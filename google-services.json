@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "548858265891",
+    "project_id": "btbmobile-3a639",
+    "storage_bucket": "btbmobile-3a639.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:548858265891:android:431d3f76951ff73d82cc96",
+        "android_client_info": {
+          "package_name": "com.btb"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "548858265891-32fnci270dv9j0bo99u89lk2sdl4c0j9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBpxaIBxgfoD8irxUTmJcz1-R6JD2gog6g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "548858265891-32fnci270dv9j0bo99u89lk2sdl4c0j9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:548858265891:android:889153357f919ff882cc96",
+        "android_client_info": {
+          "package_name": "com.btb.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "548858265891-32fnci270dv9j0bo99u89lk2sdl4c0j9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBpxaIBxgfoD8irxUTmJcz1-R6JD2gog6g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "548858265891-32fnci270dv9j0bo99u89lk2sdl4c0j9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
