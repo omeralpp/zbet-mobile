@@ -53,7 +53,9 @@
       "cordova-support-android-plugin": {},
       "cordova-plugin-device": {}
     },
-    "platforms": []
+    "platforms": [
+      "android"
+    ]
   },
   "dependencies": {
     "cordova-plugin-device": "2.0.3"
