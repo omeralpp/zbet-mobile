@@ -14,7 +14,6 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "cordova-android": "^10.1.2",
-    "cordova-plugin-device": "^2.0.3",
     "cordova-plugin-dialogs": "^2.0.2",
     "cordova-plugin-firebasex": "^13.0.1",
     "cordova-plugin-inappbrowser": "^5.0.0",
@@ -51,9 +50,12 @@
         "ANDROID_GSON_VERSION": "2.8.7",
         "ANDROID_FIREBASE_PERF_GRADLE_PLUGIN_VERSION": "1.4.0"
       },
-      "cordova-plugin-device": {},
-      "cordova-support-android-plugin": {}
+      "cordova-support-android-plugin": {},
+      "cordova-plugin-device": {}
     },
     "platforms": []
+  },
+  "dependencies": {
+    "cordova-plugin-device": "2.0.3"
   }
 }

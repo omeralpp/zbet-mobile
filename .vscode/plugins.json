@@ -1,1 +1,1 @@
-{"plugins":["cordova-plugin-network-information","cordova-plugin-device","cordova-plugin-dialogs","cordova-plugin-firebasex","cordova-plugin-inappbrowser","cordova-plugin-whitelist","cordova-support-android-plugin"]}
+{"plugins":["cordova-plugin-network-information","cordova-plugin-dialogs","cordova-plugin-firebasex","cordova-plugin-inappbrowser","cordova-plugin-whitelist","cordova-support-android-plugin","cordova-plugin-device"]}

@@ -2,63 +2,38 @@
 <widget id="com.btb" version="1.0.0"
     xmlns="http://www.w3.org/ns/widgets"
     xmlns:cdv="http://cordova.apache.org/ns/1.0">
+
     <name>BTB</name>
-
     <description>Better Than Bet</description>
+    <author href="http://cordova.io" email="dev@cordova.apache.org">Apache Cordova Team</author>
 
-    <author href="http://cordova.io" email="dev@cordova.apache.org">Apache Cordova Team </author>
+    <content src="index.html" />
 
-    <content src="index.html"/>
+    <access origin="*" />
+    <allow-navigation href="https://82475096trial.launchpad.cfapps.us10.hana.ondemand.com/*" />
 
-    <access origin="*"/>
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <allow-intent href="tel:*" />
+    <allow-intent href="sms:*" />
+    <allow-intent href="mailto:*" />
+    <allow-intent href="geo:*" />
 
-    <!-- <access origin="http://agridoctor.net*"/>
-
-    <access origin="http://www.agridoctor.net*"/> -->
-
-    <!-- <access origin="https://www.agridoctor.net*"/> -->
-
-    <access origin="https://eedd7ad0trial.launchpad.cfapps.us10.hana.ondemand.com/*"/>
-
-    <allow-intent href="http://*/*"/>
-
-    <allow-intent href="https://*/*"/>
-
-    <allow-intent href="tel:*"/>
-
-    <allow-intent href="sms:*"/>
-
-    <allow-intent href="mailto:*"/>
-
-    <allow-intent href="geo:*"/>
-
-
--    <platform name="android">
+    <platform name="android">
         <preference name="AndroidXEnabled" value="true" />
         <resource-file src="google-services.json" target="app/google-services.json" />
+        <allow-intent href="market:*" />
 
-        <allow-intent href="market:*"/>
-
-        <icon src="res/images/ldpi.png" density="ldpi"/>
-
-        <icon src="res/images/mdpi.png" density="mdpi"/>
-
-        <icon src="res/images/hdpi.png" density="hdpi"/>
-
-        <icon src="res/images/xhdpi.png" density="xhdpi"/>
-
-        <icon src="res/images/xxhdpi.png" density="xxhdpi"/>
-
-        <icon src="res/images/xxxhdpi.png" density="xxxhdpi"/>
-
+        <icon src="res/images/ldpi.png" density="ldpi" />
+        <icon src="res/images/mdpi.png" density="mdpi" />
+        <icon src="res/images/hdpi.png" density="hdpi" />
+        <icon src="res/images/xhdpi.png" density="xhdpi" />
+        <icon src="res/images/xxhdpi.png" density="xxhdpi" />
+        <icon src="res/images/xxxhdpi.png" density="xxxhdpi" />
     </platform>
 
-
--    <platform name="ios">
-
-        <allow-intent href="itms:*"/>
-
-        <allow-intent href="itms-apps:*"/>
-
+    <platform name="ios">
+        <allow-intent href="itms:*" />
+        <allow-intent href="itms-apps:*" />
     </platform>
 </widget>

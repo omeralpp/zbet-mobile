@@ -1,50 +1,171 @@
-
-function redirectTo(location) {
-	window.open = cordova.InAppBrowser.open;
-	//showPleasewait('Redirecting','Please wait');
-	var d = setInterval(function () {
-		window.open(location, '_self',
-			'location=no,zoom=no,toolbar=no');
-		clearInterval(d);
-	}, 1500);
-}
-
 var app = {
-		// Application Constructor
-		initialize: function () {
-			document.addEventListener('deviceready',
-				this.onDeviceReady.bind(this), false);
-		},
-		// deviceready Event Handler
-		//
-		// Bind any cordova events here. Common events are:
-		// 'pause', 'resume', etc.
-		onDeviceReady: function () {
-			
-			this.receivedEvent('deviceready');
-			window.FirebasePlugin.onTokenRefresh(function(token) {
-				// save this server-side and use it to push notifications to this device
-				 console.log("OAP:",token);
-				 FirebasePlugin.subscribe("BTB", function(){
-					console.log("Subscribed to topic");
-				}, function(error){
-					 console.error("Error subscribing to topic: " + error);
-				});
-				 
-				//  alert("OAP:",token);
-				}, function(error) {
-				 console.error(error);
-				});
-		},
-		// Update DOM on a Received Event
-		receivedEvent: function (id) {
-			if (navigator.connection.type == Connection.NONE) {
-				navigator.notification.alert('An internet connection is required to continue ');
-				}
-				else {
-					redirectTo("https://eedd7ad0trial.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=7878e7a3-ce12-445e-a50b-421f271a65b0#btb-manage?sap-ui-app-id-hint=saas_approuter_com.btb.btb&/?sap-iapp-state--history=TASO8CRGC6FI9RR1EYHGGWF0GEKUIJF1HNQQJ0CLU");
-					//Replce URL with your website URL
-				}
+	launchUrl: "https://188b143btrial.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b38042ce-b8ab-4fea-a892-abf4c58a170f#Shell-home",
+
+	relaunchTimer: null,
+	restoreTimer: null,
+	waitingBackPressedOnce: false,
+
+	browserRef: null,
+	backHandler: null,
+
+	initialize: function () {
+		this.backHandler = this.onBackButton.bind(this);
+
+		document.addEventListener("deviceready", this.onDeviceReady.bind(this), false);
+	},
+
+	onDeviceReady: function () {
+		this.registerFirebase();
+		this.enableCustomBack();
+		this.startApp();
+	},
+
+	enableCustomBack: function () {
+		document.removeEventListener("backbutton", this.backHandler, false);
+		document.addEventListener("backbutton", this.backHandler, false);
+	},
+
+	disableCustomBack: function () {
+		document.removeEventListener("backbutton", this.backHandler, false);
+	},
+
+	registerFirebase: function () {
+		if (window.FirebasePlugin) {
+			window.FirebasePlugin.onTokenRefresh(function (token) {
+				console.log("FCM Token:", token);
+
+				window.FirebasePlugin.subscribe(
+					"BTB",
+					function () {
+						console.log("Subscribed to BTB");
+					},
+					function (error) {
+						console.error("Subscribe error:", error);
+					}
+				);
+			}, function (error) {
+				console.error("FCM error:", error);
+			});
+		}
+	},
+
+	setStatusText: function (text) {
+		var el = document.getElementById("statusText");
+		if (el) {
+			el.innerText = text;
+		}
+	},
+
+	startApp: function () {
+		if (navigator.connection && navigator.connection.type === Connection.NONE) {
+			this.setStatusText("No internet connection");
+			return;
+		}
+
+		this.setStatusText("Please wait...");
+		this.scheduleRelaunch();
+	},
+
+	clearTimers: function () {
+		if (this.relaunchTimer) {
+			clearTimeout(this.relaunchTimer);
+			this.relaunchTimer = null;
+		}
+
+		if (this.restoreTimer) {
+			clearTimeout(this.restoreTimer);
+			this.restoreTimer = null;
+		}
+	},
+
+	scheduleRelaunch: function () {
+		var self = this;
+
+		this.clearTimers();
+		this.waitingBackPressedOnce = false;
+		this.setStatusText("Please wait...");
+
+		this.relaunchTimer = setTimeout(function () {
+			self.openLaunchpad();
+		}, 2000);
+	},
+
+	openLaunchpad: function () {
+		var self = this;
+
+		this.relaunchTimer = null;
+		this.waitingBackPressedOnce = false;
+		this.setStatusText("Opening...");
+
+		if (this.browserRef) {
+			try {
+				this.browserRef.close();
+			} catch (e) {
+				console.log("Browser close error:", e);
 			}
-		};
-		app.initialize();
+			this.browserRef = null;
+		}
+
+		this.browserRef = cordova.InAppBrowser.open(
+			this.launchUrl,
+			"_blank",
+			"location=no,toolbar=no,zoom=no,hideurlbar=yes,hardwareback=yes,clearcache=no,clearsessioncache=no"
+		);
+
+		if (!this.browserRef) {
+			this.setStatusText("Cannot open browser");
+			return;
+		}
+
+		// Browser açıkken standart InAppBrowser back çalışsın
+		this.disableCustomBack();
+
+		this.browserRef.addEventListener("loadstop", function (event) {
+			console.log("loadstop url:", event && event.url ? event.url : "");
+		});
+
+		this.browserRef.addEventListener("loaderror", function (event) {
+			console.error("Launchpad load error:", event);
+
+			self.browserRef = null;
+			self.enableCustomBack();
+			self.setStatusText("Load error, retrying...");
+			self.scheduleRelaunch();
+		});
+
+		this.browserRef.addEventListener("exit", function () {
+			console.log("Browser closed");
+
+			self.browserRef = null;
+			self.enableCustomBack();
+			self.setStatusText("Please wait...");
+			self.scheduleRelaunch();
+		});
+	},
+
+	onBackButton: function () {
+		var self = this;
+
+		// Bu handler sadece logo ekranında aktif olacak
+		if (this.browserRef) {
+			return;
+		}
+
+		this.clearTimers();
+
+		if (!this.waitingBackPressedOnce) {
+			this.waitingBackPressedOnce = true;
+			this.setStatusText("Press back again to exit");
+
+			this.restoreTimer = setTimeout(function () {
+				self.waitingBackPressedOnce = false;
+				self.setStatusText("Please wait...");
+				self.scheduleRelaunch();
+			}, 2000);
+		} else {
+			navigator.app.exitApp();
+		}
+	}
+};
+
+app.initialize();
