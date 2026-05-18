@@ -5,12 +5,12 @@
 
     <name>BTB</name>
     <description>Better Than Bet</description>
-    <author href="http://cordova.io" email="dev@cordova.apache.org">Apache Cordova Team</author>
+    <author>BTB</author>
 
     <content src="index.html" />
 
     <access origin="*" />
-    <allow-navigation href="https://82475096trial.launchpad.cfapps.us10.hana.ondemand.com/*" />
+    <allow-navigation href="https://188b143btrial.launchpad.cfapps.us10.hana.ondemand.com/*" />
 
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />

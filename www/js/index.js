@@ -1,5 +1,6 @@
 var app = {
 	launchUrl: "https://188b143btrial.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b38042ce-b8ab-4fea-a892-abf4c58a170f#Shell-home",
+	topicName: "BTB",
 
 	relaunchTimer: null,
 	restoreTimer: null,
@@ -17,6 +18,7 @@ var app = {
 	onDeviceReady: function () {
 		this.registerFirebase();
 		this.enableCustomBack();
+		this.registerNetworkHandlers();
 		this.startApp();
 	},
 
@@ -30,23 +32,55 @@ var app = {
 	},
 
 	registerFirebase: function () {
-		if (window.FirebasePlugin) {
-			window.FirebasePlugin.onTokenRefresh(function (token) {
-				console.log("FCM Token:", token);
+		if (!window.FirebasePlugin) {
+			return;
+		}
 
-				window.FirebasePlugin.subscribe(
-					"BTB",
-					function () {
-						console.log("Subscribed to BTB");
-					},
-					function (error) {
-						console.error("Subscribe error:", error);
-					}
-				);
+		this.subscribeToNotifications();
+
+		if (typeof window.FirebasePlugin.getToken === "function") {
+			window.FirebasePlugin.getToken(function (token) {
+				console.log("FCM Token:", token);
 			}, function (error) {
-				console.error("FCM error:", error);
+				console.error("FCM token error:", error);
 			});
 		}
+
+		var self = this;
+
+		window.FirebasePlugin.onTokenRefresh(function (token) {
+			console.log("FCM Token:", token);
+			self.subscribeToNotifications();
+		}, function (error) {
+			console.error("FCM error:", error);
+		});
+	},
+
+	subscribeToNotifications: function () {
+		if (!window.FirebasePlugin || typeof window.FirebasePlugin.subscribe !== "function") {
+			return;
+		}
+
+		window.FirebasePlugin.subscribe(
+			this.topicName,
+			function () {
+				console.log("Subscribed to BTB");
+			},
+			function (error) {
+				console.error("Subscribe error:", error);
+			}
+		);
+	},
+
+	registerNetworkHandlers: function () {
+		document.addEventListener("online", this.startApp.bind(this), false);
+
+		document.addEventListener("offline", function () {
+			if (!app.browserRef) {
+				app.clearTimers();
+				app.setStatusText("No internet connection");
+			}
+		}, false);
 	},
 
 	setStatusText: function (text) {
@@ -57,7 +91,11 @@ var app = {
 	},
 
 	startApp: function () {
-		if (navigator.connection && navigator.connection.type === Connection.NONE) {
+		if (
+			navigator.connection &&
+			typeof Connection !== "undefined" &&
+			navigator.connection.type === Connection.NONE
+		) {
 			this.setStatusText("No internet connection");
 			return;
 		}
@@ -117,7 +155,7 @@ var app = {
 			return;
 		}
 
-		// Browser açıkken standart InAppBrowser back çalışsın
+		// Let InAppBrowser handle the hardware back button while it is open.
 		this.disableCustomBack();
 
 		this.browserRef.addEventListener("loadstop", function (event) {
@@ -146,7 +184,7 @@ var app = {
 	onBackButton: function () {
 		var self = this;
 
-		// Bu handler sadece logo ekranında aktif olacak
+		// This handler is active only on the logo/loading screen.
 		if (this.browserRef) {
 			return;
 		}
