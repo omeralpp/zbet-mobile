@@ -8,6 +8,7 @@ var app = {
 
 	browserRef: null,
 	backHandler: null,
+	firebaseMessageHandlerRegistered: false,
 
 	initialize: function () {
 		this.backHandler = this.onBackButton.bind(this);
@@ -31,37 +32,111 @@ var app = {
 		document.removeEventListener("backbutton", this.backHandler, false);
 	},
 
+	getFirebaseMessaging: function () {
+		return window.FirebasexMessaging || window.FirebasePlugin || null;
+	},
+
 	registerFirebase: function () {
-		if (!window.FirebasePlugin) {
+		var messaging = this.getFirebaseMessaging();
+		if (!messaging) {
+			console.warn("Firebase messaging plugin is not available");
 			return;
-		}
-
-		this.subscribeToNotifications();
-
-		if (typeof window.FirebasePlugin.getToken === "function") {
-			window.FirebasePlugin.getToken(function (token) {
-				console.log("FCM Token:", token);
-			}, function (error) {
-				console.error("FCM token error:", error);
-			});
 		}
 
 		var self = this;
 
-		window.FirebasePlugin.onTokenRefresh(function (token) {
-			console.log("FCM Token:", token);
+		this.requestNotificationPermission(function () {
+			self.registerFirebaseMessageHandler();
 			self.subscribeToNotifications();
+			self.logFirebaseToken();
+		});
+
+		if (typeof messaging.onTokenRefresh === "function") {
+			messaging.onTokenRefresh(function (token) {
+				console.log("FCM Token refreshed:", token);
+				self.subscribeToNotifications();
+			}, function (error) {
+				console.error("FCM token refresh error:", error);
+			});
+		}
+	},
+
+	requestNotificationPermission: function (done) {
+		var messaging = this.getFirebaseMessaging();
+
+		if (!messaging || typeof messaging.hasPermission !== "function") {
+			done();
+			return;
+		}
+
+		messaging.hasPermission(function (hasPermission) {
+			if (hasPermission) {
+				console.log("Notification permission is granted");
+				done();
+				return;
+			}
+
+			if (typeof messaging.grantPermission !== "function") {
+				console.warn("Notification permission is not granted and cannot be requested");
+				done();
+				return;
+			}
+
+			messaging.grantPermission(function (granted) {
+				console.log("Notification permission was " + (granted ? "granted" : "denied"));
+				done();
+			}, function (error) {
+				console.error("Notification permission error:", error);
+				done();
+			});
 		}, function (error) {
-			console.error("FCM error:", error);
+			console.error("Notification permission check error:", error);
+			done();
+		});
+	},
+
+	registerFirebaseMessageHandler: function () {
+		var messaging = this.getFirebaseMessaging();
+
+		if (
+			this.firebaseMessageHandlerRegistered ||
+			!messaging ||
+			typeof messaging.onMessageReceived !== "function"
+		) {
+			return;
+		}
+
+		this.firebaseMessageHandlerRegistered = true;
+
+		messaging.onMessageReceived(function (message) {
+			console.log("FCM Message:", JSON.stringify(message));
+		}, function (error) {
+			console.error("FCM message handler error:", error);
+		});
+	},
+
+	logFirebaseToken: function () {
+		var messaging = this.getFirebaseMessaging();
+
+		if (!messaging || typeof messaging.getToken !== "function") {
+			return;
+		}
+
+		messaging.getToken(function (token) {
+			console.log("FCM Token:", token);
+		}, function (error) {
+			console.error("FCM token error:", error);
 		});
 	},
 
 	subscribeToNotifications: function () {
-		if (!window.FirebasePlugin || typeof window.FirebasePlugin.subscribe !== "function") {
+		var messaging = this.getFirebaseMessaging();
+
+		if (!messaging || typeof messaging.subscribe !== "function") {
 			return;
 		}
 
-		window.FirebasePlugin.subscribe(
+		messaging.subscribe(
 			this.topicName,
 			function () {
 				console.log("Subscribed to BTB");
