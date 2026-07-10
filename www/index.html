@@ -11,61 +11,19 @@
     <meta name="color-scheme" content="light dark">
     <link rel="stylesheet" href="css/index.css">
     <title>BTB</title>
-
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: #00091C;
-            font-family: Arial, sans-serif;
-        }
-
-        #body {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            background:
-                radial-gradient(circle at 50% 40%, rgba(9, 95, 187, 0.25), transparent 34%),
-                linear-gradient(180deg, #00091C 0%, #071426 100%);
-        }
-
-        #content-holder {
-            height: 300px;
-            position: absolute;
-            width: 100%;
-            top: 50%;
-            transform: translate(0, -50%);
-            text-align: center;
-        }
-
-        a {
-            color: #4BBA4F;
-            text-decoration: none;
-            font-weight: 900;
-            font-size: 17px;
-        }
-
-        #statusText {
-            color: #D8E2EC;
-            letter-spacing: .04em;
-            margin: 18px 0;
-        }
-
-        .brand-logo {
-            display: block;
-            margin: auto;
-            max-width: min(78vw, 360px);
-            width: 360px;
-        }
-    </style>
 </head>
 
 <body>
     <div id="body">
         <div id="content-holder">
-            <img src="img/pleasewait.gif" alt="Please wait" width="80">
-            <h4 id="statusText">Please wait...</h4>
+            <div class="spinner-wrap" aria-hidden="true">
+                <img src="img/pleasewait.gif" alt="" width="64">
+            </div>
             <img class="brand-logo" src="img/logo.png" alt="BTB">
+            <h4 id="statusText">Please wait...</h4>
+            <p id="detailText">Opening BTB mobile experience.</p>
+            <button id="retryButton" type="button" class="retry-button" hidden>Retry</button>
+            <p id="versionText">BTB Mobile 1.0.0</p>
         </div>
     </div>
 

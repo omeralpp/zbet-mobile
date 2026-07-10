@@ -13,7 +13,7 @@ body {
     -webkit-touch-callout: none;
     -webkit-text-size-adjust: none;
     -webkit-user-select: none;
-    background: #00091c;
+    background: #05111f;
     color: #d8e2ec;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
@@ -22,4 +22,95 @@ body {
 
 img {
     max-width: 100%;
+}
+
+#body {
+    align-items: center;
+    background:
+        radial-gradient(circle at 50% 36%, rgba(37, 99, 151, 0.24), transparent 34%),
+        linear-gradient(180deg, #061424 0%, #040a13 100%);
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    min-height: 100%;
+    padding: 32px 22px;
+    position: fixed;
+    width: 100%;
+}
+
+#content-holder {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    max-width: 420px;
+    min-height: 360px;
+    text-align: center;
+    width: 100%;
+}
+
+.spinner-wrap {
+    align-items: center;
+    display: flex;
+    height: 72px;
+    justify-content: center;
+    margin-bottom: 18px;
+    width: 72px;
+}
+
+.brand-logo {
+    display: block;
+    max-width: min(78vw, 340px);
+    width: 340px;
+}
+
+#statusText {
+    color: #f4f7fb;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1.35;
+    margin: 24px 0 8px;
+}
+
+#detailText {
+    color: #a9b8c8;
+    font-size: 14px;
+    line-height: 1.45;
+    margin: 0;
+    max-width: 320px;
+    min-height: 42px;
+}
+
+.retry-button {
+    appearance: none;
+    background: #2e7d52;
+    border: 0;
+    border-radius: 6px;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1;
+    margin-top: 22px;
+    min-height: 44px;
+    min-width: 136px;
+    padding: 0 20px;
+}
+
+.retry-button:active {
+    background: #256743;
+}
+
+.retry-button[hidden] {
+    display: none;
+}
+
+#versionText {
+    bottom: 18px;
+    color: #6f8298;
+    font-size: 12px;
+    left: 0;
+    margin: 0;
+    position: fixed;
+    right: 0;
+    text-align: center;
 }
