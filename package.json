@@ -5,7 +5,7 @@
   "description": "Better Than Bet Android in-app browser shell.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test test/*.test.js"
   },
   "keywords": [
     "ecosystem:cordova"

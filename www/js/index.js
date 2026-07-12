@@ -63,12 +63,11 @@ var app = {
 		this.requestNotificationPermission(function () {
 			self.registerFirebaseMessageHandler();
 			self.subscribeToNotifications();
-			self.logFirebaseToken();
 		});
 
 		if (typeof messaging.onTokenRefresh === "function") {
-			messaging.onTokenRefresh(function (token) {
-				console.log("FCM Token refreshed:", token);
+			messaging.onTokenRefresh(function () {
+				console.log("FCM token refreshed");
 				self.subscribeToNotifications();
 			}, function (error) {
 				console.error("FCM token refresh error:", error);
@@ -126,8 +125,6 @@ var app = {
 		this.firebaseMessageHandlerRegistered = true;
 
 		messaging.onMessageReceived(function (message) {
-			console.log("FCM Message:", JSON.stringify(message));
-
 			if (self.isNotificationTap(message)) {
 				self.openNotificationTarget(message);
 			}
@@ -164,7 +161,7 @@ var app = {
 		var body = this.getMessageValue(message, "body");
 		var text = ((title || "") + " " + (body || "")).toLowerCase();
 
-		if (text.indexOf("super") >= 0) {
+		if (text.indexOf("super") >= 0 || text.indexOf("sclear") >= 0) {
 			return this.getRouteUrl("super");
 		}
 
@@ -196,7 +193,12 @@ var app = {
 		var normalizedRoute = routeText.toLowerCase();
 		var hash = this.defaultHash;
 
-		if (normalizedRoute === "super" || normalizedRoute === "superlog" || normalizedRoute === "super-log") {
+		if (
+			normalizedRoute === "super" ||
+			normalizedRoute === "superlog" ||
+			normalizedRoute === "super-log" ||
+			normalizedRoute === "sclear"
+		) {
 			hash = "#SuperLog-display";
 		} else if (normalizedRoute === "btb" || normalizedRoute === "main" || normalizedRoute === "live") {
 			hash = "#btb-manage";
@@ -205,20 +207,6 @@ var app = {
 		}
 
 		return this.launchpadBaseUrl + hash;
-	},
-
-	logFirebaseToken: function () {
-		var messaging = this.getFirebaseMessaging();
-
-		if (!messaging || typeof messaging.getToken !== "function") {
-			return;
-		}
-
-		messaging.getToken(function (token) {
-			console.log("FCM Token:", token);
-		}, function (error) {
-			console.error("FCM token error:", error);
-		});
 	},
 
 	subscribeToNotifications: function () {
@@ -243,8 +231,7 @@ var app = {
 		var self = this;
 
 		document.addEventListener("online", function () {
-			self.retryAttempt = 0;
-			self.startApp(self.pendingLaunchUrl || self.getRouteUrl("home"), { immediate: true });
+			self.handleOnline();
 		}, false);
 
 		document.addEventListener("offline", function () {
@@ -253,6 +240,15 @@ var app = {
 				self.showOfflineState();
 			}
 		}, false);
+	},
+
+	handleOnline: function () {
+		if (this.browserRef) {
+			return;
+		}
+
+		this.retryAttempt = 0;
+		this.startApp(this.pendingLaunchUrl || this.getRouteUrl("home"), { immediate: true });
 	},
 
 	setStatusText: function (text) {
@@ -459,4 +455,10 @@ var app = {
 	}
 };
 
-app.initialize();
+if (typeof module !== "undefined" && module.exports) {
+	module.exports = app;
+}
+
+if (typeof document !== "undefined") {
+	app.initialize();
+}
