@@ -36,3 +36,4 @@ Generated Cordova folders such as `platforms/`, `plugins/`, and `node_modules/` 
   - `SUPER` / `SCLEAR` style messages open `#SuperLog-display`.
   - Other BTB messages open `#btb-manage`.
   - Future FCM payloads can override this with `data.route`, `data.target`, or `data.screen`.
+- Bilyoner match-card links are handed to Android so the installed Bilyoner app opens separately; web loading remains the fallback.

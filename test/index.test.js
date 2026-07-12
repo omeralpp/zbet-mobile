@@ -69,3 +69,69 @@ test("retries immediately when connectivity returns without a browser", function
 		app.startApp = originalStartApp;
 	}
 });
+
+test("recognizes only Bilyoner match-card URLs", function () {
+	assert.equal(
+		app.isBilyonerMatchUrl("https://www.bilyoner.com/mac-karti/futbol/12345/oranlar"),
+		true
+	);
+	assert.equal(app.isBilyonerMatchUrl("https://www.bilyoner.com/uyelik"), false);
+	assert.equal(
+		app.isBilyonerMatchUrl("https://www.bilyoner.com.example.org/mac-karti/futbol/12345/oranlar"),
+		false
+	);
+});
+
+test("opens Bilyoner match-card URLs in the Android system", function () {
+	var originalOpenSystemUrl = app.openSystemUrl;
+	var openedUrl = null;
+	var browserLoads = 0;
+	var matchUrl = "https://www.bilyoner.com/mac-karti/futbol/12345/oranlar";
+
+	app.openSystemUrl = function (url) {
+		openedUrl = url;
+		return true;
+	};
+
+	try {
+		app.handleBeforeLoad({ url: matchUrl }, function () {
+			browserLoads += 1;
+		});
+
+		assert.equal(openedUrl, matchUrl);
+		assert.equal(browserLoads, 0);
+	} finally {
+		app.openSystemUrl = originalOpenSystemUrl;
+	}
+});
+
+test("keeps normal URLs inside the BTB browser", function () {
+	var launchpadUrl = app.launchpadBaseUrl + "#btb-manage";
+	var loadedUrl = null;
+
+	app.handleBeforeLoad({ url: launchpadUrl }, function (url) {
+		loadedUrl = url;
+	});
+
+	assert.equal(loadedUrl, launchpadUrl);
+});
+
+test("falls back to the browser when Android cannot open Bilyoner", function () {
+	var originalOpenSystemUrl = app.openSystemUrl;
+	var loadedUrl = null;
+	var matchUrl = "https://www.bilyoner.com/mac-karti/futbol/12345/oranlar";
+
+	app.openSystemUrl = function () {
+		return false;
+	};
+
+	try {
+		app.handleBeforeLoad({ url: matchUrl }, function (url) {
+			loadedUrl = url;
+		});
+
+		assert.equal(loadedUrl, matchUrl);
+	} finally {
+		app.openSystemUrl = originalOpenSystemUrl;
+	}
+});

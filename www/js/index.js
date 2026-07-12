@@ -209,6 +209,50 @@ var app = {
 		return this.launchpadBaseUrl + hash;
 	},
 
+	isBilyonerMatchUrl: function (url) {
+		try {
+			var parsedUrl = new URL(String(url || ""));
+			var hostname = parsedUrl.hostname.toLowerCase();
+			var pathname = parsedUrl.pathname.toLowerCase();
+
+			return parsedUrl.protocol === "https:" &&
+				(hostname === "bilyoner.com" || hostname === "www.bilyoner.com") &&
+				pathname.indexOf("/mac-karti/") === 0;
+		} catch (e) {
+			return false;
+		}
+	},
+
+	openSystemUrl: function (url) {
+		if (
+			typeof cordova === "undefined" ||
+			!cordova.InAppBrowser ||
+			typeof cordova.InAppBrowser.open !== "function"
+		) {
+			return false;
+		}
+
+		try {
+			cordova.InAppBrowser.open(url, "_system");
+			return true;
+		} catch (e) {
+			console.error("System URL open error:", e);
+			return false;
+		}
+	},
+
+	handleBeforeLoad: function (event, loadUrl) {
+		var url = event && event.url ? event.url : "";
+
+		if (this.isBilyonerMatchUrl(url) && this.openSystemUrl(url)) {
+			return;
+		}
+
+		if (typeof loadUrl === "function" && url) {
+			loadUrl(url);
+		}
+	},
+
 	subscribeToNotifications: function () {
 		var messaging = this.getFirebaseMessaging();
 
@@ -386,7 +430,7 @@ var app = {
 		this.browserRef = cordova.InAppBrowser.open(
 			launchUrl,
 			"_blank",
-			"location=no,toolbar=no,zoom=no,hideurlbar=yes,hardwareback=yes,clearcache=no,clearsessioncache=no"
+			"location=no,toolbar=no,zoom=no,hideurlbar=yes,hardwareback=yes,clearcache=no,clearsessioncache=no,beforeload=yes"
 		);
 
 		if (!this.browserRef) {
@@ -398,6 +442,10 @@ var app = {
 
 		// Let InAppBrowser handle the hardware back button while it is open.
 		this.disableCustomBack();
+
+		this.browserRef.addEventListener("beforeload", function (event, loadUrl) {
+			self.handleBeforeLoad(event, loadUrl);
+		});
 
 		this.browserRef.addEventListener("loadstop", function (event) {
 			console.log("loadstop url:", event && event.url ? event.url : "");
