@@ -1,6 +1,8 @@
 "use strict";
 
 var assert = require("node:assert/strict");
+var fs = require("node:fs");
+var path = require("node:path");
 var test = require("node:test");
 var app = require("../www/js/index.js");
 
@@ -133,5 +135,231 @@ test("falls back to the browser when Android cannot open Bilyoner", function () 
 		assert.equal(loadedUrl, matchUrl);
 	} finally {
 		app.openSystemUrl = originalOpenSystemUrl;
+	}
+});
+
+test("configures the native Android splash with BTB branding", function () {
+	var configXml = fs.readFileSync(path.join(__dirname, "..", "config.xml"), "utf8");
+
+	assert.match(
+		configXml,
+		/<preference name="AndroidWindowSplashScreenAnimatedIcon" value="www\/img\/logo\.png" \/>/
+	);
+	assert.match(
+		configXml,
+		/<preference name="SplashScreenBackgroundColor" value="#05111F" \/>/
+	);
+	assert.match(configXml, /<preference name="SplashScreenDelay" value="1500" \/>/);
+});
+
+test("shows the existing Launchpad browser when the app resumes", function () {
+	var originalBrowserRef = app.browserRef;
+	var originalRelaunchTimer = app.relaunchTimer;
+	var originalResumeProbeTimer = app.resumeProbeTimer;
+	var originalPausedAt = app.pausedAt;
+	var originalStartApp = app.startApp;
+	var originalDisableCustomBack = app.disableCustomBack;
+	var showCalls = 0;
+	var probeCalls = 0;
+	var startCalls = 0;
+	var backCalls = 0;
+
+	app.browserRef = {
+		show: function () {
+			showCalls += 1;
+		},
+		executeScript: function (details, done) {
+			probeCalls += 1;
+			assert.match(details.code, /document\.readyState/);
+			done([JSON.stringify({
+				href: app.launchpadBaseUrl,
+				ready: "complete",
+				hasContent: true
+			})]);
+		}
+	};
+	app.relaunchTimer = null;
+	app.resumeProbeTimer = null;
+	app.pausedAt = Date.now();
+	app.startApp = function () {
+		startCalls += 1;
+	};
+	app.disableCustomBack = function () {
+		backCalls += 1;
+	};
+
+	try {
+		app.handleResume();
+
+		assert.equal(showCalls, 1);
+		assert.equal(probeCalls, 1);
+		assert.equal(startCalls, 0);
+		assert.equal(backCalls, 1);
+		assert.equal(app.resumeProbeTimer, null);
+	} finally {
+		app.clearResumeProbe();
+		app.browserRef = originalBrowserRef;
+		app.relaunchTimer = originalRelaunchTimer;
+		app.resumeProbeTimer = originalResumeProbeTimer;
+		app.pausedAt = originalPausedAt;
+		app.startApp = originalStartApp;
+		app.disableCustomBack = originalDisableCustomBack;
+	}
+});
+
+test("reopens Launchpad when the app resumes without a browser", function () {
+	var originalBrowserRef = app.browserRef;
+	var originalPendingLaunchUrl = app.pendingLaunchUrl;
+	var originalRelaunchTimer = app.relaunchTimer;
+	var originalPausedAt = app.pausedAt;
+	var originalRetryAttempt = app.retryAttempt;
+	var originalStartApp = app.startApp;
+	var receivedUrl = null;
+	var receivedOptions = null;
+
+	app.browserRef = null;
+	app.pendingLaunchUrl = app.launchpadBaseUrl + "#btb-manage";
+	app.relaunchTimer = null;
+	app.pausedAt = 0;
+	app.retryAttempt = 3;
+	app.startApp = function (url, options) {
+		receivedUrl = url;
+		receivedOptions = options;
+	};
+
+	try {
+		app.handleResume();
+
+		assert.equal(app.retryAttempt, 0);
+		assert.equal(receivedUrl, app.pendingLaunchUrl);
+		assert.deepEqual(receivedOptions, { immediate: true });
+	} finally {
+		app.browserRef = originalBrowserRef;
+		app.pendingLaunchUrl = originalPendingLaunchUrl;
+		app.relaunchTimer = originalRelaunchTimer;
+		app.pausedAt = originalPausedAt;
+		app.retryAttempt = originalRetryAttempt;
+		app.startApp = originalStartApp;
+	}
+});
+
+test("does not compete with a notification relaunch already in progress", function () {
+	var originalRelaunchTimer = app.relaunchTimer;
+	var originalPausedAt = app.pausedAt;
+	var originalStartApp = app.startApp;
+	var startCalls = 0;
+
+	app.relaunchTimer = {};
+	app.pausedAt = 0;
+	app.startApp = function () {
+		startCalls += 1;
+	};
+
+	try {
+		app.handleResume();
+		assert.equal(startCalls, 0);
+	} finally {
+		app.relaunchTimer = originalRelaunchTimer;
+		app.pausedAt = originalPausedAt;
+		app.startApp = originalStartApp;
+	}
+});
+
+test("rejects an empty or blank InAppBrowser health response", function () {
+	assert.equal(app.isBrowserProbeHealthy([]), false);
+	assert.equal(
+		app.isBrowserProbeHealthy([JSON.stringify({
+			href: "about:blank",
+			ready: "complete",
+			hasContent: false
+		})]),
+		false
+	);
+	assert.equal(
+		app.isBrowserProbeHealthy([JSON.stringify({
+			href: app.launchpadBaseUrl,
+			ready: "complete",
+			hasContent: true
+		})]),
+		true
+	);
+});
+
+test("reopens Launchpad after a long background suspension", function () {
+	var originalBrowserRef = app.browserRef;
+	var originalPendingLaunchUrl = app.pendingLaunchUrl;
+	var originalRelaunchTimer = app.relaunchTimer;
+	var originalPausedAt = app.pausedAt;
+	var originalRefreshAfter = app.resumeHardRefreshAfter;
+	var originalStartApp = app.startApp;
+	var showCalls = 0;
+	var receivedUrl = null;
+
+	app.browserRef = {
+		show: function () {
+			showCalls += 1;
+		}
+	};
+	app.pendingLaunchUrl = app.launchpadBaseUrl + "#btb-manage";
+	app.relaunchTimer = null;
+	app.pausedAt = Date.now() - 1000;
+	app.resumeHardRefreshAfter = 500;
+	app.startApp = function (url) {
+		receivedUrl = url;
+	};
+
+	try {
+		app.handleResume();
+
+		assert.equal(showCalls, 0);
+		assert.equal(receivedUrl, app.pendingLaunchUrl);
+	} finally {
+		app.browserRef = originalBrowserRef;
+		app.pendingLaunchUrl = originalPendingLaunchUrl;
+		app.relaunchTimer = originalRelaunchTimer;
+		app.pausedAt = originalPausedAt;
+		app.resumeHardRefreshAfter = originalRefreshAfter;
+		app.startApp = originalStartApp;
+	}
+});
+
+test("waits for the previous Android browser to close before replacement", function () {
+	var originalBrowserRef = app.browserRef;
+	var originalRelaunchTimer = app.relaunchTimer;
+	var originalSetTimeout = global.setTimeout;
+	var originalSetStatusText = app.setStatusText;
+	var originalSetDetailText = app.setDetailText;
+	var originalSetRetryVisible = app.setRetryVisible;
+	var closeCalls = 0;
+	var scheduledDelay = null;
+
+	app.browserRef = {
+		close: function () {
+			closeCalls += 1;
+		}
+	};
+	app.relaunchTimer = null;
+	app.setStatusText = function () {};
+	app.setDetailText = function () {};
+	app.setRetryVisible = function () {};
+	global.setTimeout = function (callback, delay) {
+		scheduledDelay = delay;
+		return { callback: callback };
+	};
+
+	try {
+		app.openLaunchpad(app.launchpadBaseUrl);
+
+		assert.equal(closeCalls, 1);
+		assert.equal(app.browserRef, null);
+		assert.equal(scheduledDelay, app.browserCloseDelay);
+		assert.ok(app.relaunchTimer);
+	} finally {
+		app.browserRef = originalBrowserRef;
+		app.relaunchTimer = originalRelaunchTimer;
+		global.setTimeout = originalSetTimeout;
+		app.setStatusText = originalSetStatusText;
+		app.setDetailText = originalSetDetailText;
+		app.setRetryVisible = originalSetRetryVisible;
 	}
 });

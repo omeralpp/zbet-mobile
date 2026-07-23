@@ -9,6 +9,12 @@
 
     <content src="index.html" />
 
+    <preference name="BackgroundColor" value="#FF05111F" />
+    <preference name="SplashScreenBackgroundColor" value="#05111F" />
+    <preference name="SplashScreenDelay" value="1500" />
+    <preference name="FadeSplashScreen" value="true" />
+    <preference name="FadeSplashScreenDuration" value="250" />
+
     <access origin="*" />
     <allow-navigation href="https://188b143btrial.launchpad.cfapps.us10.hana.ondemand.com/*" />
 
@@ -21,6 +27,7 @@
 
     <platform name="android">
         <preference name="AndroidXEnabled" value="true" />
+        <preference name="AndroidWindowSplashScreenAnimatedIcon" value="www/img/logo.png" />
         <resource-file src="google-services.json" target="app/google-services.json" />
         <allow-intent href="market:*" />
 

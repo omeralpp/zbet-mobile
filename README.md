@@ -30,8 +30,10 @@ Generated Cordova folders such as `platforms/`, `plugins/`, and `node_modules/` 
 ## Runtime Behavior
 
 - The app uses one official BTB Launchpad URL.
+- Cold starts show a native BTB-branded splash before Launchpad; the local loading screen remains available for retries and notification-driven relaunches.
 - Load failures retry with backoff: 2 seconds, 5 seconds, 15 seconds, then 30 seconds.
 - The loading screen exposes a manual retry button for offline or repeated load failures.
+- Returning from the background verifies the existing Launchpad browser and reuses it only while it is responsive. Stale, blank, or long-suspended browser windows are replaced with the last requested route after a short Android-safe close delay.
 - Notification taps route inside Launchpad when possible:
   - `SUPER` / `SCLEAR` style messages open `#SuperLog-display`.
   - Other BTB messages open `#btb-manage`.

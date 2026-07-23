@@ -3,13 +3,17 @@ var app = {
 	defaultHash: "#Shell-home",
 	topicName: "BTB",
 	retryDelays: [2000, 5000, 15000, 30000],
+	browserCloseDelay: 300,
+	resumeProbeDelay: 1200,
+	resumeHardRefreshAfter: 30000,
 
 	relaunchTimer: null,
 	restoreTimer: null,
+	resumeProbeTimer: null,
 	waitingBackPressedOnce: false,
 	retryAttempt: 0,
 	pendingLaunchUrl: null,
-	suppressNextExitRelaunch: false,
+	pausedAt: 0,
 
 	browserRef: null,
 	backHandler: null,
@@ -26,6 +30,7 @@ var app = {
 		this.registerFirebase();
 		this.enableCustomBack();
 		this.registerNetworkHandlers();
+		this.registerLifecycleHandlers();
 		this.startApp();
 	},
 
@@ -286,6 +291,115 @@ var app = {
 		}, false);
 	},
 
+	registerLifecycleHandlers: function () {
+		document.addEventListener("pause", this.handlePause.bind(this), false);
+		document.addEventListener("resume", this.handleResume.bind(this), false);
+	},
+
+	handlePause: function () {
+		this.pausedAt = Date.now();
+	},
+
+	handleResume: function () {
+		var backgroundDuration = this.pausedAt ? Date.now() - this.pausedAt : 0;
+		var browser = this.browserRef;
+
+		this.pausedAt = 0;
+
+		if (this.relaunchTimer) {
+			return;
+		}
+
+		if (browser && backgroundDuration >= this.resumeHardRefreshAfter) {
+			this.restartBrowserAfterResume(browser);
+			return;
+		}
+
+		if (browser && typeof browser.show === "function") {
+			try {
+				browser.show();
+				this.disableCustomBack();
+				this.verifyBrowserAfterResume(browser);
+				return;
+			} catch (e) {
+				console.error("Browser resume error:", e);
+			}
+		}
+
+		this.restartBrowserAfterResume(browser);
+	},
+
+	verifyBrowserAfterResume: function (browser) {
+		var self = this;
+
+		this.clearResumeProbe();
+		this.resumeProbeTimer = setTimeout(function () {
+			self.resumeProbeTimer = null;
+			self.restartBrowserAfterResume(browser);
+		}, this.resumeProbeDelay);
+
+		if (!browser || typeof browser.executeScript !== "function") {
+			return;
+		}
+
+		try {
+			browser.executeScript({
+				code: "(function(){var b=document.body;return JSON.stringify({href:String(location.href||''),ready:String(document.readyState||''),hasContent:!!(b&&(b.children.length||String(b.innerText||'').trim().length))});})()"
+			}, function (results) {
+				if (self.browserRef !== browser) {
+					self.clearResumeProbe();
+					return;
+				}
+
+				if (self.isBrowserProbeHealthy(results)) {
+					self.retryAttempt = 0;
+					self.clearResumeProbe();
+					return;
+				}
+
+				self.restartBrowserAfterResume(browser);
+			});
+		} catch (e) {
+			console.error("Browser health check error:", e);
+			this.restartBrowserAfterResume(browser);
+		}
+	},
+
+	isBrowserProbeHealthy: function (results) {
+		var state;
+
+		if (!Array.isArray(results) || !results.length || typeof results[0] !== "string") {
+			return false;
+		}
+
+		try {
+			state = JSON.parse(results[0]);
+		} catch (e) {
+			return false;
+		}
+
+		return /^https?:\/\//i.test(String(state.href || "")) &&
+			(state.ready === "interactive" || state.ready === "complete") &&
+			state.hasContent === true;
+	},
+
+	clearResumeProbe: function () {
+		if (this.resumeProbeTimer) {
+			clearTimeout(this.resumeProbeTimer);
+			this.resumeProbeTimer = null;
+		}
+	},
+
+	restartBrowserAfterResume: function (browser) {
+		if (browser && this.browserRef !== browser) {
+			return;
+		}
+
+		this.clearResumeProbe();
+		this.retryAttempt = 0;
+		this.startApp(this.pendingLaunchUrl || this.getRouteUrl("home"), { immediate: true });
+	},
+
 	handleOnline: function () {
 		if (this.browserRef) {
 			return;
@@ -368,6 +482,8 @@ var app = {
 			clearTimeout(this.restoreTimer);
 			this.restoreTimer = null;
 		}
+
+		this.clearResumeProbe();
 	},
 
 	scheduleRelaunch: function (url, options) {
@@ -399,20 +515,24 @@ var app = {
 		return delay;
 	},
 
-	closeBrowserForRetry: function () {
-		if (!this.browserRef) {
+	closeBrowserForRetry: function (browser) {
+		var browserToClose = browser || this.browserRef;
+
+		if (!browserToClose) {
 			return;
 		}
 
-		this.suppressNextExitRelaunch = true;
+		browserToClose.btbIntentionalClose = true;
 
 		try {
-			this.browserRef.close();
+			browserToClose.close();
 		} catch (e) {
 			console.log("Browser close error:", e);
 		}
 
-		this.browserRef = null;
+		if (this.browserRef === browserToClose) {
+			this.browserRef = null;
+		}
 	},
 
 	openLaunchpad: function (url) {
@@ -425,15 +545,23 @@ var app = {
 		this.setDetailText("Loading the requested BTB screen.");
 		this.setRetryVisible(false);
 
-		this.closeBrowserForRetry();
+		if (this.browserRef) {
+			this.closeBrowserForRetry(this.browserRef);
+			this.relaunchTimer = setTimeout(function () {
+				self.openLaunchpad(launchUrl);
+			}, this.browserCloseDelay);
+			return;
+		}
 
-		this.browserRef = cordova.InAppBrowser.open(
+		var browser = cordova.InAppBrowser.open(
 			launchUrl,
 			"_blank",
 			"location=no,toolbar=no,zoom=no,hideurlbar=yes,hardwareback=yes,clearcache=no,clearsessioncache=no,beforeload=yes"
 		);
+		this.browserRef = browser;
 
-		if (!this.browserRef) {
+		if (!browser) {
+			this.enableCustomBack();
 			this.setStatusText("Cannot open BTB");
 			this.setDetailText("The in-app browser could not be started.");
 			this.setRetryVisible(true, "Retry");
@@ -443,34 +571,49 @@ var app = {
 		// Let InAppBrowser handle the hardware back button while it is open.
 		this.disableCustomBack();
 
-		this.browserRef.addEventListener("beforeload", function (event, loadUrl) {
+		browser.addEventListener("beforeload", function (event, loadUrl) {
+			if (self.browserRef !== browser) {
+				return;
+			}
+
 			self.handleBeforeLoad(event, loadUrl);
 		});
 
-		this.browserRef.addEventListener("loadstop", function (event) {
+		browser.addEventListener("loadstop", function (event) {
+			if (self.browserRef !== browser) {
+				return;
+			}
+
 			console.log("loadstop url:", event && event.url ? event.url : "");
 			self.retryAttempt = 0;
 		});
 
-		this.browserRef.addEventListener("loaderror", function (event) {
+		browser.addEventListener("loaderror", function (event) {
+			if (self.browserRef !== browser) {
+				return;
+			}
+
 			console.error("Launchpad load error:", event);
 
-			self.closeBrowserForRetry();
+			self.closeBrowserForRetry(browser);
 			self.enableCustomBack();
 			self.scheduleRelaunch(launchUrl);
 		});
 
-		this.browserRef.addEventListener("exit", function () {
+		browser.addEventListener("exit", function () {
+			var wasCurrentBrowser = self.browserRef === browser;
+
 			console.log("Browser closed");
 
-			self.enableCustomBack();
+			if (wasCurrentBrowser) {
+				self.browserRef = null;
+			}
 
-			if (self.suppressNextExitRelaunch) {
-				self.suppressNextExitRelaunch = false;
+			if (browser.btbIntentionalClose || !wasCurrentBrowser) {
 				return;
 			}
 
-			self.browserRef = null;
+			self.enableCustomBack();
 			self.setStatusText("BTB closed");
 			self.setDetailText("Reopening the mobile experience.");
 			self.scheduleRelaunch(self.pendingLaunchUrl || self.getRouteUrl("home"), { initial: true });
