@@ -409,9 +409,18 @@ test("builds a BTB Object Page deep link from notification match keys", function
 		}
 	};
 	var expectedUrl = app.launchpadBaseUrl +
-		"#btb-manage?datum=2026-07-26&id=481516&uzeit=16%3A23%3A00";
+		"#btb-manage?sap-ui-app-id-hint=saas_approuter_com.btb.btb&/" +
+		"zbet_cds_005(" +
+			"datum=datetime'2026-07-26T00%253A00%253A00'," +
+			"id=481516," +
+			"uzeit=time'PT16H23M00S')" +
+		"/?FCLLayout=MidColumnFullScreen";
 
 	assert.equal(app.getNotificationLaunchUrl(message), expectedUrl);
+	assert.match(expectedUrl, /sap-ui-app-id-hint=saas_approuter_com\.btb\.btb/);
+	assert.match(expectedUrl, /T00%253A00%253A00/);
+	assert.match(expectedUrl, /FCLLayout=MidColumnFullScreen/);
+	assert.doesNotMatch(expectedUrl, /sap-iapp-state/);
 	assert.deepEqual(app.getWidgetPayload(message), {
 		title: "Super coupon created",
 		body: "Inter Turku - Gnistan : Ms1X selected.",
@@ -437,6 +446,33 @@ test("routes Toto widget content to the Spor Toto Launchpad app", function () {
 		title: "Spor Toto",
 		body: "Program sonucu hazır",
 		route: "toto"
+	});
+});
+
+test("passes the dual KPI snapshot to the native widget bridge", function () {
+	var payload = app.getWidgetPayload({
+		data: {
+			notification_title: "BTB KPI",
+			notification_body: "Performance updated",
+			toto_coverage_hits: "3",
+			toto_coverage_total: "4",
+			super_min_rating: "3",
+			super_wins: "5",
+			super_losses: "3",
+			super_profit: "1.0600"
+		}
+	});
+
+	assert.deepEqual(payload, {
+		title: "BTB KPI",
+		body: "Performance updated",
+		route: "btb",
+		toto_coverage_hits: 3,
+		toto_coverage_total: 4,
+		super_min_rating: 3,
+		super_wins: 5,
+		super_losses: 3,
+		super_profit: 1.06
 	});
 });
 
@@ -487,7 +523,12 @@ test("opens the notification match from the widget content area", function () {
 		assert.equal(
 			receivedUrl,
 			app.launchpadBaseUrl +
-				"#btb-manage?datum=2026-07-26&id=481516&uzeit=16%3A23%3A00"
+				"#btb-manage?sap-ui-app-id-hint=saas_approuter_com.btb.btb&/" +
+				"zbet_cds_005(" +
+					"datum=datetime'2026-07-26T00%253A00%253A00'," +
+					"id=481516," +
+					"uzeit=time'PT16H23M00S')" +
+				"/?FCLLayout=MidColumnFullScreen"
 		);
 	} finally {
 		app.startApp = originalStartApp;
@@ -569,6 +610,43 @@ test("declares the tracked Android widget Cordova plugin", function () {
 		),
 		"utf8"
 	);
+	var kpiWidgetInfo = fs.readFileSync(
+		path.join(
+			root,
+			"plugins-src",
+			"cordova-plugin-btb-widget",
+			"src",
+			"android",
+			"res",
+			"xml",
+			"btb_kpi_widget_info.xml"
+		),
+		"utf8"
+	);
+	var kpiWidgetLayout = fs.readFileSync(
+		path.join(
+			root,
+			"plugins-src",
+			"cordova-plugin-btb-widget",
+			"src",
+			"android",
+			"res",
+			"layout",
+			"btb_kpi_widget.xml"
+		),
+		"utf8"
+	);
+	var kpiWidgetProvider = fs.readFileSync(
+		path.join(
+			root,
+			"plugins-src",
+			"cordova-plugin-btb-widget",
+			"src",
+			"android",
+			"BtbKpiWidgetProvider.java"
+		),
+		"utf8"
+	);
 	var superButtonIndex = widgetLayout.indexOf(
 		'android:id="@+id/btb_widget_super"'
 	);
@@ -585,9 +663,14 @@ test("declares the tracked Android widget Cordova plugin", function () {
 	);
 	assert.match(pluginXml, /android\.appwidget\.action\.APPWIDGET_UPDATE/);
 	assert.match(pluginXml, /com\.btb\.widget\.BtbWidgetProvider/);
+	assert.match(pluginXml, /com\.btb\.widget\.BtbKpiWidgetProvider/);
 	assert.match(pluginXml, /com\.btb\.widget\.BtbWidgetInitializer/);
 	assert.match(pluginXml, /\$\{applicationId\}\.widget\.initializer/);
 	assert.match(widgetInfo, /android:initialLayout="@layout\/btb_widget"/);
+	assert.match(
+		kpiWidgetInfo,
+		/android:initialLayout="@layout\/btb_kpi_widget"/
+	);
 	assert.match(widgetLayout, /android:id="@\+id\/btb_widget_rating"/);
 	assert.match(widgetLayout, /android:id="@\+id\/btb_widget_toto"/);
 	assert.ok(superButtonIndex < btbButtonIndex);
@@ -595,4 +678,8 @@ test("declares the tracked Android widget Cordova plugin", function () {
 	assert.match(widgetPlugin, /EXTRA_MATCH_ID/);
 	assert.match(widgetPlugin, /EXTRA_MATCH_DATE/);
 	assert.match(widgetPlugin, /EXTRA_MATCH_TIME/);
+	assert.match(kpiWidgetLayout, /android:id="@\+id\/btb_kpi_toto_chart"/);
+	assert.match(kpiWidgetLayout, /android:id="@\+id\/btb_kpi_super_chart"/);
+	assert.match(kpiWidgetProvider, /createDonut/);
+	assert.match(kpiWidgetProvider, /super_min_rating/);
 });

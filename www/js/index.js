@@ -151,7 +151,39 @@ var app = {
 			payload.match_time = matchTarget.time;
 		}
 
+		this.addKpiWidgetValues(message, payload);
 		return payload;
+	},
+
+	addKpiWidgetValues: function (message, payload) {
+		var totoHits = this.getMessageValue(message, "toto_coverage_hits");
+		var totoTotal = this.getMessageValue(message, "toto_coverage_total");
+		var superMinRating = this.getMessageValue(message, "super_min_rating");
+		var superWins = this.getMessageValue(message, "super_wins");
+		var superLosses = this.getMessageValue(message, "super_losses");
+		var superProfit = this.getMessageValue(message, "super_profit");
+
+		if (
+			/^\d+$/.test(totoHits) &&
+			/^\d+$/.test(totoTotal) &&
+			Number(totoHits) <= Number(totoTotal)
+		) {
+			payload.toto_coverage_hits = Number(totoHits);
+			payload.toto_coverage_total = Number(totoTotal);
+		}
+
+		if (
+			/^[1-5]$/.test(superMinRating) &&
+			/^\d+$/.test(superWins) &&
+			/^\d+$/.test(superLosses) &&
+			superProfit !== "" &&
+			Number.isFinite(Number(superProfit))
+		) {
+			payload.super_min_rating = Number(superMinRating);
+			payload.super_wins = Number(superWins);
+			payload.super_losses = Number(superLosses);
+			payload.super_profit = Number(superProfit);
+		}
 	},
 
 	getNotificationTextValue: function (message, key) {
@@ -252,10 +284,19 @@ var app = {
 			return "";
 		}
 
+		var timeParts = target.time.split(":");
+		var entityPath = "zbet_cds_005(" +
+			"datum=datetime'" + target.date + "T00%253A00%253A00'," +
+			"id=" + target.id + "," +
+			"uzeit=time'PT" +
+				timeParts[0] + "H" +
+				timeParts[1] + "M" +
+				timeParts[2] + "S')";
+
 		return this.launchpadBaseUrl +
-			"#btb-manage?datum=" + encodeURIComponent(target.date) +
-			"&id=" + encodeURIComponent(target.id) +
-			"&uzeit=" + encodeURIComponent(target.time);
+			"#btb-manage?sap-ui-app-id-hint=saas_approuter_com.btb.btb&/" +
+			entityPath +
+			"/?FCLLayout=MidColumnFullScreen";
 	},
 
 	registerFirebase: function () {

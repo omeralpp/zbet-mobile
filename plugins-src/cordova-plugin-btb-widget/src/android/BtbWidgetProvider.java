@@ -136,7 +136,7 @@ public class BtbWidgetProvider extends AppWidgetProvider {
         return views;
     }
 
-    private static PendingIntent createOpenIntent(
+    static PendingIntent createOpenIntent(
             Context context,
             String route,
             int requestCode,

@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-btb-widget",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "BTB Android home-screen widget and Cordova route bridge.",
   "cordova": {
     "id": "cordova-plugin-btb-widget",

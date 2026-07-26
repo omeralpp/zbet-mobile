@@ -2,7 +2,7 @@
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
     id="cordova-plugin-btb-widget"
-    version="1.0.0">
+    version="1.1.0">
 
     <name>BTB Widget</name>
     <description>Native Android home-screen widget for the BTB Cordova application.</description>
@@ -38,6 +38,18 @@
                     android:name="android.appwidget.provider"
                     android:resource="@xml/btb_widget_info" />
             </receiver>
+            <receiver
+                android:name="com.btb.widget.BtbKpiWidgetProvider"
+                android:enabled="true"
+                android:exported="false"
+                android:label="@string/btb_kpi_widget_name">
+                <intent-filter>
+                    <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                </intent-filter>
+                <meta-data
+                    android:name="android.appwidget.provider"
+                    android:resource="@xml/btb_kpi_widget_info" />
+            </receiver>
         </config-file>
 
         <source-file
@@ -45,6 +57,9 @@
             target-dir="src/com/btb/widget" />
         <source-file
             src="src/android/BtbWidgetProvider.java"
+            target-dir="src/com/btb/widget" />
+        <source-file
+            src="src/android/BtbKpiWidgetProvider.java"
             target-dir="src/com/btb/widget" />
         <source-file
             src="src/android/BtbWidgetInitializer.java"
@@ -57,8 +72,14 @@
             src="src/android/res/layout/btb_widget.xml"
             target="res/layout/btb_widget.xml" />
         <resource-file
+            src="src/android/res/layout/btb_kpi_widget.xml"
+            target="res/layout/btb_kpi_widget.xml" />
+        <resource-file
             src="src/android/res/xml/btb_widget_info.xml"
             target="res/xml/btb_widget_info.xml" />
+        <resource-file
+            src="src/android/res/xml/btb_kpi_widget_info.xml"
+            target="res/xml/btb_kpi_widget_info.xml" />
         <resource-file
             src="src/android/res/drawable/btb_widget_background.xml"
             target="res/drawable/btb_widget_background.xml" />

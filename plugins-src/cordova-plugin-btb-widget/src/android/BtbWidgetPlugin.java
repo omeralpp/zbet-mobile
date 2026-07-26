@@ -66,6 +66,7 @@ public class BtbWidgetPlugin extends CordovaPlugin {
             @Override
             public void run() {
                 BtbWidgetProvider.storeAndUpdate(context, payload);
+                BtbKpiWidgetProvider.storeAndUpdate(context, payload);
                 callbackContext.success();
             }
         });

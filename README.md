@@ -36,6 +36,7 @@ Generated Cordova folders such as `platforms/`, `plugins/`, and `node_modules/` 
 - The loading screen exposes a manual retry button for offline or repeated load failures.
 - Returning from the background verifies the existing Launchpad browser and reuses it only while it is responsive. Stale, blank, or long-suspended browser windows are replaced with the last requested route after a short Android-safe close delay.
 - Android exposes a `BTB Son Super` home-screen widget. It stores the latest received BTB notification locally, renders the Super rating as gold stars, and keeps BTB Main as the center action.
+- Android also exposes a separate `BTB Performans` widget with two native donut KPIs. Toto shows the latest program's covered/resulted split; Super shows the won/lost split and net profit for the current `NOTIFY/SUPER` minimum rating and above.
 - When a match notification contains `match_id`, `match_date`, and `match_time`, tapping the notification area opens that match’s BTB Object Page. Incomplete or older payloads fall back to the related BTB/Super route.
 - Notification taps route inside Launchpad when possible:
   - `SUPER` / `SCLEAR` style messages open `#SuperLog-display`.
@@ -47,4 +48,5 @@ the Cordova UI starts and never consumes them, so the existing system notificati
 and JavaScript delivery flow continue unchanged. The JavaScript callback is kept as
 a second update path for queued/tapped notifications.
   - Future FCM payloads can override this with `data.route`, `data.target`, or `data.screen`.
+- The performance widget refreshes from the KPI snapshot carried by compatible FCM messages, so it remains available without an active Launchpad session.
 - Bilyoner match-card links are handed to Android so the installed Bilyoner app opens separately; web loading remains the fallback.

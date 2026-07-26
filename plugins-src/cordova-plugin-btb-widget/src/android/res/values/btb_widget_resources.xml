@@ -14,4 +14,10 @@
     <string name="btb_widget_rating_description">Super yıldız derecesi</string>
     <string name="btb_widget_ready">Hazır</string>
     <string name="btb_widget_updated">Güncellendi %1$s</string>
+    <string name="btb_kpi_widget_name">BTB Performans</string>
+    <string name="btb_kpi_widget_description">Toto kapsam ve Super profit KPI değerlerini iki donut grafikle gösterir.</string>
+    <string name="btb_kpi_widget_title">BTB Performans</string>
+    <string name="btb_kpi_toto_title">Toto Kapsam</string>
+    <string name="btb_kpi_super_title">Super Profit</string>
+    <string name="btb_kpi_waiting">Veri bekleniyor</string>
 </resources>

@@ -45,6 +45,14 @@ public class BtbWidgetMessageReceiver extends FirebasePluginMessageReceiver {
             body = notificationBody;
         }
 
+        updateKpiWidget(
+                firstMapValue(data, "toto_coverage_hits", "totoCoverageHits"),
+                firstMapValue(data, "toto_coverage_total", "totoCoverageTotal"),
+                firstMapValue(data, "super_min_rating", "superMinRating"),
+                firstMapValue(data, "super_wins", "superWins"),
+                firstMapValue(data, "super_losses", "superLosses"),
+                firstMapValue(data, "super_profit", "superProfit"));
+
         updateWidget(
                 title,
                 body,
@@ -66,6 +74,14 @@ public class BtbWidgetMessageReceiver extends FirebasePluginMessageReceiver {
             return false;
         }
 
+        updateKpiWidget(
+                firstBundleValue(bundle, "toto_coverage_hits", "totoCoverageHits"),
+                firstBundleValue(bundle, "toto_coverage_total", "totoCoverageTotal"),
+                firstBundleValue(bundle, "super_min_rating", "superMinRating"),
+                firstBundleValue(bundle, "super_wins", "superWins"),
+                firstBundleValue(bundle, "super_losses", "superLosses"),
+                firstBundleValue(bundle, "super_profit", "superProfit"));
+
         updateWidget(
                 firstBundleValue(bundle, "notification_title", "title"),
                 firstBundleValue(
@@ -80,6 +96,27 @@ public class BtbWidgetMessageReceiver extends FirebasePluginMessageReceiver {
                 firstBundleValue(bundle, "match_time", "matchTime"),
                 firstBundleValue(bundle, "notification_body", "body"));
         return false;
+    }
+
+    private void updateKpiWidget(
+            String totoCoverageHits,
+            String totoCoverageTotal,
+            String superMinRating,
+            String superWins,
+            String superLosses,
+            String superProfit) {
+        try {
+            JSONObject payload = new JSONObject();
+            payload.put("toto_coverage_hits", cleanValue(totoCoverageHits));
+            payload.put("toto_coverage_total", cleanValue(totoCoverageTotal));
+            payload.put("super_min_rating", cleanValue(superMinRating));
+            payload.put("super_wins", cleanValue(superWins));
+            payload.put("super_losses", cleanValue(superLosses));
+            payload.put("super_profit", cleanValue(superProfit));
+            BtbKpiWidgetProvider.storeAndUpdate(context, payload);
+        } catch (JSONException ignored) {
+            // All values are strings; this guard keeps FCM delivery non-fatal.
+        }
     }
 
     private void updateWidget(
