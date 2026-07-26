@@ -719,6 +719,14 @@ test("injects mobile shortcuts and opens Android notification settings", functio
 		assert.match(injectedCode, /btb-menu-up/);
 		assert.match(injectedCode, /btb-menu-down/);
 		assert.match(injectedCode, /bottom:82px/);
+		assert.match(
+			injectedCode,
+			/#btb-mobile-quick-menu\{[^}]*pointer-events:none/
+		);
+		assert.match(
+			injectedCode,
+			/#btb-mobile-quick-nav\.btb-open #btb-mobile-quick-menu\{pointer-events:auto/
+		);
 		assert.doesNotThrow(function () {
 			return new Function(injectedCode);
 		});
