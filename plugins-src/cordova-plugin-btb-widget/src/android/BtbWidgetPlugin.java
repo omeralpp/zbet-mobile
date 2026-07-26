@@ -14,6 +14,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class BtbWidgetPlugin extends CordovaPlugin {
+    private static final String BILYONER_PACKAGE = "com.bilyoner.app";
+    private static final String BILYONER_WEB_URL = "https://www.bilyoner.com/";
+
     public static final String EXTRA_ROUTE = "com.btb.widget.ROUTE";
     public static final String EXTRA_MATCH_ID = "com.btb.widget.MATCH_ID";
     public static final String EXTRA_MATCH_DATE = "com.btb.widget.MATCH_DATE";
@@ -45,6 +48,11 @@ public class BtbWidgetPlugin extends CordovaPlugin {
 
         if ("openNotificationSettings".equals(action)) {
             openNotificationSettings(callbackContext);
+            return true;
+        }
+
+        if ("openBilyoner".equals(action)) {
+            openBilyoner(callbackContext);
             return true;
         }
 
@@ -96,6 +104,28 @@ public class BtbWidgetPlugin extends CordovaPlugin {
                 intent.setData(Uri.parse("package:" + context.getPackageName()));
             }
 
+            cordova.getActivity().startActivity(intent);
+            callbackContext.success();
+        } catch (Exception error) {
+            callbackContext.error(error.getMessage());
+        }
+    }
+
+    private void openBilyoner(CallbackContext callbackContext) {
+        try {
+            Context context = cordova.getActivity().getApplicationContext();
+            Intent intent = context.getPackageManager()
+                    .getLaunchIntentForPackage(BILYONER_PACKAGE);
+
+            if (intent == null) {
+                intent = new Intent(Intent.ACTION_VIEW, Uri.parse(BILYONER_WEB_URL));
+            }
+
+            intent.addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK |
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+            );
             cordova.getActivity().startActivity(intent);
             callbackContext.success();
         } catch (Exception error) {

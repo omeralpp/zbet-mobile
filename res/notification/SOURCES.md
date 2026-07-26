@@ -9,7 +9,7 @@ recordings from Freesound.
 - Source: `Crowd Cheer` by FoolBoyMedia
 - Source page: https://freesound.org/people/FoolBoyMedia/sounds/397434/
 - License: Creative Commons Zero (CC0)
-- Processing: a 1.25-second crowd-cheer segment was selected, converted to
+- Processing: a 1.05-second crowd-cheer segment was selected, converted to
   44.1 kHz mono PCM, normalized, filtered, and faded for notification use.
 
 ## General referee whistle

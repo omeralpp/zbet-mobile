@@ -138,6 +138,29 @@ test("falls back to the browser when Android cannot open Bilyoner", function () 
 	}
 });
 
+test("opens the Bilyoner home app through the native bridge", function () {
+	var originalWindow = global.window;
+	var openCalls = 0;
+
+	global.window = {
+		BtbWidget: {
+			openBilyoner: function (done) {
+				openCalls += 1;
+				done();
+			}
+		}
+	};
+
+	try {
+		assert.equal(app.handleBrowserMessage({
+			data: JSON.stringify({ action: "openBilyoner" })
+		}), true);
+		assert.equal(openCalls, 1);
+	} finally {
+		global.window = originalWindow;
+	}
+});
+
 test("configures the native Android splash with BTB branding", function () {
 	var configXml = fs.readFileSync(path.join(__dirname, "..", "config.xml"), "utf8");
 
@@ -657,7 +680,7 @@ test("keeps existing BTB notification channels", function () {
 	assert.deepEqual(deletedChannels, ["btb_alerts_v1"]);
 });
 
-test("opens Android notification settings from the mobile shortcut", function () {
+test("injects mobile shortcuts and opens Android notification settings", function () {
 	var originalWindow = global.window;
 	var openCalls = 0;
 	var injectedCode = "";
@@ -676,15 +699,60 @@ test("opens Android notification settings from the mobile shortcut", function ()
 			data: JSON.stringify({ action: "openNotificationSettings" })
 		}), true);
 		assert.equal(openCalls, 1);
-		assert.equal(app.injectNotificationSettingsButton({
+		assert.equal(app.injectMobileControls({
 			executeScript: function (details) {
 				injectedCode = details.code;
 			}
 		}), true);
 		assert.match(injectedCode, /btb-mobile-notification-settings/);
+		assert.match(injectedCode, /btb-mobile-quick-toggle/);
+		assert.match(injectedCode, /navigateLaunchpad/);
+		assert.match(injectedCode, /openBilyoner/);
+		assert.match(injectedCode, /Bilyoner/);
+		assert.match(injectedCode, /Super Log/);
+		assert.match(injectedCode, /Toto/);
 		assert.match(injectedCode, /cordova_iab\.postMessage/);
+		assert.match(injectedCode, /makeDraggable/);
+		assert.match(injectedCode, /pointerdown/);
+		assert.match(injectedCode, /btb-mobile-quick-position-v1/);
+		assert.match(injectedCode, /window\.localStorage/);
+		assert.match(injectedCode, /btb-menu-up/);
+		assert.match(injectedCode, /btb-menu-down/);
+		assert.match(injectedCode, /bottom:82px/);
+		assert.doesNotThrow(function () {
+			return new Function(injectedCode);
+		});
 	} finally {
 		global.window = originalWindow;
+	}
+});
+
+test("navigates to a Launchpad app with an in-browser transition splash", function () {
+	var originalBrowserRef = app.browserRef;
+	var originalPendingLaunchUrl = app.pendingLaunchUrl;
+	var injectedCode = "";
+
+	app.browserRef = {
+		executeScript: function (details) {
+			injectedCode = details.code;
+		}
+	};
+
+	try {
+		assert.equal(app.handleBrowserMessage({
+			data: JSON.stringify({ action: "navigateLaunchpad", route: "super" })
+		}), true);
+		assert.equal(app.pendingLaunchUrl, app.getRouteUrl("super"));
+		assert.match(injectedCode, /btb-mobile-route-splash/);
+		assert.match(injectedCode, /Super Log yukleniyor/);
+		assert.match(injectedCode, /#SuperLog-display/);
+		assert.doesNotThrow(function () {
+			return new Function(injectedCode);
+		});
+		assert.equal(app.navigateLaunchpadRoute("unsupported"), false);
+	} finally {
+		app.browserRef = originalBrowserRef;
+		app.pendingLaunchUrl = originalPendingLaunchUrl;
 	}
 });
 
@@ -836,8 +904,11 @@ test("declares the tracked Android widget Cordova plugin", function () {
 	assert.match(widgetPlugin, /EXTRA_MATCH_DATE/);
 	assert.match(widgetPlugin, /EXTRA_MATCH_TIME/);
 	assert.match(widgetPlugin, /EXTRA_TOTO_GC_NO/);
-	assert.match(widgetPlugin, /EXTRA_TOTO_VERSION/);
-	assert.match(widgetPlugin, /ACTION_APP_NOTIFICATION_SETTINGS/);
+		assert.match(widgetPlugin, /EXTRA_TOTO_VERSION/);
+		assert.match(widgetPlugin, /ACTION_APP_NOTIFICATION_SETTINGS/);
+		assert.match(widgetPlugin, /com\.bilyoner\.app/);
+		assert.match(widgetPlugin, /getLaunchIntentForPackage/);
+		assert.match(pluginXml, /<package android:name="com\.bilyoner\.app" \/>/);
 	assert.match(kpiWidgetLayout, /android:id="@\+id\/btb_kpi_toto_chart"/);
 	assert.match(kpiWidgetLayout, /android:id="@\+id\/btb_kpi_super_chart"/);
 	assert.match(kpiWidgetProvider, /createDonut/);
