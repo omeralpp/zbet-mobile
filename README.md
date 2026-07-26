@@ -38,6 +38,7 @@ Generated Cordova folders such as `platforms/`, `plugins/`, and `node_modules/` 
 - Android exposes a `BTB Son Super` home-screen widget. It stores the latest received BTB notification locally, renders the Super rating as gold stars, and keeps BTB Main as the center action.
 - Android also exposes a separate `BTB Performans` widget with two native donut KPIs. Toto prefers the latest program waiting for results and falls back to the latest resulted program; tapping its donut opens that exact program Object Page. Super shows the won/lost split and net profit for the current `NOTIFY/SUPER` minimum rating and above.
 - When a match notification contains `match_id`, `match_date`, and `match_time`, tapping the notification area opens that match’s BTB Object Page. Incomplete or older payloads fall back to the related BTB/Super route.
+- Android notifications use a dedicated `BTB Bildirimleri` channel (`btb_alerts_v1`), a monochrome status icon, the colored BTB large icon, and the bundled `btb_alert` sound. The channel is created once so Android keeps the user’s later sound and vibration preferences.
 - Notification taps route inside Launchpad when possible:
   - `SUPER` / `SCLEAR` style messages open `#SuperLog-display`.
   - Other BTB messages open `#btb-manage`.

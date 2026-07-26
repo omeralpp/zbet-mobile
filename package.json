@@ -5,6 +5,7 @@
   "description": "Better Than Bet Android in-app browser shell.",
   "main": "index.js",
   "scripts": {
+    "generate:notification-sound": "node scripts/generate-notification-sound.js",
     "test": "node --test test/*.test.js"
   },
   "keywords": [
@@ -38,7 +39,7 @@
         "FIREBASE_MESSAGING_IMMEDIATE_PAYLOAD_DELIVERY": "false",
         "IOS_FCM_ENABLED": "true",
         "IOS_ENABLE_CRITICAL_ALERTS_ENABLED": "false",
-        "ANDROID_ICON_ACCENT": "#FFFFFF",
+        "ANDROID_ICON_ACCENT": "#1597E5",
         "ANDROID_FIREBASE_MESSAGING_VERSION": "25.0.1"
       },
       "cordova-plugin-btb-widget": {}

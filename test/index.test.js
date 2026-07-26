@@ -607,6 +607,73 @@ test("passes notification content to the native widget bridge", function () {
 	}
 });
 
+test("creates the BTB notification channel with the bundled sound", function () {
+	var channelOptions = null;
+	var messaging = {
+		listChannels: function (done) {
+			done([]);
+		},
+		createChannel: function (options) {
+			channelOptions = options;
+		}
+	};
+
+	assert.equal(app.configureNotificationChannel(messaging), true);
+	assert.deepEqual(channelOptions, {
+		id: "btb_alerts_v1",
+		name: "BTB Bildirimleri",
+		description: "BTB kupon, Super ve Toto bildirimleri",
+		importance: 4,
+		sound: "btb_alert",
+		vibration: [0, 180, 120, 180],
+		light: true,
+		badge: true,
+		visibility: 1
+	});
+});
+
+test("keeps an existing BTB notification channel", function () {
+	var createCalls = 0;
+	var messaging = {
+		listChannels: function (done) {
+			done([{ id: "btb_alerts_v1" }]);
+		},
+		createChannel: function () {
+			createCalls += 1;
+		}
+	};
+
+	assert.equal(app.configureNotificationChannel(messaging), true);
+	assert.equal(createCalls, 0);
+});
+
+test("declares branded Android notification resources", function () {
+	var root = path.join(__dirname, "..");
+	var configXml = fs.readFileSync(path.join(root, "config.xml"), "utf8");
+	var packageJson = JSON.parse(
+		fs.readFileSync(path.join(root, "package.json"), "utf8")
+	);
+	var iconXml = fs.readFileSync(
+		path.join(root, "res", "notification", "notification_icon.xml"),
+		"utf8"
+	);
+	var sound = fs.readFileSync(
+		path.join(root, "res", "notification", "btb_alert.wav")
+	);
+
+	assert.match(configXml, /drawable\/notification_icon\.xml/);
+	assert.match(configXml, /drawable\/notification_icon_large\.png/);
+	assert.match(configXml, /raw\/btb_alert\.wav/);
+	assert.match(iconXml, /android:strokeColor="#FFFFFFFF"/);
+	assert.equal(sound.subarray(0, 4).toString("ascii"), "RIFF");
+	assert.equal(sound.subarray(8, 12).toString("ascii"), "WAVE");
+	assert.equal(
+		packageJson.cordova.plugins["cordova-plugin-firebasex-messaging"]
+			.ANDROID_ICON_ACCENT,
+		"#1597E5"
+	);
+});
+
 test("declares the tracked Android widget Cordova plugin", function () {
 	var root = path.join(__dirname, "..");
 	var packageJson = JSON.parse(

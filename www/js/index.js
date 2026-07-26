@@ -2,6 +2,8 @@ var app = {
 	launchpadBaseUrl: "https://188b143btrial.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b38042ce-b8ab-4fea-a892-abf4c58a170f",
 	defaultHash: "#Shell-home",
 	topicName: "BTB",
+	notificationChannelId: "btb_alerts_v1",
+	notificationSoundName: "btb_alert",
 	retryDelays: [2000, 5000, 15000, 30000],
 	browserCloseDelay: 300,
 	resumeProbeDelay: 1200,
@@ -351,6 +353,7 @@ var app = {
 		}
 
 		var self = this;
+		this.configureNotificationChannel(messaging);
 
 		this.requestNotificationPermission(function () {
 			self.registerFirebaseMessageHandler();
@@ -365,6 +368,54 @@ var app = {
 				console.error("FCM token refresh error:", error);
 			});
 		}
+	},
+
+	configureNotificationChannel: function (messaging) {
+		var self = this;
+		var createChannel = function () {
+			if (typeof messaging.createChannel !== "function") {
+				return;
+			}
+
+			messaging.createChannel({
+				id: self.notificationChannelId,
+				name: "BTB Bildirimleri",
+				description: "BTB kupon, Super ve Toto bildirimleri",
+				importance: 4,
+				sound: self.notificationSoundName,
+				vibration: [0, 180, 120, 180],
+				light: true,
+				badge: true,
+				visibility: 1
+			}, function () {
+				console.log("BTB notification channel is ready");
+			}, function (error) {
+				console.error("BTB notification channel error:", error);
+			});
+		};
+
+		if (!messaging || typeof messaging.createChannel !== "function") {
+			return false;
+		}
+
+		if (typeof messaging.listChannels !== "function") {
+			createChannel();
+			return true;
+		}
+
+		messaging.listChannels(function (channels) {
+			var exists = Array.isArray(channels) && channels.some(function (channel) {
+				return channel && channel.id === self.notificationChannelId;
+			});
+
+			if (!exists) {
+				createChannel();
+			}
+		}, function () {
+			createChannel();
+		});
+
+		return true;
 	},
 
 	requestNotificationPermission: function (done) {
