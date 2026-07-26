@@ -35,7 +35,8 @@ Generated Cordova folders such as `platforms/`, `plugins/`, and `node_modules/` 
 - Load failures retry with backoff: 2 seconds, 5 seconds, 15 seconds, then 30 seconds.
 - The loading screen exposes a manual retry button for offline or repeated load failures.
 - Returning from the background verifies the existing Launchpad browser and reuses it only while it is responsive. Stale, blank, or long-suspended browser windows are replaced with the last requested route after a short Android-safe close delay.
-- Android exposes a `BTB Son Super` home-screen widget. It stores the latest received BTB notification locally and opens BTB Main, Super Log, Spor Toto, or the last notification route when tapped.
+- Android exposes a `BTB Son Super` home-screen widget. It stores the latest received BTB notification locally, renders the Super rating as gold stars, and keeps BTB Main as the center action.
+- When a match notification contains `match_id`, `match_date`, and `match_time`, tapping the notification area opens that match’s BTB Object Page. Incomplete or older payloads fall back to the related BTB/Super route.
 - Notification taps route inside Launchpad when possible:
   - `SUPER` / `SCLEAR` style messages open `#SuperLog-display`.
   - Other BTB messages open `#btb-manage`.

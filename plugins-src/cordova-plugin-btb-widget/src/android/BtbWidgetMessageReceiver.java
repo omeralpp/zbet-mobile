@@ -10,8 +10,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class BtbWidgetMessageReceiver extends FirebasePluginMessageReceiver {
+    private static final Pattern LEGACY_RATING =
+            Pattern.compile("\\brating\\s*([1-5])\\b", Pattern.CASE_INSENSITIVE);
     private final Context context;
 
     public BtbWidgetMessageReceiver(Context context) {
@@ -28,20 +32,28 @@ public class BtbWidgetMessageReceiver extends FirebasePluginMessageReceiver {
         Map<String, String> data = remoteMessage.getData();
         RemoteMessage.Notification notification = remoteMessage.getNotification();
         String title = firstMapValue(data, "notification_title", "title");
-        String body = firstMapValue(data, "notification_body", "body");
+        String notificationBody = firstMapValue(data, "notification_body", "body");
+        String body = firstMapValue(data, "widget_body");
 
         if (isBlank(title) && notification != null) {
             title = notification.getTitle();
         }
-        if (isBlank(body) && notification != null) {
-            body = notification.getBody();
+        if (isBlank(notificationBody) && notification != null) {
+            notificationBody = notification.getBody();
+        }
+        if (isBlank(body)) {
+            body = notificationBody;
         }
 
         updateWidget(
                 title,
                 body,
                 firstMapValue(data, "route", "target", "screen"),
-                firstMapValue(data, "rating", "star", "stars", "super_rating"));
+                firstMapValue(data, "rating", "star", "stars", "super_rating"),
+                firstMapValue(data, "match_id", "matchId"),
+                firstMapValue(data, "match_date", "matchDate"),
+                firstMapValue(data, "match_time", "matchTime"),
+                notificationBody);
 
         // Never consume the message; the existing Firebase plugin must still
         // display and deliver the notification through its normal flow.
@@ -56,18 +68,42 @@ public class BtbWidgetMessageReceiver extends FirebasePluginMessageReceiver {
 
         updateWidget(
                 firstBundleValue(bundle, "notification_title", "title"),
-                firstBundleValue(bundle, "notification_body", "body"),
+                firstBundleValue(
+                        bundle,
+                        "widget_body",
+                        "notification_body",
+                        "body"),
                 firstBundleValue(bundle, "route", "target", "screen"),
-                firstBundleValue(bundle, "rating", "star", "stars", "super_rating"));
+                firstBundleValue(bundle, "rating", "star", "stars", "super_rating"),
+                firstBundleValue(bundle, "match_id", "matchId"),
+                firstBundleValue(bundle, "match_date", "matchDate"),
+                firstBundleValue(bundle, "match_time", "matchTime"),
+                firstBundleValue(bundle, "notification_body", "body"));
         return false;
     }
 
-    private void updateWidget(String title, String body, String route, String rating) {
+    private void updateWidget(
+            String title,
+            String body,
+            String route,
+            String rating,
+            String matchId,
+            String matchDate,
+            String matchTime,
+            String notificationBody) {
         if (isBlank(title) && isBlank(body)) {
             return;
         }
 
+        int normalizedRating = parseRating(
+                rating,
+                isBlank(notificationBody) ? body : notificationBody);
+        boolean hasMatchTarget =
+                !isBlank(matchId) && !isBlank(matchDate) && !isBlank(matchTime);
         String normalizedRoute = resolveRoute(route, title, body);
+        if (hasMatchTarget) {
+            normalizedRoute = "btb";
+        }
         String finalTitle = isBlank(title)
                 ? ("super".equals(normalizedRoute) ? "Yeni Super bildirimi" : "BTB Mobile")
                 : title.trim();
@@ -77,18 +113,17 @@ public class BtbWidgetMessageReceiver extends FirebasePluginMessageReceiver {
                         : "toto".equals(normalizedRoute)
                                 ? "Spor Toto programını açmak için dokunun."
                                 : "BTB uygulamasını açmak için dokunun.")
-                : body.trim();
-        int normalizedRating = parseRating(rating);
-
-        if (normalizedRating > 0) {
-            finalTitle = normalizedRating + "★ " + finalTitle;
-        }
+                : getWidgetBody(body, normalizedRating);
 
         try {
             JSONObject payload = new JSONObject();
             payload.put("title", finalTitle);
             payload.put("body", finalBody);
             payload.put("route", normalizedRoute);
+            payload.put("rating", normalizedRating);
+            payload.put("match_id", cleanValue(matchId));
+            payload.put("match_date", cleanValue(matchDate));
+            payload.put("match_time", cleanValue(matchTime));
             BtbWidgetProvider.storeAndUpdate(context, payload);
         } catch (JSONException ignored) {
             // All values are strings; this guard keeps FCM delivery non-fatal.
@@ -111,13 +146,40 @@ public class BtbWidgetMessageReceiver extends FirebasePluginMessageReceiver {
         return text.contains("toto") ? "toto" : "btb";
     }
 
-    private static int parseRating(String rating) {
+    private static int parseRating(String rating, String body) {
         try {
             int value = Integer.parseInt(rating == null ? "" : rating.trim());
-            return value >= 1 && value <= 5 ? value : 0;
+            if (value >= 1 && value <= 5) {
+                return value;
+            }
         } catch (NumberFormatException ignored) {
-            return 0;
+            // Legacy payloads carried the rating only in the body.
         }
+
+        Matcher matcher = LEGACY_RATING.matcher(body == null ? "" : body);
+        return matcher.find() ? Integer.parseInt(matcher.group(1)) : 0;
+    }
+
+    private static String getWidgetBody(String body, int rating) {
+        String source = cleanValue(body);
+        if (rating == 0) {
+            return source;
+        }
+
+        String cleaned = source
+                .replaceFirst(
+                        "(?i)\\s*\\(\\s*rating\\s*[1-5]\\s*\\)\\s*[.!?]?\\s*$",
+                        "")
+                .replaceFirst("\\s*[★⭐]{1,5}\\s*[.!?]?\\s*$", "")
+                .trim();
+
+        if (cleaned.isEmpty() ||
+                cleaned.endsWith(".") ||
+                cleaned.endsWith("!") ||
+                cleaned.endsWith("?")) {
+            return cleaned;
+        }
+        return cleaned + ".";
     }
 
     private static String firstMapValue(Map<String, String> values, String... keys) {
@@ -146,5 +208,9 @@ public class BtbWidgetMessageReceiver extends FirebasePluginMessageReceiver {
 
     private static boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    private static String cleanValue(String value) {
+        return value == null ? "" : value.trim();
     }
 }

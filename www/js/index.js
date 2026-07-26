@@ -85,9 +85,10 @@ var app = {
 
 	openWidgetTarget: function (event) {
 		var route = event && event.route ? event.route : "home";
+		var targetUrl = this.getMatchLaunchUrl(event) || this.getRouteUrl(route);
 
 		this.retryAttempt = 0;
-		this.startApp(this.getRouteUrl(route), { immediate: true });
+		this.startApp(targetUrl, { immediate: true });
 	},
 
 	updateWidgetFromMessage: function (message) {
@@ -116,12 +117,10 @@ var app = {
 			? "super"
 			: targetUrl.indexOf("#SporToto-manage") >= 0 ? "toto" : "btb";
 		var title = this.getNotificationTextValue(message, "title");
-		var body = this.getNotificationTextValue(message, "body");
-		var rating = this.getMessageValue(message, "rating") ||
-			this.getMessageValue(message, "star") ||
-			this.getMessageValue(message, "stars") ||
-			this.getMessageValue(message, "super_rating");
-		var normalizedRating = Number.parseInt(rating, 10);
+		var body = this.getMessageValue(message, "widget_body") ||
+			this.getNotificationTextValue(message, "body");
+		var normalizedRating = this.getNotificationRating(message, body);
+		var matchTarget = this.getMatchTarget(message);
 
 		if (!title && !body) {
 			return null;
@@ -134,20 +133,129 @@ var app = {
 				? "Spor Toto programını açmak için dokunun."
 				: "BTB uygulamasını açmak için dokunun.");
 
-		if (normalizedRating >= 1 && normalizedRating <= 5) {
-			title = normalizedRating + "★ " + title;
-		}
+		body = this.getWidgetBody(body, normalizedRating);
 
-		return {
+		var payload = {
 			title: title,
 			body: body,
 			route: route
 		};
+
+		if (normalizedRating) {
+			payload.rating = normalizedRating;
+		}
+
+		if (matchTarget) {
+			payload.match_id = matchTarget.id;
+			payload.match_date = matchTarget.date;
+			payload.match_time = matchTarget.time;
+		}
+
+		return payload;
 	},
 
 	getNotificationTextValue: function (message, key) {
 		return this.getMessageValue(message, key) ||
 			this.getMessageValue(message, "notification_" + key);
+	},
+
+	getNotificationRating: function (message, body) {
+		var explicitRating = this.getMessageValue(message, "rating") ||
+			this.getMessageValue(message, "star") ||
+			this.getMessageValue(message, "stars") ||
+			this.getMessageValue(message, "super_rating");
+		var normalizedRating = Number.parseInt(explicitRating, 10);
+
+		if (normalizedRating >= 1 && normalizedRating <= 5) {
+			return normalizedRating;
+		}
+
+		var text = String(body || "");
+		var legacyMatch = text.match(/\brating\s*([1-5])\b/i);
+
+		if (legacyMatch) {
+			return Number.parseInt(legacyMatch[1], 10);
+		}
+
+		var starMatch = text.match(/([★⭐]{1,5})/);
+		return starMatch ? starMatch[1].length : 0;
+	},
+
+	getWidgetBody: function (body, rating) {
+		var source = String(body || "").trim();
+
+		if (!rating) {
+			return source;
+		}
+
+		var cleaned = source
+			.replace(/\s*\(\s*rating\s*[1-5]\s*\)\s*[.!?]?\s*$/i, "")
+			.replace(/\s*[★⭐]{1,5}\s*[.!?]?\s*$/, "")
+			.trim();
+
+		if (!cleaned || /[.!?]$/.test(cleaned)) {
+			return cleaned;
+		}
+
+		return cleaned + ".";
+	},
+
+	normalizeMatchDate: function (value) {
+		var text = String(value || "").trim();
+		var compact = text.match(/^(\d{4})(\d{2})(\d{2})$/);
+
+		if (compact) {
+			return compact[1] + "-" + compact[2] + "-" + compact[3];
+		}
+
+		return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : "";
+	},
+
+	normalizeMatchTime: function (value) {
+		var text = String(value || "").trim();
+		var compact = text.match(/^(\d{2})(\d{2})(\d{2})$/);
+
+		if (compact) {
+			return compact[1] + ":" + compact[2] + ":" + compact[3];
+		}
+
+		return /^\d{2}:\d{2}:\d{2}$/.test(text) ? text : "";
+	},
+
+	getMatchTarget: function (message) {
+		var id = this.getMessageValue(message, "match_id") ||
+			this.getMessageValue(message, "matchId");
+		var date = this.normalizeMatchDate(
+			this.getMessageValue(message, "match_date") ||
+			this.getMessageValue(message, "matchDate")
+		);
+		var time = this.normalizeMatchTime(
+			this.getMessageValue(message, "match_time") ||
+			this.getMessageValue(message, "matchTime")
+		);
+
+		if (!/^\d+$/.test(id) || Number.parseInt(id, 10) <= 0 || !date || !time) {
+			return null;
+		}
+
+		return {
+			id: String(Number.parseInt(id, 10)),
+			date: date,
+			time: time
+		};
+	},
+
+	getMatchLaunchUrl: function (message) {
+		var target = this.getMatchTarget(message);
+
+		if (!target) {
+			return "";
+		}
+
+		return this.launchpadBaseUrl +
+			"#btb-manage?datum=" + encodeURIComponent(target.date) +
+			"&id=" + encodeURIComponent(target.id) +
+			"&uzeit=" + encodeURIComponent(target.time);
 	},
 
 	registerFirebase: function () {
@@ -250,6 +358,12 @@ var app = {
 	},
 
 	getNotificationLaunchUrl: function (message) {
+		var matchUrl = this.getMatchLaunchUrl(message);
+
+		if (matchUrl) {
+			return matchUrl;
+		}
+
 		var route = this.getMessageValue(message, "route") ||
 			this.getMessageValue(message, "target") ||
 			this.getMessageValue(message, "screen");

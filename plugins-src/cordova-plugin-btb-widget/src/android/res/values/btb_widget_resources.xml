@@ -2,6 +2,7 @@
 <resources>
     <color name="btb_widget_text">#FFFFFFFF</color>
     <color name="btb_widget_muted">#FF9FB0C1</color>
+    <color name="btb_widget_rating">#FFFFC107</color>
 
     <string name="btb_widget_name">BTB Son Super</string>
     <string name="btb_widget_description">Son BTB ve Super bildirimini ana ekranda gösterir.</string>
@@ -10,6 +11,7 @@
     <string name="btb_widget_open">BTB</string>
     <string name="btb_widget_super_log">Super Log</string>
     <string name="btb_widget_toto">Toto</string>
+    <string name="btb_widget_rating_description">Super yıldız derecesi</string>
     <string name="btb_widget_ready">Hazır</string>
     <string name="btb_widget_updated">Güncellendi %1$s</string>
 </resources>

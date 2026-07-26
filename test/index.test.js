@@ -374,9 +374,52 @@ test("builds a Super widget payload from notification data", function () {
 	});
 
 	assert.deepEqual(payload, {
-		title: "4★ SCLEAR",
-		body: "Selection cleared",
-		route: "super"
+		title: "SCLEAR",
+		body: "Selection cleared.",
+		route: "super",
+		rating: 4
+	});
+});
+
+test("replaces a legacy numeric rating with a separate star rating", function () {
+	var payload = app.getWidgetPayload({
+		data: {
+			notification_title: "Super coupon created",
+			notification_body: "Inter Turku - Gnistan : Ms1X selected (rating 3)."
+		}
+	});
+
+	assert.deepEqual(payload, {
+		title: "Super coupon created",
+		body: "Inter Turku - Gnistan : Ms1X selected.",
+		route: "super",
+		rating: 3
+	});
+});
+
+test("builds a BTB Object Page deep link from notification match keys", function () {
+	var message = {
+		data: {
+			notification_title: "Super coupon created",
+			widget_body: "Inter Turku - Gnistan : Ms1X selected.",
+			rating: "3",
+			match_id: "481516",
+			match_date: "20260726",
+			match_time: "162300"
+		}
+	};
+	var expectedUrl = app.launchpadBaseUrl +
+		"#btb-manage?datum=2026-07-26&id=481516&uzeit=16%3A23%3A00";
+
+	assert.equal(app.getNotificationLaunchUrl(message), expectedUrl);
+	assert.deepEqual(app.getWidgetPayload(message), {
+		title: "Super coupon created",
+		body: "Inter Turku - Gnistan : Ms1X selected.",
+		route: "btb",
+		rating: 3,
+		match_id: "481516",
+		match_date: "2026-07-26",
+		match_time: "16:23:00"
 	});
 });
 
@@ -421,6 +464,32 @@ test("opens the requested Launchpad route from the Android widget", function () 
 		assert.deepEqual(receivedOptions, { immediate: true });
 	} finally {
 		app.retryAttempt = originalRetryAttempt;
+		app.startApp = originalStartApp;
+	}
+});
+
+test("opens the notification match from the widget content area", function () {
+	var originalStartApp = app.startApp;
+	var receivedUrl = null;
+
+	app.startApp = function (url) {
+		receivedUrl = url;
+	};
+
+	try {
+		app.openWidgetTarget({
+			route: "btb",
+			match_id: "481516",
+			match_date: "2026-07-26",
+			match_time: "16:23:00"
+		});
+
+		assert.equal(
+			receivedUrl,
+			app.launchpadBaseUrl +
+				"#btb-manage?datum=2026-07-26&id=481516&uzeit=16%3A23%3A00"
+		);
+	} finally {
 		app.startApp = originalStartApp;
 	}
 });
@@ -489,6 +558,26 @@ test("declares the tracked Android widget Cordova plugin", function () {
 		),
 		"utf8"
 	);
+	var widgetPlugin = fs.readFileSync(
+		path.join(
+			root,
+			"plugins-src",
+			"cordova-plugin-btb-widget",
+			"src",
+			"android",
+			"BtbWidgetPlugin.java"
+		),
+		"utf8"
+	);
+	var superButtonIndex = widgetLayout.indexOf(
+		'android:id="@+id/btb_widget_super"'
+	);
+	var btbButtonIndex = widgetLayout.indexOf(
+		'android:id="@+id/btb_widget_open"'
+	);
+	var totoButtonIndex = widgetLayout.indexOf(
+		'android:id="@+id/btb_widget_toto"'
+	);
 
 	assert.equal(
 		packageJson.dependencies["cordova-plugin-btb-widget"],
@@ -499,5 +588,11 @@ test("declares the tracked Android widget Cordova plugin", function () {
 	assert.match(pluginXml, /com\.btb\.widget\.BtbWidgetInitializer/);
 	assert.match(pluginXml, /\$\{applicationId\}\.widget\.initializer/);
 	assert.match(widgetInfo, /android:initialLayout="@layout\/btb_widget"/);
+	assert.match(widgetLayout, /android:id="@\+id\/btb_widget_rating"/);
 	assert.match(widgetLayout, /android:id="@\+id\/btb_widget_toto"/);
+	assert.ok(superButtonIndex < btbButtonIndex);
+	assert.ok(btbButtonIndex < totoButtonIndex);
+	assert.match(widgetPlugin, /EXTRA_MATCH_ID/);
+	assert.match(widgetPlugin, /EXTRA_MATCH_DATE/);
+	assert.match(widgetPlugin, /EXTRA_MATCH_TIME/);
 });

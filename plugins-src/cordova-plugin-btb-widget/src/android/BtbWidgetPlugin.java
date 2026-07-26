@@ -11,13 +11,16 @@ import org.json.JSONObject;
 
 public class BtbWidgetPlugin extends CordovaPlugin {
     public static final String EXTRA_ROUTE = "com.btb.widget.ROUTE";
+    public static final String EXTRA_MATCH_ID = "com.btb.widget.MATCH_ID";
+    public static final String EXTRA_MATCH_DATE = "com.btb.widget.MATCH_DATE";
+    public static final String EXTRA_MATCH_TIME = "com.btb.widget.MATCH_TIME";
 
     private CallbackContext routeListener;
-    private String pendingRoute;
+    private JSONObject pendingEvent;
 
     @Override
     protected void pluginInitialize() {
-        pendingRoute = consumeRoute(cordova.getActivity().getIntent());
+        pendingEvent = consumeEvent(cordova.getActivity().getIntent());
     }
 
     @Override
@@ -44,14 +47,14 @@ public class BtbWidgetPlugin extends CordovaPlugin {
         waiting.setKeepCallback(true);
         callbackContext.sendPluginResult(waiting);
 
-        String currentRoute = consumeRoute(cordova.getActivity().getIntent());
-        if (currentRoute != null) {
-            pendingRoute = currentRoute;
+        JSONObject currentEvent = consumeEvent(cordova.getActivity().getIntent());
+        if (currentEvent != null) {
+            pendingEvent = currentEvent;
         }
 
-        if (pendingRoute != null) {
-            emitRoute(pendingRoute);
-            pendingRoute = null;
+        if (pendingEvent != null) {
+            emitEvent(pendingEvent);
+            pendingEvent = null;
         }
     }
 
@@ -70,17 +73,17 @@ public class BtbWidgetPlugin extends CordovaPlugin {
 
     @Override
     public void onNewIntent(Intent intent) {
-        String route = consumeRoute(intent);
-        if (route == null) {
+        JSONObject event = consumeEvent(intent);
+        if (event == null) {
             return;
         }
 
         if (routeListener == null) {
-            pendingRoute = route;
+            pendingEvent = event;
             return;
         }
 
-        emitRoute(route);
+        emitEvent(event);
     }
 
     @Override
@@ -88,15 +91,14 @@ public class BtbWidgetPlugin extends CordovaPlugin {
         routeListener = null;
     }
 
-    private void emitRoute(String route) {
+    private void emitEvent(JSONObject event) {
         if (routeListener == null) {
-            pendingRoute = route;
+            pendingEvent = event;
             return;
         }
 
         try {
-            JSONObject event = new JSONObject();
-            event.put("route", normalizeRoute(route));
+            event.put("route", normalizeRoute(event.optString("route", "home")));
             event.put("source", "widget");
 
             PluginResult result = new PluginResult(PluginResult.Status.OK, event);
@@ -110,14 +112,38 @@ public class BtbWidgetPlugin extends CordovaPlugin {
         }
     }
 
-    private String consumeRoute(Intent intent) {
+    private JSONObject consumeEvent(Intent intent) {
         if (intent == null || !intent.hasExtra(EXTRA_ROUTE)) {
             return null;
         }
 
         String route = normalizeRoute(intent.getStringExtra(EXTRA_ROUTE));
+        String matchId = intent.getStringExtra(EXTRA_MATCH_ID);
+        String matchDate = intent.getStringExtra(EXTRA_MATCH_DATE);
+        String matchTime = intent.getStringExtra(EXTRA_MATCH_TIME);
+
         intent.removeExtra(EXTRA_ROUTE);
-        return route;
+        intent.removeExtra(EXTRA_MATCH_ID);
+        intent.removeExtra(EXTRA_MATCH_DATE);
+        intent.removeExtra(EXTRA_MATCH_TIME);
+
+        try {
+            JSONObject event = new JSONObject();
+            event.put("route", route);
+
+            if (!isBlank(matchId) && !isBlank(matchDate) && !isBlank(matchTime)) {
+                event.put("match_id", matchId.trim());
+                event.put("match_date", matchDate.trim());
+                event.put("match_time", matchTime.trim());
+            }
+            return event;
+        } catch (JSONException ignored) {
+            return null;
+        }
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 
     static String normalizeRoute(String route) {

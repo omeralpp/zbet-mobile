@@ -44,10 +44,23 @@
     </LinearLayout>
 
     <TextView
+        android:id="@+id/btb_widget_rating"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:contentDescription="@string/btb_widget_rating_description"
+        android:letterSpacing="0.08"
+        android:maxLines="1"
+        android:textColor="@color/btb_widget_rating"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <TextView
         android:id="@+id/btb_widget_body"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="3dp"
         android:layout_weight="1"
         android:ellipsize="end"
         android:maxLines="2"
@@ -62,26 +75,26 @@
         android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/btb_widget_open"
+            android:id="@+id/btb_widget_super"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:background="@drawable/btb_widget_secondary_button"
             android:gravity="center"
-            android:text="@string/btb_widget_open"
+            android:text="@string/btb_widget_super_log"
             android:textColor="@color/btb_widget_text"
             android:textSize="12sp"
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/btb_widget_super"
+            android:id="@+id/btb_widget_open"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:background="@drawable/btb_widget_primary_button"
             android:gravity="center"
-            android:text="@string/btb_widget_super_log"
+            android:text="@string/btb_widget_open"
             android:textColor="@color/btb_widget_text"
             android:textSize="12sp"
             android:textStyle="bold" />
