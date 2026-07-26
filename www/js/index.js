@@ -18,6 +18,7 @@ var app = {
 	browserRef: null,
 	backHandler: null,
 	firebaseMessageHandlerRegistered: false,
+	widgetListenerRegistered: false,
 
 	initialize: function () {
 		this.backHandler = this.onBackButton.bind(this);
@@ -27,11 +28,12 @@ var app = {
 
 	onDeviceReady: function () {
 		this.bindRetryButton();
+		this.registerWidget();
 		this.registerFirebase();
 		this.enableCustomBack();
 		this.registerNetworkHandlers();
 		this.registerLifecycleHandlers();
-		this.startApp();
+		this.startApp(this.pendingLaunchUrl || undefined);
 	},
 
 	bindRetryButton: function () {
@@ -54,6 +56,98 @@ var app = {
 
 	getFirebaseMessaging: function () {
 		return window.FirebasexMessaging || window.FirebasePlugin || null;
+	},
+
+	getWidgetBridge: function () {
+		return typeof window !== "undefined" && window.BtbWidget ? window.BtbWidget : null;
+	},
+
+	registerWidget: function () {
+		var widget = this.getWidgetBridge();
+
+		if (
+			this.widgetListenerRegistered ||
+			!widget ||
+			typeof widget.listen !== "function"
+		) {
+			return;
+		}
+
+		var self = this;
+		this.widgetListenerRegistered = true;
+
+		widget.listen(function (event) {
+			self.openWidgetTarget(event);
+		}, function (error) {
+			console.error("Widget route listener error:", error);
+		});
+	},
+
+	openWidgetTarget: function (event) {
+		var route = event && event.route ? event.route : "home";
+
+		this.retryAttempt = 0;
+		this.startApp(this.getRouteUrl(route), { immediate: true });
+	},
+
+	updateWidgetFromMessage: function (message) {
+		var widget = this.getWidgetBridge();
+		var payload = this.getWidgetPayload(message);
+
+		if (!payload || !widget || typeof widget.update !== "function") {
+			return false;
+		}
+
+		widget.update(payload, function () {
+			console.log("BTB widget updated");
+		}, function (error) {
+			console.error("BTB widget update error:", error);
+		});
+		return true;
+	},
+
+	getWidgetPayload: function (message) {
+		if (!message) {
+			return null;
+		}
+
+		var targetUrl = this.getNotificationLaunchUrl(message);
+		var route = targetUrl.indexOf("#SuperLog-display") >= 0
+			? "super"
+			: targetUrl.indexOf("#SporToto-manage") >= 0 ? "toto" : "btb";
+		var title = this.getNotificationTextValue(message, "title");
+		var body = this.getNotificationTextValue(message, "body");
+		var rating = this.getMessageValue(message, "rating") ||
+			this.getMessageValue(message, "star") ||
+			this.getMessageValue(message, "stars") ||
+			this.getMessageValue(message, "super_rating");
+		var normalizedRating = Number.parseInt(rating, 10);
+
+		if (!title && !body) {
+			return null;
+		}
+
+		title = title || (route === "super" ? "Yeni Super bildirimi" : "BTB Mobile");
+		body = body || (route === "super"
+			? "Super Log’u açmak için dokunun."
+			: route === "toto"
+				? "Spor Toto programını açmak için dokunun."
+				: "BTB uygulamasını açmak için dokunun.");
+
+		if (normalizedRating >= 1 && normalizedRating <= 5) {
+			title = normalizedRating + "★ " + title;
+		}
+
+		return {
+			title: title,
+			body: body,
+			route: route
+		};
+	},
+
+	getNotificationTextValue: function (message, key) {
+		return this.getMessageValue(message, key) ||
+			this.getMessageValue(message, "notification_" + key);
 	},
 
 	registerFirebase: function () {
@@ -130,6 +224,8 @@ var app = {
 		this.firebaseMessageHandlerRegistered = true;
 
 		messaging.onMessageReceived(function (message) {
+			self.updateWidgetFromMessage(message);
+
 			if (self.isNotificationTap(message)) {
 				self.openNotificationTarget(message);
 			}
@@ -162,8 +258,8 @@ var app = {
 			return this.getRouteUrl(route);
 		}
 
-		var title = this.getMessageValue(message, "title");
-		var body = this.getMessageValue(message, "body");
+		var title = this.getNotificationTextValue(message, "title");
+		var body = this.getNotificationTextValue(message, "body");
 		var text = ((title || "") + " " + (body || "")).toLowerCase();
 
 		if (text.indexOf("super") >= 0 || text.indexOf("sclear") >= 0) {
@@ -205,6 +301,12 @@ var app = {
 			normalizedRoute === "sclear"
 		) {
 			hash = "#SuperLog-display";
+		} else if (
+			normalizedRoute === "toto" ||
+			normalizedRoute === "sportoto" ||
+			normalizedRoute === "spor-toto"
+		) {
+			hash = "#SporToto-manage";
 		} else if (normalizedRoute === "btb" || normalizedRoute === "main" || normalizedRoute === "live") {
 			hash = "#btb-manage";
 		} else if (routeText.indexOf("#") === 0) {

@@ -363,3 +363,141 @@ test("waits for the previous Android browser to close before replacement", funct
 		app.setRetryVisible = originalSetRetryVisible;
 	}
 });
+
+test("builds a Super widget payload from notification data", function () {
+	var payload = app.getWidgetPayload({
+		data: {
+			notification_title: "SCLEAR",
+			notification_body: "Selection cleared",
+			rating: "4"
+		}
+	});
+
+	assert.deepEqual(payload, {
+		title: "4★ SCLEAR",
+		body: "Selection cleared",
+		route: "super"
+	});
+});
+
+test("routes Toto widget content to the Spor Toto Launchpad app", function () {
+	var payload = app.getWidgetPayload({
+		data: {
+			notification_title: "Spor Toto",
+			notification_body: "Program sonucu hazır",
+			route: "toto"
+		}
+	});
+
+	assert.equal(app.getRouteUrl("toto"), app.launchpadBaseUrl + "#SporToto-manage");
+	assert.deepEqual(payload, {
+		title: "Spor Toto",
+		body: "Program sonucu hazır",
+		route: "toto"
+	});
+});
+
+test("does not replace widget content for an empty FCM message", function () {
+	assert.equal(app.getWidgetPayload({ data: {} }), null);
+});
+
+test("opens the requested Launchpad route from the Android widget", function () {
+	var originalRetryAttempt = app.retryAttempt;
+	var originalStartApp = app.startApp;
+	var receivedUrl = null;
+	var receivedOptions = null;
+
+	app.retryAttempt = 3;
+	app.startApp = function (url, options) {
+		receivedUrl = url;
+		receivedOptions = options;
+	};
+
+	try {
+		app.openWidgetTarget({ route: "super" });
+
+		assert.equal(app.retryAttempt, 0);
+		assert.equal(receivedUrl, app.getRouteUrl("super"));
+		assert.deepEqual(receivedOptions, { immediate: true });
+	} finally {
+		app.retryAttempt = originalRetryAttempt;
+		app.startApp = originalStartApp;
+	}
+});
+
+test("passes notification content to the native widget bridge", function () {
+	var originalWindow = global.window;
+	var receivedPayload = null;
+
+	global.window = {
+		BtbWidget: {
+			update: function (payload, done) {
+				receivedPayload = payload;
+				done();
+			}
+		}
+	};
+
+	try {
+		assert.equal(app.updateWidgetFromMessage({
+			title: "BTB Live",
+			body: "New selection",
+			route: "main"
+		}), true);
+		assert.deepEqual(receivedPayload, {
+			title: "BTB Live",
+			body: "New selection",
+			route: "btb"
+		});
+	} finally {
+		global.window = originalWindow;
+	}
+});
+
+test("declares the tracked Android widget Cordova plugin", function () {
+	var root = path.join(__dirname, "..");
+	var packageJson = JSON.parse(
+		fs.readFileSync(path.join(root, "package.json"), "utf8")
+	);
+	var pluginXml = fs.readFileSync(
+		path.join(root, "plugins-src", "cordova-plugin-btb-widget", "plugin.xml"),
+		"utf8"
+	);
+	var widgetInfo = fs.readFileSync(
+		path.join(
+			root,
+			"plugins-src",
+			"cordova-plugin-btb-widget",
+			"src",
+			"android",
+			"res",
+			"xml",
+			"btb_widget_info.xml"
+		),
+		"utf8"
+	);
+	var widgetLayout = fs.readFileSync(
+		path.join(
+			root,
+			"plugins-src",
+			"cordova-plugin-btb-widget",
+			"src",
+			"android",
+			"res",
+			"layout",
+			"btb_widget.xml"
+		),
+		"utf8"
+	);
+
+	assert.equal(
+		packageJson.dependencies["cordova-plugin-btb-widget"],
+		"file:plugins-src/cordova-plugin-btb-widget"
+	);
+	assert.match(pluginXml, /android\.appwidget\.action\.APPWIDGET_UPDATE/);
+	assert.match(pluginXml, /com\.btb\.widget\.BtbWidgetProvider/);
+	assert.match(pluginXml, /com\.btb\.widget\.BtbWidgetInitializer/);
+	assert.match(pluginXml, /\$\{applicationId\}\.widget\.initializer/);
+	assert.match(widgetInfo, /android:initialLayout="@layout\/btb_widget"/);
+	assert.match(widgetLayout, /android:id="@\+id\/btb_widget_toto"/);
+});

@@ -1,0 +1,25 @@
+{
+  "name": "cordova-plugin-btb-widget",
+  "version": "1.0.0",
+  "description": "BTB Android home-screen widget and Cordova route bridge.",
+  "cordova": {
+    "id": "cordova-plugin-btb-widget",
+    "platforms": [
+      "android"
+    ]
+  },
+  "keywords": [
+    "cordova",
+    "ecosystem:cordova",
+    "cordova-android",
+    "android-widget"
+  ],
+  "license": "Apache-2.0",
+  "engines": {
+    "cordovaDependencies": {
+      "0.0.1": {
+        "cordova-android": ">=12.0.0"
+      }
+    }
+  }
+}

@@ -40,13 +40,15 @@
         "IOS_ENABLE_CRITICAL_ALERTS_ENABLED": "false",
         "ANDROID_ICON_ACCENT": "#FFFFFF",
         "ANDROID_FIREBASE_MESSAGING_VERSION": "25.0.1"
-      }
+      },
+      "cordova-plugin-btb-widget": {}
     },
     "platforms": [
       "android"
     ]
   },
   "dependencies": {
+    "cordova-plugin-btb-widget": "file:plugins-src/cordova-plugin-btb-widget",
     "cordova-plugin-device": "2.0.3",
     "cordova-plugin-firebasex-core": "1.0.3",
     "cordova-plugin-firebasex-messaging": "1.0.3"
