@@ -607,44 +607,85 @@ test("passes notification content to the native widget bridge", function () {
 	}
 });
 
-test("creates the BTB notification channel with the bundled sound", function () {
-	var channelOptions = null;
+test("creates the Super and general BTB notification channels", function () {
+	var channelOptions = [];
 	var messaging = {
 		listChannels: function (done) {
 			done([]);
 		},
 		createChannel: function (options) {
-			channelOptions = options;
+			channelOptions.push(options);
 		}
 	};
 
-	assert.equal(app.configureNotificationChannel(messaging), true);
-	assert.deepEqual(channelOptions, {
-		id: "btb_alerts_v1",
-		name: "BTB Bildirimleri",
-		description: "BTB kupon, Super ve Toto bildirimleri",
-		importance: 4,
-		sound: "btb_alert",
-		vibration: [0, 180, 120, 180],
-		light: true,
-		badge: true,
-		visibility: 1
-	});
+	assert.equal(app.configureNotificationChannels(messaging), true);
+	assert.deepEqual(
+		channelOptions.map(function (channel) {
+			return { id: channel.id, sound: channel.sound };
+		}),
+		[
+			{ id: "btb_super_goal_v1", sound: "btb_super_goal" },
+			{
+				id: "btb_general_whistle_v1",
+				sound: "btb_referee_whistle"
+			}
+		]
+	);
 });
 
-test("keeps an existing BTB notification channel", function () {
+test("keeps existing BTB notification channels", function () {
 	var createCalls = 0;
+	var deletedChannels = [];
 	var messaging = {
 		listChannels: function (done) {
-			done([{ id: "btb_alerts_v1" }]);
+			done([
+				{ id: "btb_super_goal_v1" },
+				{ id: "btb_general_whistle_v1" },
+				{ id: "btb_alerts_v1" }
+			]);
 		},
 		createChannel: function () {
 			createCalls += 1;
+		},
+		deleteChannel: function (channelId) {
+			deletedChannels.push(channelId);
 		}
 	};
 
-	assert.equal(app.configureNotificationChannel(messaging), true);
+	assert.equal(app.configureNotificationChannels(messaging), true);
 	assert.equal(createCalls, 0);
+	assert.deepEqual(deletedChannels, ["btb_alerts_v1"]);
+});
+
+test("opens Android notification settings from the mobile shortcut", function () {
+	var originalWindow = global.window;
+	var openCalls = 0;
+	var injectedCode = "";
+
+	global.window = {
+		BtbWidget: {
+			openNotificationSettings: function (done) {
+				openCalls += 1;
+				done();
+			}
+		}
+	};
+
+	try {
+		assert.equal(app.handleBrowserMessage({
+			data: JSON.stringify({ action: "openNotificationSettings" })
+		}), true);
+		assert.equal(openCalls, 1);
+		assert.equal(app.injectNotificationSettingsButton({
+			executeScript: function (details) {
+				injectedCode = details.code;
+			}
+		}), true);
+		assert.match(injectedCode, /btb-mobile-notification-settings/);
+		assert.match(injectedCode, /cordova_iab\.postMessage/);
+	} finally {
+		global.window = originalWindow;
+	}
 });
 
 test("declares branded Android notification resources", function () {
@@ -657,16 +698,22 @@ test("declares branded Android notification resources", function () {
 		path.join(root, "res", "notification", "notification_icon.xml"),
 		"utf8"
 	);
-	var sound = fs.readFileSync(
-		path.join(root, "res", "notification", "btb_alert.wav")
+	var superSound = fs.readFileSync(
+		path.join(root, "res", "notification", "btb_super_goal.wav")
+	);
+	var generalSound = fs.readFileSync(
+		path.join(root, "res", "notification", "btb_referee_whistle.wav")
 	);
 
 	assert.match(configXml, /drawable\/notification_icon\.xml/);
 	assert.match(configXml, /drawable\/notification_icon_large\.png/);
-	assert.match(configXml, /raw\/btb_alert\.wav/);
+	assert.match(configXml, /raw\/btb_super_goal\.wav/);
+	assert.match(configXml, /raw\/btb_referee_whistle\.wav/);
 	assert.match(iconXml, /android:strokeColor="#FFFFFFFF"/);
-	assert.equal(sound.subarray(0, 4).toString("ascii"), "RIFF");
-	assert.equal(sound.subarray(8, 12).toString("ascii"), "WAVE");
+	assert.equal(superSound.subarray(0, 4).toString("ascii"), "RIFF");
+	assert.equal(superSound.subarray(8, 12).toString("ascii"), "WAVE");
+	assert.equal(generalSound.subarray(0, 4).toString("ascii"), "RIFF");
+	assert.equal(generalSound.subarray(8, 12).toString("ascii"), "WAVE");
 	assert.equal(
 		packageJson.cordova.plugins["cordova-plugin-firebasex-messaging"]
 			.ANDROID_ICON_ACCENT,
@@ -790,6 +837,7 @@ test("declares the tracked Android widget Cordova plugin", function () {
 	assert.match(widgetPlugin, /EXTRA_MATCH_TIME/);
 	assert.match(widgetPlugin, /EXTRA_TOTO_GC_NO/);
 	assert.match(widgetPlugin, /EXTRA_TOTO_VERSION/);
+	assert.match(widgetPlugin, /ACTION_APP_NOTIFICATION_SETTINGS/);
 	assert.match(kpiWidgetLayout, /android:id="@\+id\/btb_kpi_toto_chart"/);
 	assert.match(kpiWidgetLayout, /android:id="@\+id\/btb_kpi_super_chart"/);
 	assert.match(kpiWidgetProvider, /createDonut/);

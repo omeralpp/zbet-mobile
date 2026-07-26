@@ -2,8 +2,21 @@ var app = {
 	launchpadBaseUrl: "https://188b143btrial.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b38042ce-b8ab-4fea-a892-abf4c58a170f",
 	defaultHash: "#Shell-home",
 	topicName: "BTB",
-	notificationChannelId: "btb_alerts_v1",
-	notificationSoundName: "btb_alert",
+	notificationChannels: [
+		{
+			id: "btb_super_goal_v1",
+			name: "BTB Super Kupon",
+			description: "Super kupon gol ve stadyum bildirimleri",
+			sound: "btb_super_goal"
+		},
+		{
+			id: "btb_general_whistle_v1",
+			name: "BTB Genel",
+			description: "Toto, oran ve diğer BTB bildirimleri",
+			sound: "btb_referee_whistle"
+		}
+	],
+	legacyNotificationChannelIds: ["btb_alerts_v1"],
 	retryDelays: [2000, 5000, 15000, 30000],
 	browserCloseDelay: 300,
 	resumeProbeDelay: 1200,
@@ -62,6 +75,67 @@ var app = {
 
 	getWidgetBridge: function () {
 		return typeof window !== "undefined" && window.BtbWidget ? window.BtbWidget : null;
+	},
+
+	openNotificationSettings: function () {
+		var widget = this.getWidgetBridge();
+
+		if (!widget || typeof widget.openNotificationSettings !== "function") {
+			return false;
+		}
+
+		widget.openNotificationSettings(function () {
+			console.log("BTB notification settings opened");
+		}, function (error) {
+			console.error("BTB notification settings error:", error);
+		});
+		return true;
+	},
+
+	handleBrowserMessage: function (event) {
+		var data = event && event.data;
+
+		if (typeof data === "string") {
+			try {
+				data = JSON.parse(data);
+			} catch (error) {
+				return false;
+			}
+		}
+
+		if (!data || data.action !== "openNotificationSettings") {
+			return false;
+		}
+
+		return this.openNotificationSettings();
+	},
+
+	injectNotificationSettingsButton: function (browser) {
+		if (!browser || typeof browser.executeScript !== "function") {
+			return false;
+		}
+
+		var code = [
+			"(function(){",
+			"if(document.getElementById('btb-mobile-notification-settings')){return;}",
+			"var button=document.createElement('button');",
+			"button.id='btb-mobile-notification-settings';",
+			"button.type='button';",
+			"button.setAttribute('aria-label','Bildirim ayarları');",
+			"button.title='Bildirim ayarları';",
+			"button.textContent='🔔';",
+			"button.style.cssText='position:fixed;right:14px;bottom:18px;width:42px;height:42px;border-radius:21px;border:1px solid #1597E5;background:#061525;color:#fff;box-shadow:0 3px 12px rgba(0,0,0,.3);font-size:19px;line-height:38px;padding:0;opacity:.88;z-index:2147483647;';",
+			"button.addEventListener('click',function(){",
+			"if(window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.cordova_iab){",
+			"window.webkit.messageHandlers.cordova_iab.postMessage(JSON.stringify({action:'openNotificationSettings'}));",
+			"}",
+			"});",
+			"document.body.appendChild(button);",
+			"})();"
+		].join("");
+
+		browser.executeScript({ code: code });
+		return true;
 	},
 
 	registerWidget: function () {
@@ -353,7 +427,7 @@ var app = {
 		}
 
 		var self = this;
-		this.configureNotificationChannel(messaging);
+		this.configureNotificationChannels(messaging);
 
 		this.requestNotificationPermission(function () {
 			self.registerFirebaseMessageHandler();
@@ -370,27 +444,47 @@ var app = {
 		}
 	},
 
-	configureNotificationChannel: function (messaging) {
+	configureNotificationChannels: function (messaging) {
 		var self = this;
-		var createChannel = function () {
-			if (typeof messaging.createChannel !== "function") {
-				return;
-			}
-
+		var createChannel = function (channel) {
 			messaging.createChannel({
-				id: self.notificationChannelId,
-				name: "BTB Bildirimleri",
-				description: "BTB kupon, Super ve Toto bildirimleri",
+				id: channel.id,
+				name: channel.name,
+				description: channel.description,
 				importance: 4,
-				sound: self.notificationSoundName,
+				sound: channel.sound,
 				vibration: [0, 180, 120, 180],
 				light: true,
 				badge: true,
 				visibility: 1
 			}, function () {
-				console.log("BTB notification channel is ready");
+				console.log("BTB notification channel is ready:", channel.id);
 			}, function (error) {
-				console.error("BTB notification channel error:", error);
+				console.error("BTB notification channel error:", channel.id, error);
+			});
+		};
+		var createMissingChannels = function (channels) {
+			var existing = Array.isArray(channels) ? channels : [];
+
+			if (typeof messaging.deleteChannel === "function") {
+				existing.forEach(function (current) {
+					if (
+						current &&
+						self.legacyNotificationChannelIds.indexOf(current.id) >= 0
+					) {
+						messaging.deleteChannel(current.id);
+					}
+				});
+			}
+
+			self.notificationChannels.forEach(function (channel) {
+				var exists = existing.some(function (current) {
+					return current && current.id === channel.id;
+				});
+
+				if (!exists) {
+					createChannel(channel);
+				}
 			});
 		};
 
@@ -399,20 +493,14 @@ var app = {
 		}
 
 		if (typeof messaging.listChannels !== "function") {
-			createChannel();
+			createMissingChannels([]);
 			return true;
 		}
 
 		messaging.listChannels(function (channels) {
-			var exists = Array.isArray(channels) && channels.some(function (channel) {
-				return channel && channel.id === self.notificationChannelId;
-			});
-
-			if (!exists) {
-				createChannel();
-			}
+			createMissingChannels(channels);
 		}, function () {
-			createChannel();
+			createMissingChannels([]);
 		});
 
 		return true;
@@ -931,6 +1019,12 @@ var app = {
 			self.handleBeforeLoad(event, loadUrl);
 		});
 
+		browser.addEventListener("message", function (event) {
+			if (self.browserRef === browser) {
+				self.handleBrowserMessage(event);
+			}
+		});
+
 		browser.addEventListener("loadstop", function (event) {
 			if (self.browserRef !== browser) {
 				return;
@@ -938,6 +1032,7 @@ var app = {
 
 			console.log("loadstop url:", event && event.url ? event.url : "");
 			self.retryAttempt = 0;
+			self.injectNotificationSettingsButton(browser);
 		});
 
 		browser.addEventListener("loaderror", function (event) {

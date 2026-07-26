@@ -1,6 +1,10 @@
 package com.btb.widget;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.Settings;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
@@ -39,6 +43,11 @@ public class BtbWidgetPlugin extends CordovaPlugin {
             return true;
         }
 
+        if ("openNotificationSettings".equals(action)) {
+            openNotificationSettings(callbackContext);
+            return true;
+        }
+
         return false;
     }
 
@@ -72,6 +81,26 @@ public class BtbWidgetPlugin extends CordovaPlugin {
                 callbackContext.success();
             }
         });
+    }
+
+    private void openNotificationSettings(CallbackContext callbackContext) {
+        try {
+            Context context = cordova.getActivity().getApplicationContext();
+            Intent intent;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+                intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.getPackageName());
+            } else {
+                intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                intent.setData(Uri.parse("package:" + context.getPackageName()));
+            }
+
+            cordova.getActivity().startActivity(intent);
+            callbackContext.success();
+        } catch (Exception error) {
+            callbackContext.error(error.getMessage());
+        }
     }
 
     @Override

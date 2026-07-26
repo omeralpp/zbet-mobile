@@ -5,7 +5,6 @@
   "description": "Better Than Bet Android in-app browser shell.",
   "main": "index.js",
   "scripts": {
-    "generate:notification-sound": "node scripts/generate-notification-sound.js",
     "test": "node --test test/*.test.js"
   },
   "keywords": [

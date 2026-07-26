@@ -31,7 +31,8 @@
         <resource-file src="google-services.json" target="app/google-services.json" />
         <resource-file src="res/notification/notification_icon.xml" target="app/src/main/res/drawable/notification_icon.xml" />
         <resource-file src="res/images/xxxhdpi.png" target="app/src/main/res/drawable/notification_icon_large.png" />
-        <resource-file src="res/notification/btb_alert.wav" target="app/src/main/res/raw/btb_alert.wav" />
+        <resource-file src="res/notification/btb_super_goal.wav" target="app/src/main/res/raw/btb_super_goal.wav" />
+        <resource-file src="res/notification/btb_referee_whistle.wav" target="app/src/main/res/raw/btb_referee_whistle.wav" />
         <allow-intent href="market:*" />
 
         <icon src="res/images/ldpi.png" density="ldpi" />

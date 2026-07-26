@@ -9,3 +9,7 @@ exports.listen = function (success, error) {
 exports.update = function (payload, success, error) {
 	exec(success, error, "BtbWidget", "update", [payload || {}]);
 };
+
+exports.openNotificationSettings = function (success, error) {
+	exec(success, error, "BtbWidget", "openNotificationSettings", []);
+};
