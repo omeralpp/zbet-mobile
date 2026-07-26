@@ -456,6 +456,8 @@ test("passes the dual KPI snapshot to the native widget bridge", function () {
 			notification_body: "Performance updated",
 			toto_coverage_hits: "3",
 			toto_coverage_total: "4",
+			toto_program_gc_no: "348",
+			toto_program_version: "1",
 			super_min_rating: "3",
 			super_wins: "5",
 			super_losses: "3",
@@ -469,11 +471,52 @@ test("passes the dual KPI snapshot to the native widget bridge", function () {
 		route: "btb",
 		toto_coverage_hits: 3,
 		toto_coverage_total: 4,
+		toto_program_gc_no: 348,
+		toto_program_version: 1,
 		super_min_rating: 3,
 		super_wins: 5,
 		super_losses: 3,
 		super_profit: 1.06
 	});
+});
+
+test("opens the KPI Toto program Object Page with stable keys", function () {
+	var originalStartApp = app.startApp;
+	var receivedUrl = null;
+
+	app.startApp = function (url) {
+		receivedUrl = url;
+	};
+
+	try {
+		app.openWidgetTarget({
+			route: "toto",
+			toto_program_gc_no: "348",
+			toto_program_version: "1"
+		});
+
+		assert.equal(
+			receivedUrl,
+			app.launchpadBaseUrl +
+				"#SporToto-manage?" +
+				"sap-ui-app-id-hint=saas_approuter_com.btb.toto.zbettotoapp&/" +
+				"Programs(gc_no=348,version_no=1)" +
+				"/?FCLLayout=MidColumnFullScreen"
+		);
+	} finally {
+		app.startApp = originalStartApp;
+	}
+});
+
+test("falls back to the Toto list when program keys are unavailable", function () {
+	assert.equal(
+		app.getTotoProgramLaunchUrl({
+			toto_program_gc_no: "invalid",
+			toto_program_version: "1"
+		}),
+		""
+	);
+	assert.equal(app.getRouteUrl("toto"), app.launchpadBaseUrl + "#SporToto-manage");
 });
 
 test("does not replace widget content for an empty FCM message", function () {
@@ -678,8 +721,11 @@ test("declares the tracked Android widget Cordova plugin", function () {
 	assert.match(widgetPlugin, /EXTRA_MATCH_ID/);
 	assert.match(widgetPlugin, /EXTRA_MATCH_DATE/);
 	assert.match(widgetPlugin, /EXTRA_MATCH_TIME/);
+	assert.match(widgetPlugin, /EXTRA_TOTO_GC_NO/);
+	assert.match(widgetPlugin, /EXTRA_TOTO_VERSION/);
 	assert.match(kpiWidgetLayout, /android:id="@\+id\/btb_kpi_toto_chart"/);
 	assert.match(kpiWidgetLayout, /android:id="@\+id\/btb_kpi_super_chart"/);
 	assert.match(kpiWidgetProvider, /createDonut/);
 	assert.match(kpiWidgetProvider, /super_min_rating/);
+	assert.match(kpiWidgetProvider, /createTotoOpenIntent/);
 });

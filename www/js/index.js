@@ -85,7 +85,9 @@ var app = {
 
 	openWidgetTarget: function (event) {
 		var route = event && event.route ? event.route : "home";
-		var targetUrl = this.getMatchLaunchUrl(event) || this.getRouteUrl(route);
+		var targetUrl = this.getMatchLaunchUrl(event) ||
+			this.getTotoProgramLaunchUrl(event) ||
+			this.getRouteUrl(route);
 
 		this.retryAttempt = 0;
 		this.startApp(targetUrl, { immediate: true });
@@ -158,6 +160,7 @@ var app = {
 	addKpiWidgetValues: function (message, payload) {
 		var totoHits = this.getMessageValue(message, "toto_coverage_hits");
 		var totoTotal = this.getMessageValue(message, "toto_coverage_total");
+		var totoTarget = this.getTotoProgramTarget(message);
 		var superMinRating = this.getMessageValue(message, "super_min_rating");
 		var superWins = this.getMessageValue(message, "super_wins");
 		var superLosses = this.getMessageValue(message, "super_losses");
@@ -170,6 +173,11 @@ var app = {
 		) {
 			payload.toto_coverage_hits = Number(totoHits);
 			payload.toto_coverage_total = Number(totoTotal);
+		}
+
+		if (totoTarget) {
+			payload.toto_program_gc_no = Number(totoTarget.gcNo);
+			payload.toto_program_version = Number(totoTarget.version);
 		}
 
 		if (
@@ -296,6 +304,42 @@ var app = {
 		return this.launchpadBaseUrl +
 			"#btb-manage?sap-ui-app-id-hint=saas_approuter_com.btb.btb&/" +
 			entityPath +
+			"/?FCLLayout=MidColumnFullScreen";
+	},
+
+	getTotoProgramTarget: function (message) {
+		var gcNo = this.getMessageValue(message, "toto_program_gc_no") ||
+			this.getMessageValue(message, "totoProgramGcNo");
+		var version = this.getMessageValue(message, "toto_program_version") ||
+			this.getMessageValue(message, "totoProgramVersion");
+
+		if (
+			!/^\d+$/.test(gcNo) ||
+			Number.parseInt(gcNo, 10) <= 0 ||
+			!/^\d+$/.test(version) ||
+			Number.parseInt(version, 10) <= 0
+		) {
+			return null;
+		}
+
+		return {
+			gcNo: String(Number.parseInt(gcNo, 10)),
+			version: String(Number.parseInt(version, 10))
+		};
+	},
+
+	getTotoProgramLaunchUrl: function (message) {
+		var target = this.getTotoProgramTarget(message);
+
+		if (!target) {
+			return "";
+		}
+
+		return this.launchpadBaseUrl +
+			"#SporToto-manage?" +
+			"sap-ui-app-id-hint=saas_approuter_com.btb.toto.zbettotoapp&/" +
+			"Programs(gc_no=" + target.gcNo +
+				",version_no=" + target.version + ")" +
 			"/?FCLLayout=MidColumnFullScreen";
 	},
 

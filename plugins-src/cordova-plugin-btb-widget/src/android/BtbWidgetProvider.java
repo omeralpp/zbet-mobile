@@ -143,6 +143,42 @@ public class BtbWidgetProvider extends AppWidgetProvider {
             String matchId,
             String matchDate,
             String matchTime) {
+        return createOpenIntent(
+                context,
+                route,
+                requestCode,
+                matchId,
+                matchDate,
+                matchTime,
+                "",
+                "");
+    }
+
+    static PendingIntent createTotoOpenIntent(
+            Context context,
+            int requestCode,
+            String gcNo,
+            String version) {
+        return createOpenIntent(
+                context,
+                "toto",
+                requestCode,
+                "",
+                "",
+                "",
+                gcNo,
+                version);
+    }
+
+    private static PendingIntent createOpenIntent(
+            Context context,
+            String route,
+            int requestCode,
+            String matchId,
+            String matchDate,
+            String matchTime,
+            String totoGcNo,
+            String totoVersion) {
         Intent intent = context.getPackageManager()
                 .getLaunchIntentForPackage(context.getPackageName());
 
@@ -161,6 +197,13 @@ public class BtbWidgetProvider extends AppWidgetProvider {
             intent.putExtra(BtbWidgetPlugin.EXTRA_MATCH_ID, cleanValue(matchId));
             intent.putExtra(BtbWidgetPlugin.EXTRA_MATCH_DATE, cleanValue(matchDate));
             intent.putExtra(BtbWidgetPlugin.EXTRA_MATCH_TIME, cleanValue(matchTime));
+        }
+        if (!cleanValue(totoGcNo).isEmpty() &&
+                !cleanValue(totoVersion).isEmpty()) {
+            intent.putExtra(BtbWidgetPlugin.EXTRA_TOTO_GC_NO, cleanValue(totoGcNo));
+            intent.putExtra(
+                    BtbWidgetPlugin.EXTRA_TOTO_VERSION,
+                    cleanValue(totoVersion));
         }
         intent.addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK |

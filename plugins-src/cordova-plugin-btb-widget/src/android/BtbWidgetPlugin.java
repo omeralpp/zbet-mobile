@@ -14,6 +14,8 @@ public class BtbWidgetPlugin extends CordovaPlugin {
     public static final String EXTRA_MATCH_ID = "com.btb.widget.MATCH_ID";
     public static final String EXTRA_MATCH_DATE = "com.btb.widget.MATCH_DATE";
     public static final String EXTRA_MATCH_TIME = "com.btb.widget.MATCH_TIME";
+    public static final String EXTRA_TOTO_GC_NO = "com.btb.widget.TOTO_GC_NO";
+    public static final String EXTRA_TOTO_VERSION = "com.btb.widget.TOTO_VERSION";
 
     private CallbackContext routeListener;
     private JSONObject pendingEvent;
@@ -122,11 +124,15 @@ public class BtbWidgetPlugin extends CordovaPlugin {
         String matchId = intent.getStringExtra(EXTRA_MATCH_ID);
         String matchDate = intent.getStringExtra(EXTRA_MATCH_DATE);
         String matchTime = intent.getStringExtra(EXTRA_MATCH_TIME);
+        String totoGcNo = intent.getStringExtra(EXTRA_TOTO_GC_NO);
+        String totoVersion = intent.getStringExtra(EXTRA_TOTO_VERSION);
 
         intent.removeExtra(EXTRA_ROUTE);
         intent.removeExtra(EXTRA_MATCH_ID);
         intent.removeExtra(EXTRA_MATCH_DATE);
         intent.removeExtra(EXTRA_MATCH_TIME);
+        intent.removeExtra(EXTRA_TOTO_GC_NO);
+        intent.removeExtra(EXTRA_TOTO_VERSION);
 
         try {
             JSONObject event = new JSONObject();
@@ -136,6 +142,10 @@ public class BtbWidgetPlugin extends CordovaPlugin {
                 event.put("match_id", matchId.trim());
                 event.put("match_date", matchDate.trim());
                 event.put("match_time", matchTime.trim());
+            }
+            if (!isBlank(totoGcNo) && !isBlank(totoVersion)) {
+                event.put("toto_program_gc_no", totoGcNo.trim());
+                event.put("toto_program_version", totoVersion.trim());
             }
             return event;
         } catch (JSONException ignored) {

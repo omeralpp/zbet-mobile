@@ -48,6 +48,8 @@ public class BtbWidgetMessageReceiver extends FirebasePluginMessageReceiver {
         updateKpiWidget(
                 firstMapValue(data, "toto_coverage_hits", "totoCoverageHits"),
                 firstMapValue(data, "toto_coverage_total", "totoCoverageTotal"),
+                firstMapValue(data, "toto_program_gc_no", "totoProgramGcNo"),
+                firstMapValue(data, "toto_program_version", "totoProgramVersion"),
                 firstMapValue(data, "super_min_rating", "superMinRating"),
                 firstMapValue(data, "super_wins", "superWins"),
                 firstMapValue(data, "super_losses", "superLosses"),
@@ -77,6 +79,11 @@ public class BtbWidgetMessageReceiver extends FirebasePluginMessageReceiver {
         updateKpiWidget(
                 firstBundleValue(bundle, "toto_coverage_hits", "totoCoverageHits"),
                 firstBundleValue(bundle, "toto_coverage_total", "totoCoverageTotal"),
+                firstBundleValue(bundle, "toto_program_gc_no", "totoProgramGcNo"),
+                firstBundleValue(
+                        bundle,
+                        "toto_program_version",
+                        "totoProgramVersion"),
                 firstBundleValue(bundle, "super_min_rating", "superMinRating"),
                 firstBundleValue(bundle, "super_wins", "superWins"),
                 firstBundleValue(bundle, "super_losses", "superLosses"),
@@ -101,6 +108,8 @@ public class BtbWidgetMessageReceiver extends FirebasePluginMessageReceiver {
     private void updateKpiWidget(
             String totoCoverageHits,
             String totoCoverageTotal,
+            String totoProgramGcNo,
+            String totoProgramVersion,
             String superMinRating,
             String superWins,
             String superLosses,
@@ -109,6 +118,10 @@ public class BtbWidgetMessageReceiver extends FirebasePluginMessageReceiver {
             JSONObject payload = new JSONObject();
             payload.put("toto_coverage_hits", cleanValue(totoCoverageHits));
             payload.put("toto_coverage_total", cleanValue(totoCoverageTotal));
+            payload.put("toto_program_gc_no", cleanValue(totoProgramGcNo));
+            payload.put(
+                    "toto_program_version",
+                    cleanValue(totoProgramVersion));
             payload.put("super_min_rating", cleanValue(superMinRating));
             payload.put("super_wins", cleanValue(superWins));
             payload.put("super_losses", cleanValue(superLosses));

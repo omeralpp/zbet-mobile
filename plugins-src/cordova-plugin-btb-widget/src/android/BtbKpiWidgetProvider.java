@@ -27,6 +27,8 @@ public class BtbKpiWidgetProvider extends AppWidgetProvider {
     private static final String KEY_HAS_TOTO = "has_toto";
     private static final String KEY_TOTO_HITS = "toto_hits";
     private static final String KEY_TOTO_TOTAL = "toto_total";
+    private static final String KEY_TOTO_GC_NO = "toto_gc_no";
+    private static final String KEY_TOTO_VERSION = "toto_version";
     private static final String KEY_HAS_SUPER = "has_super";
     private static final String KEY_SUPER_MIN_RATING = "super_min_rating";
     private static final String KEY_SUPER_WINS = "super_wins";
@@ -69,11 +71,25 @@ public class BtbKpiWidgetProvider extends AppWidgetProvider {
                 payload.optString("toto_coverage_hits", ""));
         Integer totoTotal = parseNonNegativeInteger(
                 payload.optString("toto_coverage_total", ""));
+        Integer totoGcNo = parseNonNegativeInteger(
+                payload.optString("toto_program_gc_no", ""));
+        Integer totoVersion = parseNonNegativeInteger(
+                payload.optString("toto_program_version", ""));
 
         if (totoHits != null && totoTotal != null && totoHits <= totoTotal) {
             editor.putBoolean(KEY_HAS_TOTO, true);
             editor.putInt(KEY_TOTO_HITS, totoHits);
             editor.putInt(KEY_TOTO_TOTAL, totoTotal);
+            if (totoGcNo != null &&
+                    totoGcNo > 0 &&
+                    totoVersion != null &&
+                    totoVersion > 0) {
+                editor.putInt(KEY_TOTO_GC_NO, totoGcNo);
+                editor.putInt(KEY_TOTO_VERSION, totoVersion);
+            } else {
+                editor.remove(KEY_TOTO_GC_NO);
+                editor.remove(KEY_TOTO_VERSION);
+            }
             changed = true;
         }
 
@@ -124,6 +140,8 @@ public class BtbKpiWidgetProvider extends AppWidgetProvider {
         boolean hasToto = preferences.getBoolean(KEY_HAS_TOTO, false);
         int totoHits = preferences.getInt(KEY_TOTO_HITS, 0);
         int totoTotal = preferences.getInt(KEY_TOTO_TOTAL, 0);
+        int totoGcNo = preferences.getInt(KEY_TOTO_GC_NO, 0);
+        int totoVersion = preferences.getInt(KEY_TOTO_VERSION, 0);
         boolean hasSuper = preferences.getBoolean(KEY_HAS_SUPER, false);
         int minRating = preferences.getInt(KEY_SUPER_MIN_RATING, 0);
         int superWins = preferences.getInt(KEY_SUPER_WINS, 0);
@@ -195,8 +213,11 @@ public class BtbKpiWidgetProvider extends AppWidgetProvider {
                         context, "home", 4200, "", "", ""));
         views.setOnClickPendingIntent(
                 R.id.btb_kpi_toto,
-                BtbWidgetProvider.createOpenIntent(
-                        context, "toto", 4201, "", "", ""));
+                BtbWidgetProvider.createTotoOpenIntent(
+                        context,
+                        4201,
+                        totoGcNo > 0 ? String.valueOf(totoGcNo) : "",
+                        totoVersion > 0 ? String.valueOf(totoVersion) : ""));
         views.setOnClickPendingIntent(
                 R.id.btb_kpi_super,
                 BtbWidgetProvider.createOpenIntent(
