@@ -503,6 +503,37 @@ test("passes the dual KPI snapshot to the native widget bridge", function () {
 	});
 });
 
+test("defaults omitted daily Super KPI values to zero", function () {
+	var payload = app.getWidgetPayload({
+		data: {
+			notification_title: "Daily coupons are ready",
+			notification_body: "Fixtures loaded",
+			super_min_rating: "3"
+		}
+	});
+
+	assert.equal(payload.super_min_rating, 3);
+	assert.equal(payload.super_wins, 0);
+	assert.equal(payload.super_losses, 0);
+	assert.equal(payload.super_profit, 0);
+});
+
+test("preserves a one-sided daily Super KPI result", function () {
+	var payload = app.getWidgetPayload({
+		data: {
+			notification_title: "Super coupon created",
+			notification_body: "Home - Away : Ms1 selected",
+			super_min_rating: "3",
+			super_wins: "1",
+			super_profit: "1.25"
+		}
+	});
+
+	assert.equal(payload.super_wins, 1);
+	assert.equal(payload.super_losses, 0);
+	assert.equal(payload.super_profit, 1.25);
+});
+
 test("opens the KPI Toto program Object Page with stable keys", function () {
 	var originalStartApp = app.startApp;
 	var receivedUrl = null;
@@ -718,6 +749,33 @@ test("injects mobile shortcuts and opens Android notification settings", functio
 		assert.match(injectedCode, /window\.localStorage/);
 		assert.match(injectedCode, /btb-menu-up/);
 		assert.match(injectedCode, /btb-menu-down/);
+		assert.match(injectedCode, /btb-mobile-ball-pet/);
+		assert.match(injectedCode, /btb-mobile-mascot-ball/);
+		assert.match(injectedCode, /btb-mobile-mascot-eye-left/);
+		assert.match(injectedCode, /btb-mobile-mascot-eyebrow-left/);
+		assert.match(injectedCode, /btb-mobile-mascot-mouth/);
+		assert.match(injectedCode, /btb-mobile-mascot-leg-right/);
+		assert.doesNotMatch(injectedCode, /btb-mobile-mascot-arm-left/);
+		assert.doesNotMatch(injectedCode, /btb-mobile-mascot-arm-right/);
+		assert.match(injectedCode, /btbBallPetIdle/);
+		assert.match(injectedCode, /btbBallPetHappy/);
+		assert.match(injectedCode, /btbBallPetSpark/);
+		assert.match(injectedCode, /btbMascotBlink/);
+		assert.match(injectedCode, /btbMascotAngryShake/);
+		assert.match(injectedCode, /btb-emotion-happy/);
+		assert.match(injectedCode, /btb-emotion-bored/);
+		assert.match(injectedCode, /btb-emotion-angry/);
+		assert.match(injectedCode, /Math\.random\(\)\*5001/);
+		assert.match(injectedCode, /scheduleMascotEmotion/);
+		assert.match(injectedCode, /btb-mobile-mascot-greeting/);
+		assert.match(injectedCode, /btbMascotHello/);
+		assert.match(injectedCode, /sessionStorage/);
+		assert.match(injectedCode, /btb-mobile-mascot-greeting-v1/);
+		assert.match(injectedCode, /greeting\.textContent='Hi!'/);
+		assert.match(injectedCode, /greeting\.remove\(\)/);
+		assert.match(injectedCode, /BTB maskotu - hızlı uygulama geçişi/);
+		assert.match(injectedCode, /prefers-reduced-motion:reduce/);
+		assert.match(injectedCode, /aria-hidden="true"/);
 		assert.match(injectedCode, /bottom:82px/);
 		assert.match(
 			injectedCode,
@@ -733,6 +791,373 @@ test("injects mobile shortcuts and opens Android notification settings", functio
 	} finally {
 		global.window = originalWindow;
 	}
+});
+
+test("keeps the Cordova Launchpad in touch-optimized cozy density", function () {
+	var injectedCode = "";
+	var observerCallback = null;
+	var observerOptions = null;
+
+	assert.equal(app.enforceMobileTouchDensity({
+		executeScript: function (details) {
+			injectedCode = details.code;
+		}
+	}), true);
+	assert.match(injectedCode, /sapUiSizeCompact/);
+	assert.match(injectedCode, /sapUiSizeCondensed/);
+	assert.match(injectedCode, /sapUiSizeCozy/);
+	assert.match(injectedCode, /data-btb-mobile-density/);
+	assert.match(injectedCode, /MutationObserver/);
+	assert.match(injectedCode, /attributeFilter:\['class'\]/);
+	assert.match(injectedCode, /subtree:true/);
+	assert.match(injectedCode, /querySelectorAll/);
+	assert.match(injectedCode, /querySelectorAll\('iframe'\)/);
+	assert.match(injectedCode, /contentDocument/);
+	assert.match(injectedCode, /addEventListener\('load'/);
+	assert.match(injectedCode, /accessibleFrames/);
+	assert.match(injectedCode, /blockedFrames/);
+	assert.match(injectedCode, /isShareActionLabel/);
+	assert.match(injectedCode, /isShareActionId/);
+	assert.match(injectedCode, /share menu/);
+	assert.match(injectedCode, /paylaş menüsü/);
+	assert.match(injectedCode, /data-btb-mobile-hidden/);
+	assert.match(injectedCode, /control\.setVisible\(false\)/);
+	assert.doesNotMatch(injectedCode, /childList:true/);
+	assert.doesNotMatch(injectedCode, /addedNodes/);
+	assert.match(injectedCode, /pageshow/);
+	assert.match(injectedCode, /hashchange/);
+	assert.match(injectedCode, /popstate/);
+	assert.match(injectedCode, /setInterval/);
+	assert.match(injectedCode, /clearInterval/);
+	assert.doesNotThrow(function () {
+		return new Function(injectedCode);
+	});
+
+	function createElement(initialClasses) {
+		var classes = new Set(initialClasses || []);
+		var attributes = {};
+		var classWrites = 0;
+		return {
+			nodeType: 1,
+			classList: {
+				contains: function (name) {
+					return classes.has(name);
+				},
+				remove: function (name) {
+					if (classes.delete(name)) {
+						classWrites += 1;
+					}
+				},
+				add: function (name) {
+					if (!classes.has(name)) {
+						classes.add(name);
+						classWrites += 1;
+					}
+				}
+			},
+			querySelectorAll: function () {
+				return [];
+			},
+			getAttribute: function (name) {
+				return attributes[name];
+			},
+			setAttribute: function (name, value) {
+				attributes[name] = value;
+			},
+			hasClass: function (name) {
+				return classes.has(name);
+			},
+			getClassWrites: function () {
+				return classWrites;
+			}
+		};
+	}
+
+	var documentElement = createElement([]);
+	var body = createElement(["sapUiSizeCompact"]);
+	var fakeDocument = {
+		documentElement: documentElement,
+		body: body,
+		hidden: false,
+		defaultView: null,
+		addEventListener: function () {},
+		querySelectorAll: function (selector) {
+			if (selector === "iframe") {
+				return [];
+			}
+			if (selector === ".sapUiSizeCompact,.sapUiSizeCondensed") {
+				return body.hasClass("sapUiSizeCompact") ? [body] : [];
+			}
+			return [];
+		}
+	};
+	var fakeWindow = {
+		MutationObserver: function (callback) {
+			observerCallback = callback;
+			this.observe = function (target, options) {
+				observerOptions = options;
+			};
+			this.disconnect = function () {};
+		},
+		addEventListener: function () {},
+		removeEventListener: function () {},
+		requestAnimationFrame: function (callback) {
+			callback();
+		},
+		setTimeout: function () {
+			return 1;
+		},
+		clearTimeout: function () {},
+		setInterval: function () {
+			return 1;
+		},
+		clearInterval: function () {}
+	};
+	fakeDocument.defaultView = fakeWindow;
+
+	new Function("window", "document", injectedCode)(fakeWindow, fakeDocument);
+	assert.equal(documentElement.hasClass("sapUiSizeCozy"), true);
+	assert.equal(body.hasClass("sapUiSizeCozy"), true);
+	assert.equal(body.hasClass("sapUiSizeCompact"), false);
+	assert.equal(observerOptions.subtree, true);
+	assert.equal(observerOptions.childList, undefined);
+
+	var writesBeforeObserver = documentElement.getClassWrites();
+	observerCallback([{ type: "attributes", target: documentElement }]);
+	assert.equal(documentElement.getClassWrites(), writesBeforeObserver);
+});
+
+test("keeps a newly loaded Work Zone application iframe in cozy density", function () {
+	var injectedCode = "";
+	var intervalCallback = null;
+
+	app.enforceMobileTouchDensity({
+		executeScript: function (details) {
+			injectedCode = details.code;
+		}
+	});
+
+	function createElement(initialClasses) {
+		var classes = new Set(initialClasses || []);
+		var attributes = {};
+		return {
+			nodeType: 1,
+			classList: {
+				contains: function (name) {
+					return classes.has(name);
+				},
+				remove: function (name) {
+					classes.delete(name);
+				},
+				add: function (name) {
+					classes.add(name);
+				}
+			},
+			getAttribute: function (name) {
+				return attributes[name];
+			},
+			setAttribute: function (name, value) {
+				attributes[name] = value;
+			},
+			hasClass: function (name) {
+				return classes.has(name);
+			}
+		};
+	}
+
+	function createDocument(initialBodyClasses) {
+		var documentElement = createElement([]);
+		var body = createElement(initialBodyClasses);
+		return {
+			documentElement: documentElement,
+			body: body,
+			hidden: false,
+			defaultView: null,
+			addEventListener: function () {},
+			querySelectorAll: function (selector) {
+				if (selector === "iframe") {
+					return [];
+				}
+				if (selector === ".sapUiSizeCompact,.sapUiSizeCondensed") {
+					return body.hasClass("sapUiSizeCompact") ? [body] : [];
+				}
+				return [];
+			}
+		};
+	}
+
+	var shellDocument = createDocument([]);
+	var appDocument = createDocument(["sapUiSizeCompact"]);
+	var frameLoadHandler = null;
+	var frame = {
+		contentDocument: appDocument,
+		addEventListener: function (name, handler) {
+			if (name === "load") {
+				frameLoadHandler = handler;
+			}
+		}
+	};
+	shellDocument.querySelectorAll = function (selector) {
+		return selector === "iframe" ? [frame] : [];
+	};
+	var fakeWindow = {
+		MutationObserver: function () {
+			this.observe = function () {};
+			this.disconnect = function () {};
+		},
+		addEventListener: function () {},
+		removeEventListener: function () {},
+		requestAnimationFrame: function (callback) {
+			callback();
+		},
+		setTimeout: function () {
+			return 1;
+		},
+		clearTimeout: function () {},
+		setInterval: function (callback) {
+			intervalCallback = callback;
+			return 1;
+		},
+		clearInterval: function () {}
+	};
+	shellDocument.defaultView = fakeWindow;
+	appDocument.defaultView = fakeWindow;
+
+	new Function("window", "document", injectedCode)(fakeWindow, shellDocument);
+	assert.equal(appDocument.body.hasClass("sapUiSizeCompact"), false);
+	assert.equal(appDocument.body.hasClass("sapUiSizeCozy"), true);
+	assert.equal(typeof frameLoadHandler, "function");
+	assert.equal(fakeWindow.__btbMobileDensityState.accessibleFrames, 1);
+
+	appDocument.body.classList.remove("sapUiSizeCozy");
+	appDocument.body.classList.add("sapUiSizeCompact");
+	intervalCallback();
+	assert.equal(appDocument.body.hasClass("sapUiSizeCompact"), false);
+	assert.equal(appDocument.body.hasClass("sapUiSizeCozy"), true);
+});
+
+test("auto-hides and restores the mobile Work Zone shell header", function () {
+	var injectedCode = "";
+
+	assert.equal(app.enableMobileAutoHideShell({
+		executeScript: function (details) {
+			injectedCode = details.code;
+		}
+	}), true);
+	assert.match(injectedCode, /setHeaderVisibility\(visible,true\)/);
+	assert.match(injectedCode, /getRenderer\('fiori2'\)/);
+	assert.match(injectedCode, /btb-mobile-shell-reveal/);
+	assert.match(injectedCode, /btb-mobile-shell-hidden/);
+	assert.match(injectedCode, /idleDelay=3000/);
+	assert.match(injectedCode, /clientY\)<=28/);
+	assert.match(injectedCode, /hasOpenOverlay/);
+	assert.match(injectedCode, /hashchange/);
+	assert.match(injectedCode, /visibilitychange/);
+	assert.match(injectedCode, /prefers-reduced-motion:reduce/);
+	assert.doesNotThrow(function () {
+		return new Function(injectedCode);
+	});
+});
+
+test("hides the complete standard Share button inside Work Zone", function () {
+	var injectedCode = "";
+	app.enforceMobileTouchDensity({
+		executeScript: function (details) {
+			injectedCode = details.code;
+		}
+	});
+
+	function createRootElement() {
+		var attributes = {};
+		var classes = new Set();
+		return {
+			nodeType: 1,
+			classList: {
+				contains: function (name) {
+					return classes.has(name);
+				},
+				remove: function (name) {
+					classes.delete(name);
+				},
+				add: function (name) {
+					classes.add(name);
+				}
+			},
+			getAttribute: function (name) {
+				return attributes[name];
+			},
+			setAttribute: function (name, value) {
+				attributes[name] = value;
+			}
+		};
+	}
+
+	var displayValue = "";
+	var shareAction = {
+		nodeType: 1,
+		id: "ProgramsObjectPage--fe::Share",
+		textContent: "",
+		style: {
+			setProperty: function (name, value) {
+				if (name === "display") {
+					displayValue = value;
+				}
+			}
+		},
+		getAttribute: function () {
+			return "Share";
+		},
+		setAttribute: function (name, value) {
+			this[name] = value;
+		},
+		closest: function (selector) {
+			if (selector.indexOf("data-sap-ui") >= 0) {
+				return null;
+			}
+			return {};
+		}
+	};
+	var documentElement = createRootElement();
+	var body = createRootElement();
+	var fakeDocument = {
+		documentElement: documentElement,
+		body: body,
+		hidden: false,
+		defaultView: null,
+		addEventListener: function () {},
+		querySelectorAll: function (selector) {
+			if (selector === "iframe" || selector === ".sapUiSizeCompact,.sapUiSizeCondensed") {
+				return [];
+			}
+			return [shareAction];
+		}
+	};
+	var fakeWindow = {
+		MutationObserver: function () {
+			this.observe = function () {};
+			this.disconnect = function () {};
+		},
+		addEventListener: function () {},
+		removeEventListener: function () {},
+		requestAnimationFrame: function (callback) {
+			callback();
+		},
+		setTimeout: function () {
+			return 1;
+		},
+		clearTimeout: function () {},
+		setInterval: function () {
+			return 1;
+		},
+		clearInterval: function () {}
+	};
+	fakeDocument.defaultView = fakeWindow;
+
+	new Function("window", "document", injectedCode)(fakeWindow, fakeDocument);
+	assert.equal(displayValue, "none");
+	assert.equal(shareAction["aria-hidden"], "true");
+	assert.equal(shareAction["data-btb-mobile-hidden"], "share");
+	assert.equal(shareAction.tabindex, "-1");
 });
 
 test("navigates to a Launchpad app with an in-browser transition splash", function () {
@@ -921,5 +1346,10 @@ test("declares the tracked Android widget Cordova plugin", function () {
 	assert.match(kpiWidgetLayout, /android:id="@\+id\/btb_kpi_super_chart"/);
 	assert.match(kpiWidgetProvider, /createDonut/);
 	assert.match(kpiWidgetProvider, /super_min_rating/);
+	assert.match(kpiWidgetProvider, /KEY_SUPER_UPDATED_AT/);
+	assert.match(kpiWidgetProvider, /parseSuperCount/);
+	assert.match(kpiWidgetProvider, /parseSuperProfit/);
+	assert.match(kpiWidgetProvider, /isSameLocalDay/);
+	assert.match(kpiWidgetInfo, /android:updatePeriodMillis="1800000"/);
 	assert.match(kpiWidgetProvider, /createTotoOpenIntent/);
 });

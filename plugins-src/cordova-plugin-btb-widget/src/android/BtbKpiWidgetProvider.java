@@ -19,6 +19,7 @@ import com.btb.R;
 import org.json.JSONObject;
 
 import java.math.BigDecimal;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
@@ -34,6 +35,7 @@ public class BtbKpiWidgetProvider extends AppWidgetProvider {
     private static final String KEY_SUPER_WINS = "super_wins";
     private static final String KEY_SUPER_LOSSES = "super_losses";
     private static final String KEY_SUPER_PROFIT = "super_profit";
+    private static final String KEY_SUPER_UPDATED_AT = "super_updated_at";
     private static final String KEY_UPDATED_AT = "updated_at";
 
     private static final int COLOR_SUCCESS = Color.rgb(39, 174, 96);
@@ -95,24 +97,29 @@ public class BtbKpiWidgetProvider extends AppWidgetProvider {
 
         Integer minRating = parseNonNegativeInteger(
                 payload.optString("super_min_rating", ""));
-        Integer superWins = parseNonNegativeInteger(
-                payload.optString("super_wins", ""));
-        Integer superLosses = parseNonNegativeInteger(
-                payload.optString("super_losses", ""));
-        BigDecimal superProfit = parseDecimal(
-                payload.optString("super_profit", ""));
+        boolean hasSuperThreshold =
+                minRating != null && minRating >= 1 && minRating <= 5;
+        Integer superWins = hasSuperThreshold
+                ? parseSuperCount(payload.optString("super_wins", ""))
+                : null;
+        Integer superLosses = hasSuperThreshold
+                ? parseSuperCount(payload.optString("super_losses", ""))
+                : null;
+        BigDecimal superProfit = hasSuperThreshold
+                ? parseSuperProfit(payload.optString("super_profit", ""))
+                : null;
 
-        if (minRating != null &&
-                minRating >= 1 &&
-                minRating <= 5 &&
+        if (hasSuperThreshold &&
                 superWins != null &&
                 superLosses != null &&
                 superProfit != null) {
+            long now = System.currentTimeMillis();
             editor.putBoolean(KEY_HAS_SUPER, true);
             editor.putInt(KEY_SUPER_MIN_RATING, minRating);
             editor.putInt(KEY_SUPER_WINS, superWins);
             editor.putInt(KEY_SUPER_LOSSES, superLosses);
             editor.putString(KEY_SUPER_PROFIT, superProfit.toPlainString());
+            editor.putLong(KEY_SUPER_UPDATED_AT, now);
             changed = true;
         }
 
@@ -148,7 +155,15 @@ public class BtbKpiWidgetProvider extends AppWidgetProvider {
         int superLosses = preferences.getInt(KEY_SUPER_LOSSES, 0);
         BigDecimal superProfit = parseDecimal(
                 preferences.getString(KEY_SUPER_PROFIT, ""));
+        long superUpdatedAt = preferences.getLong(KEY_SUPER_UPDATED_AT, 0);
         long updatedAt = preferences.getLong(KEY_UPDATED_AT, 0);
+
+        if (hasSuper &&
+                !isSameLocalDay(superUpdatedAt, System.currentTimeMillis())) {
+            superWins = 0;
+            superLosses = 0;
+            superProfit = BigDecimal.ZERO;
+        }
 
         RemoteViews views = new RemoteViews(
                 context.getPackageName(),
@@ -309,6 +324,31 @@ public class BtbKpiWidgetProvider extends AppWidgetProvider {
         } catch (NumberFormatException ignored) {
             return null;
         }
+    }
+
+    private static Integer parseSuperCount(String value) {
+        String text = value == null ? "" : value.trim();
+        return text.isEmpty() ? 0 : parseNonNegativeInteger(text);
+    }
+
+    private static BigDecimal parseSuperProfit(String value) {
+        String text = value == null ? "" : value.trim();
+        return text.isEmpty() ? BigDecimal.ZERO : parseDecimal(text);
+    }
+
+    private static boolean isSameLocalDay(long first, long second) {
+        if (first <= 0 || second <= 0) {
+            return false;
+        }
+
+        Calendar firstDay = Calendar.getInstance();
+        firstDay.setTimeInMillis(first);
+        Calendar secondDay = Calendar.getInstance();
+        secondDay.setTimeInMillis(second);
+        return firstDay.get(Calendar.ERA) == secondDay.get(Calendar.ERA) &&
+                firstDay.get(Calendar.YEAR) == secondDay.get(Calendar.YEAR) &&
+                firstDay.get(Calendar.DAY_OF_YEAR) ==
+                        secondDay.get(Calendar.DAY_OF_YEAR);
     }
 
     private static int dpToPx(Context context, int value) {
