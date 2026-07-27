@@ -736,6 +736,12 @@ test("injects mobile shortcuts and opens Android notification settings", functio
 			}
 		}), true);
 		assert.match(injectedCode, /btb-mobile-notification-settings/);
+		assert.match(injectedCode, /btb-mobile-refresh/);
+		assert.match(injectedCode, /btb-mobile-refresh-button/);
+		assert.match(injectedCode, /refreshLaunchpad/);
+		assert.match(injectedCode, /window\.location\.reload\(\)/);
+		assert.match(injectedCode, /syncShell\(open\)/);
+		assert.match(injectedCode, /closeQuickMenu/);
 		assert.match(injectedCode, /btb-mobile-quick-toggle/);
 		assert.match(injectedCode, /navigateLaunchpad/);
 		assert.match(injectedCode, /openBilyoner/);
@@ -1036,7 +1042,7 @@ test("keeps a newly loaded Work Zone application iframe in cozy density", functi
 	assert.equal(appDocument.body.hasClass("sapUiSizeCozy"), true);
 });
 
-test("auto-hides and restores the mobile Work Zone shell header", function () {
+test("shows the mobile Work Zone shell header only with the mascot menu", function () {
 	var injectedCode = "";
 
 	assert.equal(app.enableMobileAutoHideShell({
@@ -1046,14 +1052,18 @@ test("auto-hides and restores the mobile Work Zone shell header", function () {
 	}), true);
 	assert.match(injectedCode, /setHeaderVisibility\(visible,true\)/);
 	assert.match(injectedCode, /getRenderer\('fiori2'\)/);
-	assert.match(injectedCode, /btb-mobile-shell-reveal/);
 	assert.match(injectedCode, /btb-mobile-shell-hidden/);
-	assert.match(injectedCode, /idleDelay=3000/);
-	assert.match(injectedCode, /clientY\)<=28/);
-	assert.match(injectedCode, /hasOpenOverlay/);
+	assert.match(injectedCode, /__btbMobileSetShellVisible/);
+	assert.match(injectedCode, /__btbMobileShellRequestedVisible/);
+	assert.match(injectedCode, /classList\.contains\('btb-open'\)/);
+	assert.match(injectedCode, /setTimeout\(applyRequested,400\)/);
+	assert.match(injectedCode, /setTimeout\(applyRequested,1200\)/);
 	assert.match(injectedCode, /hashchange/);
 	assert.match(injectedCode, /visibilitychange/);
-	assert.match(injectedCode, /prefers-reduced-motion:reduce/);
+	assert.doesNotMatch(injectedCode, /idleDelay=3000/);
+	assert.doesNotMatch(injectedCode, /clientY\)<=28/);
+	assert.doesNotMatch(injectedCode, /hasOpenOverlay/);
+	assert.doesNotMatch(injectedCode, /style\.textContent='#'\+revealId/);
 	assert.doesNotThrow(function () {
 		return new Function(injectedCode);
 	});
