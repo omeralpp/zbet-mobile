@@ -54,7 +54,8 @@ Repo     : C:\dev\btb-cdoex\zbet-cap
 Branch   : main
 Upstream : origin/main
 Baseline : 2a0e2ea Preserve zero-valued daily Super KPIs
-Current  : 79a239b Add secure Mobile BFF runtime
+Runtime  : 79a239b Add secure Mobile BFF runtime
+Current  : 4fa127e Refresh CAP dependencies for secure build
 ```
 
 Beklenen kapsam:
@@ -155,6 +156,8 @@ zbet-cap:
   tests        33/33
   ESLint       passed
   cds build    passed
+  npm audit    0 vulnerabilities
+  MTA build    passed
   diff check   passed
 
 Mobile:
@@ -216,7 +219,7 @@ Kaynak commitleri:
 
 ```text
 zbet-mobile : 560995850aab2d9e8654cf1fd3cf5e4cc8a7814d
-zbet-cap    : 79a239bc5609c27d26d9db7b3e3bba56b3df60d1
+zbet-cap    : 4fa127e883d23d5446e7c39c2058a4ba037d5fb7
 ```
 
 Dış API son smoke geçti. Fiziksel cihaz bağlı olmadığı için gerçek cihaz
