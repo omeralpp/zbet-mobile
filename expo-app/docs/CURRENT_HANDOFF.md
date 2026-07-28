@@ -41,11 +41,11 @@ Repo     : C:\dev\btb-cdoex\zbet-mobile
 Branch   : master
 Upstream : origin/master
 Baseline : da8ba84 Tie mobile shell controls to mascot menu
+Code     : 5609958 Add BTB Mobile Next pilot app
 ```
 
-Beklenen kapsam: kök `.gitignore`, `README.md` ve yeni `expo-app/`. Expo
-klasörünün içinde ayrı Git deposu yoktur. Commit/push bilgisi bu task
-tamamlanırken aşağıdaki sonuç bölümüne yazılmalıdır.
+Kök `.gitignore`, `README.md` ve yeni `expo-app/` commit edildi. Expo klasörünün
+içinde ayrı Git deposu yoktur.
 
 ### zbet-cap
 
@@ -54,6 +54,7 @@ Repo     : C:\dev\btb-cdoex\zbet-cap
 Branch   : main
 Upstream : origin/main
 Baseline : 2a0e2ea Preserve zero-valued daily Super KPIs
+Current  : 79a239b Add secure Mobile BFF runtime
 ```
 
 Beklenen kapsam:
@@ -211,13 +212,16 @@ silinmez.
 
 ## Sonuç ve sonraki adım
 
-Task kapanırken şu alanları güncelle:
+Kaynak commitleri:
 
-- zbet-mobile commit/push SHA;
-- zbet-cap commit/push SHA;
-- dış API son smoke sonucu;
-- bağlı cihaz varsa gerçek cihaz sonuçları;
-- yapılmayan BTP deploy/cutover gerekçesi.
+```text
+zbet-mobile : 560995850aab2d9e8654cf1fd3cf5e4cc8a7814d
+zbet-cap    : 79a239bc5609c27d26d9db7b3e3bba56b3df60d1
+```
+
+Dış API son smoke geçti. Fiziksel cihaz bağlı olmadığı için gerçek cihaz
+sonuçları yoktur. BTP deploy ve Cordova cutover yukarıdaki güvenlik/parity
+kapıları nedeniyle yapılmadı.
 
 Bir sonraki güvenli adım: SAP'ta ayrı communication user/role oluşturmak,
 runtime secret'ını değiştirmek ve fiziksel cihaz pilotunu yürütmektir.
