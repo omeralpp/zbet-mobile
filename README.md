@@ -2,6 +2,15 @@
 
 Cordova Android shell for the BTB Launchpad / Work Zone experience.
 
+Yeni React Native + Expo + TypeScript geçiş uygulaması Cordova kaynaklarıyla
+yan yana [expo-app](expo-app/README.md) altında geliştirilmektedir. Cutover
+tamamlanana kadar bu iki uygulama ayrı package kimliğiyle birlikte korunur.
+Yeni paket; FCM veri doğrulamasını, arka plan bildirim görevini, iki Android
+widget'ını, native deep link yönlendirmesini ve uygulama içi Fiori WebView
+yüzeyini Expo/React Native yapısında karşılar. Eski widget yerleşimleri farklı
+package kimliğine otomatik taşınmadığı için `BTB Next` widget'ları yeni APK
+kurulduktan sonra launcher üzerinden bir kez eklenmelidir.
+
 ## Purpose
 
 - Open the BTB web experience inside an Android in-app browser shell.

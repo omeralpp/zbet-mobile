@@ -1,0 +1,286 @@
+import { useQuery } from "@tanstack/react-query";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { totoProgramQuery } from "@/src/api/queries";
+import { Screen } from "@/src/components/Screen";
+import { ErrorState, LoadingState } from "@/src/components/StateView";
+import { colors, radii, spacing } from "@/src/theme/theme";
+import {
+  formatPercentage,
+  formatProgramStatus
+} from "@/src/utils/format";
+
+function numberParam(value: string | string[] | undefined): number {
+  const raw = Array.isArray(value) ? value[0] : value;
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 0;
+}
+
+export default function TotoProgramDetailScreen() {
+  const params = useLocalSearchParams<{
+    gcNo?: string | string[];
+    version?: string | string[];
+  }>();
+  const router = useRouter();
+  const gcNo = numberParam(params.gcNo);
+  const version = numberParam(params.version);
+  const query = useQuery(totoProgramQuery(gcNo, version));
+
+  if (query.isLoading) {
+    return (
+      <Screen>
+        <LoadingState label="Toto programı hazırlanıyor" />
+      </Screen>
+    );
+  }
+
+  if (query.isError || !query.data) {
+    return (
+      <Screen>
+        <ErrorState
+          message={
+            query.error instanceof Error
+              ? query.error.message
+              : "Toto programı alınamadı."
+          }
+          onRetry={() => query.refetch()}
+        />
+      </Screen>
+    );
+  }
+
+  const program = query.data;
+
+  return (
+    <Screen contentStyle={styles.screen}>
+      <View style={styles.hero}>
+        <Text style={styles.eyebrow}>{program.weekText}</Text>
+        <Text style={styles.title}>Program {program.gcNo}</Text>
+        <View style={styles.statusPill}>
+          <Text style={styles.status}>
+            {formatProgramStatus(program.status)}
+          </Text>
+        </View>
+        <View style={styles.metrics}>
+          <View>
+            <Text style={styles.metricValue}>{program.columns}</Text>
+            <Text style={styles.metricLabel}>kolon</Text>
+          </View>
+          <View>
+            <Text style={styles.metricValue}>{program.cost}</Text>
+            <Text style={styles.metricLabel}>maliyet</Text>
+          </View>
+          <View>
+            <Text style={styles.metricValue}>{program.mainHits ?? "—"}</Text>
+            <Text style={styles.metricLabel}>ana isabet</Text>
+          </View>
+          <View>
+            <Text style={styles.metricValue}>
+              {program.coverageHits ?? "—"}
+            </Text>
+            <Text style={styles.metricLabel}>kapsama</Text>
+          </View>
+        </View>
+        <Text style={styles.distribution}>
+          {program.singleCount} tek · {program.doubleCount} çift ·{" "}
+          {program.tripleCount} üçlü
+        </Text>
+      </View>
+
+      <Text style={styles.sectionTitle}>Tahminler</Text>
+      {program.predictions.map((prediction) => {
+        const resultColor =
+          prediction.result === "HIT"
+            ? colors.green
+            : prediction.result === "MISS"
+              ? colors.red
+              : colors.blue;
+        return (
+          <View key={prediction.matchNo} style={styles.predictionCard}>
+            <View style={styles.matchNo}>
+              <Text style={styles.matchNoText}>{prediction.matchNo}</Text>
+            </View>
+            <View style={styles.predictionCopy}>
+              <Text numberOfLines={1} style={styles.matchName}>
+                {prediction.matchName}
+              </Text>
+              <Text style={styles.predictionMeta}>
+                Güven {formatPercentage(prediction.confidence)} · Risk{" "}
+                {prediction.riskScore.toFixed(2)}
+              </Text>
+            </View>
+            <View style={styles.pickBlock}>
+              <Text style={styles.pick}>{prediction.coverage}</Text>
+              <Text style={[styles.result, { color: resultColor }]}>
+                {prediction.result}
+              </Text>
+            </View>
+          </View>
+        );
+      })}
+
+      <Pressable
+        onPress={() =>
+          router.push({
+            pathname: "/fiori",
+            params: {
+              target: "toto",
+              gcNo: String(program.gcNo),
+              version: String(program.version)
+            }
+          })
+        }
+        style={styles.primaryAction}
+      >
+        <Text style={styles.primaryActionText}>Fiori programını aç</Text>
+      </Pressable>
+      <Text style={styles.safetyNote}>
+        Tahmin üretme, sonuç importu ve kontrollü güncelleme native preview’da
+        çalıştırılmaz.
+      </Text>
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    paddingTop: spacing.lg
+  },
+  hero: {
+    backgroundColor: colors.surface,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.xl
+  },
+  eyebrow: {
+    color: colors.green,
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 1,
+    textTransform: "uppercase"
+  },
+  title: {
+    color: colors.text,
+    fontSize: 27,
+    fontWeight: "900",
+    marginTop: spacing.sm
+  },
+  statusPill: {
+    alignSelf: "flex-start",
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: radii.round,
+    backgroundColor: colors.goldSoft
+  },
+  status: {
+    color: colors.gold,
+    fontSize: 10,
+    fontWeight: "900",
+    textTransform: "uppercase"
+  },
+  metrics: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: spacing.md,
+    marginTop: spacing.xl,
+    paddingTop: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSoft
+  },
+  metricValue: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: "900"
+  },
+  metricLabel: {
+    color: colors.textSubtle,
+    fontSize: 9,
+    marginTop: 2
+  },
+  distribution: {
+    color: colors.textMuted,
+    fontSize: 11,
+    marginTop: spacing.lg
+  },
+  sectionTitle: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: "900",
+    marginTop: spacing.xxl,
+    marginBottom: spacing.md
+  },
+  predictionCard: {
+    minHeight: 76,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    backgroundColor: colors.backgroundElevated,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm
+  },
+  matchNo: {
+    width: 38,
+    height: 38,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radii.md,
+    backgroundColor: colors.surfaceStrong
+  },
+  matchNoText: {
+    color: colors.blue,
+    fontSize: 14,
+    fontWeight: "900"
+  },
+  predictionCopy: {
+    flex: 1
+  },
+  matchName: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: "800"
+  },
+  predictionMeta: {
+    color: colors.textSubtle,
+    fontSize: 9,
+    marginTop: 4
+  },
+  pickBlock: {
+    alignItems: "flex-end"
+  },
+  pick: {
+    color: colors.gold,
+    fontSize: 16,
+    fontWeight: "900"
+  },
+  result: {
+    fontSize: 9,
+    fontWeight: "900",
+    marginTop: 3
+  },
+  primaryAction: {
+    minHeight: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radii.round,
+    backgroundColor: colors.blue,
+    marginTop: spacing.xxl
+  },
+  primaryActionText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: "900"
+  },
+  safetyNote: {
+    color: colors.textSubtle,
+    fontSize: 10,
+    lineHeight: 15,
+    textAlign: "center",
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.lg
+  }
+});

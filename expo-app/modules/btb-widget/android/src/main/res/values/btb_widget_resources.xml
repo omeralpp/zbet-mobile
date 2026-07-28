@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="btb_widget_text">#FFF4F8FC</color>
+  <color name="btb_widget_muted">#FF94A9BC</color>
+  <color name="btb_widget_subtle">#FF6E879D</color>
+  <color name="btb_widget_blue">#FF1597E5</color>
+  <color name="btb_widget_green">#FF62E66D</color>
+  <color name="btb_widget_gold">#FFF5C542</color>
+
+  <string name="btb_widget_name">BTB Next – Son Super</string>
+  <string name="btb_widget_description">Son BTB ve Super bildirimini ana ekranda gösterir.</string>
+  <string name="btb_widget_default_title">BTB Mobile Next</string>
+  <string name="btb_widget_default_body">Son Super bildirimi burada görünecek.</string>
+  <string name="btb_widget_open">BTB</string>
+  <string name="btb_widget_super_log">Super</string>
+  <string name="btb_widget_toto">Toto</string>
+  <string name="btb_widget_ready">Hazır</string>
+  <string name="btb_widget_updated">Güncellendi %1$s</string>
+
+  <string name="btb_kpi_widget_name">BTB Next – Performans</string>
+  <string name="btb_kpi_widget_description">Toto kapsam ve Super profit KPI değerlerini gösterir.</string>
+  <string name="btb_kpi_widget_title">BTB Performans</string>
+  <string name="btb_kpi_toto_title">Toto kapsamı</string>
+  <string name="btb_kpi_super_title">Super profit</string>
+  <string name="btb_kpi_waiting">Veri bekleniyor</string>
+</resources>

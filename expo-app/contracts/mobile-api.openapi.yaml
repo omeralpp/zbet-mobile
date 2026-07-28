@@ -1,0 +1,415 @@
+openapi: 3.1.0
+info:
+  title: BTB Mobile API
+  version: 0.1.0
+  description: >-
+    Read-only-first contract between BTB Mobile Next and the dedicated mobile
+    BFF. SAP OData names and credentials are intentionally not exposed.
+servers:
+  - url: https://mobile-api.example.invalid
+security:
+  - mobileOAuth:
+      - mobile.read
+paths:
+  /v1/dashboard:
+    get:
+      operationId: getDashboard
+      responses:
+        "200":
+          description: Mobile dashboard snapshot.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+        default:
+          $ref: "#/components/responses/Error"
+  /v1/btb/matches:
+    get:
+      operationId: getMatches
+      responses:
+        "200":
+          description: Current BTB match state.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MatchSummary"
+        default:
+          $ref: "#/components/responses/Error"
+  /v1/btb/matches/{key}:
+    get:
+      operationId: getMatch
+      parameters:
+        - $ref: "#/components/parameters/Key"
+      responses:
+        "200":
+          description: Current match detail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchDetail"
+        default:
+          $ref: "#/components/responses/Error"
+  /v1/super/logs:
+    get:
+      operationId: getSuperLogs
+      responses:
+        "200":
+          description: Historical Super decisions.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SuperLog"
+        default:
+          $ref: "#/components/responses/Error"
+  /v1/toto/programs:
+    get:
+      operationId: getTotoPrograms
+      responses:
+        "200":
+          description: Toto-native program summaries and predictions.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TotoProgram"
+        default:
+          $ref: "#/components/responses/Error"
+  /v1/toto/programs/{gcNo}/{version}:
+    get:
+      operationId: getTotoProgram
+      parameters:
+        - name: gcNo
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Exact Toto program version.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TotoProgram"
+        default:
+          $ref: "#/components/responses/Error"
+  /v1/devices:
+    post:
+      operationId: registerDevice
+      security:
+        - mobileOAuth:
+            - mobile.device.write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [token, platform]
+              properties:
+                token:
+                  type: string
+                  minLength: 1
+                platform:
+                  type: string
+                  enum: [android, ios]
+      responses:
+        "200":
+          description: Stable empty acknowledgement.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+        default:
+          $ref: "#/components/responses/Error"
+components:
+  securitySchemes:
+    mobileOAuth:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://identity.example.invalid/oauth2/authorize
+          tokenUrl: https://identity.example.invalid/oauth2/token
+          scopes:
+            mobile.read: Read BTB, Super and Toto mobile projections.
+            mobile.device.write: Register or update this user's device token.
+  parameters:
+    Key:
+      name: key
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+  responses:
+    Error:
+      description: Bounded API error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+  schemas:
+    ApiError:
+      type: object
+      additionalProperties: false
+      required: [message]
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+        correlationId:
+          type: string
+    MatchStatus:
+      type: string
+      enum: [LIVE, HALF_TIME, NOT_STARTED, FINISHED]
+    MatchSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - key
+        - id
+        - matchDate
+        - matchTime
+        - league
+        - homeTeam
+        - awayTeam
+        - homeScore
+        - awayScore
+        - elapsed
+        - status
+        - selectedOdd
+        - rating
+        - liveRate
+        - currentRate
+        - pressureDiff
+        - totalPressure
+        - lastUpdatedAt
+      properties:
+        key: { type: string, minLength: 1 }
+        id: { type: integer, minimum: 1 }
+        matchDate: { type: string, minLength: 1 }
+        matchTime: { type: string, minLength: 1 }
+        league: { type: string, minLength: 1 }
+        homeTeam: { type: string, minLength: 1 }
+        awayTeam: { type: string, minLength: 1 }
+        homeScore: { type: integer, minimum: 0 }
+        awayScore: { type: integer, minimum: 0 }
+        elapsed: { type: integer, minimum: 0 }
+        status: { $ref: "#/components/schemas/MatchStatus" }
+        selectedOdd: { type: string }
+        rating: { type: integer, minimum: 0, maximum: 5 }
+        liveRate:
+          type: [number, "null"]
+        currentRate:
+          type: [number, "null"]
+        pressureDiff: { type: number }
+        totalPressure: { type: number }
+        lastUpdatedAt: { type: string, format: date-time }
+    MatchDetail:
+      allOf:
+        - $ref: "#/components/schemas/MatchSummary"
+        - type: object
+          required:
+            - homeBallPossession
+            - awayBallPossession
+            - homeShotsOnTarget
+            - awayShotsOnTarget
+            - homeDangerousAttacks
+            - awayDangerousAttacks
+            - homeCorners
+            - awayCorners
+            - homeRedCards
+            - awayRedCards
+            - scoreDistribution
+          properties:
+            homeBallPossession:
+              type: number
+              minimum: 0
+              maximum: 100
+            awayBallPossession:
+              type: number
+              minimum: 0
+              maximum: 100
+            homeShotsOnTarget: { type: integer, minimum: 0 }
+            awayShotsOnTarget: { type: integer, minimum: 0 }
+            homeDangerousAttacks: { type: integer, minimum: 0 }
+            awayDangerousAttacks: { type: integer, minimum: 0 }
+            homeCorners: { type: integer, minimum: 0 }
+            awayCorners: { type: integer, minimum: 0 }
+            homeRedCards: { type: integer, minimum: 0 }
+            awayRedCards: { type: integer, minimum: 0 }
+            scoreDistribution:
+              type: array
+              items:
+                $ref: "#/components/schemas/ScoreDistribution"
+      unevaluatedProperties: false
+    ScoreDistribution:
+      type: object
+      additionalProperties: false
+      required: [score, probability]
+      properties:
+        score: { type: string, minLength: 1 }
+        probability:
+          type: number
+          minimum: 0
+          maximum: 1
+    SuperLog:
+      type: object
+      additionalProperties: false
+      required:
+        - key
+        - matchKey
+        - matchName
+        - createdAt
+        - elapsed
+        - selectedOdd
+        - rating
+        - reason
+        - liveRate
+        - currentRate
+        - result
+        - profit
+        - finalScore
+        - pressureAdjustment
+        - stateAdjustment
+      properties:
+        key: { type: string, minLength: 1 }
+        matchKey: { type: string, minLength: 1 }
+        matchName: { type: string, minLength: 1 }
+        createdAt: { type: string, format: date-time }
+        elapsed: { type: integer, minimum: 0 }
+        selectedOdd: { type: string, minLength: 1 }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        reason: { type: string, minLength: 1 }
+        liveRate:
+          type: [number, "null"]
+        currentRate:
+          type: [number, "null"]
+        result:
+          type: string
+          enum: [OPEN, WON, LOST, VOID]
+        profit:
+          type: [number, "null"]
+        finalScore: { type: string }
+        pressureAdjustment: { type: number }
+        stateAdjustment: { type: number }
+    TotoPrediction:
+      type: object
+      additionalProperties: false
+      required:
+        - matchNo
+        - matchName
+        - mainPick
+        - coverage
+        - confidence
+        - riskScore
+        - result
+      properties:
+        matchNo: { type: integer, minimum: 1 }
+        matchName: { type: string, minLength: 1 }
+        mainPick:
+          type: string
+          enum: ["1", X, "2"]
+        coverage: { type: string, minLength: 1 }
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        riskScore: { type: number, minimum: 0 }
+        result:
+          type: string
+          enum: [OPEN, HIT, MISS]
+    TotoProgram:
+      type: object
+      additionalProperties: false
+      required:
+        - key
+        - gcNo
+        - version
+        - weekText
+        - status
+        - modelVersion
+        - columns
+        - cost
+        - maxColumns
+        - singleCount
+        - doubleCount
+        - tripleCount
+        - mainHits
+        - coverageHits
+        - predictions
+        - updatedAt
+      properties:
+        key: { type: string, minLength: 1 }
+        gcNo: { type: integer, minimum: 1 }
+        version: { type: integer, minimum: 1 }
+        weekText: { type: string, minLength: 1 }
+        status:
+          type: string
+          enum: [ACTIVE, WAITING_RESULT, RESULTED, ERROR]
+        modelVersion: { type: string, minLength: 1 }
+        columns: { type: integer, minimum: 0 }
+        cost: { type: number, minimum: 0 }
+        maxColumns: { type: integer, minimum: 1 }
+        singleCount: { type: integer, minimum: 0 }
+        doubleCount: { type: integer, minimum: 0 }
+        tripleCount: { type: integer, minimum: 0 }
+        mainHits:
+          type: [integer, "null"]
+          minimum: 0
+        coverageHits:
+          type: [integer, "null"]
+          minimum: 0
+        predictions:
+          type: array
+          items:
+            $ref: "#/components/schemas/TotoPrediction"
+        updatedAt: { type: string, format: date-time }
+    Dashboard:
+      type: object
+      additionalProperties: false
+      required:
+        - generatedAt
+        - liveMatchCount
+        - highStarLiveCount
+        - todaySuperWon
+        - todaySuperLost
+        - todaySuperProfit
+        - latestTotoProgram
+        - featuredMatches
+        - recentSuper
+      properties:
+        generatedAt: { type: string, format: date-time }
+        liveMatchCount: { type: integer, minimum: 0 }
+        highStarLiveCount: { type: integer, minimum: 0 }
+        todaySuperWon: { type: integer, minimum: 0 }
+        todaySuperLost: { type: integer, minimum: 0 }
+        todaySuperProfit: { type: number }
+        latestTotoProgram:
+          oneOf:
+            - $ref: "#/components/schemas/TotoProgram"
+            - type: "null"
+        featuredMatches:
+          type: array
+          maxItems: 5
+          items:
+            $ref: "#/components/schemas/MatchSummary"
+        recentSuper:
+          type: array
+          maxItems: 5
+          items:
+            $ref: "#/components/schemas/SuperLog"
