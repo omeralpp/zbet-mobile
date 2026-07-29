@@ -25,10 +25,11 @@ Aktif akış:
 
 ```text
 Expo Mobile Next
-  -> SAP Identity Service public client / Authorization Code + PKCE
+  -> X-BTB-Pilot-Key (direct open; no user login)
   -> https://api.surklase.com
   -> Cloudflare Tunnel
   -> 127.0.0.1:4004 Mobile BFF
+  -> server-side SAP developer technical user
   -> sabit read-only SAP OData allowlist
 ```
 
@@ -42,7 +43,7 @@ Branch   : master
 Upstream : origin/master
 Baseline : da8ba84 Tie mobile shell controls to mascot menu
 Code     : 5609958 Add BTB Mobile Next pilot app
-Current  : 60cf0fb Keep Android OAuth browser open on OEM devices
+Current  : e12fe2e Open Mobile pilot without interactive login
 ```
 
 Kök `.gitignore`, `README.md` ve yeni `expo-app/` commit edildi. Expo klasörünün
@@ -56,7 +57,7 @@ Branch   : main
 Upstream : origin/main
 Baseline : 2a0e2ea Preserve zero-valued daily Super KPIs
 Runtime  : 79a239b Add secure Mobile BFF runtime
-Current  : 68db2ab Fix Mobile OAuth callback bridge
+Current  : 255a9a0 Add direct-open Mobile pilot access
 ```
 
 Beklenen kapsam:
@@ -100,22 +101,19 @@ Canlı SAP `$metadata` kontrolünde provider'ın kullandığı 83 alanın tamam�
 bulundu. Main, Super, Toto, dashboard ve iki maç detayı varyantı Mobile Zod
 contract'larından geçti.
 
-## Kimlik, Firebase ve Cloudflare
+## Erişim, Firebase ve Cloudflare
 
-Identity:
+Direct-open pilot:
 
-- servis: `btb-mobile-identity`;
-- public native client, PKCE S256 ve refresh token;
-- redirect: `https://api.surklase.com/auth/callback`;
-- RFC 9207 `iss` exact IAS issuer doğrulamasından sonra native dönüş
-  `btbmobile://auth` ile tamamlanır;
-- istemci aynı PKCE isteğinde doğrulanmış HTTPS App Link'i ve native köprü
-  dönüşünü birlikte dinler; Android App State/callback yarışı için sınırlı
-  bekleme uygular ve beklenmeyen callback URL'lerini reddeder;
-- Xiaomi/MIUI dahil OEM'lerde Custom Tab'i anında kapatılmış sayabilen Expo
-  proxy activity devre dışıdır; Android tarayıcı doğrudan açılır;
-- user token kabul edilir, client-credentials token reddedilir;
-- APK'da client secret yoktur.
+- uygulama IAS/BTP giriş ekranı göstermeden doğrudan açılır;
+- her `/v1` isteği rotatable `X-BTB-Pilot-Key` taşır;
+- BFF yalnız anahtarın SHA-256 özetini Windows User environment'ta tutar;
+- eksik/yanlış anahtar `401`, doğru anahtar sabit read-only rotalarda `200`;
+- SAP `developer` kullanıcı adı/parolası yalnız BFF runtime'ındadır;
+- APK'da SAP parolası, Identity client secret veya Firebase service-account
+  anahtarı yoktur;
+- OAuth/PKCE fallback kaynakta korunur ancak direct-open pilot APK'da Identity
+  endpointi ve OAuth App Link intent filter'ı paketlenmez.
 
 Firebase:
 
@@ -144,7 +142,8 @@ korundu. Dış doğrulama:
 - `/auth/callback` readiness → 200;
 - geçerli callback → 302 `btbmobile://auth`;
 - eksik veya beklenmeyen issuer callback → 400;
-- `/v1/dashboard` tokensız → 401;
+- `/v1/dashboard` anahtarsız/yanlış anahtarla → 401;
+- `/v1/dashboard`, BTB, Super ve Toto doğru pilot anahtarıyla → 200;
 - response server → Cloudflare.
 
 ## Yerel runtime
@@ -163,15 +162,15 @@ korundu. Dış doğrulama:
 
 ```text
 zbet-cap:
-  tests        35/35
+  tests        37/37
   ESLint       passed
   cds build    passed
   npm audit    0 vulnerabilities
-  MTA build    passed
+  MTA build    previous baseline passed; current mbt CLI unavailable
   diff check   passed
 
 Mobile:
-  tests        33/33
+  tests        35/35
   TypeScript   passed
   ESLint       passed
   Expo Doctor  20/20
@@ -179,8 +178,9 @@ Mobile:
   arm64 debug native build passed
   arm64 standalone pilot-release build passed
   Android 15 x86_64 emulator build/install passed
-  App Link domain verification passed
-  IAS authorize Custom Tab 30-second hold + BFF callback + retry passed
+  OAuth App Link absent from direct-open APK
+  IAS endpoint absent from direct-open APK
+  direct-open live dashboard and SAP data passed
 ```
 
 `npm audit --omit=dev` sonucu `0 high`, `0 critical`, `11 moderate` oldu. Kalan
@@ -196,12 +196,12 @@ C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\
 ```
 
 APK `com.btb.mobile.next` paketidir, release JS bundle'ı içerir, mock kapalıdır,
-gerçek API/IAS endpointlerini taşır ve mevcut pilot debug sertifikasıyla
-imzalıdır.
+gerçek API ve rotatable pilot erişimini taşır, IAS endpointi taşımaz ve mevcut
+pilot debug sertifikasıyla imzalıdır.
 
 ```text
-Boyut   : 48,460,215 bytes
-SHA-256 : BB4232E6C046A2DC967B2E57F772D9043303E7776BAC27472A7439D59493293A
+Boyut   : 48,460,415 bytes
+SHA-256 : 8D51B2020384AA08A85CCF4D0AB0B47873DB7A08029B9A0DEE1511CF3B5E75D4
 ```
 
 ## Açık zorunlu kapılar
@@ -212,14 +212,10 @@ SHA-256 : BB4232E6C046A2DC967B2E57F772D9043303E7776BAC27472A7439D59493293A
    kullanır. Cordova cutover öncesi
    `ZBET_CDS_005_CDS`, `ZBET_UI_SUPER_LOG_SB` ve `ZBET_SB_TOTO_UI` ile sınırlı
    communication user zorunludur.
-2. Android 15 emülatörde kurulum, IAS authorize başlangıcı, verified App Link,
-   PKCE state ve BFF native callback dönüşü doğrulandı. Proxy activity olmadan
-   IAS Custom Tab 30 saniye açık kaldı, erken `Giriş tamamlanmadı` hatası
-   oluşmadı; sahte kod güvenli ve görünür `invalid_grant` mesajına ulaştı ve
-   ikinci giriş yeni PKCE state ile açıldı. Fiziksel cihaz ADB'ye bağlı olmadığı
-   için geçerli kullanıcıyla tam token/refresh, canlı veri, notification,
-   widget, Fiori, geri tuşu, offline ve host restart testleri final APK ile
-   cihazda tamamlanmalıdır.
+2. Android 15 emülatörde direct-open kurulum ve canlı dashboard/SAP verisi
+   doğrulandı. Fiziksel cihaz ADB'ye bağlı olmadığı için notification, widget,
+   Fiori, geri tuşu, offline ve host restart testleri final APK ile cihazda
+   tamamlanmalıdır.
 3. Pilot APK debug sertifikalıdır. Store/production release signing anahtarı
    seçilmeli, yedeklenmeli ve kurtarma sahipliği belirlenmelidir.
 4. Cordova'nın kaldırılması/devre dışı bırakılması için destek ve rollback
@@ -237,13 +233,13 @@ silinmez.
 Kaynak commitleri:
 
 ```text
-zbet-mobile : 60cf0fbc65829420dda2874c5ff37e4d63a4edb0
-zbet-cap    : 68db2ab26fc31f474a0d307fb284888c223ad1a7
+zbet-mobile : e12fe2e7f9959ac31434ea13612eac299e63d745
+zbet-cap    : 255a9a0a50547a9ad09fb517ee3cc2c88ef44e2a
 ```
 
-Dış API ve emülatör OAuth callback smoke geçti. Fiziksel cihaz post-fix tam
-oturum sonuçları henüz yoktur. BTP deploy ve Cordova cutover yukarıdaki
-güvenlik/parity kapıları nedeniyle yapılmadı.
+Dış API anahtar kapısı ve emülatör direct-open canlı veri smoke geçti. BTP
+deploy ve Cordova cutover yukarıdaki güvenlik/parity kapıları nedeniyle
+yapılmadı.
 
-Bir sonraki güvenli adım: SAP'ta ayrı communication user/role oluşturmak,
-runtime secret'ını değiştirmek ve fiziksel cihaz pilotunu yürütmektir.
+Bir sonraki güvenli adım: yeni APK'yı fiziksel cihazda doğrulamak, SAP'ta ayrı
+communication user/role oluşturmak ve pilot anahtarını düzenli döndürmektir.
