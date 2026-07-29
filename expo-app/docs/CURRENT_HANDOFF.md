@@ -46,11 +46,12 @@ anahtarlı dashboard `200` smoke testi geçti.
 ## Repo checkpoint
 
 ```text
-zbet-mobile  master  618702e  origin/master ile hizalı, Mobile cutover değişiklikleri uncommitted
-zbet-cap     main    255a9a0  origin/main ile hizalı, BFF değişiklikleri uncommitted
+zbet-mobile  master  074d807  origin/master'a push edildi (Mobile cutover implementation)
+zbet-cap     main    165809c  origin/main'e push edildi (Mobile BFF)
 ```
 
-Mevcut kullanıcı değişiklikleri korundu. Stash/revert, commit veya push
+Mevcut kullanıcı değişiklikleri korundu. `btb-codex` çalışma ağacındaki önceden
+var olan kullanıcı değişiklikleri bu commitlere alınmadı. Stash/revert
 yapılmadı.
 
 ## Son cutover sonucu
