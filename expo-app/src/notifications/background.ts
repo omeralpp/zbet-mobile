@@ -4,6 +4,8 @@ import * as TaskManager from "expo-task-manager";
 import { extractRemoteNotificationData } from "./background-data";
 import { notificationChannels } from "./register";
 import { updateWidgetsFromData } from "@/src/widgets/btb-widget";
+import { hasPerformanceWidgetData } from "@/src/widgets/performance-widget-data";
+import { refreshPerformanceWidgetFromApi } from "@/src/widgets/performance-widget";
 import type { WidgetInputData } from "@/src/widgets/widget-payload";
 
 export const backgroundNotificationTask =
@@ -62,6 +64,26 @@ async function presentAndroidNotification(
   return true;
 }
 
+export async function syncWidgetsAfterNotification(
+  data: WidgetInputData
+): Promise<boolean> {
+  const notificationUpdated = await updateWidgetsFromData(data);
+  if (hasPerformanceWidgetData(data)) {
+    return notificationUpdated;
+  }
+
+  try {
+    const performanceUpdated = await refreshPerformanceWidgetFromApi();
+    return notificationUpdated || performanceUpdated;
+  } catch (error: unknown) {
+    console.warn(
+      "Performans widgetı canlı özetle yenilenemedi.",
+      error
+    );
+    return notificationUpdated;
+  }
+}
+
 if (!TaskManager.isTaskDefined(backgroundNotificationTask)) {
   TaskManager.defineTask<Notifications.NotificationTaskPayload>(
     backgroundNotificationTask,
@@ -77,7 +99,7 @@ if (!TaskManager.isTaskDefined(backgroundNotificationTask)) {
 
       try {
         const [widgetUpdated, notificationPresented] = await Promise.all([
-          updateWidgetsFromData(remoteData),
+          syncWidgetsAfterNotification(remoteData),
           presentAndroidNotification(remoteData)
         ]);
         return widgetUpdated || notificationPresented

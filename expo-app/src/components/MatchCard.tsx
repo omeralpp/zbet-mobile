@@ -1,12 +1,18 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { MatchSummary } from "@/src/api/schemas";
 import { colors, radii, shadows, spacing } from "@/src/theme/theme";
-import { formatElapsed, formatRate } from "@/src/utils/format";
+import {
+  formatElapsed,
+  formatFixtureDateTime,
+  formatRate,
+  formatSigned
+} from "@/src/utils/format";
 import { RatingStars } from "./RatingStars";
 
 export function MatchCard({ match }: { match: MatchSummary }) {
+  const pathname = usePathname();
   const router = useRouter();
   const live = match.status === "LIVE" || match.status === "HALF_TIME";
 
@@ -15,7 +21,13 @@ export function MatchCard({ match }: { match: MatchSummary }) {
       accessibilityHint="Maç detayını açar"
       accessibilityRole="button"
       onPress={() =>
-        router.push(`/match/${encodeURIComponent(match.key)}` as never)
+        router.push({
+          pathname: "/match/[key]",
+          params: {
+            key: match.key,
+            from: pathname
+          }
+        } as never)
       }
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
@@ -26,7 +38,10 @@ export function MatchCard({ match }: { match: MatchSummary }) {
         <View style={[styles.timePill, live && styles.livePill]}>
           {live ? <View style={styles.liveDot} /> : null}
           <Text style={[styles.timeText, live && styles.liveText]}>
-            {formatElapsed(match.status, match.elapsed)}
+            {formatFixtureDateTime(match.matchDate, match.matchTime)}
+            {live || match.status === "FINISHED"
+              ? ` · ${formatElapsed(match.status, match.elapsed)}`
+              : ""}
           </Text>
         </View>
       </View>
@@ -65,17 +80,19 @@ export function MatchCard({ match }: { match: MatchSummary }) {
             name={match.pressureDiff >= 0 ? "trending-up" : "trending-down"}
             size={18}
           />
-          <Text
-            style={[
-              styles.pressure,
-              {
-                color: match.pressureDiff >= 0 ? colors.green : colors.red
-              }
-            ]}
-          >
-            {match.pressureDiff > 0 ? "+" : ""}
-            {match.pressureDiff.toFixed(1)}
-          </Text>
+          <View>
+            <Text
+              style={[
+                styles.pressure,
+                {
+                  color: match.pressureDiff >= 0 ? colors.green : colors.red
+                }
+              ]}
+            >
+              {formatSigned(match.pressureDiff, 1)}
+            </Text>
+            <Text style={styles.pressureLabel}>baskı farkı</Text>
+          </View>
         </View>
       </View>
     </Pressable>
@@ -201,5 +218,10 @@ const styles = StyleSheet.create({
   pressure: {
     fontSize: 13,
     fontWeight: "900"
+  },
+  pressureLabel: {
+    color: colors.textSubtle,
+    fontSize: 8,
+    marginTop: 1
   }
 });

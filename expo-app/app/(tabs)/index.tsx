@@ -1,7 +1,10 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import {
+  Alert,
   Image,
+  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
@@ -17,10 +20,20 @@ import { TotoProgramCard } from "@/src/components/TotoProgramCard";
 import { dashboardQuery } from "@/src/api/queries";
 import { colors, radii, spacing } from "@/src/theme/theme";
 import { formatSigned } from "@/src/utils/format";
+import { refreshPerformanceWidgetFromApi } from "@/src/widgets/performance-widget";
 
 export default function DashboardScreen() {
   const router = useRouter();
   const query = useQuery(dashboardQuery);
+
+  useEffect(() => {
+    if (!query.data) {
+      return;
+    }
+    refreshPerformanceWidgetFromApi().catch((error: unknown) => {
+      console.warn("Overview performans widgetını yenileyemedi.", error);
+    });
+  }, [query.data]);
 
   if (query.isLoading) {
     return (
@@ -63,7 +76,21 @@ export default function DashboardScreen() {
         )
       }}
     >
-      <View style={styles.hero}>
+      <Pressable
+        accessibilityHint="Uygulamanın kısa açıklamasını açar"
+        accessibilityRole="button"
+        onPress={() =>
+          Alert.alert(
+            "BTB Mobile Next",
+            "Canlı maç durumunu, BTB Super kararlarını ve Spor Toto program özetlerini tek yerde, salt okunur ve mobil odaklı sunar.",
+            [{ text: "Anladım" }]
+          )
+        }
+        style={({ pressed }) => [
+          styles.hero,
+          pressed && styles.pressed
+        ]}
+      >
         <Image
           resizeMode="contain"
           source={require("../../assets/icon.png")}
@@ -76,7 +103,7 @@ export default function DashboardScreen() {
             BTB, Super ve Toto sinyalleri tek mobil akışta.
           </Text>
         </View>
-      </View>
+      </Pressable>
 
       <View style={styles.metrics}>
         <MetricCard
@@ -84,6 +111,12 @@ export default function DashboardScreen() {
           detail="aktif takip"
           icon="access-point"
           label="Canlı maç"
+          onPress={() =>
+            router.push({
+              pathname: "/live",
+              params: { filter: "LIVE" }
+            } as never)
+          }
           value={String(dashboard.liveMatchCount)}
         />
         <MetricCard
@@ -91,6 +124,12 @@ export default function DashboardScreen() {
           detail="rating 3 ve üzeri"
           icon="star-four-points-outline"
           label="Yüksek yıldız"
+          onPress={() =>
+            router.push({
+              pathname: "/live",
+              params: { filter: "HIGH_STAR" }
+            } as never)
+          }
           value={String(dashboard.highStarLiveCount)}
         />
         <MetricCard
@@ -98,6 +137,12 @@ export default function DashboardScreen() {
           detail={`${dashboard.todaySuperWon} kazandı · ${dashboard.todaySuperLost} kaybetti`}
           icon="chart-line"
           label="Günlük Super"
+          onPress={() =>
+            router.push({
+              pathname: "/super",
+              params: { scope: "LATEST_DAY" }
+            } as never)
+          }
           value={formatSigned(dashboard.todaySuperProfit)}
         />
       </View>
@@ -113,7 +158,7 @@ export default function DashboardScreen() {
       ))}
 
       <SectionHeader
-        actionLabel="Super Log"
+        actionLabel="Tüm kararlar"
         caption="En yeni kararlar"
         onAction={() => router.push("/super" as never)}
         title="Son Super hareketleri"
@@ -139,7 +184,7 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    paddingTop: spacing.lg
+    paddingTop: 72
   },
   hero: {
     minHeight: 170,
@@ -151,6 +196,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     overflow: "hidden"
+  },
+  pressed: {
+    opacity: 0.82
   },
   logo: {
     width: 92,

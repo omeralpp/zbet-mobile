@@ -9,13 +9,16 @@ import {
 import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import { AppState, Platform, type AppStateStatus } from "react-native";
-import { ensureBackgroundNotificationTask } from "@/src/notifications/background";
+import {
+  ensureBackgroundNotificationTask,
+  syncWidgetsAfterNotification
+} from "@/src/notifications/background";
 import { notificationDataToPath } from "@/src/notifications/routing";
 import {
   ensureNotificationChannels,
   restorePushRegistration
 } from "@/src/notifications/register";
-import { updateWidgetsFromData } from "@/src/widgets/btb-widget";
+import { refreshPerformanceWidgetFromApi } from "@/src/widgets/performance-widget";
 import { AuthProvider } from "@/src/auth/AuthProvider";
 
 Notifications.setNotificationHandler({
@@ -54,6 +57,14 @@ export function AppProviders({ children }: PropsWithChildren) {
       (status: AppStateStatus) => {
         if (Platform.OS !== "web") {
           focusManager.setFocused(status === "active");
+          if (status === "active") {
+            refreshPerformanceWidgetFromApi().catch((error: unknown) => {
+              console.warn(
+                "Performans widgetı uygulama dönüşünde yenilenemedi.",
+                error
+              );
+            });
+          }
         }
       }
     );
@@ -67,7 +78,8 @@ export function AppProviders({ children }: PropsWithChildren) {
     Promise.all([
       ensureNotificationChannels(),
       ensureBackgroundNotificationTask(),
-      restorePushRegistration()
+      restorePushRegistration(),
+      refreshPerformanceWidgetFromApi()
     ]).catch((error: unknown) => {
       console.warn("Bildirim çalışma zamanı hazırlanamadı.", error);
     });
@@ -79,7 +91,7 @@ export function AppProviders({ children }: PropsWithChildren) {
           return;
         }
 
-        updateWidgetsFromData(data).catch((error: unknown) => {
+        syncWidgetsAfterNotification(data).catch((error: unknown) => {
           console.warn("Foreground widget güncellemesi tamamlanamadı.", error);
         });
       });

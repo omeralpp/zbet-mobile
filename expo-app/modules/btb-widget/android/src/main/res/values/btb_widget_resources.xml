@@ -9,6 +9,7 @@
 
   <string name="btb_widget_name">BTB Next – Son Super</string>
   <string name="btb_widget_description">Son BTB ve Super bildirimini ana ekranda gösterir.</string>
+  <string name="btb_widget_app_icon">BTB Mobile Next ikonu</string>
   <string name="btb_widget_default_title">BTB Mobile Next</string>
   <string name="btb_widget_default_body">Son Super bildirimi burada görünecek.</string>
   <string name="btb_widget_open">BTB</string>

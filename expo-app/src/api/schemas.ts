@@ -37,14 +37,22 @@ export const scoreDistributionSchema = z.strictObject({
 });
 
 export const matchDetailSchema = matchSummarySchema.extend({
+  decisionMinute: z.number().int().nonnegative().nullable(),
+  decisionReason: z.string(),
+  decisionScore: finiteNumber.nullable(),
+  decisionConfidence: finiteNumber.min(0).max(1).nullable(),
   homeBallPossession: finiteNumber.min(0).max(100),
   awayBallPossession: finiteNumber.min(0).max(100),
+  homeTotalShots: z.number().int().nonnegative(),
+  awayTotalShots: z.number().int().nonnegative(),
   homeShotsOnTarget: z.number().int().nonnegative(),
   awayShotsOnTarget: z.number().int().nonnegative(),
-  homeDangerousAttacks: z.number().int().nonnegative(),
-  awayDangerousAttacks: z.number().int().nonnegative(),
+  homeXg: finiteNumber.nonnegative(),
+  awayXg: finiteNumber.nonnegative(),
   homeCorners: z.number().int().nonnegative(),
   awayCorners: z.number().int().nonnegative(),
+  homeYellowCards: z.number().int().nonnegative(),
+  awayYellowCards: z.number().int().nonnegative(),
   homeRedCards: z.number().int().nonnegative(),
   awayRedCards: z.number().int().nonnegative(),
   scoreDistribution: z.array(scoreDistributionSchema)
@@ -68,14 +76,21 @@ export const superLogSchema = z.strictObject({
   stateAdjustment: finiteNumber
 });
 
-export const totoPredictionSchema = z.strictObject({
+export const totoFixtureSchema = z.strictObject({
   matchNo: z.number().int().positive(),
   matchName: z.string().min(1),
+  matchDate: z.string(),
+  matchTime: z.string(),
+  eventId: z.number().int().positive().nullable(),
+  actualResult: z.enum(["1", "X", "2"]).nullable()
+});
+
+export const totoPredictionSchema = totoFixtureSchema.extend({
   mainPick: z.enum(["1", "X", "2"]),
   coverage: z.string().min(1),
   confidence: finiteNumber.min(0).max(1),
   riskScore: finiteNumber.min(0),
-  result: z.enum(["OPEN", "HIT", "MISS"])
+  result: z.enum(["OPEN", "MAIN_HIT", "COVERED", "MISS"])
 });
 
 export const totoProgramSchema = z.strictObject({
@@ -84,7 +99,7 @@ export const totoProgramSchema = z.strictObject({
   version: z.number().int().positive(),
   weekText: z.string().min(1),
   status: z.enum(["ACTIVE", "WAITING_RESULT", "RESULTED", "ERROR"]),
-  modelVersion: z.string().min(1),
+  modelVersion: z.string(),
   columns: z.number().int().nonnegative(),
   cost: finiteNumber.nonnegative(),
   maxColumns: z.number().int().positive(),
@@ -93,6 +108,7 @@ export const totoProgramSchema = z.strictObject({
   tripleCount: z.number().int().nonnegative(),
   mainHits: z.number().int().nonnegative().nullable(),
   coverageHits: z.number().int().nonnegative().nullable(),
+  fixtures: z.array(totoFixtureSchema),
   predictions: z.array(totoPredictionSchema),
   updatedAt: isoDateTime
 });
@@ -104,6 +120,9 @@ export const dashboardSchema = z.strictObject({
   todaySuperWon: z.number().int().nonnegative(),
   todaySuperLost: z.number().int().nonnegative(),
   todaySuperProfit: finiteNumber,
+  todayHighStarSuperWon: z.number().int().nonnegative(),
+  todayHighStarSuperLost: z.number().int().nonnegative(),
+  todayHighStarSuperProfit: finiteNumber,
   latestTotoProgram: totoProgramSchema.nullable(),
   featuredMatches: z.array(matchSummarySchema).max(5),
   recentSuper: z.array(superLogSchema).max(5)
@@ -118,5 +137,6 @@ export type MatchSummary = z.infer<typeof matchSummarySchema>;
 export type MatchDetail = z.infer<typeof matchDetailSchema>;
 export type SuperLog = z.infer<typeof superLogSchema>;
 export type TotoProgram = z.infer<typeof totoProgramSchema>;
+export type TotoFixture = z.infer<typeof totoFixtureSchema>;
 export type TotoPrediction = z.infer<typeof totoPredictionSchema>;
 export type Dashboard = z.infer<typeof dashboardSchema>;

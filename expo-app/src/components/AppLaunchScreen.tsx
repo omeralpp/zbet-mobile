@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   Animated,
+  Easing,
   Image,
   StyleSheet,
   Text,
   View,
   type LayoutChangeEvent
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radii, spacing } from "@/src/theme/theme";
 
 type AppLaunchScreenProps = {
@@ -23,9 +26,55 @@ export function AppLaunchScreen({
   onComplete,
   onLayout
 }: AppLaunchScreenProps) {
+  const insets = useSafeAreaInsets();
   const [progress] = useState(() => new Animated.Value(0.08));
+  const [ballY] = useState(() => new Animated.Value(-260));
+  const [ballOpacity] = useState(() => new Animated.Value(1));
+  const [ballScale] = useState(() => new Animated.Value(1));
+  const [ballRotation] = useState(() => new Animated.Value(0));
   const [minimumDisplayElapsed, setMinimumDisplayElapsed] =
     useState(false);
+
+  useEffect(() => {
+    const landing = Animated.sequence([
+      Animated.parallel([
+        Animated.timing(ballY, {
+          toValue: 86,
+          duration: 720,
+          easing: Easing.bezier(0.2, 0.72, 0.25, 1),
+          useNativeDriver: true
+        }),
+        Animated.timing(ballRotation, {
+          toValue: 1,
+          duration: 720,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true
+        })
+      ]),
+      Animated.spring(ballY, {
+        toValue: 82,
+        damping: 11,
+        stiffness: 240,
+        mass: 0.55,
+        useNativeDriver: true
+      }),
+      Animated.delay(80),
+      Animated.parallel([
+        Animated.timing(ballOpacity, {
+          toValue: 0,
+          duration: 170,
+          useNativeDriver: true
+        }),
+        Animated.timing(ballScale, {
+          toValue: 0.55,
+          duration: 170,
+          useNativeDriver: true
+        })
+      ])
+    ]);
+    landing.start();
+    return () => landing.stop();
+  }, [ballOpacity, ballRotation, ballScale, ballY]);
 
   useEffect(() => {
     const animation = Animated.timing(progress, {
@@ -71,6 +120,10 @@ export function AppLaunchScreen({
     inputRange: [0, 1],
     outputRange: ["0%", "100%"]
   });
+  const ballRotate = ballRotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["-80deg", "420deg"]
+  });
 
   return (
     <LinearGradient
@@ -81,12 +134,34 @@ export function AppLaunchScreen({
     >
       <View style={styles.glow} />
       <View style={styles.content}>
-        <Image
-          accessibilityIgnoresInvertColors
-          resizeMode="contain"
-          source={require("../../assets/icon.png")}
-          style={styles.logo}
-        />
+        <View style={styles.logoStage}>
+          <Image
+            accessibilityIgnoresInvertColors
+            resizeMode="contain"
+            source={require("../../assets/icon.png")}
+            style={styles.logo}
+          />
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.ball,
+              {
+                opacity: ballOpacity,
+                transform: [
+                  { translateY: ballY },
+                  { rotate: ballRotate },
+                  { scale: ballScale }
+                ]
+              }
+            ]}
+          >
+            <MaterialCommunityIcons
+              color={colors.white}
+              name="soccer"
+              size={30}
+            />
+          </Animated.View>
+        </View>
         <Text style={styles.brand}>BTB MOBILE</Text>
         <Text style={styles.tagline}>BETTER THAN BET</Text>
 
@@ -120,7 +195,14 @@ export function AppLaunchScreen({
           </View>
         </View>
       </View>
-      <Text style={styles.footer}>Canlı analiz • Super • Toto</Text>
+      <Text
+        style={[
+          styles.footer,
+          { bottom: Math.max(insets.bottom, spacing.lg) + spacing.md }
+        ]}
+      >
+        Canlı analiz • Super • Toto
+      </Text>
     </LinearGradient>
   );
 }
@@ -150,6 +232,23 @@ const styles = StyleSheet.create({
     width: 132,
     height: 132,
     borderRadius: 30
+  },
+  logoStage: {
+    width: 132,
+    height: 132
+  },
+  ball: {
+    position: "absolute",
+    left: 51,
+    top: 0,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "#071726",
+    shadowColor: colors.blue,
+    shadowOpacity: 0.85,
+    shadowRadius: 10,
+    elevation: 8
   },
   brand: {
     marginTop: spacing.xl,
@@ -205,7 +304,6 @@ const styles = StyleSheet.create({
   },
   footer: {
     position: "absolute",
-    bottom: 42,
     color: colors.textSubtle,
     fontSize: 11,
     fontWeight: "700",

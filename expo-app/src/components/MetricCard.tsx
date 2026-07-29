@@ -1,6 +1,11 @@
 import type { ComponentProps } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View
+} from "react-native";
 import { colors, radii, shadows, spacing } from "@/src/theme/theme";
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
@@ -11,6 +16,7 @@ type MetricCardProps = {
   value: string;
   detail?: string;
   accent?: string;
+  onPress?: () => void;
 };
 
 export function MetricCard({
@@ -18,10 +24,11 @@ export function MetricCard({
   label,
   value,
   detail,
-  accent = colors.blue
+  accent = colors.blue,
+  onPress
 }: MetricCardProps) {
-  return (
-    <View style={[styles.card, { borderTopColor: accent }]}>
+  const content = (
+    <>
       <View style={[styles.iconWrap, { backgroundColor: `${accent}1F` }]}>
         <MaterialCommunityIcons color={accent} name={icon} size={20} />
       </View>
@@ -36,7 +43,27 @@ export function MetricCard({
           {detail}
         </Text>
       ) : null}
-    </View>
+    </>
+  );
+
+  if (!onPress) {
+    return <View style={[styles.card, { borderTopColor: accent }]}>{content}</View>;
+  }
+
+  return (
+    <Pressable
+      accessibilityHint={`${label} ekranını açar`}
+      accessibilityLabel={`${label}: ${value}`}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.card,
+        { borderTopColor: accent },
+        pressed && styles.pressed
+      ]}
+    >
+      {content}
+    </Pressable>
   );
 }
 
@@ -51,6 +78,10 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     padding: spacing.lg,
     ...shadows.card
+  },
+  pressed: {
+    opacity: 0.78,
+    transform: [{ scale: 0.99 }]
   },
   iconWrap: {
     width: 36,

@@ -1,8 +1,9 @@
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { SuperLog } from "@/src/api/schemas";
 import { colors, radii, spacing } from "@/src/theme/theme";
 import {
+  formatMatchKeyDateTime,
   formatRate,
   formatSigned,
   formatSuperResult
@@ -23,6 +24,7 @@ function resultColor(result: SuperLog["result"]): string {
 }
 
 export function SuperLogCard({ log }: { log: SuperLog }) {
+  const pathname = usePathname();
   const router = useRouter();
   const color = resultColor(log.result);
 
@@ -32,7 +34,13 @@ export function SuperLogCard({ log }: { log: SuperLog }) {
       accessibilityLabel={`${log.matchName}, ${log.rating} yıldız, ${formatSuperResult(log.result)}`}
       accessibilityRole="button"
       onPress={() =>
-        router.push(`/match/${encodeURIComponent(log.matchKey)}` as never)
+        router.push({
+          pathname: "/match/[key]",
+          params: {
+            key: log.matchKey,
+            from: pathname
+          }
+        } as never)
       }
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
@@ -46,6 +54,9 @@ export function SuperLogCard({ log }: { log: SuperLog }) {
       </View>
       <Text numberOfLines={1} style={styles.match}>
         {log.matchName}
+      </Text>
+      <Text numberOfLines={1} style={styles.fixtureTime}>
+        {formatMatchKeyDateTime(log.matchKey)}
       </Text>
       <Text numberOfLines={1} style={styles.reason}>
         {log.reason}
@@ -108,6 +119,12 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 11,
     marginTop: 2
+  },
+  fixtureTime: {
+    color: colors.textSubtle,
+    fontSize: 10,
+    fontWeight: "700",
+    marginTop: 3
   },
   footer: {
     flexDirection: "row",

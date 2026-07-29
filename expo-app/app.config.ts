@@ -21,7 +21,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       "expo-notifications",
       {
-        icon: "./assets/notification-icon.png",
         color: "#1597E5",
         sounds: [
           "./assets/sounds/btb_super_goal.wav",
@@ -46,7 +45,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       backgroundColor: "#04101E"
     },
     ...(googleServicesFile ? { googleServicesFile } : {}),
-    predictiveBackGestureEnabled: true,
+    predictiveBackGestureEnabled: false,
     permissions: ["android.permission.POST_NOTIFICATIONS"],
     intentFilters: usesPilotAccess
       ? []

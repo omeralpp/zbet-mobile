@@ -1,14 +1,53 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Alert,
+  Linking,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View
+} from "react-native";
+import type { TotoPrediction } from "@/src/api/schemas";
 import { totoProgramQuery } from "@/src/api/queries";
 import { Screen } from "@/src/components/Screen";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
+import { buildBilyonerMatchUrl } from "@/src/external/bilyoner";
 import { colors, radii, spacing } from "@/src/theme/theme";
 import {
+  formatFixtureDateTime,
   formatPercentage,
   formatProgramStatus
 } from "@/src/utils/format";
+
+function predictionResultPresentation(result: TotoPrediction["result"]): {
+  color: string;
+  label: string;
+} {
+  if (result === "MAIN_HIT") {
+    return { color: colors.green, label: "ANA TAHMİN" };
+  }
+  if (result === "COVERED") {
+    return { color: colors.gold, label: "KUPONDA" };
+  }
+  if (result === "MISS") {
+    return { color: colors.red, label: "KAPSAM DIŞI" };
+  }
+  return { color: colors.blue, label: "BEKLİYOR" };
+}
+
+function openBilyoner(eventId: number | null): void {
+  if (!eventId) {
+    return;
+  }
+  Linking.openURL(buildBilyonerMatchUrl(eventId)).catch(() =>
+    Alert.alert(
+      "Bilyoner açılamadı",
+      "Bu karşılaşmanın Bilyoner sayfası şu anda açılamıyor."
+    )
+  );
+}
 
 function numberParam(value: string | string[] | undefined): number {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -50,14 +89,43 @@ export default function TotoProgramDetailScreen() {
   }
 
   const program = query.data;
+  const resultTotal = program.predictions.length || program.fixtures.length;
+  const resultedCount = program.predictions.filter(
+    (prediction) => prediction.result !== "OPEN"
+  ).length;
+  const resultProgress =
+    resultTotal > 0 ? Math.min(100, (resultedCount / resultTotal) * 100) : 0;
 
   return (
-    <Screen contentStyle={styles.screen}>
+    <Screen
+      contentStyle={styles.screen}
+      scrollProps={{
+        alwaysBounceVertical: true,
+        refreshControl: (
+          <RefreshControl
+            colors={[colors.green]}
+            onRefresh={() => query.refetch()}
+            refreshing={query.isRefetching}
+            tintColor={colors.green}
+          />
+        )
+      }}
+    >
       <View style={styles.hero}>
         <Text style={styles.eyebrow}>{program.weekText}</Text>
         <Text style={styles.title}>Program {program.gcNo}</Text>
-        <View style={styles.statusPill}>
-          <Text style={styles.status}>
+        <View
+          style={[
+            styles.statusPill,
+            program.status === "ACTIVE" && styles.statusPillActive
+          ]}
+        >
+          <Text
+            style={[
+              styles.status,
+              program.status === "ACTIVE" && styles.statusActive
+            ]}
+          >
             {formatProgramStatus(program.status)}
           </Text>
         </View>
@@ -87,16 +155,63 @@ export default function TotoProgramDetailScreen() {
         </Text>
       </View>
 
-      <Text style={styles.sectionTitle}>Tahminler</Text>
-      {program.predictions.map((prediction) => {
-        const resultColor =
-          prediction.result === "HIT"
-            ? colors.green
-            : prediction.result === "MISS"
-              ? colors.red
-              : colors.blue;
+      {resultTotal > 0 ? (
+        <View style={styles.resultProgressCard}>
+          <View style={styles.resultProgressHeader}>
+            <Text style={styles.resultProgressTitle}>Sonuçlar</Text>
+            <Text style={styles.resultProgressValue}>
+              {resultedCount}/{resultTotal}
+            </Text>
+          </View>
+          <View style={styles.resultProgressTrack}>
+            <View
+              style={[
+                styles.resultProgressFill,
+                { width: `${resultProgress}%` }
+              ]}
+            />
+          </View>
+          <View style={styles.resultLegend}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: colors.green }]} />
+              <Text style={styles.legendText}>Ana tahmin</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: colors.gold }]} />
+              <Text style={styles.legendText}>Kuponda</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: colors.red }]} />
+              <Text style={styles.legendText}>Kapsam dışı</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View
+                style={[
+                  styles.legendDot,
+                  { backgroundColor: colors.textSubtle }
+                ]}
+              />
+              <Text style={styles.legendText}>Bekliyor</Text>
+            </View>
+          </View>
+        </View>
+      ) : null}
+
+      <Text style={styles.sectionTitle}>
+        {program.predictions.length ? "Tahminler" : "Aktif fikstür"}
+      </Text>
+      {program.predictions.length ? program.predictions.map((prediction) => {
+        const presentation = predictionResultPresentation(prediction.result);
         return (
-          <View key={prediction.matchNo} style={styles.predictionCard}>
+          <Pressable
+            disabled={!prediction.eventId}
+            key={prediction.matchNo}
+            onPress={() => openBilyoner(prediction.eventId)}
+            style={({ pressed }) => [
+              styles.predictionCard,
+              pressed && styles.pressed
+            ]}
+          >
             <View style={styles.matchNo}>
               <Text style={styles.matchNoText}>{prediction.matchNo}</Text>
             </View>
@@ -105,19 +220,59 @@ export default function TotoProgramDetailScreen() {
                 {prediction.matchName}
               </Text>
               <Text style={styles.predictionMeta}>
-                Güven {formatPercentage(prediction.confidence)} · Risk{" "}
-                {prediction.riskScore.toFixed(2)}
+                {formatFixtureDateTime(
+                  prediction.matchDate,
+                  prediction.matchTime
+                )}{" "}
+                · Güven {formatPercentage(prediction.confidence)}
               </Text>
             </View>
             <View style={styles.pickBlock}>
               <Text style={styles.pick}>{prediction.coverage}</Text>
-              <Text style={[styles.result, { color: resultColor }]}>
-                {prediction.result}
+              <Text style={[styles.result, { color: presentation.color }]}>
+                {presentation.label}
+              </Text>
+              {prediction.actualResult ? (
+                <Text style={styles.actualResult}>
+                  Sonuç {prediction.actualResult}
+                </Text>
+              ) : null}
+            </View>
+          </Pressable>
+        );
+      }) : program.fixtures.length ? (
+        program.fixtures.map((fixture) => (
+          <Pressable
+            disabled={!fixture.eventId}
+            key={fixture.matchNo}
+            onPress={() => openBilyoner(fixture.eventId)}
+            style={({ pressed }) => [
+              styles.predictionCard,
+              pressed && styles.pressed
+            ]}
+          >
+            <View style={styles.matchNo}>
+              <Text style={styles.matchNoText}>{fixture.matchNo}</Text>
+            </View>
+            <View style={styles.predictionCopy}>
+              <Text numberOfLines={1} style={styles.matchName}>
+                {fixture.matchName}
+              </Text>
+              <Text style={styles.predictionMeta}>
+                {formatFixtureDateTime(
+                  fixture.matchDate,
+                  fixture.matchTime
+                )}
               </Text>
             </View>
-          </View>
-        );
-      })}
+            <Text style={styles.waitingPrediction}>Tahmin hazırlanıyor</Text>
+          </Pressable>
+        ))
+      ) : (
+        <Text style={styles.emptyFixtures}>
+          Aktif programın fikstür satırları henüz hazırlanmadı.
+        </Text>
+      )}
 
       <Pressable
         onPress={() =>
@@ -180,6 +335,12 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     textTransform: "uppercase"
   },
+  statusPillActive: {
+    backgroundColor: colors.greenSoft
+  },
+  statusActive: {
+    color: colors.green
+  },
   metrics: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -204,6 +365,61 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: spacing.lg
   },
+  resultProgressCard: {
+    backgroundColor: colors.backgroundElevated,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    marginTop: spacing.lg,
+    padding: spacing.lg
+  },
+  resultProgressHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  resultProgressTitle: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: "900"
+  },
+  resultProgressValue: {
+    color: colors.green,
+    fontSize: 14,
+    fontWeight: "900"
+  },
+  resultProgressTrack: {
+    height: 6,
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: radii.round,
+    marginTop: spacing.sm,
+    overflow: "hidden"
+  },
+  resultProgressFill: {
+    height: "100%",
+    backgroundColor: colors.green,
+    borderRadius: radii.round
+  },
+  resultLegend: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.md,
+    marginTop: spacing.md
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs
+  },
+  legendDot: {
+    width: 7,
+    height: 7,
+    borderRadius: radii.round
+  },
+  legendText: {
+    color: colors.textMuted,
+    fontSize: 10
+  },
   sectionTitle: {
     color: colors.text,
     fontSize: 18,
@@ -222,6 +438,9 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     padding: spacing.md,
     marginBottom: spacing.sm
+  },
+  pressed: {
+    opacity: 0.76
   },
   matchNo: {
     width: 38,
@@ -261,6 +480,25 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: "900",
     marginTop: 3
+  },
+  actualResult: {
+    color: colors.textSubtle,
+    fontSize: 8,
+    fontWeight: "700",
+    marginTop: 2
+  },
+  waitingPrediction: {
+    color: colors.gold,
+    maxWidth: 72,
+    textAlign: "right",
+    fontSize: 9,
+    fontWeight: "800"
+  },
+  emptyFixtures: {
+    color: colors.textMuted,
+    textAlign: "center",
+    fontSize: 12,
+    paddingVertical: spacing.xxl
   },
   primaryAction: {
     minHeight: 50,

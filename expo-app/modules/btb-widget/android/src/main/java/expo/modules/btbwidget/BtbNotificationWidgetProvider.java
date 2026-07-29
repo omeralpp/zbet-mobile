@@ -112,6 +112,9 @@ public class BtbNotificationWidgetProvider extends AppWidgetProvider {
         RemoteViews views = new RemoteViews(
                 context.getPackageName(),
                 R.layout.btb_notification_widget);
+        views.setImageViewResource(
+                R.id.btb_widget_icon,
+                context.getApplicationInfo().icon);
         views.setTextViewText(R.id.btb_widget_title, title);
         views.setTextViewText(R.id.btb_widget_body, body);
         views.setTextViewText(R.id.btb_widget_rating, getStars(rating));

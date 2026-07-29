@@ -1,10 +1,24 @@
 import { useEffect, useRef } from "react";
-import { usePathname, useRouter } from "expo-router";
+import {
+  useGlobalSearchParams,
+  usePathname,
+  useRouter
+} from "expo-router";
 import { Alert, BackHandler, Platform } from "react-native";
-import { resolveAndroidBackAction } from "./back-navigation";
+import {
+  resolveAndroidBackAction,
+  resolveAndroidFallbackPath
+} from "./back-navigation";
+
+function firstParam(value: string | string[] | undefined): string {
+  return Array.isArray(value) ? value[0] ?? "" : value ?? "";
+}
 
 export function AndroidBackGuard() {
   const pathname = usePathname();
+  const params = useGlobalSearchParams<{
+    from?: string | string[];
+  }>();
   const router = useRouter();
   const exitDialogOpen = useRef(false);
 
@@ -31,7 +45,12 @@ export function AndroidBackGuard() {
         }
 
         if (action === "home") {
-          router.replace("/");
+          router.replace(
+            resolveAndroidFallbackPath(
+              pathname,
+              firstParam(params.from)
+            )
+          );
           return true;
         }
 
@@ -73,7 +92,7 @@ export function AndroidBackGuard() {
     return () => {
       subscription.remove();
     };
-  }, [pathname, router]);
+  }, [params.from, pathname, router]);
 
   return null;
 }

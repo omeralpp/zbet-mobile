@@ -41,7 +41,6 @@ function RootNavigator() {
   return (
     <>
       <StatusBar style="light" />
-      <AndroidBackGuard />
       <Stack
         screenOptions={{
           contentStyle: { backgroundColor: colors.background },
@@ -72,6 +71,7 @@ function RootNavigator() {
         <Stack.Screen name="auth" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" options={{ title: "Bulunamadı" }} />
       </Stack>
+      <AndroidBackGuard />
       {hasSession ? <BtbMascotOverlay /> : null}
     </>
   );

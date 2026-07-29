@@ -220,16 +220,34 @@ components:
           required:
             - homeBallPossession
             - awayBallPossession
+            - decisionMinute
+            - decisionReason
+            - decisionScore
+            - decisionConfidence
+            - homeTotalShots
+            - awayTotalShots
             - homeShotsOnTarget
             - awayShotsOnTarget
-            - homeDangerousAttacks
-            - awayDangerousAttacks
+            - homeXg
+            - awayXg
             - homeCorners
             - awayCorners
+            - homeYellowCards
+            - awayYellowCards
             - homeRedCards
             - awayRedCards
             - scoreDistribution
           properties:
+            decisionMinute:
+              type: [integer, "null"]
+              minimum: 0
+            decisionReason: { type: string }
+            decisionScore:
+              type: [number, "null"]
+            decisionConfidence:
+              type: [number, "null"]
+              minimum: 0
+              maximum: 1
             homeBallPossession:
               type: number
               minimum: 0
@@ -238,12 +256,16 @@ components:
               type: number
               minimum: 0
               maximum: 100
+            homeTotalShots: { type: integer, minimum: 0 }
+            awayTotalShots: { type: integer, minimum: 0 }
             homeShotsOnTarget: { type: integer, minimum: 0 }
             awayShotsOnTarget: { type: integer, minimum: 0 }
-            homeDangerousAttacks: { type: integer, minimum: 0 }
-            awayDangerousAttacks: { type: integer, minimum: 0 }
+            homeXg: { type: number, minimum: 0 }
+            awayXg: { type: number, minimum: 0 }
             homeCorners: { type: integer, minimum: 0 }
             awayCorners: { type: integer, minimum: 0 }
+            homeYellowCards: { type: integer, minimum: 0 }
+            awayYellowCards: { type: integer, minimum: 0 }
             homeRedCards: { type: integer, minimum: 0 }
             awayRedCards: { type: integer, minimum: 0 }
             scoreDistribution:
@@ -302,31 +324,50 @@ components:
         pressureAdjustment: { type: number }
         stateAdjustment: { type: number }
     TotoPrediction:
+      allOf:
+        - $ref: "#/components/schemas/TotoFixture"
+        - type: object
+          required:
+            - mainPick
+            - coverage
+            - confidence
+            - riskScore
+            - result
+          properties:
+            mainPick:
+              type: string
+              enum: ["1", X, "2"]
+            coverage: { type: string, minLength: 1 }
+            confidence:
+              type: number
+              minimum: 0
+              maximum: 1
+            riskScore: { type: number, minimum: 0 }
+            result:
+              type: string
+              enum: [OPEN, MAIN_HIT, COVERED, MISS]
+      unevaluatedProperties: false
+    TotoFixture:
       type: object
       additionalProperties: false
       required:
         - matchNo
         - matchName
-        - mainPick
-        - coverage
-        - confidence
-        - riskScore
-        - result
+        - matchDate
+        - matchTime
+        - eventId
+        - actualResult
       properties:
         matchNo: { type: integer, minimum: 1 }
         matchName: { type: string, minLength: 1 }
-        mainPick:
-          type: string
-          enum: ["1", X, "2"]
-        coverage: { type: string, minLength: 1 }
-        confidence:
-          type: number
-          minimum: 0
-          maximum: 1
-        riskScore: { type: number, minimum: 0 }
-        result:
-          type: string
-          enum: [OPEN, HIT, MISS]
+        matchDate: { type: string }
+        matchTime: { type: string }
+        eventId:
+          type: [integer, "null"]
+          minimum: 1
+        actualResult:
+          type: [string, "null"]
+          enum: ["1", X, "2", null]
     TotoProgram:
       type: object
       additionalProperties: false
@@ -345,6 +386,7 @@ components:
         - tripleCount
         - mainHits
         - coverageHits
+        - fixtures
         - predictions
         - updatedAt
       properties:
@@ -355,7 +397,7 @@ components:
         status:
           type: string
           enum: [ACTIVE, WAITING_RESULT, RESULTED, ERROR]
-        modelVersion: { type: string, minLength: 1 }
+        modelVersion: { type: string }
         columns: { type: integer, minimum: 0 }
         cost: { type: number, minimum: 0 }
         maxColumns: { type: integer, minimum: 1 }
@@ -368,6 +410,10 @@ components:
         coverageHits:
           type: [integer, "null"]
           minimum: 0
+        fixtures:
+          type: array
+          items:
+            $ref: "#/components/schemas/TotoFixture"
         predictions:
           type: array
           items:
@@ -383,6 +429,9 @@ components:
         - todaySuperWon
         - todaySuperLost
         - todaySuperProfit
+        - todayHighStarSuperWon
+        - todayHighStarSuperLost
+        - todayHighStarSuperProfit
         - latestTotoProgram
         - featuredMatches
         - recentSuper
@@ -393,6 +442,9 @@ components:
         todaySuperWon: { type: integer, minimum: 0 }
         todaySuperLost: { type: integer, minimum: 0 }
         todaySuperProfit: { type: number }
+        todayHighStarSuperWon: { type: integer, minimum: 0 }
+        todayHighStarSuperLost: { type: integer, minimum: 0 }
+        todayHighStarSuperProfit: { type: number }
         latestTotoProgram:
           oneOf:
             - $ref: "#/components/schemas/TotoProgram"

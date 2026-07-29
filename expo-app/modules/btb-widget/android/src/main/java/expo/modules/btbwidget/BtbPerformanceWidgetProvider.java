@@ -68,13 +68,13 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
         boolean changed = false;
 
         Integer totoHits = parseNonNegativeInteger(
-                payload.optString("toto_coverage_hits", ""));
+                payload.opt("toto_coverage_hits"));
         Integer totoTotal = parseNonNegativeInteger(
-                payload.optString("toto_coverage_total", ""));
+                payload.opt("toto_coverage_total"));
         Integer totoGcNo = parseNonNegativeInteger(
-                payload.optString("toto_program_gc_no", ""));
+                payload.opt("toto_program_gc_no"));
         Integer totoVersion = parseNonNegativeInteger(
-                payload.optString("toto_program_version", ""));
+                payload.opt("toto_program_version"));
 
         if (totoHits != null && totoTotal != null && totoHits <= totoTotal) {
             editor.putBoolean(KEY_HAS_TOTO, true);
@@ -92,17 +92,17 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
         }
 
         Integer minRating = parseNonNegativeInteger(
-                payload.optString("super_min_rating", ""));
+                payload.opt("super_min_rating"));
         boolean hasSuperThreshold =
                 minRating != null && minRating >= 1 && minRating <= 5;
         Integer superWins = hasSuperThreshold
-                ? parseSuperCount(payload.optString("super_wins", ""))
+                ? parseSuperCount(payload.opt("super_wins"))
                 : null;
         Integer superLosses = hasSuperThreshold
-                ? parseSuperCount(payload.optString("super_losses", ""))
+                ? parseSuperCount(payload.opt("super_losses"))
                 : null;
         BigDecimal superProfit = hasSuperThreshold
-                ? parseSuperProfit(payload.optString("super_profit", ""))
+                ? parseSuperProfit(payload.opt("super_profit"))
                 : null;
 
         if (hasSuperThreshold &&
@@ -171,6 +171,9 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
         RemoteViews views = new RemoteViews(
                 context.getPackageName(),
                 R.layout.btb_performance_widget);
+        views.setImageViewResource(
+                R.id.btb_kpi_app_icon,
+                context.getApplicationInfo().icon);
 
         int coveragePercent = totoTotal > 0
                 ? Math.round((totoHits * 100f) / totoTotal)
@@ -326,31 +329,58 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
         return stars.toString();
     }
 
-    private static Integer parseNonNegativeInteger(String value) {
+    private static Integer parseNonNegativeInteger(Object value) {
+        if (value instanceof Number) {
+            double number = ((Number) value).doubleValue();
+            if (
+                    Double.isFinite(number) &&
+                    number >= 0 &&
+                    number <= Integer.MAX_VALUE &&
+                    Math.rint(number) == number) {
+                return (int) number;
+            }
+            return null;
+        }
+
         try {
-            int number = Integer.parseInt(value == null ? "" : value.trim());
+            int number = Integer.parseInt(valueText(value));
             return number >= 0 ? number : null;
         } catch (NumberFormatException ignored) {
             return null;
         }
     }
 
-    private static BigDecimal parseDecimal(String value) {
+    private static BigDecimal parseDecimal(Object value) {
+        if (value instanceof Number) {
+            double number = ((Number) value).doubleValue();
+            return Double.isFinite(number)
+                    ? BigDecimal.valueOf(number)
+                    : null;
+        }
+
         try {
-            return new BigDecimal(value == null ? "" : value.trim());
+            return new BigDecimal(valueText(value));
         } catch (NumberFormatException ignored) {
             return null;
         }
     }
 
-    private static Integer parseSuperCount(String value) {
-        String text = value == null ? "" : value.trim();
-        return text.isEmpty() ? 0 : parseNonNegativeInteger(text);
+    private static Integer parseSuperCount(Object value) {
+        return valueText(value).isEmpty()
+                ? 0
+                : parseNonNegativeInteger(value);
     }
 
-    private static BigDecimal parseSuperProfit(String value) {
-        String text = value == null ? "" : value.trim();
-        return text.isEmpty() ? BigDecimal.ZERO : parseDecimal(text);
+    private static BigDecimal parseSuperProfit(Object value) {
+        return valueText(value).isEmpty()
+                ? BigDecimal.ZERO
+                : parseDecimal(value);
+    }
+
+    private static String valueText(Object value) {
+        return value == null || JSONObject.NULL.equals(value)
+                ? ""
+                : String.valueOf(value).trim();
     }
 
     private static boolean isSameLocalDay(long first, long second) {

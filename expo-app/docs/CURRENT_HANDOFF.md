@@ -3,31 +3,30 @@
 Son güncelleme: 2026-07-29
 Çalışma alanı: `C:\dev\btb-cdoex`
 Aktif task: `BTB Mobile Next - Aktif`
+Mod: `OBSERVATION`
 Optimizer profili: `btb-mobile`
 
-## Başlangıç ve sınır
+## Başlangıç
 
-Yeni veya devam eden Mobile Next task’ı önce yalnızca:
+Yeni veya devam eden Mobile Next task’ı önce yalnız:
 
 1. `C:\dev\btb-cdoex\AGENTS.md`
 2. bu dosya
 
-dosyalarını tamamen okur. Sonra yalnız aktif alt görev için gereken README,
-architecture, OpenAPI, SAP mapping, Firebase, Android veya cutover belgesine
-geçer. Eski task geçmişi fork edilmez; `node_modules`, Cordova `platforms`,
-Expo native staging klasörleri ve arşivler geniş taranmaz. Kullanıcı
+dosyalarını tamamen okur. Sonra yalnız aktif iş için gereken Mobile belge ve
+kaynaklarına geçer. Eski task geçmişi fork edilmez; generated/native staging,
+`node_modules`, Cordova `platforms` ve eski arşivler geniş taranmaz. Kullanıcı
 değişiklikleri stash/revert edilmez.
 
-Bu task Expo/Android istemcisini, Mobile BFF’i, Firebase/device delivery’yi,
-Cloudflare origin rotasını, APK yaşam döngüsünü ve kontrollü Cordova geçişini
-takip eder. BTB/Toto model ağırlığı, star, tahmin, kupon, sonuç veya öğrenme
-kararı üretmez.
+Observation tespitleri `docs/OBSERVATION_LOG.md` içinde tutulur. Kod değişikliği
+yalnız `btb next cutover start` komutuyla
+`docs/NEXT_CUTOVER_PROCEDURE.md` uyarınca toplu yapılır.
 
 ## Aktif pilot akışı
 
 ```text
 BTB Mobile Next
-  -> X-BTB-Pilot-Key (direct open; user login yok)
+  -> X-BTB-Pilot-Key (kullanıcı girişi yok)
   -> https://api.surklase.com
   -> Cloudflare Tunnel
   -> 127.0.0.1:4004 Mobile BFF
@@ -35,98 +34,109 @@ BTB Mobile Next
   -> fixed read-only SAP OData allowlist
 ```
 
-Pilot anahtarı APK’dan çıkarılabilir; üretim kimliği değildir. BFF yalnız
-SHA-256 özetini tutar. SAP/Firebase credential, signing material ve secret
-değerleri kaynakta, logda, handoff’ta veya APK notunda tutulmaz.
+Tunnel: `surklase-local-wordpress`
+Tunnel ID: `f129a5fe-96d9-47a2-948d-38fa3acbd2b1`
+Route: `api.surklase.com -> http://localhost:4004`
+
+Bu cutover’da yalnız yerel public origin süreci güncel BFF kaynağıyla
+`scripts/start-mobile-bff.ps1` üzerinden yeniden başlatıldı. Cloudflare
+DNS/Tunnel tanımı değiştirilmedi. Anahtarsız `401`, yerel ve public doğru
+anahtarlı dashboard `200` smoke testi geçti.
 
 ## Repo checkpoint
 
-### zbet-mobile
-
 ```text
-Path     : C:\dev\btb-cdoex\zbet-mobile
-Branch   : master
-Upstream : origin/master
-HEAD     : 6147a46 Record direct-open Mobile pilot handoff
+zbet-mobile  master  618702e  origin/master ile hizalı, Mobile cutover değişiklikleri uncommitted
+zbet-cap     main    255a9a0  origin/main ile hizalı, BFF değişiklikleri uncommitted
 ```
 
-### zbet-cap
+Mevcut kullanıcı değişiklikleri korundu. Stash/revert, commit veya push
+yapılmadı.
+
+## Son cutover sonucu
+
+- Canlı listeye sade `Seçili` filtresi eklendi; pressure değeri `baskı farkı`
+  etiketiyle açıklandı.
+- Maç detayında kapalı market `— / market kapalı`; seçim sonrası maksimum oran
+  gösterilmiyor.
+- `BTB neden seçti?` özeti seçim marketi, dakika, Türkçe karar nedeni, güven ve
+  model skorunu açılır biçimde gösteriyor.
+- Canlı saha dengesi artık toplam şut, isabetli şut, ondalıklı xG, korner, sarı
+  ve kırmızı kart içeriyor.
+- Bilyoner aksiyonu yeşil, Fiori aksiyonu mavi ve ikisi birlikte korunuyor.
+- Maç ve Toto detaylarında ekran kapsamlı pull-to-refresh var.
+- Toto detayında `Sonuçlar X/15` ve ana tahmin/kupon/kapsam dışı/bekliyor renk
+  açıklaması var.
+- Performans widget Super KPI’sı yalnız aynı gün sonuçlanan `rating >= 3`
+  kararların kazandı/kaybetti/kâr toplamını kullanıyor.
+- Canlı SAP entity’sinde gerçek kaynak update timestamp’i bulunmadığından sahte
+  tazelik göstergesi eklenmedi; NXT-OBS-032 `DEFERRED`.
+
+Çözülen batch arşivi:
+`docs/observation_archive/cutover_2026-07-29-03.md`.
+
+Aktif observation maddeleri:
+
+- NXT-OBS-001 — fiziksel cihaz Performans widget parity: `READY`
+- NXT-OBS-002 — fiziksel cihaz gerçek FCM küçük ikon: `READY`
+- NXT-OBS-032 — SAP kaynak timestamp bağımlılığı: `DEFERRED`
+
+## Doğrulama
+
+- `zbet-cap`: 39/39 test ve production CDS build geçti.
+- Mobile: 45/45 test, TypeScript, ESLint ve Expo Doctor 20/20 geçti.
+- Ortak `invoke-mobile-check.ps1 -BundleOnly` ve Android production bundle
+  geçti.
+- SAP `$metadata`: provider tarafından seçilen 119/119 benzersiz alan mevcut.
+- Gerçek seçili maç DTO’sunda karar dakikası/nedeni, ondalıklı xG, toplam şut
+  ve sarı kart verisi doğrulandı.
+- Native x86_64 emülatör ve arm64 final release build geçti.
+- Android 15 emülatörde Overview, Back, `Seçili`, karar özeti, saha metrikleri,
+  aksiyon renkleri, Toto sonuç açıklaması, detail refresh ve Performans widget
+  smoke testleri geçti.
+- Gerçek widget `%80 (12/15)` Toto ve aynı gün `3+` Super için
+  `0,00 / 0 kazandı · 0 kaybetti` gösterdi.
+- Logcat’te fatal Android veya React Native hatası görülmedi.
+- `npm audit --omit=dev`: `0 high`, `0 critical`, `11 moderate`. Önerilen
+  otomatik düzeltmeler uyumsuz Expo downgrade’leri olduğu için uygulanmadı.
+
+## Final pilot APK
 
 ```text
-Path     : C:\dev\btb-cdoex\zbet-cap
-Branch   : main
-Upstream : origin/main
-HEAD     : 255a9a0 Add direct-open Mobile pilot access
-```
-
-### btb-codex ownership boundary
-
-Mobile kalite kapısıyla ilgili kullanıcı değişiklikleri `README.md`,
-`ROADMAP.md`, `TOOLS.md`, `config/mobile-quality.config.json` ve
-`scripts/invoke-mobile-check.ps1` dosyalarında korunur. Mobile task profili ve
-optimizer değişiklikleri bunlardan ayrı incelenir; kullanıcı onayı olmadan
-birlikte stage/commit edilmez.
-
-## Doğrulanmış checkpoint
-
-- Uygulama IAS/BTP giriş ekranı göstermeden canlı dashboard’a açıldı.
-- Fixed Mobile BFF rotalarında eksik/yanlış pilot key `401`, doğru key `200`.
-- Canlı dashboard, maç, Super ve Toto SAP DTO smoke testleri geçti.
-- `zbet-cap`: 37/37 test, ESLint ve production CDS build geçti.
-- Mobile: 35/35 test, TypeScript, ESLint ve Expo Doctor 20/20 geçti.
-- Android 15 emülatörde direct-open kurulum ve canlı SAP verisi doğrulandı.
-- Direct-open APK’da OAuth App Link ve IAS endpointi bulunmuyor.
-
-Pilot APK:
-
-```text
-Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-pilot.apk
+Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-cutover-20260729-v3-final.apk
 Package : com.btb.mobile.next
-Size    : 48,460,415 bytes
-SHA-256 : 8D51B2020384AA08A85CCF4D0AB0B47873DB7A08029B9A0DEE1511CF3B5E75D4
-Signing : pilot debug certificate
-```
-
-Cloudflare:
-
-```text
-Tunnel : surklase-local-wordpress
-ID     : f129a5fe-96d9-47a2-948d-38fa3acbd2b1
-Route  : api.surklase.com -> http://localhost:4004
+Version : 0.1.0 (1)
+ABI     : arm64-v8a
+Size    : 48,459,859 bytes
+SHA-256 : 52820DB7076203EFBF7FA4E17D2DB4A30DBD66AB8AC38AD6F1F97267F478535F
+Signing : Android pilot debug certificate; APK Signature Scheme v2 doğrulandı
 ```
 
 ## Açık kapılar
 
-1. Geçici SAP `developer` hesabı yerine yalnız gerekli üç OData servisine
-   yetkili ayrı communication user gerekir.
-2. Fiziksel cihazda notification, widget, Fiori, deep link, back, offline ve
-   host-restart parity testleri tamamlanmalıdır.
-3. Store/release signing anahtarı, yedek ve kurtarma sahipliği belirlenmelidir.
-4. Cordova kaldırılmadan önce destek ve rollback runbook’u ile cihaz kanıtı
-   gerekir.
-5. Mevcut ABAP FCM çağrısı authentication header göndermediği için caller-auth
-   geçişi tamamlanmadan IAS korumalı CAP/BTP deploy yapılmamalıdır.
-
-Bu kapılar kapanmadan Cordova cutover yapılmaz ve mevcut Cordova kaynakları
-silinmez.
+1. Final APK fiziksel cihazda kurulmalı; gerçek FCM sonrasında notification
+   küçük ikonu ve Performans widget parity sonucu bildirilmelidir.
+2. Bilyoner kurulu fiziksel cihazda HTTPS app-association/deep-link sonucu
+   gözlenmelidir; web fallback emülatör ve unit testte hazırdır.
+3. Gerçek veri tazeliği için `zbet_t_matches` kaynak timestamp alanı ve bağımlı
+   DDIC/CDS/service aktivasyon planı gerekir; bu ayrı SAP onayı ister.
+4. SAP `developer` yerine yalnız gerekli OData servislerine yetkili ayrı
+   communication user oluşturulmalıdır.
+5. Store/release signing, yedek ve kurtarma sahipliği belirlenmelidir.
+6. Cordova kaldırılmadan önce cihaz kanıtı, destek ve rollback runbook’u gerekir.
+7. ABAP FCM caller-auth geçişi tamamlanmadan IAS korumalı CAP/BTP deploy
+   yapılmamalıdır.
 
 ## Onay kapıları
 
-Commit/push, BTP deploy, Cloudflare DNS/Tunnel yayını, Firebase veya SAP dış
-değişikliği, release imzalama/dağıtım ve Cordova cutover ayrı açık onay ister.
-Pilot veya salt-okunur inceleme onayı bunların hiçbirini otomatik kapsamaz.
+`btb next cutover start`, zorunlu kalite kapıları geçtikten sonra yalnız cutover
+kapsamındaki dosyaların ilgili repolarda commit edilip upstream branch’e push
+edilmesini de kapsar. Cutover dışındaki commit/push işlemleri ayrıca açık onay
+ister.
 
-## Gerektiğinde okunacak dosyalar
+BTP deploy, Cloudflare DNS/Tunnel yayını, Firebase veya SAP dış değişikliği,
+release imzalama/dağıtım ve Cordova cutover her seferinde ayrı açık onay ister.
 
-- Uygulama ve build: `zbet-mobile/expo-app/README.md`
-- Mimari, güvenlik ve fazlar:
-  `zbet-mobile/expo-app/docs/ARCHITECTURE.md`
-- API sözleşmesi:
-  `zbet-mobile/expo-app/contracts/mobile-api.openapi.yaml`
-- BFF/SAP eşlemesi:
-  `zbet-cap/docs/mobile-bff-sap-mapping.md`
-- Ortak Mobile kalite kapısı: `btb-codex/README.md`
-
-Bir sonraki güvenli ürün adımı fiziksel cihaz parity testidir. Geniş auth,
-native redesign, multi-repo release veya Cordova cutover öncesinde bu handoff
-yenilenir ve context yeniden denetlenir.
+Bir sonraki güvenli adım final APK’yı fiziksel cihazda observation modunda
+kullanmaktır. Yeni tespitler bir sonraki `btb next cutover start` komutuna kadar
+yalnız observation loguna eklenir.

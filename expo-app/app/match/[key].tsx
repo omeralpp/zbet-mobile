@@ -1,7 +1,11 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
+  Alert,
+  Linking,
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
   View
@@ -10,8 +14,11 @@ import { matchQuery } from "@/src/api/queries";
 import { RatingStars } from "@/src/components/RatingStars";
 import { Screen } from "@/src/components/Screen";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
+import { buildBilyonerMatchUrl } from "@/src/external/bilyoner";
 import { colors, radii, spacing } from "@/src/theme/theme";
 import {
+  formatDecisionReason,
+  formatFixtureDateTime,
   formatElapsed,
   formatPercentage,
   formatRate
@@ -30,27 +37,30 @@ function ComparisonRow({
   label,
   home,
   away,
-  suffix = ""
+  suffix = "",
+  formatter
 }: {
   label: string;
   home: number;
   away: number;
   suffix?: string;
+  formatter?: (value: number) => string;
 }) {
   const total = Math.max(1, home + away);
   const homeWidth: `${number}%` = `${Math.max(4, (home / total) * 100)}%`;
   const awayWidth: `${number}%` = `${Math.max(4, (away / total) * 100)}%`;
+  const formatValue = formatter ?? String;
 
   return (
     <View style={styles.comparison}>
       <View style={styles.comparisonLabels}>
         <Text style={styles.statValue}>
-          {home}
+          {formatValue(home)}
           {suffix}
         </Text>
         <Text style={styles.statLabel}>{label}</Text>
         <Text style={styles.statValue}>
-          {away}
+          {formatValue(away)}
           {suffix}
         </Text>
       </View>
@@ -68,8 +78,9 @@ function ComparisonRow({
 
 export default function MatchDetailScreen() {
   const params = useLocalSearchParams<{ key?: string | string[] }>();
-  const router = useRouter();
   const key = firstParam(params.key);
+  const router = useRouter();
+  const [showDecision, setShowDecision] = useState(false);
   const query = useQuery(matchQuery(key));
 
   if (query.isLoading) {
@@ -98,10 +109,28 @@ export default function MatchDetailScreen() {
   const match = query.data;
 
   return (
-    <Screen contentStyle={styles.screen}>
+    <Screen
+      contentStyle={styles.screen}
+      scrollProps={{
+        alwaysBounceVertical: true,
+        refreshControl: (
+          <RefreshControl
+            colors={[colors.green]}
+            onRefresh={() => query.refetch()}
+            refreshing={query.isRefetching}
+            tintColor={colors.green}
+          />
+        )
+      }}
+    >
       <View style={styles.scoreHero}>
         <View style={styles.leagueRow}>
-          <Text style={styles.league}>{match.league}</Text>
+          <View style={styles.leagueCopy}>
+            <Text style={styles.league}>{match.league}</Text>
+            <Text style={styles.fixtureTime}>
+              {formatFixtureDateTime(match.matchDate, match.matchTime)}
+            </Text>
+          </View>
           <View style={styles.elapsedPill}>
             <Text style={styles.elapsed}>
               {formatElapsed(match.status, match.elapsed)}
@@ -139,11 +168,54 @@ export default function MatchDetailScreen() {
               <Text style={styles.rateValue}>
                 {formatRate(match.currentRate)}
               </Text>
-              <Text style={styles.rateLabel}>güncel oran</Text>
+              <Text style={styles.rateLabel}>
+                {match.currentRate === null && match.selectedOdd
+                  ? "market kapalı"
+                  : "güncel oran"}
+              </Text>
             </View>
           </View>
         </View>
       </View>
+
+      {match.selectedOdd && match.rating > 0 ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setShowDecision((visible) => !visible)}
+          style={styles.decisionCard}
+        >
+          <View style={styles.decisionHeader}>
+            <View>
+              <Text style={styles.decisionEyebrow}>KARAR ÖZETİ</Text>
+              <Text style={styles.decisionTitle}>BTB neden seçti?</Text>
+            </View>
+            <Text style={styles.decisionToggle}>
+              {showDecision ? "Gizle" : "Göster"}
+            </Text>
+          </View>
+          {showDecision ? (
+            <View style={styles.decisionBody}>
+              <Text style={styles.decisionReason}>
+                {formatDecisionReason(match.decisionReason)}
+              </Text>
+              <Text style={styles.decisionMeta}>
+                {match.selectedOdd}
+                {match.decisionMinute !== null
+                  ? ` · ${match.decisionMinute}'`
+                  : ""}
+                {match.decisionConfidence !== null
+                  ? ` · Güven ${formatPercentage(match.decisionConfidence)}`
+                  : ""}
+              </Text>
+              {match.decisionScore !== null ? (
+                <Text style={styles.decisionScore}>
+                  Model skoru {match.decisionScore.toFixed(2)}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+        </Pressable>
+      ) : null}
 
       <Text style={styles.sectionTitle}>Canlı saha dengesi</Text>
       <View style={styles.statsCard}>
@@ -154,19 +226,35 @@ export default function MatchDetailScreen() {
           suffix="%"
         />
         <ComparisonRow
+          away={match.awayTotalShots}
+          home={match.homeTotalShots}
+          label="Toplam şut"
+        />
+        <ComparisonRow
           away={match.awayShotsOnTarget}
           home={match.homeShotsOnTarget}
           label="İsabetli şut"
         />
         <ComparisonRow
-          away={match.awayDangerousAttacks}
-          home={match.homeDangerousAttacks}
-          label="Tehlikeli atak"
+          away={match.awayXg}
+          formatter={formatRate}
+          home={match.homeXg}
+          label="xG"
         />
         <ComparisonRow
           away={match.awayCorners}
           home={match.homeCorners}
           label="Korner"
+        />
+        <ComparisonRow
+          away={match.awayYellowCards}
+          home={match.homeYellowCards}
+          label="Sarı kart"
+        />
+        <ComparisonRow
+          away={match.awayRedCards}
+          home={match.homeRedCards}
+          label="Kırmızı kart"
         />
       </View>
 
@@ -197,6 +285,19 @@ export default function MatchDetailScreen() {
       <View style={styles.actions}>
         <Pressable
           onPress={() =>
+            Linking.openURL(buildBilyonerMatchUrl(match.id)).catch(() =>
+              Alert.alert(
+                "Bilyoner açılamadı",
+                "Bu maçın Bilyoner sayfası şu anda açılamıyor."
+              )
+            )
+          }
+          style={styles.bilyonerAction}
+        >
+          <Text style={styles.bilyonerActionText}>Bilyoner&apos;da aç</Text>
+        </Pressable>
+        <Pressable
+          onPress={() =>
             router.push({
               pathname: "/fiori",
               params: {
@@ -205,14 +306,14 @@ export default function MatchDetailScreen() {
               }
             })
           }
-          style={styles.primaryAction}
+          style={styles.fioriAction}
         >
-          <Text style={styles.primaryActionText}>Fiori ayrıntısını aç</Text>
+          <Text style={styles.fioriActionText}>Fiori&apos;de aç</Text>
         </Pressable>
       </View>
       <Text style={styles.safetyNote}>
-        Canlı skor ve fixture güncelleme işlemleri bu preview sürümünde
-        bilinçli olarak Fiori tarafında tutulur.
+        Maç sayfası Bilyoner uygulamasında; uygulama yoksa güvenli web
+        sayfasında açılır. BTB görünümü salt okunurdur.
       </Text>
     </Screen>
   );
@@ -237,10 +338,18 @@ const styles = StyleSheet.create({
   },
   league: {
     color: colors.textMuted,
-    flex: 1,
     fontSize: 11,
     fontWeight: "800",
     textTransform: "uppercase"
+  },
+  leagueCopy: {
+    flex: 1
+  },
+  fixtureTime: {
+    color: colors.textSubtle,
+    fontSize: 10,
+    fontWeight: "700",
+    marginTop: 3
   },
   elapsedPill: {
     backgroundColor: colors.redSoft,
@@ -306,6 +415,58 @@ const styles = StyleSheet.create({
     color: colors.textSubtle,
     fontSize: 9,
     marginTop: 2
+  },
+  decisionCard: {
+    backgroundColor: colors.backgroundElevated,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    padding: spacing.lg,
+    marginTop: spacing.lg
+  },
+  decisionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.md
+  },
+  decisionEyebrow: {
+    color: colors.green,
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 1
+  },
+  decisionTitle: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: "900",
+    marginTop: 2
+  },
+  decisionToggle: {
+    color: colors.blue,
+    fontSize: 11,
+    fontWeight: "900"
+  },
+  decisionBody: {
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSoft,
+    gap: spacing.xs,
+    marginTop: spacing.md,
+    paddingTop: spacing.md
+  },
+  decisionReason: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: "800"
+  },
+  decisionMeta: {
+    color: colors.textMuted,
+    fontSize: 11,
+    lineHeight: 16
+  },
+  decisionScore: {
+    color: colors.textSubtle,
+    fontSize: 10
   },
   sectionTitle: {
     color: colors.text,
@@ -416,16 +577,29 @@ const styles = StyleSheet.create({
     fontSize: 12
   },
   actions: {
+    gap: spacing.md,
     marginTop: spacing.xxl
   },
-  primaryAction: {
+  bilyonerAction: {
+    minHeight: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radii.round,
+    backgroundColor: colors.green
+  },
+  bilyonerActionText: {
+    color: colors.background,
+    fontSize: 14,
+    fontWeight: "900"
+  },
+  fioriAction: {
     minHeight: 50,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: radii.round,
     backgroundColor: colors.blue
   },
-  primaryActionText: {
+  fioriActionText: {
     color: colors.white,
     fontSize: 14,
     fontWeight: "900"

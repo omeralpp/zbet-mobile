@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   FlatList,
   RefreshControl,
@@ -18,7 +19,7 @@ import {
 } from "@/src/components/StateView";
 import { colors, spacing } from "@/src/theme/theme";
 
-type MatchFilter = "ALL" | "LIVE" | "HIGH_STAR";
+type MatchFilter = "ALL" | "LIVE" | "SELECTED" | "HIGH_STAR";
 
 function matchesFilter(match: MatchSummary, filter: MatchFilter): boolean {
   if (filter === "LIVE") {
@@ -27,11 +28,25 @@ function matchesFilter(match: MatchSummary, filter: MatchFilter): boolean {
   if (filter === "HIGH_STAR") {
     return match.rating >= 3;
   }
+  if (filter === "SELECTED") {
+    return Boolean(match.selectedOdd) && match.rating >= 1;
+  }
   return true;
 }
 
+function routeFilter(value: string | string[] | undefined): MatchFilter {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return raw === "HIGH_STAR" || raw === "SELECTED" || raw === "ALL"
+    ? raw
+    : "LIVE";
+}
+
 export default function LiveScreen() {
-  const [filter, setFilter] = useState<MatchFilter>("LIVE");
+  const params = useLocalSearchParams<{
+    filter?: string | string[];
+  }>();
+  const router = useRouter();
+  const filter = routeFilter(params.filter);
   const query = useQuery(matchesQuery);
   const matches = useMemo(
     () => (query.data ?? []).filter((match) => matchesFilter(match, filter)),
@@ -48,17 +63,22 @@ export default function LiveScreen() {
       <View style={styles.filters}>
         <FilterChip
           label="Canlı"
-          onPress={() => setFilter("LIVE")}
+          onPress={() => router.setParams({ filter: "LIVE" })}
           selected={filter === "LIVE"}
         />
         <FilterChip
           label="3+ yıldız"
-          onPress={() => setFilter("HIGH_STAR")}
+          onPress={() => router.setParams({ filter: "HIGH_STAR" })}
           selected={filter === "HIGH_STAR"}
         />
         <FilterChip
+          label="Seçili"
+          onPress={() => router.setParams({ filter: "SELECTED" })}
+          selected={filter === "SELECTED"}
+        />
+        <FilterChip
           label="Tümü"
-          onPress={() => setFilter("ALL")}
+          onPress={() => router.setParams({ filter: "ALL" })}
           selected={filter === "ALL"}
         />
       </View>
@@ -110,6 +130,7 @@ const styles = StyleSheet.create({
   },
   filters: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.sm,
     marginBottom: spacing.lg
   },

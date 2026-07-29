@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { TotoProgram } from "@/src/api/schemas";
 import { colors, radii, spacing } from "@/src/theme/theme";
@@ -9,11 +9,13 @@ import {
 } from "@/src/utils/format";
 
 export function TotoProgramCard({ program }: { program: TotoProgram }) {
+  const pathname = usePathname();
   const router = useRouter();
   const capacity = Math.min(
     1,
     program.maxColumns > 0 ? program.columns / program.maxColumns : 0
   );
+  const active = program.status === "ACTIVE";
 
   return (
     <Pressable
@@ -21,7 +23,14 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
       accessibilityLabel={`Program ${program.gcNo}, ${program.weekText}`}
       accessibilityRole="button"
       onPress={() =>
-        router.push(`/toto/${program.gcNo}/${program.version}` as never)
+        router.push({
+          pathname: "/toto/[gcNo]/[version]",
+          params: {
+            gcNo: program.gcNo,
+            version: program.version,
+            from: pathname
+          }
+        } as never)
       }
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
@@ -37,8 +46,15 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
           <Text style={styles.title}>Program {program.gcNo}</Text>
           <Text style={styles.week}>{program.weekText}</Text>
         </View>
-        <View style={styles.statusPill}>
-          <Text style={styles.status}>{formatProgramStatus(program.status)}</Text>
+        <View
+          style={[
+            styles.statusPill,
+            active && styles.activeStatusPill
+          ]}
+        >
+          <Text style={[styles.status, active && styles.activeStatus]}>
+            {formatProgramStatus(program.status)}
+          </Text>
         </View>
       </View>
 
@@ -118,6 +134,12 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: "900",
     textTransform: "uppercase"
+  },
+  activeStatusPill: {
+    backgroundColor: colors.greenSoft
+  },
+  activeStatus: {
+    color: colors.green
   },
   metrics: {
     flexDirection: "row",

@@ -3,6 +3,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Tabs } from "expo-router";
 import { Platform, type ColorValue } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/src/theme/theme";
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
@@ -20,6 +21,9 @@ function tabIcon(name: IconName) {
 }
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Math.max(insets.bottom, 8);
+
   return (
     <Tabs
       screenListeners={{
@@ -35,7 +39,9 @@ export default function TabLayout() {
         tabBarInactiveTintColor: colors.textSubtle,
         tabBarHideOnKeyboard: true,
         tabBarStyle: {
-          paddingTop: 8,
+          height: 58 + bottomPadding,
+          paddingTop: 6,
+          paddingBottom: bottomPadding,
           borderTopColor: colors.border,
           backgroundColor: colors.backgroundElevated
         },

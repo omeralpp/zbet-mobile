@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveAndroidBackAction } from "./back-navigation";
+import {
+  resolveAndroidBackAction,
+  resolveAndroidFallbackPath
+} from "./back-navigation";
 
 test("ana sekmelerden geri dönüş önce özete gider", () => {
   assert.equal(resolveAndroidBackAction("/live", false), "home");
@@ -25,6 +28,25 @@ test("geçmişsiz derin bağlantı güvenli biçimde özete döner", () => {
   assert.equal(
     resolveAndroidBackAction("/match/123", false),
     "home"
+  );
+});
+
+test("maç detayı geçmişsiz kalırsa geldiği uygulama ekranına döner", () => {
+  assert.equal(
+    resolveAndroidFallbackPath("/match/123", "/super"),
+    "/super"
+  );
+  assert.equal(
+    resolveAndroidFallbackPath("/match/123", "/live"),
+    "/live"
+  );
+  assert.equal(
+    resolveAndroidFallbackPath("/match/123", "/unknown"),
+    "/"
+  );
+  assert.equal(
+    resolveAndroidFallbackPath("/toto/350/1", "/"),
+    "/toto"
   );
 });
 

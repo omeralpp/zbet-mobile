@@ -13,15 +13,12 @@
     android:gravity="center_vertical"
     android:orientation="horizontal">
 
-    <TextView
+    <ImageView
+      android:id="@+id/btb_widget_icon"
       android:layout_width="36dp"
       android:layout_height="36dp"
-      android:background="@drawable/btb_widget_primary_button"
-      android:gravity="center"
-      android:text="BTB"
-      android:textColor="@color/btb_widget_text"
-      android:textSize="10sp"
-      android:textStyle="bold" />
+      android:contentDescription="@string/btb_widget_app_icon"
+      android:scaleType="fitCenter" />
 
     <LinearLayout
       android:layout_width="0dp"

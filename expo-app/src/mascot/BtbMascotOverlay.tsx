@@ -36,9 +36,10 @@ type MenuItem = {
   onPress: () => void;
 };
 
-const storageKey = "btb-mobile-next-mascot-position-v1";
+const storageKey = "btb-mobile-next-mascot-position-v2";
 const mascotSize = 52;
 const edgeMargin = 10;
+const defaultTopOffset = 0;
 
 function parseStoredPosition(value: string | null): Position | null {
   if (!value) {
@@ -104,13 +105,13 @@ export function BtbMascotOverlay() {
   const [showGreeting, setShowGreeting] = useState(true);
   const defaultPosition = useMemo(
     () => ({
-      x: edgeMargin + insets.left,
-      y: Math.max(
-        edgeMargin + insets.top,
-        height - insets.bottom - mascotSize - 105
-      )
+      x: Math.max(
+        edgeMargin + insets.left,
+        width - insets.right - mascotSize - edgeMargin
+      ),
+      y: edgeMargin + insets.top + defaultTopOffset
     }),
-    [height, insets.bottom, insets.left, insets.top]
+    [insets.left, insets.right, insets.top, width]
   );
   const [position, setPosition] = useState<Position>(defaultPosition);
   const bounds = useMemo(

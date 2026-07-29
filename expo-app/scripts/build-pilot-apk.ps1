@@ -142,6 +142,25 @@ try {
   }
 } finally {
   if (Test-Path -LiteralPath $resolvedStageRoot) {
-    Remove-Item -LiteralPath $resolvedStageRoot -Recurse -Force
+    $cleanupError = $null
+    for ($attempt = 1; $attempt -le 6; $attempt++) {
+      try {
+        Remove-Item `
+          -LiteralPath $resolvedStageRoot `
+          -Recurse `
+          -Force `
+          -ErrorAction Stop
+        $cleanupError = $null
+        break
+      } catch {
+        $cleanupError = $_
+        if ($attempt -lt 6) {
+          Start-Sleep -Seconds 2
+        }
+      }
+    }
+    if ($cleanupError) {
+      throw $cleanupError
+    }
   }
 }
