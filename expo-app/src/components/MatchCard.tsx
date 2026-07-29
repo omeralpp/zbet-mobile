@@ -5,8 +5,8 @@ import type { MatchSummary } from "@/src/api/schemas";
 import { colors, radii, shadows, spacing } from "@/src/theme/theme";
 import {
   formatElapsed,
+  formatCurrentMarketRate,
   formatFixtureDateTime,
-  formatRate,
   formatSigned
 } from "@/src/utils/format";
 import { RatingStars } from "./RatingStars";
@@ -15,6 +15,11 @@ export function MatchCard({ match }: { match: MatchSummary }) {
   const pathname = usePathname();
   const router = useRouter();
   const live = match.status === "LIVE" || match.status === "HALF_TIME";
+  const currentMarket = formatCurrentMarketRate(
+    match.currentRate,
+    match.selectedOdd,
+    "canlı oran"
+  );
 
   return (
     <Pressable
@@ -71,8 +76,8 @@ export function MatchCard({ match }: { match: MatchSummary }) {
           </Text>
         </View>
         <View style={styles.rateBlock}>
-          <Text style={styles.rate}>{formatRate(match.liveRate)}</Text>
-          <Text style={styles.rateLabel}>canlı oran</Text>
+          <Text style={styles.rate}>{currentMarket.value}</Text>
+          <Text style={styles.rateLabel}>{currentMarket.label}</Text>
         </View>
         <View style={styles.pressureBlock}>
           <MaterialCommunityIcons

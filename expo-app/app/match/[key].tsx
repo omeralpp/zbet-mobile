@@ -17,12 +17,18 @@ import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { buildBilyonerMatchUrl } from "@/src/external/bilyoner";
 import { colors, radii, spacing } from "@/src/theme/theme";
 import {
+  formatCurrentMarketRate,
   formatDecisionReason,
   formatFixtureDateTime,
   formatElapsed,
   formatPercentage,
-  formatRate
+  formatRate,
+  formatSigned
 } from "@/src/utils/format";
+import {
+  derivePressureBalance,
+  type PressureDirection
+} from "@/src/utils/pressure-balance";
 
 function firstParam(value: string | string[] | undefined): string {
   const raw = Array.isArray(value) ? value[0] ?? "" : value ?? "";
@@ -76,6 +82,62 @@ function ComparisonRow({
   );
 }
 
+function PressureBalanceRow({
+  totalPressure,
+  pressureDiff
+}: {
+  totalPressure: number;
+  pressureDiff: number;
+}) {
+  const balance = derivePressureBalance(totalPressure, pressureDiff);
+  const fillWidth: `${number}%` =
+    `${balance.magnitudeRatio * 100}%`;
+  const homeWidth: `${number}%` =
+    balance.direction === "HOME" ? fillWidth : "0%";
+  const awayWidth: `${number}%` =
+    balance.direction === "AWAY" ? fillWidth : "0%";
+  const directionLabel: Record<PressureDirection, string> = {
+    HOME: "Ev sahibi baskısı",
+    AWAY: "Deplasman baskısı",
+    BALANCED: "Dengeli"
+  };
+  const value = balance.hasData ? formatSigned(pressureDiff, 1) : "—";
+  const accessibilityLabel = balance.hasData
+    ? `Baskı farkı ${value}, ${directionLabel[balance.direction]}`
+    : "Baskı farkı verisi bekleniyor";
+
+  return (
+    <View
+      accessibilityLabel={accessibilityLabel}
+      style={styles.pressureComparison}
+    >
+      <View style={styles.pressureLabels}>
+        <Text style={styles.pressureSide}>Ev baskısı</Text>
+        <View style={styles.pressureValueBlock}>
+          <Text style={styles.pressureValue}>{value}</Text>
+          <Text style={styles.pressureCaption}>
+            {balance.hasData
+              ? directionLabel[balance.direction]
+              : "Veri bekleniyor"}
+          </Text>
+        </View>
+        <Text style={[styles.pressureSide, styles.pressureAwayLabel]}>
+          Dep. baskısı
+        </Text>
+      </View>
+      <View style={styles.pressureAxis}>
+        <View style={styles.pressureHomeTrack}>
+          <View style={[styles.pressureHomeFill, { width: homeWidth }]} />
+        </View>
+        <View style={styles.pressureZero} />
+        <View style={styles.pressureAwayTrack}>
+          <View style={[styles.pressureAwayFill, { width: awayWidth }]} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
 export default function MatchDetailScreen() {
   const params = useLocalSearchParams<{ key?: string | string[] }>();
   const key = firstParam(params.key);
@@ -107,6 +169,11 @@ export default function MatchDetailScreen() {
   }
 
   const match = query.data;
+  const currentMarket = formatCurrentMarketRate(
+    match.currentRate,
+    match.selectedOdd,
+    "güncel oran"
+  );
 
   return (
     <Screen
@@ -165,14 +232,8 @@ export default function MatchDetailScreen() {
               <Text style={styles.rateLabel}>seçim oranı</Text>
             </View>
             <View style={styles.alignEnd}>
-              <Text style={styles.rateValue}>
-                {formatRate(match.currentRate)}
-              </Text>
-              <Text style={styles.rateLabel}>
-                {match.currentRate === null && match.selectedOdd
-                  ? "market kapalı"
-                  : "güncel oran"}
-              </Text>
+              <Text style={styles.rateValue}>{currentMarket.value}</Text>
+              <Text style={styles.rateLabel}>{currentMarket.label}</Text>
             </View>
           </View>
         </View>
@@ -255,6 +316,10 @@ export default function MatchDetailScreen() {
           away={match.awayRedCards}
           home={match.homeRedCards}
           label="Kırmızı kart"
+        />
+        <PressureBalanceRow
+          pressureDiff={match.pressureDiff}
+          totalPressure={match.totalPressure}
         />
       </View>
 
@@ -503,6 +568,78 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 11,
     fontWeight: "700"
+  },
+  pressureComparison: {
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSoft,
+    gap: spacing.sm,
+    paddingTop: spacing.lg
+  },
+  pressureLabels: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  pressureSide: {
+    color: colors.blue,
+    width: 72,
+    fontSize: 10,
+    fontWeight: "800"
+  },
+  pressureAwayLabel: {
+    color: colors.green,
+    textAlign: "right"
+  },
+  pressureValueBlock: {
+    flex: 1,
+    alignItems: "center"
+  },
+  pressureValue: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: "900"
+  },
+  pressureCaption: {
+    color: colors.textMuted,
+    fontSize: 9,
+    marginTop: 1
+  },
+  pressureAxis: {
+    height: 7,
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  pressureHomeTrack: {
+    flex: 1,
+    height: 5,
+    alignItems: "flex-end",
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: radii.round,
+    overflow: "hidden"
+  },
+  pressureAwayTrack: {
+    flex: 1,
+    height: 5,
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: radii.round,
+    overflow: "hidden"
+  },
+  pressureHomeFill: {
+    height: "100%",
+    backgroundColor: colors.blue,
+    borderRadius: radii.round
+  },
+  pressureAwayFill: {
+    height: "100%",
+    backgroundColor: colors.green,
+    borderRadius: radii.round
+  },
+  pressureZero: {
+    width: 2,
+    height: 7,
+    marginHorizontal: 3,
+    borderRadius: 1,
+    backgroundColor: colors.textMuted
   },
   dualBar: {
     flexDirection: "row",

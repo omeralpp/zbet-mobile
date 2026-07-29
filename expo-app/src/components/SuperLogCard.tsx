@@ -68,7 +68,7 @@ export function SuperLogCard({ log }: { log: SuperLog }) {
         </View>
         <View style={styles.alignEnd}>
           <Text style={styles.value}>{formatRate(log.liveRate)}</Text>
-          <Text style={styles.label}>oran</Text>
+          <Text style={styles.label}>seçim oranı</Text>
         </View>
         <View style={styles.alignEnd}>
           <Text style={[styles.value, { color }]}>

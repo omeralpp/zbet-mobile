@@ -1,12 +1,28 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  formatCurrentMarketRate,
   formatDecisionReason,
   formatFixtureDateTime,
   formatMatchKeyDateTime,
   formatSuperDateScope,
   matchDateFromKey
 } from "./format";
+
+test("güncel market oranını seçim oranından ayrı tutar", () => {
+  assert.deepEqual(formatCurrentMarketRate(1.38, "Ms1X", "canlı oran"), {
+    value: "1,38",
+    label: "canlı oran"
+  });
+  assert.deepEqual(formatCurrentMarketRate(null, "Ms1X", "canlı oran"), {
+    value: "—",
+    label: "market kapalı"
+  });
+  assert.deepEqual(formatCurrentMarketRate(null, "", "güncel oran"), {
+    value: "—",
+    label: "oran bekleniyor"
+  });
+});
 
 test("Super karar nedenini kullanıcı diline çevirir", () => {
   assert.equal(

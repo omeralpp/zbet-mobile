@@ -25,6 +25,7 @@ import {
   formatSuperDateScope,
   matchDateFromKey
 } from "@/src/utils/format";
+import { getSuperDayScopeAction } from "@/src/utils/super-day-scope";
 
 type SuperFilter = "ALL" | "OPEN" | "SETTLED" | "HIGH_STAR";
 
@@ -50,6 +51,7 @@ export default function SuperScreen() {
     ? params.scope[0]
     : params.scope;
   const latestDayOnly = rawScope === "LATEST_DAY";
+  const dayScopeAction = getSuperDayScopeAction(latestDayOnly);
   const [filter, setFilter] = useState<SuperFilter>("ALL");
   const query = useQuery(superLogsQuery);
   const latestMatchDate = useMemo(
@@ -113,14 +115,24 @@ export default function SuperScreen() {
       </View>
       <View style={styles.scopeRow}>
         {dateScope ? <Text style={styles.scope}>{dateScope}</Text> : null}
-        {latestDayOnly ? (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.replace("/super" as never)}
-          >
-            <Text style={styles.allDays}>Tüm günler</Text>
-          </Pressable>
-        ) : null}
+        <Pressable
+          accessibilityLabel={`${dayScopeAction.label} kapsamına geç`}
+          accessibilityRole="button"
+          onPress={() =>
+            router.replace(
+              dayScopeAction.nextScope
+                ? ({
+                    pathname: "/super",
+                    params: { scope: dayScopeAction.nextScope }
+                  } as never)
+                : ("/super" as never)
+            )
+          }
+        >
+          <Text style={styles.dayScopeAction}>
+            {dayScopeAction.label}
+          </Text>
+        </Pressable>
       </View>
 
       {query.isLoading ? (
@@ -185,7 +197,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginBottom: spacing.md
   },
-  allDays: {
+  dayScopeAction: {
     color: colors.blue,
     fontSize: 10,
     fontWeight: "900"

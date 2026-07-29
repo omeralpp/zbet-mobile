@@ -13,6 +13,23 @@ export function formatRate(value: number | null): string {
       }).format(value);
 }
 
+export function formatCurrentMarketRate(
+  value: number | null,
+  selectedOdd: string,
+  availableLabel: "canlı oran" | "güncel oran"
+): { value: string; label: string } {
+  if (value !== null) {
+    return {
+      value: formatRate(value),
+      label: availableLabel
+    };
+  }
+  return {
+    value: "—",
+    label: selectedOdd ? "market kapalı" : "oran bekleniyor"
+  };
+}
+
 export function formatSigned(value: number, digits = 2): string {
   const formatted = new Intl.NumberFormat("tr-TR", {
     minimumFractionDigits: digits,
