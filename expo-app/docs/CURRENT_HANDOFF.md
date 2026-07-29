@@ -46,35 +46,29 @@ anahtarlı dashboard `200` smoke testi geçti.
 ## Repo checkpoint
 
 ```text
-zbet-mobile  master  074d807  origin/master'a push edildi (Mobile cutover implementation)
-zbet-cap     main    165809c  origin/main'e push edildi (Mobile BFF)
+zbet-mobile  master  ca9ac31  origin/master'a push edildi (Mobile cutover Batch 4 implementation)
+zbet-cap     main    165809c  origin/main'de değişmeden kaldı (Mobile BFF)
 ```
 
-Mevcut kullanıcı değişiklikleri korundu. `btb-codex` çalışma ağacındaki önceden
-var olan kullanıcı değişiklikleri bu commitlere alınmadı. Stash/revert
-yapılmadı.
+Mevcut kullanıcı değişiklikleri korundu. Cutover kapsamı dışındaki dosyalar
+commitlere alınmadı. Stash/revert yapılmadı.
 
 ## Son cutover sonucu
 
-- Canlı listeye sade `Seçili` filtresi eklendi; pressure değeri `baskı farkı`
-  etiketiyle açıklandı.
-- Maç detayında kapalı market `— / market kapalı`; seçim sonrası maksimum oran
-  gösterilmiyor.
-- `BTB neden seçti?` özeti seçim marketi, dakika, Türkçe karar nedeni, güven ve
-  model skorunu açılır biçimde gösteriyor.
-- Canlı saha dengesi artık toplam şut, isabetli şut, ondalıklı xG, korner, sarı
-  ve kırmızı kart içeriyor.
-- Bilyoner aksiyonu yeşil, Fiori aksiyonu mavi ve ikisi birlikte korunuyor.
-- Maç ve Toto detaylarında ekran kapsamlı pull-to-refresh var.
-- Toto detayında `Sonuçlar X/15` ve ana tahmin/kupon/kapsam dışı/bekliyor renk
-  açıklaması var.
-- Performans widget Super KPI’sı yalnız aynı gün sonuçlanan `rating >= 3`
-  kararların kazandı/kaybetti/kâr toplamını kullanıyor.
-- Canlı SAP entity’sinde gerçek kaynak update timestamp’i bulunmadığından sahte
-  tazelik göstergesi eklenmedi; NXT-OBS-032 `DEFERRED`.
+- Android native splash’taki ikinci BTB logosu kaldırıldı; yalnız nötr koyu
+  arka plan üzerinden modern uygulama loading ekranına geçiliyor.
+- Karar Günlüğü `Bugün` / `Tüm günler` arasında çift yönlü geçiş yapıyor.
+- Canlı kartlar gerçek güncel `currentRate` değerini gösteriyor; kapalı markette
+  seçim oranına fallback yapılmıyor. Super kartı `liveRate` değerini açıkça
+  `seçim oranı` olarak etiketliyor.
+- Maç detayına sıfır merkezli, ev/deplasman yönlü baskı farkı göstergesi
+  eklendi.
+- Expo SDK 57 bağımlılıkları resmi uyumlu patch seviyelerine yükseltildi.
+- Canlı SAP entity’sinde gerçek kaynak update timestamp’i bulunmadığından
+  NXT-OBS-032 `DEFERRED` kaldı.
 
 Çözülen batch arşivi:
-`docs/observation_archive/cutover_2026-07-29-03.md`.
+`docs/observation_archive/cutover_2026-07-29-04.md`.
 
 Aktif observation maddeleri:
 
@@ -85,16 +79,16 @@ Aktif observation maddeleri:
 ## Doğrulama
 
 - `zbet-cap`: 39/39 test ve production CDS build geçti.
-- Mobile: 45/45 test, TypeScript, ESLint ve Expo Doctor 20/20 geçti.
+- Mobile: 51/51 test, TypeScript, ESLint ve Expo Doctor 20/20 geçti.
 - Ortak `invoke-mobile-check.ps1 -BundleOnly` ve Android production bundle
   geçti.
 - SAP `$metadata`: provider tarafından seçilen 119/119 benzersiz alan mevcut.
-- Gerçek seçili maç DTO’sunda karar dakikası/nedeni, ondalıklı xG, toplam şut
-  ve sarı kart verisi doğrulandı.
+- Public BFF anahtarsız `401`, doğru pilot anahtarıyla maç listesi `200`
+  döndürdü; seçim oranı, güncel oran ve pressure alanları doğrulandı.
 - Native x86_64 emülatör ve arm64 final release build geçti.
-- Android 15 emülatörde Overview, Back, `Seçili`, karar özeti, saha metrikleri,
-  aksiyon renkleri, Toto sonuç açıklaması, detail refresh ve Performans widget
-  smoke testleri geçti.
+- Android 15 emülatörde logosuz native splash, `Bugün` / `Tüm günler`, gerçek
+  canlı oran, Super `seçim oranı` etiketi ve baskı farkı göstergesi görsel
+  testleri geçti.
 - Gerçek widget `%80 (12/15)` Toto ve aynı gün `3+` Super için
   `0,00 / 0 kazandı · 0 kaybetti` gösterdi.
 - Logcat’te fatal Android veya React Native hatası görülmedi.
@@ -104,12 +98,12 @@ Aktif observation maddeleri:
 ## Final pilot APK
 
 ```text
-Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-cutover-20260729-v3-final.apk
+Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-cutover-20260729-v4-final.apk
 Package : com.btb.mobile.next
 Version : 0.1.0 (1)
 ABI     : arm64-v8a
-Size    : 48,459,859 bytes
-SHA-256 : 52820DB7076203EFBF7FA4E17D2DB4A30DBD66AB8AC38AD6F1F97267F478535F
+Size    : 47,192,748 bytes
+SHA-256 : 7714F363A7DA66430064465146B055A2CB1E6EAA3C5FFBF53F046D4A151B1306
 Signing : Android pilot debug certificate; APK Signature Scheme v2 doğrulandı
 ```
 

@@ -5,8 +5,8 @@ Durum: `ACTIVE / OBSERVATION`
 Aktif APK:
 
 ```text
-btb-mobile-next-arm64-cutover-20260729-v3-final.apk
-SHA-256: 52820DB7076203EFBF7FA4E17D2DB4A30DBD66AB8AC38AD6F1F97267F478535F
+btb-mobile-next-arm64-cutover-20260729-v4-final.apk
+SHA-256: 7714F363A7DA66430064465146B055A2CB1E6EAA3C5FFBF53F046D4A151B1306
 ```
 
 Bu dosya yalnız gerçek kullanımda açık kalan tespitleri tutar. Observation
@@ -31,3 +31,4 @@ Durumlar: `OBSERVED`, `READY`, `DEFERRED`, `RESOLVED`.
 
 - `docs/observation_archive/cutover_2026-07-29.md`
 - `docs/observation_archive/cutover_2026-07-29-03.md`
+- `docs/observation_archive/cutover_2026-07-29-04.md`
