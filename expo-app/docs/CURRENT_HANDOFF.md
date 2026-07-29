@@ -42,7 +42,7 @@ Branch   : master
 Upstream : origin/master
 Baseline : da8ba84 Tie mobile shell controls to mascot menu
 Code     : 5609958 Add BTB Mobile Next pilot app
-Current  : f5b9dc8 Handle Android OAuth callback race
+Current  : 60cf0fb Keep Android OAuth browser open on OEM devices
 ```
 
 Kök `.gitignore`, `README.md` ve yeni `expo-app/` commit edildi. Expo klasörünün
@@ -112,6 +112,8 @@ Identity:
 - istemci aynı PKCE isteğinde doğrulanmış HTTPS App Link'i ve native köprü
   dönüşünü birlikte dinler; Android App State/callback yarışı için sınırlı
   bekleme uygular ve beklenmeyen callback URL'lerini reddeder;
+- Xiaomi/MIUI dahil OEM'lerde Custom Tab'i anında kapatılmış sayabilen Expo
+  proxy activity devre dışıdır; Android tarayıcı doğrudan açılır;
 - user token kabul edilir, client-credentials token reddedilir;
 - APK'da client secret yoktur.
 
@@ -169,7 +171,7 @@ zbet-cap:
   diff check   passed
 
 Mobile:
-  tests        31/31
+  tests        33/33
   TypeScript   passed
   ESLint       passed
   Expo Doctor  20/20
@@ -178,7 +180,7 @@ Mobile:
   arm64 standalone pilot-release build passed
   Android 15 x86_64 emulator build/install passed
   App Link domain verification passed
-  IAS authorize + PKCE start and BFF native callback race handling passed
+  IAS authorize Custom Tab 30-second hold + BFF callback + retry passed
 ```
 
 `npm audit --omit=dev` sonucu `0 high`, `0 critical`, `11 moderate` oldu. Kalan
@@ -198,8 +200,8 @@ gerçek API/IAS endpointlerini taşır ve mevcut pilot debug sertifikasıyla
 imzalıdır.
 
 ```text
-Boyut   : 48,459,831 bytes
-SHA-256 : E49B808BFAFFE46F02B8AC0DAF908F905E0D66B0C2225E35B57EECA769DA2F98
+Boyut   : 48,460,215 bytes
+SHA-256 : BB4232E6C046A2DC967B2E57F772D9043303E7776BAC27472A7439D59493293A
 ```
 
 ## Açık zorunlu kapılar
@@ -211,12 +213,13 @@ SHA-256 : E49B808BFAFFE46F02B8AC0DAF908F905E0D66B0C2225E35B57EECA769DA2F98
    `ZBET_CDS_005_CDS`, `ZBET_UI_SUPER_LOG_SB` ve `ZBET_SB_TOTO_UI` ile sınırlı
    communication user zorunludur.
 2. Android 15 emülatörde kurulum, IAS authorize başlangıcı, verified App Link,
-   PKCE state ve BFF native callback dönüşü doğrulandı. Callback artık sessizce
-   giriş ekranına dönmüyor; sahte kod güvenli ve görünür `invalid_grant`
-   mesajına ulaşıyor. Fiziksel cihaz ADB'ye bağlı olmadığı için geçerli
-   kullanıcıyla tam token/refresh, canlı veri, notification, widget, Fiori,
-   geri tuşu, offline ve host restart testleri final APK ile cihazda
-   tamamlanmalıdır.
+   PKCE state ve BFF native callback dönüşü doğrulandı. Proxy activity olmadan
+   IAS Custom Tab 30 saniye açık kaldı, erken `Giriş tamamlanmadı` hatası
+   oluşmadı; sahte kod güvenli ve görünür `invalid_grant` mesajına ulaştı ve
+   ikinci giriş yeni PKCE state ile açıldı. Fiziksel cihaz ADB'ye bağlı olmadığı
+   için geçerli kullanıcıyla tam token/refresh, canlı veri, notification,
+   widget, Fiori, geri tuşu, offline ve host restart testleri final APK ile
+   cihazda tamamlanmalıdır.
 3. Pilot APK debug sertifikalıdır. Store/production release signing anahtarı
    seçilmeli, yedeklenmeli ve kurtarma sahipliği belirlenmelidir.
 4. Cordova'nın kaldırılması/devre dışı bırakılması için destek ve rollback
@@ -234,7 +237,7 @@ silinmez.
 Kaynak commitleri:
 
 ```text
-zbet-mobile : f5b9dc82fdb4ad85407e951cee721e08bbfed6d7
+zbet-mobile : 60cf0fbc65829420dda2874c5ff37e4d63a4edb0
 zbet-cap    : 68db2ab26fc31f474a0d307fb284888c223ad1a7
 ```
 
