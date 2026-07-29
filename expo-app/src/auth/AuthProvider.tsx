@@ -8,9 +8,11 @@ import {
   type PropsWithChildren
 } from "react";
 import * as AuthSession from "expo-auth-session";
+import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { runtimeConfig } from "@/src/config/runtime";
 import { toFriendlyAuthError } from "./auth-error";
+import { isOAuthCallbackUrl } from "./oauth-callback";
 import {
   clearSession,
   getSession,
@@ -36,6 +38,7 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 const nativeReturnUri = "btbmobile://auth";
+const callbackGraceMs = 1000;
 
 function sessionFromTokenResponse(
   token: AuthSession.TokenResponse,
@@ -187,17 +190,68 @@ export function AuthProvider({ children }: PropsWithChildren) {
         usePKCE: true
       });
       const authorizationUrl = await request.makeAuthUrlAsync(discovery);
-      const browserResult = await WebBrowser.openAuthSessionAsync(
-        authorizationUrl,
-        nativeReturnUri
-      );
+      let resolveCallback: (url: string) => void = () => undefined;
+      const callbackPromise = new Promise<string>((resolve) => {
+        resolveCallback = resolve;
+      });
+      const callbackSubscription = Linking.addEventListener("url", (event) => {
+        if (isOAuthCallbackUrl(event.url, redirectUri, nativeReturnUri)) {
+          resolveCallback(event.url);
+        }
+      });
 
-      if (browserResult.type !== "success") {
+      let callbackUrl: string | null = null;
+      try {
+        const browserOutcome = WebBrowser.openAuthSessionAsync(
+          authorizationUrl,
+          redirectUri
+        ).then(
+          (result) => ({ type: "browser" as const, result }),
+          (browserError: unknown) => ({
+            type: "browser-error" as const,
+            error: browserError
+          })
+        );
+        const firstOutcome = await Promise.race([
+          browserOutcome,
+          callbackPromise.then((url) => ({
+            type: "callback" as const,
+            url
+          }))
+        ]);
+
+        if (firstOutcome.type === "callback") {
+          callbackUrl = firstOutcome.url;
+        } else if (firstOutcome.type === "browser-error") {
+          throw firstOutcome.error;
+        } else if (firstOutcome.result.type === "success") {
+          callbackUrl = firstOutcome.result.url;
+        } else {
+          let timeout: ReturnType<typeof setTimeout> | undefined;
+          try {
+            callbackUrl = await Promise.race([
+              callbackPromise,
+              new Promise<null>((resolve) => {
+                timeout = setTimeout(() => resolve(null), callbackGraceMs);
+              })
+            ]);
+          } finally {
+            if (timeout) {
+              clearTimeout(timeout);
+            }
+          }
+        }
+      } finally {
+        callbackSubscription.remove();
+      }
+
+      if (!callbackUrl) {
+        setError("Giriş tamamlanmadı. Lütfen yeniden deneyin.");
         setStatus("unauthenticated");
         return;
       }
 
-      const response = request.parseReturnUrl(browserResult.url);
+      const response = request.parseReturnUrl(callbackUrl);
       if (response.type !== "success") {
         setError(
           response.type === "error"
