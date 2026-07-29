@@ -10,8 +10,10 @@ import {
 import * as AuthSession from "expo-auth-session";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
+import { Platform } from "react-native";
 import { runtimeConfig } from "@/src/config/runtime";
 import { toFriendlyAuthError } from "./auth-error";
+import { getOAuthBrowserOptions } from "./oauth-browser-options";
 import { isOAuthCallbackUrl } from "./oauth-callback";
 import {
   clearSession,
@@ -204,7 +206,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
       try {
         const browserOutcome = WebBrowser.openAuthSessionAsync(
           authorizationUrl,
-          redirectUri
+          redirectUri,
+          getOAuthBrowserOptions(Platform.OS)
         ).then(
           (result) => ({ type: "browser" as const, result }),
           (browserError: unknown) => ({

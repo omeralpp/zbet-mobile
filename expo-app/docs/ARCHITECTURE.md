@@ -68,7 +68,9 @@ contract testi hazırlanmalıdır.
    aktarır. Android'de tarayıcı dönüşü ve App State olayı yarışabildiği için
    istemci aynı PKCE isteği içinde hem doğrulanmış HTTPS App Link'i hem de
    native köprü dönüşünü dinler; URL yolu ve OAuth `state` doğrulaması
-   korunur.
+   korunur. Expo Android auth polyfill'i OEM'lerde tarayıcıyı açılır açılmaz
+   kapatılmış sayabildiğinden proxy activity devre dışıdır; Custom Tab doğrudan
+   açılır ve gerçek callback veya kullanıcı dönüşü beklenir.
 3. Giriş Authorization Code + PKCE ile yapılır; implicit flow ve client secret
    kullanılmaz.
 4. Tokenlar `expo-secure-store` içinde saklanır ve süresi yaklaşınca refresh

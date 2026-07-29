@@ -7,7 +7,8 @@
 - Redirect/App Link: `https://api.surklase.com/auth/callback`
 - Native return: issuer-validated callback bridge to `btbmobile://auth`
 - Android callback handling: verified HTTPS App Link and native bridge return
-  are accepted in the same PKCE session
+  are accepted in the same PKCE session; Android auth launches without the
+  OEM-sensitive proxy activity
 - Android package: `com.btb.mobile.next`
 - Firebase Android client: provisioned; `google-services.json` stays outside Git
 - Live data: fixed, read-only Mobile BFF routes over Cloudflare Tunnel
