@@ -42,6 +42,7 @@ Branch   : master
 Upstream : origin/master
 Baseline : da8ba84 Tie mobile shell controls to mascot menu
 Code     : 5609958 Add BTB Mobile Next pilot app
+Current  : 600de2e Complete Android OAuth callback flow
 ```
 
 Kök `.gitignore`, `README.md` ve yeni `expo-app/` commit edildi. Expo klasörünün
@@ -55,7 +56,7 @@ Branch   : main
 Upstream : origin/main
 Baseline : 2a0e2ea Preserve zero-valued daily Super KPIs
 Runtime  : 79a239b Add secure Mobile BFF runtime
-Current  : 4fa127e Refresh CAP dependencies for secure build
+Current  : 68db2ab Fix Mobile OAuth callback bridge
 ```
 
 Beklenen kapsam:
@@ -106,6 +107,8 @@ Identity:
 - servis: `btb-mobile-identity`;
 - public native client, PKCE S256 ve refresh token;
 - redirect: `https://api.surklase.com/auth/callback`;
+- RFC 9207 `iss` exact IAS issuer doğrulamasından sonra native dönüş
+  `btbmobile://auth` ile tamamlanır;
 - user token kabul edilir, client-credentials token reddedilir;
 - APK'da client secret yoktur.
 
@@ -133,7 +136,9 @@ Mevcut `surklase.com` ve `www.surklase.com -> localhost:8080` rotaları
 korundu. Dış doğrulama:
 
 - `/.well-known/assetlinks.json` → 200;
-- `/auth/callback` → 200;
+- `/auth/callback` readiness → 200;
+- geçerli callback → 302 `btbmobile://auth`;
+- eksik veya beklenmeyen issuer callback → 400;
 - `/v1/dashboard` tokensız → 401;
 - response server → Cloudflare.
 
@@ -153,7 +158,7 @@ korundu. Dış doğrulama:
 
 ```text
 zbet-cap:
-  tests        33/33
+  tests        35/35
   ESLint       passed
   cds build    passed
   npm audit    0 vulnerabilities
@@ -161,13 +166,16 @@ zbet-cap:
   diff check   passed
 
 Mobile:
-  tests        27/27
+  tests        29/29
   TypeScript   passed
   ESLint       passed
   Expo Doctor  20/20
   Android JS production bundle passed
   arm64 debug native build passed
   arm64 standalone pilot-release build passed
+  Android 15 x86_64 emulator build/install passed
+  App Link domain verification passed
+  IAS authorize + PKCE start and native callback return passed
 ```
 
 `npm audit --omit=dev` sonucu `0 high`, `0 critical`, `11 moderate` oldu. Kalan
@@ -187,8 +195,8 @@ gerçek API/IAS endpointlerini taşır ve mevcut pilot debug sertifikasıyla
 imzalıdır.
 
 ```text
-Boyut   : 48,456,695 bytes
-SHA-256 : F136284E7453C46741B5AEECCD5F586CB5910C504A1F478A62A11AF2C7882470
+Boyut   : 48,456,471 bytes
+SHA-256 : 19489100CD24FE6B3F043BC7E3453E50B0890519D480FACBE190BB6EBB2874E8
 ```
 
 ## Açık zorunlu kapılar
@@ -198,9 +206,11 @@ SHA-256 : F136284E7453C46741B5AEECCD5F586CB5910C504A1F478A62A11AF2C7882470
    yalnız sabit read-only allowlist arkasında kullanır. Cordova cutover öncesi
    `ZBET_CDS_005_CDS`, `ZBET_UI_SUPER_LOG_SB` ve `ZBET_SB_TOTO_UI` ile sınırlı
    communication user zorunludur.
-2. Fiziksel Android cihaz bağlı değildi. OAuth giriş/refresh, canlı veri,
-   notification, widget, App Link, deep-link, Fiori, geri tuşu, offline ve host
-   restart testleri cihazda yapılmalıdır.
+2. Android 15 emülatörde kurulum, IAS authorize başlangıcı, verified App Link,
+   PKCE state ve native callback dönüşü doğrulandı. Fiziksel cihaz ADB'ye bağlı
+   olmadığı için geçerli kullanıcıyla tam token/refresh, canlı veri,
+   notification, widget, Fiori, geri tuşu, offline ve host restart testleri
+   final APK ile cihazda tamamlanmalıdır.
 3. Pilot APK debug sertifikalıdır. Store/production release signing anahtarı
    seçilmeli, yedeklenmeli ve kurtarma sahipliği belirlenmelidir.
 4. Cordova'nın kaldırılması/devre dışı bırakılması için destek ve rollback
@@ -218,13 +228,13 @@ silinmez.
 Kaynak commitleri:
 
 ```text
-zbet-mobile : 560995850aab2d9e8654cf1fd3cf5e4cc8a7814d
-zbet-cap    : 4fa127e883d23d5446e7c39c2058a4ba037d5fb7
+zbet-mobile : 600de2e74d7e33b14648852569b5d6012b550c9a
+zbet-cap    : 68db2ab26fc31f474a0d307fb284888c223ad1a7
 ```
 
-Dış API son smoke geçti. Fiziksel cihaz bağlı olmadığı için gerçek cihaz
-sonuçları yoktur. BTP deploy ve Cordova cutover yukarıdaki güvenlik/parity
-kapıları nedeniyle yapılmadı.
+Dış API ve emülatör OAuth callback smoke geçti. Fiziksel cihaz post-fix tam
+oturum sonuçları henüz yoktur. BTP deploy ve Cordova cutover yukarıdaki
+güvenlik/parity kapıları nedeniyle yapılmadı.
 
 Bir sonraki güvenli adım: SAP'ta ayrı communication user/role oluşturmak,
 runtime secret'ını değiştirmek ve fiziksel cihaz pilotunu yürütmektir.
