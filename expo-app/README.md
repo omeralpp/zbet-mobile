@@ -3,12 +3,11 @@
 ## Pilot runtime status (2026-07-29)
 
 - Public API: `https://api.surklase.com`
-- OAuth: SAP Identity Service public client, Authorization Code + PKCE
-- Redirect/App Link: `https://api.surklase.com/auth/callback`
-- Native return: issuer-validated callback bridge to `btbmobile://auth`
-- Android callback handling: verified HTTPS App Link and native bridge return
-  are accepted in the same PKCE session; Android auth launches without the
-  OEM-sensitive proxy activity
+- Active authentication: direct-open pilot key; no IAS/BTP sign-in screen
+- SAP access: server-side `developer` technical user behind fixed read-only
+  BFF routes
+- Pilot protection: APK sends a rotatable random key; BFF stores only its
+  SHA-256 digest
 - Android package: `com.btb.mobile.next`
 - Firebase Android client: provisioned; `google-services.json` stays outside Git
 - Live data: fixed, read-only Mobile BFF routes over Cloudflare Tunnel
@@ -28,8 +27,8 @@ deneyimin bağımsız kaynak kodudur.
 
 - Dashboard, canlı maç, maç detayı, Super geçmişi ve Toto programları native.
 - Veri varsayılan olarak deterministik mock kaynaktan gelir.
-- Gerçek veri yalnızca OAuth 2.0 Authorization Code + PKCE korumalı mobil BFF
-  üzerinden okunur; mobil uygulama SAP OData servislerine doğrudan bağlanmaz.
+- Gerçek veri yalnızca pilot anahtarıyla korunan mobil BFF üzerinden okunur;
+  mobil uygulama SAP OData servislerine doğrudan bağlanmaz.
 - Livescore, yeni fixture ve Toto `RefreshProgram` gibi veri değiştiren işlemler
   ilk sürümde uygulama içindeki HTTPS-kısıtlı Fiori ekranına aktarılır. Bu yüzey
   native başlık, yüklenme ilerlemesi, geri/ileri ve yenileme kontrolleri sunar.
@@ -61,7 +60,7 @@ npm run start:go
 ```
 
 Temel mock ekranlar Expo Go ile incelenebilir. Uygulama içi Fiori WebView,
-Android widget'ları, arka plan bildirim görevi, gerçek OAuth ve Firebase
+Android widget'ları, arka plan bildirim görevi, doğrudan pilot erişimi ve Firebase
 doğrulaması için development build gerekir:
 
 ```powershell
@@ -74,18 +73,16 @@ Yalnızca public değerler `EXPO_PUBLIC_*` değişkenlerine yazılır:
 
 - `EXPO_PUBLIC_USE_MOCKS=true`: yerel preview.
 - `EXPO_PUBLIC_MOBILE_API_URL`: mobil BFF kök URL'si.
-- `EXPO_PUBLIC_AUTH_CLIENT_ID`: public/native OAuth client kimliği.
-- `EXPO_PUBLIC_AUTH_AUTHORIZATION_ENDPOINT`: authorize endpoint.
-- `EXPO_PUBLIC_AUTH_TOKEN_ENDPOINT`: token endpoint.
-- `EXPO_PUBLIC_AUTH_REVOCATION_ENDPOINT`: isteğe bağlı revoke endpoint.
-- `EXPO_PUBLIC_AUTH_SCOPES`: varsayılan `openid profile email`.
+- `EXPO_PUBLIC_MOBILE_PILOT_KEY`: doğrudan-açılış pilot anahtarı. SAP parolası
+  değildir; her pilot APK döngüsünde değiştirilebilir.
 - `EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL`: doğrulanmış Fiori fallback URL'si.
 - `BTB_GOOGLE_SERVICES_FILE`: build makinesindeki preview Android Firebase
   client dosyasının yolu. Service-account anahtarı değildir ve repoya eklenmez.
 
-`EXPO_PUBLIC_*` değerleri uygulama paketinden okunabilir. Client secret, SAP
-parolası, Firebase service-account anahtarı veya başka bir secret burada
-tutulmaz.
+`EXPO_PUBLIC_*` değerleri uygulama paketinden okunabilir. Pilot anahtarı bu
+nedenle üretim kimliği değildir; yalnız fixed read-only BFF yüzeyi için
+dağıtım kapısıdır. SAP parolası, Identity client secret ve Firebase
+service-account anahtarı APK'da tutulmaz.
 
 ## Kontroller
 

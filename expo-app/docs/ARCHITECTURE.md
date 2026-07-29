@@ -4,20 +4,20 @@
 
 ```text
 BTB Mobile Next
-  -> SAP Identity Service (public PKCE client)
+  -> X-BTB-Pilot-Key
   -> https://api.surklase.com
-  -> Cloudflare Tunnel
+  -> private Cloudflare Tunnel
   -> 127.0.0.1:4004 Mobile BFF
+  -> server-side SAP developer technical user
   -> fixed read-only SAP OData allowlist
 ```
 
-The BFF validates Identity user tokens, exposes only fixed `/v1` routes,
-bounds upstream reads, maps SAP responses into mobile DTOs, encrypts the local
-device registry, and keeps all SAP/Firebase credentials server-side. The
-public App Link association is pinned to `com.btb.mobile.next` and the current
-pilot certificate.
+The BFF validates the direct-open pilot key by SHA-256 digest, exposes only
+fixed `/v1` routes, bounds upstream reads, maps SAP responses into mobile DTOs,
+encrypts the local device registry, and keeps all SAP/Firebase credentials
+server-side.
 
-The pilot origin currently uses the existing SAP administrator credential
+The pilot origin currently uses the existing SAP `developer` credential
 behind the BFF allowlist because SAP GUI scripting is disabled. This is a
 temporary pilot exception, not a production or Cordova-cutover approval. A
 dedicated communication user restricted to the three named OData services is
@@ -27,15 +27,15 @@ still mandatory.
 
 ```text
 Expo native client
-  -> OAuth 2.0 Authorization Code + PKCE
+  -> rotatable pilot access key
   -> Mobile BFF (/v1)
-  -> BTP destination / SAP connectivity
+  -> server-side SAP technical user
   -> BTB V2 + Super/Toto V4 OData services
 ```
 
 Mobil istemci SAP hostu, destination credential veya client secret bilmez. BFF:
 
-- access tokenı ve rol kapsamını doğrular;
+- pilot anahtarının SHA-256 özetini sabit zamanlı karşılaştırır;
 - SAP servislerindeki farklı V2/V4 adlarını stabil `/v1` DTO'larına dönüştürür;
 - bounded pagination, timeout, hata kodu ve audit correlation uygular;
 - cihaz push tokenını kullanıcı ve platformla ilişkilendirir;
@@ -61,26 +61,19 @@ contract testi hazırlanmalıdır.
 
 ## Güvenlik modeli
 
-1. Uygulama public native OAuth client olarak kaydedilir.
-2. Identity redirect URI olarak
-   `https://api.surklase.com/auth/callback` allowlist'e eklenir. BFF, exact
-   Identity issuer kontrolünden sonra yanıtı `btbmobile://auth` native dönüşüne
-   aktarır. Android'de tarayıcı dönüşü ve App State olayı yarışabildiği için
-   istemci aynı PKCE isteği içinde hem doğrulanmış HTTPS App Link'i hem de
-   native köprü dönüşünü dinler; URL yolu ve OAuth `state` doğrulaması
-   korunur. Expo Android auth polyfill'i OEM'lerde tarayıcıyı açılır açılmaz
-   kapatılmış sayabildiğinden proxy activity devre dışıdır; Custom Tab doğrudan
-   açılır ve gerçek callback veya kullanıcı dönüşü beklenir.
-3. Giriş Authorization Code + PKCE ile yapılır; implicit flow ve client secret
-   kullanılmaz.
-4. Tokenlar `expo-secure-store` içinde saklanır ve süresi yaklaşınca refresh
-   tokenla yenilenir.
-5. BFF minimum `mobile.read`; cihaz kaydı için ayrı `mobile.device.write`
-   kapsamını doğrular.
-6. BFF yalnız izinli SAP entity/alanlarını okur. İstemciden serbest OData path,
+1. Aktif pilot APK doğrudan açılır; IAS/BTP kullanıcı ekranı göstermez.
+2. APK rastgele pilot anahtarını `X-BTB-Pilot-Key` başlığıyla gönderir. BFF
+   yalnız SHA-256 özetini tutar ve karşılaştırmayı sabit zamanlı yapar.
+3. Pilot anahtarı APK'dan çıkarılabilir; bu nedenle üretim kimliği sayılmaz,
+   periyodik döndürülür ve yalnız fixed read-only yüzeyi açar.
+4. SAP `developer` kullanıcı adı/parolası yalnız BFF runtime environment'ındadır
+   ve mobil yanıt/log/APK içine girmez.
+5. BFF yalnız izinli SAP entity/alanlarını okur. İstemciden serbest OData path,
    `$filter` veya destination adı kabul etmez.
-7. Loglarda access/refresh token, SAP credential ve ham bildirim tokenı
+6. Loglarda pilot anahtarı, SAP credential ve ham bildirim tokenı
    yazdırılmaz.
+7. OAuth/PKCE kodu fallback olarak korunur fakat direct-open pilot build'inde
+   Identity endpointleri veya App Link intent filter'ları paketlenmez.
 
 ## Geçiş fazları
 
@@ -102,13 +95,11 @@ Android geçiş yüzeyleri:
   Fiori sayfası aktifken sayfa geri/yenile/harici tarayıcı eylemlerini
   kaydeder; böylece ayrı bir kalıcı tarayıcı araç çubuğu gerekmez.
 
-## Cloudflare domain üzerinden BTP bağımsızlaşma adayı
-
-Bu hedef henüz aktif runtime sözleşmesi değildir. Önerilen sınır:
+## Cloudflare domain üzerinden aktif pilot
 
 ```text
 BTB Mobile
-  -> api.<owned-domain> (TLS, WAF, rate limit)
+  -> api.surklase.com (TLS)
   -> private Cloudflare Tunnel
   -> Mobile BFF
   -> izinli SAP OData servisleri
@@ -116,8 +107,8 @@ BTB Mobile
 
 Domain veya Tunnel, BFF güvenlik katmanının yerine geçmez. Mobil paket SAP
 credential, Cloudflare service token veya Firebase service-account anahtarı
-taşımaz. Authorization Code + PKCE korunur; BFF token scope doğrular, sabit
-`/v1` DTO sözleşmesini uygular ve yalnız allowlist SAP operasyonlarına gider.
+taşımaz. BFF pilot anahtarı özetini doğrular, sabit `/v1` DTO sözleşmesini
+uygular ve yalnız allowlist SAP operasyonlarına gider.
 FCM köprüsü aynı özel origin üzerinde ayrı yetkili bir servis olabilir.
 
 BTP bağımlılığı ancak üç ayrı yüzey taşındığında tamamen biter:
@@ -137,9 +128,9 @@ DTO contract testleri ve aynı kayıt için Fiori/native parity kontrolü gereki
 
 ### Faz 2 — Pilot
 
-Preview Firebase client, gerçek cihaz development build'i, OAuth, token refresh,
-bildirim routing, offline/retry ve performans ölçülür. Cordova hâlâ rollback
-yoludur.
+Preview Firebase client, gerçek cihaz development build'i, direct-open pilot
+anahtarı, bildirim routing, offline/retry ve performans ölçülür. Cordova hâlâ
+rollback yoludur.
 
 ### Faz 3 — Kontrollü native aksiyonlar
 
@@ -166,18 +157,11 @@ runbook'u ve rollback planı doğrulandıktan sonra emekliye ayrılır.
 
 ## Üretim öncesi blokajlar
 
-- Gerçek mobil BFF ve SAP DTO mapping'i henüz uygulanmadı.
-- Native OAuth client, redirect URI, scope/role koleksiyonu ve BFF token
-  doğrulaması henüz identity provider üzerinde kurulmadı.
-- `zbet-cap` şu anda `auth: mocked` kullanıyor; bu ayarla mobil production
-  trafiği kabul edemez.
-- `zbet-cap/firebase-key.json` Git tarafından izleniyor. İçindeki
-  service-account credential üretim pilotundan önce sağlayıcı tarafında
-  rotate/revoke edilmeli, repodan çıkarılmalı ve secret binding/vault'a
-  taşınmalı. Bu işlem yalnız dosyayı silmekle tamamlanmış sayılmaz.
-- Yeni Android package `com.btb.mobile.next` için ayrı preview Firebase client
-  gerekir. Eski Cordova `google-services.json` dosyası yeni pakete
-  kopyalanmaz.
+- Direct-open pilot anahtarı uygulama paketinden çıkarılabilir; üretim öncesi
+  cihaz attestation veya kullanıcı/cihaz kimliğiyle değiştirilmelidir.
+- Geçici SAP `developer` hesabı yerine üç OData servisiyle sınırlı ayrı
+  communication user oluşturulmalıdır.
+- Store signing, fiziksel cihaz parity, destek ve rollback kapıları eksiktir.
 - Mevcut `npm audit --omit=dev` bulguları Expo CLI/config zincirindeki
   transitive `uuid` advisory'sine bağlıdır. Önerilen otomatik düzeltme Expo'yu
   uyumsuz eski major sürüme düşürdüğü için uygulanmaz; Expo SDK güncellemesiyle

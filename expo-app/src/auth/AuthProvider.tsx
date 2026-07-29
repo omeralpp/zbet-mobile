@@ -100,6 +100,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
         setStatus("preview");
         return;
       }
+      if (runtimeConfig.pilotAccessKey) {
+        setStatus("authenticated");
+        return;
+      }
       if (!configured || !discovery) {
         setStatus("configuration-error");
         setError("Mobil OAuth endpointleri henüz yapılandırılmadı.");
@@ -173,6 +177,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const signIn = useCallback(async () => {
     if (runtimeConfig.useMocks) {
       setStatus("preview");
+      return;
+    }
+    if (runtimeConfig.pilotAccessKey) {
+      setError(null);
+      setStatus("authenticated");
       return;
     }
     if (!configured || !discovery) {
@@ -297,6 +306,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
   ]);
 
   const signOut = useCallback(async () => {
+    if (runtimeConfig.pilotAccessKey) {
+      setError(null);
+      setStatus("authenticated");
+      return;
+    }
     await clearSession();
     setError(null);
     setStatus(runtimeConfig.useMocks ? "preview" : "unauthenticated");

@@ -2,6 +2,7 @@ import Constants from "expo-constants";
 
 type RuntimeExtra = {
   mobileApiUrl?: string;
+  pilotAccessKey?: string;
   useMocks?: boolean;
   authClientId?: string;
   authAuthorizationEndpoint?: string;
@@ -16,6 +17,7 @@ const extra = (Constants.expoConfig?.extra ?? {}) as RuntimeExtra;
 
 export const runtimeConfig = {
   mobileApiUrl: String(extra.mobileApiUrl ?? "").replace(/\/+$/, ""),
+  pilotAccessKey: String(extra.pilotAccessKey ?? ""),
   useMocks: extra.useMocks !== false,
   auth: {
     clientId: String(extra.authClientId ?? ""),

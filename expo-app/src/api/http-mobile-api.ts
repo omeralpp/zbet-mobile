@@ -1,5 +1,7 @@
 import { z, type ZodType } from "zod";
 import { getAccessToken } from "@/src/auth/session-store";
+import { runtimeConfig } from "@/src/config/runtime";
+import { getApiAuthHeaders } from "./api-auth-headers";
 import {
   dashboardSchema,
   matchDetailSchema,
@@ -25,13 +27,15 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
     outerSignal?.addEventListener("abort", abort, { once: true });
 
     try {
-      const token = await getAccessToken();
+      const token = runtimeConfig.pilotAccessKey
+        ? undefined
+        : await getAccessToken();
       const response = await fetch(`${baseUrl}${path}`, {
         ...init,
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...getApiAuthHeaders(runtimeConfig.pilotAccessKey, token),
           ...init.headers
         },
         signal: controller.signal

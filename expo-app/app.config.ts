@@ -2,6 +2,9 @@ import type { ExpoConfig, ConfigContext } from "expo/config";
 
 const previewPackage = "com.btb.mobile.next";
 const googleServicesFile = process.env.BTB_GOOGLE_SERVICES_FILE;
+const pilotAccessKey =
+  process.env.EXPO_PUBLIC_MOBILE_PILOT_KEY?.trim() ?? "";
+const usesPilotAccess = Boolean(pilotAccessKey);
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
@@ -45,30 +48,32 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ...(googleServicesFile ? { googleServicesFile } : {}),
     predictiveBackGestureEnabled: true,
     permissions: ["android.permission.POST_NOTIFICATIONS"],
-    intentFilters: [
-      {
-        action: "VIEW",
-        autoVerify: true,
-        data: [
+    intentFilters: usesPilotAccess
+      ? []
+      : [
           {
-            scheme: "https",
-            host: "api.surklase.com",
-            pathPrefix: "/auth/callback"
-          }
-        ],
-        category: ["BROWSABLE", "DEFAULT"]
-      },
-      {
-        action: "VIEW",
-        autoVerify: false,
-        data: [
+            action: "VIEW",
+            autoVerify: true,
+            data: [
+              {
+                scheme: "https",
+                host: "api.surklase.com",
+                pathPrefix: "/auth/callback"
+              }
+            ],
+            category: ["BROWSABLE", "DEFAULT"]
+          },
           {
-            scheme: "btbmobile"
+            action: "VIEW",
+            autoVerify: false,
+            data: [
+              {
+                scheme: "btbmobile"
+              }
+            ],
+            category: ["BROWSABLE", "DEFAULT"]
           }
-        ],
-        category: ["BROWSABLE", "DEFAULT"]
-      }
-    ]
+        ]
   },
   ios: {
     bundleIdentifier: previewPackage,
@@ -79,19 +84,32 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   extra: {
     mobileApiUrl: process.env.EXPO_PUBLIC_MOBILE_API_URL ?? "",
+    pilotAccessKey,
     useMocks: process.env.EXPO_PUBLIC_USE_MOCKS !== "false",
-    authClientId: process.env.EXPO_PUBLIC_AUTH_CLIENT_ID ?? "",
+    authClientId: usesPilotAccess
+      ? ""
+      : process.env.EXPO_PUBLIC_AUTH_CLIENT_ID ?? "",
     authAuthorizationEndpoint:
-      process.env.EXPO_PUBLIC_AUTH_AUTHORIZATION_ENDPOINT ?? "",
-    authTokenEndpoint: process.env.EXPO_PUBLIC_AUTH_TOKEN_ENDPOINT ?? "",
+      usesPilotAccess
+        ? ""
+        : process.env.EXPO_PUBLIC_AUTH_AUTHORIZATION_ENDPOINT ?? "",
+    authTokenEndpoint: usesPilotAccess
+      ? ""
+      : process.env.EXPO_PUBLIC_AUTH_TOKEN_ENDPOINT ?? "",
     authRedirectUri:
-      process.env.EXPO_PUBLIC_AUTH_REDIRECT_URI ??
-      "https://api.surklase.com/auth/callback",
+      usesPilotAccess
+        ? ""
+        : process.env.EXPO_PUBLIC_AUTH_REDIRECT_URI ??
+          "https://api.surklase.com/auth/callback",
     authRevocationEndpoint:
-      process.env.EXPO_PUBLIC_AUTH_REVOCATION_ENDPOINT ?? "",
+      usesPilotAccess
+        ? ""
+        : process.env.EXPO_PUBLIC_AUTH_REVOCATION_ENDPOINT ?? "",
     authScopes:
-      process.env.EXPO_PUBLIC_AUTH_SCOPES ??
-      "openid profile email groups offline_access",
+      usesPilotAccess
+        ? ""
+        : process.env.EXPO_PUBLIC_AUTH_SCOPES ??
+          "openid profile email groups offline_access",
     legacyLaunchpadUrl:
       process.env.EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL ??
       "https://188b143btrial.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b38042ce-b8ab-4fea-a892-abf4c58a170f"

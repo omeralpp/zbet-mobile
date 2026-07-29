@@ -8,8 +8,7 @@ info:
 servers:
   - url: https://mobile-api.example.invalid
 security:
-  - mobileOAuth:
-      - mobile.read
+  - pilotKey: []
 paths:
   /v1/dashboard:
     get:
@@ -108,8 +107,7 @@ paths:
     post:
       operationId: registerDevice
       security:
-        - mobileOAuth:
-            - mobile.device.write
+        - pilotKey: []
       requestBody:
         required: true
         content:
@@ -137,15 +135,11 @@ paths:
           $ref: "#/components/responses/Error"
 components:
   securitySchemes:
-    mobileOAuth:
-      type: oauth2
-      flows:
-        authorizationCode:
-          authorizationUrl: https://identity.example.invalid/oauth2/authorize
-          tokenUrl: https://identity.example.invalid/oauth2/token
-          scopes:
-            mobile.read: Read BTB, Super and Toto mobile projections.
-            mobile.device.write: Register or update this user's device token.
+    pilotKey:
+      type: apiKey
+      in: header
+      name: X-BTB-Pilot-Key
+      description: Rotatable direct-open pilot key; not a SAP credential.
   parameters:
     Key:
       name: key

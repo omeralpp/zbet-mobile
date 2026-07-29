@@ -38,12 +38,8 @@ if (Test-Path -LiteralPath $resolvedStageRoot) {
 
 $requiredEnvironment = @(
   'BTB_GOOGLE_SERVICES_FILE',
-  'EXPO_PUBLIC_AUTH_AUTHORIZATION_ENDPOINT',
-  'EXPO_PUBLIC_AUTH_CLIENT_ID',
-  'EXPO_PUBLIC_AUTH_REDIRECT_URI',
-  'EXPO_PUBLIC_AUTH_SCOPES',
-  'EXPO_PUBLIC_AUTH_TOKEN_ENDPOINT',
   'EXPO_PUBLIC_MOBILE_API_URL',
+  'EXPO_PUBLIC_MOBILE_PILOT_KEY',
   'EXPO_PUBLIC_USE_MOCKS'
 )
 foreach ($name in $requiredEnvironment) {
@@ -70,6 +66,12 @@ if ($env:EXPO_PUBLIC_USE_MOCKS.ToLowerInvariant() -ne 'false') {
 }
 if ($env:EXPO_PUBLIC_MOBILE_API_URL -ne 'https://api.surklase.com') {
   throw 'Pilot APK must target https://api.surklase.com.'
+}
+if (
+  $env:EXPO_PUBLIC_MOBILE_PILOT_KEY.Length -lt 32 -or
+  $env:EXPO_PUBLIC_MOBILE_PILOT_KEY -match '[\r\n]'
+) {
+  throw 'Pilot APK access key is invalid.'
 }
 
 try {

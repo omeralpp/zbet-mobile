@@ -188,7 +188,7 @@ export default function MoreScreen() {
         ) : null}
       </View>
 
-      {!runtimeConfig.useMocks ? (
+      {!runtimeConfig.useMocks && !runtimeConfig.pilotAccessKey ? (
         <>
           <Text style={styles.sectionTitle}>Oturum</Text>
           <View style={styles.group}>
