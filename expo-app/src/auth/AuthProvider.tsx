@@ -10,6 +10,7 @@ import {
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { runtimeConfig } from "@/src/config/runtime";
+import { toFriendlyAuthError } from "./auth-error";
 import {
   clearSession,
   getSession,
@@ -34,6 +35,7 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const nativeReturnUri = "btbmobile://auth";
 
 function sessionFromTokenResponse(
   token: AuthSession.TokenResponse,
@@ -84,16 +86,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
     });
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [error, setError] = useState<string | null>(null);
-  const [request, response, promptAsync] = AuthSession.useAuthRequest(
-    {
-      clientId: authConfig.clientId || "preview-not-configured",
-      scopes: [...authConfig.scopes],
-      redirectUri,
-      responseType: AuthSession.ResponseType.Code,
-      usePKCE: true
-    },
-    discovery
-  );
 
   useEffect(() => {
     let mounted = true;
@@ -173,107 +165,79 @@ export function AuthProvider({ children }: PropsWithChildren) {
     discovery
   ]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function handleAuthorizationResponse() {
-      // Defer response handling out of the effect setup phase.
-      await Promise.resolve();
-      if (cancelled || !response) {
-        return;
-      }
-
-      if (response?.type === "error") {
-        setError(response.error?.message ?? "Oturum açılamadı.");
-        setStatus("unauthenticated");
-        return;
-      }
-
-      if (
-        response.type !== "success" ||
-        !response.params.code ||
-        !request?.codeVerifier ||
-        !discovery
-      ) {
-        return;
-      }
-
-      setStatus("loading");
-      try {
-        const token = await AuthSession.exchangeCodeAsync(
-          {
-            clientId: authConfig.clientId,
-            code: response.params.code,
-            redirectUri,
-            extraParams: {
-              code_verifier: request.codeVerifier
-            }
-          },
-          discovery
-        );
-        await saveSession(sessionFromTokenResponse(token));
-        if (cancelled) {
-          return;
-        }
-        setError(null);
-        setStatus("authenticated");
-      } catch (exchangeError: unknown) {
-        if (cancelled) {
-          return;
-        }
-        setError(
-          exchangeError instanceof Error
-            ? exchangeError.message
-            : "Token değişimi tamamlanamadı."
-        );
-        setStatus("unauthenticated");
-      }
-    }
-
-    handleAuthorizationResponse().catch((authorizationError: unknown) => {
-      if (!cancelled) {
-        setError(
-          authorizationError instanceof Error
-            ? authorizationError.message
-            : "Oturum yanıtı işlenemedi."
-        );
-        setStatus("unauthenticated");
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    authConfig.clientId,
-    discovery,
-    redirectUri,
-    request?.codeVerifier,
-    response
-  ]);
-
   const signIn = useCallback(async () => {
     if (runtimeConfig.useMocks) {
       setStatus("preview");
       return;
     }
-    if (!configured || !request) {
+    if (!configured || !discovery) {
       setError("Mobil OAuth yapılandırması hazır değil.");
       setStatus(configured ? "unauthenticated" : "configuration-error");
       return;
     }
+
     setError(null);
+    setStatus("loading");
     try {
-      await promptAsync();
-    } catch (promptError: unknown) {
-      setError(
-        promptError instanceof Error
-          ? promptError.message
-          : "Güvenli giriş ekranı açılamadı."
+      const request = new AuthSession.AuthRequest({
+        clientId: authConfig.clientId,
+        scopes: [...authConfig.scopes],
+        redirectUri,
+        responseType: AuthSession.ResponseType.Code,
+        usePKCE: true
+      });
+      const authorizationUrl = await request.makeAuthUrlAsync(discovery);
+      const browserResult = await WebBrowser.openAuthSessionAsync(
+        authorizationUrl,
+        nativeReturnUri
       );
+
+      if (browserResult.type !== "success") {
+        setStatus("unauthenticated");
+        return;
+      }
+
+      const response = request.parseReturnUrl(browserResult.url);
+      if (response.type !== "success") {
+        setError(
+          response.type === "error"
+            ? toFriendlyAuthError(response.error)
+            : "Kimlik sağlayıcısı oturumu tamamlamadı."
+        );
+        setStatus("unauthenticated");
+        return;
+      }
+      if (!response.params.code || !request.codeVerifier) {
+        setError("Kimlik sağlayıcısı geçerli bir yetkilendirme kodu döndürmedi.");
+        setStatus("unauthenticated");
+        return;
+      }
+
+      const token = await AuthSession.exchangeCodeAsync(
+        {
+          clientId: authConfig.clientId,
+          code: response.params.code,
+          redirectUri,
+          extraParams: {
+            code_verifier: request.codeVerifier
+          }
+        },
+        discovery
+      );
+      await saveSession(sessionFromTokenResponse(token));
+      setError(null);
+      setStatus("authenticated");
+    } catch (signInError: unknown) {
+      setError(toFriendlyAuthError(signInError));
       setStatus("unauthenticated");
     }
-  }, [configured, promptAsync, request]);
+  }, [
+    authConfig.clientId,
+    authConfig.scopes,
+    configured,
+    discovery,
+    redirectUri
+  ]);
 
   const signOut = useCallback(async () => {
     await clearSession();

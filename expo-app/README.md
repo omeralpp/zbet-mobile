@@ -5,6 +5,7 @@
 - Public API: `https://api.surklase.com`
 - OAuth: SAP Identity Service public client, Authorization Code + PKCE
 - Redirect/App Link: `https://api.surklase.com/auth/callback`
+- Native return: issuer-validated callback bridge to `btbmobile://auth`
 - Android package: `com.btb.mobile.next`
 - Firebase Android client: provisioned; `google-services.json` stays outside Git
 - Live data: fixed, read-only Mobile BFF routes over Cloudflare Tunnel
@@ -102,6 +103,17 @@ için `-Install` kullanılabilir. `-NativeBuild`, Windows yol sınırını aşma
 kısa ömürlü bir build staging klasörü kullanarak arm64 debug APK smoke build'i
 üretir ve sonucu `.codex-artifacts` altına kopyalar. Bu kontroller commit, push
 veya deploy yapmaz.
+
+Standalone pilot APK betiği varsayılan olarak ARM64 üretir. Android Studio
+emülatör doğrulaması için aynı kaynak ve public runtime ayarlarıyla ayrı bir
+x86_64 çıktı alınabilir:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass `
+  -File .\scripts\build-pilot-apk.ps1 `
+  -Architecture x86_64 `
+  -ArtifactName btb-mobile-next-x86_64-emulator.apk
+```
 
 ## Cordova'dan kontrollü geçiş
 

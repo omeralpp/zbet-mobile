@@ -1,5 +1,11 @@
 [CmdletBinding()]
-param()
+param(
+  [ValidateSet('arm64-v8a', 'x86_64')]
+  [string]$Architecture = 'arm64-v8a',
+
+  [ValidatePattern('^[a-z0-9][a-z0-9._-]*\.apk$')]
+  [string]$ArtifactName = 'btb-mobile-next-arm64-pilot.apk'
+)
 
 $ErrorActionPreference = 'Stop'
 
@@ -40,6 +46,15 @@ $requiredEnvironment = @(
   'EXPO_PUBLIC_MOBILE_API_URL',
   'EXPO_PUBLIC_USE_MOCKS'
 )
+foreach ($name in $requiredEnvironment) {
+  $currentValue = [Environment]::GetEnvironmentVariable($name, 'Process')
+  if ([string]::IsNullOrWhiteSpace($currentValue)) {
+    $userValue = [Environment]::GetEnvironmentVariable($name, 'User')
+    if (-not [string]::IsNullOrWhiteSpace($userValue)) {
+      [Environment]::SetEnvironmentVariable($name, $userValue, 'Process')
+    }
+  }
+}
 $missingEnvironment = @(
   $requiredEnvironment | Where-Object {
     [string]::IsNullOrWhiteSpace(
@@ -104,10 +119,10 @@ try {
         '-p',
         $androidRoot,
         'assembleRelease',
-        '-PreactNativeArchitectures=arm64-v8a',
+        "-PreactNativeArchitectures=$Architecture",
         '--no-daemon'
       ) `
-      -Phase 'Pilot arm64 release APK compile'
+      -Phase "Pilot $Architecture release APK compile"
 
     $apkPath = Join-Path $androidRoot `
       'app\build\outputs\apk\release\app-release.apk'
@@ -117,8 +132,7 @@ try {
 
     $artifactRoot = Join-Path $appRoot '.codex-artifacts'
     New-Item -ItemType Directory -Force -Path $artifactRoot | Out-Null
-    $artifactPath = Join-Path $artifactRoot `
-      'btb-mobile-next-arm64-pilot.apk'
+    $artifactPath = Join-Path $artifactRoot $ArtifactName
     Copy-Item -Force -LiteralPath $apkPath -Destination $artifactPath
     Write-Host "Pilot APK: $artifactPath"
   } finally {

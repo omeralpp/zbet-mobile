@@ -69,6 +69,7 @@ function RootNavigator() {
         <Stack.Protected guard={!hasSession}>
           <Stack.Screen name="sign-in" options={{ headerShown: false }} />
         </Stack.Protected>
+        <Stack.Screen name="auth" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" options={{ title: "Bulunamadı" }} />
       </Stack>
       {hasSession ? <BtbMascotOverlay /> : null}

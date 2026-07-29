@@ -62,7 +62,10 @@ contract testi hazırlanmalıdır.
 ## Güvenlik modeli
 
 1. Uygulama public native OAuth client olarak kaydedilir.
-2. Redirect URI `btbmobile://auth` olarak allowlist'e eklenir.
+2. Identity redirect URI olarak
+   `https://api.surklase.com/auth/callback` allowlist'e eklenir. BFF, exact
+   Identity issuer kontrolünden sonra yanıtı `btbmobile://auth` native dönüşüne
+   aktarır; doğrulanmış HTTPS App Link de yedek yol olarak korunur.
 3. Giriş Authorization Code + PKCE ile yapılır; implicit flow ve client secret
    kullanılmaz.
 4. Tokenlar `expo-secure-store` içinde saklanır ve süresi yaklaşınca refresh
