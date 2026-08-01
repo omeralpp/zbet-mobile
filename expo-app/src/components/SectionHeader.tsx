@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, spacing } from "@/src/theme/theme";
+import { colors, radii, spacing } from "@/src/theme/theme";
 
 type SectionHeaderProps = {
   title: string;
@@ -22,10 +22,14 @@ export function SectionHeader({
       </View>
       {actionLabel && onAction ? (
         <Pressable
+          accessibilityLabel={actionLabel}
           accessibilityRole="button"
-          hitSlop={8}
+          hitSlop={10}
           onPress={onAction}
-          style={({ pressed }) => pressed && styles.pressed}
+          style={({ pressed }) => [
+            styles.actionButton,
+            pressed && styles.pressed
+          ]}
         >
           <Text style={styles.action}>{actionLabel}</Text>
         </Pressable>
@@ -59,10 +63,23 @@ const styles = StyleSheet.create({
   },
   action: {
     color: colors.blue,
-    fontSize: 13,
-    fontWeight: "800"
+    fontSize: 11,
+    fontWeight: "900"
+  },
+  actionButton: {
+    alignItems: "center",
+    backgroundColor: colors.surfaceStrong,
+    borderColor: colors.border,
+    borderRadius: radii.round,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 32,
+    paddingHorizontal: spacing.md
   },
   pressed: {
-    opacity: 0.65
+    backgroundColor: colors.borderSoft,
+    borderColor: colors.blue,
+    opacity: 0.82,
+    transform: [{ scale: 0.98 }]
   }
 });

@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import type { MatchSummary } from "@/src/api/schemas";
+import type { MatchInsight, MatchSummary } from "@/src/api/schemas";
 import { colors, radii, shadows, spacing } from "@/src/theme/theme";
 import {
   formatElapsed,
@@ -11,7 +11,47 @@ import {
 } from "@/src/utils/format";
 import { RatingStars } from "./RatingStars";
 
-export function MatchCard({ match }: { match: MatchSummary }) {
+function TeamName({
+  name,
+  position,
+  redCards
+}: {
+  name: string;
+  position?: number | null | undefined;
+  redCards?: number | undefined;
+}) {
+  return (
+    <View style={styles.teamRow}>
+      <Text numberOfLines={1} style={styles.team}>
+        {name}
+      </Text>
+      {position ? (
+        <Text accessibilityLabel={`Lig sırası ${position}`} style={styles.rank}>
+          #{position}
+        </Text>
+      ) : null}
+      {redCards && redCards > 0 ? (
+        <View
+          accessibilityLabel={`${name}, ${redCards} kırmızı kart`}
+          style={styles.redCardBadge}
+        >
+          <MaterialCommunityIcons color={colors.red} name="card" size={13} />
+          {redCards > 1 ? (
+            <Text style={styles.redCardCount}>{redCards}</Text>
+          ) : null}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+export function MatchCard({
+  insight,
+  match
+}: {
+  insight?: MatchInsight | undefined;
+  match: MatchSummary;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const live = match.status === "LIVE" || match.status === "HALF_TIME";
@@ -53,12 +93,16 @@ export function MatchCard({ match }: { match: MatchSummary }) {
 
       <View style={styles.scoreRow}>
         <View style={styles.teams}>
-          <Text numberOfLines={1} style={styles.team}>
-            {match.homeTeam}
-          </Text>
-          <Text numberOfLines={1} style={styles.team}>
-            {match.awayTeam}
-          </Text>
+          <TeamName
+            name={match.homeTeam}
+            position={insight?.homeStandingPosition}
+            redCards={insight?.homeRedCards}
+          />
+          <TeamName
+            name={match.awayTeam}
+            position={insight?.awayStandingPosition}
+            redCards={insight?.awayRedCards}
+          />
         </View>
         <View style={styles.scores}>
           <Text style={styles.score}>{match.homeScore}</Text>
@@ -169,9 +213,31 @@ const styles = StyleSheet.create({
   },
   team: {
     color: colors.text,
+    flexShrink: 1,
     fontSize: 16,
     lineHeight: 22,
     fontWeight: "700"
+  },
+  teamRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.xs,
+    minWidth: 0
+  },
+  rank: {
+    color: colors.green,
+    fontSize: 10,
+    fontWeight: "900"
+  },
+  redCardBadge: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 2
+  },
+  redCardCount: {
+    color: colors.red,
+    fontSize: 9,
+    fontWeight: "900"
   },
   scores: {
     alignItems: "center",

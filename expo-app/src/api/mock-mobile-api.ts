@@ -1,6 +1,8 @@
 import {
   dashboardSchema,
   matchDetailSchema,
+  matchInsightListSchema,
+  matchInsightSchema,
   matchListSchema,
   superLogDetailSchema,
   superLogListSchema,
@@ -10,6 +12,7 @@ import {
 } from "./schemas";
 import {
   mockDashboard,
+  mockMatchInsights,
   mockMatchSummaries,
   mockMatches,
   mockSuperKpis,
@@ -45,6 +48,24 @@ export const mockMobileApi: MobileApi = {
   async getMatches(signal) {
     await mockDelay(signal);
     return matchListSchema.parse(clone(mockMatchSummaries));
+  },
+
+  async getMatchInsights(signal) {
+    await mockDelay(signal);
+    return matchInsightListSchema.parse(clone(mockMatchInsights));
+  },
+
+  async getMatchInsight(key, signal) {
+    await mockDelay(signal);
+    const insight = mockMatchInsights.find((candidate) => candidate.key === key);
+    if (!insight) {
+      throw new MobileApiError(
+        "Maç göstergesi bulunamadı.",
+        404,
+        "MATCH_INSIGHT_NOT_FOUND"
+      );
+    }
+    return matchInsightSchema.parse(clone(insight));
   },
 
   async getMatch(key, signal) {

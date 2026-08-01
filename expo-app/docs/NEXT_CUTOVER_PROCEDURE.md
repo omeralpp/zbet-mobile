@@ -38,6 +38,12 @@ Komut geldiğinde:
    doğrulama sonucu özetlenir. Stage/commit/push yalnız kullanıcı bu adımı
    ayrıca açıkça onaylarsa yapılır; onay yoksa çalışma doğrulanmış dirty
    checkpoint olarak bırakılır.
+8. Final telefon artifact’ının ABI, imza ve hash doğrulaması kaydedildikten sonra
+   `.codex-artifacts` temizlenir. Yalnız son doğrulanmış fiziksel telefon `arm64`
+   APK’sı tutulur; önceki APK sürümleri, `x86_64` emülatör paketleri ve geçici
+   build/log/ekran kanıtları deploy veya kullanıcıya teslimden önce Geri Dönüşüm
+   Kutusu’na taşınır. Kaynak, test, handoff ve observation arşivleri bu temizliğe
+   hiçbir zaman dahil edilmez.
 
 Belirsiz iş kararı, kapsam genişlemesi veya geri döndürmesi zor işlem varsayımla
 uygulanmaz; blocker olarak raporlanır.

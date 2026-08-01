@@ -39,74 +39,60 @@ Tunnel: `surklase-local-wordpress`
 Tunnel ID: `f129a5fe-96d9-47a2-948d-38fa3acbd2b1`
 Route: `api.surklase.com -> http://localhost:4004`
 
-Bu cutover’da BFF yerel kaynakla yeniden başlatıldı; authenticated public
-contract smoke geçti. Cloudflare DNS/Tunnel veya SAP konfigürasyonu
-değiştirilmedi. Health endpoint’i pilot anahtarı olmadan bilinçli olarak `401`
-döndürür.
+Bu cutover’da BFF yerel kaynakla yeniden başlatıldı. Eski DTO’lar değiştirilmeden
+yeni `/v1/btb/match-insights` list/detail yüzeyi loopback ve public origin’de
+authenticated smoke testinden geçti. Cloudflare DNS/Tunnel veya SAP
+konfigürasyonu değiştirilmedi.
 
 ## Repo checkpoint
 
 ```text
-zbet-mobile  master  6f6712a  cutover uygulama checkpoint’i origin/master'a pushlandı
-zbet-cap     main    142ce59  Mobile BFF checkpoint’i origin/main'e pushlandı
+zbet-mobile  master  cd16f29  origin/master ile aynı; doğrulanmış cutover değişiklikleri dirty, commit/push onayı bekliyor
+zbet-cap     main    142ce59  origin/main ile aynı; doğrulanmış Mobile BFF değişiklikleri dirty, commit/push onayı bekliyor
 btb-codex   main    9648e18  temiz, origin/main ile aynı
 ```
 
-`zbet-mobile` ve `zbet-cap` working tree’lerindeki önceki kullanıcı/cutover
-değişiklikleri korundu ve ilgili Mobile kapsamıyla commit/push yapıldı.
+## Son cutover sonucu — NXT-OBS-054–059
 
-## Son cutover sonucu — NXT-OBS-049–052
+- Canlı Maçlar’daki `Seçili` sekmesi kaldırıldı. Eski deep-link parametresi
+  geriye uyumlu biçimde yıldız filtresine yönleniyor.
+- Toto Programı detayına yeşil `Bilyoner Spor Toto’da aç` butonu eklendi; mavi
+  Fiori hedefi ayrı kaldı.
+- Geçmiş sonuç eşleşmesi satırları aynı marketin gerçek
+  `zbet_cds_006-live_rate` değerini yüzdelerden ayrı gösteriyor. Kapalı oran
+  `kapalı`, endpoint/geçerli eşleşme yoksa `—`.
+- Overview metin aksiyonları kompakt, pressed geri bildirimli ve erişilebilir
+  pill butonlara dönüştürüldü.
+- Takım bazlı kırmızı kart sayısı Canlı kartı ve Maç Detayı üst kartında doğru
+  takımın yanında gösteriliyor; sıfır/eksik değer gizli.
+- Güncel maç entity’sinde lig sırası alanı bulunmadığı read-only metadata ile
+  doğrulandı. Mobile sıralama üretmedi; NXT-OBS-058 `DEFERRED`.
 
-- Canlı ve Karar Günlüğü yıldız menüleri yalnız kapsayıcı `1+ / 2+ / 3+ / 4+`
-  eşiklerini kullanıyor. Canlı ve Super tercihleri cihazda bağımsız saklanıyor.
-- Canlı `1+` yalnız gerçek Super seçimi bulunan rating 1–5 maçları kapsıyor;
-  rating `0`, seçimsiz ve `İzleniyor` adaylar yıldız sekmesine/sayacına girmiyor.
-- Yeni `/v1/super/kpis` read-only sözleşmesi İstanbul günündeki sonuçlanmış Super
-  kararlarının dört eşik bucket’ını sağlıyor. Eski Dashboard şekli korunuyor.
-- Karar Günlüğü seçimi, Overview `Günlük Super` kartı ve Performans widget’ı aynı
-  kalıcı Super eşiğini paylaşıyor. Seçim anında widget yenileniyor; sabit job
-  payload’ı tercihi ezmiyor ve geçici ağ hatasında son doğrulanmış değer korunuyor.
-
-Arşiv: `docs/observation_archive/cutover_2026-08-01-03.md`.
-
-## Commit/push ve deploy kapanışı
-
-- `zbet-cap` commit `142ce59` (`Extend Mobile BFF decision metrics`) `main`
-  dalına pushlandı.
-- `zbet-mobile` uygulama commit’i `6f6712a`
-  (`Refine Mobile Next insights and controls`) `master` dalına pushlandı.
-- Mobile runtime `api.surklase.com -> Cloudflare Tunnel -> 127.0.0.1:4004`
-  olduğu için bu batch’in BFF değişiklikleri yerel servisin yeniden başlatılmasıyla
-  aktif oldu; authenticated loopback/public smoke geçti.
-- BTP’deki `btb-fcm-proxy-srv` notification proxy kodu bu batch’te değişmedi ve
-  Mobile public hostname BTP uygulamasına yönlenmiyor. Bu nedenle gereksiz MTA
-  deploy yapılmadı. CF hedefi `trial/dev`; mevcut CLI oturumu süresi dolmuş.
+Arşiv: `docs/observation_archive/cutover_2026-08-01-04.md`.
 
 ## Doğrulama
 
-- Mobile: TypeScript, ESLint, 61/61 test, Expo Doctor 20/20.
-- Android production JS bundle; arm64 ve x86_64 native release build geçti.
-- Android 15 x86_64 emülatörde iki dört-eşik menüsü, Canlı `1+` seçili maç
-  kapsamı, Overview Canlı sayacı ve Super 4+ seçiminin Overview/widget parity’si
-  doğrulandı.
-- BFF: 42/42 test ve production CDS build.
-- Loopback/public authenticated smoke: eski Dashboard sözleşmesi değişmedi;
-  `/v1/super/kpis` dört bucket ve İstanbul ölçüm gününü döndürdü.
-- CAP production dependency audit: temiz.
-- Mobile audit: Expo toolchain dolaylı `xcode -> uuid` zincirinde 11 moderate;
-  otomatik çözüm breaking Expo geçişi istediği için uygulanmadı.
-- Emülatör process logunda fatal Android/React Native hata izi yok.
+- Mobile TypeScript, ESLint, 62/62 test, Expo Doctor 20/20.
+- Android production JS bundle ve arm64/x86_64 release compile geçti.
+- Android 15 x86_64 emülatörde Overview pill, Canlı sekme sadeleşmesi, gerçek
+  oran/kapalı ayrımı ve Toto dış hedef renkleri doğrulandı; fatal log yok.
+- BFF 43/43 test ve production CDS build geçti.
+- Loopback/public authenticated smoke: mevcut match contract çalışıyor;
+  insights list/detail aynı alanları ve bounded market oranlarını döndürüyor.
+- CAP production dependency audit temiz. Mobile audit Expo toolchain dolaylı
+  `xcode -> uuid` zincirinde 11 moderate; breaking force-fix uygulanmadı.
+- Mobile/CAP diff secret taraması sıfır eşleşme.
 
 ## Final yerel pilot APK
 
 ```text
-Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-cutover-20260801-v7-final.apk
+Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-cutover-20260801-v8-final.apk
 Package : com.btb.mobile.next
 Version : 0.1.0 (1)
 ABI     : arm64-v8a
-Size    : 48,095,388 bytes
-SHA-256 : 041E719AC16AAF9FB51F71CA74668ABBFB35466E2370B2430DF67D7373440982
-Signing : Android pilot debug certificate; APK Signature Scheme v2 doğrulandı
+Size    : 48,104,020 bytes
+SHA-256 : 82465A7CDD997D6A899EF5F1CFA6B21D77E31369F8DC585F6132F643BDC1F574
+Signing : v7 ile aynı Android pilot debug sertifikası; APK Signature Scheme v2 doğrulandı
 ```
 
 ## Aktif observation maddeleri
@@ -115,21 +101,23 @@ Signing : Android pilot debug certificate; APK Signature Scheme v2 doğrulandı
 - NXT-OBS-002 — fiziksel cihaz gerçek FCM küçük ikon: `READY`
 - NXT-OBS-032 — SAP kaynak timestamp bağımlılığı: `DEFERRED`
 - NXT-OBS-033 — Windows startup görevi kayıt/restart kanıtı: `READY`
+- NXT-OBS-053 — final arm64 v8 fiziksel kurulum kanıtı: `READY`
+- NXT-OBS-058 — güncel maç lig sırası kaynağı yok: `DEFERRED`
 
 ## Açık kapılar
 
-1. Final arm64 APK fiziksel cihazda kurulup gerçek FCM sonrasında notification
-   küçük ikonu ve Performans widget parity gözlenmeli.
-2. Bilyoner kurulu fiziksel cihazda HTTPS app-association/deep-link gözlenmeli.
-3. Windows başlangıç görevi ayrı onayla kaydedilip gerçek restart sonrası
+1. Final arm64 v8 APK fiziksel Android cihazda kurulup kırmızı kart/market oranı,
+   Bilyoner Spor Toto hedefi, gerçek FCM küçük ikonu ve Performans widget parity
+   gözlenmeli.
+2. Windows başlangıç görevi ayrı onayla kaydedilip gerçek restart sonrası
    local/public health kanıtı alınmalı.
-4. Gerçek veri tazeliği için SAP kaynak timestamp alanı ve DDIC/CDS aktivasyonu
-   ayrı SAP onayı ister.
-5. SAP `developer` yerine yalnız gereken OData servislerine yetkili communication
+3. Lig sırası ve gerçek veri tazeliği için kaynak DDIC/CDS/service alanları ve
+   SAP aktivasyonu ayrı SAP onayı ister.
+4. SAP `developer` yerine yalnız gerekli OData servislerine yetkili communication
    user oluşturulmalı.
-6. Store/release signing, dağıtım, rollback sahipliği ve Cordova cutover ayrıca
+5. Store/release signing, dağıtım, rollback sahipliği ve Cordova cutover ayrıca
    planlanmalı.
-7. Expo’nun dolaylı `uuid` advisory’si uyumlu non-breaking paket güncellemesi
+6. Expo’nun dolaylı `uuid` advisory’si uyumlu non-breaking paket güncellemesi
    yayımlandığında yeniden değerlendirilmeli.
 
 ## Onay kapıları
@@ -138,6 +126,6 @@ Commit/push, BTP deploy, Cloudflare DNS/Tunnel yayını, Firebase veya SAP dış
 değişikliği, Windows Scheduled Task kaydı, release signing/dağıtım ve Cordova
 cutover ayrı açık onay ister. Production hiçbir pilot onayından çıkarılmaz.
 
-Bir sonraki güvenli adım final APK’yı fiziksel cihazda observation modunda
-kullanmaktır. Yeni tespitler bir sonraki `btb next cutover start` komutuna kadar
-yalnız observation loguna eklenir.
+Bir sonraki güvenli adım final arm64 v8 APK’yı fiziksel cihazda observation
+modunda kullanmaktır. Yeni tespitler bir sonraki `btb next cutover start`
+komutuna kadar yalnız observation loguna eklenir.

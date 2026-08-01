@@ -13,7 +13,10 @@ import type { TotoPrediction } from "@/src/api/schemas";
 import { totoProgramQuery } from "@/src/api/queries";
 import { Screen } from "@/src/components/Screen";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
-import { buildBilyonerMatchUrl } from "@/src/external/bilyoner";
+import {
+  buildBilyonerMatchUrl,
+  buildBilyonerTotoUrl
+} from "@/src/external/bilyoner";
 import { colors, radii, spacing } from "@/src/theme/theme";
 import {
   formatFixtureDateTime,
@@ -318,21 +321,47 @@ export default function TotoProgramDetailScreen() {
         </Text>
       )}
 
-      <Pressable
-        onPress={() =>
-          router.push({
-            pathname: "/fiori",
-            params: {
-              target: "toto",
-              gcNo: String(program.gcNo),
-              version: String(program.version)
-            }
-          })
-        }
-        style={styles.primaryAction}
-      >
-        <Text style={styles.primaryActionText}>Fiori programını aç</Text>
-      </Pressable>
+      <View style={styles.actions}>
+        <Pressable
+          accessibilityHint="Bilyoner uygulaması kuruluysa Spor Toto sayfasını uygulamada, değilse güvenli web sayfasında açar"
+          accessibilityRole="link"
+          onPress={() =>
+            Linking.openURL(buildBilyonerTotoUrl()).catch(() =>
+              Alert.alert(
+                "Bilyoner açılamadı",
+                "Bilyoner Spor Toto sayfası şu anda açılamıyor."
+              )
+            )
+          }
+          style={({ pressed }) => [
+            styles.bilyonerAction,
+            pressed && styles.actionPressed
+          ]}
+        >
+          <Text style={styles.bilyonerActionText}>
+            Bilyoner Spor Toto&apos;da aç
+          </Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() =>
+            router.push({
+              pathname: "/fiori",
+              params: {
+                target: "toto",
+                gcNo: String(program.gcNo),
+                version: String(program.version)
+              }
+            })
+          }
+          style={({ pressed }) => [
+            styles.primaryAction,
+            pressed && styles.actionPressed
+          ]}
+        >
+          <Text style={styles.primaryActionText}>Fiori programını aç</Text>
+        </Pressable>
+      </View>
       <Text style={styles.safetyNote}>
         Tahmin üretme, sonuç importu ve kontrollü güncelleme native preview’da
         çalıştırılmaz.
@@ -554,18 +583,37 @@ const styles = StyleSheet.create({
     fontSize: 12,
     paddingVertical: spacing.xxl
   },
+  actions: {
+    gap: spacing.md,
+    marginTop: spacing.xxl
+  },
   primaryAction: {
     minHeight: 50,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: radii.round,
-    backgroundColor: colors.blue,
-    marginTop: spacing.xxl
+    backgroundColor: colors.blue
   },
   primaryActionText: {
     color: colors.white,
     fontSize: 14,
     fontWeight: "900"
+  },
+  bilyonerAction: {
+    alignItems: "center",
+    backgroundColor: colors.green,
+    borderRadius: radii.round,
+    justifyContent: "center",
+    minHeight: 50
+  },
+  bilyonerActionText: {
+    color: colors.background,
+    fontSize: 14,
+    fontWeight: "900"
+  },
+  actionPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.995 }]
   },
   safetyNote: {
     color: colors.textSubtle,

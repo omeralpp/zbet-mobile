@@ -5,6 +5,8 @@ import { getApiAuthHeaders } from "./api-auth-headers";
 import {
   dashboardSchema,
   matchDetailSchema,
+  matchInsightListSchema,
+  matchInsightSchema,
   matchListSchema,
   superLogDetailSchema,
   superLogListSchema,
@@ -86,6 +88,20 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
       request("/v1/dashboard", dashboardSchema, {}, signal),
     getMatches: (signal) =>
       request("/v1/btb/matches", matchListSchema, {}, signal),
+    getMatchInsights: (signal) =>
+      request(
+        "/v1/btb/match-insights",
+        matchInsightListSchema,
+        {},
+        signal
+      ),
+    getMatchInsight: (key, signal) =>
+      request(
+        `/v1/btb/match-insights/${encodeURIComponent(key)}`,
+        matchInsightSchema,
+        {},
+        signal
+      ),
     getMatch: (key, signal) =>
       request(
         `/v1/btb/matches/${encodeURIComponent(key)}`,

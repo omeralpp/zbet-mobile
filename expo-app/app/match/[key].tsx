@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   Alert,
@@ -10,7 +11,7 @@ import {
   Text,
   View
 } from "react-native";
-import { matchQuery } from "@/src/api/queries";
+import { matchInsightQuery, matchQuery } from "@/src/api/queries";
 import { RatingStars } from "@/src/components/RatingStars";
 import { RatioResultsChart } from "@/src/components/RatioResultsChart";
 import { Screen } from "@/src/components/Screen";
@@ -38,6 +39,40 @@ function firstParam(value: string | string[] | undefined): string {
   } catch {
     return raw;
   }
+}
+
+function TeamHeroName({
+  name,
+  position,
+  redCards
+}: {
+  name: string;
+  position?: number | null | undefined;
+  redCards: number;
+}) {
+  return (
+    <View style={styles.teamNameRow}>
+      <Text numberOfLines={2} style={styles.team}>
+        {name}
+      </Text>
+      {position ? (
+        <Text accessibilityLabel={`Lig sırası ${position}`} style={styles.rank}>
+          #{position}
+        </Text>
+      ) : null}
+      {redCards > 0 ? (
+        <View
+          accessibilityLabel={`${name}, ${redCards} kırmızı kart`}
+          style={styles.redCardBadge}
+        >
+          <MaterialCommunityIcons color={colors.red} name="card" size={14} />
+          {redCards > 1 ? (
+            <Text style={styles.redCardCount}>{redCards}</Text>
+          ) : null}
+        </View>
+      ) : null}
+    </View>
+  );
 }
 
 function ComparisonRow({
@@ -145,6 +180,7 @@ export default function MatchDetailScreen() {
   const router = useRouter();
   const [showDecision, setShowDecision] = useState(false);
   const query = useQuery(matchQuery(key));
+  const insightQuery = useQuery(matchInsightQuery(key));
 
   if (query.isLoading) {
     return (
@@ -170,6 +206,7 @@ export default function MatchDetailScreen() {
   }
 
   const match = query.data;
+  const insight = insightQuery.data;
   const currentMarket = formatCurrentMarketRate(
     match.currentRate,
     match.selectedOdd,
@@ -184,8 +221,10 @@ export default function MatchDetailScreen() {
         refreshControl: (
           <RefreshControl
             colors={[colors.green]}
-            onRefresh={() => query.refetch()}
-            refreshing={query.isRefetching}
+              onRefresh={() =>
+                Promise.all([query.refetch(), insightQuery.refetch()])
+              }
+              refreshing={query.isRefetching || insightQuery.isRefetching}
             tintColor={colors.green}
           />
         )
@@ -207,17 +246,21 @@ export default function MatchDetailScreen() {
         </View>
         <View style={styles.scoreRow}>
           <View style={styles.teamBlock}>
-            <Text numberOfLines={2} style={styles.team}>
-              {match.homeTeam}
-            </Text>
+            <TeamHeroName
+              name={match.homeTeam}
+              position={insight?.homeStandingPosition}
+              redCards={insight?.homeRedCards ?? match.homeRedCards}
+            />
           </View>
           <Text style={styles.score}>
             {match.homeScore} – {match.awayScore}
           </Text>
           <View style={[styles.teamBlock, styles.awayTeam]}>
-            <Text numberOfLines={2} style={styles.team}>
-              {match.awayTeam}
-            </Text>
+            <TeamHeroName
+              name={match.awayTeam}
+              position={insight?.awayStandingPosition}
+              redCards={insight?.awayRedCards ?? match.awayRedCards}
+            />
           </View>
         </View>
         <View style={styles.selectionRow}>
@@ -281,6 +324,7 @@ export default function MatchDetailScreen() {
 
       <Text style={styles.sectionTitle}>Oran sonuçları</Text>
       <RatioResultsChart
+        marketRates={insight?.marketRates ?? []}
         phase={match.ratioPhase}
         rows={match.ratioResults}
       />
@@ -450,6 +494,28 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     fontWeight: "800"
+  },
+  teamNameRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs,
+    justifyContent: "center"
+  },
+  rank: {
+    color: colors.green,
+    fontSize: 10,
+    fontWeight: "900"
+  },
+  redCardBadge: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 2
+  },
+  redCardCount: {
+    color: colors.red,
+    fontSize: 9,
+    fontWeight: "900"
   },
   score: {
     color: colors.white,

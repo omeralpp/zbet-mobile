@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildBilyonerMatchUrl } from "./bilyoner";
+import { buildBilyonerMatchUrl, buildBilyonerTotoUrl } from "./bilyoner";
 
 test("Bilyoner maç kartı için güvenilir event URL'si üretir", () => {
   assert.equal(
@@ -8,4 +8,8 @@ test("Bilyoner maç kartı için güvenilir event URL'si üretir", () => {
     "https://www.bilyoner.com/mac-karti/futbol/472910/oranlar"
   );
   assert.throws(() => buildBilyonerMatchUrl(0), /etkinlik kimliği/);
+});
+
+test("Bilyoner Spor Toto için sabit güvenilir HTTPS hedefi kullanır", () => {
+  assert.equal(buildBilyonerTotoUrl(), "https://www.bilyoner.com/spor-toto");
 });

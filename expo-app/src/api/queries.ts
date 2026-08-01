@@ -4,6 +4,8 @@ import { mobileApi } from "./index";
 export const queryKeys = {
   dashboard: ["dashboard"] as const,
   matches: ["matches"] as const,
+  matchInsights: ["matchInsights"] as const,
+  matchInsight: (key: string) => ["matchInsights", key] as const,
   match: (key: string) => ["matches", key] as const,
   superLogs: ["superLogs"] as const,
   superKpis: ["superKpis"] as const,
@@ -25,6 +27,23 @@ export const matchesQuery = queryOptions({
   staleTime: 20_000,
   refetchInterval: 60_000
 });
+
+export const matchInsightsQuery = queryOptions({
+  queryKey: queryKeys.matchInsights,
+  queryFn: ({ signal }) => mobileApi.getMatchInsights(signal),
+  staleTime: 20_000,
+  refetchInterval: 60_000
+});
+
+export function matchInsightQuery(key: string) {
+  return queryOptions({
+    queryKey: queryKeys.matchInsight(key),
+    queryFn: ({ signal }) => mobileApi.getMatchInsight(key, signal),
+    staleTime: 15_000,
+    enabled: Boolean(key),
+    retry: 1
+  });
+}
 
 export function matchQuery(key: string) {
   return queryOptions({

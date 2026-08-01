@@ -50,6 +50,34 @@ paths:
                 $ref: "#/components/schemas/MatchDetail"
         default:
           $ref: "#/components/responses/Error"
+  /v1/btb/match-insights:
+    get:
+      operationId: getMatchInsights
+      responses:
+        "200":
+          description: Optional team-card indicators for current BTB matches.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MatchInsight"
+        default:
+          $ref: "#/components/responses/Error"
+  /v1/btb/match-insights/{key}:
+    get:
+      operationId: getMatchInsight
+      parameters:
+        - $ref: "#/components/parameters/Key"
+      responses:
+        "200":
+          description: Optional team indicators and real current market rates.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchInsight"
+        default:
+          $ref: "#/components/responses/Error"
   /v1/super/logs:
     get:
       operationId: getSuperLogs
@@ -309,6 +337,37 @@ components:
               items:
                 $ref: "#/components/schemas/RatioResult"
       unevaluatedProperties: false
+    MatchInsight:
+      type: object
+      additionalProperties: false
+      required:
+        - key
+        - homeRedCards
+        - awayRedCards
+        - homeStandingPosition
+        - awayStandingPosition
+        - marketRates
+      properties:
+        key: { type: string, minLength: 1 }
+        homeRedCards: { type: integer, minimum: 0 }
+        awayRedCards: { type: integer, minimum: 0 }
+        homeStandingPosition: { type: [integer, "null"], minimum: 1 }
+        awayStandingPosition: { type: [integer, "null"], minimum: 1 }
+        marketRates:
+          type: array
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/MatchMarketRate"
+    MatchMarketRate:
+      type: object
+      additionalProperties: false
+      required: [sort, betType, liveRate]
+      properties:
+        sort: { type: integer, minimum: 0 }
+        betType: { type: string, minLength: 1 }
+        liveRate:
+          type: [number, "null"]
+          exclusiveMinimum: 1
     ScoreDistribution:
       type: object
       additionalProperties: false

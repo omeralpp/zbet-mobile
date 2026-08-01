@@ -4,7 +4,7 @@ import {
   type StarDecisionFilter
 } from "./decision-filters";
 
-export type LiveMatchTab = "LIVE" | "SELECTED" | "ALL" | "STAR";
+export type LiveMatchTab = "LIVE" | "ALL" | "STAR";
 
 export function matchLiveTab(
   match: MatchSummary,
@@ -14,8 +14,6 @@ export function matchLiveTab(
   switch (tab) {
     case "LIVE":
       return match.status === "LIVE" || match.status === "HALF_TIME";
-    case "SELECTED":
-      return matchDecisionFilter(match, "SELECTED");
     case "STAR":
       return matchDecisionFilter(match, starFilter);
     default:

@@ -1,6 +1,7 @@
 import type {
   Dashboard,
   MatchDetail,
+  MatchInsight,
   MatchSummary,
   SuperLog,
   SuperLogDetail,
@@ -11,6 +12,8 @@ import type {
 export interface MobileApi {
   getDashboard(signal?: AbortSignal): Promise<Dashboard>;
   getMatches(signal?: AbortSignal): Promise<MatchSummary[]>;
+  getMatchInsights(signal?: AbortSignal): Promise<MatchInsight[]>;
+  getMatchInsight(key: string, signal?: AbortSignal): Promise<MatchInsight>;
   getMatch(key: string, signal?: AbortSignal): Promise<MatchDetail>;
   getSuperLogs(signal?: AbortSignal): Promise<SuperLog[]>;
   getSuperKpis(signal?: AbortSignal): Promise<SuperKpis>;

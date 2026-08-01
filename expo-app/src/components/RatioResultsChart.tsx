@@ -1,6 +1,11 @@
 import { StyleSheet, Text, View } from "react-native";
-import type { MatchDetail, RatioResult } from "@/src/api/schemas";
+import type {
+  MatchDetail,
+  MatchMarketRate,
+  RatioResult
+} from "@/src/api/schemas";
 import { colors, radii, spacing } from "@/src/theme/theme";
+import { formatRate } from "@/src/utils/format";
 
 type RatioPhase = NonNullable<MatchDetail["ratioPhase"]>;
 
@@ -23,9 +28,11 @@ function visiblePhases(phase: RatioPhase, rows: RatioResult[]) {
 }
 
 export function RatioResultsChart({
+  marketRates,
   phase,
   rows
 }: {
+  marketRates: MatchMarketRate[];
   phase: MatchDetail["ratioPhase"];
   rows: RatioResult[];
 }) {
@@ -59,39 +66,64 @@ export function RatioResultsChart({
             ))}
           </View>
           <View style={styles.rows}>
-            {rows.map((row) => (
-              <View
-                accessibilityLabel={`${row.betType} geçmiş sonuç oranları`}
-                key={`${row.sort}:${row.betType}`}
-                style={styles.row}
-              >
-                <Text numberOfLines={1} style={styles.betType}>
-                  {row.betType}
-                </Text>
-                <View style={styles.bars}>
-                  {phases.map((item) => {
-                    const value = row[item.field];
-                    if (value === null) {
-                      return null;
-                    }
-                    const width: `${number}%` = `${Math.min(100, Math.max(0, value))}%`;
-                    return (
-                      <View key={item.key} style={styles.barLine}>
-                        <View style={styles.track}>
-                          <View
-                            style={[
-                              styles.fill,
-                              { backgroundColor: item.color, width }
-                            ]}
-                          />
+            {rows.map((row) => {
+              const marketRate = marketRates.find(
+                (rate) =>
+                  rate.sort === row.sort && rate.betType === row.betType
+              );
+              const rateText = marketRate
+                ? marketRate.liveRate === null
+                  ? "kapalı"
+                  : formatRate(marketRate.liveRate)
+                : "—";
+              return (
+                <View
+                  accessibilityLabel={`${row.betType} geçmiş sonuç yüzdeleri, canlı oran ${rateText}`}
+                  key={`${row.sort}:${row.betType}`}
+                  style={styles.row}
+                >
+                  <View style={styles.rowHeader}>
+                    <Text numberOfLines={1} style={styles.betType}>
+                      {row.betType}
+                    </Text>
+                    <View style={styles.marketRate}>
+                      <Text style={styles.marketRateLabel}>Canlı oran</Text>
+                      <Text
+                        style={[
+                          styles.marketRateValue,
+                          marketRate?.liveRate === null &&
+                            styles.marketRateClosed
+                        ]}
+                      >
+                        {rateText}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.bars}>
+                    {phases.map((item) => {
+                      const value = row[item.field];
+                      if (value === null) {
+                        return null;
+                      }
+                      const width: `${number}%` = `${Math.min(100, Math.max(0, value))}%`;
+                      return (
+                        <View key={item.key} style={styles.barLine}>
+                          <View style={styles.track}>
+                            <View
+                              style={[
+                                styles.fill,
+                                { backgroundColor: item.color, width }
+                              ]}
+                            />
+                          </View>
+                          <Text style={styles.value}>%{Math.round(value)}</Text>
                         </View>
-                        <Text style={styles.value}>%{Math.round(value)}</Text>
-                      </View>
-                    );
-                  })}
+                      );
+                    })}
+                  </View>
                 </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
         </>
       ) : (
@@ -169,15 +201,35 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg
   },
   row: {
-    flexDirection: "row",
+    gap: spacing.sm
+  },
+  rowHeader: {
     alignItems: "center",
-    gap: spacing.md
+    flexDirection: "row",
+    justifyContent: "space-between"
   },
   betType: {
     color: colors.text,
-    width: 58,
     fontSize: 11,
     fontWeight: "900"
+  },
+  marketRate: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.xs
+  },
+  marketRateLabel: {
+    color: colors.textSubtle,
+    fontSize: 9,
+    fontWeight: "700"
+  },
+  marketRateValue: {
+    color: colors.green,
+    fontSize: 11,
+    fontWeight: "900"
+  },
+  marketRateClosed: {
+    color: colors.textMuted
   },
   bars: {
     flex: 1,

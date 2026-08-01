@@ -2,6 +2,7 @@ import {
   matchSummarySchema,
   type Dashboard,
   type MatchDetail,
+  type MatchInsight,
   type SuperLog,
   type SuperKpis,
   type TotoProgram
@@ -202,6 +203,21 @@ export const mockMatches: MatchDetail[] = [
 
 export const mockMatchSummaries = mockMatches.map((match) =>
   matchSummarySchema.strip().parse(match)
+);
+
+export const mockMatchInsights: MatchInsight[] = mockMatches.map(
+  (match, matchIndex) => ({
+    key: match.key,
+    homeRedCards: matchIndex === 0 ? 1 : match.homeRedCards,
+    awayRedCards: match.awayRedCards,
+    homeStandingPosition: matchIndex === 0 ? 2 : null,
+    awayStandingPosition: matchIndex === 0 ? 7 : null,
+    marketRates: match.ratioResults.map((row, rowIndex) => ({
+      sort: row.sort,
+      betType: row.betType,
+      liveRate: rowIndex === 0 ? 1.38 : null
+    }))
+  })
 );
 
 export const mockSuperLogs: SuperLog[] = [

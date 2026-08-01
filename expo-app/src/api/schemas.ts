@@ -44,6 +44,21 @@ export const ratioResultSchema = z.strictObject({
   live: finiteNumber.min(0).max(100).nullable()
 });
 
+export const matchMarketRateSchema = z.strictObject({
+  sort: z.number().int().nonnegative(),
+  betType: z.string().min(1),
+  liveRate: finiteNumber.gt(1).nullable()
+});
+
+export const matchInsightSchema = z.strictObject({
+  key: z.string().min(1),
+  homeRedCards: z.number().int().nonnegative(),
+  awayRedCards: z.number().int().nonnegative(),
+  homeStandingPosition: z.number().int().positive().nullable(),
+  awayStandingPosition: z.number().int().positive().nullable(),
+  marketRates: z.array(matchMarketRateSchema).max(50)
+});
+
 export const matchDetailSchema = matchSummarySchema.extend({
   decisionMinute: z.number().int().nonnegative().nullable(),
   decisionReason: z.string(),
@@ -207,6 +222,7 @@ export const dashboardSchema = z.strictObject({
 });
 
 export const matchListSchema = z.array(matchSummarySchema);
+export const matchInsightListSchema = z.array(matchInsightSchema);
 export const superLogListSchema = z.array(superLogSchema);
 export const totoProgramListSchema = z.array(totoProgramSchema);
 
@@ -214,6 +230,8 @@ export type MatchStatus = z.infer<typeof matchStatusSchema>;
 export type MatchSummary = z.infer<typeof matchSummarySchema>;
 export type MatchDetail = z.infer<typeof matchDetailSchema>;
 export type RatioResult = z.infer<typeof ratioResultSchema>;
+export type MatchInsight = z.infer<typeof matchInsightSchema>;
+export type MatchMarketRate = z.infer<typeof matchMarketRateSchema>;
 export type SuperLog = z.infer<typeof superLogSchema>;
 export type SuperLogDetail = z.infer<typeof superLogDetailSchema>;
 export type SuperKpis = z.infer<typeof superKpisSchema>;

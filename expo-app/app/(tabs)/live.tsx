@@ -8,7 +8,7 @@ import {
   Text,
   View
 } from "react-native";
-import { matchesQuery } from "@/src/api/queries";
+import { matchInsightsQuery, matchesQuery } from "@/src/api/queries";
 import { FilterChip } from "@/src/components/FilterChip";
 import { DecisionFilterChip } from "@/src/components/DecisionFilterChip";
 import { MatchCard } from "@/src/components/MatchCard";
@@ -40,11 +40,13 @@ function routeTab(
 ): LiveMatchTab {
   const scope = firstParam(scopeValue);
   const legacy = firstParam(legacyFilter);
-  if (["LIVE", "SELECTED", "ALL", "STAR"].includes(scope)) {
+  if (["LIVE", "ALL", "STAR"].includes(scope)) {
     return scope as LiveMatchTab;
   }
-  if (legacy === "SELECTED") {
-    return "SELECTED";
+  // Preserve old notification/deep-link compatibility without keeping a
+  // separate selected tab in the current UI.
+  if (scope === "SELECTED" || legacy === "SELECTED") {
+    return "STAR";
   }
   if (legacy === "ALL") {
     return "ALL";
@@ -74,6 +76,7 @@ export default function LiveScreen() {
   const tab = routeTab(params.scope, params.filter, params.decision);
   const [decisionOpen, setDecisionOpen] = useState(false);
   const query = useQuery(matchesQuery);
+  const insightsQuery = useQuery(matchInsightsQuery);
 
   useEffect(() => {
     if (
@@ -98,6 +101,13 @@ export default function LiveScreen() {
     [query.data, starFilter, tab]
   );
   const sections = useMemo(() => groupMatchesByKickoff(matches), [matches]);
+  const insightMap = useMemo(
+    () =>
+      new Map(
+        (insightsQuery.data ?? []).map((insight) => [insight.key, insight])
+      ),
+    [insightsQuery.data]
+  );
 
   return (
     <Screen
@@ -114,14 +124,6 @@ export default function LiveScreen() {
             router.setParams({ scope: "LIVE", filter: undefined });
           }}
           selected={tab === "LIVE"}
-        />
-        <FilterChip
-          label="Seçili"
-          onPress={() => {
-            setDecisionOpen(false);
-            router.setParams({ scope: "SELECTED", filter: undefined });
-          }}
-          selected={tab === "SELECTED"}
         />
         <FilterChip
           label="Tümü"
@@ -179,8 +181,10 @@ export default function LiveScreen() {
           refreshControl={
             <RefreshControl
               colors={[colors.green]}
-              onRefresh={() => query.refetch()}
-              refreshing={query.isRefetching}
+              onRefresh={() =>
+                Promise.all([query.refetch(), insightsQuery.refetch()])
+              }
+              refreshing={query.isRefetching || insightsQuery.isRefetching}
               tintColor={colors.green}
             />
           }
@@ -188,7 +192,11 @@ export default function LiveScreen() {
             <View style={styles.group}>
               <Text style={styles.sectionTitle}>{section.title}</Text>
               {section.data.map((match) => (
-                <MatchCard key={match.key} match={match} />
+                <MatchCard
+                  insight={insightMap.get(match.key)}
+                  key={match.key}
+                  match={match}
+                />
               ))}
             </View>
           )}
