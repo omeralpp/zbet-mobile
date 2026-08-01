@@ -20,6 +20,7 @@ import {
   formatPercentage,
   formatProgramStatus
 } from "@/src/utils/format";
+import { summarizeTotoResults } from "@/src/utils/toto-results";
 
 function predictionResultPresentation(result: TotoPrediction["result"]): {
   color: string;
@@ -89,12 +90,8 @@ export default function TotoProgramDetailScreen() {
   }
 
   const program = query.data;
-  const resultTotal = program.predictions.length || program.fixtures.length;
-  const resultedCount = program.predictions.filter(
-    (prediction) => prediction.result !== "OPEN"
-  ).length;
-  const resultProgress =
-    resultTotal > 0 ? Math.min(100, (resultedCount / resultTotal) * 100) : 0;
+  const resultSummary = summarizeTotoResults(program.predictions);
+  const resultTotal = resultSummary.total || program.fixtures.length;
 
   return (
     <Screen
@@ -160,17 +157,64 @@ export default function TotoProgramDetailScreen() {
           <View style={styles.resultProgressHeader}>
             <Text style={styles.resultProgressTitle}>Sonuçlar</Text>
             <Text style={styles.resultProgressValue}>
-              {resultedCount}/{resultTotal}
+              {resultSummary.settled}/{resultTotal} sonuçlandı
             </Text>
           </View>
           <View style={styles.resultProgressTrack}>
-            <View
-              style={[
-                styles.resultProgressFill,
-                { width: `${resultProgress}%` }
-              ]}
-            />
+            {resultSummary.total > 0 ? (
+              <>
+                <View
+                  style={[
+                    styles.resultProgressFill,
+                    {
+                      backgroundColor: colors.green,
+                      flex: resultSummary.mainHits
+                    }
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.resultProgressFill,
+                    {
+                      backgroundColor: colors.gold,
+                      flex: resultSummary.coveredOnly
+                    }
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.resultProgressFill,
+                    {
+                      backgroundColor: colors.red,
+                      flex: resultSummary.misses
+                    }
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.resultProgressFill,
+                    {
+                      backgroundColor: colors.textSubtle,
+                      flex: resultSummary.open
+                    }
+                  ]}
+                />
+              </>
+            ) : null}
           </View>
+          {resultSummary.total > 0 ? (
+            <View style={styles.resultMetrics}>
+              <Text style={[styles.resultMetric, { color: colors.green }]}>
+                {resultSummary.mainHits} ana isabet
+              </Text>
+              <Text style={[styles.resultMetric, { color: colors.gold }]}>
+                {resultSummary.coveredOnly} Kuponda
+              </Text>
+              <Text style={[styles.resultMetric, { color: colors.red }]}>
+                {resultSummary.misses} kapsam dışı
+              </Text>
+            </View>
+          ) : null}
           <View style={styles.resultLegend}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: colors.green }]} />
@@ -390,6 +434,7 @@ const styles = StyleSheet.create({
   },
   resultProgressTrack: {
     height: 6,
+    flexDirection: "row",
     backgroundColor: colors.surfaceStrong,
     borderRadius: radii.round,
     marginTop: spacing.sm,
@@ -397,8 +442,17 @@ const styles = StyleSheet.create({
   },
   resultProgressFill: {
     height: "100%",
-    backgroundColor: colors.green,
     borderRadius: radii.round
+  },
+  resultMetrics: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.md,
+    marginTop: spacing.md
+  },
+  resultMetric: {
+    fontSize: 10,
+    fontWeight: "900"
   },
   resultLegend: {
     flexDirection: "row",

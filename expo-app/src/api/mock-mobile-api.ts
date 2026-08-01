@@ -2,7 +2,9 @@ import {
   dashboardSchema,
   matchDetailSchema,
   matchListSchema,
+  superLogDetailSchema,
   superLogListSchema,
+  superKpisSchema,
   totoProgramListSchema,
   totoProgramSchema
 } from "./schemas";
@@ -10,6 +12,7 @@ import {
   mockDashboard,
   mockMatchSummaries,
   mockMatches,
+  mockSuperKpis,
   mockSuperLogs,
   mockTotoPrograms
 } from "./mock-data";
@@ -56,6 +59,61 @@ export const mockMobileApi: MobileApi = {
   async getSuperLogs(signal) {
     await mockDelay(signal);
     return superLogListSchema.parse(clone(mockSuperLogs));
+  },
+
+  async getSuperKpis(signal) {
+    await mockDelay(signal);
+    return superKpisSchema.parse(clone(mockSuperKpis));
+  },
+
+  async getSuperLog(key, signal) {
+    await mockDelay(signal);
+    const log = mockSuperLogs.find((candidate) => candidate.key === key);
+    if (!log) {
+      throw new MobileApiError(
+        "Super kararı bulunamadı.",
+        404,
+        "SUPER_LOG_NOT_FOUND"
+      );
+    }
+    return superLogDetailSchema.parse(
+      clone({
+        ...log,
+        matchDate: "2026-07-29",
+        matchTime: "20:45",
+        matchId: 472910,
+        homeTeam: log.matchName.split(" - ")[0] || "Ev",
+        awayTeam: log.matchName.split(" - ")[1] || "Deplasman",
+        league: "Demo lig",
+        marketGroup: "MATCH_RESULT",
+        decisionHomeScore: 1,
+        decisionAwayScore: 0,
+        baseProbability: 0.72,
+        superProbability: 0.79,
+        modelScore: 3.75,
+        edgeScore: 1.2,
+        compatibilityScore: 0.8,
+        alignmentScore: 0.65,
+        totalPressure: 68.2,
+        pressureDiff: 16.4,
+        homePressure: 42.3,
+        awayPressure: 25.9,
+        deviation: 0.15,
+        initialPool: 61,
+        halfTimePool: 18,
+        postScorePool: 14,
+        selectedOddPool: 9,
+        homeStandingPosition: 2,
+        awayStandingPosition: 7,
+        homeStandingPoints: 41,
+        awayStandingPoints: 28,
+        standingPpgDiff: 0.42,
+        homeVenuePpg: 2.1,
+        awayVenuePpg: 1.3,
+        venuePpgDiff: 0.8,
+        aiComment: "Ev sahibi baskısı seçimi destekliyor."
+      })
+    );
   },
 
   async getTotoPrograms(signal) {

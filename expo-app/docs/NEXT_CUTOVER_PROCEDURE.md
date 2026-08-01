@@ -34,20 +34,19 @@ Komut geldiğinde:
    çalıştırılır.
 6. Başarılı, ertelenen ve kanıt bekleyen maddeler ayrıştırılır; aktif log
    yalnız açık maddelerle bırakılır.
-7. Bütün zorunlu kalite kapıları geçtiğinde yalnız cutover kapsamındaki dosyalar
-   ilgili repolarda stage edilir; repo başına anlamlı commit oluşturulur, takip
-   edilen upstream branch’e push edilir ve yerel/uzak SHA eşitliği doğrulanır.
-   Herhangi bir zorunlu kapı başarısızsa commit veya push yapılmaz.
+7. Bütün zorunlu kalite kapıları geçtiğinde repo durumu, değişen dosyalar ve
+   doğrulama sonucu özetlenir. Stage/commit/push yalnız kullanıcı bu adımı
+   ayrıca açıkça onaylarsa yapılır; onay yoksa çalışma doğrulanmış dirty
+   checkpoint olarak bırakılır.
 
 Belirsiz iş kararı, kapsam genişlemesi veya geri döndürmesi zor işlem varsayımla
 uygulanmaz; blocker olarak raporlanır.
 
 ## Onay sınırları
 
-Kullanıcının kalıcı talimatı uyarınca komut; yerel batch edit/test ile, yalnız
-başarılı kalite kapılarından sonra cutover kapsamının stage/commit/push işlemini
-birlikte onaylar. Cutover dışındaki kullanıcı değişiklikleri commit kapsamına
-alınmaz.
+Komut yalnız yerel batch edit/test ve doğrulamayı onaylar. Stage/commit/push
+ayrı açık onay ister; cutover dışındaki kullanıcı değişiklikleri hiçbir zaman
+varsayımla commit kapsamına alınmaz.
 
 BTP deploy, Cloudflare DNS/Tunnel yayını, Firebase veya SAP dış değişikliği,
 release imzalama/dağıtım ve Cordova cutover her seferinde ayrı açık onay ister.

@@ -1,4 +1,4 @@
-import { usePathname, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { SuperLog } from "@/src/api/schemas";
 import { colors, radii, spacing } from "@/src/theme/theme";
@@ -24,21 +24,19 @@ function resultColor(result: SuperLog["result"]): string {
 }
 
 export function SuperLogCard({ log }: { log: SuperLog }) {
-  const pathname = usePathname();
   const router = useRouter();
   const color = resultColor(log.result);
 
   return (
     <Pressable
-      accessibilityHint="İlgili maçın detayını açar"
+      accessibilityHint="Dokunulan Super kararının tarihsel detayını açar"
       accessibilityLabel={`${log.matchName}, ${log.rating} yıldız, ${formatSuperResult(log.result)}`}
       accessibilityRole="button"
       onPress={() =>
         router.push({
-          pathname: "/match/[key]",
+          pathname: "/super/[key]",
           params: {
-            key: log.matchKey,
-            from: pathname
+            key: log.key
           }
         } as never)
       }

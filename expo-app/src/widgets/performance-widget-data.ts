@@ -1,10 +1,12 @@
-import type { Dashboard, TotoProgram } from "@/src/api/schemas";
+import type { Dashboard, SuperKpis, TotoProgram } from "@/src/api/schemas";
+import {
+  starFilterMinRating,
+  type StarDecisionFilter
+} from "@/src/utils/decision-filters";
 import type {
   BtbWidgetPayload,
   WidgetInputData
 } from "./widget-payload";
-
-const defaultSuperMinRating = 3;
 
 export function hasPerformanceWidgetData(
   data: WidgetInputData
@@ -21,15 +23,18 @@ export function hasPerformanceWidgetData(
 
 export function buildPerformanceWidgetPayload(
   dashboard: Dashboard,
+  superKpis: SuperKpis,
+  superFilter: StarDecisionFilter,
   programs: TotoProgram[] = dashboard.latestTotoProgram
     ? [dashboard.latestTotoProgram]
     : []
 ): BtbWidgetPayload {
+  const superBucket = superKpis.buckets[superFilter];
   const payload: BtbWidgetPayload = {
-    super_min_rating: defaultSuperMinRating,
-    super_wins: dashboard.todayHighStarSuperWon,
-    super_losses: dashboard.todayHighStarSuperLost,
-    super_profit: dashboard.todayHighStarSuperProfit
+    super_min_rating: starFilterMinRating(superFilter),
+    super_wins: superBucket.won,
+    super_losses: superBucket.lost,
+    super_profit: superBucket.profit
   };
   const program = programs.find(
     (candidate) =>
@@ -56,4 +61,23 @@ export function buildPerformanceWidgetPayload(
   }
 
   return payload;
+}
+
+const superKpiKeys = new Set([
+  "super_min_rating",
+  "superMinRating",
+  "super_wins",
+  "superWins",
+  "super_losses",
+  "superLosses",
+  "super_profit",
+  "superProfit"
+]);
+
+export function withoutSuperKpiData(
+  data: WidgetInputData
+): WidgetInputData {
+  return Object.fromEntries(
+    Object.entries(data).filter(([key]) => !superKpiKeys.has(key))
+  );
 }

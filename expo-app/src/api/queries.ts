@@ -6,6 +6,8 @@ export const queryKeys = {
   matches: ["matches"] as const,
   match: (key: string) => ["matches", key] as const,
   superLogs: ["superLogs"] as const,
+  superKpis: ["superKpis"] as const,
+  superLog: (key: string) => ["superLogs", key] as const,
   totoPrograms: ["totoPrograms"] as const,
   totoProgram: (gcNo: number, version: number) =>
     ["totoPrograms", gcNo, version] as const
@@ -38,6 +40,21 @@ export const superLogsQuery = queryOptions({
   queryFn: ({ signal }) => mobileApi.getSuperLogs(signal),
   staleTime: 30_000
 });
+
+export const superKpisQuery = queryOptions({
+  queryKey: queryKeys.superKpis,
+  queryFn: ({ signal }) => mobileApi.getSuperKpis(signal),
+  staleTime: 30_000
+});
+
+export function superLogQuery(key: string) {
+  return queryOptions({
+    queryKey: queryKeys.superLog(key),
+    queryFn: ({ signal }) => mobileApi.getSuperLog(key, signal),
+    staleTime: 30_000,
+    enabled: Boolean(key)
+  });
+}
 
 export const totoProgramsQuery = queryOptions({
   queryKey: queryKeys.totoPrograms,

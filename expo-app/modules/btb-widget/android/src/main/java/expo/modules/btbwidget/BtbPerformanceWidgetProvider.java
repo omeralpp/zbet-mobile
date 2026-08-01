@@ -17,7 +17,6 @@ import android.widget.RemoteViews;
 import org.json.JSONObject;
 
 import java.math.BigDecimal;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
@@ -161,13 +160,6 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
         long superUpdatedAt = preferences.getLong(KEY_SUPER_UPDATED_AT, 0);
         long updatedAt = preferences.getLong(KEY_UPDATED_AT, 0);
 
-        if (hasSuper &&
-                !isSameLocalDay(superUpdatedAt, System.currentTimeMillis())) {
-            superWins = 0;
-            superLosses = 0;
-            superProfit = BigDecimal.ZERO;
-        }
-
         RemoteViews views = new RemoteViews(
                 context.getPackageName(),
                 R.layout.btb_performance_widget);
@@ -223,11 +215,14 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
         views.setTextViewText(R.id.btb_kpi_super_detail, superDetail);
         views.setTextViewText(
                 R.id.btb_kpi_updated,
-                updatedAt > 0
+                (superUpdatedAt > 0 ? superUpdatedAt : updatedAt) > 0
                         ? context.getString(
                                 R.string.btb_widget_updated,
                                 DateFormat.getTimeFormat(context).format(
-                                        new Date(updatedAt)))
+                                        new Date(
+                                                superUpdatedAt > 0
+                                                        ? superUpdatedAt
+                                                        : updatedAt)))
                         : context.getString(R.string.btb_widget_ready));
 
         views.setOnClickPendingIntent(
@@ -381,20 +376,6 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
         return value == null || JSONObject.NULL.equals(value)
                 ? ""
                 : String.valueOf(value).trim();
-    }
-
-    private static boolean isSameLocalDay(long first, long second) {
-        if (first <= 0 || second <= 0) {
-            return false;
-        }
-        Calendar firstDay = Calendar.getInstance();
-        firstDay.setTimeInMillis(first);
-        Calendar secondDay = Calendar.getInstance();
-        secondDay.setTimeInMillis(second);
-        return firstDay.get(Calendar.ERA) == secondDay.get(Calendar.ERA) &&
-                firstDay.get(Calendar.YEAR) == secondDay.get(Calendar.YEAR) &&
-                firstDay.get(Calendar.DAY_OF_YEAR) ==
-                        secondDay.get(Calendar.DAY_OF_YEAR);
     }
 
     private static int dpToPx(Context context, int value) {

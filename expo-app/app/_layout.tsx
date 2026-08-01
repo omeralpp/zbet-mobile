@@ -57,6 +57,10 @@ function RootNavigator() {
             options={{ title: "Maç Detayı" }}
           />
           <Stack.Screen
+            name="super/[key]"
+            options={{ title: "Super Kararı Detayı" }}
+          />
+          <Stack.Screen
             name="toto/[gcNo]/[version]"
             options={{ title: "Toto Programı" }}
           />

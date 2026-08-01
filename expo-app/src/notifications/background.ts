@@ -4,7 +4,7 @@ import * as TaskManager from "expo-task-manager";
 import { extractRemoteNotificationData } from "./background-data";
 import { notificationChannels } from "./register";
 import { updateWidgetsFromData } from "@/src/widgets/btb-widget";
-import { hasPerformanceWidgetData } from "@/src/widgets/performance-widget-data";
+import { withoutSuperKpiData } from "@/src/widgets/performance-widget-data";
 import { refreshPerformanceWidgetFromApi } from "@/src/widgets/performance-widget";
 import type { WidgetInputData } from "@/src/widgets/widget-payload";
 
@@ -67,10 +67,9 @@ async function presentAndroidNotification(
 export async function syncWidgetsAfterNotification(
   data: WidgetInputData
 ): Promise<boolean> {
-  const notificationUpdated = await updateWidgetsFromData(data);
-  if (hasPerformanceWidgetData(data)) {
-    return notificationUpdated;
-  }
+  const notificationUpdated = await updateWidgetsFromData(
+    withoutSuperKpiData(data)
+  );
 
   try {
     const performanceUpdated = await refreshPerformanceWidgetFromApi();

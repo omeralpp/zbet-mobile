@@ -64,6 +64,32 @@ paths:
                   $ref: "#/components/schemas/SuperLog"
         default:
           $ref: "#/components/responses/Error"
+  /v1/super/kpis:
+    get:
+      operationId: getSuperKpis
+      responses:
+        "200":
+          description: Istanbul-day Super KPI buckets for local device selection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuperKpis"
+        default:
+          $ref: "#/components/responses/Error"
+  /v1/super/logs/{key}:
+    get:
+      operationId: getSuperLog
+      parameters:
+        - $ref: "#/components/parameters/Key"
+      responses:
+        "200":
+          description: Exact historical Super decision snapshot.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuperLogDetail"
+        default:
+          $ref: "#/components/responses/Error"
   /v1/toto/programs:
     get:
       operationId: getTotoPrograms
@@ -237,6 +263,8 @@ components:
             - homeRedCards
             - awayRedCards
             - scoreDistribution
+            - ratioPhase
+            - ratioResults
           properties:
             decisionMinute:
               type: [integer, "null"]
@@ -272,6 +300,14 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/ScoreDistribution"
+            ratioPhase:
+              type: [string, "null"]
+              enum: [KICK_OFF, HALF_TIME, LIVE, null]
+            ratioResults:
+              type: array
+              maxItems: 50
+              items:
+                $ref: "#/components/schemas/RatioResult"
       unevaluatedProperties: false
     ScoreDistribution:
       type: object
@@ -283,6 +319,16 @@ components:
           type: number
           minimum: 0
           maximum: 1
+    RatioResult:
+      type: object
+      additionalProperties: false
+      required: [sort, betType, kickOff, halfTime, live]
+      properties:
+        sort: { type: integer, minimum: 0 }
+        betType: { type: string, minLength: 1 }
+        kickOff: { type: [number, "null"], minimum: 0, maximum: 100 }
+        halfTime: { type: [number, "null"], minimum: 0, maximum: 100 }
+        live: { type: [number, "null"], minimum: 0, maximum: 100 }
     SuperLog:
       type: object
       additionalProperties: false
@@ -323,6 +369,79 @@ components:
         finalScore: { type: string }
         pressureAdjustment: { type: number }
         stateAdjustment: { type: number }
+    SuperLogDetail:
+      allOf:
+        - $ref: "#/components/schemas/SuperLog"
+        - type: object
+          required:
+            - matchDate
+            - matchTime
+            - matchId
+            - homeTeam
+            - awayTeam
+            - league
+            - marketGroup
+            - decisionHomeScore
+            - decisionAwayScore
+            - baseProbability
+            - superProbability
+            - modelScore
+            - edgeScore
+            - compatibilityScore
+            - alignmentScore
+            - totalPressure
+            - pressureDiff
+            - homePressure
+            - awayPressure
+            - deviation
+            - initialPool
+            - halfTimePool
+            - postScorePool
+            - selectedOddPool
+            - homeStandingPosition
+            - awayStandingPosition
+            - homeStandingPoints
+            - awayStandingPoints
+            - standingPpgDiff
+            - homeVenuePpg
+            - awayVenuePpg
+            - venuePpgDiff
+            - aiComment
+          properties:
+            matchDate: { type: string, minLength: 1 }
+            matchTime: { type: string }
+            matchId: { type: integer, minimum: 1 }
+            homeTeam: { type: string, minLength: 1 }
+            awayTeam: { type: string, minLength: 1 }
+            league: { type: string, minLength: 1 }
+            marketGroup: { type: string }
+            decisionHomeScore: { type: integer, minimum: 0 }
+            decisionAwayScore: { type: integer, minimum: 0 }
+            baseProbability: { type: [number, "null"], minimum: 0, maximum: 1 }
+            superProbability: { type: [number, "null"], minimum: 0, maximum: 1 }
+            modelScore: { type: [number, "null"] }
+            edgeScore: { type: number }
+            compatibilityScore: { type: number }
+            alignmentScore: { type: number }
+            totalPressure: { type: number }
+            pressureDiff: { type: number }
+            homePressure: { type: number }
+            awayPressure: { type: number }
+            deviation: { type: number }
+            initialPool: { type: integer, minimum: 0 }
+            halfTimePool: { type: integer, minimum: 0 }
+            postScorePool: { type: integer, minimum: 0 }
+            selectedOddPool: { type: integer, minimum: 0 }
+            homeStandingPosition: { type: integer, minimum: 0 }
+            awayStandingPosition: { type: integer, minimum: 0 }
+            homeStandingPoints: { type: integer, minimum: 0 }
+            awayStandingPoints: { type: integer, minimum: 0 }
+            standingPpgDiff: { type: number }
+            homeVenuePpg: { type: number }
+            awayVenuePpg: { type: number }
+            venuePpgDiff: { type: number }
+            aiComment: { type: string }
+      unevaluatedProperties: false
     TotoPrediction:
       allOf:
         - $ref: "#/components/schemas/TotoFixture"
@@ -426,6 +545,7 @@ components:
         - generatedAt
         - liveMatchCount
         - highStarLiveCount
+        - liveStarCounts
         - todaySuperWon
         - todaySuperLost
         - todaySuperProfit
@@ -433,12 +553,15 @@ components:
         - todayHighStarSuperLost
         - todayHighStarSuperProfit
         - latestTotoProgram
+        - featuredMatchMode
         - featuredMatches
         - recentSuper
       properties:
         generatedAt: { type: string, format: date-time }
         liveMatchCount: { type: integer, minimum: 0 }
         highStarLiveCount: { type: integer, minimum: 0 }
+        liveStarCounts:
+          $ref: "#/components/schemas/LiveStarCounts"
         todaySuperWon: { type: integer, minimum: 0 }
         todaySuperLost: { type: integer, minimum: 0 }
         todaySuperProfit: { type: number }
@@ -449,9 +572,12 @@ components:
           oneOf:
             - $ref: "#/components/schemas/TotoProgram"
             - type: "null"
+        featuredMatchMode:
+          type: string
+          enum: [SELECTED_LIVE, PRESSURE_LIVE, UPCOMING, EMPTY]
         featuredMatches:
           type: array
-          maxItems: 5
+          maxItems: 3
           items:
             $ref: "#/components/schemas/MatchSummary"
         recentSuper:
@@ -459,3 +585,39 @@ components:
           maxItems: 5
           items:
             $ref: "#/components/schemas/SuperLog"
+    LiveStarCounts:
+      type: object
+      additionalProperties: false
+      required: [ALL, STAR_1, STAR_2, STAR_3, STAR_4, STAR_5, STAR_3_PLUS]
+      properties:
+        ALL: { type: integer, minimum: 0 }
+        STAR_1: { type: integer, minimum: 0 }
+        STAR_2: { type: integer, minimum: 0 }
+        STAR_3: { type: integer, minimum: 0 }
+        STAR_4: { type: integer, minimum: 0 }
+        STAR_5: { type: integer, minimum: 0 }
+        STAR_3_PLUS: { type: integer, minimum: 0 }
+    SuperKpiBucket:
+      type: object
+      additionalProperties: false
+      required: [won, lost, profit]
+      properties:
+        won: { type: integer, minimum: 0 }
+        lost: { type: integer, minimum: 0 }
+        profit: { type: number }
+    SuperKpis:
+      type: object
+      additionalProperties: false
+      required: [generatedAt, metricDate, buckets]
+      properties:
+        generatedAt: { type: string, format: date-time }
+        metricDate: { type: string, format: date }
+        buckets:
+          type: object
+          additionalProperties: false
+          required: [STAR_1_PLUS, STAR_2_PLUS, STAR_3_PLUS, STAR_4_PLUS]
+          properties:
+            STAR_1_PLUS: { $ref: "#/components/schemas/SuperKpiBucket" }
+            STAR_2_PLUS: { $ref: "#/components/schemas/SuperKpiBucket" }
+            STAR_3_PLUS: { $ref: "#/components/schemas/SuperKpiBucket" }
+            STAR_4_PLUS: { $ref: "#/components/schemas/SuperKpiBucket" }

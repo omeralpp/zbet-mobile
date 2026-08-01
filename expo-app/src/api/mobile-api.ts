@@ -3,6 +3,8 @@ import type {
   MatchDetail,
   MatchSummary,
   SuperLog,
+  SuperLogDetail,
+  SuperKpis,
   TotoProgram
 } from "./schemas";
 
@@ -11,6 +13,8 @@ export interface MobileApi {
   getMatches(signal?: AbortSignal): Promise<MatchSummary[]>;
   getMatch(key: string, signal?: AbortSignal): Promise<MatchDetail>;
   getSuperLogs(signal?: AbortSignal): Promise<SuperLog[]>;
+  getSuperKpis(signal?: AbortSignal): Promise<SuperKpis>;
+  getSuperLog(key: string, signal?: AbortSignal): Promise<SuperLogDetail>;
   getTotoPrograms(signal?: AbortSignal): Promise<TotoProgram[]>;
   getTotoProgram(
     gcNo: number,

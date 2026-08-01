@@ -7,9 +7,11 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import { usePathname, useRouter } from "expo-router";
 import {
+  AccessibilityInfo,
+  Animated,
+  Image,
   PanResponder,
   Platform,
   Pressable,
@@ -23,12 +25,7 @@ import { colors, radii, shadows } from "@/src/theme/theme";
 import { useMascotActions } from "./MascotActions";
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
-
-type Position = {
-  x: number;
-  y: number;
-};
-
+type Position = { x: number; y: number };
 type MenuItem = {
   key: string;
   icon: IconName;
@@ -36,10 +33,14 @@ type MenuItem = {
   onPress: () => void;
 };
 
-const storageKey = "btb-mobile-next-mascot-position-v2";
-const mascotSize = 52;
+const storageKey = "btb-mobile-next-bibi-position-v3";
+const mascotSize = 58;
 const edgeMargin = 10;
-const defaultTopOffset = 0;
+const bibiFrames = [
+  require("../../assets/mascot/bibi-open.png"),
+  require("../../assets/mascot/bibi-half.png"),
+  require("../../assets/mascot/bibi-closed.png")
+] as const;
 
 function parseStoredPosition(value: string | null): Position | null {
   if (!value) {
@@ -101,15 +102,24 @@ export function BtbMascotOverlay() {
   const router = useRouter();
   const { pageActions } = useMascotActions();
   const [openPath, setOpenPath] = useState<string | null>(null);
-  const [blink, setBlink] = useState(false);
+  const [blinkFrame, setBlinkFrame] = useState<0 | 1 | 2>(0);
   const [showGreeting, setShowGreeting] = useState(true);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const [floatY] = useState(() => new Animated.Value(0));
+  const [pressScale] = useState(() => new Animated.Value(1));
+  const [openTilt] = useState(() => new Animated.Value(0));
+  const [dragTilt] = useState(() => new Animated.Value(0));
+  const [dragTranslation] = useState(
+    () => new Animated.ValueXY({ x: 0, y: 0 })
+  );
+  const [halo] = useState(() => new Animated.Value(0.2));
   const defaultPosition = useMemo(
     () => ({
       x: Math.max(
         edgeMargin + insets.left,
         width - insets.right - mascotSize - edgeMargin
       ),
-      y: edgeMargin + insets.top + defaultTopOffset
+      y: edgeMargin + insets.top
     }),
     [insets.left, insets.right, insets.top, width]
   );
@@ -123,14 +133,7 @@ export function BtbMascotOverlay() {
       bottom: insets.bottom,
       left: insets.left
     }),
-    [
-      height,
-      insets.bottom,
-      insets.left,
-      insets.right,
-      insets.top,
-      width
-    ]
+    [height, insets.bottom, insets.left, insets.right, insets.top, width]
   );
   const visiblePosition = useMemo(
     () => clampPosition(position, bounds),
@@ -139,58 +142,105 @@ export function BtbMascotOverlay() {
   const open = openPath === pathname;
 
   useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then(setReduceMotion)
+      .catch(() => undefined);
+    const subscription = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      setReduceMotion
+    );
+    return () => subscription.remove();
+  }, []);
+
+  useEffect(() => {
     AsyncStorage.getItem(storageKey)
       .then((stored) => {
-        const restored = clampPosition(
-          parseStoredPosition(stored) ?? defaultPosition,
-          bounds
+        setPosition(
+          clampPosition(parseStoredPosition(stored) ?? defaultPosition, bounds)
         );
-        setPosition(restored);
       })
       .catch(() => undefined);
   }, [bounds, defaultPosition]);
 
   useEffect(() => {
-    const greetingTimer = setTimeout(() => {
-      setShowGreeting(false);
-    }, 2800);
+    const greetingTimer = setTimeout(() => setShowGreeting(false), 2800);
     return () => clearTimeout(greetingTimer);
   }, []);
 
   useEffect(() => {
-    let disposed = false;
-    let blinkTimer: ReturnType<typeof setTimeout> | null = null;
-    let resetTimer: ReturnType<typeof setTimeout> | null = null;
+    floatY.stopAnimation();
+    floatY.setValue(0);
+    if (reduceMotion) {
+      return;
+    }
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatY, {
+          toValue: -2,
+          duration: 1800,
+          useNativeDriver: true
+        }),
+        Animated.timing(floatY, {
+          toValue: 0,
+          duration: 1800,
+          useNativeDriver: true
+        })
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [floatY, reduceMotion]);
 
+  useEffect(() => {
+    let disposed = false;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const later = (callback: () => void, delay: number) => {
+      const timer = setTimeout(callback, delay);
+      timers.push(timer);
+    };
     const schedule = () => {
-      blinkTimer = setTimeout(
-        () => {
-          if (disposed) {
-            return;
-          }
-          setBlink(true);
-          resetTimer = setTimeout(() => {
-            if (!disposed) {
-              setBlink(false);
-              schedule();
-            }
-          }, 150);
-        },
-        3800 + Math.round(Math.random() * 2200)
-      );
+      later(() => {
+        if (disposed || open) {
+          schedule();
+          return;
+        }
+        setBlinkFrame(1);
+        later(() => setBlinkFrame(2), 55);
+        later(() => setBlinkFrame(1), 125);
+        later(() => {
+          setBlinkFrame(0);
+          schedule();
+        }, 190);
+      }, 3800 + Math.round(Math.random() * 2400));
     };
     schedule();
-
     return () => {
       disposed = true;
-      if (blinkTimer) {
-        clearTimeout(blinkTimer);
-      }
-      if (resetTimer) {
-        clearTimeout(resetTimer);
-      }
+      timers.forEach(clearTimeout);
     };
-  }, []);
+  }, [open]);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      openTilt.setValue(0);
+      halo.setValue(open ? 1 : 0.2);
+      return;
+    }
+    Animated.parallel([
+      Animated.spring(openTilt, {
+        toValue: open ? 1 : 0,
+        damping: 13,
+        stiffness: 150,
+        mass: 0.7,
+        useNativeDriver: true
+      }),
+      Animated.timing(halo, {
+        toValue: open ? 1 : 0.2,
+        duration: 220,
+        useNativeDriver: true
+      })
+    ]).start();
+  }, [halo, open, openTilt, reduceMotion]);
 
   const panResponder = useMemo(
     () =>
@@ -204,15 +254,20 @@ export function BtbMascotOverlay() {
           }
         },
         onPanResponderMove: (_, gesture) => {
-          setPosition(
-            clampPosition(
-              {
-                x: visiblePosition.x + gesture.dx,
-                y: visiblePosition.y + gesture.dy
-              },
-              bounds
-            )
+          const next = clampPosition(
+            {
+              x: visiblePosition.x + gesture.dx,
+              y: visiblePosition.y + gesture.dy
+            },
+            bounds
           );
+          dragTranslation.setValue({
+            x: next.x - visiblePosition.x,
+            y: next.y - visiblePosition.y
+          });
+          if (!reduceMotion) {
+            dragTilt.setValue(Math.max(-1, Math.min(1, gesture.dx / 36)));
+          }
         },
         onPanResponderRelease: (_, gesture) => {
           const next = clampPosition(
@@ -222,88 +277,48 @@ export function BtbMascotOverlay() {
             },
             bounds
           );
+          dragTranslation.setValue({ x: 0, y: 0 });
           setPosition(next);
           AsyncStorage.setItem(storageKey, JSON.stringify(next)).catch(
             () => undefined
           );
+          Animated.spring(dragTilt, {
+            toValue: 0,
+            damping: 14,
+            stiffness: 180,
+            useNativeDriver: true
+          }).start();
         },
-        onPanResponderTerminate: (_, gesture) => {
-          setPosition(
-            clampPosition(
-              {
-                x: visiblePosition.x + gesture.dx,
-                y: visiblePosition.y + gesture.dy
-              },
-              bounds
-            )
-          );
+        onPanResponderTerminate: () => {
+          dragTranslation.setValue({ x: 0, y: 0 });
+          dragTilt.setValue(0);
         }
       }),
-    [bounds, visiblePosition]
+    [bounds, dragTilt, dragTranslation, reduceMotion, visiblePosition]
   );
 
   const menuItems = useMemo<MenuItem[]>(() => {
     const items: MenuItem[] = [];
     if (pageActions) {
       items.push(
-        {
-          key: "page-back",
-          icon: "arrow-left",
-          label: "Sayfada geri",
-          onPress: pageActions.back
-        },
-        {
-          key: "page-refresh",
-          icon: "reload",
-          label: "Yenile",
-          onPress: pageActions.refresh
-        },
-        {
-          key: "page-external",
-          icon: "open-in-new",
-          label: "Tarayıcıda aç",
-          onPress: pageActions.openExternal
-        }
+        { key: "page-back", icon: "arrow-left", label: "Sayfada geri", onPress: pageActions.back },
+        { key: "page-refresh", icon: "reload", label: "Yenile", onPress: pageActions.refresh },
+        { key: "page-external", icon: "open-in-new", label: "Tarayıcıda aç", onPress: pageActions.openExternal }
       );
     }
-
     items.push(
-      {
-        key: "home",
-        icon: "view-dashboard-outline",
-        label: "Özet",
-        onPress: () => router.replace("/")
-      },
-      {
-        key: "live",
-        icon: "soccer",
-        label: "Canlı",
-        onPress: () => router.replace("/live")
-      },
-      {
-        key: "super",
-        icon: "star-outline",
-        label: "Super",
-        onPress: () => router.replace("/super")
-      },
-      {
-        key: "toto",
-        icon: "ticket-confirmation-outline",
-        label: "Toto",
-        onPress: () => router.replace("/toto")
-      }
+      { key: "home", icon: "view-dashboard-outline", label: "Özet", onPress: () => router.replace("/") },
+      { key: "live", icon: "soccer", label: "Canlı", onPress: () => router.replace("/live") },
+      { key: "super", icon: "star-outline", label: "Super", onPress: () => router.replace("/super") },
+      { key: "toto", icon: "ticket-confirmation-outline", label: "Toto", onPress: () => router.replace("/toto") }
     );
-
     if (pathname !== "/fiori") {
       items.push({
         key: "fiori",
         icon: "view-dashboard-variant-outline",
         label: "Fiori",
         onPress: () =>
-          router.push({
-            pathname: "/fiori",
-            params: { target: "launchpad" }
-          })
+          router.push({ pathname: "/fiori", params: { target: "launchpad" } })
       });
     }
     return items;
@@ -311,16 +326,33 @@ export function BtbMascotOverlay() {
 
   const menuDown = visiblePosition.y < height / 2;
   const menuRight = visiblePosition.x > width / 2;
+  const rotation = Animated.add(
+    openTilt.interpolate({ inputRange: [0, 1], outputRange: [0, 0.7] }),
+    dragTilt
+  ).interpolate({ inputRange: [-1, 1], outputRange: ["-8deg", "8deg"] });
+
+  const animatePress = (toValue: number) => {
+    Animated.spring(pressScale, {
+      toValue,
+      damping: 15,
+      stiffness: 240,
+      useNativeDriver: true
+    }).start();
+  };
 
   return (
     <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-      <View
+      <Animated.View
         {...panResponder.panHandlers}
         style={[
           styles.anchor,
           {
             left: visiblePosition.x,
-            top: visiblePosition.y
+            top: visiblePosition.y,
+            transform: [
+              { translateX: dragTranslation.x },
+              { translateY: dragTranslation.y }
+            ]
           }
         ]}
       >
@@ -347,11 +379,7 @@ export function BtbMascotOverlay() {
                 ]}
               >
                 <View style={styles.menuIcon}>
-                  <MaterialCommunityIcons
-                    color={colors.text}
-                    name={item.icon}
-                    size={19}
-                  />
+                  <MaterialCommunityIcons color={colors.text} name={item.icon} size={19} />
                 </View>
                 <Text style={styles.menuLabel}>{item.label}</Text>
               </Pressable>
@@ -367,54 +395,42 @@ export function BtbMascotOverlay() {
               menuRight ? styles.greetingRight : styles.greetingLeft
             ]}
           >
-            <Text style={styles.greetingText}>Hi!</Text>
+            <Text style={styles.greetingText}>Bibi hazır</Text>
           </View>
         ) : null}
 
-        <Pressable
-          accessibilityLabel="BTB maskotu hızlı menü"
-          accessibilityRole="button"
-          onPress={() => {
-            setOpenPath(open ? null : pathname);
-            if (Platform.OS !== "web") {
-              Haptics.selectionAsync().catch(() => undefined);
-            }
+        <Animated.View
+          style={{
+            transform: [
+              { translateY: reduceMotion ? 0 : floatY },
+              { scale: pressScale },
+              { rotate: reduceMotion ? "0deg" : rotation }
+            ]
           }}
-          style={({ pressed }) => [
-            styles.toggle,
-            open && styles.toggleOpen,
-            pressed && styles.togglePressed
-          ]}
         >
-          <View style={styles.legLeft} />
-          <View style={styles.legRight} />
-          <LinearGradient
-            colors={
-              open
-                ? ["#FFFFFF", "#E8FBF5", "#9EE5CF"]
-                : ["#FFFFFF", "#EEF9FD", "#B9E4F4"]
-            }
-            style={styles.ball}
+          <Pressable
+            accessibilityLabel="Bibi hızlı menü"
+            accessibilityRole="button"
+            onPress={() => {
+              setOpenPath(open ? null : pathname);
+              if (Platform.OS !== "web") {
+                Haptics.selectionAsync().catch(() => undefined);
+              }
+            }}
+            onPressIn={() => animatePress(0.92)}
+            onPressOut={() => animatePress(1)}
+            style={styles.toggle}
           >
-            <View
-              style={[
-                styles.eye,
-                styles.eyeLeft,
-                (blink || open) && styles.eyeBlink
-              ]}
+            <Animated.View pointerEvents="none" style={[styles.halo, { opacity: halo }]} />
+            <Image
+              resizeMode="contain"
+              source={bibiFrames[open ? 2 : blinkFrame]}
+              style={styles.bibi}
             />
-            <View
-              style={[
-                styles.eye,
-                styles.eyeRight,
-                (blink || open) && styles.eyeBlink
-              ]}
-            />
-            <View style={[styles.mouth, open && styles.mouthHappy]} />
-          </LinearGradient>
-          <Text style={styles.sparkle}>✦</Text>
-        </Pressable>
-      </View>
+            <Text style={styles.sparkle}>✦</Text>
+          </Pressable>
+        </Animated.View>
+      </Animated.View>
     </View>
   );
 }
@@ -422,8 +438,6 @@ export function BtbMascotOverlay() {
 const styles = StyleSheet.create({
   anchor: {
     position: "absolute",
-    left: 0,
-    top: 0,
     width: mascotSize,
     height: mascotSize,
     zIndex: 1000,
@@ -433,131 +447,48 @@ const styles = StyleSheet.create({
     width: mascotSize,
     height: mascotSize,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "center"
+  },
+  halo: {
+    position: "absolute",
+    top: 2,
+    right: 2,
+    bottom: 2,
+    left: 2,
     borderRadius: radii.round,
-    borderWidth: 1,
-    borderColor: colors.blue,
-    backgroundColor: colors.background,
+    borderWidth: 2,
+    borderColor: colors.green,
+    backgroundColor: colors.blueSoft,
     ...shadows.card
   },
-  toggleOpen: {
-    backgroundColor: colors.surfaceStrong,
-    transform: [{ rotate: "10deg" }]
-  },
-  togglePressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.94 }]
-  },
-  ball: {
-    width: 39,
-    height: 39,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: "#56C8FF"
-  },
-  eye: {
-    position: "absolute",
-    top: 11,
-    width: 5,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: colors.background,
-    transform: [{ scaleY: 1 }]
-  },
-  eyeLeft: {
-    left: 8
-  },
-  eyeRight: {
-    right: 8
-  },
-  eyeBlink: {
-    height: 2,
-    top: 14
-  },
-  mouth: {
-    position: "absolute",
-    left: 12,
-    top: 23,
-    width: 11,
-    height: 6,
-    borderBottomWidth: 2,
-    borderBottomColor: colors.background,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8
-  },
-  mouthHappy: {
-    left: 9,
-    top: 21,
-    width: 17,
-    height: 9
-  },
-  legLeft: {
-    position: "absolute",
-    left: 15,
-    bottom: 4,
-    width: 9,
-    height: 2,
-    borderRadius: 2,
-    backgroundColor: "#56C8FF",
-    transform: [{ rotate: "-55deg" }]
-  },
-  legRight: {
-    position: "absolute",
-    right: 15,
-    bottom: 4,
-    width: 9,
-    height: 2,
-    borderRadius: 2,
-    backgroundColor: "#56C8FF",
-    transform: [{ rotate: "55deg" }]
-  },
+  bibi: { width: mascotSize, height: mascotSize },
   sparkle: {
     position: "absolute",
-    right: 0,
-    top: -4,
+    right: -1,
+    top: -5,
     color: "#56C8FF",
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "900"
   },
   greeting: {
     position: "absolute",
-    top: 7,
+    top: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: "#56C8FF",
+    borderColor: colors.blue,
     backgroundColor: colors.white,
     ...shadows.card
   },
-  greetingLeft: {
-    left: mascotSize + 8
-  },
-  greetingRight: {
-    right: mascotSize + 8
-  },
-  greetingText: {
-    color: colors.background,
-    fontSize: 13,
-    fontWeight: "900"
-  },
-  menu: {
-    position: "absolute",
-    gap: 6,
-    minWidth: 150
-  },
-  menuUp: {
-    bottom: mascotSize + 8
-  },
-  menuDown: {
-    top: mascotSize + 8
-  },
-  menuLeft: {
-    left: 0
-  },
-  menuRight: {
-    right: 0
-  },
+  greetingLeft: { left: mascotSize + 8 },
+  greetingRight: { right: mascotSize + 8 },
+  greetingText: { color: colors.background, fontSize: 12, fontWeight: "900" },
+  menu: { position: "absolute", gap: 6, minWidth: 150 },
+  menuUp: { bottom: mascotSize + 8 },
+  menuDown: { top: mascotSize + 8 },
+  menuLeft: { left: 0 },
+  menuRight: { right: 0 },
   menuItem: {
     minHeight: 42,
     flexDirection: "row",
@@ -571,12 +502,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(4, 16, 30, 0.96)",
     ...shadows.card
   },
-  menuItemRight: {
-    flexDirection: "row-reverse"
-  },
-  menuItemPressed: {
-    backgroundColor: colors.surfaceStrong
-  },
+  menuItemRight: { flexDirection: "row-reverse" },
+  menuItemPressed: { backgroundColor: colors.surfaceStrong },
   menuIcon: {
     width: 31,
     height: 31,
@@ -585,9 +512,5 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: colors.blueSoft
   },
-  menuLabel: {
-    color: colors.text,
-    fontSize: 12,
-    fontWeight: "800"
-  }
+  menuLabel: { color: colors.text, fontSize: 12, fontWeight: "800" }
 });

@@ -6,7 +6,9 @@ import {
   dashboardSchema,
   matchDetailSchema,
   matchListSchema,
+  superLogDetailSchema,
   superLogListSchema,
+  superKpisSchema,
   totoProgramListSchema,
   totoProgramSchema
 } from "./schemas";
@@ -93,6 +95,15 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
       ),
     getSuperLogs: (signal) =>
       request("/v1/super/logs", superLogListSchema, {}, signal),
+    getSuperKpis: (signal) =>
+      request("/v1/super/kpis", superKpisSchema, {}, signal),
+    getSuperLog: (key, signal) =>
+      request(
+        `/v1/super/logs/${encodeURIComponent(key)}`,
+        superLogDetailSchema,
+        {},
+        signal
+      ),
     getTotoPrograms: (signal) =>
       request("/v1/toto/programs", totoProgramListSchema, {}, signal),
     getTotoProgram: (gcNo, version, signal) =>

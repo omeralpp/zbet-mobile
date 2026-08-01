@@ -36,6 +36,14 @@ export const scoreDistributionSchema = z.strictObject({
   probability: finiteNumber.min(0).max(1)
 });
 
+export const ratioResultSchema = z.strictObject({
+  sort: z.number().int().nonnegative(),
+  betType: z.string().min(1),
+  kickOff: finiteNumber.min(0).max(100).nullable(),
+  halfTime: finiteNumber.min(0).max(100).nullable(),
+  live: finiteNumber.min(0).max(100).nullable()
+});
+
 export const matchDetailSchema = matchSummarySchema.extend({
   decisionMinute: z.number().int().nonnegative().nullable(),
   decisionReason: z.string(),
@@ -55,7 +63,9 @@ export const matchDetailSchema = matchSummarySchema.extend({
   awayYellowCards: z.number().int().nonnegative(),
   homeRedCards: z.number().int().nonnegative(),
   awayRedCards: z.number().int().nonnegative(),
-  scoreDistribution: z.array(scoreDistributionSchema)
+  scoreDistribution: z.array(scoreDistributionSchema),
+  ratioPhase: z.enum(["KICK_OFF", "HALF_TIME", "LIVE"]).nullable(),
+  ratioResults: z.array(ratioResultSchema).max(50)
 });
 
 export const superLogSchema = z.strictObject({
@@ -74,6 +84,59 @@ export const superLogSchema = z.strictObject({
   finalScore: z.string(),
   pressureAdjustment: finiteNumber,
   stateAdjustment: finiteNumber
+});
+
+export const superLogDetailSchema = superLogSchema.extend({
+  matchDate: z.string().min(1),
+  matchTime: z.string(),
+  matchId: z.number().int().positive(),
+  homeTeam: z.string().min(1),
+  awayTeam: z.string().min(1),
+  league: z.string().min(1),
+  marketGroup: z.string(),
+  decisionHomeScore: z.number().int().nonnegative(),
+  decisionAwayScore: z.number().int().nonnegative(),
+  baseProbability: finiteNumber.min(0).max(1).nullable(),
+  superProbability: finiteNumber.min(0).max(1).nullable(),
+  modelScore: finiteNumber.nullable(),
+  edgeScore: finiteNumber,
+  compatibilityScore: finiteNumber,
+  alignmentScore: finiteNumber,
+  totalPressure: finiteNumber,
+  pressureDiff: finiteNumber,
+  homePressure: finiteNumber,
+  awayPressure: finiteNumber,
+  deviation: finiteNumber,
+  initialPool: z.number().int().nonnegative(),
+  halfTimePool: z.number().int().nonnegative(),
+  postScorePool: z.number().int().nonnegative(),
+  selectedOddPool: z.number().int().nonnegative(),
+  homeStandingPosition: z.number().int().nonnegative(),
+  awayStandingPosition: z.number().int().nonnegative(),
+  homeStandingPoints: z.number().int().nonnegative(),
+  awayStandingPoints: z.number().int().nonnegative(),
+  standingPpgDiff: finiteNumber,
+  homeVenuePpg: finiteNumber,
+  awayVenuePpg: finiteNumber,
+  venuePpgDiff: finiteNumber,
+  aiComment: z.string()
+});
+
+export const superKpiBucketSchema = z.strictObject({
+  won: z.number().int().nonnegative(),
+  lost: z.number().int().nonnegative(),
+  profit: finiteNumber
+});
+
+export const superKpisSchema = z.strictObject({
+  generatedAt: isoDateTime,
+  metricDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  buckets: z.strictObject({
+    STAR_1_PLUS: superKpiBucketSchema,
+    STAR_2_PLUS: superKpiBucketSchema,
+    STAR_3_PLUS: superKpiBucketSchema,
+    STAR_4_PLUS: superKpiBucketSchema
+  })
 });
 
 export const totoFixtureSchema = z.strictObject({
@@ -117,6 +180,15 @@ export const dashboardSchema = z.strictObject({
   generatedAt: isoDateTime,
   liveMatchCount: z.number().int().nonnegative(),
   highStarLiveCount: z.number().int().nonnegative(),
+  liveStarCounts: z.strictObject({
+    ALL: z.number().int().nonnegative(),
+    STAR_1: z.number().int().nonnegative(),
+    STAR_2: z.number().int().nonnegative(),
+    STAR_3: z.number().int().nonnegative(),
+    STAR_4: z.number().int().nonnegative(),
+    STAR_5: z.number().int().nonnegative(),
+    STAR_3_PLUS: z.number().int().nonnegative()
+  }),
   todaySuperWon: z.number().int().nonnegative(),
   todaySuperLost: z.number().int().nonnegative(),
   todaySuperProfit: finiteNumber,
@@ -124,7 +196,13 @@ export const dashboardSchema = z.strictObject({
   todayHighStarSuperLost: z.number().int().nonnegative(),
   todayHighStarSuperProfit: finiteNumber,
   latestTotoProgram: totoProgramSchema.nullable(),
-  featuredMatches: z.array(matchSummarySchema).max(5),
+  featuredMatchMode: z.enum([
+    "SELECTED_LIVE",
+    "PRESSURE_LIVE",
+    "UPCOMING",
+    "EMPTY"
+  ]),
+  featuredMatches: z.array(matchSummarySchema).max(3),
   recentSuper: z.array(superLogSchema).max(5)
 });
 
@@ -135,7 +213,10 @@ export const totoProgramListSchema = z.array(totoProgramSchema);
 export type MatchStatus = z.infer<typeof matchStatusSchema>;
 export type MatchSummary = z.infer<typeof matchSummarySchema>;
 export type MatchDetail = z.infer<typeof matchDetailSchema>;
+export type RatioResult = z.infer<typeof ratioResultSchema>;
 export type SuperLog = z.infer<typeof superLogSchema>;
+export type SuperLogDetail = z.infer<typeof superLogDetailSchema>;
+export type SuperKpis = z.infer<typeof superKpisSchema>;
 export type TotoProgram = z.infer<typeof totoProgramSchema>;
 export type TotoFixture = z.infer<typeof totoFixtureSchema>;
 export type TotoPrediction = z.infer<typeof totoPredictionSchema>;

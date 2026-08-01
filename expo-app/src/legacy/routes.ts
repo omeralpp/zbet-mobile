@@ -37,3 +37,44 @@ export function buildLegacyTotoUrl(
     "?FCLLayout=MidColumnFullScreen"
   );
 }
+
+function encodeODataText(value: string): string {
+  return encodeURIComponent(value.replace(/'/g, "''"));
+}
+
+export function buildLegacySuperLogUrl(
+  launchpadBaseUrl: string,
+  key: {
+    matchDate: string;
+    matchId: number;
+    elapsed: number;
+    selectedOdd: string;
+    rating: number;
+    reason: string;
+  }
+): string {
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(key.matchDate) ||
+    key.matchId <= 0 ||
+    key.elapsed < 0 ||
+    !key.selectedOdd ||
+    key.rating < 1 ||
+    key.rating > 5 ||
+    !key.reason
+  ) {
+    return `${launchpadBaseUrl}#SuperLog-display`;
+  }
+
+  const entityPath =
+    `SuperLog(datum=${key.matchDate},id=${key.matchId},` +
+    `elapsed='${encodeODataText(String(key.elapsed))}',` +
+    `selected_odd='${encodeODataText(key.selectedOdd)}',` +
+    `rating=${key.rating},` +
+    `recalc_reason='${encodeODataText(key.reason)}')`;
+
+  return (
+    `${launchpadBaseUrl}#SuperLog-display?` +
+    "sap-ui-app-id-hint=saas_approuter_com.btb.superlog.zbetsuperlogreport&/" +
+    `${entityPath}/?FCLLayout=MidColumnFullScreen`
+  );
+}

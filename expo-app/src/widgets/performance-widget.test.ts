@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mockDashboard } from "@/src/api/mock-data";
+import { mockDashboard, mockSuperKpis } from "@/src/api/mock-data";
 import {
   buildPerformanceWidgetPayload,
-  hasPerformanceWidgetData
+  hasPerformanceWidgetData,
+  withoutSuperKpiData
 } from "./performance-widget-data";
 
 test("dashboard özetini Performans widget KPI snapshotına dönüştürür", () => {
@@ -17,16 +18,23 @@ test("dashboard özetini Performans widget KPI snapshotına dönüştürür", ()
       : null
   };
 
-  assert.deepEqual(buildPerformanceWidgetPayload(dashboard), {
-    toto_coverage_hits: 2,
-    toto_coverage_total: 3,
-    toto_program_gc_no: 350,
-    toto_program_version: 1,
-    super_min_rating: 3,
-    super_wins: 1,
-    super_losses: 1,
-    super_profit: 0.14
-  });
+  assert.deepEqual(
+    buildPerformanceWidgetPayload(
+      dashboard,
+      mockSuperKpis,
+      "STAR_4_PLUS"
+    ),
+    {
+      toto_coverage_hits: 2,
+      toto_coverage_total: 3,
+      toto_program_gc_no: 350,
+      toto_program_version: 1,
+      super_min_rating: 4,
+      super_wins: 1,
+      super_losses: 0,
+      super_profit: 1.14
+    }
+  );
 });
 
 test("sonuç kapsamı olmayan Toto programını widgeta taşımaz", () => {
@@ -43,12 +51,19 @@ test("sonuç kapsamı olmayan Toto programını widgeta taşımaz", () => {
       : null
   };
 
-  assert.deepEqual(buildPerformanceWidgetPayload(dashboard), {
-    super_min_rating: 3,
-    super_wins: 1,
-    super_losses: 1,
-    super_profit: 0.14
-  });
+  assert.deepEqual(
+    buildPerformanceWidgetPayload(
+      dashboard,
+      mockSuperKpis,
+      "STAR_2_PLUS"
+    ),
+    {
+      super_min_rating: 2,
+      super_wins: 1,
+      super_losses: 1,
+      super_profit: 0.14
+    }
+  );
 });
 
 test("dashboard aktif programdayken son sonuçlanan programı widgetta kullanır", () => {
@@ -73,6 +88,8 @@ test("dashboard aktif programdayken son sonuçlanan programı widgetta kullanır
   assert.deepEqual(
     buildPerformanceWidgetPayload(
       { ...mockDashboard, latestTotoProgram: active },
+      mockSuperKpis,
+      "STAR_3_PLUS",
       [active, settled]
     ),
     {
@@ -95,4 +112,21 @@ test("bildirim payloadında Performans KPI alanını ayırt eder", () => {
   );
   assert.equal(hasPerformanceWidgetData({ super_min_rating: "3" }), true);
   assert.equal(hasPerformanceWidgetData({ totoCoverageHits: 4 }), true);
+});
+
+test("bildirim jobı sabit Super KPI ile cihaz seçimini ezmez", () => {
+  assert.deepEqual(
+    withoutSuperKpiData({
+      notification_title: "BTB",
+      toto_coverage_hits: "12",
+      super_min_rating: "3",
+      super_wins: "5",
+      super_losses: "8",
+      super_profit: "-3.77"
+    }),
+    {
+      notification_title: "BTB",
+      toto_coverage_hits: "12"
+    }
+  );
 });

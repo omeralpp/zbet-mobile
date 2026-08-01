@@ -17,25 +17,35 @@ import { SectionHeader } from "@/src/components/SectionHeader";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { SuperLogCard } from "@/src/components/SuperLogCard";
 import { TotoProgramCard } from "@/src/components/TotoProgramCard";
-import { dashboardQuery } from "@/src/api/queries";
+import { dashboardQuery, superKpisQuery } from "@/src/api/queries";
+import { useLiveStarFilter } from "@/src/preferences/LiveStarFilterProvider";
+import { useSuperStarFilter } from "@/src/preferences/SuperStarFilterProvider";
 import { colors, radii, spacing } from "@/src/theme/theme";
+import {
+  liveStarMetricCount,
+  starMetricLabel
+} from "@/src/utils/decision-filters";
 import { formatSigned } from "@/src/utils/format";
 import { refreshPerformanceWidgetFromApi } from "@/src/widgets/performance-widget";
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { filter: liveStarFilter } = useLiveStarFilter();
+  const { filter: superStarFilter } = useSuperStarFilter();
   const query = useQuery(dashboardQuery);
+  const superKpis = useQuery(superKpisQuery);
+  const dashboardError = query.error ?? superKpis.error;
 
   useEffect(() => {
-    if (!query.data) {
+    if (!query.data || !superKpis.data) {
       return;
     }
-    refreshPerformanceWidgetFromApi().catch((error: unknown) => {
+    refreshPerformanceWidgetFromApi(superStarFilter).catch((error: unknown) => {
       console.warn("Overview performans widgetını yenileyemedi.", error);
     });
-  }, [query.data]);
+  }, [query.data, superKpis.data, superStarFilter]);
 
-  if (query.isLoading) {
+  if (query.isLoading || superKpis.isLoading) {
     return (
       <Screen eyebrow="BTB Mobile" title="Bugünün merkezi">
         <LoadingState />
@@ -43,24 +53,37 @@ export default function DashboardScreen() {
     );
   }
 
-  if (query.isError || !query.data) {
+  if (query.isError || superKpis.isError || !query.data || !superKpis.data) {
     return (
       <Screen eyebrow="BTB Mobile" title="Bugünün merkezi">
         <ErrorState
           message={
-            query.error instanceof Error
-              ? query.error.message
+            dashboardError instanceof Error
+              ? dashboardError.message
               : "Özet verisi alınamadı."
           }
-          onRetry={() => query.refetch()}
+          onRetry={() => {
+            void Promise.all([query.refetch(), superKpis.refetch()]);
+          }}
         />
       </Screen>
     );
   }
 
   const dashboard = query.data;
+  const dailySuper = superKpis.data.buckets[superStarFilter];
   const profitColor =
-    dashboard.todaySuperProfit >= 0 ? colors.green : colors.red;
+    dailySuper.profit >= 0 ? colors.green : colors.red;
+  const featuredTitle = {
+    SELECTED_LIVE: "Öne çıkan canlı maçlar",
+    PRESSURE_LIVE: "Takipteki canlı maçlar",
+    UPCOMING: "Sıradaki maçlar",
+    EMPTY: "Maç görünümü"
+  }[dashboard.featuredMatchMode];
+  const featuredCaption =
+    dashboard.featuredMatchMode === "UPCOMING"
+      ? "Başlama zamanı en yakın aktif fikstürler"
+      : "Skor, oran ve baskı birlikte";
 
   return (
     <Screen
@@ -69,8 +92,10 @@ export default function DashboardScreen() {
         refreshControl: (
           <RefreshControl
             colors={[colors.green]}
-            onRefresh={() => query.refetch()}
-            refreshing={query.isRefetching}
+            onRefresh={() =>
+              Promise.all([query.refetch(), superKpis.refetch()])
+            }
+            refreshing={query.isRefetching || superKpis.isRefetching}
             tintColor={colors.green}
           />
         )
@@ -114,48 +139,54 @@ export default function DashboardScreen() {
           onPress={() =>
             router.push({
               pathname: "/live",
-              params: { filter: "LIVE" }
+              params: { scope: "LIVE" }
             } as never)
           }
           value={String(dashboard.liveMatchCount)}
         />
         <MetricCard
           accent={colors.gold}
-          detail="rating 3 ve üzeri"
+          detail="canlı maç filtresi"
           icon="star-four-points-outline"
-          label="Yüksek yıldız"
+          label={starMetricLabel(liveStarFilter)}
           onPress={() =>
             router.push({
               pathname: "/live",
-              params: { filter: "HIGH_STAR" }
+              params: { scope: "STAR", decision: liveStarFilter }
             } as never)
           }
-          value={String(dashboard.highStarLiveCount)}
+          value={String(
+            liveStarMetricCount(dashboard.liveStarCounts, liveStarFilter)
+          )}
         />
         <MetricCard
           accent={profitColor}
-          detail={`${dashboard.todaySuperWon} kazandı · ${dashboard.todaySuperLost} kaybetti`}
+          detail={`${dailySuper.won} kazandı · ${dailySuper.lost} kaybetti`}
           icon="chart-line"
-          label="Günlük Super"
+          label={`Günlük Super · ${starMetricLabel(superStarFilter)}`}
           onPress={() =>
             router.push({
               pathname: "/super",
               params: { scope: "LATEST_DAY" }
             } as never)
           }
-          value={formatSigned(dashboard.todaySuperProfit)}
+          value={formatSigned(dailySuper.profit)}
         />
       </View>
 
-      <SectionHeader
-        actionLabel="Tümünü gör"
-        caption="Skor, oran ve baskı birlikte"
-        onAction={() => router.push("/live" as never)}
-        title="Öne çıkan canlı maçlar"
-      />
-      {dashboard.featuredMatches.map((match) => (
-        <MatchCard key={match.key} match={match} />
-      ))}
+      {dashboard.featuredMatches.length ? (
+        <>
+          <SectionHeader
+            actionLabel="Tümünü gör"
+            caption={featuredCaption}
+            onAction={() => router.push("/live" as never)}
+            title={featuredTitle}
+          />
+          {dashboard.featuredMatches.map((match) => (
+            <MatchCard key={match.key} match={match} />
+          ))}
+        </>
+      ) : null}
 
       <SectionHeader
         actionLabel="Tüm kararlar"

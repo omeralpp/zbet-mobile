@@ -6,6 +6,7 @@ import {
   mockDashboard,
   mockMatchSummaries,
   mockMatches,
+  mockSuperKpis,
   mockSuperLogs,
   mockTotoPrograms
 } from "./mock-data";
@@ -15,6 +16,7 @@ import {
   matchDetailSchema,
   matchListSchema,
   superLogListSchema,
+  superKpisSchema,
   totoProgramListSchema
 } from "./schemas";
 
@@ -23,6 +25,7 @@ test("validates every native preview fixture against the runtime contract", () =
   assert.doesNotThrow(() => matchListSchema.parse(mockMatchSummaries));
   assert.doesNotThrow(() => mockMatches.map((row) => matchDetailSchema.parse(row)));
   assert.doesNotThrow(() => superLogListSchema.parse(mockSuperLogs));
+  assert.doesNotThrow(() => superKpisSchema.parse(mockSuperKpis));
   assert.doesNotThrow(() => totoProgramListSchema.parse(mockTotoPrograms));
 });
 
@@ -62,6 +65,8 @@ test("keeps the checked-in OpenAPI document parseable and route-complete", async
       "/v1/dashboard",
       "/v1/devices",
       "/v1/super/logs",
+      "/v1/super/kpis",
+      "/v1/super/logs/{key}",
       "/v1/toto/programs",
       "/v1/toto/programs/{gcNo}/{version}"
     ].sort()

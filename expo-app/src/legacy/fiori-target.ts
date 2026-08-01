@@ -1,12 +1,24 @@
-import { buildLegacyMatchUrl, buildLegacyTotoUrl } from "./routes";
+import {
+  buildLegacyMatchUrl,
+  buildLegacySuperLogUrl,
+  buildLegacyTotoUrl
+} from "./routes";
 
-export type FioriTarget = "launchpad" | "match" | "toto";
+export type FioriTarget = "launchpad" | "match" | "super" | "toto";
 
 export type FioriTargetParams = {
   target: FioriTarget;
   matchKey?: string;
   gcNo?: number;
   version?: number;
+  superKey?: {
+    matchDate: string;
+    matchId: number;
+    elapsed: number;
+    selectedOdd: string;
+    rating: number;
+    reason: string;
+  };
 };
 
 export function resolveFioriTargetUrl(
@@ -27,6 +39,9 @@ export function resolveFioriTargetUrl(
       params.version
     );
   }
+  if (params.target === "super" && params.superKey) {
+    return buildLegacySuperLogUrl(launchpadUrl, params.superKey);
+  }
   return launchpadUrl;
 }
 
@@ -36,6 +51,9 @@ export function fioriTargetTitle(target: FioriTarget): string {
   }
   if (target === "toto") {
     return "Fiori Toto programı";
+  }
+  if (target === "super") {
+    return "Fiori Super kararı";
   }
   return "Fiori Launchpad";
 }

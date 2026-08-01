@@ -9,9 +9,9 @@ import {
   Text,
   View
 } from "react-native";
-import type { SuperLog } from "@/src/api/schemas";
 import { superLogsQuery } from "@/src/api/queries";
 import { FilterChip } from "@/src/components/FilterChip";
+import { DecisionFilterChip } from "@/src/components/DecisionFilterChip";
 import { Screen } from "@/src/components/Screen";
 import {
   EmptyState,
@@ -26,21 +26,14 @@ import {
   matchDateFromKey
 } from "@/src/utils/format";
 import { getSuperDayScopeAction } from "@/src/utils/super-day-scope";
-
-type SuperFilter = "ALL" | "OPEN" | "SETTLED" | "HIGH_STAR";
-
-function superFilter(log: SuperLog, filter: SuperFilter): boolean {
-  if (filter === "OPEN") {
-    return log.result === "OPEN";
-  }
-  if (filter === "SETTLED") {
-    return log.result === "WON" || log.result === "LOST";
-  }
-  if (filter === "HIGH_STAR") {
-    return log.rating >= 3;
-  }
-  return true;
-}
+import {
+  useSuperStarFilter
+} from "@/src/preferences/SuperStarFilterProvider";
+import { refreshPerformanceWidgetFromApi } from "@/src/widgets/performance-widget";
+import {
+  matchSuperLogTab,
+  type SuperLogTab
+} from "@/src/utils/super-log-tabs";
 
 export default function SuperScreen() {
   const params = useLocalSearchParams<{
@@ -52,7 +45,10 @@ export default function SuperScreen() {
     : params.scope;
   const latestDayOnly = rawScope === "LATEST_DAY";
   const dayScopeAction = getSuperDayScopeAction(latestDayOnly);
-  const [filter, setFilter] = useState<SuperFilter>("ALL");
+  const [tab, setTab] = useState<SuperLogTab>("ALL");
+  const { filter: starFilter, setFilter: setStarFilter } =
+    useSuperStarFilter();
+  const [decisionOpen, setDecisionOpen] = useState(false);
   const query = useQuery(superLogsQuery);
   const latestMatchDate = useMemo(
     () =>
@@ -73,8 +69,11 @@ export default function SuperScreen() {
     [latestDayOnly, latestMatchDate, query.data]
   );
   const logs = useMemo(
-    () => scopedLogs.filter((log) => superFilter(log, filter)),
-    [filter, scopedLogs]
+    () =>
+      scopedLogs.filter(
+        (log) => matchSuperLogTab(log, tab, starFilter)
+      ),
+    [scopedLogs, starFilter, tab]
   );
   const dateScope = useMemo(
     () =>
@@ -94,23 +93,38 @@ export default function SuperScreen() {
       <View style={styles.filters}>
         <FilterChip
           label="Tümü"
-          onPress={() => setFilter("ALL")}
-          selected={filter === "ALL"}
+          onPress={() => {
+            setDecisionOpen(false);
+            setTab("ALL");
+          }}
+          selected={tab === "ALL"}
         />
         <FilterChip
           label="Açık"
-          onPress={() => setFilter("OPEN")}
-          selected={filter === "OPEN"}
+          onPress={() => {
+            setDecisionOpen(false);
+            setTab("OPEN");
+          }}
+          selected={tab === "OPEN"}
         />
-        <FilterChip
-          label="Sonuçlanan"
-          onPress={() => setFilter("SETTLED")}
-          selected={filter === "SETTLED"}
-        />
-        <FilterChip
-          label="3+"
-          onPress={() => setFilter("HIGH_STAR")}
-          selected={filter === "HIGH_STAR"}
+        <DecisionFilterChip
+          active={tab === "STAR"}
+          onActivate={() => setTab("STAR")}
+          onChange={(value) => {
+            setStarFilter(value);
+            setTab("STAR");
+            refreshPerformanceWidgetFromApi(value).catch(
+              (error: unknown) => {
+                console.warn(
+                  "Super tercihi widgeta uygulanamadı.",
+                  error
+                );
+              }
+            );
+          }}
+          onOpenChange={setDecisionOpen}
+          open={decisionOpen}
+          value={starFilter}
         />
       </View>
       <View style={styles.scopeRow}>
@@ -118,7 +132,11 @@ export default function SuperScreen() {
         <Pressable
           accessibilityLabel={`${dayScopeAction.label} kapsamına geç`}
           accessibilityRole="button"
-          onPress={() =>
+          accessibilityState={{ disabled: query.isRefetching }}
+          disabled={query.isRefetching}
+          hitSlop={6}
+          onPress={() => {
+            setDecisionOpen(false);
             router.replace(
               dayScopeAction.nextScope
                 ? ({
@@ -126,8 +144,13 @@ export default function SuperScreen() {
                     params: { scope: dayScopeAction.nextScope }
                   } as never)
                 : ("/super" as never)
-            )
-          }
+            );
+          }}
+          style={({ pressed }) => [
+            styles.dayScopeButton,
+            pressed && styles.dayScopeButtonPressed,
+            query.isRefetching && styles.dayScopeButtonDisabled
+          ]}
         >
           <Text style={styles.dayScopeAction}>
             {dayScopeAction.label}
@@ -166,6 +189,12 @@ export default function SuperScreen() {
               tintColor={colors.gold}
             />
           }
+          onScrollBeginDrag={() => setDecisionOpen(false)}
+          onTouchStart={() => {
+            if (decisionOpen) {
+              setDecisionOpen(false);
+            }
+          }}
           renderItem={({ item }) => <SuperLogCard log={item} />}
           showsVerticalScrollIndicator={false}
           windowSize={7}
@@ -199,8 +228,25 @@ const styles = StyleSheet.create({
   },
   dayScopeAction: {
     color: colors.blue,
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "900"
+  },
+  dayScopeButton: {
+    minHeight: 44,
+    minWidth: 88,
+    alignItems: "center",
+    justifyContent: "center",
+    borderColor: colors.borderSoft,
+    borderRadius: 999,
+    borderWidth: 1,
+    backgroundColor: colors.backgroundElevated,
+    paddingHorizontal: spacing.md
+  },
+  dayScopeButtonPressed: {
+    opacity: 0.68
+  },
+  dayScopeButtonDisabled: {
+    opacity: 0.5
   },
   list: {
     paddingBottom: 112

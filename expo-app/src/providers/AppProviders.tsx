@@ -20,6 +20,8 @@ import {
 } from "@/src/notifications/register";
 import { refreshPerformanceWidgetFromApi } from "@/src/widgets/performance-widget";
 import { AuthProvider } from "@/src/auth/AuthProvider";
+import { LiveStarFilterProvider } from "@/src/preferences/LiveStarFilterProvider";
+import { SuperStarFilterProvider } from "@/src/preferences/SuperStarFilterProvider";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -125,7 +127,11 @@ export function AppProviders({ children }: PropsWithChildren) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>{children}</AuthProvider>
+      <AuthProvider>
+        <LiveStarFilterProvider>
+          <SuperStarFilterProvider>{children}</SuperStarFilterProvider>
+        </LiveStarFilterProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

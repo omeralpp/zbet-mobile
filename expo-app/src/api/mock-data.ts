@@ -3,6 +3,7 @@ import {
   type Dashboard,
   type MatchDetail,
   type SuperLog,
+  type SuperKpis,
   type TotoProgram
 } from "./schemas";
 
@@ -51,6 +52,11 @@ export const mockMatches: MatchDetail[] = [
       { score: "2-0", probability: 0.23 },
       { score: "1-1", probability: 0.18 },
       { score: "2-1", probability: 0.12 }
+    ],
+    ratioPhase: "LIVE",
+    ratioResults: [
+      { sort: 1, betType: "Ms1X", kickOff: 61, halfTime: 78, live: 82 },
+      { sort: 2, betType: "Kgvar", kickOff: 44, halfTime: 67, live: 71 }
     ]
   },
   {
@@ -95,6 +101,11 @@ export const mockMatches: MatchDetail[] = [
       { score: "2-0", probability: 0.21 },
       { score: "0-0", probability: 0.18 },
       { score: "1-1", probability: 0.16 }
+    ],
+    ratioPhase: "HALF_TIME",
+    ratioResults: [
+      { sort: 1, betType: "Ms25a", kickOff: 58, halfTime: 69, live: null },
+      { sort: 2, betType: "Kgvar", kickOff: 47, halfTime: 62, live: null }
     ]
   },
   {
@@ -139,6 +150,11 @@ export const mockMatches: MatchDetail[] = [
       { score: "1-1", probability: 0.25 },
       { score: "0-2", probability: 0.17 },
       { score: "1-2", probability: 0.12 }
+    ],
+    ratioPhase: "KICK_OFF",
+    ratioResults: [
+      { sort: 1, betType: "MsX2", kickOff: 64, halfTime: null, live: null },
+      { sort: 2, betType: "Kgyok", kickOff: 51, halfTime: null, live: null }
     ]
   },
   {
@@ -178,7 +194,9 @@ export const mockMatches: MatchDetail[] = [
     awayYellowCards: 0,
     homeRedCards: 0,
     awayRedCards: 0,
-    scoreDistribution: []
+    scoreDistribution: [],
+    ratioPhase: null,
+    ratioResults: []
   }
 ];
 
@@ -327,12 +345,26 @@ export const mockTotoPrograms: TotoProgram[] = [
   }
 ];
 
+const mockSelectedLiveMatches = mockMatches.filter(
+  (match) =>
+    match.status === "LIVE" && Boolean(match.selectedOdd) && match.rating >= 1
+);
+
 export const mockDashboard: Dashboard = {
   generatedAt: now,
   liveMatchCount: mockMatches.filter((match) => match.status === "LIVE").length,
-  highStarLiveCount: mockMatches.filter(
-    (match) => match.status === "LIVE" && match.rating >= 3
+  highStarLiveCount: mockSelectedLiveMatches.filter(
+    (match) => match.rating >= 3
   ).length,
+  liveStarCounts: {
+    ALL: mockSelectedLiveMatches.length,
+    STAR_1: mockSelectedLiveMatches.filter((match) => match.rating === 1).length,
+    STAR_2: mockSelectedLiveMatches.filter((match) => match.rating === 2).length,
+    STAR_3: mockSelectedLiveMatches.filter((match) => match.rating === 3).length,
+    STAR_4: mockSelectedLiveMatches.filter((match) => match.rating === 4).length,
+    STAR_5: mockSelectedLiveMatches.filter((match) => match.rating === 5).length,
+    STAR_3_PLUS: mockSelectedLiveMatches.filter((match) => match.rating >= 3).length
+  },
   todaySuperWon: 1,
   todaySuperLost: 1,
   todaySuperProfit: 0.14,
@@ -340,8 +372,20 @@ export const mockDashboard: Dashboard = {
   todayHighStarSuperLost: 1,
   todayHighStarSuperProfit: 0.14,
   latestTotoProgram: mockTotoPrograms[0]!,
+  featuredMatchMode: "SELECTED_LIVE",
   featuredMatches: mockMatchSummaries
     .filter((match) => match.status === "LIVE")
     .slice(0, 3),
   recentSuper: mockSuperLogs.slice(0, 3)
+};
+
+export const mockSuperKpis: SuperKpis = {
+  generatedAt: now,
+  metricDate: "2026-07-28",
+  buckets: {
+    STAR_1_PLUS: { won: 1, lost: 1, profit: 0.14 },
+    STAR_2_PLUS: { won: 1, lost: 1, profit: 0.14 },
+    STAR_3_PLUS: { won: 1, lost: 1, profit: 0.14 },
+    STAR_4_PLUS: { won: 1, lost: 0, profit: 1.14 }
+  }
 };

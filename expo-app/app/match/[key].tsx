@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { matchQuery } from "@/src/api/queries";
 import { RatingStars } from "@/src/components/RatingStars";
+import { RatioResultsChart } from "@/src/components/RatioResultsChart";
 import { Screen } from "@/src/components/Screen";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { buildBilyonerMatchUrl } from "@/src/external/bilyoner";
@@ -277,6 +278,12 @@ export default function MatchDetailScreen() {
           ) : null}
         </Pressable>
       ) : null}
+
+      <Text style={styles.sectionTitle}>Oran sonuçları</Text>
+      <RatioResultsChart
+        phase={match.ratioPhase}
+        rows={match.ratioResults}
+      />
 
       <Text style={styles.sectionTitle}>Canlı saha dengesi</Text>
       <View style={styles.statsCard}>

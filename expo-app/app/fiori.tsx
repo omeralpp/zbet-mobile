@@ -37,7 +37,9 @@ function positiveInteger(value: string): number {
 }
 
 function normalizeTarget(value: string): FioriTarget {
-  return value === "match" || value === "toto" ? value : "launchpad";
+  return value === "match" || value === "super" || value === "toto"
+    ? value
+    : "launchpad";
 }
 
 export default function FioriScreen() {
@@ -46,6 +48,12 @@ export default function FioriScreen() {
     matchKey?: string | string[];
     gcNo?: string | string[];
     version?: string | string[];
+    matchDate?: string | string[];
+    matchId?: string | string[];
+    elapsed?: string | string[];
+    selectedOdd?: string | string[];
+    rating?: string | string[];
+    reason?: string | string[];
   }>();
   const router = useRouter();
   const { setPageActions } = useMascotActions();
@@ -58,9 +66,28 @@ export default function FioriScreen() {
         target,
         matchKey: firstParam(params.matchKey),
         gcNo: positiveInteger(firstParam(params.gcNo)),
-        version: positiveInteger(firstParam(params.version))
+        version: positiveInteger(firstParam(params.version)),
+        superKey: {
+          matchDate: firstParam(params.matchDate),
+          matchId: positiveInteger(firstParam(params.matchId)),
+          elapsed: Number(firstParam(params.elapsed)) || 0,
+          selectedOdd: firstParam(params.selectedOdd),
+          rating: positiveInteger(firstParam(params.rating)),
+          reason: firstParam(params.reason)
+        }
       }),
-    [params.gcNo, params.matchKey, params.version, target]
+    [
+      params.elapsed,
+      params.gcNo,
+      params.matchDate,
+      params.matchId,
+      params.matchKey,
+      params.rating,
+      params.reason,
+      params.selectedOdd,
+      params.version,
+      target
+    ]
   );
   const [currentUrl, setCurrentUrl] = useState(initialUrl);
   const [progress, setProgress] = useState(0);
