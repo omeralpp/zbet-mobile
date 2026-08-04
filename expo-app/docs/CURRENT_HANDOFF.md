@@ -47,8 +47,8 @@ DNS/Tunnel veya SAP konfigürasyonu değiştirilmedi.
 ## Repo checkpoint
 
 ```text
-zbet-mobile  master  a1f3736  origin/master ile aynı; doğrulanmış cutover değişiklikleri dirty, commit/push onayı bekliyor
-zbet-cap     main    91d6276  origin/main ile aynı; doğrulanmış Mobile BFF değişiklikleri dirty, commit/push onayı bekliyor
+zbet-mobile  master  2b0bf53  cutover commit’i push edildi; worktree temiz, origin/master ile aynı
+zbet-cap     main    be8f5ed  Mobile BFF commit’i push edildi; worktree temiz, origin/main ile aynı
 btb-codex   main    9648e18  temiz, origin/main ile aynı
 ```
 
