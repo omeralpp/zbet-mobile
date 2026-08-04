@@ -9,6 +9,7 @@ import {
 
 export function DecisionFilterChip({
   value,
+  count,
   active,
   open,
   onActivate,
@@ -16,6 +17,7 @@ export function DecisionFilterChip({
   onChange
 }: {
   value: StarDecisionFilter;
+  count?: number;
   active: boolean;
   open: boolean;
   onActivate: () => void;
@@ -26,6 +28,8 @@ export function DecisionFilterChip({
     <View style={[styles.wrapper, open && styles.wrapperOpen]}>
       <Pressable
         accessibilityLabel={`${decisionFilterLabel(value)} yıldız filtresi${
+          count === undefined ? "" : `, ${count} kayıt`
+        }${
           active ? ", seçenekleri aç" : ", filtreyi etkinleştir"
         }`}
         accessibilityRole="button"
@@ -50,7 +54,7 @@ export function DecisionFilterChip({
           size={15}
         />
         <Text style={[styles.chipText, active && styles.chipTextSelected]}>
-          {decisionFilterLabel(value)}
+          {decisionFilterLabel(value)}{count === undefined ? "" : ` ${count}`}
         </Text>
         <MaterialCommunityIcons
           color={active ? colors.white : colors.textMuted}

@@ -50,6 +50,37 @@ paths:
                 $ref: "#/components/schemas/MatchDetail"
         default:
           $ref: "#/components/responses/Error"
+  /v1/btb/matches/{key}/period-score:
+    get:
+      operationId: getMatchPeriodScore
+      parameters:
+        - $ref: "#/components/parameters/Key"
+      responses:
+        "200":
+          description: Verified current or historical half-time score context.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PeriodScoreContext"
+        default:
+          $ref: "#/components/responses/Error"
+  /v1/btb/matches/{key}/super-logs:
+    get:
+      operationId: getMatchSuperLogs
+      parameters:
+        - $ref: "#/components/parameters/Key"
+      responses:
+        "200":
+          description: Bounded historical Super decisions for the exact match.
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 50
+                items:
+                  $ref: "#/components/schemas/SuperLog"
+        default:
+          $ref: "#/components/responses/Error"
   /v1/btb/match-insights:
     get:
       operationId: getMatchInsights
@@ -116,6 +147,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuperLogDetail"
+        default:
+          $ref: "#/components/responses/Error"
+  /v1/super/logs/{key}/period-score:
+    get:
+      operationId: getSuperLogPeriodScore
+      parameters:
+        - $ref: "#/components/parameters/Key"
+      responses:
+        "200":
+          description: Half-time score known at the selected Super decision.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PeriodScoreContext"
         default:
           $ref: "#/components/responses/Error"
   /v1/toto/programs:
@@ -358,6 +403,21 @@ components:
           maxItems: 50
           items:
             $ref: "#/components/schemas/MatchMarketRate"
+    PeriodScoreContext:
+      type: object
+      additionalProperties: false
+      required: [key, halfTimeScore]
+      properties:
+        key: { type: string, minLength: 1 }
+        halfTimeScore:
+          oneOf:
+            - type: object
+              additionalProperties: false
+              required: [homeScore, awayScore]
+              properties:
+                homeScore: { type: integer, minimum: 0 }
+                awayScore: { type: integer, minimum: 0 }
+            - type: "null"
     MatchMarketRate:
       type: object
       additionalProperties: false

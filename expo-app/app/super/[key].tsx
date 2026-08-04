@@ -7,7 +7,10 @@ import {
   Text,
   View
 } from "react-native";
-import { superLogQuery } from "@/src/api/queries";
+import {
+  superLogPeriodScoreQuery,
+  superLogQuery
+} from "@/src/api/queries";
 import { Screen } from "@/src/components/Screen";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { RatingStars } from "@/src/components/RatingStars";
@@ -38,6 +41,7 @@ export default function SuperLogDetailScreen() {
   const router = useRouter();
   const key = firstParam(params.key);
   const query = useQuery(superLogQuery(key));
+  const periodScoreQuery = useQuery(superLogPeriodScoreQuery(key));
 
   if (query.isLoading) {
     return (
@@ -63,6 +67,11 @@ export default function SuperLogDetailScreen() {
   }
 
   const log = query.data;
+  const hasStandingContext =
+    log.homeStandingPosition > 0 ||
+    log.awayStandingPosition > 0 ||
+    log.homeStandingPoints > 0 ||
+    log.awayStandingPoints > 0;
   const resultColor =
     log.result === "WON"
       ? colors.green
@@ -80,8 +89,10 @@ export default function SuperLogDetailScreen() {
         refreshControl: (
           <RefreshControl
             colors={[colors.gold]}
-            onRefresh={() => query.refetch()}
-            refreshing={query.isRefetching}
+            onRefresh={() =>
+              Promise.all([query.refetch(), periodScoreQuery.refetch()])
+            }
+            refreshing={query.isRefetching || periodScoreQuery.isRefetching}
             tintColor={colors.gold}
           />
         )
@@ -101,6 +112,12 @@ export default function SuperLogDetailScreen() {
         <Text style={styles.score}>
           {log.decisionHomeScore} - {log.decisionAwayScore}
         </Text>
+        {periodScoreQuery.data?.halfTimeScore ? (
+          <Text style={styles.halfTimeScore}>
+            İY: {periodScoreQuery.data.halfTimeScore.homeScore}-
+            {periodScoreQuery.data.halfTimeScore.awayScore}
+          </Text>
+        ) : null}
         <View style={styles.selectionRow}>
           <View>
             <RatingStars rating={log.rating} />
@@ -126,10 +143,8 @@ export default function SuperLogDetailScreen() {
             "base probability"
           )}
           {metric(
-            log.superProbability === null
-              ? "—"
-              : formatPercentage(log.superProbability),
-            "Super olasılığı"
+            hasStandingContext ? formatSigned(log.standingPpgDiff) : "—",
+            "Lig PPG farkı"
           )}
           {metric(
             log.modelScore === null ? "—" : formatSigned(log.modelScore),
@@ -164,12 +179,42 @@ export default function SuperLogDetailScreen() {
           {metric(log.deviation.toFixed(2), "deviation")}
           {metric(formatSigned(log.venuePpgDiff), "saha PPG farkı")}
         </View>
-        <Text style={styles.standing}>
-          {log.homeTeam}: {log.homeStandingPosition || "—"}. sıra · {log.homeStandingPoints} puan
-        </Text>
-        <Text style={styles.standing}>
-          {log.awayTeam}: {log.awayStandingPosition || "—"}. sıra · {log.awayStandingPoints} puan
-        </Text>
+        {hasStandingContext ? (
+          <View style={styles.standingTable}>
+            <View style={styles.standingHeader}>
+              <Text style={[styles.standingHeaderText, styles.standingTeam]}>Takım</Text>
+              <Text style={styles.standingHeaderText}>Sıra</Text>
+              <Text style={styles.standingHeaderText}>Puan</Text>
+            </View>
+            {[
+              {
+                team: log.homeTeam,
+                position: log.homeStandingPosition,
+                points: log.homeStandingPoints
+              },
+              {
+                team: log.awayTeam,
+                position: log.awayStandingPosition,
+                points: log.awayStandingPoints
+              }
+            ].map((standing, index) => (
+              <View
+                key={`${standing.team}-${index}`}
+                style={[styles.standingRow, index > 0 && styles.standingDivider]}
+              >
+                <Text numberOfLines={1} style={[styles.standingText, styles.standingTeam]}>
+                  {standing.team}
+                </Text>
+                <Text style={styles.standingValue}>
+                  {standing.position || "—"}
+                </Text>
+                <Text style={styles.standingValue}>
+                  {standing.points || "—"}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
       </View>
 
       <Pressable
@@ -233,6 +278,7 @@ const styles = StyleSheet.create({
   fixtureTime: { color: colors.textSubtle, fontSize: 10, marginTop: 4 },
   match: { color: colors.text, fontSize: 22, fontWeight: "900", marginTop: spacing.lg },
   score: { color: colors.white, fontSize: 28, fontWeight: "900", marginTop: spacing.sm },
+  halfTimeScore: { color: colors.textMuted, fontSize: 10, fontWeight: "800", marginTop: 3 },
   selectionRow: {
     flexDirection: "row",
     alignItems: "flex-end",
@@ -252,7 +298,14 @@ const styles = StyleSheet.create({
   metricValue: { color: colors.text, fontSize: 15, fontWeight: "900" },
   metricLabel: { color: colors.textSubtle, fontSize: 9, marginTop: 2 },
   comment: { color: colors.textMuted, fontSize: 11, lineHeight: 17, marginTop: spacing.lg, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.borderSoft },
-  standing: { color: colors.textMuted, fontSize: 11, marginTop: spacing.md },
+  standingTable: { borderColor: colors.borderSoft, borderRadius: radii.md, borderWidth: 1, marginTop: spacing.lg, overflow: "hidden" },
+  standingHeader: { alignItems: "center", backgroundColor: colors.surfaceStrong, flexDirection: "row", minHeight: 32, paddingHorizontal: spacing.md },
+  standingHeaderText: { color: colors.textSubtle, fontSize: 9, fontWeight: "900", textAlign: "right", width: 46 },
+  standingRow: { alignItems: "center", flexDirection: "row", minHeight: 40, paddingHorizontal: spacing.md },
+  standingDivider: { borderTopColor: colors.borderSoft, borderTopWidth: 1 },
+  standingTeam: { flex: 1, textAlign: "left", width: undefined },
+  standingText: { color: colors.textMuted, fontSize: 11, fontWeight: "800" },
+  standingValue: { color: colors.text, fontSize: 11, fontWeight: "900", textAlign: "right", width: 46 },
   primaryAction: { minHeight: 50, alignItems: "center", justifyContent: "center", borderRadius: radii.round, backgroundColor: colors.blue, marginTop: spacing.xxl },
   primaryActionText: { color: colors.white, fontSize: 14, fontWeight: "900" },
   secondaryAction: { minHeight: 48, alignItems: "center", justifyContent: "center", borderRadius: radii.round, borderWidth: 1, borderColor: colors.green, marginTop: spacing.md },

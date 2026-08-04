@@ -8,6 +8,7 @@ import {
   matchInsightListSchema,
   matchInsightSchema,
   matchListSchema,
+  periodScoreContextSchema,
   superLogDetailSchema,
   superLogListSchema,
   superKpisSchema,
@@ -109,6 +110,20 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
         {},
         signal
       ),
+    getMatchPeriodScore: (key, signal) =>
+      request(
+        `/v1/btb/matches/${encodeURIComponent(key)}/period-score`,
+        periodScoreContextSchema,
+        {},
+        signal
+      ),
+    getMatchSuperLogs: (key, signal) =>
+      request(
+        `/v1/btb/matches/${encodeURIComponent(key)}/super-logs`,
+        superLogListSchema,
+        {},
+        signal
+      ),
     getSuperLogs: (signal) =>
       request("/v1/super/logs", superLogListSchema, {}, signal),
     getSuperKpis: (signal) =>
@@ -117,6 +132,13 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
       request(
         `/v1/super/logs/${encodeURIComponent(key)}`,
         superLogDetailSchema,
+        {},
+        signal
+      ),
+    getSuperLogPeriodScore: (key, signal) =>
+      request(
+        `/v1/super/logs/${encodeURIComponent(key)}/period-score`,
+        periodScoreContextSchema,
         {},
         signal
       ),

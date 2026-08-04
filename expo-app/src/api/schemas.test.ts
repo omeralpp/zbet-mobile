@@ -17,6 +17,7 @@ import {
   matchDetailSchema,
   matchInsightListSchema,
   matchListSchema,
+  periodScoreContextSchema,
   superLogListSchema,
   superKpisSchema,
   totoProgramListSchema
@@ -49,6 +50,26 @@ test("rejects unknown BFF fields and invalid Super ratings", () => {
   );
 });
 
+test("validates bounded half-time score contexts", async () => {
+  const match = await mockMobileApi.getMatchPeriodScore(mockMatches[0]!.key);
+  const log = await mockMobileApi.getSuperLogPeriodScore(mockSuperLogs[0]!.key);
+
+  assert.deepEqual(periodScoreContextSchema.parse(match).halfTimeScore, {
+    homeScore: 1,
+    awayScore: 0
+  });
+  assert.deepEqual(periodScoreContextSchema.parse(log).halfTimeScore, {
+    homeScore: 1,
+    awayScore: 0
+  });
+  assert.throws(() =>
+    periodScoreContextSchema.parse({
+      key: "match",
+      halfTimeScore: { homeScore: 1, awayScore: 0, leaked: true }
+    })
+  );
+});
+
 test("keeps the checked-in OpenAPI document parseable and route-complete", async () => {
   const source = await readFile(
     new URL("../../contracts/mobile-api.openapi.yaml", import.meta.url),
@@ -65,6 +86,8 @@ test("keeps the checked-in OpenAPI document parseable and route-complete", async
     [
       "/v1/btb/matches",
       "/v1/btb/matches/{key}",
+      "/v1/btb/matches/{key}/period-score",
+      "/v1/btb/matches/{key}/super-logs",
       "/v1/btb/match-insights",
       "/v1/btb/match-insights/{key}",
       "/v1/dashboard",
@@ -72,6 +95,7 @@ test("keeps the checked-in OpenAPI document parseable and route-complete", async
       "/v1/super/logs",
       "/v1/super/kpis",
       "/v1/super/logs/{key}",
+      "/v1/super/logs/{key}/period-score",
       "/v1/toto/programs",
       "/v1/toto/programs/{gcNo}/{version}"
     ].sort()

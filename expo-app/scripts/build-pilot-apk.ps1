@@ -143,7 +143,10 @@ try {
 } finally {
   if (Test-Path -LiteralPath $resolvedStageRoot) {
     $cleanupError = $null
-    for ($attempt = 1; $attempt -le 6; $attempt++) {
+    # Gradle lint workers may retain a cache JAR briefly after a successful
+    # release build. Keep the staging cleanup bounded, but allow enough time
+    # for Windows to release that handle before treating cleanup as failed.
+    for ($attempt = 1; $attempt -le 30; $attempt++) {
       try {
         Remove-Item `
           -LiteralPath $resolvedStageRoot `
@@ -154,7 +157,7 @@ try {
         break
       } catch {
         $cleanupError = $_
-        if ($attempt -lt 6) {
+        if ($attempt -lt 30) {
           Start-Sleep -Seconds 2
         }
       }

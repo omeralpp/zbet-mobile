@@ -7,9 +7,13 @@ export const queryKeys = {
   matchInsights: ["matchInsights"] as const,
   matchInsight: (key: string) => ["matchInsights", key] as const,
   match: (key: string) => ["matches", key] as const,
+  matchPeriodScore: (key: string) => ["matches", key, "periodScore"] as const,
+  matchSuperLogs: (key: string) => ["matches", key, "superLogs"] as const,
   superLogs: ["superLogs"] as const,
   superKpis: ["superKpis"] as const,
   superLog: (key: string) => ["superLogs", key] as const,
+  superLogPeriodScore: (key: string) =>
+    ["superLogs", key, "periodScore"] as const,
   totoPrograms: ["totoPrograms"] as const,
   totoProgram: (gcNo: number, version: number) =>
     ["totoPrograms", gcNo, version] as const
@@ -54,6 +58,26 @@ export function matchQuery(key: string) {
   });
 }
 
+export function matchPeriodScoreQuery(key: string) {
+  return queryOptions({
+    queryKey: queryKeys.matchPeriodScore(key),
+    queryFn: ({ signal }) => mobileApi.getMatchPeriodScore(key, signal),
+    staleTime: 15_000,
+    enabled: Boolean(key),
+    retry: 1
+  });
+}
+
+export function matchSuperLogsQuery(key: string) {
+  return queryOptions({
+    queryKey: queryKeys.matchSuperLogs(key),
+    queryFn: ({ signal }) => mobileApi.getMatchSuperLogs(key, signal),
+    staleTime: 15_000,
+    enabled: Boolean(key),
+    retry: 1
+  });
+}
+
 export const superLogsQuery = queryOptions({
   queryKey: queryKeys.superLogs,
   queryFn: ({ signal }) => mobileApi.getSuperLogs(signal),
@@ -72,6 +96,16 @@ export function superLogQuery(key: string) {
     queryFn: ({ signal }) => mobileApi.getSuperLog(key, signal),
     staleTime: 30_000,
     enabled: Boolean(key)
+  });
+}
+
+export function superLogPeriodScoreQuery(key: string) {
+  return queryOptions({
+    queryKey: queryKeys.superLogPeriodScore(key),
+    queryFn: ({ signal }) => mobileApi.getSuperLogPeriodScore(key, signal),
+    staleTime: 30_000,
+    enabled: Boolean(key),
+    retry: 1
   });
 }
 

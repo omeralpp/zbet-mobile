@@ -4,6 +4,7 @@ import {
   matchInsightListSchema,
   matchInsightSchema,
   matchListSchema,
+  periodScoreContextSchema,
   superLogDetailSchema,
   superLogListSchema,
   superKpisSchema,
@@ -77,6 +78,26 @@ export const mockMobileApi: MobileApi = {
     return matchDetailSchema.parse(clone(match));
   },
 
+  async getMatchPeriodScore(key, signal) {
+    await mockDelay(signal);
+    const match = mockMatches.find((candidate) => candidate.key === key);
+    if (!match) {
+      throw new MobileApiError("Maç devre skoru bulunamadı.", 404, "MATCH_PERIOD_SCORE_NOT_FOUND");
+    }
+    return periodScoreContextSchema.parse({
+      key,
+      halfTimeScore:
+        match.elapsed >= 45 ? { homeScore: 1, awayScore: 0 } : null
+    });
+  },
+
+  async getMatchSuperLogs(key, signal) {
+    await mockDelay(signal);
+    return superLogListSchema.parse(
+      clone(mockSuperLogs.filter((candidate) => candidate.matchKey === key))
+    );
+  },
+
   async getSuperLogs(signal) {
     await mockDelay(signal);
     return superLogListSchema.parse(clone(mockSuperLogs));
@@ -135,6 +156,19 @@ export const mockMobileApi: MobileApi = {
         aiComment: "Ev sahibi baskısı seçimi destekliyor."
       })
     );
+  },
+
+  async getSuperLogPeriodScore(key, signal) {
+    await mockDelay(signal);
+    const log = mockSuperLogs.find((candidate) => candidate.key === key);
+    if (!log) {
+      throw new MobileApiError("Super karar devre skoru bulunamadı.", 404, "SUPER_LOG_PERIOD_SCORE_NOT_FOUND");
+    }
+    return periodScoreContextSchema.parse({
+      key,
+      halfTimeScore:
+        log.elapsed >= 45 ? { homeScore: 1, awayScore: 0 } : null
+    });
   },
 
   async getTotoPrograms(signal) {

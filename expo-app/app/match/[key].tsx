@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -11,7 +11,12 @@ import {
   Text,
   View
 } from "react-native";
-import { matchInsightQuery, matchQuery } from "@/src/api/queries";
+import {
+  matchInsightQuery,
+  matchPeriodScoreQuery,
+  matchQuery,
+  matchSuperLogsQuery
+} from "@/src/api/queries";
 import { RatingStars } from "@/src/components/RatingStars";
 import { RatioResultsChart } from "@/src/components/RatioResultsChart";
 import { Screen } from "@/src/components/Screen";
@@ -31,6 +36,7 @@ import {
   derivePressureBalance,
   type PressureDirection
 } from "@/src/utils/pressure-balance";
+import { relatedSuperDecisions } from "@/src/utils/related-super-decisions";
 
 function firstParam(value: string | string[] | undefined): string {
   const raw = Array.isArray(value) ? value[0] ?? "" : value ?? "";
@@ -181,6 +187,12 @@ export default function MatchDetailScreen() {
   const [showDecision, setShowDecision] = useState(false);
   const query = useQuery(matchQuery(key));
   const insightQuery = useQuery(matchInsightQuery(key));
+  const periodScoreQuery = useQuery(matchPeriodScoreQuery(key));
+  const superLogs = useQuery(matchSuperLogsQuery(key));
+  const relatedDecisions = useMemo(
+    () => relatedSuperDecisions(superLogs.data ?? [], key),
+    [key, superLogs.data]
+  );
 
   if (query.isLoading) {
     return (
@@ -222,9 +234,19 @@ export default function MatchDetailScreen() {
           <RefreshControl
             colors={[colors.green]}
               onRefresh={() =>
-                Promise.all([query.refetch(), insightQuery.refetch()])
+                Promise.all([
+                  query.refetch(),
+                  insightQuery.refetch(),
+                  periodScoreQuery.refetch(),
+                  superLogs.refetch()
+                ])
               }
-              refreshing={query.isRefetching || insightQuery.isRefetching}
+              refreshing={
+                query.isRefetching ||
+                insightQuery.isRefetching ||
+                periodScoreQuery.isRefetching ||
+                superLogs.isRefetching
+              }
             tintColor={colors.green}
           />
         )
@@ -252,9 +274,17 @@ export default function MatchDetailScreen() {
               redCards={insight?.homeRedCards ?? match.homeRedCards}
             />
           </View>
-          <Text style={styles.score}>
-            {match.homeScore} – {match.awayScore}
-          </Text>
+          <View style={styles.scoreBlock}>
+            <Text style={styles.score}>
+              {match.homeScore} – {match.awayScore}
+            </Text>
+            {periodScoreQuery.data?.halfTimeScore ? (
+              <Text style={styles.halfTimeScore}>
+                İY: {periodScoreQuery.data.halfTimeScore.homeScore}-
+                {periodScoreQuery.data.halfTimeScore.awayScore}
+              </Text>
+            ) : null}
+          </View>
           <View style={[styles.teamBlock, styles.awayTeam]}>
             <TeamHeroName
               name={match.awayTeam}
@@ -320,6 +350,52 @@ export default function MatchDetailScreen() {
             </View>
           ) : null}
         </Pressable>
+      ) : null}
+
+      {relatedDecisions.length ? (
+        <>
+          <Text style={styles.sectionTitle}>Maçın Super tercihleri</Text>
+          <View style={styles.relatedDecisionCard}>
+            {relatedDecisions.map((log, index) => {
+              const current =
+                log.selectedOdd === match.selectedOdd &&
+                log.rating === match.rating &&
+                log.elapsed === match.decisionMinute;
+              return (
+                <Pressable
+                  accessibilityHint="Tarihsel Super karar detayını açar"
+                  accessibilityLabel={`${log.rating} yıldız, ${log.elapsed}. dakika, ${log.selectedOdd}`}
+                  accessibilityRole="button"
+                  key={log.key}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/super/[key]",
+                      params: { key: log.key }
+                    } as never)
+                  }
+                  style={({ pressed }) => [
+                    styles.relatedDecisionRow,
+                    index > 0 && styles.relatedDecisionDivider,
+                    pressed && styles.relatedDecisionPressed
+                  ]}
+                >
+                  <RatingStars rating={log.rating} size={14} />
+                  <Text style={styles.relatedDecisionMinute}>{log.elapsed}&apos;</Text>
+                  <Text style={styles.relatedDecisionOdd}>{log.selectedOdd}</Text>
+                  {current ? (
+                    <Text style={styles.currentDecision}>Güncel</Text>
+                  ) : (
+                    <MaterialCommunityIcons
+                      color={colors.textMuted}
+                      name="chevron-right"
+                      size={18}
+                    />
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+        </>
       ) : null}
 
       <Text style={styles.sectionTitle}>Oran sonuçları</Text>
@@ -523,6 +599,15 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     paddingHorizontal: spacing.lg
   },
+  scoreBlock: {
+    alignItems: "center"
+  },
+  halfTimeScore: {
+    color: colors.textMuted,
+    fontSize: 10,
+    fontWeight: "800",
+    marginTop: 3
+  },
   selectionRow: {
     paddingTop: spacing.lg,
     borderTopWidth: 1,
@@ -605,6 +690,44 @@ const styles = StyleSheet.create({
   decisionScore: {
     color: colors.textSubtle,
     fontSize: 10
+  },
+  relatedDecisionCard: {
+    backgroundColor: colors.backgroundElevated,
+    borderColor: colors.borderSoft,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    paddingHorizontal: spacing.lg
+  },
+  relatedDecisionRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.md,
+    minHeight: 52
+  },
+  relatedDecisionDivider: {
+    borderTopColor: colors.borderSoft,
+    borderTopWidth: 1
+  },
+  relatedDecisionPressed: {
+    opacity: 0.7
+  },
+  relatedDecisionMinute: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontWeight: "800",
+    minWidth: 32
+  },
+  relatedDecisionOdd: {
+    color: colors.text,
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "900"
+  },
+  currentDecision: {
+    color: colors.green,
+    fontSize: 9,
+    fontWeight: "900",
+    textTransform: "uppercase"
   },
   sectionTitle: {
     color: colors.text,

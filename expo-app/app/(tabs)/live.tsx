@@ -100,6 +100,14 @@ export default function LiveScreen() {
       ),
     [query.data, starFilter, tab]
   );
+  const tabCounts = useMemo(() => {
+    const source = query.data ?? [];
+    return {
+      LIVE: source.filter((match) => matchLiveTab(match, "LIVE", starFilter)).length,
+      ALL: source.filter((match) => matchLiveTab(match, "ALL", starFilter)).length,
+      STAR: source.filter((match) => matchLiveTab(match, "STAR", starFilter)).length
+    };
+  }, [query.data, starFilter]);
   const sections = useMemo(() => groupMatchesByKickoff(matches), [matches]);
   const insightMap = useMemo(
     () =>
@@ -118,6 +126,7 @@ export default function LiveScreen() {
     >
       <View style={styles.filters}>
         <FilterChip
+          count={tabCounts.LIVE}
           label="Canlı"
           onPress={() => {
             setDecisionOpen(false);
@@ -126,6 +135,7 @@ export default function LiveScreen() {
           selected={tab === "LIVE"}
         />
         <FilterChip
+          count={tabCounts.ALL}
           label="Tümü"
           onPress={() => {
             setDecisionOpen(false);
@@ -135,6 +145,7 @@ export default function LiveScreen() {
         />
         <DecisionFilterChip
           active={tab === "STAR"}
+          count={tabCounts.STAR}
           onActivate={() =>
             router.setParams({ scope: "STAR", decision: starFilter })
           }

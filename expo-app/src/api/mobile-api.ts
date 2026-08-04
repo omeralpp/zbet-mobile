@@ -3,6 +3,7 @@ import type {
   MatchDetail,
   MatchInsight,
   MatchSummary,
+  PeriodScoreContext,
   SuperLog,
   SuperLogDetail,
   SuperKpis,
@@ -15,9 +16,18 @@ export interface MobileApi {
   getMatchInsights(signal?: AbortSignal): Promise<MatchInsight[]>;
   getMatchInsight(key: string, signal?: AbortSignal): Promise<MatchInsight>;
   getMatch(key: string, signal?: AbortSignal): Promise<MatchDetail>;
+  getMatchPeriodScore(
+    key: string,
+    signal?: AbortSignal
+  ): Promise<PeriodScoreContext>;
+  getMatchSuperLogs(key: string, signal?: AbortSignal): Promise<SuperLog[]>;
   getSuperLogs(signal?: AbortSignal): Promise<SuperLog[]>;
   getSuperKpis(signal?: AbortSignal): Promise<SuperKpis>;
   getSuperLog(key: string, signal?: AbortSignal): Promise<SuperLogDetail>;
+  getSuperLogPeriodScore(
+    key: string,
+    signal?: AbortSignal
+  ): Promise<PeriodScoreContext>;
   getTotoPrograms(signal?: AbortSignal): Promise<TotoProgram[]>;
   getTotoProgram(
     gcNo: number,

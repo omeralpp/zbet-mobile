@@ -75,6 +75,14 @@ export default function SuperScreen() {
       ),
     [scopedLogs, starFilter, tab]
   );
+  const tabCounts = useMemo(
+    () => ({
+      ALL: scopedLogs.filter((log) => matchSuperLogTab(log, "ALL", starFilter)).length,
+      OPEN: scopedLogs.filter((log) => matchSuperLogTab(log, "OPEN", starFilter)).length,
+      STAR: scopedLogs.filter((log) => matchSuperLogTab(log, "STAR", starFilter)).length
+    }),
+    [scopedLogs, starFilter]
+  );
   const dateScope = useMemo(
     () =>
       latestDayOnly && latestMatchDate
@@ -92,6 +100,7 @@ export default function SuperScreen() {
     >
       <View style={styles.filters}>
         <FilterChip
+          count={tabCounts.ALL}
           label="Tümü"
           onPress={() => {
             setDecisionOpen(false);
@@ -100,6 +109,7 @@ export default function SuperScreen() {
           selected={tab === "ALL"}
         />
         <FilterChip
+          count={tabCounts.OPEN}
           label="Açık"
           onPress={() => {
             setDecisionOpen(false);
@@ -109,6 +119,7 @@ export default function SuperScreen() {
         />
         <DecisionFilterChip
           active={tab === "STAR"}
+          count={tabCounts.STAR}
           onActivate={() => setTab("STAR")}
           onChange={(value) => {
             setStarFilter(value);

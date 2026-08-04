@@ -3,15 +3,18 @@ import { colors, radii, spacing } from "@/src/theme/theme";
 
 export function FilterChip({
   label,
+  count,
   selected,
   onPress
 }: {
   label: string;
+  count?: number;
   selected: boolean;
   onPress: () => void;
 }) {
   return (
     <Pressable
+      accessibilityLabel={count === undefined ? label : `${label}, ${count} kayıt`}
       accessibilityRole="button"
       accessibilityState={{ selected }}
       onPress={onPress}
@@ -22,7 +25,7 @@ export function FilterChip({
       ]}
     >
       <Text style={[styles.label, selected && styles.selectedLabel]}>
-        {label}
+        {label}{count === undefined ? "" : ` ${count}`}
       </Text>
     </Pressable>
   );
