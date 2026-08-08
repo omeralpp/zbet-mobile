@@ -1,9 +1,9 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-08-04
+Son güncelleme: 2026-08-08
 Çalışma alanı: `C:\dev\btb-cdoex`
 Aktif task: `BTB Mobile Next - Aktif`
-Mod: `OBSERVATION`
+Mod: `PLATFORM INDEPENDENCE PHASE 1 (LOCAL, UNCOMMITTED)`
 Optimizer profili: `btb-mobile`
 
 ## Başlangıç
@@ -22,6 +22,67 @@ Observation tespitleri `docs/OBSERVATION_LOG.md` içinde tutulur. Kod değişikl
 yalnız `btb next cutover start` komutuyla
 `docs/NEXT_CUTOVER_PROCEDURE.md` uyarınca toplu yapılır. Commit/push, deploy,
 dış sistem değişikliği ve release dağıtımı ayrıca açık onay ister.
+
+## Production auth remediation checkpoint — 2026-08-08
+
+Statik pilot anahtarının production kimliği olması yerel kod seviyesinde
+engellendi. Phase 1 değişiklikleri aşağıdaki feature branch'lere commit/push
+edildi; deploy yapılmadı ve aktif pilot runtime yeniden başlatılmadı.
+
+- Non-mock mobil build fail-closed biçimde `oauth` seçer. `pilot` yalnız açık
+  build profilidir; OAuth profilinde pilot anahtarı varsa Expo config durur.
+- BFF `BTB_MOBILE_AUTH_MODE=pilot|oauth` değerini zorunlu tutar. OAuth modu
+  pilot digestini reddeder ve yalnız doğrulanmış kullanıcı tokenını kabul eder;
+  client-credentials/technical token reddedilir.
+- Authorization Code + PKCE S256 state/verifier SecureStore'da en fazla on
+  dakika tutulur; doğrulanmış issuer/state ile Android cold-start callback
+  tamamlanabilir.
+- Her BFF isteği öncesi access-token süresi kontrol edilir. Bitime 60 saniye
+  kala eşzamanlı istekler tek refresh paylaşır; refresh veya BFF `401`
+  başarısızlığında oturum temizlenir.
+- Mobil `typecheck + lint + 81/81 test`, BFF `61/61 test` geçti. Phase 1 final
+  build/doctor kapıları bu devir güncellemesi sırasında yeniden çalıştırılıyor.
+- OAuth production config Android JS export ve arm64 debug smoke build geçti:
+  `.codex-artifacts/btb-mobile-next-arm64-oauth-debug.apk`, SHA-256
+  `EF0A590AF6DF240DBB240EBB27B4EBADD67DE4DFF5D683D29D55E33FF7993457`.
+- Generic OIDC discovery, Keycloak public client/PKCE S256, `btb-api`
+  audience/scope/subject, standalone BFF JWT validation, refresh ve revoke
+  gerçek yerel Keycloak 26.7.0 üzerinde geçti. Production HTTPS IdP, App Link
+  release sertifikası ve gerçek cihaz login-refresh-cold-start-logout kanıtı
+  dış sistem kapısı olarak açık kaldı.
+
+## Platform Independence Phase 1 checkpoint — 2026-08-08
+
+- IAS artık production IdP kararı değildir; mobil discovery tabanlı generic
+  OIDC kullanır, ilk doğrulanan sağlayıcı Keycloak'tur.
+- `zbet-cap/standalone-server.js` CAP/IAS/BTP binding olmadan generic OIDC,
+  fixed `/v1` Mobile BFF ve opsiyonel standalone notification API açar.
+- Bildirim teslimi şifreli kullanıcı+installation registry ve idempotency
+  ledger üzerinden doğrudan FCM HTTP v1'e gider. Token rotation, logout
+  unregister, stale ve permanently-invalid token cleanup eklendi.
+- CAP CDS action, `mta.yaml`, SAP adapter/mapping ve Fiori/Work Zone yüzeyleri
+  silinmedi; `OPTIONAL SAP INTEGRATION` olarak korundu.
+- Fiori WebView yalnız yapılandırılmış SAP HTTPS hostlarında gezinir. Bu yüzeyin
+  erişilememesi native Dashboard/BTB/Super/Toto, auth, bildirim ve widget
+  akışlarını durdurmaz.
+- ABAP/CDS, aktif pilot, Cloudflare, Firebase ve BTP dış durumu değiştirilmedi.
+  Yalnız Phase 1 kaynak branch'leri commit/push edildi; deploy yapılmadı.
+- Final yerel kapılar: Mobile `typecheck + ESLint + 81/81 test`, Expo Doctor
+  `20/20`, generic-OIDC Android production JS export ve arm64 debug native
+  compile; CAP `61/61 test`,
+  production CDS build, Keycloak Compose/metadata ve gerçek
+  PKCE/BFF/refresh/revoke/logout smoke geçti. Değişen dosyalarda beklenmeyen
+  secret literal bulunmadı.
+- Phase 1 pilot release artifact:
+  `.codex-artifacts/btb-mobile-next-arm64-phase1-pilot-20260808.apk`, SHA-256
+  `1E775E33A72D44C660E0DCE06A1C8FAF32EE8923EAC732EDF4BA0536182235B1`.
+  APK arm64-v8a, Firebase client içeren, embedded production JS bundle'lı ve
+  önceki v9 ile aynı debug sertifikasıyla APK Signature Scheme v2 imzalıdır.
+  Artifact dağıtılmadı; kısa yol native staging temizlendi.
+- CAP production audit temiz. Mobile audit, Metro/Expo build zincirinde
+  `15 high + 8 moderate` transitive bulgu raporluyor; önerilen tam düzeltmeler
+  React Native/Expo için breaking major downgrade gerektirdiğinden `--force`
+  uygulanmadı. Bu bulgular release güvenlik kapısında ayrıca ele alınmalı.
 
 ## Aktif pilot akışı
 
@@ -47,9 +108,9 @@ DNS/Tunnel veya SAP konfigürasyonu değiştirilmedi.
 ## Repo checkpoint
 
 ```text
-zbet-mobile  master  2b0bf53  cutover commit’i push edildi; worktree temiz, origin/master ile aynı
-zbet-cap     main    be8f5ed  Mobile BFF commit’i push edildi; worktree temiz, origin/main ile aynı
-btb-codex   main    9648e18  temiz, origin/main ile aynı
+zbet-mobile  agent/platform-independence-phase1  d61c47f  functional Phase 1 commit; handoff follow-up follows
+zbet-cap     agent/platform-independence-phase1  8e5f8cc  origin branch'e push edildi
+btb-codex   main    bu taskta değiştirilmedi; önceden var olan kullanıcı değişiklikleri korundu
 ```
 
 ## Son cutover sonucu — NXT-OBS-060–064
@@ -87,13 +148,13 @@ Arşiv: `docs/observation_archive/cutover_2026-08-04.md`.
 ## Final yerel pilot APK
 
 ```text
-Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-cutover-20260804-v9-final.apk
+Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-phase1-pilot-20260808.apk
 Package : com.btb.mobile.next
 Version : 0.1.0 (1)
 ABI     : arm64-v8a
-Size    : 48,112,268 bytes
-SHA-256 : 5527BC7477ECC0FEA157F134B85E1A06660847B45DA7803AF311D540C7229B1D
-Signing : v8 ile aynı Android pilot debug sertifikası; APK Signature Scheme v2 doğrulandı
+Size    : 48,136,712 bytes
+SHA-256 : 1E775E33A72D44C660E0DCE06A1C8FAF32EE8923EAC732EDF4BA0536182235B1
+Signing : v9 ile aynı Android pilot debug sertifikası (`fac61745...3b9c`); APK Signature Scheme v2 doğrulandı
 ```
 
 ## Aktif observation maddeleri
@@ -107,7 +168,7 @@ Signing : v8 ile aynı Android pilot debug sertifikası; APK Signature Scheme v2
 
 ## Açık kapılar
 
-1. Final arm64 v9 APK fiziksel Android cihazda kurulup filtre sayaçları, ilk-yarı
+1. Phase 1 arm64 pilot APK fiziksel Android cihazda v9 üzerine kurulup filtre sayaçları, ilk-yarı
    skorları, diğer Super kararlarına geçiş, gerçek FCM küçük ikonu ve Performans
    widget parity gözlenmeli.
 2. Windows başlangıç görevi ayrı onayla kaydedilip gerçek restart sonrası
@@ -127,6 +188,10 @@ Commit/push, BTP deploy, Cloudflare DNS/Tunnel yayını, Firebase veya SAP dış
 değişikliği, Windows Scheduled Task kaydı, release signing/dağıtım ve Cordova
 cutover ayrı açık onay ister. Production hiçbir pilot onayından çıkarılmaz.
 
-Bir sonraki güvenli adım final arm64 v9 APK’yı fiziksel cihazda observation
-modunda kullanmaktır. Yeni tespitler bir sonraki `btb next cutover start`
-komutuna kadar yalnız observation loguna eklenir.
+Phase 1 için bir sonraki güvenli adım; ayrı onayla production HTTPS Keycloak
+veya eşdeğer OIDC sağlayıcıyı, exact redirect/logout ve release App Link
+ayarlarını hazırlamak; server secret/persistence/monitoring politikasını
+seçmek; ardından gerçek cihazda login, refresh, cold-start, sign-out, FCM,
+widget ve optional Fiori failure smoke kanıtı almaktır. Bu onay gelene kadar
+aktif pilot runtime değişmeden kalır; v9 kurulu rollback APK'sı, Phase 1 APK ise
+fiziksel kurulum bekleyen yeni adaydır.
