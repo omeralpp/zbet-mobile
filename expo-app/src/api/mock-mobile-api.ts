@@ -192,7 +192,11 @@ export const mockMobileApi: MobileApi = {
     return totoProgramSchema.parse(clone(program));
   },
 
-  async registerDevice(_token, _platform, signal) {
+  async registerDevice(_token, _platform, _installationId, signal) {
+    await mockDelay(signal);
+  },
+
+  async unregisterDevice(_installationId, signal) {
     await mockDelay(signal);
   }
 };

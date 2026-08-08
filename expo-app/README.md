@@ -19,6 +19,28 @@ certificate. It is installable and standalone, but it is not the final store
 release. Cordova remains the rollback path until the physical-device,
 least-privilege SAP account, release-signing, support, and rollback gates pass.
 
+## Production authentication boundary (local, not deployed)
+
+Production builds use an explicit provider-neutral `oauth` profile. The app
+opens the configured OIDC provider in the system browser, completes
+Authorization Code + PKCE S256, stores the short-lived session in
+Android-backed SecureStore, and sends only the user Bearer token to the Mobile
+BFF. The BFF validates discovery/JWKS, exact issuer and audience, expiry,
+subject and route scopes; it rejects client-credentials tokens. Keycloak is the
+first verified provider. IAS is no longer a required production IdP.
+
+The PKCE state and verifier are kept in SecureStore for at most ten minutes so
+an Android cold-start callback can finish safely. Each API request checks the
+token lifetime, shares one refresh operation across concurrent requests, and
+returns to sign-in if refresh or BFF validation fails. Sign-out attempts
+refresh-token revocation before clearing the local session. No OIDC client
+secret is present in the app, repository, or APK.
+
+This code path is not a production deployment approval. A production HTTPS
+OIDC issuer and public client, exact redirect/logout URIs, Android App Link
+certificate, and physical-device login/refresh/cold-start/logout tests remain
+external gates.
+
 Android-first React Native + Expo + TypeScript istemcisi. Mevcut Cordova
 uygulaması geçiş tamamlanana kadar aynı repoda korunur; bu klasör yeni native
 deneyimin bağımsız kaynak kodudur.
@@ -31,7 +53,8 @@ deneyimin bağımsız kaynak kodudur.
   mobil uygulama SAP OData servislerine doğrudan bağlanmaz.
 - Livescore, yeni fixture ve Toto `RefreshProgram` gibi veri değiştiren işlemler
   ilk sürümde uygulama içindeki HTTPS-kısıtlı Fiori ekranına aktarılır. Bu yüzey
-  native başlık, yüklenme ilerlemesi, geri/ileri ve yenileme kontrolleri sunar.
+  yalnız yapılandırılmış SAP hostlarında açılır; BTP/Work Zone erişilemezse
+  Dashboard, BTB, Super, Toto, bildirim ve widget akışları çalışmaya devam eder.
 - BTB/Super ile Toto aynı uygulama kabuğunu kullanır ama kaynak, performans ve
   öğrenme metrikleri birbirine karıştırılmaz.
 - Android ana ekranında `BTB Next – Son Super` ve `BTB Next – Performans`
@@ -73,16 +96,32 @@ Yalnızca public değerler `EXPO_PUBLIC_*` değişkenlerine yazılır:
 
 - `EXPO_PUBLIC_USE_MOCKS=true`: yerel preview.
 - `EXPO_PUBLIC_MOBILE_API_URL`: mobil BFF kök URL'si.
+- `EXPO_PUBLIC_MOBILE_AUTH_MODE`: `preview`, `pilot` veya `oauth`. Non-mock
+  build varsayılan olarak `oauth` seçer; pilot yalnız açık `pilot` profilidir.
 - `EXPO_PUBLIC_MOBILE_PILOT_KEY`: doğrudan-açılış pilot anahtarı. SAP parolası
-  değildir; her pilot APK döngüsünde değiştirilebilir.
+  değildir; yalnız `pilot` profilinde kabul edilir ve her pilot APK döngüsünde
+  değiştirilebilir.
+- `EXPO_PUBLIC_AUTH_CLIENT_ID`, `EXPO_PUBLIC_AUTH_ISSUER`, redirect URI ve
+  scope listesi: yalnız public OIDC metadata. Authorization/token endpointleri
+  varsayılan olarak discovery belgesinden alınır; revocation/end-session dahil
+  açık endpoint override'ları opsiyoneldir. Redirect URI tam olarak
+  `https://api.surklase.com/auth/callback` olmalı; scope listesi `openid`,
+  `offline_access`, `mobile.read` ve `mobile.device.write` içermeli. Public
+  secret biçimli bir environment değeri build'i durdurur.
 - `EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL`: doğrulanmış Fiori fallback URL'si.
+- `EXPO_PUBLIC_SAP_WEB_ALLOWED_HOSTS`: Fiori/Work Zone WebView için virgülle
+  ayrılmış kesin veya `*.` wildcard SAP HTTPS host allowlist'i.
 - `BTB_GOOGLE_SERVICES_FILE`: build makinesindeki preview Android Firebase
   client dosyasının yolu. Service-account anahtarı değildir ve repoya eklenmez.
 
 `EXPO_PUBLIC_*` değerleri uygulama paketinden okunabilir. Pilot anahtarı bu
 nedenle üretim kimliği değildir; yalnız fixed read-only BFF yüzeyi için
-dağıtım kapısıdır. SAP parolası, Identity client secret ve Firebase
+dağıtım kapısıdır. SAP parolası, OIDC client secret ve Firebase
 service-account anahtarı APK'da tutulmaz.
+
+OAuth profilinde pilot anahtarı bulunursa app config build'i durdurur. Pilot APK
+betiği de `EXPO_PUBLIC_MOBILE_AUTH_MODE=pilot` olmadan çalışmaz; böylece pilot
+erişimi production profiline sessizce taşınamaz.
 
 ## Kontroller
 

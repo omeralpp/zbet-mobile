@@ -8,6 +8,7 @@ info:
 servers:
   - url: https://mobile-api.example.invalid
 security:
+  - bearerAuth: []
   - pilotKey: []
 paths:
   /v1/dashboard:
@@ -206,6 +207,7 @@ paths:
     post:
       operationId: registerDevice
       security:
+        - bearerAuth: []
         - pilotKey: []
       requestBody:
         required: true
@@ -222,6 +224,11 @@ paths:
                 platform:
                   type: string
                   enum: [android, ios]
+                installationId:
+                  type: string
+                  minLength: 16
+                  maxLength: 128
+                  pattern: "^[A-Za-z0-9._:-]+$"
       responses:
         "200":
           description: Stable empty acknowledgement.
@@ -232,13 +239,43 @@ paths:
                 additionalProperties: false
         default:
           $ref: "#/components/responses/Error"
+  /v1/devices/{installationId}:
+    delete:
+      operationId: unregisterDevice
+      security:
+        - bearerAuth: []
+        - pilotKey: []
+      parameters:
+        - name: installationId
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+            pattern: "^[A-Za-z0-9._:-]+$"
+      responses:
+        "204":
+          description: Device installation unregistered for the authenticated user.
+        default:
+          $ref: "#/components/responses/Error"
 components:
   securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >-
+        Short-lived generic OIDC user access token for the production profile.
+        Issuer, audience, signature, expiry, and local scopes are verified;
+        client-credentials tokens are rejected by the BFF.
     pilotKey:
       type: apiKey
       in: header
       name: X-BTB-Pilot-Key
-      description: Rotatable direct-open pilot key; not a SAP credential.
+      description: >-
+        Rotatable direct-open key accepted only by the explicit pilot profile;
+        never a production identity or SAP credential.
   parameters:
     Key:
       name: key

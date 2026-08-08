@@ -39,6 +39,7 @@ if (Test-Path -LiteralPath $resolvedStageRoot) {
 $requiredEnvironment = @(
   'BTB_GOOGLE_SERVICES_FILE',
   'EXPO_PUBLIC_MOBILE_API_URL',
+  'EXPO_PUBLIC_MOBILE_AUTH_MODE',
   'EXPO_PUBLIC_MOBILE_PILOT_KEY',
   'EXPO_PUBLIC_USE_MOCKS'
 )
@@ -63,6 +64,9 @@ if ($missingEnvironment.Count -gt 0) {
 }
 if ($env:EXPO_PUBLIC_USE_MOCKS.ToLowerInvariant() -ne 'false') {
   throw 'Pilot APK must be built with EXPO_PUBLIC_USE_MOCKS=false.'
+}
+if ($env:EXPO_PUBLIC_MOBILE_AUTH_MODE.ToLowerInvariant() -ne 'pilot') {
+  throw 'Pilot APK must be built with EXPO_PUBLIC_MOBILE_AUTH_MODE=pilot.'
 }
 if ($env:EXPO_PUBLIC_MOBILE_API_URL -ne 'https://api.surklase.com') {
   throw 'Pilot APK must target https://api.surklase.com.'

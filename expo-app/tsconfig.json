@@ -5,6 +5,7 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "noFallthroughCasesInSwitch": true,
+    "allowImportingTsExtensions": true,
     "types": [
       "node"
     ],

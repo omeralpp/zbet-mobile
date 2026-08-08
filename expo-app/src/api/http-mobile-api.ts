@@ -1,7 +1,9 @@
 import { z, type ZodType } from "zod";
-import { getAccessToken } from "@/src/auth/session-store";
+import { clearSession } from "@/src/auth/session-store";
+import { getValidAccessToken } from "@/src/auth/token-manager";
 import { runtimeConfig } from "@/src/config/runtime";
 import { getApiAuthHeaders } from "./api-auth-headers";
+import { buildDeviceRegistrationPayload } from "./device-registration";
 import {
   dashboardSchema,
   matchDetailSchema,
@@ -32,9 +34,17 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
     outerSignal?.addEventListener("abort", abort, { once: true });
 
     try {
-      const token = runtimeConfig.pilotAccessKey
-        ? undefined
-        : await getAccessToken();
+      const token =
+        runtimeConfig.authMode === "oauth"
+          ? await getValidAccessToken()
+          : undefined;
+      if (runtimeConfig.authMode === "oauth" && !token) {
+        throw new MobileApiError(
+          "Güvenli oturum gerekli.",
+          401,
+          "UNAUTHENTICATED"
+        );
+      }
       const response = await fetch(`${baseUrl}${path}`, {
         ...init,
         headers: {
@@ -59,10 +69,14 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
         } catch {
           // A non-JSON error body must not hide the HTTP status.
         }
+        if (response.status === 401 && runtimeConfig.authMode === "oauth") {
+          await clearSession();
+        }
         throw new MobileApiError(message, response.status, code);
       }
 
-      const data: unknown = await response.json();
+      const data: unknown =
+        response.status === 204 ? undefined : await response.json();
       return schema.parse(data);
     } catch (error) {
       if (error instanceof MobileApiError) {
@@ -151,15 +165,25 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
         {},
         signal
       ),
-    registerDevice: async (token, platform, signal) => {
+    registerDevice: async (token, platform, installationId, signal) => {
       await request(
         "/v1/devices",
         // The endpoint deliberately returns a stable empty acknowledgement.
         z.strictObject({}),
         {
           method: "POST",
-          body: JSON.stringify({ token, platform })
+          body: JSON.stringify(
+            buildDeviceRegistrationPayload(token, platform, installationId)
+          )
         },
+        signal
+      );
+    },
+    unregisterDevice: async (installationId, signal) => {
+      await request(
+        `/v1/devices/${encodeURIComponent(installationId)}`,
+        z.undefined(),
+        { method: "DELETE" },
         signal
       );
     }

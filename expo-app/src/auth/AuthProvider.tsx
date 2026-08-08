@@ -14,13 +14,19 @@ import { Platform } from "react-native";
 import { runtimeConfig } from "@/src/config/runtime";
 import { toFriendlyAuthError } from "./auth-error";
 import { getOAuthBrowserOptions } from "./oauth-browser-options";
-import { isOAuthCallbackUrl } from "./oauth-callback";
+import { isOAuthCallbackUrl, parseOAuthCallback } from "./oauth-callback";
+import { getOidcDiscovery } from "./oidc-discovery-runtime";
 import {
+  clearPendingAuthorization,
   clearSession,
+  getPendingAuthorization,
   getSession,
+  savePendingAuthorization,
   saveSession,
-  type SessionTokens
+  subscribeToSessionEvents
 } from "./session-store";
+import { sessionFromTokenResponse } from "./token-manager-core";
+import { revokeCurrentSession } from "./token-manager";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -40,49 +46,19 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 const nativeReturnUri = "btbmobile://auth";
+const nativeLogoutUri = "btbmobile://logged-out";
 const callbackGraceMs = 1000;
-
-function sessionFromTokenResponse(
-  token: AuthSession.TokenResponse,
-  fallbackRefreshToken?: string
-): SessionTokens {
-  const issuedAt = token.issuedAt ?? AuthSession.getCurrentTimeInSeconds();
-  const expiresAt = token.expiresIn ? issuedAt + token.expiresIn : undefined;
-  const refreshToken = token.refreshToken ?? fallbackRefreshToken;
-
-  return {
-    accessToken: token.accessToken,
-    ...(refreshToken ? { refreshToken } : {}),
-    ...(token.tokenType ? { tokenType: token.tokenType } : {}),
-    ...(expiresAt ? { expiresAt } : {})
-  };
-}
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const authConfig = runtimeConfig.auth;
   const configured = Boolean(
     authConfig.clientId &&
-      authConfig.authorizationEndpoint &&
-      authConfig.tokenEndpoint
+      authConfig.issuer &&
+      authConfig.redirectUri
   );
-  const discovery = useMemo<AuthSession.DiscoveryDocument | null>(
-    () =>
-      configured
-        ? {
-            authorizationEndpoint: authConfig.authorizationEndpoint,
-            tokenEndpoint: authConfig.tokenEndpoint,
-            ...(authConfig.revocationEndpoint
-              ? { revocationEndpoint: authConfig.revocationEndpoint }
-              : {})
-          }
-        : null,
-    [
-      authConfig.authorizationEndpoint,
-      authConfig.revocationEndpoint,
-      authConfig.tokenEndpoint,
-      configured
-    ]
-  );
+  const [discovery, setDiscovery] =
+    useState<AuthSession.DiscoveryDocument | null>(null);
+  const [discoveryError, setDiscoveryError] = useState<string | null>(null);
   const redirectUri =
     authConfig.redirectUri ||
     AuthSession.makeRedirectUri({
@@ -94,19 +70,132 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     let mounted = true;
+    if (runtimeConfig.authMode !== "oauth" || !configured) {
+      return;
+    }
+    getOidcDiscovery().then(
+      (document) => {
+        if (mounted) {
+          setDiscovery(document);
+          setDiscoveryError(null);
+        }
+      },
+      (discoveryFailure: unknown) => {
+        if (mounted) {
+          setDiscoveryError(toFriendlyAuthError(discoveryFailure));
+        }
+      }
+    );
+    return () => {
+      mounted = false;
+    };
+  }, [configured]);
+
+  const completeAuthorizationCallback = useCallback(
+    async (callbackUrl: string) => {
+      if (!configured || !discovery) {
+        throw new Error("Mobil OAuth yapılandırması hazır değil.");
+      }
+
+      const activeDiscovery = discovery;
+      const pending = await getPendingAuthorization();
+      if (!pending) {
+        throw new Error(
+          "Giriş isteğinin süresi doldu. Lütfen giriş işlemini yeniden başlatın."
+        );
+      }
+
+      try {
+        const response = parseOAuthCallback(
+          callbackUrl,
+          pending,
+          nativeReturnUri,
+          authConfig.issuer
+        );
+        if (response.type === "error") {
+          throw new Error(response.description || response.error);
+        }
+
+        const token = await AuthSession.exchangeCodeAsync(
+          {
+            clientId: authConfig.clientId,
+            code: response.code,
+            redirectUri: pending.redirectUri,
+            extraParams: {
+              code_verifier: response.codeVerifier
+            }
+          },
+          activeDiscovery
+        );
+        await saveSession(sessionFromTokenResponse(token));
+      } finally {
+        await clearPendingAuthorization();
+      }
+    },
+    [authConfig.clientId, authConfig.issuer, configured, discovery]
+  );
+
+  useEffect(
+    () =>
+      subscribeToSessionEvents((event) => {
+        if (runtimeConfig.authMode !== "oauth") {
+          return;
+        }
+        if (event === "cleared") {
+          setStatus("unauthenticated");
+        } else {
+          setError(null);
+          setStatus("authenticated");
+        }
+      }),
+    []
+  );
+
+  useEffect(() => {
+    let mounted = true;
 
     async function bootstrap() {
-      if (runtimeConfig.useMocks) {
+      if (runtimeConfig.authMode === "preview") {
         setStatus("preview");
         return;
       }
-      if (runtimeConfig.pilotAccessKey) {
+      if (runtimeConfig.authMode === "pilot") {
         setStatus("authenticated");
         return;
       }
-      if (!configured || !discovery) {
+      if (!configured) {
         setStatus("configuration-error");
         setError("Mobil OAuth endpointleri henüz yapılandırılmadı.");
+        return;
+      }
+      if (discoveryError) {
+        setStatus("configuration-error");
+        setError(discoveryError);
+        return;
+      }
+      if (!discovery) {
+        setStatus("loading");
+        return;
+      }
+
+      const initialUrl = await Linking.getInitialURL();
+      if (
+        initialUrl &&
+        isOAuthCallbackUrl(initialUrl, redirectUri, nativeReturnUri)
+      ) {
+        try {
+          await completeAuthorizationCallback(initialUrl);
+          if (mounted) {
+            setError(null);
+            setStatus("authenticated");
+          }
+        } catch (callbackError: unknown) {
+          await clearSession();
+          if (mounted) {
+            setError(toFriendlyAuthError(callbackError));
+            setStatus("unauthenticated");
+          }
+        }
         return;
       }
 
@@ -140,7 +229,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
           discovery
         );
         await saveSession(
-          sessionFromTokenResponse(refreshed, stored.refreshToken)
+          sessionFromTokenResponse(
+            refreshed,
+            stored.refreshToken,
+            stored.idToken
+          )
         );
         if (mounted) {
           setStatus("authenticated");
@@ -170,16 +263,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [
     authConfig.clientId,
     authConfig.scopes,
+    completeAuthorizationCallback,
     configured,
-    discovery
+    discovery,
+    discoveryError,
+    redirectUri
   ]);
 
   const signIn = useCallback(async () => {
-    if (runtimeConfig.useMocks) {
+    if (runtimeConfig.authMode === "preview") {
       setStatus("preview");
       return;
     }
-    if (runtimeConfig.pilotAccessKey) {
+    if (runtimeConfig.authMode === "pilot") {
       setError(null);
       setStatus("authenticated");
       return;
@@ -198,9 +294,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
         scopes: [...authConfig.scopes],
         redirectUri,
         responseType: AuthSession.ResponseType.Code,
+        codeChallengeMethod: AuthSession.CodeChallengeMethod.S256,
         usePKCE: true
       });
       const authorizationUrl = await request.makeAuthUrlAsync(discovery);
+      if (!request.codeVerifier) {
+        throw new Error("OAuth PKCE doğrulayıcısı üretilemedi.");
+      }
+      await savePendingAuthorization({
+        state: request.state,
+        codeVerifier: request.codeVerifier,
+        redirectUri,
+        createdAt: Date.now()
+      });
       let resolveCallback: (url: string) => void = () => undefined;
       const callbackPromise = new Promise<string>((resolve) => {
         resolveCallback = resolve;
@@ -258,63 +364,62 @@ export function AuthProvider({ children }: PropsWithChildren) {
       }
 
       if (!callbackUrl) {
+        await clearPendingAuthorization();
         setError("Giriş tamamlanmadı. Lütfen yeniden deneyin.");
         setStatus("unauthenticated");
         return;
       }
 
-      const response = request.parseReturnUrl(callbackUrl);
-      if (response.type !== "success") {
-        setError(
-          response.type === "error"
-            ? toFriendlyAuthError(response.error)
-            : "Kimlik sağlayıcısı oturumu tamamlamadı."
-        );
-        setStatus("unauthenticated");
-        return;
-      }
-      if (!response.params.code || !request.codeVerifier) {
-        setError("Kimlik sağlayıcısı geçerli bir yetkilendirme kodu döndürmedi.");
-        setStatus("unauthenticated");
-        return;
-      }
-
-      const token = await AuthSession.exchangeCodeAsync(
-        {
-          clientId: authConfig.clientId,
-          code: response.params.code,
-          redirectUri,
-          extraParams: {
-            code_verifier: request.codeVerifier
-          }
-        },
-        discovery
-      );
-      await saveSession(sessionFromTokenResponse(token));
+      await completeAuthorizationCallback(callbackUrl);
       setError(null);
       setStatus("authenticated");
     } catch (signInError: unknown) {
+      await clearPendingAuthorization().catch(() => undefined);
       setError(toFriendlyAuthError(signInError));
       setStatus("unauthenticated");
     }
   }, [
     authConfig.clientId,
     authConfig.scopes,
+    completeAuthorizationCallback,
     configured,
     discovery,
     redirectUri
   ]);
 
   const signOut = useCallback(async () => {
-    if (runtimeConfig.pilotAccessKey) {
+    if (runtimeConfig.authMode === "pilot") {
       setError(null);
       setStatus("authenticated");
       return;
     }
-    await clearSession();
+    const session = await getSession();
+    let remoteDiscovery: AuthSession.DiscoveryDocument | null = null;
+    if (runtimeConfig.authMode === "oauth") {
+      remoteDiscovery = await revokeCurrentSession().catch(() => null);
+    }
+    await Promise.all([clearSession(), clearPendingAuthorization()]);
     setError(null);
-    setStatus(runtimeConfig.useMocks ? "preview" : "unauthenticated");
-  }, []);
+    setStatus(
+      runtimeConfig.authMode === "preview" ? "preview" : "unauthenticated"
+    );
+    if (
+      runtimeConfig.authMode === "oauth" &&
+      remoteDiscovery?.endSessionEndpoint
+    ) {
+      const logout = new URL(remoteDiscovery.endSessionEndpoint);
+      logout.searchParams.set("client_id", authConfig.clientId);
+      if (session?.idToken) {
+        logout.searchParams.set("id_token_hint", session.idToken);
+      }
+      logout.searchParams.set("post_logout_redirect_uri", nativeLogoutUri);
+      await WebBrowser.openAuthSessionAsync(
+        logout.href,
+        nativeLogoutUri,
+        getOAuthBrowserOptions(Platform.OS)
+      ).catch(() => undefined);
+    }
+  }, [authConfig.clientId]);
 
   const value = useMemo<AuthContextValue>(
     () => ({ status, error, signIn, signOut }),

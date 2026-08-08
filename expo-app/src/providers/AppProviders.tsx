@@ -16,7 +16,8 @@ import {
 import { notificationDataToPath } from "@/src/notifications/routing";
 import {
   ensureNotificationChannels,
-  restorePushRegistration
+  restorePushRegistration,
+  syncPushToken
 } from "@/src/notifications/register";
 import { refreshPerformanceWidgetFromApi } from "@/src/widgets/performance-widget";
 import { AuthProvider } from "@/src/auth/AuthProvider";
@@ -97,6 +98,11 @@ export function AppProviders({ children }: PropsWithChildren) {
           console.warn("Foreground widget güncellemesi tamamlanamadı.", error);
         });
       });
+    const pushTokenSubscription = Notifications.addPushTokenListener((token) => {
+      syncPushToken(String(token.data)).catch((error: unknown) => {
+        console.warn("Bildirim tokenı sunucuya güncellenemedi.", error);
+      });
+    });
 
     const navigateFromResponse = (
       response: Notifications.NotificationResponse | null
@@ -121,6 +127,7 @@ export function AppProviders({ children }: PropsWithChildren) {
 
     return () => {
       receivedSubscription.remove();
+      pushTokenSubscription.remove();
       responseSubscription.remove();
     };
   }, [router]);

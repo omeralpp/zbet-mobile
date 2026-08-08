@@ -24,6 +24,10 @@ import {
   type FioriTarget
 } from "@/src/legacy/fiori-target";
 import { fioriShellFocusScript } from "@/src/legacy/fiori-shell";
+import {
+  isAllowedSapWebUrl,
+  parseSapWebAllowedHosts
+} from "@/src/legacy/sap-web-boundary";
 import { useMascotActions } from "@/src/mascot/MascotActions";
 import { colors, spacing } from "@/src/theme/theme";
 
@@ -92,6 +96,11 @@ export default function FioriScreen() {
   const [currentUrl, setCurrentUrl] = useState(initialUrl);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [blockedUrl, setBlockedUrl] = useState("");
+  const allowedHosts = useMemo(
+    () => parseSapWebAllowedHosts(runtimeConfig.sapWebAllowedHosts),
+    []
+  );
 
   const goBack = useCallback(() => {
     if (webCanGoBack.current) {
@@ -108,8 +117,8 @@ export default function FioriScreen() {
     webView.current?.reload();
   }, []);
   const openExternal = useCallback(() => {
-    Linking.openURL(currentUrl).catch(() => undefined);
-  }, [currentUrl]);
+    Linking.openURL(blockedUrl || currentUrl).catch(() => undefined);
+  }, [blockedUrl, currentUrl]);
 
   useFocusEffect(
     useCallback(() => {
@@ -163,6 +172,11 @@ export default function FioriScreen() {
             />
           </View>
         ) : null}
+        <View pointerEvents="none" style={styles.optionalBadge}>
+          <Text style={styles.optionalBadgeText}>
+            {error ? "Opsiyonel SAP • kullanılamıyor" : "Opsiyonel SAP entegrasyonu"}
+          </Text>
+        </View>
         <WebView
           allowsBackForwardNavigationGestures
           domStorageEnabled
@@ -191,13 +205,23 @@ export default function FioriScreen() {
           }}
           onNavigationStateChange={updateNavigation}
           onShouldStartLoadWithRequest={(request) => {
-            if (
-              request.url === "about:blank" ||
-              request.url.startsWith("https://")
-            ) {
+            if (isAllowedSapWebUrl(request.url, allowedHosts)) {
               return true;
             }
-            Linking.openURL(request.url).catch(() => undefined);
+            if (request.url.startsWith("https://")) {
+              setBlockedUrl(request.url);
+              setError(
+                "SAP yönlendirmesi güvenli alan listesinin dışında kaldı. Native BTB çalışmaya devam ediyor."
+              );
+              return false;
+            }
+            if (/^(?:mailto|tel):/i.test(request.url)) {
+              Linking.openURL(request.url).catch(() => undefined);
+              return false;
+            }
+            setError(
+              "Desteklenmeyen SAP yönlendirmesi engellendi. Native BTB çalışmaya devam ediyor."
+            );
             return false;
           }}
           originWhitelist={["https://*"]}
@@ -217,6 +241,10 @@ export default function FioriScreen() {
             />
             <Text style={styles.errorTitle}>Fiori sayfası açılamadı</Text>
             <Text style={styles.errorMessage}>{error}</Text>
+            <Text style={styles.optionalMessage}>
+              Fiori / Work Zone isteğe bağlı SAP entegrasyonudur; Dashboard,
+              Super, Toto, bildirimler ve widget&apos;lar bu hatadan etkilenmez.
+            </Text>
             <Pressable
               onPress={() => {
                 setError(null);
@@ -225,6 +253,9 @@ export default function FioriScreen() {
               style={styles.retry}
             >
               <Text style={styles.retryText}>Yeniden dene</Text>
+            </Pressable>
+            <Pressable onPress={openExternal} style={styles.external}>
+              <Text style={styles.retryText}>Sistem tarayıcısında aç</Text>
             </Pressable>
           </View>
         ) : null}
@@ -251,6 +282,24 @@ const styles = StyleSheet.create({
   progress: {
     height: "100%",
     backgroundColor: colors.green
+  },
+  optionalBadge: {
+    position: "absolute",
+    top: spacing.md,
+    right: spacing.md,
+    zIndex: 4,
+    elevation: 4,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 999,
+    backgroundColor: colors.surfaceStrong
+  },
+  optionalBadgeText: {
+    color: colors.textMuted,
+    fontSize: 10,
+    fontWeight: "800"
   },
   webContainer: {
     flex: 1,
@@ -280,6 +329,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: spacing.sm
   },
+  optionalMessage: {
+    color: colors.textMuted,
+    fontSize: 11,
+    lineHeight: 17,
+    textAlign: "center",
+    marginTop: spacing.md
+  },
   retry: {
     marginTop: spacing.xl,
     paddingHorizontal: spacing.xl,
@@ -291,5 +347,12 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 13,
     fontWeight: "900"
+  },
+  external: {
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: 999,
+    backgroundColor: colors.surfaceStrong
   }
 });

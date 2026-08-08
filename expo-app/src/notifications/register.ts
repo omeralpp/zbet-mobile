@@ -1,12 +1,36 @@
 import { Platform } from "react-native";
+import * as Crypto from "expo-crypto";
 import * as Notifications from "expo-notifications";
+import * as SecureStore from "expo-secure-store";
 import { mobileApi } from "@/src/api";
+import { runtimeConfig } from "@/src/config/runtime";
 
 export const notificationChannels = {
   super: "btb_super_goal_v1",
   general: "btb_general_whistle_v1"
 } as const;
-export const notificationTopic = "BTB";
+const installationKey = "btb.mobile.installation-id";
+
+export async function getInstallationId(): Promise<string> {
+  const stored = await SecureStore.getItemAsync(installationKey);
+  if (stored && /^[A-Za-z0-9._:-]{16,128}$/.test(stored)) {
+    return stored;
+  }
+  const installationId = Crypto.randomUUID();
+  await SecureStore.setItemAsync(installationKey, installationId, {
+    keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY
+  });
+  return installationId;
+}
+
+export async function syncPushToken(token: string): Promise<void> {
+  const platform = Platform.OS === "ios" ? "ios" : "android";
+  await mobileApi.registerDevice(
+    token,
+    platform,
+    runtimeConfig.authMode === "oauth" ? await getInstallationId() : undefined
+  );
+}
 
 export async function ensureNotificationChannels(): Promise<void> {
   if (Platform.OS !== "android") {
@@ -48,11 +72,7 @@ export async function registerPushDevice(): Promise<string> {
 
   const deviceToken = await Notifications.getDevicePushTokenAsync();
   const token = String(deviceToken.data);
-  const platform = Platform.OS === "ios" ? "ios" : "android";
-  if (Platform.OS === "android") {
-    await Notifications.subscribeToTopicAsync(notificationTopic);
-  }
-  await mobileApi.registerDevice(token, platform);
+  await syncPushToken(token);
   return token;
 }
 
@@ -64,9 +84,10 @@ export async function restorePushRegistration(): Promise<void> {
 
   const deviceToken = await Notifications.getDevicePushTokenAsync();
   const token = String(deviceToken.data);
-  const platform = Platform.OS === "ios" ? "ios" : "android";
-  if (Platform.OS === "android") {
-    await Notifications.subscribeToTopicAsync(notificationTopic);
-  }
-  await mobileApi.registerDevice(token, platform);
+  await syncPushToken(token);
+}
+
+export async function unregisterPushDevice(): Promise<void> {
+  const installationId = await getInstallationId();
+  await mobileApi.unregisterDevice(installationId);
 }

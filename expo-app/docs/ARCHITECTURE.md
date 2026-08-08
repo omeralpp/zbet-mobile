@@ -23,27 +23,34 @@ temporary pilot exception, not a production or Cordova-cutover approval. A
 dedicated communication user restricted to the three named OData services is
 still mandatory.
 
-## Hedef akış
+## Production auth boundary (implemented locally, not deployed)
 
 ```text
 Expo native client
-  -> rotatable pilot access key
-  -> Mobile BFF (/v1)
+  -> system browser + generic OIDC public client (Keycloak first)
+  -> Authorization Code + PKCE S256
+  -> short-lived user Bearer token
+  -> standalone Mobile API (/v1)
+  -> discovery/JWKS issuer/audience/scope validation (user tokens only)
   -> server-side SAP technical user
   -> BTB V2 + Super/Toto V4 OData services
 ```
 
 Mobil istemci SAP hostu, destination credential veya client secret bilmez. BFF:
 
-- pilot anahtarının SHA-256 özetini sabit zamanlı karşılaştırır;
+- production `oauth` profilinde provider-neutral OIDC kullanıcı tokenını
+  doğrular ve client-credentials tokenını reddeder;
+- ayrı `pilot` profilinde pilot anahtarının SHA-256 özetini sabit zamanlı
+  karşılaştırır;
 - SAP servislerindeki farklı V2/V4 adlarını stabil `/v1` DTO'larına dönüştürür;
 - bounded pagination, timeout, hata kodu ve audit correlation uygular;
-- cihaz push tokenını kullanıcı ve platformla ilişkilendirir;
+- cihaz push tokenını OIDC `sub`, installation ID ve platformla ilişkilendirir;
 - hiçbir model ağırlığı, star kararı veya Toto tahmini üretmez.
 
-Mevcut `zbet-cap` FCM köprüsü küçük ve `auth: mocked` durumundadır. Üretim mobil
-BFF sorumluluğu, güvenli kimlik doğrulama ve SAP destination erişimi netleşmeden
-bu servise örtük biçimde yüklenmemelidir.
+Auth profili mobil build ve BFF runtime'da açıkça `pilot` veya `oauth` seçilir.
+Non-mock mobil build OAuth'a fail-closed varsayılan verir; OAuth profilinde pilot
+anahtarı/digest bulunması build veya BFF startup'ını durdurur. Pilot profile
+sessiz fallback yoktur.
 
 ## Kaynak sınırları
 
@@ -72,8 +79,13 @@ contract testi hazırlanmalıdır.
    `$filter` veya destination adı kabul etmez.
 6. Loglarda pilot anahtarı, SAP credential ve ham bildirim tokenı
    yazdırılmaz.
-7. OAuth/PKCE kodu fallback olarak korunur fakat direct-open pilot build'inde
-   Identity endpointleri veya App Link intent filter'ları paketlenmez.
+7. Pilot build OIDC endpointlerini veya App Link intent filter'larını
+   paketlemez. OAuth build pilot anahtarı paketlemez.
+8. OAuth build sistem tarayıcısı, PKCE S256, state ve RFC 9207 issuer doğrulaması
+   kullanır. PKCE verifier/state SecureStore'da en fazla on dakika tutulduğu
+   için cold-start callback tamamlanabilir.
+9. Access token her istek öncesi kontrol edilir; bitime 60 saniye kala tekil bir
+   refresh yapılır. Refresh veya BFF doğrulaması başarısızsa oturum temizlenir.
 
 ## Geçiş fazları
 
@@ -109,17 +121,16 @@ Domain veya Tunnel, BFF güvenlik katmanının yerine geçmez. Mobil paket SAP
 credential, Cloudflare service token veya Firebase service-account anahtarı
 taşımaz. BFF pilot anahtarı özetini doğrular, sabit `/v1` DTO sözleşmesini
 uygular ve yalnız allowlist SAP operasyonlarına gider.
-FCM köprüsü aynı özel origin üzerinde ayrı yetkili bir servis olabilir.
+Standalone bildirim servisi aynı özel origin üzerinde ayrı üretici anahtarıyla
+çalışır ve kayıtlı cihazlara doğrudan FCM HTTP v1 gönderir. Core runtime şu üç
+yüzeydir: generic OIDC, standalone Mobile API/SAP adapter ve standalone
+notification service. Bunların hiçbiri IAS/BTP binding gerektirmez.
 
-BTP bağımlılığı ancak üç ayrı yüzey taşındığında tamamen biter:
-
-1. mobil BFF/runtime,
-2. FCM gönderim servisi ve secret binding,
-3. Fiori/UI5 statik hosting, kimlik ve rol/shell karşılığı.
-
-İlk iki yüzey kendi origin + Tunnel yapısına alınsa bile Work Zone/Fiori
-Launchpad kullanılmaya devam ettiği sürece uygulamanın Fiori fallback'i BTP
-bağımlılığı taşımaya devam eder.
+Fiori/UI5 hosting, Work Zone shell/destination, CAP/MTA ve IAS entegrasyonu
+`OPTIONAL SAP INTEGRATION` olarak korunur. Kullanıcı Fiori yüzeyini açtığında
+BTP erişimi gerekebilir; bu durum native Dashboard/BTB/Super/Toto, auth,
+bildirim veya widget çalışma koşulu değildir. WebView yalnız yapılandırılmış SAP
+HTTPS hostlarına gider; başarısızlık core uygulamayı durdurmaz.
 
 ### Faz 1 — Read-only BFF
 
@@ -157,8 +168,11 @@ runbook'u ve rollback planı doğrulandıktan sonra emekliye ayrılır.
 
 ## Üretim öncesi blokajlar
 
-- Direct-open pilot anahtarı uygulama paketinden çıkarılabilir; üretim öncesi
-  cihaz attestation veya kullanıcı/cihaz kimliğiyle değiştirilmelidir.
+- Statik pilot anahtarının production kimliği olması kod seviyesinde
+  engellenmiştir. Yerel Keycloak public client üzerinde PKCE/JWKS/BFF/refresh/
+  revoke smoke geçmiştir. Production HTTPS OIDC issuer/public client, callback
+  ve logout URI'ları, Android App Link sertifikası ve gerçek cihaz login/
+  refresh/cold-start/logout kanıtı henüz dış sistemde tamamlanmamıştır.
 - Geçici SAP `developer` hesabı yerine üç OData servisiyle sınırlı ayrı
   communication user oluşturulmalıdır.
 - Store signing, fiziksel cihaz parity, destek ve rollback kapıları eksiktir.

@@ -14,7 +14,10 @@ import { Screen } from "@/src/components/Screen";
 import { useAuth } from "@/src/auth/AuthProvider";
 import { runtimeConfig } from "@/src/config/runtime";
 import { openDeveloperMenu } from "@/src/devtools/developer-menu";
-import { registerPushDevice } from "@/src/notifications/register";
+import {
+  registerPushDevice,
+  unregisterPushDevice
+} from "@/src/notifications/register";
 import { colors, radii, spacing } from "@/src/theme/theme";
 import {
   getWidgetStatus,
@@ -196,12 +199,17 @@ export default function MoreScreen() {
               detail="Bu cihazdaki güvenli oturum verisini temizle"
               icon="logout"
               onPress={() => {
-                auth.signOut().catch((error: unknown) => {
-                  Alert.alert(
-                    "Oturum kapatılamadı",
-                    error instanceof Error ? error.message : "Bilinmeyen hata."
-                  );
-                });
+                unregisterPushDevice()
+                  .catch(() => undefined)
+                  .then(() => auth.signOut())
+                  .catch((error: unknown) => {
+                    Alert.alert(
+                      "Oturum kapatılamadı",
+                      error instanceof Error
+                        ? error.message
+                        : "Bilinmeyen hata."
+                    );
+                  });
               }}
               title="Oturumu kapat"
             />

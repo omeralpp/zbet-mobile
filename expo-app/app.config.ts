@@ -1,12 +1,52 @@
 import type { ExpoConfig, ConfigContext } from "expo/config";
+import {
+  productionOAuthRedirectUri,
+  resolveMobileAuthMode,
+  validateNoPublicOAuthSecrets,
+  validateOAuthPublicConfiguration
+} from "./src/config/auth-mode.ts";
 
 const previewPackage = "com.btb.mobile.next";
-const googleServicesFile = process.env.BTB_GOOGLE_SERVICES_FILE;
-const pilotAccessKey =
-  process.env.EXPO_PUBLIC_MOBILE_PILOT_KEY?.trim() ?? "";
-const usesPilotAccess = Boolean(pilotAccessKey);
 
-export default ({ config }: ConfigContext): ExpoConfig => ({
+export default function resolveAppConfig({
+  config
+}: ConfigContext): ExpoConfig {
+  const googleServicesFile = process.env.BTB_GOOGLE_SERVICES_FILE;
+  const pilotAccessKey =
+    process.env.EXPO_PUBLIC_MOBILE_PILOT_KEY?.trim() ?? "";
+  const useMocks = process.env.EXPO_PUBLIC_USE_MOCKS !== "false";
+  const mobileAuthMode = resolveMobileAuthMode({
+    useMocks,
+    configuredMode: process.env.EXPO_PUBLIC_MOBILE_AUTH_MODE,
+    pilotAccessKey
+  });
+  const usesPilotAccess = mobileAuthMode === "pilot";
+  const usesOAuth = mobileAuthMode === "oauth";
+  const oauthScopes =
+    process.env.EXPO_PUBLIC_AUTH_SCOPES ??
+    "openid offline_access mobile.read mobile.device.write";
+  const oauthPublicConfiguration = {
+    clientId: process.env.EXPO_PUBLIC_AUTH_CLIENT_ID ?? "",
+    issuer: process.env.EXPO_PUBLIC_AUTH_ISSUER ?? "",
+    authorizationEndpoint:
+      process.env.EXPO_PUBLIC_AUTH_AUTHORIZATION_ENDPOINT ?? "",
+    tokenEndpoint: process.env.EXPO_PUBLIC_AUTH_TOKEN_ENDPOINT ?? "",
+    revocationEndpoint:
+      process.env.EXPO_PUBLIC_AUTH_REVOCATION_ENDPOINT ?? "",
+    endSessionEndpoint:
+      process.env.EXPO_PUBLIC_AUTH_END_SESSION_ENDPOINT ?? "",
+    redirectUri:
+      process.env.EXPO_PUBLIC_AUTH_REDIRECT_URI ??
+      productionOAuthRedirectUri,
+    scopes: oauthScopes
+  };
+
+  if (usesOAuth) {
+    validateNoPublicOAuthSecrets(process.env);
+    validateOAuthPublicConfiguration(oauthPublicConfiguration);
+  }
+
+  return {
   ...config,
   name: "BTB Mobile Next",
   slug: "btb-mobile-next",
@@ -85,34 +125,34 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   extra: {
     mobileApiUrl: process.env.EXPO_PUBLIC_MOBILE_API_URL ?? "",
-    pilotAccessKey,
-    useMocks: process.env.EXPO_PUBLIC_USE_MOCKS !== "false",
-    authClientId: usesPilotAccess
-      ? ""
-      : process.env.EXPO_PUBLIC_AUTH_CLIENT_ID ?? "",
+    authMode: mobileAuthMode,
+    pilotAccessKey: usesPilotAccess ? pilotAccessKey : "",
+    useMocks,
+    authClientId: usesOAuth ? oauthPublicConfiguration.clientId : "",
+    authIssuer: usesOAuth ? oauthPublicConfiguration.issuer : "",
     authAuthorizationEndpoint:
-      usesPilotAccess
-        ? ""
-        : process.env.EXPO_PUBLIC_AUTH_AUTHORIZATION_ENDPOINT ?? "",
-    authTokenEndpoint: usesPilotAccess
-      ? ""
-      : process.env.EXPO_PUBLIC_AUTH_TOKEN_ENDPOINT ?? "",
+      usesOAuth ? oauthPublicConfiguration.authorizationEndpoint : "",
+    authTokenEndpoint: usesOAuth ? oauthPublicConfiguration.tokenEndpoint : "",
     authRedirectUri:
-      usesPilotAccess
-        ? ""
-        : process.env.EXPO_PUBLIC_AUTH_REDIRECT_URI ??
-          "https://api.surklase.com/auth/callback",
+      usesOAuth ? oauthPublicConfiguration.redirectUri : "",
     authRevocationEndpoint:
-      usesPilotAccess
+      !usesOAuth
         ? ""
         : process.env.EXPO_PUBLIC_AUTH_REVOCATION_ENDPOINT ?? "",
-    authScopes:
-      usesPilotAccess
+    authEndSessionEndpoint:
+      !usesOAuth
         ? ""
-        : process.env.EXPO_PUBLIC_AUTH_SCOPES ??
-          "openid profile email groups offline_access",
+        : process.env.EXPO_PUBLIC_AUTH_END_SESSION_ENDPOINT ?? "",
+    authScopes:
+      !usesOAuth
+        ? ""
+        : oauthScopes,
     legacyLaunchpadUrl:
       process.env.EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL ??
-      "https://188b143btrial.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b38042ce-b8ab-4fea-a892-abf4c58a170f"
+      "https://188b143btrial.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b38042ce-b8ab-4fea-a892-abf4c58a170f",
+    sapWebAllowedHosts:
+      process.env.EXPO_PUBLIC_SAP_WEB_ALLOWED_HOSTS ??
+      "*.hana.ondemand.com,*.accounts.ondemand.com"
   }
-});
+  };
+}

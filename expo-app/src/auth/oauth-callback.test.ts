@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isOAuthCallbackUrl } from "./oauth-callback";
+import {
+  isOAuthCallbackUrl,
+  parseOAuthCallback
+} from "./oauth-callback";
 
 const redirectUri = "https://api.surklase.com/auth/callback";
 const nativeReturnUri = "btbmobile://auth";
@@ -29,6 +32,66 @@ test("accepts the verified HTTPS App Link and native bridge callback", () => {
       nativeReturnUri
     ),
     true
+  );
+});
+
+test("cold-start callback validates state, issuer, and PKCE verifier", () => {
+  assert.deepEqual(
+    parseOAuthCallback(
+      `${redirectUri}?code=code-1&state=state-1234567890&` +
+        "iss=https%3A%2F%2Ftenant.accounts.example.test",
+      {
+        state: "state-1234567890",
+        codeVerifier: "v".repeat(64),
+        redirectUri
+      },
+      nativeReturnUri,
+      "https://tenant.accounts.example.test"
+    ),
+    {
+      type: "success",
+      code: "code-1",
+      codeVerifier: "v".repeat(64)
+    }
+  );
+});
+
+test("cold-start callback rejects mismatched state, issuer, and duplicates", () => {
+  const pending = {
+    state: "state-1234567890",
+    codeVerifier: "v".repeat(64),
+    redirectUri
+  };
+  assert.throws(
+    () =>
+      parseOAuthCallback(
+        `${nativeReturnUri}?code=x&state=wrong&iss=https%3A%2F%2Ftenant.accounts.example.test`,
+        pending,
+        nativeReturnUri,
+        "https://tenant.accounts.example.test"
+      ),
+    /state/
+  );
+  assert.throws(
+    () =>
+      parseOAuthCallback(
+        `${nativeReturnUri}?code=x&state=${pending.state}&iss=https%3A%2F%2Fevil.example`,
+        pending,
+        nativeReturnUri,
+        "https://tenant.accounts.example.test"
+      ),
+    /issuer/
+  );
+  assert.throws(
+    () =>
+      parseOAuthCallback(
+        `${nativeReturnUri}?code=x&code=y&state=${pending.state}&` +
+          "iss=https%3A%2F%2Ftenant.accounts.example.test",
+        pending,
+        nativeReturnUri,
+        "https://tenant.accounts.example.test"
+      ),
+    /parametreleri/
   );
 });
 

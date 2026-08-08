@@ -37,6 +37,11 @@ export interface MobileApi {
   registerDevice(
     token: string,
     platform: "android" | "ios",
+    installationId?: string,
+    signal?: AbortSignal
+  ): Promise<void>;
+  unregisterDevice(
+    installationId: string,
     signal?: AbortSignal
   ): Promise<void>;
 }
