@@ -13,11 +13,13 @@ import {
 } from "react-native";
 import {
   matchInsightQuery,
+  matchLeagueContextQuery,
   matchPeriodScoreQuery,
   matchQuery,
   matchSuperLogsQuery
 } from "@/src/api/queries";
 import { RatingStars } from "@/src/components/RatingStars";
+import { LeagueStandingsTable } from "@/src/components/LeagueStandingsTable";
 import { RatioResultsChart } from "@/src/components/RatioResultsChart";
 import { Screen } from "@/src/components/Screen";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
@@ -187,6 +189,7 @@ export default function MatchDetailScreen() {
   const [showDecision, setShowDecision] = useState(false);
   const query = useQuery(matchQuery(key));
   const insightQuery = useQuery(matchInsightQuery(key));
+  const leagueContextQuery = useQuery(matchLeagueContextQuery(key));
   const periodScoreQuery = useQuery(matchPeriodScoreQuery(key));
   const superLogs = useQuery(matchSuperLogsQuery(key));
   const relatedDecisions = useMemo(
@@ -237,6 +240,7 @@ export default function MatchDetailScreen() {
                 Promise.all([
                   query.refetch(),
                   insightQuery.refetch(),
+                  leagueContextQuery.refetch(),
                   periodScoreQuery.refetch(),
                   superLogs.refetch()
                 ])
@@ -244,6 +248,7 @@ export default function MatchDetailScreen() {
               refreshing={
                 query.isRefetching ||
                 insightQuery.isRefetching ||
+                leagueContextQuery.isRefetching ||
                 periodScoreQuery.isRefetching ||
                 superLogs.isRefetching
               }
@@ -395,6 +400,37 @@ export default function MatchDetailScreen() {
               );
             })}
           </View>
+        </>
+      ) : null}
+
+      {leagueContextQuery.data &&
+      (leagueContextQuery.data.homeStandingPosition !== null ||
+        leagueContextQuery.data.awayStandingPosition !== null ||
+        leagueContextQuery.data.homeStandingPoints !== null ||
+        leagueContextQuery.data.awayStandingPoints !== null) ? (
+        <>
+          <Text style={styles.sectionTitle}>Lig sıralaması</Text>
+          <LeagueStandingsTable
+            contextLabel={
+              leagueContextQuery.data.source === "LATEST_SUPER_DECISION"
+                ? "Son Super kararı kaydı"
+                : "Kaynak bekleniyor"
+            }
+            rows={[
+              {
+                team: leagueContextQuery.data.homeTeam,
+                position: leagueContextQuery.data.homeStandingPosition,
+                points: leagueContextQuery.data.homeStandingPoints,
+                side: "HOME"
+              },
+              {
+                team: leagueContextQuery.data.awayTeam,
+                position: leagueContextQuery.data.awayStandingPosition,
+                points: leagueContextQuery.data.awayStandingPoints,
+                side: "AWAY"
+              }
+            ]}
+          />
         </>
       ) : null}
 

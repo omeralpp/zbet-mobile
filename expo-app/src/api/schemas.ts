@@ -59,6 +59,19 @@ export const matchInsightSchema = z.strictObject({
   marketRates: z.array(matchMarketRateSchema).max(50)
 });
 
+export const matchLeagueContextSchema = z.strictObject({
+  key: z.string().min(1),
+  league: z.string().min(1),
+  homeTeam: z.string().min(1),
+  awayTeam: z.string().min(1),
+  source: z.enum(["LATEST_SUPER_DECISION", "UNAVAILABLE"]),
+  capturedAt: isoDateTime.nullable(),
+  homeStandingPosition: z.number().int().positive().nullable(),
+  awayStandingPosition: z.number().int().positive().nullable(),
+  homeStandingPoints: z.number().int().nonnegative().nullable(),
+  awayStandingPoints: z.number().int().nonnegative().nullable()
+});
+
 export const periodScoreContextSchema = z.strictObject({
   key: z.string().min(1),
   halfTimeScore: z
@@ -241,6 +254,7 @@ export type MatchSummary = z.infer<typeof matchSummarySchema>;
 export type MatchDetail = z.infer<typeof matchDetailSchema>;
 export type RatioResult = z.infer<typeof ratioResultSchema>;
 export type MatchInsight = z.infer<typeof matchInsightSchema>;
+export type MatchLeagueContext = z.infer<typeof matchLeagueContextSchema>;
 export type MatchMarketRate = z.infer<typeof matchMarketRateSchema>;
 export type PeriodScoreContext = z.infer<typeof periodScoreContextSchema>;
 export type SuperLog = z.infer<typeof superLogSchema>;

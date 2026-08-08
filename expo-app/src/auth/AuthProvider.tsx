@@ -13,6 +13,7 @@ import * as WebBrowser from "expo-web-browser";
 import { Platform } from "react-native";
 import { runtimeConfig } from "@/src/config/runtime";
 import { toFriendlyAuthError } from "./auth-error";
+import { resolveImmediateAuthStatus } from "./entry-policy";
 import { getOAuthBrowserOptions } from "./oauth-browser-options";
 import { isOAuthCallbackUrl, parseOAuthCallback } from "./oauth-callback";
 import { getOidcDiscovery } from "./oidc-discovery-runtime";
@@ -155,12 +156,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
     let mounted = true;
 
     async function bootstrap() {
-      if (runtimeConfig.authMode === "preview") {
-        setStatus("preview");
-        return;
-      }
-      if (runtimeConfig.authMode === "pilot") {
-        setStatus("authenticated");
+      const immediateStatus = resolveImmediateAuthStatus(
+        runtimeConfig.authMode
+      );
+      if (immediateStatus) {
+        setStatus(immediateStatus);
         return;
       }
       if (!configured) {
@@ -390,7 +390,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const signOut = useCallback(async () => {
     if (runtimeConfig.authMode === "pilot") {
       setError(null);
-      setStatus("authenticated");
+      setStatus("unauthenticated");
       return;
     }
     const session = await getSession();

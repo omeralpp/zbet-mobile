@@ -4,6 +4,7 @@ import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
 import { mobileApi } from "@/src/api";
 import { runtimeConfig } from "@/src/config/runtime";
+import { resolveLegacyNotificationTopic } from "./registration-policy";
 
 export const notificationChannels = {
   super: "btb_super_goal_v1",
@@ -25,6 +26,13 @@ export async function getInstallationId(): Promise<string> {
 
 export async function syncPushToken(token: string): Promise<void> {
   const platform = Platform.OS === "ios" ? "ios" : "android";
+  const legacyTopic = resolveLegacyNotificationTopic(
+    runtimeConfig.authMode,
+    platform
+  );
+  if (legacyTopic) {
+    await Notifications.subscribeToTopicAsync(legacyTopic);
+  }
   await mobileApi.registerDevice(
     token,
     platform,

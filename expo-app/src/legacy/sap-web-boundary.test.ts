@@ -7,7 +7,7 @@ import {
 
 test("allows only configured SAP HTTPS destinations", () => {
   const hosts = parseSapWebAllowedHosts(
-    "*.hana.ondemand.com, *.accounts.ondemand.com, invalid"
+    "*.hana.ondemand.com, *.accounts.ondemand.com, *.trial-accounts.ondemand.com, invalid"
   );
   assert.equal(
     isAllowedSapWebUrl(
@@ -18,6 +18,13 @@ test("allows only configured SAP HTTPS destinations", () => {
   );
   assert.equal(
     isAllowedSapWebUrl("https://login.accounts.ondemand.com/", hosts),
+    true
+  );
+  assert.equal(
+    isAllowedSapWebUrl(
+      "https://apouezlwd.trial-accounts.ondemand.com/oauth2/authorize",
+      hosts
+    ),
     true
   );
   assert.equal(isAllowedSapWebUrl("https://hana.ondemand.com/", hosts), false);

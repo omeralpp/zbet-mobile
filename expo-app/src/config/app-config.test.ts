@@ -7,7 +7,8 @@ test("native splash yalnız uygulama arka planını gösterir", () => {
   const environmentNames = [
     "EXPO_PUBLIC_USE_MOCKS",
     "EXPO_PUBLIC_MOBILE_AUTH_MODE",
-    "EXPO_PUBLIC_MOBILE_PILOT_KEY"
+    "EXPO_PUBLIC_MOBILE_PILOT_KEY",
+    "EXPO_PUBLIC_SAP_WEB_ALLOWED_HOSTS"
   ] as const;
   const previous = Object.fromEntries(
     environmentNames.map((name) => [name, process.env[name]])
@@ -36,6 +37,10 @@ test("native splash yalnız uygulama arka planını gösterir", () => {
         }
       }
     ]);
+    assert.equal(
+      config.extra?.sapWebAllowedHosts,
+      "*.hana.ondemand.com,*.accounts.ondemand.com,*.trial-accounts.ondemand.com"
+    );
   } finally {
     for (const name of environmentNames) {
       const value = previous[name];

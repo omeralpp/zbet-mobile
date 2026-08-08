@@ -22,6 +22,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radii, shadows } from "@/src/theme/theme";
+import { useTutorial } from "@/src/tutorial/TutorialProvider";
 import { useMascotActions } from "./MascotActions";
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
@@ -101,6 +102,7 @@ export function BtbMascotOverlay() {
   const pathname = usePathname();
   const router = useRouter();
   const { pageActions } = useMascotActions();
+  const tutorial = useTutorial();
   const [openPath, setOpenPath] = useState<string | null>(null);
   const [blinkFrame, setBlinkFrame] = useState<0 | 1 | 2>(0);
   const [showGreeting, setShowGreeting] = useState(true);
@@ -110,6 +112,9 @@ export function BtbMascotOverlay() {
   const [openTilt] = useState(() => new Animated.Value(0));
   const [dragTilt] = useState(() => new Animated.Value(0));
   const [dragTranslation] = useState(
+    () => new Animated.ValueXY({ x: 0, y: 0 })
+  );
+  const [guideTranslation] = useState(
     () => new Animated.ValueXY({ x: 0, y: 0 })
   );
   const [halo] = useState(() => new Animated.Value(0.2));
@@ -139,7 +144,46 @@ export function BtbMascotOverlay() {
     () => clampPosition(position, bounds),
     [bounds, position]
   );
-  const open = openPath === pathname;
+  const tutorialPosition = useMemo(() => {
+    if (!tutorial.activeTip) {
+      return visiblePosition;
+    }
+    const usableWidth = Math.max(
+      0,
+      width - insets.left - insets.right - mascotSize - edgeMargin * 2
+    );
+    const usableHeight = Math.max(
+      0,
+      height - insets.top - insets.bottom - mascotSize - edgeMargin * 2
+    );
+    return clampPosition(
+      {
+        x:
+          insets.left +
+          edgeMargin +
+          usableWidth * tutorial.activeTip.target.x,
+        y:
+          insets.top +
+          edgeMargin +
+          usableHeight * tutorial.activeTip.target.y
+      },
+      bounds
+    );
+  }, [
+    bounds,
+    height,
+    insets.bottom,
+    insets.left,
+    insets.right,
+    insets.top,
+    tutorial.activeTip,
+    visiblePosition,
+    width
+  ]);
+  const displayPosition = tutorial.activeTip
+    ? tutorialPosition
+    : visiblePosition;
+  const open = !tutorial.activeTip && openPath === pathname;
 
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled()
@@ -242,6 +286,33 @@ export function BtbMascotOverlay() {
     ]).start();
   }, [halo, open, openTilt, reduceMotion]);
 
+  useEffect(() => {
+    const next = {
+      x: displayPosition.x - visiblePosition.x,
+      y: displayPosition.y - visiblePosition.y
+    };
+    guideTranslation.stopAnimation();
+    if (reduceMotion) {
+      guideTranslation.setValue(next);
+      return;
+    }
+    Animated.spring(guideTranslation, {
+      toValue: next,
+      damping: 17,
+      stiffness: 120,
+      mass: 0.8,
+      useNativeDriver: true
+    }).start();
+  }, [
+    displayPosition.x,
+    displayPosition.y,
+    guideTranslation,
+    reduceMotion,
+    tutorial.activeTip,
+    visiblePosition.x,
+    visiblePosition.y
+  ]);
+
   const panResponder = useMemo(
     () =>
       PanResponder.create({
@@ -324,8 +395,20 @@ export function BtbMascotOverlay() {
     return items;
   }, [pageActions, pathname, router]);
 
-  const menuDown = visiblePosition.y < height / 2;
-  const menuRight = visiblePosition.x > width / 2;
+  const menuDown = displayPosition.y < height / 2;
+  const menuRight = displayPosition.x > width / 2;
+  const tutorialBubbleWidth = Math.min(
+    248,
+    Math.max(188, width - insets.left - insets.right - 28)
+  );
+  const tutorialBubbleLeft =
+    Math.min(
+      Math.max(
+        insets.left + edgeMargin,
+        displayPosition.x + mascotSize / 2 - tutorialBubbleWidth / 2
+      ),
+      width - insets.right - edgeMargin - tutorialBubbleWidth
+    ) - displayPosition.x;
   const rotation = Animated.add(
     openTilt.interpolate({ inputRange: [0, 1], outputRange: [0, 0.7] }),
     dragTilt
@@ -343,19 +426,72 @@ export function BtbMascotOverlay() {
   return (
     <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
       <Animated.View
-        {...panResponder.panHandlers}
+        {...(tutorial.activeTip ? {} : panResponder.panHandlers)}
         style={[
           styles.anchor,
           {
             left: visiblePosition.x,
             top: visiblePosition.y,
             transform: [
+              { translateX: guideTranslation.x },
+              { translateY: guideTranslation.y },
               { translateX: dragTranslation.x },
               { translateY: dragTranslation.y }
             ]
           }
         ]}
       >
+        {tutorial.activeTip ? (
+          <View
+            accessibilityLiveRegion="polite"
+            accessibilityRole="summary"
+            style={[
+              styles.tutorialBubble,
+              menuDown ? styles.tutorialDown : styles.tutorialUp,
+              { left: tutorialBubbleLeft, width: tutorialBubbleWidth }
+            ]}
+          >
+            <Text style={styles.tutorialTitle}>
+              {tutorial.activeTip.title}
+            </Text>
+            <Text style={styles.tutorialBody}>{tutorial.activeTip.body}</Text>
+            <View style={styles.tutorialActions}>
+              <Pressable
+                accessibilityLabel="Bibi rehberini kapat"
+                onPress={() => {
+                  setOpenPath(null);
+                  tutorial.setEnabled(false);
+                }}
+                style={({ pressed }) => [
+                  styles.tutorialSecondary,
+                  pressed && styles.menuItemPressed
+                ]}
+              >
+                <Text style={styles.tutorialSecondaryText}>Rehberi kapat</Text>
+              </Pressable>
+              <Pressable
+                accessibilityLabel={
+                  tutorial.hasNextOnPage
+                    ? "Sonraki rehber adımı"
+                    : "Bu rehber bilgisini tamamla"
+                }
+                onPress={() => {
+                  setOpenPath(null);
+                  tutorial.completeActiveTip();
+                }}
+                style={({ pressed }) => [
+                  styles.tutorialPrimary,
+                  pressed && styles.menuItemPressed
+                ]}
+              >
+                <Text style={styles.tutorialPrimaryText}>
+                  {tutorial.hasNextOnPage ? "Sonraki" : "Anladım"}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
+
         {open ? (
           <View
             style={[
@@ -387,7 +523,7 @@ export function BtbMascotOverlay() {
           </View>
         ) : null}
 
-        {showGreeting ? (
+        {showGreeting && !tutorial.activeTip ? (
           <View
             pointerEvents="none"
             style={[
@@ -409,8 +545,11 @@ export function BtbMascotOverlay() {
           }}
         >
           <Pressable
-            accessibilityLabel="Bibi hızlı menü"
+            accessibilityLabel={
+              tutorial.activeTip ? "Bibi rehber anlatımı" : "Bibi hızlı menü"
+            }
             accessibilityRole="button"
+            disabled={Boolean(tutorial.activeTip)}
             onPress={() => {
               setOpenPath(open ? null : pathname);
               if (Platform.OS !== "web") {
@@ -484,6 +623,56 @@ const styles = StyleSheet.create({
   greetingLeft: { left: mascotSize + 8 },
   greetingRight: { right: mascotSize + 8 },
   greetingText: { color: colors.background, fontSize: 12, fontWeight: "900" },
+  tutorialBubble: {
+    position: "absolute",
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.blue,
+    backgroundColor: "rgba(244, 248, 252, 0.98)",
+    padding: 14,
+    ...shadows.card
+  },
+  tutorialDown: { top: mascotSize + 8 },
+  tutorialUp: { bottom: mascotSize + 8 },
+  tutorialTitle: {
+    color: colors.background,
+    fontSize: 14,
+    fontWeight: "900"
+  },
+  tutorialBody: {
+    color: colors.surfaceStrong,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 5
+  },
+  tutorialActions: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "flex-end",
+    marginTop: 12
+  },
+  tutorialSecondary: {
+    borderRadius: radii.round,
+    paddingHorizontal: 10,
+    paddingVertical: 8
+  },
+  tutorialSecondaryText: {
+    color: colors.textSubtle,
+    fontSize: 10,
+    fontWeight: "900"
+  },
+  tutorialPrimary: {
+    backgroundColor: colors.blue,
+    borderRadius: radii.round,
+    paddingHorizontal: 14,
+    paddingVertical: 8
+  },
+  tutorialPrimaryText: {
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: "900"
+  },
   menu: { position: "absolute", gap: 6, minWidth: 150 },
   menuUp: { bottom: mascotSize + 8 },
   menuDown: { top: mascotSize + 8 },

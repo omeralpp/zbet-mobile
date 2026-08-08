@@ -14,6 +14,7 @@ import {
 import { Screen } from "@/src/components/Screen";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { RatingStars } from "@/src/components/RatingStars";
+import { LeagueStandingsTable } from "@/src/components/LeagueStandingsTable";
 import { colors, radii, spacing } from "@/src/theme/theme";
 import {
   formatFixtureDateTime,
@@ -109,6 +110,7 @@ export default function SuperLogDetailScreen() {
           {formatFixtureDateTime(log.matchDate, log.matchTime)} · {log.elapsed}&apos; karar
         </Text>
         <Text style={styles.match}>{log.homeTeam} - {log.awayTeam}</Text>
+        <Text style={styles.scoreLabel}>Karar anı skoru</Text>
         <Text style={styles.score}>
           {log.decisionHomeScore} - {log.decisionAwayScore}
         </Text>
@@ -117,6 +119,17 @@ export default function SuperLogDetailScreen() {
             İY: {periodScoreQuery.data.halfTimeScore.homeScore}-
             {periodScoreQuery.data.halfTimeScore.awayScore}
           </Text>
+        ) : null}
+        {(log.result === "WON" || log.result === "LOST") && log.finalScore ? (
+          <View
+            accessibilityLabel={`Biten skor ${log.finalScore}`}
+            style={[styles.finalScorePill, { borderColor: resultColor }]}
+          >
+            <Text style={styles.finalScoreLabel}>Biten skor</Text>
+            <Text style={[styles.finalScoreValue, { color: resultColor }]}>
+              {log.finalScore.replace("-", " - ")}
+            </Text>
+          </View>
         ) : null}
         <View style={styles.selectionRow}>
           <View>
@@ -180,40 +193,23 @@ export default function SuperLogDetailScreen() {
           {metric(formatSigned(log.venuePpgDiff), "saha PPG farkı")}
         </View>
         {hasStandingContext ? (
-          <View style={styles.standingTable}>
-            <View style={styles.standingHeader}>
-              <Text style={[styles.standingHeaderText, styles.standingTeam]}>Takım</Text>
-              <Text style={styles.standingHeaderText}>Sıra</Text>
-              <Text style={styles.standingHeaderText}>Puan</Text>
-            </View>
-            {[
+          <LeagueStandingsTable
+            contextLabel="Karar anındaki kayıt"
+            rows={[
               {
                 team: log.homeTeam,
-                position: log.homeStandingPosition,
-                points: log.homeStandingPoints
+                position: log.homeStandingPosition || null,
+                points: log.homeStandingPoints,
+                side: "HOME"
               },
               {
                 team: log.awayTeam,
-                position: log.awayStandingPosition,
-                points: log.awayStandingPoints
+                position: log.awayStandingPosition || null,
+                points: log.awayStandingPoints,
+                side: "AWAY"
               }
-            ].map((standing, index) => (
-              <View
-                key={`${standing.team}-${index}`}
-                style={[styles.standingRow, index > 0 && styles.standingDivider]}
-              >
-                <Text numberOfLines={1} style={[styles.standingText, styles.standingTeam]}>
-                  {standing.team}
-                </Text>
-                <Text style={styles.standingValue}>
-                  {standing.position || "—"}
-                </Text>
-                <Text style={styles.standingValue}>
-                  {standing.points || "—"}
-                </Text>
-              </View>
-            ))}
-          </View>
+            ]}
+          />
         ) : null}
       </View>
 
@@ -277,8 +273,12 @@ const styles = StyleSheet.create({
   result: { fontSize: 10, fontWeight: "900" },
   fixtureTime: { color: colors.textSubtle, fontSize: 10, marginTop: 4 },
   match: { color: colors.text, fontSize: 22, fontWeight: "900", marginTop: spacing.lg },
+  scoreLabel: { color: colors.textSubtle, fontSize: 9, fontWeight: "800", marginTop: spacing.md },
   score: { color: colors.white, fontSize: 28, fontWeight: "900", marginTop: spacing.sm },
   halfTimeScore: { color: colors.textMuted, fontSize: 10, fontWeight: "800", marginTop: 3 },
+  finalScorePill: { alignItems: "center", alignSelf: "flex-start", borderRadius: radii.round, borderWidth: 1, flexDirection: "row", gap: spacing.sm, marginTop: spacing.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  finalScoreLabel: { color: colors.textMuted, fontSize: 10, fontWeight: "800" },
+  finalScoreValue: { fontSize: 15, fontWeight: "900" },
   selectionRow: {
     flexDirection: "row",
     alignItems: "flex-end",
@@ -298,14 +298,6 @@ const styles = StyleSheet.create({
   metricValue: { color: colors.text, fontSize: 15, fontWeight: "900" },
   metricLabel: { color: colors.textSubtle, fontSize: 9, marginTop: 2 },
   comment: { color: colors.textMuted, fontSize: 11, lineHeight: 17, marginTop: spacing.lg, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.borderSoft },
-  standingTable: { borderColor: colors.borderSoft, borderRadius: radii.md, borderWidth: 1, marginTop: spacing.lg, overflow: "hidden" },
-  standingHeader: { alignItems: "center", backgroundColor: colors.surfaceStrong, flexDirection: "row", minHeight: 32, paddingHorizontal: spacing.md },
-  standingHeaderText: { color: colors.textSubtle, fontSize: 9, fontWeight: "900", textAlign: "right", width: 46 },
-  standingRow: { alignItems: "center", flexDirection: "row", minHeight: 40, paddingHorizontal: spacing.md },
-  standingDivider: { borderTopColor: colors.borderSoft, borderTopWidth: 1 },
-  standingTeam: { flex: 1, textAlign: "left", width: undefined },
-  standingText: { color: colors.textMuted, fontSize: 11, fontWeight: "800" },
-  standingValue: { color: colors.text, fontSize: 11, fontWeight: "900", textAlign: "right", width: 46 },
   primaryAction: { minHeight: 50, alignItems: "center", justifyContent: "center", borderRadius: radii.round, backgroundColor: colors.blue, marginTop: spacing.xxl },
   primaryActionText: { color: colors.white, fontSize: 14, fontWeight: "900" },
   secondaryAction: { minHeight: 48, alignItems: "center", justifyContent: "center", borderRadius: radii.round, borderWidth: 1, borderColor: colors.green, marginTop: spacing.md },

@@ -3,6 +3,7 @@ import {
   matchDetailSchema,
   matchInsightListSchema,
   matchInsightSchema,
+  matchLeagueContextSchema,
   matchListSchema,
   periodScoreContextSchema,
   superLogDetailSchema,
@@ -67,6 +68,31 @@ export const mockMobileApi: MobileApi = {
       );
     }
     return matchInsightSchema.parse(clone(insight));
+  },
+
+  async getMatchLeagueContext(key, signal) {
+    await mockDelay(signal);
+    const match = mockMatches.find((candidate) => candidate.key === key);
+    const insight = mockMatchInsights.find((candidate) => candidate.key === key);
+    if (!match || !insight) {
+      throw new MobileApiError(
+        "Maç lig bağlamı bulunamadı.",
+        404,
+        "MATCH_LEAGUE_CONTEXT_NOT_FOUND"
+      );
+    }
+    return matchLeagueContextSchema.parse({
+      key,
+      league: match.league,
+      homeTeam: match.homeTeam,
+      awayTeam: match.awayTeam,
+      source: "LATEST_SUPER_DECISION",
+      capturedAt: "2026-07-29T09:12:00.000Z",
+      homeStandingPosition: insight.homeStandingPosition,
+      awayStandingPosition: insight.awayStandingPosition,
+      homeStandingPoints: insight.homeStandingPosition ? 41 : null,
+      awayStandingPoints: insight.awayStandingPosition ? 28 : null
+    });
   },
 
   async getMatch(key, signal) {

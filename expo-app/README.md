@@ -3,7 +3,8 @@
 ## Pilot runtime status (2026-07-29)
 
 - Public API: `https://api.surklase.com`
-- Active authentication: direct-open pilot key; no IAS/BTP sign-in screen
+- Active authentication: branded pilot entry gate backed by the rotatable
+  read-only pilot key; it asks for no username or password and is not user identity
 - SAP access: server-side `developer` technical user behind fixed read-only
   BFF routes
 - Pilot protection: APK sends a rotatable random key; BFF stores only its
@@ -13,11 +14,22 @@
 - Live data: fixed, read-only Mobile BFF routes over Cloudflare Tunnel
 - Pilot APK: produced by `scripts/build-pilot-apk.ps1` with
   `EXPO_PUBLIC_USE_MOCKS=false` and an embedded release JS bundle
+- Pilot Android notification compatibility: subscribes to the legacy `BTB`
+  topic until the direct user/installation delivery producer is cut over;
+  OAuth, preview and iOS profiles do not use this fallback
+- Pilot degraded BFF mode keeps encrypted device registration available while
+  outbound direct FCM delivery remains explicitly disabled.
 
 The pilot APK is intentionally signed with the current Android debug
 certificate. It is installable and standalone, but it is not the final store
 release. Cordova remains the rollback path until the physical-device,
 least-privilege SAP account, release-signing, support, and rollback gates pass.
+
+On cold start the pilot build displays the same BTB-branded entry surface used
+by OAuth builds, but labels the action as pilot access and explicitly states
+that no user identity is verified. A real user session still requires the
+separate production OIDC provider, BFF OAuth runtime, Android App Link, and
+physical-device authentication cutover.
 
 ## Production authentication boundary (local, not deployed)
 
@@ -63,6 +75,12 @@ deneyimin bağımsız kaynak kodudur.
 - Kodla çizilen BTB maskotu native ve Fiori yüzeylerinde aynı konumu korur;
   sürüklenebilir hızlı menü native sekmeleri, Fiori geri/yenile ve harici
   tarayıcı kontrollerini tek noktada sunar.
+- Bibi ilk kurulumda ekran bazlı kısa rehberi açar; bir ekrandaki önemli
+  noktalara hareket eder, ilerlemeyi cihazda saklar ve `Daha fazla` ekranından
+  kapatılabilir, kaldığı yerden açılabilir veya baştan başlatılabilir.
+- Canlı oran oku güncel oranı seçim oranıyla karşılaştırır; ev/uçak baskı
+  simgeleri yalnızca baskı tarafını anlatır. Lig tablosu SAP’ın yayınladığı
+  iki takımın sıra/puanıyla sınırlıdır; tam lig verisi uydurulmaz.
 - Fiori WebView native başlık/alt araç çubuğu olmadan sistem güvenli alanı
   içinde tam ekran çalışır ve Work Zone renderer API'siyle Launchpad başlığını
   gizli tutar.
@@ -110,7 +128,9 @@ Yalnızca public değerler `EXPO_PUBLIC_*` değişkenlerine yazılır:
   secret biçimli bir environment değeri build'i durdurur.
 - `EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL`: doğrulanmış Fiori fallback URL'si.
 - `EXPO_PUBLIC_SAP_WEB_ALLOWED_HOSTS`: Fiori/Work Zone WebView için virgülle
-  ayrılmış kesin veya `*.` wildcard SAP HTTPS host allowlist'i.
+  ayrılmış kesin veya `*.` wildcard SAP HTTPS host allowlist'i. Varsayılan
+  Launchpad, SAP Accounts ve trial IAS yönlendirmelerini kapsar:
+  `*.hana.ondemand.com,*.accounts.ondemand.com,*.trial-accounts.ondemand.com`.
 - `BTB_GOOGLE_SERVICES_FILE`: build makinesindeki preview Android Firebase
   client dosyasının yolu. Service-account anahtarı değildir ve repoya eklenmez.
 

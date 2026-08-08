@@ -10,6 +10,7 @@ import { MascotActionsProvider } from "@/src/mascot/MascotActions";
 import { AndroidBackGuard } from "@/src/navigation/AndroidBackGuard";
 import { AppProviders } from "@/src/providers/AppProviders";
 import { colors } from "@/src/theme/theme";
+import { TutorialProvider } from "@/src/tutorial/TutorialProvider";
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -86,7 +87,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AppProviders>
         <MascotActionsProvider>
-          <RootNavigator />
+          <TutorialProvider>
+            <RootNavigator />
+          </TutorialProvider>
         </MascotActionsProvider>
       </AppProviders>
     </SafeAreaProvider>

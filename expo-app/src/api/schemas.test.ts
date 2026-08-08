@@ -16,6 +16,7 @@ import {
   dashboardSchema,
   matchDetailSchema,
   matchInsightListSchema,
+  matchLeagueContextSchema,
   matchListSchema,
   periodScoreContextSchema,
   superLogListSchema,
@@ -70,6 +71,14 @@ test("validates bounded half-time score contexts", async () => {
   );
 });
 
+test("validates the bounded two-team league context", async () => {
+  const context = await mockMobileApi.getMatchLeagueContext(mockMatches[0]!.key);
+  assert.doesNotThrow(() => matchLeagueContextSchema.parse(context));
+  assert.throws(() =>
+    matchLeagueContextSchema.parse({ ...context, played: 20 })
+  );
+});
+
 test("keeps the checked-in OpenAPI document parseable and route-complete", async () => {
   const source = await readFile(
     new URL("../../contracts/mobile-api.openapi.yaml", import.meta.url),
@@ -86,6 +95,7 @@ test("keeps the checked-in OpenAPI document parseable and route-complete", async
     [
       "/v1/btb/matches",
       "/v1/btb/matches/{key}",
+      "/v1/btb/matches/{key}/league-context",
       "/v1/btb/matches/{key}/period-score",
       "/v1/btb/matches/{key}/super-logs",
       "/v1/btb/match-insights",

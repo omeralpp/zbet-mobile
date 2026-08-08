@@ -152,7 +152,7 @@ export default function resolveAppConfig({
       "https://188b143btrial.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b38042ce-b8ab-4fea-a892-abf4c58a170f",
     sapWebAllowedHosts:
       process.env.EXPO_PUBLIC_SAP_WEB_ALLOWED_HOSTS ??
-      "*.hana.ondemand.com,*.accounts.ondemand.com"
+      "*.hana.ondemand.com,*.accounts.ondemand.com,*.trial-accounts.ondemand.com"
   }
   };
 }

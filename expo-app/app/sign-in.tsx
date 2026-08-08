@@ -11,11 +11,14 @@ import {
   View
 } from "react-native";
 import { useAuth } from "@/src/auth/AuthProvider";
+import { resolveAuthEntryPresentation } from "@/src/auth/entry-policy";
+import { runtimeConfig } from "@/src/config/runtime";
 import { colors, radii, spacing } from "@/src/theme/theme";
 
 export default function SignInScreen() {
   const auth = useAuth();
   const [submitting, setSubmitting] = useState(false);
+  const presentation = resolveAuthEntryPresentation(runtimeConfig.authMode);
 
   const signIn = async () => {
     setSubmitting(true);
@@ -59,10 +62,11 @@ export default function SignInScreen() {
               />
             </View>
             <View style={styles.securityCopy}>
-              <Text style={styles.securityTitle}>Kurumsal oturum</Text>
+              <Text style={styles.securityTitle}>
+                {presentation.securityTitle}
+              </Text>
               <Text style={styles.securityText}>
-                Parolanız uygulamada tutulmaz. Giriş, OAuth 2.0 Authorization
-                Code ve PKCE akışıyla tamamlanır.
+                {presentation.securityText}
               </Text>
             </View>
           </View>
@@ -93,7 +97,9 @@ export default function SignInScreen() {
             ) : (
               <>
                 <Text style={styles.buttonText}>
-                  {unavailable ? "Bağlantı yapılandırılmalı" : "Güvenli giriş yap"}
+                  {unavailable
+                    ? "Bağlantı yapılandırılmalı"
+                    : presentation.buttonText}
                 </Text>
                 <MaterialCommunityIcons
                   color={colors.background}
@@ -105,8 +111,7 @@ export default function SignInScreen() {
           </Pressable>
 
           <Text style={styles.footer}>
-            İlk sürüm salt okunur çalışır. Livescore ve program yenileme gibi
-            değişiklik yapan işlemler doğrulanmış Fiori ekranında açılır.
+            {presentation.footerText}
           </Text>
         </View>
       </SafeAreaView>

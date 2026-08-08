@@ -9,6 +9,7 @@ import {
   matchDetailSchema,
   matchInsightListSchema,
   matchInsightSchema,
+  matchLeagueContextSchema,
   matchListSchema,
   periodScoreContextSchema,
   superLogDetailSchema,
@@ -114,6 +115,13 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
       request(
         `/v1/btb/match-insights/${encodeURIComponent(key)}`,
         matchInsightSchema,
+        {},
+        signal
+      ),
+    getMatchLeagueContext: (key, signal) =>
+      request(
+        `/v1/btb/matches/${encodeURIComponent(key)}/league-context`,
+        matchLeagueContextSchema,
         {},
         signal
       ),

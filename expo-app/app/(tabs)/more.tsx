@@ -19,6 +19,7 @@ import {
   unregisterPushDevice
 } from "@/src/notifications/register";
 import { colors, radii, spacing } from "@/src/theme/theme";
+import { useTutorial } from "@/src/tutorial/TutorialProvider";
 import {
   getWidgetStatus,
   seedWidgetPreview
@@ -63,6 +64,7 @@ export default function MoreScreen() {
   const [updatingWidgets, setUpdatingWidgets] = useState(false);
   const auth = useAuth();
   const router = useRouter();
+  const tutorial = useTutorial();
 
   const registerNotifications = async () => {
     setRegistering(true);
@@ -146,6 +148,28 @@ export default function MoreScreen() {
 
       <Text style={styles.sectionTitle}>Cihaz</Text>
       <View style={styles.group}>
+        <SettingsRow
+          detail={
+            tutorial.enabled
+              ? "Ekranlar açıldıkça kısa anlatımları gösterir"
+              : "İlerleme saklandı; istediğinde kaldığın yerden aç"
+          }
+          icon="school-outline"
+          onPress={() => tutorial.setEnabled(!tutorial.enabled)}
+          title={`Bibi rehberi ${tutorial.enabled ? "açık" : "kapalı"}`}
+        />
+        <SettingsRow
+          detail="Tamamlanan adımları temizler ve rehberi yeniden açar"
+          icon="restart"
+          onPress={() => {
+            tutorial.restart();
+            Alert.alert(
+              "Bibi rehberi baştan başladı",
+              "Ekranları açtıkça kısa anlatımlar yeniden gösterilecek."
+            );
+          }}
+          title="Bibi rehberini baştan başlat"
+        />
         <SettingsRow
           detail={
             registering

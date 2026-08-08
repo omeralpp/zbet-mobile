@@ -3,6 +3,8 @@ import { usePathname, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { MatchInsight, MatchSummary } from "@/src/api/schemas";
 import { colors, radii, shadows, spacing } from "@/src/theme/theme";
+import { deriveLiveRateTrend } from "@/src/utils/live-card-indicators";
+import { derivePressureBalance } from "@/src/utils/pressure-balance";
 import {
   formatElapsed,
   formatCurrentMarketRate,
@@ -60,6 +62,35 @@ export function MatchCard({
     match.selectedOdd,
     "canlı oran"
   );
+  const rateTrend = deriveLiveRateTrend(match.liveRate, match.currentRate);
+  const rateTrendIcon =
+    rateTrend === "UP"
+      ? "trending-up"
+      : rateTrend === "DOWN"
+        ? "trending-down"
+        : "minus";
+  const rateTrendColor =
+    rateTrend === "UP"
+      ? colors.green
+      : rateTrend === "DOWN"
+        ? colors.red
+        : colors.textSubtle;
+  const pressureBalance = derivePressureBalance(
+    match.totalPressure,
+    match.pressureDiff
+  );
+  const pressureIcon =
+    pressureBalance.direction === "HOME"
+      ? "home-variant-outline"
+      : pressureBalance.direction === "AWAY"
+        ? "airplane"
+        : "scale-balance";
+  const pressureColor =
+    pressureBalance.direction === "HOME"
+      ? colors.blue
+      : pressureBalance.direction === "AWAY"
+        ? colors.green
+        : colors.textSubtle;
 
   return (
     <Pressable
@@ -119,14 +150,47 @@ export function MatchCard({
             {match.selectedOdd || "Aday bekleniyor"}
           </Text>
         </View>
-        <View style={styles.rateBlock}>
-          <Text style={styles.rate}>{currentMarket.value}</Text>
+        <View
+          accessibilityLabel={`Canlı oran ${currentMarket.value}, ${
+            rateTrend === "UP"
+              ? "seçim oranından yüksek"
+              : rateTrend === "DOWN"
+                ? "seçim oranından düşük"
+                : "değişim yok veya oran kapalı"
+          }`}
+          style={styles.rateBlock}
+        >
+          <View style={styles.rateHeadline}>
+            {rateTrend !== "UNAVAILABLE" ? (
+              <MaterialCommunityIcons
+                color={rateTrendColor}
+                name={rateTrendIcon}
+                size={17}
+              />
+            ) : null}
+            <Text style={[styles.rate, { color: rateTrendColor }]}>
+              {currentMarket.value}
+            </Text>
+          </View>
           <Text style={styles.rateLabel}>{currentMarket.label}</Text>
         </View>
-        <View style={styles.pressureBlock}>
+        <View
+          accessibilityLabel={
+            pressureBalance.hasData
+              ? `Baskı farkı ${formatSigned(match.pressureDiff, 1)}, ${
+                  pressureBalance.direction === "HOME"
+                    ? "ev sahibi baskıda"
+                    : pressureBalance.direction === "AWAY"
+                      ? "deplasman baskıda"
+                      : "dengeli"
+                }`
+              : "Baskı verisi bekleniyor"
+          }
+          style={styles.pressureBlock}
+        >
           <MaterialCommunityIcons
-            color={match.pressureDiff >= 0 ? colors.green : colors.red}
-            name={match.pressureDiff >= 0 ? "trending-up" : "trending-down"}
+            color={pressureColor}
+            name={pressureIcon}
             size={18}
           />
           <View>
@@ -134,11 +198,13 @@ export function MatchCard({
               style={[
                 styles.pressure,
                 {
-                  color: match.pressureDiff >= 0 ? colors.green : colors.red
+                  color: pressureColor
                 }
               ]}
             >
-              {formatSigned(match.pressureDiff, 1)}
+              {pressureBalance.hasData
+                ? formatSigned(match.pressureDiff, 1)
+                : "—"}
             </Text>
             <Text style={styles.pressureLabel}>baskı farkı</Text>
           </View>
@@ -270,6 +336,11 @@ const styles = StyleSheet.create({
   rateBlock: {
     alignItems: "flex-end",
     marginLeft: "auto"
+  },
+  rateHeadline: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 3
   },
   rate: {
     color: colors.text,

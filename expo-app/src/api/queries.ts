@@ -6,6 +6,8 @@ export const queryKeys = {
   matches: ["matches"] as const,
   matchInsights: ["matchInsights"] as const,
   matchInsight: (key: string) => ["matchInsights", key] as const,
+  matchLeagueContext: (key: string) =>
+    ["matches", key, "leagueContext"] as const,
   match: (key: string) => ["matches", key] as const,
   matchPeriodScore: (key: string) => ["matches", key, "periodScore"] as const,
   matchSuperLogs: (key: string) => ["matches", key, "superLogs"] as const,
@@ -44,6 +46,16 @@ export function matchInsightQuery(key: string) {
     queryKey: queryKeys.matchInsight(key),
     queryFn: ({ signal }) => mobileApi.getMatchInsight(key, signal),
     staleTime: 15_000,
+    enabled: Boolean(key),
+    retry: 1
+  });
+}
+
+export function matchLeagueContextQuery(key: string) {
+  return queryOptions({
+    queryKey: queryKeys.matchLeagueContext(key),
+    queryFn: ({ signal }) => mobileApi.getMatchLeagueContext(key, signal),
+    staleTime: 60_000,
     enabled: Boolean(key),
     retry: 1
   });

@@ -65,6 +65,20 @@ paths:
                 $ref: "#/components/schemas/PeriodScoreContext"
         default:
           $ref: "#/components/responses/Error"
+  /v1/btb/matches/{key}/league-context:
+    get:
+      operationId: getMatchLeagueContext
+      parameters:
+        - $ref: "#/components/parameters/Key"
+      responses:
+        "200":
+          description: Current two-team league position and points context.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchLeagueContext"
+        default:
+          $ref: "#/components/responses/Error"
   /v1/btb/matches/{key}/super-logs:
     get:
       operationId: getMatchSuperLogs
@@ -440,6 +454,33 @@ components:
           maxItems: 50
           items:
             $ref: "#/components/schemas/MatchMarketRate"
+    MatchLeagueContext:
+      type: object
+      additionalProperties: false
+      required:
+        - key
+        - league
+        - homeTeam
+        - awayTeam
+        - source
+        - capturedAt
+        - homeStandingPosition
+        - awayStandingPosition
+        - homeStandingPoints
+        - awayStandingPoints
+      properties:
+        key: { type: string, minLength: 1 }
+        league: { type: string, minLength: 1 }
+        homeTeam: { type: string, minLength: 1 }
+        awayTeam: { type: string, minLength: 1 }
+        source:
+          type: string
+          enum: [LATEST_SUPER_DECISION, UNAVAILABLE]
+        capturedAt: { type: [string, "null"], format: date-time }
+        homeStandingPosition: { type: [integer, "null"], minimum: 1 }
+        awayStandingPosition: { type: [integer, "null"], minimum: 1 }
+        homeStandingPoints: { type: [integer, "null"], minimum: 0 }
+        awayStandingPoints: { type: [integer, "null"], minimum: 0 }
     PeriodScoreContext:
       type: object
       additionalProperties: false

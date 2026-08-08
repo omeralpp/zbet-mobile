@@ -2,6 +2,7 @@ import type {
   Dashboard,
   MatchDetail,
   MatchInsight,
+  MatchLeagueContext,
   MatchSummary,
   PeriodScoreContext,
   SuperLog,
@@ -15,6 +16,10 @@ export interface MobileApi {
   getMatches(signal?: AbortSignal): Promise<MatchSummary[]>;
   getMatchInsights(signal?: AbortSignal): Promise<MatchInsight[]>;
   getMatchInsight(key: string, signal?: AbortSignal): Promise<MatchInsight>;
+  getMatchLeagueContext(
+    key: string,
+    signal?: AbortSignal
+  ): Promise<MatchLeagueContext>;
   getMatch(key: string, signal?: AbortSignal): Promise<MatchDetail>;
   getMatchPeriodScore(
     key: string,
