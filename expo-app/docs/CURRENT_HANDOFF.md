@@ -6,8 +6,8 @@ Son güncelleme: 2026-08-09
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `OBSERVATION` — 2026-08-09 dördüncü cutover batch’i yerel, doğrulanmış ve
-commit edilmemiş checkpoint’te kapandı.
+Mod: `OBSERVATION` — 2026-08-09 dördüncü cutover batch’i doğrulandı, üç ilgili
+repoda commit/push edildi ve onaylı notification pilot dış kapıları açıldı.
 
 Yeni task önce yalnız `C:\dev\btb-cdoex\AGENTS.md` ve bu dosyayı tamamen okur.
 Observation tespitleri `docs/OBSERVATION_LOG.md` içindedir. Yeni kod batch’i
@@ -27,61 +27,64 @@ açık onay ister.
 - Super ve maç detayında ortak kompakt `Puan Durumu` vardır. Tam lig kolonları SAP
   servisinde bulunmadığı için uydurulmadı. Maç ekranı yalnız son Super kararının
   sıra/puan snapshot’ını açık kaynak etiketiyle gösterir.
-- Notification degraded mode artık dış FCM teslimini kapatırken şifreli cihaz
-  kaydını açık bırakır; aktif local/public runtime’da cihaz deposu configured’dır.
+- Notification runtime şifreli cihaz kaydı, kalıcı ledger ve Firebase teslimiyle
+  aktif pilot modundadır; local/public health iki servisi de `configured` gösterir.
 - Standalone producer, mevcut key header’ına ek olarak SAP SM59 için fixed-user
   HTTPS Basic adaptörüyle hazırlandı. ABAP yerel kaynağı sabit eski BTP URL’si
   yerine destination + `/v1/notifications` + tür/idempotency sözleşmesini kullanır.
-  Aktif teslim ve canlı SAP aktivasyonu hâlâ bilinçli kapalıdır.
+  SAP DEV kaynak aktivasyonu, SM59 HTTPS destination ve gerçek FCM teslimi geçti.
 
-## SAP kanıt sınırı
+## SAP kanıtı
 
 - `sap-adt` MCP ile yayınlı `ZBET_UI_SUPER_LOG_SB` / OData V4 / `0001` servis
   binding’i okundu. Kullanılabilir MCP yüzeyi ABAP/CDS kaynak okumuyordu.
-- Canlı `ZBET_CL_MAIN` nesnesi SAP ADT ATC yüzeyinde görüldü; MCP kaynak-read
-  sağlamadığı için notification endpoint satırında canlı/local parity iddia
-  edilmedi. Yeni ABAP yalnız yerel kaynakta hazırlandı.
+- ABAP preflight geçici `codex-check/*` dalıyla SAP syntax/activation/ATC kapısından
+  geçti. Ardından doğrudan read-only ADT kaynak GET’iyle canlı `ZBET_CL_MAIN`
+  içinde `ZBET_NOTIFICATION_API` ve `/v1/notifications`, `ZBET_P_TOTO_AUTO`
+  içinde yeni producer çağrısı doğrulandı; eski sabit notification URL’si yoktur.
 - Alan kanıtı ayrıca doğrudan read-only OData metadata ile doğrulandı:
   current match entity’sinde standings yok; `zbet_cds_super_last` yalnız iki
   takımın sıra/puan snapshot’ını, Super V4 ise final skor alanlarını yayınlıyor.
-- SAP yazma, aktivasyon, transport veya model değişikliği yapılmadı.
+- SM59 `ZBET_NOTIFICATION_API`, `api.surklase.com:443`, SSL Client Standard ve
+  SAP’te saklanan Basic kullanıcıyla tanımlandı. Let’s Encrypt/ISRG CA zinciri
+  PSE’ye eklendi; connection test TLS handshake sonrası HTTP `404 Not Found`
+  yanıtını `119 ms` içinde aldı. Boş root path için 404 beklenen ulaşılabilirlik
+  kanıtıdır. Betting model veya DDIC/CDS davranışı değiştirilmedi.
 
 ## Aktif runtime
 
 ```text
 BTB Mobile Next v11 (aktif cihaz paketi henüz değiştirilmedi)
   -> https://api.surklase.com
-  -> 127.0.0.1:4004 Mobile BFF: UP, PID 21460
+  -> 127.0.0.1:4004 Mobile BFF: UP, PID 6900
   -> local/public health: HTTP 200
   -> local/public deviceRegistration: configured
-  -> local/public notificationService: unconfigured
+  -> local/public notificationService: configured
   -> BTB Mobile BFF startup task: Ready, last result 0
-  -> notification delivery: explicitly disabled
+  -> notification delivery: enabled (pilot)
 ```
 
-Yeni BFF device-registration davranışı, kullanıcının eski süreçte gördüğü
-`DEVICE_STORE_NOT_CONFIGURED` hatasından sonra doğrulanmış Windows göreviyle
-02:35’te aktif 4004 sürecine alındı. BTP deploy yapılmadı; direct FCM teslimi
-bilinçli kapalı kaldı. Windows task disk üzerindeki commit edilmemiş scripti
-çağırır; sonraki logon/reboot aynı degraded-mode davranışını kullanır.
+Raw producer key yalnız Windows Credential Manager ve SAP SM59 secret alanındadır;
+runtime kullanıcı ortamında yalnız SHA-256 digest bulunur. Windows başlangıç görevi
+`DisableNotificationDelivery` olmadan yeniden kaydedildi. Aynı producer üzerinden
+tek kontrollü DEV isteği `matched=2`, `delivered=2`, `failed=0`, `removed=0`
+sonucuyla gerçek FCM teslimini kanıtladı. BTP deploy yapılmadı; public pilot route
+mevcut Cloudflare origin zincirini kullanır.
 
 ## Repo checkpoint
 
 ```text
 zbet-mobile  agent/platform-independence-phase1
-             HEAD fd2cede8706e7bf8ea02117666ba5957e30de054
-             auth/Fiori/topic + tutorial/league/final-score/live-card/docs değişiklikleri
-             commit/push yok
+             HEAD 26c40f8fd1329c72db645af6c8854afced316fb6
+             origin/agent/platform-independence-phase1 üzerine push edildi
 
 zbet-cap     agent/platform-independence-phase1
-             HEAD f32d95806180053da9b814a0b32007d019c2e18d
-             startup/degraded + league-context + producer Basic adapter/docs/tests
-             commit/push/deploy yok
+             HEAD a8f9e50de948967607505ac0d4384012c93dcd2e
+             origin/agent/platform-independence-phase1 üzerine push edildi; deploy yok
 
-zbet-abap    main
-             HEAD 9fc534cc3e3dd00dc532d00ce1d0c43b7f5f3067
-             notification destination/contract + Toto result + README değişiklikleri
-             commit/push/SAP aktivasyonu yok
+zbet-abap    agent/mobile-notification-producer
+             HEAD 43cd4a77abf5c804dc265d53b9df221b46d5a322
+             origin/agent/mobile-notification-producer üzerine push edildi
 
 btb-codex    main 9648e1881add18791bdf4f0e833e5cda005301c2
              önceden var olan README.md ve MCP_SETUP.md kullanıcı değişiklikleri korundu
@@ -94,12 +97,12 @@ btb-codex    main 9648e1881add18791bdf4f0e833e5cda005301c2
 - CAP/BFF `65/65` test, aktif v24 runtime ile tekrar `65/65` ve production CDS
   build geçti.
 - ABAP değişen iki kaynak lint `0`; full local check ve SAP object name check geçti.
-- SAP preflight geçici commit/push yaptığı için ayrı git onayı olmadan çalıştırılmadı;
-  canlı SAP syntax/ATC/aktivasyon kapısı açıktır.
+- SAP preflight syntax/activation/ATC geçti; canlı ADT kaynak marker parity’si
+  ayrıca okundu. SM59 SSL bağlantı testi `404 Not Found / 119 ms` ile geçti.
 - İzole pilot/degraded smoke: health, authenticated match list ve league-context
-  HTTP 200; `deviceRegistration=configured`, `notificationService=unconfigured`.
-- Aktif 4004 kontrollü restart sonrası local/public health HTTP 200 ve
-  `deviceRegistration=configured`; fiziksel cihazın yeniden kayıt kanıtı bekleniyor.
+  HTTP 200; `deviceRegistration=configured`, `notificationService=configured`.
+- Aktif 4004 kontrollü restart sonrası local/public health HTTP 200; iki kayıtlı
+  cihaza gerçek FCM denemesi `2/2` teslim edildi.
 - Secret/private-key marker taraması `0`; APK’da ham Firebase/server secret yok.
 - Bağlı Android cihaz yoktu; fiziksel install/launch testi yapılmadı.
 - Dependency audit: CAP `0`; Mobile `0 critical`, `15 high`, `8 moderate`.
@@ -123,21 +126,16 @@ ve kurtarılabilir. v12 dağıtılmadı.
 
 ## Exact next steps
 
-1. Telefonda uygulama tamamen kapatılıp açılır; bildirim izni/kayıt yeniden
-   denenir ve `DEVICE_STORE_NOT_CONFIGURED` hatasının dönmediği doğrulanır.
+1. Normal bir SAP Super/Toto bildirimi oluştuğunda SAP producer POST’u, mobil
+   görünüm, deep-link ve idempotency ledger sonucu observation’a kaydedilir.
 2. Ayrı APK dağıtım onayıyla v12 telefona kurulur; Bibi rehberi, lig/final skor,
    oran/baskı ikonları, Fiori login, widget ve notification gözlenir.
-3. Ayrı runtime onayıyla güçlü producer key oluşturulur; yalnız SHA-256 digest
-   kullanıcı runtime’ına konur, Firebase/ledger ayarları doğrulanır ve startup
-   task `DisableNotificationDelivery` olmadan kontrollü yenilenir.
-4. Ayrı SAP onayıyla SM59 `ZBET_NOTIFICATION_API` HTTPS destination’ı fixed user
-   `btb-notifier` ve güvenli parolayla tanımlanır; `ZBET_CL_MAIN`, ardından
-   `ZBET_P_TOTO_AUTO` syntax/ATC/aktivasyon/transport kapısından geçirilir.
-5. Kayıtlı fiziksel cihazda tek kontrollü DEV notification, widget ve deep-link
-   kanıtı alınır.
-6. Mobile transitive audit bulguları Expo’nun uyumlu patch hattı çıktığında ayrı
+3. Gerçek Windows reboot sonrasında başlangıç görevinin aynı configured pilot
+   profilini otomatik kaldırdığı doğrulanır.
+4. Mobile transitive audit bulguları Expo’nun uyumlu patch hattı çıktığında ayrı
    dependency bakım batch’inde güncellenir; zorlayıcı downgrade yapılmaz.
-7. Üç repo için stage/commit/push yalnız ayrı açık onayla yapılır. Deploy gerekiyorsa
-   pushed exact SHA ile ayrıca `DEPLOY-DEV <sha>` onayı alınır; production hedeflenmez.
+5. BTP deploy gerekiyorsa CAP pushed exact SHA’sı için ayrıca
+   `DEPLOY-DEV a8f9e50de948967607505ac0d4384012c93dcd2e` onayı alınır;
+   production hedeflenmez.
 
 Arşiv: `docs/observation_archive/cutover_2026-08-09-04.md`.
