@@ -75,7 +75,7 @@ mevcut Cloudflare origin zincirini kullanır.
 
 ```text
 zbet-mobile  agent/platform-independence-phase1
-             HEAD 26c40f8fd1329c72db645af6c8854afced316fb6
+             implementation commit 26c40f8fd1329c72db645af6c8854afced316fb6
              origin/agent/platform-independence-phase1 üzerine push edildi
 
 zbet-cap     agent/platform-independence-phase1
