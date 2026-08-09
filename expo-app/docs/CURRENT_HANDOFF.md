@@ -32,7 +32,8 @@ açık onay ister.
 - Standalone producer, mevcut key header’ına ek olarak SAP SM59 için fixed-user
   HTTPS Basic adaptörüyle hazırlandı. ABAP yerel kaynağı sabit eski BTP URL’si
   yerine destination + `/v1/notifications` + tür/idempotency sözleşmesini kullanır.
-  SAP DEV kaynak aktivasyonu, SM59 HTTPS destination ve gerçek FCM teslimi geçti.
+  SAP DEV kaynak aktivasyonu, SM59 HTTPS destination ve gerçek FCM teslimi geçti;
+  kullanıcı son gerçek notification’ın telefonda çalıştığını doğruladı.
 
 ## SAP kanıtı
 
@@ -69,7 +70,9 @@ runtime kullanıcı ortamında yalnız SHA-256 digest bulunur. Windows başlang�
 `DisableNotificationDelivery` olmadan yeniden kaydedildi. Aynı producer üzerinden
 tek kontrollü DEV isteği `matched=2`, `delivered=2`, `failed=0`, `removed=0`
 sonucuyla gerçek FCM teslimini kanıtladı. BTP deploy yapılmadı; public pilot route
-mevcut Cloudflare origin zincirini kullanır.
+mevcut Cloudflare origin zincirini kullanır. SM59 tamamlandıktan sonraki gerçek
+notification’ın çalıştığı kullanıcı tarafından ayrıca doğrulandı; notification
+teslim zincirinde açık blocker kalmadı.
 
 ## Repo checkpoint
 
@@ -124,18 +127,17 @@ Signing : v2; pilot debug certificate SHA-256 fac61745dc0903786fb9ede62a962b399f
 Artifact klasöründe yalnız v12 final vardır. v11 Geri Dönüşüm Kutusu’na taşındı
 ve kurtarılabilir. v12 dağıtılmadı.
 
-## Exact next steps
+## Exact next steps (blocking değil)
 
-1. Normal bir SAP Super/Toto bildirimi oluştuğunda SAP producer POST’u, mobil
-   görünüm, deep-link ve idempotency ledger sonucu observation’a kaydedilir.
-2. Ayrı APK dağıtım onayıyla v12 telefona kurulur; Bibi rehberi, lig/final skor,
+1. Ayrı APK dağıtım onayıyla v12 telefona kurulur; Bibi rehberi, lig/final skor,
    oran/baskı ikonları, Fiori login, widget ve notification gözlenir.
-3. Gerçek Windows reboot sonrasında başlangıç görevinin aynı configured pilot
+2. Gerçek Windows reboot sonrasında başlangıç görevinin aynı configured pilot
    profilini otomatik kaldırdığı doğrulanır.
-4. Mobile transitive audit bulguları Expo’nun uyumlu patch hattı çıktığında ayrı
+3. Mobile transitive audit bulguları Expo’nun uyumlu patch hattı çıktığında ayrı
    dependency bakım batch’inde güncellenir; zorlayıcı downgrade yapılmaz.
-5. BTP deploy gerekiyorsa CAP pushed exact SHA’sı için ayrıca
+4. BTP deploy gerekiyorsa CAP pushed exact SHA’sı için ayrıca
    `DEPLOY-DEV a8f9e50de948967607505ac0d4384012c93dcd2e` onayı alınır;
    production hedeflenmez.
 
-Arşiv: `docs/observation_archive/cutover_2026-08-09-04.md`.
+Son notification kapanışı:
+`docs/observation_archive/cutover_2026-08-09-05.md`.
