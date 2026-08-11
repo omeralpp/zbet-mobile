@@ -40,13 +40,20 @@ function metric(value: string, label: string, color?: string) {
 export default function SuperLogDetailScreen() {
   const params = useLocalSearchParams<{ key?: string | string[] }>();
   const router = useRouter();
+  const handleEdgeSwipeBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/");
+    }
+  };
   const key = firstParam(params.key);
   const query = useQuery(superLogQuery(key));
   const periodScoreQuery = useQuery(superLogPeriodScoreQuery(key));
 
   if (query.isLoading) {
     return (
-      <Screen>
+      <Screen edgeSwipeBack onEdgeSwipeBack={handleEdgeSwipeBack}>
         <LoadingState label="Super kararı hazırlanıyor" />
       </Screen>
     );
@@ -54,7 +61,7 @@ export default function SuperLogDetailScreen() {
 
   if (query.isError || !query.data) {
     return (
-      <Screen>
+      <Screen edgeSwipeBack onEdgeSwipeBack={handleEdgeSwipeBack}>
         <ErrorState
           message={
             query.error instanceof Error
@@ -84,6 +91,8 @@ export default function SuperLogDetailScreen() {
 
   return (
     <Screen
+      edgeSwipeBack
+      onEdgeSwipeBack={handleEdgeSwipeBack}
       contentStyle={styles.screen}
       scrollProps={{
         alwaysBounceVertical: true,
@@ -290,11 +299,11 @@ const styles = StyleSheet.create({
     borderTopColor: colors.borderSoft
   },
   selection: { color: colors.text, fontSize: 15, fontWeight: "900", marginTop: 4 },
-  sectionTitle: { color: colors.text, fontSize: 18, fontWeight: "900", marginTop: spacing.xxl, marginBottom: spacing.md },
+  sectionTitle: { color: colors.text, fontSize: 18, lineHeight: 24, fontWeight: "900", marginTop: spacing.xxl, marginBottom: spacing.md },
   card: { padding: spacing.lg, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.borderSoft, backgroundColor: colors.backgroundElevated },
   reason: { color: colors.green, fontSize: 14, fontWeight: "900" },
-  metricGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.lg, marginTop: spacing.lg },
-  metric: { minWidth: 86, flexGrow: 1 },
+  metricGrid: { flexDirection: "row", flexWrap: "wrap", columnGap: spacing.md, rowGap: spacing.lg, marginTop: spacing.lg },
+  metric: { flexBasis: "30%", flexGrow: 1, minWidth: 0 },
   metricValue: { color: colors.text, fontSize: 15, fontWeight: "900" },
   metricLabel: { color: colors.textSubtle, fontSize: 9, marginTop: 2 },
   comment: { color: colors.textMuted, fontSize: 11, lineHeight: 17, marginTop: spacing.lg, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.borderSoft },

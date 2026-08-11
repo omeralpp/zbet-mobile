@@ -443,6 +443,24 @@ export function BtbMascotOverlay() {
       >
         {tutorial.activeTip ? (
           <View
+            pointerEvents="none"
+            style={[
+              styles.tutorialHighlight,
+              {
+                width: tutorial.activeTip.highlight?.width ?? 240,
+                height: tutorial.activeTip.highlight?.height ?? 96,
+                left:
+                  mascotSize / 2 -
+                  (tutorial.activeTip.highlight?.width ?? 240) / 2,
+                top:
+                  mascotSize / 2 -
+                  (tutorial.activeTip.highlight?.height ?? 96) / 2
+              }
+            ]}
+          />
+        ) : null}
+        {tutorial.activeTip ? (
+          <View
             accessibilityLiveRegion="polite"
             accessibilityRole="summary"
             style={[
@@ -631,6 +649,13 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(244, 248, 252, 0.98)",
     padding: 14,
     ...shadows.card
+  },
+  tutorialHighlight: {
+    position: "absolute",
+    borderRadius: radii.lg,
+    borderWidth: 2,
+    borderColor: colors.green,
+    backgroundColor: "rgba(98, 230, 109, 0.08)"
   },
   tutorialDown: { top: mascotSize + 8 },
   tutorialUp: { bottom: mascotSize + 8 },

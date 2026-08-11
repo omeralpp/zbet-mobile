@@ -1,9 +1,12 @@
-import type { PropsWithChildren, ReactNode } from "react";
+import { useMemo, useState, type PropsWithChildren, type ReactNode } from "react";
 import {
+  Animated,
+  PanResponder,
   ScrollView,
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
   type ScrollViewProps,
   type StyleProp,
   type ViewStyle
@@ -16,6 +19,8 @@ type ScreenProps = PropsWithChildren<{
   eyebrow?: string;
   action?: ReactNode;
   scroll?: boolean;
+  edgeSwipeBack?: boolean;
+  onEdgeSwipeBack?: () => void;
   contentStyle?: StyleProp<ViewStyle>;
   scrollProps?: Omit<ScrollViewProps, "contentContainerStyle">;
 }>;
@@ -26,9 +31,52 @@ export function Screen({
   eyebrow,
   action,
   scroll = true,
+  edgeSwipeBack = false,
+  onEdgeSwipeBack,
   contentStyle,
   scrollProps
 }: ScreenProps) {
+  const { width } = useWindowDimensions();
+  const [swipeX] = useState(() => new Animated.Value(0));
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponderCapture: (_, gesture) =>
+          edgeSwipeBack &&
+          gesture.x0 <= 32 &&
+          gesture.dx > 8 &&
+          Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.2,
+        onPanResponderMove: (_, gesture) => {
+          swipeX.setValue(Math.max(0, Math.min(width, gesture.dx)));
+        },
+        onPanResponderRelease: (_, gesture) => {
+          const shouldGoBack = gesture.dx > 76 || gesture.vx > 0.65;
+          if (shouldGoBack && onEdgeSwipeBack) {
+            Animated.timing(swipeX, {
+              toValue: width,
+              duration: 160,
+              useNativeDriver: true
+            }).start(() => onEdgeSwipeBack());
+            return;
+          }
+          Animated.spring(swipeX, {
+            toValue: 0,
+            damping: 18,
+            stiffness: 220,
+            useNativeDriver: true
+          }).start();
+        },
+        onPanResponderTerminate: () => {
+          Animated.spring(swipeX, {
+            toValue: 0,
+            damping: 18,
+            stiffness: 220,
+            useNativeDriver: true
+          }).start();
+        }
+      }),
+    [edgeSwipeBack, onEdgeSwipeBack, swipeX, width]
+  );
   const header =
     title || eyebrow || action ? (
       <View style={styles.header}>
@@ -49,18 +97,23 @@ export function Screen({
 
   return (
     <SafeAreaView edges={["top"]} style={styles.safeArea}>
-      {scroll ? (
-        <ScrollView
-          contentContainerStyle={[styles.content, contentStyle]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          {...scrollProps}
-        >
-          {content}
-        </ScrollView>
-      ) : (
-        <View style={[styles.content, styles.flex, contentStyle]}>{content}</View>
-      )}
+      <Animated.View
+        {...(edgeSwipeBack ? panResponder.panHandlers : {})}
+        style={[styles.gestureRoot, edgeSwipeBack && { transform: [{ translateX: swipeX }] }]}
+      >
+        {scroll ? (
+          <ScrollView
+            contentContainerStyle={[styles.content, contentStyle]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            {...scrollProps}
+          >
+            {content}
+          </ScrollView>
+        ) : (
+          <View style={[styles.content, styles.flex, contentStyle]}>{content}</View>
+        )}
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -71,6 +124,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background
   },
   flex: {
+    flex: 1
+  },
+  gestureRoot: {
     flex: 1
   },
   content: {

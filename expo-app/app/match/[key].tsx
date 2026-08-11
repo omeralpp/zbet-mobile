@@ -186,6 +186,13 @@ export default function MatchDetailScreen() {
   const params = useLocalSearchParams<{ key?: string | string[] }>();
   const key = firstParam(params.key);
   const router = useRouter();
+  const handleEdgeSwipeBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/");
+    }
+  };
   const [showDecision, setShowDecision] = useState(false);
   const query = useQuery(matchQuery(key));
   const insightQuery = useQuery(matchInsightQuery(key));
@@ -199,7 +206,7 @@ export default function MatchDetailScreen() {
 
   if (query.isLoading) {
     return (
-      <Screen>
+      <Screen edgeSwipeBack onEdgeSwipeBack={handleEdgeSwipeBack}>
         <LoadingState label="Maç detayı hazırlanıyor" />
       </Screen>
     );
@@ -207,7 +214,7 @@ export default function MatchDetailScreen() {
 
   if (query.isError || !query.data) {
     return (
-      <Screen>
+      <Screen edgeSwipeBack onEdgeSwipeBack={handleEdgeSwipeBack}>
         <ErrorState
           message={
             query.error instanceof Error
@@ -230,6 +237,8 @@ export default function MatchDetailScreen() {
 
   return (
     <Screen
+      edgeSwipeBack
+      onEdgeSwipeBack={handleEdgeSwipeBack}
       contentStyle={styles.screen}
       scrollProps={{
         alwaysBounceVertical: true,
@@ -768,6 +777,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.text,
     fontSize: 18,
+    lineHeight: 24,
     fontWeight: "900",
     marginTop: spacing.xxl,
     marginBottom: spacing.md

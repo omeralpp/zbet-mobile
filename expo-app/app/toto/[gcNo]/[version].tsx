@@ -67,11 +67,18 @@ export default function TotoProgramDetailScreen() {
   const router = useRouter();
   const gcNo = numberParam(params.gcNo);
   const version = numberParam(params.version);
+  const handleEdgeSwipeBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/");
+    }
+  };
   const query = useQuery(totoProgramQuery(gcNo, version));
 
   if (query.isLoading) {
     return (
-      <Screen>
+      <Screen edgeSwipeBack onEdgeSwipeBack={handleEdgeSwipeBack}>
         <LoadingState label="Toto programı hazırlanıyor" />
       </Screen>
     );
@@ -79,7 +86,7 @@ export default function TotoProgramDetailScreen() {
 
   if (query.isError || !query.data) {
     return (
-      <Screen>
+      <Screen edgeSwipeBack onEdgeSwipeBack={handleEdgeSwipeBack}>
         <ErrorState
           message={
             query.error instanceof Error
@@ -98,6 +105,8 @@ export default function TotoProgramDetailScreen() {
 
   return (
     <Screen
+      edgeSwipeBack
+      onEdgeSwipeBack={handleEdgeSwipeBack}
       contentStyle={styles.screen}
       scrollProps={{
         alwaysBounceVertical: true,
@@ -506,6 +515,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.text,
     fontSize: 18,
+    lineHeight: 24,
     fontWeight: "900",
     marginTop: spacing.xxl,
     marginBottom: spacing.md

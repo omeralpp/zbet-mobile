@@ -8,6 +8,7 @@ export type TutorialTip = {
   route: string;
   match: "EXACT" | "PREFIX";
   target: { x: number; y: number };
+  highlight?: { width: number; height: number };
 };
 
 export type TutorialState = {
@@ -23,7 +24,8 @@ export const tutorialTips: readonly TutorialTip[] = [
     body: "Canlı maç, Super ve Toto durumunu tek bakışta bu ekrandan izleyebilirsin.",
     route: "/",
     match: "EXACT",
-    target: { x: 0.82, y: 0.14 }
+    target: { x: 0.82, y: 0.14 },
+    highlight: { width: 300, height: 190 }
   },
   {
     id: "live-rate",
@@ -31,7 +33,26 @@ export const tutorialTips: readonly TutorialTip[] = [
     body: "Ok, güncel oranın seçim anındaki orana göre yönünü gösterir.",
     route: "/live",
     match: "EXACT",
-    target: { x: 0.58, y: 0.48 }
+    target: { x: 0.58, y: 0.48 },
+    highlight: { width: 300, height: 120 }
+  },
+  {
+    id: "home-live-summary",
+    title: "Takipteki canlı maçlar",
+    body: "Bu kart, seçtiğin canlı maçların skor, oran ve baskı özetini gösterir; Tümünü gör ile Canlı ekranını açabilirsin.",
+    route: "/",
+    match: "EXACT",
+    target: { x: 0.62, y: 0.62 },
+    highlight: { width: 320, height: 180 }
+  },
+  {
+    id: "home-super-summary",
+    title: "Günlük Super",
+    body: "Bu metrik, seçili yıldız filtresindeki güncel Super sonuçlarını özetler; kazanç ve kayıp sayısını birlikte gösterir.",
+    route: "/",
+    match: "EXACT",
+    target: { x: 0.55, y: 0.48 },
+    highlight: { width: 320, height: 150 }
   },
   {
     id: "live-pressure",
@@ -39,7 +60,8 @@ export const tutorialTips: readonly TutorialTip[] = [
     body: "Ev simgesi ev sahibini, uçak simgesi deplasmanın baskıda olduğunu anlatır.",
     route: "/live",
     match: "EXACT",
-    target: { x: 0.86, y: 0.48 }
+    target: { x: 0.86, y: 0.48 },
+    highlight: { width: 190, height: 120 }
   },
   {
     id: "match-score",
@@ -47,7 +69,8 @@ export const tutorialTips: readonly TutorialTip[] = [
     body: "Skor, dakika, devre skoru ve oranlar burada güncel maç durumunu gösterir.",
     route: "/match/",
     match: "PREFIX",
-    target: { x: 0.5, y: 0.18 }
+    target: { x: 0.5, y: 0.18 },
+    highlight: { width: 320, height: 190 }
   },
   {
     id: "match-league",
@@ -55,7 +78,8 @@ export const tutorialTips: readonly TutorialTip[] = [
     body: "SAP’ta doğrulanan iki takımın sıra ve puanını bu kompakt tabloda görebilirsin.",
     route: "/match/",
     match: "PREFIX",
-    target: { x: 0.5, y: 0.66 }
+    target: { x: 0.5, y: 0.66 },
+    highlight: { width: 320, height: 220 }
   },
   {
     id: "super-list",
@@ -63,7 +87,26 @@ export const tutorialTips: readonly TutorialTip[] = [
     body: "Yıldız filtresiyle kararları daraltabilir, bir karta dokunarak tarihsel kaydı açabilirsin.",
     route: "/super",
     match: "EXACT",
-    target: { x: 0.72, y: 0.32 }
+    target: { x: 0.72, y: 0.32 },
+    highlight: { width: 320, height: 110 }
+  },
+  {
+    id: "live-filters",
+    title: "Canlı filtreleri",
+    body: "Canlı, Tümü ve yıldız filtresi arasında geçiş yaparak yalnızca görmek istediğin maçları listelersin.",
+    route: "/live",
+    match: "EXACT",
+    target: { x: 0.5, y: 0.28 },
+    highlight: { width: 350, height: 72 }
+  },
+  {
+    id: "super-filters",
+    title: "Super filtreleri",
+    body: "Karar günlüğünde durum ve yıldız filtresi birlikte çalışır; yıldız menüsünü açarak 1+ ile 5 yıldız arasını seçebilirsin.",
+    route: "/super",
+    match: "EXACT",
+    target: { x: 0.5, y: 0.28 },
+    highlight: { width: 350, height: 72 }
   },
   {
     id: "super-result",
@@ -71,7 +114,8 @@ export const tutorialTips: readonly TutorialTip[] = [
     body: "Karar anı skoru ayrıdır; maç sonuçlandığında biten skor da burada gösterilir.",
     route: "/super/",
     match: "PREFIX",
-    target: { x: 0.76, y: 0.2 }
+    target: { x: 0.76, y: 0.2 },
+    highlight: { width: 320, height: 190 }
   },
   {
     id: "toto-program",
@@ -79,7 +123,17 @@ export const tutorialTips: readonly TutorialTip[] = [
     body: "Program, kolon ve kapsama bilgileri Toto’ya özeldir; BTB Super sonuçlarıyla karıştırılmaz.",
     route: "/toto",
     match: "PREFIX",
-    target: { x: 0.7, y: 0.3 }
+    target: { x: 0.7, y: 0.3 },
+    highlight: { width: 320, height: 190 }
+  },
+  {
+    id: "toto-status",
+    title: "Toto program durumu",
+    body: "Aktif, sonuç bekliyor ve sonuçlandı etiketleri programın hangi aşamada olduğunu gösterir.",
+    route: "/toto",
+    match: "PREFIX",
+    target: { x: 0.7, y: 0.24 },
+    highlight: { width: 320, height: 120 }
   },
   {
     id: "more-tutorial",
@@ -87,7 +141,8 @@ export const tutorialTips: readonly TutorialTip[] = [
     body: "Bibi rehberini buradan kapatabilir, kaldığın yerden açabilir veya baştan başlatabilirsin.",
     route: "/more",
     match: "EXACT",
-    target: { x: 0.78, y: 0.62 }
+    target: { x: 0.78, y: 0.62 },
+    highlight: { width: 320, height: 110 }
   }
 ] as const;
 

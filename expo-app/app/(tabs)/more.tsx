@@ -149,16 +149,6 @@ export default function MoreScreen() {
       <Text style={styles.sectionTitle}>Cihaz</Text>
       <View style={styles.group}>
         <SettingsRow
-          detail={
-            tutorial.enabled
-              ? "Ekranlar açıldıkça kısa anlatımları gösterir"
-              : "İlerleme saklandı; istediğinde kaldığın yerden aç"
-          }
-          icon="school-outline"
-          onPress={() => tutorial.setEnabled(!tutorial.enabled)}
-          title={`Bibi rehberi ${tutorial.enabled ? "açık" : "kapalı"}`}
-        />
-        <SettingsRow
           detail="Tamamlanan adımları temizler ve rehberi yeniden açar"
           icon="restart"
           onPress={() => {
