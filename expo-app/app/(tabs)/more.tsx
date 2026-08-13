@@ -1,4 +1,4 @@
-import { useState, type ComponentProps } from "react";
+import { useEffect, useState, type ComponentProps } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
@@ -7,6 +7,7 @@ import {
   Platform,
   Pressable,
   StyleSheet,
+  Switch,
   Text,
   View
 } from "react-native";
@@ -19,12 +20,17 @@ import {
   unregisterPushDevice
 } from "@/src/notifications/register";
 import {
+  getSuperNotificationMinimum,
+  setSuperNotificationMinimum,
+  superNotificationMinimumOptions,
+  type SuperNotificationMinimum
+} from "@/src/notifications/super-notification-preference";
+import {
   applyThemeMode,
   colors,
   radii,
   spacing,
-  themeMode,
-  type ThemeMode
+  themeMode
 } from "@/src/theme/theme";
 import { useTutorial } from "@/src/tutorial/TutorialProvider";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
@@ -48,6 +54,7 @@ function SettingsRow({
 }) {
   return (
     <Pressable
+      accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
@@ -67,27 +74,86 @@ function SettingsRow({
   );
 }
 
+function ThemeSwitchRow({
+  changing,
+  onChange
+}: {
+  changing: boolean;
+  onChange: (dark: boolean) => void;
+}) {
+  const dark = themeMode === "dark";
+  return (
+    <View style={styles.row}>
+      <View style={styles.rowIcon}>
+        <MaterialCommunityIcons
+          color={colors.blue}
+          name={dark ? "weather-night" : "white-balance-sunny"}
+          size={22}
+        />
+      </View>
+      <View style={styles.rowCopy}>
+        <Text style={styles.rowTitle}>Koyu tema</Text>
+        <Text style={styles.rowDetail}>
+          {dark ? "Koyu" : "Açık"} görünüm etkin · uygulama ve widgetlar birlikte değişir
+        </Text>
+      </View>
+      <Switch
+        accessibilityLabel="Koyu tema"
+        accessibilityRole="switch"
+        accessibilityState={{ checked: dark, disabled: changing }}
+        disabled={changing}
+        ios_backgroundColor={colors.surfaceStrong}
+        onValueChange={onChange}
+        thumbColor={dark ? colors.white : colors.textMuted}
+        trackColor={{ false: colors.surfaceStrong, true: colors.blue }}
+        value={dark}
+      />
+    </View>
+  );
+}
+
 export default function MoreScreen() {
   const [registering, setRegistering] = useState(false);
   const [updatingWidgets, setUpdatingWidgets] = useState(false);
+  const [themeChanging, setThemeChanging] = useState(false);
+  const [notificationMinimumOpen, setNotificationMinimumOpen] = useState(false);
+  const [notificationMinimum, setNotificationMinimumState] =
+    useState<SuperNotificationMinimum>(1);
   const auth = useAuth();
   const router = useRouter();
   const tutorial = useTutorial();
 
-  const selectTheme = () => {
-    const changeTheme = (mode: ThemeMode) => {
-      applyThemeMode(mode).catch((error: unknown) => {
+  useEffect(() => {
+    getSuperNotificationMinimum()
+      .then(setNotificationMinimumState)
+      .catch(() => setNotificationMinimumState(1));
+  }, []);
+
+  const changeTheme = (dark: boolean) => {
+    setThemeChanging(true);
+    applyThemeMode(dark ? "dark" : "light")
+      .catch((error: unknown) => {
         Alert.alert(
           "Tema değiştirilemedi",
           error instanceof Error ? error.message : "Bilinmeyen hata."
         );
+        setThemeChanging(false);
       });
-    };
-    Alert.alert("Uygulama teması", "Görünüm tercihini seç.", [
-      { text: "İptal", style: "cancel" },
-      { text: "Koyu", onPress: () => changeTheme("dark") },
-      { text: "Açık", onPress: () => changeTheme("light") }
-    ]);
+  };
+
+  const changeNotificationMinimum = async (
+    minimum: SuperNotificationMinimum
+  ) => {
+    try {
+      await setSuperNotificationMinimum(minimum);
+      setNotificationMinimumState(minimum);
+      setNotificationMinimumOpen(false);
+    } catch (error: unknown) {
+      Alert.alert(
+        "Bildirim tercihi kaydedilemedi",
+        error instanceof Error ? error.message : "Bilinmeyen hata."
+      );
+    }
   };
 
   const registerNotifications = async () => {
@@ -172,11 +238,9 @@ export default function MoreScreen() {
 
       <Text style={styles.sectionTitle}>Cihaz</Text>
       <View style={styles.group}>
-        <SettingsRow
-          detail={`${themeMode === "light" ? "Açık" : "Koyu"} tema etkin · seçim cihazda saklanır`}
-          icon="theme-light-dark"
-          onPress={selectTheme}
-          title="Uygulama görünümü"
+        <ThemeSwitchRow
+          changing={themeChanging}
+          onChange={changeTheme}
         />
         <TutorialTarget id="more-tutorial-restart" radius={0}>
           <SettingsRow
@@ -202,6 +266,69 @@ export default function MoreScreen() {
           onPress={registerNotifications}
           title="Bildirimleri etkinleştir"
         />
+        <Pressable
+          accessibilityLabel={`Super bildirim eşiği ${notificationMinimum} yıldız ve üzeri`}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: notificationMinimumOpen }}
+          onPress={() => setNotificationMinimumOpen((open) => !open)}
+          style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+        >
+          <View style={styles.rowIcon}>
+            <MaterialCommunityIcons color={colors.gold} name="star-outline" size={22} />
+          </View>
+          <View style={styles.rowCopy}>
+            <Text style={styles.rowTitle}>Super bildirim eşiği</Text>
+            <Text style={styles.rowDetail}>
+              Yalnız {notificationMinimum}+ yıldız görünür bildirim gönderilir; widget verisi korunur
+            </Text>
+          </View>
+          <MaterialCommunityIcons
+            color={colors.textSubtle}
+            name={notificationMinimumOpen ? "chevron-up" : "chevron-down"}
+            size={22}
+          />
+        </Pressable>
+        {notificationMinimumOpen ? (
+          <View accessibilityRole="menu" style={styles.preferenceMenu}>
+            {superNotificationMinimumOptions.map((minimum) => {
+              const selected = minimum === notificationMinimum;
+              return (
+                <Pressable
+                  accessibilityLabel={`${minimum} yıldız ve üzeri`}
+                  accessibilityRole="menuitem"
+                  accessibilityState={{ selected }}
+                  key={minimum}
+                  onPress={() => changeNotificationMinimum(minimum)}
+                  style={({ pressed }) => [
+                    styles.preferenceOption,
+                    selected && styles.preferenceOptionSelected,
+                    pressed && styles.pressed
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.preferenceStars,
+                      selected && styles.preferenceOptionTextSelected
+                    ]}
+                  >
+                    {"★".repeat(minimum)}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.preferenceOptionText,
+                      selected && styles.preferenceOptionTextSelected
+                    ]}
+                  >
+                    {minimum === 5 ? "5 yıldız" : `${minimum}+ yıldız`}
+                  </Text>
+                  {selected ? (
+                    <MaterialCommunityIcons color={colors.white} name="check" size={18} />
+                  ) : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
         {Platform.OS === "android" && __DEV__ ? (
           <SettingsRow
             detail={
@@ -327,6 +454,37 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.7
+  },
+  preferenceMenu: {
+    padding: spacing.sm,
+    gap: spacing.xs,
+    backgroundColor: colors.surface
+  },
+  preferenceOption: {
+    minHeight: 44,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.md
+  },
+  preferenceOptionSelected: {
+    backgroundColor: colors.blueSoft
+  },
+  preferenceStars: {
+    width: 72,
+    color: colors.gold,
+    fontSize: 12,
+    fontWeight: "900"
+  },
+  preferenceOptionText: {
+    flex: 1,
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: "800"
+  },
+  preferenceOptionTextSelected: {
+    color: colors.white
   },
   rowIcon: {
     width: 40,

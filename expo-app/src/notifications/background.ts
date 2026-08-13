@@ -7,6 +7,10 @@ import { updateWidgetsFromData } from "@/src/widgets/btb-widget";
 import { withoutSuperKpiData } from "@/src/widgets/performance-widget-data";
 import { refreshPerformanceWidgetFromApi } from "@/src/widgets/performance-widget";
 import type { WidgetInputData } from "@/src/widgets/widget-payload";
+import {
+  getSuperNotificationMinimum,
+  shouldPresentSuperRating
+} from "./super-notification-preference";
 
 export const backgroundNotificationTask =
   "BTB_BACKGROUND_NOTIFICATION_V1";
@@ -40,6 +44,15 @@ async function presentAndroidNotification(
 
   const rating = Number.parseInt(String(data.rating ?? ""), 10);
   const isSuper = rating >= 1 && rating <= 5;
+  if (
+    isSuper &&
+    !shouldPresentSuperRating(
+      rating,
+      await getSuperNotificationMinimum()
+    )
+  ) {
+    return false;
+  }
   const channelId = String(
     data.notification_android_channel_id ??
       (isSuper ? notificationChannels.super : notificationChannels.general)

@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
   Alert,
   Linking,
@@ -9,7 +9,9 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
-  View
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent
 } from "react-native";
 import {
   matchInsightQuery,
@@ -32,13 +34,8 @@ import {
   formatFixtureDateTime,
   formatElapsed,
   formatPercentage,
-  formatRate,
-  formatSigned
+  formatRate
 } from "@/src/utils/format";
-import {
-  derivePressureBalance,
-  type PressureDirection
-} from "@/src/utils/pressure-balance";
 import { relatedSuperDecisions } from "@/src/utils/related-super-decisions";
 
 function firstParam(value: string | string[] | undefined): string {
@@ -127,62 +124,6 @@ function ComparisonRow({
   );
 }
 
-function PressureBalanceRow({
-  totalPressure,
-  pressureDiff
-}: {
-  totalPressure: number;
-  pressureDiff: number;
-}) {
-  const balance = derivePressureBalance(totalPressure, pressureDiff);
-  const fillWidth: `${number}%` =
-    `${balance.magnitudeRatio * 100}%`;
-  const homeWidth: `${number}%` =
-    balance.direction === "HOME" ? fillWidth : "0%";
-  const awayWidth: `${number}%` =
-    balance.direction === "AWAY" ? fillWidth : "0%";
-  const directionLabel: Record<PressureDirection, string> = {
-    HOME: "Ev sahibi baskısı",
-    AWAY: "Deplasman baskısı",
-    BALANCED: "Dengeli"
-  };
-  const value = balance.hasData ? formatSigned(pressureDiff, 1) : "—";
-  const accessibilityLabel = balance.hasData
-    ? `Baskı farkı ${value}, ${directionLabel[balance.direction]}`
-    : "Baskı farkı verisi bekleniyor";
-
-  return (
-    <View
-      accessibilityLabel={accessibilityLabel}
-      style={styles.pressureComparison}
-    >
-      <View style={styles.pressureLabels}>
-        <Text style={styles.pressureSide}>Ev baskısı</Text>
-        <View style={styles.pressureValueBlock}>
-          <Text style={styles.pressureValue}>{value}</Text>
-          <Text style={styles.pressureCaption}>
-            {balance.hasData
-              ? directionLabel[balance.direction]
-              : "Veri bekleniyor"}
-          </Text>
-        </View>
-        <Text style={[styles.pressureSide, styles.pressureAwayLabel]}>
-          Dep. baskısı
-        </Text>
-      </View>
-      <View style={styles.pressureAxis}>
-        <View style={styles.pressureHomeTrack}>
-          <View style={[styles.pressureHomeFill, { width: homeWidth }]} />
-        </View>
-        <View style={styles.pressureZero} />
-        <View style={styles.pressureAwayTrack}>
-          <View style={[styles.pressureAwayFill, { width: awayWidth }]} />
-        </View>
-      </View>
-    </View>
-  );
-}
-
 export default function MatchDetailScreen() {
   const params = useLocalSearchParams<{ key?: string | string[] }>();
   const key = firstParam(params.key);
@@ -195,6 +136,14 @@ export default function MatchDetailScreen() {
     }
   };
   const [showDecision, setShowDecision] = useState(false);
+  const [compactHeader, setCompactHeader] = useState(false);
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const next = event.nativeEvent.contentOffset.y > 150;
+      setCompactHeader((current) => (current === next ? current : next));
+    },
+    []
+  );
   const query = useQuery(matchQuery(key));
   const insightQuery = useQuery(matchInsightQuery(key));
   const leagueContextQuery = useQuery(matchLeagueContextQuery(key));
@@ -237,12 +186,22 @@ export default function MatchDetailScreen() {
   );
 
   return (
-    <Screen
+    <>
+      <Stack.Screen
+        options={{
+          title: compactHeader
+            ? `${match.homeTeam} – ${match.awayTeam}`
+            : "Maç Detayı"
+        }}
+      />
+      <Screen
       edgeSwipeBack
       onEdgeSwipeBack={handleEdgeSwipeBack}
       contentStyle={styles.screen}
       scrollProps={{
         alwaysBounceVertical: true,
+        onScroll: handleScroll,
+        scrollEventThrottle: 16,
         refreshControl: (
           <RefreshControl
             colors={[colors.green]}
@@ -291,12 +250,13 @@ export default function MatchDetailScreen() {
             />
           </View>
           <View style={styles.scoreBlock}>
+            <Text style={styles.scoreContext}>Maç skoru</Text>
             <Text style={styles.score}>
               {match.homeScore} – {match.awayScore}
             </Text>
             {periodScoreQuery.data?.halfTimeScore ? (
               <Text style={styles.halfTimeScore}>
-                İY: {periodScoreQuery.data.halfTimeScore.homeScore}-
+                İlk yarı {periodScoreQuery.data.halfTimeScore.homeScore}-
                 {periodScoreQuery.data.halfTimeScore.awayScore}
               </Text>
             ) : null}
@@ -494,10 +454,6 @@ export default function MatchDetailScreen() {
           home={match.homeRedCards}
           label="Kırmızı kart"
         />
-        <PressureBalanceRow
-          pressureDiff={match.pressureDiff}
-          totalPressure={match.totalPressure}
-        />
       </View>
 
       <Text style={styles.sectionTitle}>Skor dağılımı</Text>
@@ -557,7 +513,8 @@ export default function MatchDetailScreen() {
         Maç sayfası Bilyoner uygulamasında; uygulama yoksa güvenli web
         sayfasında açılır. BTB görünümü salt okunurdur.
       </Text>
-    </Screen>
+      </Screen>
+    </>
   );
 }
 
@@ -642,6 +599,12 @@ const styles = StyleSheet.create({
     color: colors.red,
     fontSize: 9,
     fontWeight: "900"
+  },
+  scoreContext: {
+    color: colors.textSubtle,
+    fontSize: 9,
+    fontWeight: "800",
+    marginBottom: spacing.xs
   },
   score: {
     color: colors.text,
@@ -817,78 +780,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 11,
     fontWeight: "700"
-  },
-  pressureComparison: {
-    borderTopWidth: 1,
-    borderTopColor: colors.borderSoft,
-    gap: spacing.sm,
-    paddingTop: spacing.lg
-  },
-  pressureLabels: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between"
-  },
-  pressureSide: {
-    color: colors.blue,
-    width: 72,
-    fontSize: 10,
-    fontWeight: "800"
-  },
-  pressureAwayLabel: {
-    color: colors.green,
-    textAlign: "right"
-  },
-  pressureValueBlock: {
-    flex: 1,
-    alignItems: "center"
-  },
-  pressureValue: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: "900"
-  },
-  pressureCaption: {
-    color: colors.textMuted,
-    fontSize: 9,
-    marginTop: 1
-  },
-  pressureAxis: {
-    height: 7,
-    flexDirection: "row",
-    alignItems: "center"
-  },
-  pressureHomeTrack: {
-    flex: 1,
-    height: 5,
-    alignItems: "flex-end",
-    backgroundColor: colors.surfaceStrong,
-    borderRadius: radii.round,
-    overflow: "hidden"
-  },
-  pressureAwayTrack: {
-    flex: 1,
-    height: 5,
-    backgroundColor: colors.surfaceStrong,
-    borderRadius: radii.round,
-    overflow: "hidden"
-  },
-  pressureHomeFill: {
-    height: "100%",
-    backgroundColor: colors.blue,
-    borderRadius: radii.round
-  },
-  pressureAwayFill: {
-    height: "100%",
-    backgroundColor: colors.green,
-    borderRadius: radii.round
-  },
-  pressureZero: {
-    width: 2,
-    height: 7,
-    marginHorizontal: 3,
-    borderRadius: 1,
-    backgroundColor: colors.textMuted
   },
   dualBar: {
     flexDirection: "row",

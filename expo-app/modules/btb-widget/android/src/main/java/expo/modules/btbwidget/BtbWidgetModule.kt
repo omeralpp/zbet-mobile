@@ -36,6 +36,10 @@ class BtbWidgetModule : Module() {
       }
     }
 
+    AsyncFunction("setTheme") { mode: String ->
+      BtbWidgetTheme.setTheme(context, mode)
+    }
+
     AsyncFunction("clear") {
       BtbNotificationWidgetProvider.clearStoredData(context)
       BtbPerformanceWidgetProvider.clearStoredData(context)

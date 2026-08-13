@@ -13,6 +13,7 @@ import { AndroidBackGuard } from "@/src/navigation/AndroidBackGuard";
 import { AppProviders } from "@/src/providers/AppProviders";
 import { colors, themeMode } from "@/src/theme/theme";
 import { TutorialProvider } from "@/src/tutorial/TutorialProvider";
+import { syncWidgetTheme } from "@/src/widgets/btb-widget";
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -31,6 +32,7 @@ function RootNavigator() {
   useEffect(() => {
     Appearance.setColorScheme(themeMode);
     SystemUI.setBackgroundColorAsync(colors.background).catch(() => undefined);
+    syncWidgetTheme(themeMode).catch(() => undefined);
   }, []);
 
   if (!launchComplete) {

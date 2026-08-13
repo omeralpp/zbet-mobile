@@ -7,6 +7,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.text.format.DateFormat;
@@ -112,12 +113,36 @@ public class BtbNotificationWidgetProvider extends AppWidgetProvider {
         RemoteViews views = new RemoteViews(
                 context.getPackageName(),
                 R.layout.btb_notification_widget);
+        BtbWidgetTheme.Palette palette = BtbWidgetTheme.resolve(context);
+        views.setInt(
+                R.id.btb_widget_root,
+                "setBackgroundResource",
+                palette.backgroundDrawable);
         views.setImageViewResource(
                 R.id.btb_widget_icon,
                 context.getApplicationInfo().icon);
         views.setTextViewText(R.id.btb_widget_title, title);
         views.setTextViewText(R.id.btb_widget_body, body);
         views.setTextViewText(R.id.btb_widget_rating, getStars(rating));
+        views.setTextColor(R.id.btb_widget_title, palette.text);
+        views.setTextColor(R.id.btb_widget_body, palette.text);
+        views.setTextColor(R.id.btb_widget_updated, palette.subtle);
+        views.setTextColor(R.id.btb_widget_rating, palette.gold);
+        views.setTextColor(R.id.btb_widget_super, palette.text);
+        views.setTextColor(R.id.btb_widget_open, Color.WHITE);
+        views.setTextColor(R.id.btb_widget_toto, palette.text);
+        views.setInt(
+                R.id.btb_widget_super,
+                "setBackgroundResource",
+                palette.secondaryButtonDrawable);
+        views.setInt(
+                R.id.btb_widget_open,
+                "setBackgroundResource",
+                palette.primaryButtonDrawable);
+        views.setInt(
+                R.id.btb_widget_toto,
+                "setBackgroundResource",
+                palette.secondaryButtonDrawable);
         views.setViewVisibility(
                 R.id.btb_widget_rating,
                 rating >= 1 && rating <= 5 ? View.VISIBLE : View.GONE);

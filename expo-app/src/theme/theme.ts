@@ -4,6 +4,7 @@ import {
   parseThemeMode,
   type ThemeMode
 } from "./theme-preference";
+import { syncWidgetTheme } from "@/src/widgets/btb-widget";
 
 export { parseThemeMode, type ThemeMode } from "./theme-preference";
 
@@ -78,6 +79,7 @@ export const colors: ThemeColors =
 
 export async function applyThemeMode(mode: ThemeMode): Promise<void> {
   if (mode === themeMode) {
+    await syncWidgetTheme(mode);
     return;
   }
   if (typeof localStorage !== "undefined") {
@@ -85,6 +87,7 @@ export async function applyThemeMode(mode: ThemeMode): Promise<void> {
   } else {
     SecureStore.setItem(themeStorageKey, mode);
   }
+  await syncWidgetTheme(mode);
   await reloadAppAsync("BTB Mobile tema tercihi değişti");
 }
 

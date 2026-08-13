@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   FlatList,
@@ -19,13 +20,18 @@ import {
   LoadingState
 } from "@/src/components/StateView";
 import { SuperLogCard } from "@/src/components/SuperLogCard";
-import { colors, spacing } from "@/src/theme/theme";
+import {
+  colors,
+  interaction,
+  radii,
+  shadows,
+  spacing
+} from "@/src/theme/theme";
 import {
   formatFixtureDateTime,
   formatSuperDateScope,
   matchDateFromKey
 } from "@/src/utils/format";
-import { getSuperDayScopeAction } from "@/src/utils/super-day-scope";
 import {
   useSuperStarFilter
 } from "@/src/preferences/SuperStarFilterProvider";
@@ -45,11 +51,12 @@ export default function SuperScreen() {
     ? params.scope[0]
     : params.scope;
   const latestDayOnly = rawScope === "LATEST_DAY";
-  const dayScopeAction = getSuperDayScopeAction(latestDayOnly);
+  const activeDayScope = latestDayOnly ? "Bugün" : "Tüm günler";
   const [tab, setTab] = useState<SuperLogTab>("ALL");
   const { filter: starFilter, setFilter: setStarFilter } =
     useSuperStarFilter();
   const [decisionOpen, setDecisionOpen] = useState(false);
+  const [dayScopeOpen, setDayScopeOpen] = useState(false);
   const query = useQuery(superLogsQuery);
   const latestMatchDate = useMemo(
     () =>
@@ -106,6 +113,7 @@ export default function SuperScreen() {
           label="Tümü"
           onPress={() => {
             setDecisionOpen(false);
+            setDayScopeOpen(false);
             setTab("ALL");
           }}
           selected={tab === "ALL"}
@@ -115,6 +123,7 @@ export default function SuperScreen() {
           label="Açık"
           onPress={() => {
             setDecisionOpen(false);
+            setDayScopeOpen(false);
             setTab("OPEN");
           }}
           selected={tab === "OPEN"}
@@ -135,7 +144,12 @@ export default function SuperScreen() {
               }
             );
           }}
-          onOpenChange={setDecisionOpen}
+          onOpenChange={(open) => {
+            setDecisionOpen(open);
+            if (open) {
+              setDayScopeOpen(false);
+            }
+          }}
           open={decisionOpen}
           value={starFilter}
         />
@@ -143,33 +157,84 @@ export default function SuperScreen() {
       </TutorialTarget>
       <View style={styles.scopeRow}>
         {dateScope ? <Text style={styles.scope}>{dateScope}</Text> : null}
-        <Pressable
-          accessibilityLabel={`${dayScopeAction.label} kapsamına geç`}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: query.isRefetching }}
-          disabled={query.isRefetching}
-          hitSlop={6}
-          onPress={() => {
-            setDecisionOpen(false);
-            router.replace(
-              dayScopeAction.nextScope
-                ? ({
-                    pathname: "/super",
-                    params: { scope: dayScopeAction.nextScope }
-                  } as never)
-                : ("/super" as never)
-            );
-          }}
-          style={({ pressed }) => [
-            styles.dayScopeButton,
-            pressed && styles.dayScopeButtonPressed,
-            query.isRefetching && styles.dayScopeButtonDisabled
-          ]}
-        >
-          <Text style={styles.dayScopeAction}>
-            {dayScopeAction.label}
-          </Text>
-        </Pressable>
+        <View style={[styles.dayScopeWrapper, dayScopeOpen && styles.dayScopeWrapperOpen]}>
+          <Pressable
+            accessibilityLabel={`Gün kapsamı: ${activeDayScope}`}
+            accessibilityRole="button"
+            accessibilityState={{
+              disabled: query.isRefetching,
+              expanded: dayScopeOpen
+            }}
+            disabled={query.isRefetching}
+            onPress={() => {
+              setDecisionOpen(false);
+              setDayScopeOpen((open) => !open);
+            }}
+            style={({ pressed }) => [
+              styles.dayScopeButton,
+              pressed && styles.dayScopeButtonPressed,
+              query.isRefetching && styles.dayScopeButtonDisabled
+            ]}
+          >
+            <MaterialCommunityIcons
+              color={colors.blue}
+              name="calendar-range"
+              size={16}
+            />
+            <Text style={styles.dayScopeAction}>{activeDayScope}</Text>
+            <MaterialCommunityIcons
+              color={colors.textMuted}
+              name={dayScopeOpen ? "chevron-up" : "chevron-down"}
+              size={16}
+            />
+          </Pressable>
+          {dayScopeOpen ? (
+            <View accessibilityRole="menu" style={styles.dayScopeMenu}>
+              {(["Bugün", "Tüm günler"] as const).map((label) => {
+                const selected = label === activeDayScope;
+                return (
+                  <Pressable
+                    accessibilityRole="menuitem"
+                    accessibilityState={{ selected }}
+                    key={label}
+                    onPress={() => {
+                      setDayScopeOpen(false);
+                      router.replace(
+                        label === "Bugün"
+                          ? ({
+                              pathname: "/super",
+                              params: { scope: "LATEST_DAY" }
+                            } as never)
+                          : ("/super" as never)
+                      );
+                    }}
+                    style={({ pressed }) => [
+                      styles.dayScopeOption,
+                      selected && styles.dayScopeOptionSelected,
+                      pressed && styles.dayScopeButtonPressed
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.dayScopeOptionText,
+                        selected && styles.dayScopeOptionTextSelected
+                      ]}
+                    >
+                      {label}
+                    </Text>
+                    {selected ? (
+                      <MaterialCommunityIcons
+                        color={colors.white}
+                        name="check"
+                        size={17}
+                      />
+                    ) : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
+        </View>
       </View>
 
       {query.isLoading ? (
@@ -203,10 +268,16 @@ export default function SuperScreen() {
               tintColor={colors.gold}
             />
           }
-          onScrollBeginDrag={() => setDecisionOpen(false)}
+          onScrollBeginDrag={() => {
+            setDecisionOpen(false);
+            setDayScopeOpen(false);
+          }}
           onTouchStart={() => {
             if (decisionOpen) {
               setDecisionOpen(false);
+            }
+            if (dayScopeOpen) {
+              setDayScopeOpen(false);
             }
           }}
           renderItem={({ item, index }) =>
@@ -248,7 +319,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
-    marginBottom: spacing.md
+    marginBottom: spacing.md,
+    zIndex: 20
   },
   dayScopeAction: {
     color: colors.blue,
@@ -256,15 +328,57 @@ const styles = StyleSheet.create({
     fontWeight: "900"
   },
   dayScopeButton: {
-    minHeight: 44,
-    minWidth: 88,
+    minHeight: interaction.minTouchTarget,
+    minWidth: 126,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: spacing.xs,
     borderColor: colors.borderSoft,
     borderRadius: 999,
     borderWidth: 1,
     backgroundColor: colors.backgroundElevated,
     paddingHorizontal: spacing.md
+  },
+  dayScopeWrapper: {
+    position: "relative",
+    zIndex: 10
+  },
+  dayScopeWrapperOpen: {
+    zIndex: 40,
+    elevation: 40
+  },
+  dayScopeMenu: {
+    position: "absolute",
+    top: interaction.minTouchTarget + 6,
+    right: 0,
+    minWidth: 160,
+    padding: spacing.xs,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceStrong,
+    ...shadows.card
+  },
+  dayScopeOption: {
+    minHeight: interaction.minTouchTarget,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.md
+  },
+  dayScopeOptionSelected: {
+    backgroundColor: colors.blueSoft
+  },
+  dayScopeOptionText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: "800"
+  },
+  dayScopeOptionTextSelected: {
+    color: colors.white
   },
   dayScopeButtonPressed: {
     opacity: 0.68

@@ -14,9 +14,20 @@ type WidgetStatus = {
 
 type NativeBtbWidgetModule = {
   update(payload: BtbWidgetPayload): Promise<void>;
+  setTheme(mode: "dark" | "light"): Promise<void>;
   clear(): Promise<void>;
   getStatus(): Promise<WidgetStatus>;
 };
+
+export async function syncWidgetTheme(
+  mode: "dark" | "light"
+): Promise<boolean> {
+  if (!nativeWidget) {
+    return false;
+  }
+  await nativeWidget.setTheme(mode);
+  return true;
+}
 
 const nativeWidget =
   Platform.OS === "android"

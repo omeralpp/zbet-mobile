@@ -14,3 +14,20 @@ test("Performans widgetı yalnız RemoteViews uyumlu layout bileşenleri kullan�
   assert.match(layout, /<ImageView/);
   assert.match(layout, /<TextView/);
 });
+
+test("iki Android widgetı ortak light dark tema resolverını kullanır", async () => {
+  const root = "../../modules/btb-widget/android/src/main/";
+  const [theme, module, notification, performance] = await Promise.all([
+    readFile(new URL(`${root}java/expo/modules/btbwidget/BtbWidgetTheme.java`, import.meta.url), "utf8"),
+    readFile(new URL(`${root}java/expo/modules/btbwidget/BtbWidgetModule.kt`, import.meta.url), "utf8"),
+    readFile(new URL(`${root}java/expo/modules/btbwidget/BtbNotificationWidgetProvider.java`, import.meta.url), "utf8"),
+    readFile(new URL(`${root}java/expo/modules/btbwidget/BtbPerformanceWidgetProvider.java`, import.meta.url), "utf8")
+  ]);
+
+  assert.match(theme, /btb_next_widget_theme/);
+  assert.match(theme, /Palette light\(\)/);
+  assert.match(theme, /Palette dark\(\)/);
+  assert.match(module, /AsyncFunction\("setTheme"\)/);
+  assert.match(notification, /BtbWidgetTheme\.resolve/);
+  assert.match(performance, /BtbWidgetTheme\.resolve/);
+});

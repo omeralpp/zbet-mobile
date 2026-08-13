@@ -1,11 +1,14 @@
+import { useCallback, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
   Pressable,
   RefreshControl,
   StyleSheet,
   Text,
-  View
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent
 } from "react-native";
 import {
   superLogPeriodScoreQuery,
@@ -15,6 +18,7 @@ import { Screen } from "@/src/components/Screen";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { RatingStars } from "@/src/components/RatingStars";
 import { LeagueStandingsTable } from "@/src/components/LeagueStandingsTable";
+import { PressureBalance } from "@/src/components/PressureBalance";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { colors, radii, spacing } from "@/src/theme/theme";
 import {
@@ -49,6 +53,14 @@ export default function SuperLogDetailScreen() {
     }
   };
   const key = firstParam(params.key);
+  const [compactHeader, setCompactHeader] = useState(false);
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const next = event.nativeEvent.contentOffset.y > 150;
+      setCompactHeader((current) => (current === next ? current : next));
+    },
+    []
+  );
   const query = useQuery(superLogQuery(key));
   const periodScoreQuery = useQuery(superLogPeriodScoreQuery(key));
 
@@ -91,12 +103,22 @@ export default function SuperLogDetailScreen() {
           : colors.blue;
 
   return (
-    <Screen
+    <>
+      <Stack.Screen
+        options={{
+          title: compactHeader
+            ? `${log.homeTeam} – ${log.awayTeam}`
+            : "Super Kararı Detayı"
+        }}
+      />
+      <Screen
       edgeSwipeBack
       onEdgeSwipeBack={handleEdgeSwipeBack}
       contentStyle={styles.screen}
       scrollProps={{
         alwaysBounceVertical: true,
+        onScroll: handleScroll,
+        scrollEventThrottle: 16,
         refreshControl: (
           <RefreshControl
             colors={[colors.gold]}
@@ -111,49 +133,63 @@ export default function SuperLogDetailScreen() {
     >
       <TutorialTarget id="super-summary" radius={radii.xl}>
         <View style={styles.hero}>
-        <View style={styles.rowBetween}>
-          <Text numberOfLines={1} style={styles.league}>{log.league}</Text>
-          <Text style={[styles.result, { color: resultColor }]}>
-            {formatSuperResult(log.result)}
-          </Text>
-        </View>
-        <Text style={styles.fixtureTime}>
-          {formatFixtureDateTime(log.matchDate, log.matchTime)} · {log.elapsed}&apos; karar
-        </Text>
-        <Text style={styles.match}>{log.homeTeam} - {log.awayTeam}</Text>
-        <Text style={styles.scoreLabel}>Karar anı skoru</Text>
-        <Text style={styles.score}>
-          {log.decisionHomeScore} - {log.decisionAwayScore}
-        </Text>
-        {periodScoreQuery.data?.halfTimeScore ? (
-          <Text style={styles.halfTimeScore}>
-            İY: {periodScoreQuery.data.halfTimeScore.homeScore}-
-            {periodScoreQuery.data.halfTimeScore.awayScore}
-          </Text>
-        ) : null}
-        {(log.result === "WON" || log.result === "LOST") && log.finalScore ? (
-          <View
-            accessibilityLabel={`Biten skor ${log.finalScore}`}
-            style={[styles.finalScorePill, { borderColor: resultColor }]}
-          >
-            <Text style={styles.finalScoreLabel}>Biten skor</Text>
-            <Text style={[styles.finalScoreValue, { color: resultColor }]}>
-              {log.finalScore.replace("-", " - ")}
-            </Text>
+          <View style={styles.heroHeader}>
+            <View style={styles.heroMeta}>
+              <Text numberOfLines={1} style={styles.league}>{log.league}</Text>
+              <Text style={styles.fixtureTime}>
+                {formatFixtureDateTime(log.matchDate, log.matchTime)} · {log.elapsed}&apos; karar
+              </Text>
+            </View>
+            <View style={[styles.resultPill, { borderColor: resultColor }]}>
+              <Text style={[styles.result, { color: resultColor }]}>
+                {formatSuperResult(log.result)}
+              </Text>
+            </View>
           </View>
-        ) : null}
-        <View style={styles.selectionRow}>
-          <View>
-            <RatingStars rating={log.rating} />
-            <Text style={styles.selection}>{log.selectedOdd}</Text>
+          <Text style={styles.match}>{log.homeTeam} – {log.awayTeam}</Text>
+          <View style={styles.scoreTimeline}>
+            <View style={styles.scorePane}>
+              <Text style={styles.scoreLabel}>Karar anı skoru</Text>
+              <Text style={styles.score}>
+                {log.decisionHomeScore} - {log.decisionAwayScore}
+              </Text>
+              {periodScoreQuery.data?.halfTimeScore ? (
+                <Text style={styles.halfTimeScore}>
+                  İlk yarı {periodScoreQuery.data.halfTimeScore.homeScore}-
+                  {periodScoreQuery.data.halfTimeScore.awayScore}
+                </Text>
+              ) : (
+                <Text style={styles.halfTimeScore}>İlk yarı skoru yok</Text>
+              )}
+            </View>
+            {(log.result === "WON" || log.result === "LOST") && log.finalScore ? (
+              <View style={styles.scorePane}>
+                <Text style={styles.scoreLabel}>Maç sonucu</Text>
+                <Text style={[styles.score, { color: resultColor }]}>
+                  {log.finalScore.replace("-", " - ")}
+                </Text>
+                <Text style={styles.halfTimeScore}>Biten skor</Text>
+              </View>
+            ) : (
+              <View style={styles.scorePane}>
+                <Text style={styles.scoreLabel}>Maç sonucu</Text>
+                <Text style={styles.pendingScore}>—</Text>
+                <Text style={styles.halfTimeScore}>Sonuç bekleniyor</Text>
+              </View>
+            )}
           </View>
-          {metric(formatRate(log.liveRate), "seçim oranı")}
-          {metric(
-            log.profit === null ? "—" : formatSigned(log.profit),
-            "kâr",
-            resultColor
-          )}
-        </View>
+          <View style={styles.selectionRow}>
+            <View style={styles.selectionBlock}>
+              <RatingStars rating={log.rating} />
+              <Text style={styles.selection}>{log.selectedOdd}</Text>
+            </View>
+            {metric(formatRate(log.liveRate), "seçim oranı")}
+            {metric(
+              log.profit === null ? "—" : formatSigned(log.profit),
+              "kâr",
+              resultColor
+            )}
+          </View>
         </View>
       </TutorialTarget>
 
@@ -192,6 +228,10 @@ export default function SuperLogDetailScreen() {
           {metric(formatSigned(log.pressureAdjustment), "pressure adjustment")}
           {metric(formatSigned(log.stateAdjustment), "state adjustment")}
         </View>
+        <PressureBalance
+          pressureDiff={log.pressureDiff}
+          totalPressure={log.totalPressure}
+        />
       </View>
 
       <Text style={styles.sectionTitle}>Benzerlik ve lig bağlamı</Text>
@@ -256,7 +296,8 @@ export default function SuperLogDetailScreen() {
         Bu ekran dokunulan Super Log satırının tarihsel snapshot&apos;ını gösterir;
         güncel maç verisiyle değiştirilmez.
       </Text>
-    </Screen>
+      </Screen>
+    </>
   );
 }
 
@@ -269,11 +310,14 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surface
   },
-  rowBetween: {
+  heroHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: spacing.md
+  },
+  heroMeta: {
+    flex: 1
   },
   league: {
     flex: 1,
@@ -282,15 +326,36 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     textTransform: "uppercase"
   },
+  resultPill: {
+    minHeight: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radii.round,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md
+  },
   result: { fontSize: 10, fontWeight: "900" },
   fixtureTime: { color: colors.textSubtle, fontSize: 10, marginTop: 4 },
   match: { color: colors.text, fontSize: 22, fontWeight: "900", marginTop: spacing.lg },
-  scoreLabel: { color: colors.textSubtle, fontSize: 9, fontWeight: "800", marginTop: spacing.md },
+  scoreTimeline: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.md,
+    marginTop: spacing.lg
+  },
+  scorePane: {
+    flex: 1,
+    minWidth: 132,
+    padding: spacing.md,
+    borderRadius: radii.lg,
+    backgroundColor: colors.backgroundElevated,
+    borderWidth: 1,
+    borderColor: colors.borderSoft
+  },
+  scoreLabel: { color: colors.textSubtle, fontSize: 9, fontWeight: "800" },
   score: { color: colors.text, fontSize: 28, fontWeight: "900", marginTop: spacing.sm },
+  pendingScore: { color: colors.textMuted, fontSize: 28, fontWeight: "900", marginTop: spacing.sm },
   halfTimeScore: { color: colors.textMuted, fontSize: 10, fontWeight: "800", marginTop: 3 },
-  finalScorePill: { alignItems: "center", alignSelf: "flex-start", borderRadius: radii.round, borderWidth: 1, flexDirection: "row", gap: spacing.sm, marginTop: spacing.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
-  finalScoreLabel: { color: colors.textMuted, fontSize: 10, fontWeight: "800" },
-  finalScoreValue: { fontSize: 15, fontWeight: "900" },
   selectionRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -301,6 +366,9 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
     borderTopWidth: 1,
     borderTopColor: colors.borderSoft
+  },
+  selectionBlock: {
+    minWidth: 116
   },
   selection: { color: colors.text, fontSize: 15, fontWeight: "900", marginTop: 4 },
   sectionTitle: { color: colors.text, fontSize: 18, lineHeight: 24, fontWeight: "900", marginTop: spacing.xxl, marginBottom: spacing.md },

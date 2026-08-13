@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Typeface;
@@ -34,12 +33,6 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
     private static final String KEY_SUPER_PROFIT = "super_profit";
     private static final String KEY_SUPER_UPDATED_AT = "super_updated_at";
     private static final String KEY_UPDATED_AT = "updated_at";
-
-    private static final int COLOR_SUCCESS = Color.rgb(98, 230, 109);
-    private static final int COLOR_ERROR = Color.rgb(255, 101, 115);
-    private static final int COLOR_TRACK = Color.rgb(23, 59, 89);
-    private static final int COLOR_TEXT = Color.WHITE;
-    private static final int COLOR_MUTED = Color.rgb(148, 169, 188);
 
     @Override
     public void onUpdate(
@@ -163,6 +156,11 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
         RemoteViews views = new RemoteViews(
                 context.getPackageName(),
                 R.layout.btb_performance_widget);
+        BtbWidgetTheme.Palette palette = BtbWidgetTheme.resolve(context);
+        views.setInt(
+                R.id.btb_kpi_widget_root,
+                "setBackgroundResource",
+                palette.backgroundDrawable);
         views.setImageViewResource(
                 R.id.btb_kpi_app_icon,
                 context.getApplicationInfo().icon);
@@ -187,8 +185,8 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
                 ? superWins + " kazandı · " + superLosses + " kaybetti"
                 : context.getString(R.string.btb_kpi_waiting);
         int profitColor = safeProfit.signum() > 0
-                ? COLOR_SUCCESS
-                : safeProfit.signum() < 0 ? COLOR_ERROR : COLOR_MUTED;
+                ? palette.success
+                : safeProfit.signum() < 0 ? palette.error : palette.muted;
 
         views.setImageViewBitmap(
                 R.id.btb_kpi_toto_chart,
@@ -197,7 +195,8 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
                         totoHits,
                         Math.max(totoTotal - totoHits, 0),
                         coverageValue,
-                        hasToto && totoTotal > 0 ? COLOR_TEXT : COLOR_MUTED));
+                        hasToto && totoTotal > 0 ? palette.text : palette.muted,
+                        palette));
         views.setTextViewText(
                 R.id.btb_kpi_toto_label,
                 context.getString(R.string.btb_kpi_toto_title));
@@ -210,7 +209,8 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
                         superWins,
                         superLosses,
                         profitValue,
-                        hasSuper ? profitColor : COLOR_MUTED));
+                        hasSuper ? profitColor : palette.muted,
+                        palette));
         views.setTextViewText(R.id.btb_kpi_super_label, superLabel);
         views.setTextViewText(R.id.btb_kpi_super_detail, superDetail);
         views.setTextViewText(
@@ -224,6 +224,13 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
                                                         ? superUpdatedAt
                                                         : updatedAt)))
                         : context.getString(R.string.btb_widget_ready));
+        views.setTextColor(R.id.btb_kpi_title, palette.text);
+        views.setTextColor(R.id.btb_kpi_updated, palette.subtle);
+        views.setTextColor(R.id.btb_kpi_toto_label, palette.text);
+        views.setTextColor(R.id.btb_kpi_toto_detail, palette.muted);
+        views.setTextColor(R.id.btb_kpi_super_label, palette.text);
+        views.setTextColor(R.id.btb_kpi_super_detail, palette.muted);
+        views.setInt(R.id.btb_kpi_divider, "setBackgroundColor", palette.track);
 
         views.setOnClickPendingIntent(
                 R.id.btb_kpi_widget_root,
@@ -257,7 +264,8 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
             int primaryValue,
             int secondaryValue,
             String centerText,
-            int centerColor) {
+            int centerColor,
+            BtbWidgetTheme.Palette palette) {
         int size = dpToPx(context, 88);
         float strokeWidth = dpToPx(context, 10);
         float inset = strokeWidth / 2f + dpToPx(context, 3);
@@ -272,17 +280,17 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
         ring.setStyle(Paint.Style.STROKE);
         ring.setStrokeWidth(strokeWidth);
         ring.setStrokeCap(Paint.Cap.BUTT);
-        ring.setColor(COLOR_TRACK);
+        ring.setColor(palette.track);
         canvas.drawArc(bounds, -90f, 360f, false, ring);
 
         int total = Math.max(primaryValue, 0) + Math.max(secondaryValue, 0);
         if (total > 0) {
             float primarySweep =
                     360f * Math.max(primaryValue, 0) / total;
-            ring.setColor(COLOR_SUCCESS);
+            ring.setColor(palette.success);
             canvas.drawArc(bounds, -90f, primarySweep, false, ring);
             if (secondaryValue > 0) {
-                ring.setColor(COLOR_ERROR);
+                ring.setColor(palette.error);
                 canvas.drawArc(
                         bounds,
                         -90f + primarySweep,
