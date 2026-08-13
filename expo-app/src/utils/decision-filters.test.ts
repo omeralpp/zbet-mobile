@@ -1,60 +1,25 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mockMatchSummaries, mockSuperLogs } from "@/src/api/mock-data";
-import {
-  isStarDecisionFilter,
-  liveStarMetricCount,
-  normalizeStoredStarDecisionFilter,
-  matchDecisionFilter,
-  starMetricLabel,
-  superDecisionFilter
-} from "./decision-filters";
+import { mockSuperLogs } from "@/src/api/mock-data";
+import { sortSuperLogs } from "./decision-filters";
 
-test("sabit seçili sekmesi ile yıldız kriterleri ayrı semantik taşır", () => {
-  const selected = { ...mockMatchSummaries[0]!, selectedOdd: "Ms1", rating: 4 };
-  const unselected = { ...selected, selectedOdd: "", rating: 0 };
-  const unratedSelection = { ...selected, rating: 0 };
+test("keeps the provider order when Super sorting is default", () => {
+  assert.equal(sortSuperLogs(mockSuperLogs, "DEFAULT"), mockSuperLogs);
+});
 
-  assert.equal(matchDecisionFilter(selected, "SELECTED"), true);
-  assert.equal(matchDecisionFilter(unselected, "SELECTED"), false);
-  assert.equal(matchDecisionFilter(selected, "STAR_1_PLUS"), true);
-  assert.equal(matchDecisionFilter(unselected, "STAR_1_PLUS"), false);
-  assert.equal(matchDecisionFilter(unratedSelection, "STAR_1_PLUS"), false);
-  assert.equal(matchDecisionFilter(selected, "STAR_4_PLUS"), true);
-  assert.equal(matchDecisionFilter(selected, "STAR_3_PLUS"), true);
-  assert.equal(
-    matchDecisionFilter({ ...selected, rating: 3 }, "STAR_4_PLUS"),
-    false
+test("sorts Super decisions by rating and uses newest decision as tie break", () => {
+  const rows = [
+    { ...mockSuperLogs[0]!, key: "older-four", rating: 4, createdAt: "2026-08-13T08:00:00Z" },
+    { ...mockSuperLogs[0]!, key: "one", rating: 1, createdAt: "2026-08-13T10:00:00Z" },
+    { ...mockSuperLogs[0]!, key: "newer-four", rating: 4, createdAt: "2026-08-13T09:00:00Z" }
+  ];
+
+  assert.deepEqual(
+    sortSuperLogs(rows, "RATING_DESC").map((row) => row.key),
+    ["newer-four", "older-four", "one"]
   );
-});
-
-test("overview yıldız kartı kalıcı filtreyi kullanıcı dilinde adlandırır", () => {
-  assert.equal(isStarDecisionFilter("STAR_4_PLUS"), true);
-  assert.equal(isStarDecisionFilter("STAR_4"), false);
-  assert.equal(isStarDecisionFilter("ALL"), false);
-  assert.equal(isStarDecisionFilter("SELECTED"), false);
-  assert.equal(normalizeStoredStarDecisionFilter("ALL"), "STAR_1_PLUS");
-  assert.equal(normalizeStoredStarDecisionFilter("STAR_2"), "STAR_2_PLUS");
-  assert.equal(normalizeStoredStarDecisionFilter("STAR_5"), "STAR_4_PLUS");
-  assert.equal(starMetricLabel("STAR_1_PLUS"), "1+ yıldız");
-  assert.equal(starMetricLabel("STAR_4_PLUS"), "4+ yıldız");
-  assert.equal(starMetricLabel("STAR_3_PLUS"), "3+ yıldız");
-  const counts = {
-    ALL: 10,
-    STAR_1: 2,
-    STAR_2: 3,
-    STAR_3: 1,
-    STAR_4: 3,
-    STAR_5: 1
-  };
-  assert.equal(liveStarMetricCount(counts, "STAR_1_PLUS"), 10);
-  assert.equal(liveStarMetricCount(counts, "STAR_2_PLUS"), 8);
-  assert.equal(liveStarMetricCount(counts, "STAR_4_PLUS"), 4);
-});
-
-test("Super yıldız kriteri yalnız yıldız sekmesinde kullanılabilir", () => {
-  const log = { ...mockSuperLogs[0]!, rating: 3 as const };
-  assert.equal(superDecisionFilter(log, "STAR_1_PLUS"), true);
-  assert.equal(superDecisionFilter(log, "STAR_3_PLUS"), true);
-  assert.equal(superDecisionFilter(log, "STAR_4_PLUS"), false);
+  assert.deepEqual(
+    sortSuperLogs(rows, "RATING_ASC").map((row) => row.key),
+    ["one", "newer-four", "older-four"]
+  );
 });

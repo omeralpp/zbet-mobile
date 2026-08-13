@@ -76,8 +76,8 @@ export function MatchCard({
         ? colors.red
         : colors.textSubtle;
   const pressureBalance = derivePressureBalance(
-    match.totalPressure,
-    match.pressureDiff
+    match.pressureSource === "CURRENT_MATCH" ? match.totalPressure : null,
+    match.pressureSource === "CURRENT_MATCH" ? match.pressureDiff : null
   );
   const pressureIcon =
     pressureBalance.direction === "HOME"
@@ -177,7 +177,7 @@ export function MatchCard({
         <View
           accessibilityLabel={
             pressureBalance.hasData
-              ? `Baskı farkı ${formatSigned(match.pressureDiff, 1)}, ${
+              ? `Güncel baskı farkı ${formatSigned(match.pressureDiff ?? 0, 1)}, ${
                   pressureBalance.direction === "HOME"
                     ? "ev sahibi baskıda"
                     : pressureBalance.direction === "AWAY"
@@ -203,10 +203,12 @@ export function MatchCard({
               ]}
             >
               {pressureBalance.hasData
-                ? formatSigned(match.pressureDiff, 1)
+                ? formatSigned(match.pressureDiff ?? 0, 1)
                 : "—"}
             </Text>
-            <Text style={styles.pressureLabel}>baskı farkı</Text>
+            <Text style={styles.pressureLabel}>
+              {pressureBalance.hasData ? "güncel baskı farkı" : "güncel veri bekleniyor"}
+            </Text>
           </View>
         </View>
       </View>

@@ -11,8 +11,8 @@ export function PressureBalance({
   pressureDiff,
   label = "Karar anı baskı dengesi"
 }: {
-  totalPressure: number;
-  pressureDiff: number;
+  totalPressure: number | null;
+  pressureDiff: number | null;
   label?: string;
 }) {
   const balance = derivePressureBalance(totalPressure, pressureDiff);
@@ -26,14 +26,14 @@ export function PressureBalance({
     AWAY: "Deplasman baskısı",
     BALANCED: "Dengeli"
   };
-  const value = balance.hasData ? formatSigned(pressureDiff, 1) : "—";
+  const value = balance.hasData ? formatSigned(pressureDiff ?? 0, 1) : "—";
 
   return (
     <View
       accessibilityLabel={
         balance.hasData
           ? `${label}, baskı farkı ${value}, ${directionLabel[balance.direction]}`
-          : `${label}, veri yok`
+          : `${label}, veri bekleniyor`
       }
       style={styles.container}
     >
@@ -43,7 +43,9 @@ export function PressureBalance({
         <View style={styles.valueBlock}>
           <Text style={styles.value}>{value}</Text>
           <Text style={styles.caption}>
-            {balance.hasData ? directionLabel[balance.direction] : "Veri yok"}
+            {balance.hasData
+              ? directionLabel[balance.direction]
+              : "Veri bekleniyor"}
           </Text>
         </View>
         <Text style={styles.away}>Deplasman</Text>

@@ -106,6 +106,33 @@ export function formatFixtureDateTime(
   return `${date} · ${matchTime}`;
 }
 
+export function formatTimestamp(value: string): string {
+  const parsed = new Date(value);
+  if (!Number.isFinite(parsed.getTime())) {
+    return "Güncelleme zamanı bilinmiyor";
+  }
+  return new Intl.DateTimeFormat("tr-TR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Istanbul"
+  })
+    .format(parsed)
+    .replace(",", " ·");
+}
+
+export function formatTryCurrency(value: number): string {
+  return new Intl.NumberFormat("tr-TR", {
+    style: "currency",
+    currency: "TRY",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value);
+}
+
 export function matchDateFromKey(matchKey: string): string {
   return /^(\d{4}-\d{2}-\d{2}):/.exec(matchKey)?.[1] ?? "";
 }

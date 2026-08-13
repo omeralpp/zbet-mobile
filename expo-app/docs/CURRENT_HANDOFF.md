@@ -6,10 +6,10 @@ Son güncelleme: 2026-08-13
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `OBSERVATION` — 2026-08-13 Mobile cutover batch'i doğrulanıp commit/push edildi.
-Mobile checkpoint `7ba736df03d373a595f8df395e76a45592b24fa5` ile `origin/master`
-üzerindedir. BTP deploy, Cloudflare/Firebase/SAP dış değişikliği, APK dağıtımı,
-release signing ve Cordova cutover yapılmadı; her biri ayrıca açık onay gerektirir.
+Mod: `OBSERVATION` — 2026-08-13 ikinci Mobile cutover batch'i yerel olarak
+uygulandı ve doğrulandı. Commit/push, BTP deploy, Cloudflare/Firebase/SAP dış
+değişikliği, APK dağıtımı, release signing ve Cordova cutover yapılmadı; her biri
+ayrıca açık onay gerektirir.
 
 Yeni task önce yalnız `C:\dev\btb-cdoex\AGENTS.md` ve bu dosyayı tamamen okur.
 Observation tespitleri `docs/OBSERVATION_LOG.md` içindedir. Yeni toplu kod batch'i
@@ -17,89 +17,112 @@ yalnız `btb next cutover start` ile başlar.
 
 ## Son checkpoint
 
-- Karar Günlüğü gün kapsamı ayrı bir uzak buton yerine aktif `Bugün / Tüm günler`
-  değerini gösteren kompakt açılır menüdür; yıldız menüsüyle birlikte açık kalmaz.
-- Maç ve Super detay özetleri standart bilgi gruplarına ayrıldı. Kullanıcı aşağı
-  kaydırınca toolbar genel başlık yerine tek satırlık maç adını gösterir.
-- Canlı detaydaki yinelenen baskı dengesi kaldırıldı. Ortak `PressureBalance`
-  bileşeni yalnız tarihsel Super karar snapshot'ını Super detayında açıklar.
-- `Daha Fazla` ekranında cihaz bazlı Super görünür bildirim eşiği `1+`–`5 yıldız`
-  olarak saklanır. Eşik altı data-only mesaj widget'ı günceller fakat görünür yerel
-  bildirimi bastırır; Toto ve genel bildirimler değişmez.
-- Tema seçimi erişilebilir bir Koyu tema switch'idir. Uygulama tercihi native
-  `btb-widget` resolver'ına senkronize edilir; BTB bildirim ve performans widget'ları
-  aynı merkezi açık/koyu paletle birlikte yeniden çizilir.
-- Mobile BFF sözleşmesi, CAP runtime, SAP/Fiori/model davranışı ve notification
-  producer bu batch'te değiştirilmedi.
+- Maç ve Super detay hero kartlarındaki alt metrikler ortak üç kolon ritmine
+  alındı: canlıda seçim / seçim oranı / güncel oran; Super'de seçim / seçim oranı / kâr.
+- Karar Günlüğü yıldız menüsü artık `Varsayılan`, yıldız yüksekten düşüğe ve
+  düşükten yükseğe sıralamayı da içerir. Varsayılan provider sırasını aynen korur.
+  Android'de menü gerçek modal katmandadır; alttaki kartlar dokunmayı çalmaz.
+- Ana `(tabs)` ekranları `Özet -> Canlı -> Super -> Toto -> Daha Fazla` sırasında
+  yatay kaydırmayla değişir; detay ekranları ve ilk/son sekme wrap davranışı dışarıdadır.
+- Toto detayında güvenilir kaynak `updatedAt` değeri yerel tarih/saatle gösterilir.
+  Sonuçlanan fikstürlerde SAP `home_score` / `away_score` alanlarından biten skor;
+  payout hazır ve pozitifse SAP `theo_prize` alanından `Teorik ikramiye` gösterilir.
+- BFF Toto read-only seçimi/mapper'ı `payout_ready`, `payout_desc`, `theo_prize`,
+  `home_score` ve `away_score` alanlarını nullable DTO olarak taşır. Eski public BFF
+  bu alanları henüz yayınlamadığı için Mobile şeması staged deploy sırasında geriye
+  uyumlu null fallback kullanır.
+- `last_pressure_diff` / `last_total_pressure` alanlarının güncel maç değil son
+  tarihsel Super karar değerleri olduğu yerel CDS kanıtıyla doğrulandı. BFF bunları
+  artık güncel baskı gibi yayınlamaz; Mobile liste ve detay `Güncel veri bekleniyor`
+  gösterir. Gerçek current-match alanı gelmeden sahte değer üretilmez.
 
 ## Repo durumu
 
 ```text
 zbet-mobile
   branch/upstream : master / origin/master
-  checkpoint      : 7ba736df03d373a595f8df395e76a45592b24fa5
-  state           : v16 Mobile cutover commit/push tamamlandı; yalnız bu handoff
-                    yenilemesi takip eden docs commit'inde yayımlanır
+  HEAD            : 3ae7166296f1a778fe9a6bb4e73697d5d802201d
+  state           : bu cutover'ın Mobile kaynak, test, OpenAPI ve belge diff'i açık
 
 zbet-cap
   branch/upstream : main / origin/main
   HEAD            : 5fbffbf335238410f8d6f0c6815d0c33f8d35a15
-  state           : temiz; bu cutover'da değiştirilmedi ve deploy edilmedi
+  state           : bu cutover'ın bounded Mobile BFF select/mapper/test diff'i açık;
+                    deploy edilmedi
 ```
 
 Kullanıcıya ait mevcut değişiklikler korunmuştur. Açık diff yalnız bu cutover'ın
-Mobile UI, notification preference, Android widget tema ve belge kapsamındadır.
+Mobile Next ve Mobile BFF kapsamındadır.
 
 ## Doğrulama
 
-- `npm run check`: TypeScript, ESLint ve `95/95` test geçti.
-- Expo Doctor: `19/20`; yalnız Expo SDK 57 paketlerindeki bilinen yedi yama sürümü
-  farkı vardır. Bu özellik batch'ine dependency yükseltmesi karıştırılmadı.
-- ARM64 ve x86_64 release build geçti; native widget Java/Kotlin kaynakları derlendi.
-- Android API 35 x86_64 emülatöründe pilot giriş ve gerçek API verili Özet açıldı.
-- Daha Fazla ekranında tema switch'i ve Super bildirim eşiği görsel olarak bulundu.
-  Switch açık palete kontrollü reload yaptı; iki widget provider manifestte bulundu.
-- Emülatör logunda native module veya FATAL crash görülmedi.
-- Final ARM64 package/ABI/v2 imza/hash doğrulandı. Bağımlılık bytecode'undaki genel
-  `client_secret` alan adı dışında private-key/service-account secret marker yoktur.
-- Bağlı fiziksel cihaz olmadığı için gerçek launcher widget parity'si ve gerçek FCM
-  eşik davranışı observation'a bırakıldı.
+- Mobile `npm run check`: TypeScript, ESLint ve `96/96` test geçti.
+- BFF `npm test`: `65/65` test geçti.
+- Kompakt Mobile BFF kalite kapısı geçti.
+- Expo Doctor `19/20`: yalnız bilinen yedi Expo SDK 57 patch farkı açık; bu özellik
+  batch'ine dependency yükseltmesi karıştırılmadı.
+- Public `https://api.surklase.com` read-only dashboard/matches/Toto smoke ve yeni
+  Mobile Zod şemasıyla geriye uyumluluk parse kontrolü geçti.
+- Android API 35 x86_64 emülatöründe açık tema, canlı API, ana sekme swipe,
+  Karar Günlüğü modal yıldız/sıralama menüsü ve seçim hit-test'i smoke edildi.
+- SAP MCP readiness çalıştırıldı; görünür araç listesinde repository/source-read
+  aracı olmadığı için SAP kaynak iddiaları live MCP kanıtı değil yerel ABAP/CDS
+  snapshot kanıtıdır.
 
 ## Final yerel pilot APK
 
+Final ARM64 artifact build ve imza/hash doğrulaması bu handoff'un aşağıdaki alanında
+cutover kapanışında kaydedilir:
+
 ```text
-Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-cutover-20260813-v16-final.apk
+Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-cutover-20260813-v20-final.apk
 Package : com.btb.mobile.next
 Version : 0.1.0 (1)
 ABI     : arm64-v8a
-Size    : 48,177,769 bytes
-SHA-256 : B9A612DDC0EB227780E5918E2D272572B1F798093AF5E0F2905ACCC949D94BE4
+Size    : 48,186,309 bytes
+SHA-256 : FA4B569D91B0E3CE1C41F43C377A6976C82ED5F217EBED6BA6D71CF99F440793
 Signing : APK Signature Scheme v2; pilot debug certificate
 ```
 
-Artifact klasöründe yalnız v16 final tutulur. Önceki v15 ile geçici x86_64 smoke
-APK'sı doğrulama sonrasında Geri Dönüşüm Kutusu'na taşındı. APK dağıtılmadı.
+## Bilyoner takım logo eşlemesi
 
-## Açık observation maddeleri
+- `htpi` = home participant id; `atpi` = away participant id.
+- Logo kalıbı:
+  `https://content.bilyoner.com/assets/participant/{participantId}.png`
+- PSG `htpi=954`:
+  `https://content.bilyoner.com/assets/participant/954.png`
+- Aston Villa `atpi=227`:
+  `https://content.bilyoner.com/assets/participant/227.png`
+- Bu, Bilyoner'in public/dokümante edilmiş resmi logo API'si değildir; web
+  uygulamasında kullanılan CDN pattern'inin gözlemlenmesiyle tespit edilmiştir.
+  Bu nedenle tek merkezi resolver/config ve broken-image göstermeyen fallback
+  zorunludur; URL component'lere veya DB'ye dağınık yazılmaz.
+- Yerel Mobile OpenAPI/Zod, BFF `$select`/mapper ve ABAP snapshot'ında `htpi/atpi`
+  bulunmadı. Doğru alan zinciri upstream SAP/DDIC/OData'da ayrı yazma/aktivasyon
+  onayıyla sağlanmadan takım adından tahmin veya runtime scraping yapılmaz.
 
-- Fiziksel telefonda v16 kurulum, tema kalıcılığı, iki gerçek launcher widget'ının
-  açık/koyu paleti ve data-only FCM Super eşiği parity'si.
-- Dar ekran/büyük yazıda detay özet kartları ve aşağı kaydırmada sticky maç başlığı.
-- `NXT-OBS-073`: `htpi/atpi` alanlarının upstream SAP/OData/BFF zincirinde eksik
-  olması nedeniyle Bilyoner takım logosu resolver entegrasyonu bekliyor.
+## Açık observation / blokajlar
+
+- `NXT-OBS-073`: participant ID zinciri eksik; kulüp logoları doğru veri gelene kadar
+  deferred.
 - `NXT-OBS-074`: notification producer sürekliliği için SAP çağrı/SM59 telemetry kanıtı.
 - `NXT-OBS-086`: Toto idempotency düzeltmesi `BTB Toto - Aktif` sahipliğindedir.
-- `NXT-OBS-089`–`NXT-OBS-094`: detay kartı parity, Toto güncellik/sonuç alanları,
-  yıldız sıralaması, güncel baskı kaynağı ve ana sekme swipe talepleri bir sonraki
-  Mobile cutover adayıdır; kaynak alanı isteyen parçalar kanıtlanmadan uygulanmaz.
-- Expo SDK 57 yama sürümleri ayrı dependency bakım batch'i olmalıdır.
+- `NXT-OBS-092`: Mobile/BFF tarihsel baskıyı artık güncel diye göstermez; gerçek
+  current-match pressure alanı SAP/OData'da yayınlanana kadar veri bekleme fallback'i
+  kullanılır.
+- Toto skor/teorik ikramiye görünümü için bu `zbet-cap` diff'inin ayrı açık onayla
+  BTP DEV deploy edilmesi ve gerçek response ile doğrulanması gerekir.
+- Fiziksel ARM64 telefonda v20 kurulum ve ana sekme swipe/filtre/Toto sonuç görünümü
+  observation'da izlenecek.
 
 ## Exact next steps
 
 1. Observation modunda fiziksel cihaz sonuçlarını topla.
-2. Kullanıcı `btb next cutover start` derse yalnız aktif ve yeterince açık observation
-   maddelerini yeni yerel batch olarak dondur; veri kaynağı kanıtı isteyenleri ayır.
-3. BFF değişmediği için bu checkpoint'te BTP deploy gerekmez.
-4. APK dağıtımı istenirse v16 ARM64 dosyasını ayrı açık dağıtım onayıyla paylaş.
+2. Commit/push istenirse iki repoyu ayrı ve ilgili diff'lerle doğrulayıp kullanıcı
+   onayına göre commit/push et.
+3. BFF skor/ikramiye alanları için ayrıca exact-SHA BTP DEV deploy onayı al; SAP/Fiori
+   model davranışını değiştirme.
+4. Participant ID ve current pressure kaynak sözleşmelerini ilgili operasyonel task'a
+   handoff et; Mobile'da tahmini veri üretme.
 
-Cutover kanıtı: `docs/observation_archive/cutover_2026-08-13-01.md`.
+Cutover kanıtı: `docs/observation_archive/cutover_2026-08-13-02.md`.

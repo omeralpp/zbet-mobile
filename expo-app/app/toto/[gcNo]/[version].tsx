@@ -21,7 +21,9 @@ import { colors, radii, spacing } from "@/src/theme/theme";
 import {
   formatFixtureDateTime,
   formatPercentage,
-  formatProgramStatus
+  formatProgramStatus,
+  formatTimestamp,
+  formatTryCurrency
 } from "@/src/utils/format";
 import { summarizeTotoResults } from "@/src/utils/toto-results";
 
@@ -162,6 +164,9 @@ export default function TotoProgramDetailScreen() {
           {program.singleCount} tek · {program.doubleCount} çift ·{" "}
           {program.tripleCount} üçlü
         </Text>
+        <Text style={styles.updatedAt}>
+          Son güncelleme: {formatTimestamp(program.updatedAt)}
+        </Text>
       </View>
 
       {resultTotal > 0 ? (
@@ -250,6 +255,21 @@ export default function TotoProgramDetailScreen() {
               <Text style={styles.legendText}>Bekliyor</Text>
             </View>
           </View>
+          {program.status === "RESULTED" && program.theoreticalPrize !== null ? (
+            <View style={styles.prizeRow}>
+              <View style={styles.prizeCopy}>
+                <Text style={styles.prizeLabel}>Teorik ikramiye</Text>
+                {program.payoutDescription ? (
+                  <Text numberOfLines={2} style={styles.prizeDescription}>
+                    {program.payoutDescription}
+                  </Text>
+                ) : null}
+              </View>
+              <Text style={styles.prizeValue}>
+                {formatTryCurrency(program.theoreticalPrize)}
+              </Text>
+            </View>
+          ) : null}
         </View>
       ) : null}
 
@@ -291,6 +311,12 @@ export default function TotoProgramDetailScreen() {
               {prediction.actualResult ? (
                 <Text style={styles.actualResult}>
                   Sonuç {prediction.actualResult}
+                </Text>
+              ) : null}
+              {prediction.homeScore !== null &&
+              prediction.awayScore !== null ? (
+                <Text style={styles.finalScore}>
+                  Skor {prediction.homeScore}-{prediction.awayScore}
                 </Text>
               ) : null}
             </View>
@@ -447,6 +473,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: spacing.lg
   },
+  updatedAt: {
+    color: colors.textSubtle,
+    fontSize: 10,
+    marginTop: spacing.sm
+  },
   resultProgressCard: {
     backgroundColor: colors.backgroundElevated,
     borderRadius: radii.lg,
@@ -497,6 +528,36 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: spacing.md,
     marginTop: spacing.md
+  },
+  prizeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.md,
+    marginTop: spacing.lg,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSoft
+  },
+  prizeCopy: {
+    flex: 1
+  },
+  prizeLabel: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: "900"
+  },
+  prizeDescription: {
+    color: colors.textSubtle,
+    fontSize: 9,
+    lineHeight: 13,
+    marginTop: 2
+  },
+  prizeValue: {
+    color: colors.green,
+    fontSize: 15,
+    fontWeight: "900",
+    textAlign: "right"
   },
   legendItem: {
     flexDirection: "row",
@@ -578,6 +639,12 @@ const styles = StyleSheet.create({
     color: colors.textSubtle,
     fontSize: 8,
     fontWeight: "700",
+    marginTop: 2
+  },
+  finalScore: {
+    color: colors.textMuted,
+    fontSize: 9,
+    fontWeight: "800",
     marginTop: 2
   },
   waitingPrediction: {

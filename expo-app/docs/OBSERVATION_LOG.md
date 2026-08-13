@@ -5,8 +5,8 @@ Durum: `ACTIVE / OBSERVATION`
 Aktif APK:
 
 ```text
-btb-mobile-next-arm64-cutover-20260813-v16-final.apk
-SHA-256: B9A612DDC0EB227780E5918E2D272572B1F798093AF5E0F2905ACCC949D94BE4
+btb-mobile-next-arm64-cutover-20260813-v20-final.apk
+SHA-256: FA4B569D91B0E3CE1C41F43C377A6976C82ED5F217EBED6BA6D71CF99F440793
 ```
 
 Bu dosya yalnız gerçek kullanımda açık kalan tespitleri tutar. Observation
@@ -66,6 +66,18 @@ sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
 | NXT-OBS-080 | 2026-08-11 | Bibi hedef vurgusu regresyonu | Sabit koordinat ve tahminî dikdörtgenler kaldırıldı. `TutorialTarget` gerçek React Native bileşenini `measureInWindow` ile ölçer, yalnız aktif nesnenin sınırına 2 dp BTB yeşili çizer ve adım/ekran/kapanış değişiminde çerçeveyi temizler. Özet hero, Günlük Super ve ilk maç hedeflerinde ardışık emülatör ekran kanıtı alındı; eski büyük çerçeve özel durumu düzeltilip tekrar doğrulandı. Fiziksel telefon parity’si observation’da beklenir. | HIGH | READY |
 
 | NXT-OBS-081 | 2026-08-11 | Açık tema kapsam netliği | Açık tema yalnız arka plan değil; yüzey, metin, sınır, durum, grafik, Bibi, sistem durum çubuğu, giriş/splash ve navigation renklerini ortak semantik paletten üretir. Giriş, Özet, Maç Detayı, rehber balonu ve hedef çerçeveleri açık tema release APK üzerinde görsel doğrulandı; seçim koyu varsayımı bozmadan kalıcıdır. | MEDIUM | READY |
+
+## 2026-08-13 cutover (02) disposition
+
+- `NXT-OBS-089`, `091` ve `094`: yerel Mobile çözümü ve Android emülatör smoke'u
+  tamamlandı; fiziksel ARM64 observation için `READY`.
+- `NXT-OBS-090` ve `093`: Mobile + bounded BFF sözleşmesi/testi `READY`; public BFF
+  yeni alanları ayrı BTP DEV deploy onayı verilene kadar yayınlamaz.
+- `NXT-OBS-092`: tarihsel `last_pressure_*` değerinin güncelmiş gibi gösterilmesi
+  kapatıldı ve güvenli null fallback `READY`; gerçek current-match pressure kaynağı
+  SAP/OData alanı bulunmadığı için veri zenginleştirmesi `DEFERRED`.
+- `NXT-OBS-073`, `074` ve `086`: ilgili upstream/operasyonel task blokajları nedeniyle
+  açık kaldı; bu cutover sahte veri veya task sınırı aşan değişiklik yapmadı.
 
 `READY`: çözüm yerel batch içinde uygulanmış ve otomatik/emülatör kapılarından
 geçmiştir; fiziksel cihaz observation sonucu beklenir.

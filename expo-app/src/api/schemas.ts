@@ -26,8 +26,9 @@ export const matchSummarySchema = z.strictObject({
   rating: z.number().int().min(0).max(5),
   liveRate: finiteNumber.nullable(),
   currentRate: finiteNumber.nullable(),
-  pressureDiff: finiteNumber,
-  totalPressure: finiteNumber,
+  pressureDiff: finiteNumber.nullable(),
+  totalPressure: finiteNumber.nullable(),
+  pressureSource: z.literal("CURRENT_MATCH").nullable().default(null),
   lastUpdatedAt: isoDateTime
 });
 
@@ -183,7 +184,9 @@ export const totoFixtureSchema = z.strictObject({
   matchDate: z.string(),
   matchTime: z.string(),
   eventId: z.number().int().positive().nullable(),
-  actualResult: z.enum(["1", "X", "2"]).nullable()
+  actualResult: z.enum(["1", "X", "2"]).nullable(),
+  homeScore: z.number().int().nonnegative().nullable().default(null),
+  awayScore: z.number().int().nonnegative().nullable().default(null)
 });
 
 export const totoPredictionSchema = totoFixtureSchema.extend({
@@ -209,6 +212,8 @@ export const totoProgramSchema = z.strictObject({
   tripleCount: z.number().int().nonnegative(),
   mainHits: z.number().int().nonnegative().nullable(),
   coverageHits: z.number().int().nonnegative().nullable(),
+  theoreticalPrize: finiteNumber.positive().nullable().default(null),
+  payoutDescription: z.string().min(1).nullable().default(null),
   fixtures: z.array(totoFixtureSchema),
   predictions: z.array(totoPredictionSchema),
   updatedAt: isoDateTime

@@ -7,22 +7,23 @@ export type PressureBalance = {
 };
 
 export function derivePressureBalance(
-  totalPressure: number,
-  pressureDiff: number
+  totalPressure: number | null,
+  pressureDiff: number | null
 ): PressureBalance {
-  const safeTotal = Math.max(0, totalPressure);
-  const denominator = Math.max(safeTotal, Math.abs(pressureDiff));
-  const hasData = denominator > 0;
+  const safeTotal = Math.max(0, totalPressure ?? 0);
+  const safeDiff = pressureDiff ?? 0;
+  const denominator = Math.max(safeTotal, Math.abs(safeDiff));
+  const hasData = totalPressure !== null && pressureDiff !== null && denominator > 0;
 
   return {
     direction:
-      pressureDiff > 0
+      safeDiff > 0
         ? "HOME"
-        : pressureDiff < 0
+        : safeDiff < 0
           ? "AWAY"
           : "BALANCED",
     magnitudeRatio: hasData
-      ? Math.min(1, Math.abs(pressureDiff) / denominator)
+      ? Math.min(1, Math.abs(safeDiff) / denominator)
       : 0,
     hasData
   };

@@ -181,14 +181,19 @@ export default function SuperLogDetailScreen() {
           <View style={styles.selectionRow}>
             <View style={styles.selectionBlock}>
               <RatingStars rating={log.rating} />
-              <Text style={styles.selection}>{log.selectedOdd}</Text>
+              <Text numberOfLines={1} style={styles.selection}>{log.selectedOdd}</Text>
+              <Text style={styles.heroMetricLabel}>seçim</Text>
             </View>
-            {metric(formatRate(log.liveRate), "seçim oranı")}
-            {metric(
-              log.profit === null ? "—" : formatSigned(log.profit),
-              "kâr",
-              resultColor
-            )}
+            <View style={[styles.heroMetric, styles.heroMetricCenter]}>
+              <Text style={styles.heroMetricValue}>{formatRate(log.liveRate)}</Text>
+              <Text style={styles.heroMetricLabel}>seçim oranı</Text>
+            </View>
+            <View style={[styles.heroMetric, styles.heroMetricEnd]}>
+              <Text style={[styles.heroMetricValue, { color: resultColor }]}>
+                {log.profit === null ? "—" : formatSigned(log.profit)}
+              </Text>
+              <Text style={styles.heroMetricLabel}>kâr</Text>
+            </View>
           </View>
         </View>
       </TutorialTarget>
@@ -357,10 +362,9 @@ const styles = StyleSheet.create({
   pendingScore: { color: colors.textMuted, fontSize: 28, fontWeight: "900", marginTop: spacing.sm },
   halfTimeScore: { color: colors.textMuted, fontSize: 10, fontWeight: "800", marginTop: 3 },
   selectionRow: {
+    minHeight: 72,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    flexWrap: "wrap",
     gap: spacing.md,
     marginTop: spacing.xl,
     paddingTop: spacing.lg,
@@ -368,9 +372,15 @@ const styles = StyleSheet.create({
     borderTopColor: colors.borderSoft
   },
   selectionBlock: {
-    minWidth: 116
+    flex: 1,
+    minWidth: 0
   },
   selection: { color: colors.text, fontSize: 15, fontWeight: "900", marginTop: 4 },
+  heroMetric: { flex: 1, minWidth: 0 },
+  heroMetricCenter: { alignItems: "center" },
+  heroMetricEnd: { alignItems: "flex-end" },
+  heroMetricValue: { color: colors.text, fontSize: 16, lineHeight: 21, fontWeight: "900" },
+  heroMetricLabel: { color: colors.textSubtle, fontSize: 9, lineHeight: 13, marginTop: 2 },
   sectionTitle: { color: colors.text, fontSize: 18, lineHeight: 24, fontWeight: "900", marginTop: spacing.xxl, marginBottom: spacing.md },
   card: { padding: spacing.xl, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.borderSoft, backgroundColor: colors.backgroundElevated },
   reason: { color: colors.green, fontSize: 14, fontWeight: "900" },

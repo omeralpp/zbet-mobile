@@ -7,6 +7,16 @@ export type StarDecisionFilter =
   | "STAR_4_PLUS";
 
 export type DecisionFilter = "ALL" | "SELECTED" | StarDecisionFilter;
+export type SuperStarSort = "DEFAULT" | "RATING_DESC" | "RATING_ASC";
+
+export const superStarSortOptions: {
+  value: SuperStarSort;
+  label: string;
+}[] = [
+  { value: "DEFAULT", label: "Varsayılan" },
+  { value: "RATING_DESC", label: "Yıldız: yüksekten düşüğe" },
+  { value: "RATING_ASC", label: "Yıldız: düşükten yükseğe" }
+];
 
 export const starFilterOptions: {
   value: StarDecisionFilter;
@@ -129,4 +139,29 @@ export function superDecisionFilter(
   filter: DecisionFilter
 ): boolean {
   return ratingMatches(log.rating, filter);
+}
+
+export function sortSuperLogs(
+  logs: SuperLog[],
+  sort: SuperStarSort
+): SuperLog[] {
+  if (sort === "DEFAULT") {
+    return logs;
+  }
+  return logs
+    .map((log, index) => ({ log, index }))
+    .sort((left, right) => {
+      const ratingOrder =
+        sort === "RATING_DESC"
+          ? right.log.rating - left.log.rating
+          : left.log.rating - right.log.rating;
+      if (ratingOrder !== 0) {
+        return ratingOrder;
+      }
+      const dateOrder =
+        new Date(right.log.createdAt).getTime() -
+        new Date(left.log.createdAt).getTime();
+      return dateOrder || left.index - right.index;
+    })
+    .map(({ log }) => log);
 }

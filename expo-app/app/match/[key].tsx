@@ -22,6 +22,7 @@ import {
 } from "@/src/api/queries";
 import { RatingStars } from "@/src/components/RatingStars";
 import { LeagueStandingsTable } from "@/src/components/LeagueStandingsTable";
+import { PressureBalance } from "@/src/components/PressureBalance";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { RatioResultsChart } from "@/src/components/RatioResultsChart";
 import { Screen } from "@/src/components/Screen";
@@ -270,21 +271,20 @@ export default function MatchDetailScreen() {
           </View>
         </View>
         <View style={styles.selectionRow}>
-          <View>
+          <View style={styles.heroMetric}>
             <RatingStars rating={match.rating} size={16} />
-            <Text style={styles.selection}>
+            <Text numberOfLines={1} style={styles.selection}>
               {match.selectedOdd || "Super adayı bekleniyor"}
             </Text>
+            <Text style={styles.rateLabel}>seçim</Text>
           </View>
-          <View style={styles.ratePair}>
-            <View>
-              <Text style={styles.rateValue}>{formatRate(match.liveRate)}</Text>
-              <Text style={styles.rateLabel}>seçim oranı</Text>
-            </View>
-            <View style={styles.alignEnd}>
-              <Text style={styles.rateValue}>{currentMarket.value}</Text>
-              <Text style={styles.rateLabel}>{currentMarket.label}</Text>
-            </View>
+          <View style={[styles.heroMetric, styles.heroMetricCenter]}>
+            <Text style={styles.rateValue}>{formatRate(match.liveRate)}</Text>
+            <Text style={styles.rateLabel}>seçim oranı</Text>
+          </View>
+          <View style={[styles.heroMetric, styles.heroMetricEnd]}>
+            <Text style={styles.rateValue}>{currentMarket.value}</Text>
+            <Text style={styles.rateLabel}>{currentMarket.label}</Text>
           </View>
         </View>
         </View>
@@ -456,6 +456,19 @@ export default function MatchDetailScreen() {
         />
       </View>
 
+      <Text style={styles.sectionTitle}>Güncel baskı dengesi</Text>
+      <View style={styles.statsCard}>
+        <PressureBalance
+          label="Güncel maç snapshot'ı"
+          pressureDiff={
+            match.pressureSource === "CURRENT_MATCH" ? match.pressureDiff : null
+          }
+          totalPressure={
+            match.pressureSource === "CURRENT_MATCH" ? match.totalPressure : null
+          }
+        />
+      </View>
+
       <Text style={styles.sectionTitle}>Skor dağılımı</Text>
       <View style={styles.distributionCard}>
         {match.scoreDistribution.length ? (
@@ -622,27 +635,29 @@ const styles = StyleSheet.create({
     marginTop: 3
   },
   selectionRow: {
+    minHeight: 72,
     paddingTop: spacing.lg,
     borderTopWidth: 1,
     borderTopColor: colors.borderSoft,
     flexDirection: "row",
-    flexWrap: "wrap",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: spacing.lg
+    gap: spacing.md
+  },
+  heroMetric: {
+    flex: 1,
+    minWidth: 0
+  },
+  heroMetricCenter: {
+    alignItems: "center"
+  },
+  heroMetricEnd: {
+    alignItems: "flex-end"
   },
   selection: {
-    color: colors.textMuted,
-    fontSize: 11,
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: "900",
     marginTop: 3
-  },
-  ratePair: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.xl
-  },
-  alignEnd: {
-    alignItems: "flex-end"
   },
   rateValue: {
     color: colors.text,

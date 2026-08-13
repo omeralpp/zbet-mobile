@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -40,6 +40,11 @@ import {
   matchSuperLogTab,
   type SuperLogTab
 } from "@/src/utils/super-log-tabs";
+import {
+  sortSuperLogs,
+  type SuperStarSort
+} from "@/src/utils/decision-filters";
+import type { SuperLog } from "@/src/api/schemas";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 
 export default function SuperScreen() {
@@ -57,6 +62,8 @@ export default function SuperScreen() {
     useSuperStarFilter();
   const [decisionOpen, setDecisionOpen] = useState(false);
   const [dayScopeOpen, setDayScopeOpen] = useState(false);
+  const [sort, setSort] = useState<SuperStarSort>("DEFAULT");
+  const listRef = useRef<FlatList<SuperLog>>(null);
   const query = useQuery(superLogsQuery);
   const latestMatchDate = useMemo(
     () =>
@@ -78,11 +85,17 @@ export default function SuperScreen() {
   );
   const logs = useMemo(
     () =>
-      scopedLogs.filter(
-        (log) => matchSuperLogTab(log, tab, starFilter)
+      sortSuperLogs(
+        scopedLogs.filter(
+          (log) => matchSuperLogTab(log, tab, starFilter)
+        ),
+        sort
       ),
-    [scopedLogs, starFilter, tab]
+    [scopedLogs, sort, starFilter, tab]
   );
+  useEffect(() => {
+    listRef.current?.scrollToOffset({ animated: true, offset: 0 });
+  }, [sort]);
   const tabCounts = useMemo(
     () => ({
       ALL: scopedLogs.filter((log) => matchSuperLogTab(log, "ALL", starFilter)).length,
@@ -144,6 +157,7 @@ export default function SuperScreen() {
               }
             );
           }}
+          onSortChange={setSort}
           onOpenChange={(open) => {
             setDecisionOpen(open);
             if (open) {
@@ -152,6 +166,7 @@ export default function SuperScreen() {
           }}
           open={decisionOpen}
           value={starFilter}
+          sortValue={sort}
         />
         </View>
       </TutorialTarget>
@@ -250,6 +265,7 @@ export default function SuperScreen() {
         />
       ) : (
         <FlatList
+          ref={listRef}
           contentContainerStyle={styles.list}
           data={logs}
           initialNumToRender={10}

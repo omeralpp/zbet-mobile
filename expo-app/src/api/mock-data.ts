@@ -29,6 +29,7 @@ export const mockMatches: MatchDetail[] = [
     currentRate: 1.38,
     pressureDiff: 16.4,
     totalPressure: 68.2,
+    pressureSource: "CURRENT_MATCH",
     lastUpdatedAt: now,
     decisionMinute: 61,
     decisionReason: "SCORE_CHANGED / HOME",
@@ -78,6 +79,7 @@ export const mockMatches: MatchDetail[] = [
     currentRate: 1.81,
     pressureDiff: 8.1,
     totalPressure: 51.7,
+    pressureSource: "CURRENT_MATCH",
     lastUpdatedAt: now,
     decisionMinute: 48,
     decisionReason: "ODDS_CHANGED / GOAL",
@@ -127,6 +129,7 @@ export const mockMatches: MatchDetail[] = [
     currentRate: 1.71,
     pressureDiff: -5.8,
     totalPressure: 43.3,
+    pressureSource: "CURRENT_MATCH",
     lastUpdatedAt: now,
     decisionMinute: 39,
     decisionReason: "MANUAL_RECHECK / AWAY",
@@ -176,6 +179,7 @@ export const mockMatches: MatchDetail[] = [
     currentRate: null,
     pressureDiff: 0,
     totalPressure: 0,
+    pressureSource: "CURRENT_MATCH",
     lastUpdatedAt: now,
     decisionMinute: null,
     decisionReason: "",
@@ -290,6 +294,8 @@ export const mockTotoPrograms: TotoProgram[] = [
     tripleCount: 3,
     mainHits: 8,
     coverageHits: 10,
+    theoreticalPrize: 125000.5,
+    payoutDescription: "15 bilen kolonlar için teorik toplam",
     updatedAt: now,
     fixtures: [
       {
@@ -298,7 +304,9 @@ export const mockTotoPrograms: TotoProgram[] = [
         matchDate: "2026-08-01",
         matchTime: "18:00",
         eventId: 991001,
-        actualResult: "1"
+        actualResult: "1",
+        homeScore: 2,
+        awayScore: 1
       },
       {
         matchNo: 2,
@@ -306,7 +314,9 @@ export const mockTotoPrograms: TotoProgram[] = [
         matchDate: "2026-08-01",
         matchTime: "20:45",
         eventId: 991002,
-        actualResult: "X"
+        actualResult: "X",
+        homeScore: 1,
+        awayScore: 1
       },
       {
         matchNo: 3,
@@ -314,7 +324,9 @@ export const mockTotoPrograms: TotoProgram[] = [
         matchDate: "2026-08-02",
         matchTime: "21:00",
         eventId: 991003,
-        actualResult: "2"
+        actualResult: "2",
+        homeScore: 0,
+        awayScore: 2
       }
     ],
     predictions: [
@@ -325,6 +337,8 @@ export const mockTotoPrograms: TotoProgram[] = [
         matchTime: "18:00",
         eventId: 991001,
         actualResult: "1",
+        homeScore: 2,
+        awayScore: 1,
         mainPick: "1",
         coverage: "1",
         confidence: 0.72,
@@ -338,6 +352,8 @@ export const mockTotoPrograms: TotoProgram[] = [
         matchTime: "20:45",
         eventId: 991002,
         actualResult: "X",
+        homeScore: 1,
+        awayScore: 1,
         mainPick: "1",
         coverage: "1X",
         confidence: 0.61,
@@ -351,6 +367,8 @@ export const mockTotoPrograms: TotoProgram[] = [
         matchTime: "21:00",
         eventId: 991003,
         actualResult: "2",
+        homeScore: 0,
+        awayScore: 2,
         mainPick: "X",
         coverage: "1X2",
         confidence: 0.42,
