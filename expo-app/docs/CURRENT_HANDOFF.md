@@ -8,7 +8,10 @@ Aktif task: `BTB Mobile Next - Aktif`
 
 Mod: `OBSERVATION` — 2026-08-13 ikinci Mobile cutover batch'i uygulandı,
 doğrulandı, iki repoda commit/push edildi ve Mobile BFF'nin korunan CAP yüzeyi
-exact-SHA ile BTP DEV'e deploy edildi. Public Cloudflare origin yapılandırması,
+exact-SHA ile BTP DEV'e deploy edildi. Owner talimatıyla `btb-fcm-proxy-srv`
+sonradan durduruldu ve yeniden açıkça devreye alınması istenene kadar
+kullanılmayacak. Aktif runtime yalnız `api.surklase.com` arkasındaki yerel
+standalone BFF/notification servisidir. Public Cloudflare origin yapılandırması,
 Firebase/SAP dış değişikliği, APK dağıtımı, release signing ve Cordova cutover
 yapılmadı; her biri ayrıca açık onay gerektirir.
 
@@ -66,7 +69,8 @@ Mobile Next, Mobile BFF ve kapanış kanıtı kapsamındadır.
 - CAP exact-SHA MTA geçici Node 24 build ortamında üretildi; archive SHA-256
   `EE6C1471A51DBB735DDFA74A8D56C6CD5975630E9A61BFBCC02878209055DA0C`.
 - BTP DEV MTA operation `4067016a-9756-11f1-91c3-eeee0a9f1a4c` tamamlandı;
-  `btb-fcm-proxy-srv` `1/1 STARTED` ve doğrudan `/health` yanıtı `UP`.
+  deploy kanıtı alındı. Owner'ın sonraki talimatıyla `btb-fcm-proxy-srv`
+  `requested state: stopped`, `0/1` durumuna getirildi.
 - Public Mobile BFF origin yeni source ile yeniden başlatıldı. Gerçek Toto detail
   response `theoreticalPrize`, `payoutDescription`, `updatedAt`, `homeScore` ve
   `awayScore` alanlarını taşıdı; public `/health` pilot auth, SAP backend, device
@@ -126,9 +130,11 @@ Signing : APK Signature Scheme v2; pilot debug certificate
 ## Exact next steps
 
 1. Observation modunda fiziksel cihaz sonuçlarını topla.
-2. Participant ID ve current pressure kaynak sözleşmelerini ilgili operasyonel task'a
+2. `btb-fcm-proxy-srv` uygulamasını başlatma, deploy etme veya notification yolu
+   olarak kullanma; yalnız owner açıkça yeniden devreye alınmasını isterse değerlendir.
+3. Participant ID ve current pressure kaynak sözleşmelerini ilgili operasyonel task'a
    handoff et; Mobile'da tahmini veri üretme.
-3. Yeni observation batch'i yalnız `btb next cutover start` ile aç; commit/push ve
+4. Yeni observation batch'i yalnız `btb next cutover start` ile aç; commit/push ve
    dış deploy kapılarını yeniden açık onayla işlet.
 
 Cutover kanıtı: `docs/observation_archive/cutover_2026-08-13-02.md`.
