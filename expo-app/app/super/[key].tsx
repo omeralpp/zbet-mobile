@@ -15,6 +15,7 @@ import { Screen } from "@/src/components/Screen";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { RatingStars } from "@/src/components/RatingStars";
 import { LeagueStandingsTable } from "@/src/components/LeagueStandingsTable";
+import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { colors, radii, spacing } from "@/src/theme/theme";
 import {
   formatFixtureDateTime,
@@ -108,7 +109,8 @@ export default function SuperLogDetailScreen() {
         )
       }}
     >
-      <View style={styles.hero}>
+      <TutorialTarget id="super-summary" radius={radii.xl}>
+        <View style={styles.hero}>
         <View style={styles.rowBetween}>
           <Text numberOfLines={1} style={styles.league}>{log.league}</Text>
           <Text style={[styles.result, { color: resultColor }]}>
@@ -152,7 +154,8 @@ export default function SuperLogDetailScreen() {
             resultColor
           )}
         </View>
-      </View>
+        </View>
+      </TutorialTarget>
 
       <Text style={styles.sectionTitle}>Karar özeti</Text>
       <View style={styles.card}>
@@ -283,15 +286,16 @@ const styles = StyleSheet.create({
   fixtureTime: { color: colors.textSubtle, fontSize: 10, marginTop: 4 },
   match: { color: colors.text, fontSize: 22, fontWeight: "900", marginTop: spacing.lg },
   scoreLabel: { color: colors.textSubtle, fontSize: 9, fontWeight: "800", marginTop: spacing.md },
-  score: { color: colors.white, fontSize: 28, fontWeight: "900", marginTop: spacing.sm },
+  score: { color: colors.text, fontSize: 28, fontWeight: "900", marginTop: spacing.sm },
   halfTimeScore: { color: colors.textMuted, fontSize: 10, fontWeight: "800", marginTop: 3 },
   finalScorePill: { alignItems: "center", alignSelf: "flex-start", borderRadius: radii.round, borderWidth: 1, flexDirection: "row", gap: spacing.sm, marginTop: spacing.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   finalScoreLabel: { color: colors.textMuted, fontSize: 10, fontWeight: "800" },
   finalScoreValue: { fontSize: 15, fontWeight: "900" },
   selectionRow: {
     flexDirection: "row",
-    alignItems: "flex-end",
+    alignItems: "center",
     justifyContent: "space-between",
+    flexWrap: "wrap",
     gap: spacing.md,
     marginTop: spacing.xl,
     paddingTop: spacing.lg,
@@ -300,12 +304,12 @@ const styles = StyleSheet.create({
   },
   selection: { color: colors.text, fontSize: 15, fontWeight: "900", marginTop: 4 },
   sectionTitle: { color: colors.text, fontSize: 18, lineHeight: 24, fontWeight: "900", marginTop: spacing.xxl, marginBottom: spacing.md },
-  card: { padding: spacing.lg, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.borderSoft, backgroundColor: colors.backgroundElevated },
+  card: { padding: spacing.xl, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.borderSoft, backgroundColor: colors.backgroundElevated },
   reason: { color: colors.green, fontSize: 14, fontWeight: "900" },
   metricGrid: { flexDirection: "row", flexWrap: "wrap", columnGap: spacing.md, rowGap: spacing.lg, marginTop: spacing.lg },
-  metric: { flexBasis: "30%", flexGrow: 1, minWidth: 0 },
-  metricValue: { color: colors.text, fontSize: 15, fontWeight: "900" },
-  metricLabel: { color: colors.textSubtle, fontSize: 9, marginTop: 2 },
+  metric: { flexBasis: "45%", flexGrow: 1, minWidth: 128 },
+  metricValue: { color: colors.text, fontSize: 16, lineHeight: 21, fontWeight: "900" },
+  metricLabel: { color: colors.textSubtle, fontSize: 10, lineHeight: 14, marginTop: 2 },
   comment: { color: colors.textMuted, fontSize: 11, lineHeight: 17, marginTop: spacing.lg, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.borderSoft },
   primaryAction: { minHeight: 50, alignItems: "center", justifyContent: "center", borderRadius: radii.round, backgroundColor: colors.blue, marginTop: spacing.xxl },
   primaryActionText: { color: colors.white, fontSize: 14, fontWeight: "900" },

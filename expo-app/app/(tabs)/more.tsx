@@ -18,8 +18,16 @@ import {
   registerPushDevice,
   unregisterPushDevice
 } from "@/src/notifications/register";
-import { colors, radii, spacing } from "@/src/theme/theme";
+import {
+  applyThemeMode,
+  colors,
+  radii,
+  spacing,
+  themeMode,
+  type ThemeMode
+} from "@/src/theme/theme";
 import { useTutorial } from "@/src/tutorial/TutorialProvider";
+import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import {
   getWidgetStatus,
   seedWidgetPreview
@@ -65,6 +73,22 @@ export default function MoreScreen() {
   const auth = useAuth();
   const router = useRouter();
   const tutorial = useTutorial();
+
+  const selectTheme = () => {
+    const changeTheme = (mode: ThemeMode) => {
+      applyThemeMode(mode).catch((error: unknown) => {
+        Alert.alert(
+          "Tema değiştirilemedi",
+          error instanceof Error ? error.message : "Bilinmeyen hata."
+        );
+      });
+    };
+    Alert.alert("Uygulama teması", "Görünüm tercihini seç.", [
+      { text: "İptal", style: "cancel" },
+      { text: "Koyu", onPress: () => changeTheme("dark") },
+      { text: "Açık", onPress: () => changeTheme("light") }
+    ]);
+  };
 
   const registerNotifications = async () => {
     setRegistering(true);
@@ -149,17 +173,25 @@ export default function MoreScreen() {
       <Text style={styles.sectionTitle}>Cihaz</Text>
       <View style={styles.group}>
         <SettingsRow
-          detail="Tamamlanan adımları temizler ve rehberi yeniden açar"
-          icon="restart"
-          onPress={() => {
-            tutorial.restart();
-            Alert.alert(
-              "Bibi rehberi baştan başladı",
-              "Ekranları açtıkça kısa anlatımlar yeniden gösterilecek."
-            );
-          }}
-          title="Bibi rehberini baştan başlat"
+          detail={`${themeMode === "light" ? "Açık" : "Koyu"} tema etkin · seçim cihazda saklanır`}
+          icon="theme-light-dark"
+          onPress={selectTheme}
+          title="Uygulama görünümü"
         />
+        <TutorialTarget id="more-tutorial-restart" radius={0}>
+          <SettingsRow
+            detail="Tamamlanan adımları temizler ve rehberi yeniden açar"
+            icon="restart"
+            onPress={() => {
+              tutorial.restart();
+              Alert.alert(
+                "Bibi rehberi baştan başladı",
+                "Ekranları açtıkça kısa anlatımlar yeniden gösterilecek."
+              );
+            }}
+            title="Bibi rehberini baştan başlat"
+          />
+        </TutorialTarget>
         <SettingsRow
           detail={
             registering

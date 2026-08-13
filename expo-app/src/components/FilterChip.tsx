@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text } from "react-native";
-import { colors, radii, spacing } from "@/src/theme/theme";
+import { colors, interaction, radii, spacing } from "@/src/theme/theme";
 
 export function FilterChip({
   label,
@@ -33,7 +33,7 @@ export function FilterChip({
 
 const styles = StyleSheet.create({
   chip: {
-    minHeight: 36,
+    minHeight: interaction.minTouchTarget,
     justifyContent: "center",
     paddingHorizontal: spacing.md,
     borderRadius: radii.round,

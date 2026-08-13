@@ -20,6 +20,7 @@ import {
 } from "@/src/api/queries";
 import { RatingStars } from "@/src/components/RatingStars";
 import { LeagueStandingsTable } from "@/src/components/LeagueStandingsTable";
+import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { RatioResultsChart } from "@/src/components/RatioResultsChart";
 import { Screen } from "@/src/components/Screen";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
@@ -266,7 +267,8 @@ export default function MatchDetailScreen() {
         )
       }}
     >
-      <View style={styles.scoreHero}>
+      <TutorialTarget id="match-summary" radius={radii.xl}>
+        <View style={styles.scoreHero}>
         <View style={styles.leagueRow}>
           <View style={styles.leagueCopy}>
             <Text style={styles.league}>{match.league}</Text>
@@ -325,7 +327,8 @@ export default function MatchDetailScreen() {
             </View>
           </View>
         </View>
-      </View>
+        </View>
+      </TutorialTarget>
 
       {match.selectedOdd && match.rating > 0 ? (
         <Pressable
@@ -419,27 +422,29 @@ export default function MatchDetailScreen() {
         leagueContextQuery.data.awayStandingPoints !== null) ? (
         <>
           <Text style={styles.sectionTitle}>Lig sıralaması</Text>
-          <LeagueStandingsTable
-            contextLabel={
-              leagueContextQuery.data.source === "LATEST_SUPER_DECISION"
-                ? "Son Super kararı kaydı"
-                : "Kaynak bekleniyor"
-            }
-            rows={[
-              {
-                team: leagueContextQuery.data.homeTeam,
-                position: leagueContextQuery.data.homeStandingPosition,
-                points: leagueContextQuery.data.homeStandingPoints,
-                side: "HOME"
-              },
-              {
-                team: leagueContextQuery.data.awayTeam,
-                position: leagueContextQuery.data.awayStandingPosition,
-                points: leagueContextQuery.data.awayStandingPoints,
-                side: "AWAY"
+          <TutorialTarget id="match-standings">
+            <LeagueStandingsTable
+              contextLabel={
+                leagueContextQuery.data.source === "LATEST_SUPER_DECISION"
+                  ? "Son Super kararı kaydı"
+                  : "Kaynak bekleniyor"
               }
-            ]}
-          />
+              rows={[
+                {
+                  team: leagueContextQuery.data.homeTeam,
+                  position: leagueContextQuery.data.homeStandingPosition,
+                  points: leagueContextQuery.data.homeStandingPoints,
+                  side: "HOME"
+                },
+                {
+                  team: leagueContextQuery.data.awayTeam,
+                  position: leagueContextQuery.data.awayStandingPosition,
+                  points: leagueContextQuery.data.awayStandingPoints,
+                  side: "AWAY"
+                }
+              ]}
+            />
+          </TutorialTarget>
         </>
       ) : null}
 
@@ -639,7 +644,7 @@ const styles = StyleSheet.create({
     fontWeight: "900"
   },
   score: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 27,
     fontWeight: "900",
     paddingHorizontal: spacing.lg
@@ -658,6 +663,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.borderSoft,
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
     justifyContent: "space-between",
     gap: spacing.lg
@@ -669,6 +675,7 @@ const styles = StyleSheet.create({
   },
   ratePair: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.xl
   },
   alignEnd: {

@@ -6,7 +6,7 @@ import {
   Text,
   View
 } from "react-native";
-import { colors, radii, shadows, spacing } from "@/src/theme/theme";
+import { colors, interaction, radii, shadows, spacing } from "@/src/theme/theme";
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
 
@@ -71,6 +71,7 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     minWidth: 148,
+    minHeight: interaction.preferredTouchTarget * 3,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.borderSoft,

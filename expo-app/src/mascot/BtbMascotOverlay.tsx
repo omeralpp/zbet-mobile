@@ -148,35 +148,33 @@ export function BtbMascotOverlay() {
     if (!tutorial.activeTip) {
       return visiblePosition;
     }
-    const usableWidth = Math.max(
-      0,
-      width - insets.left - insets.right - mascotSize - edgeMargin * 2
-    );
-    const usableHeight = Math.max(
-      0,
-      height - insets.top - insets.bottom - mascotSize - edgeMargin * 2
-    );
+    const target = tutorial.activeTargetRect;
+    if (!target) {
+      return defaultPosition;
+    }
+    const targetRight = target.x + target.width;
+    const rightCandidate = targetRight + edgeMargin;
+    const leftCandidate = target.x - mascotSize - edgeMargin;
+    const x =
+      rightCandidate + mascotSize <= width - insets.right - edgeMargin
+        ? rightCandidate
+        : leftCandidate >= insets.left + edgeMargin
+          ? leftCandidate
+          : targetRight - mascotSize * 0.65;
     return clampPosition(
       {
-        x:
-          insets.left +
-          edgeMargin +
-          usableWidth * tutorial.activeTip.target.x,
-        y:
-          insets.top +
-          edgeMargin +
-          usableHeight * tutorial.activeTip.target.y
+        x,
+        y: target.y - mascotSize * 0.45
       },
       bounds
     );
   }, [
     bounds,
-    height,
-    insets.bottom,
     insets.left,
     insets.right,
-    insets.top,
     tutorial.activeTip,
+    tutorial.activeTargetRect,
+    defaultPosition,
     visiblePosition,
     width
   ]);
@@ -398,17 +396,45 @@ export function BtbMascotOverlay() {
   const menuDown = displayPosition.y < height / 2;
   const menuRight = displayPosition.x > width / 2;
   const tutorialBubbleWidth = Math.min(
-    248,
-    Math.max(188, width - insets.left - insets.right - 28)
+    300,
+    Math.max(220, width - insets.left - insets.right - 32)
   );
-  const tutorialBubbleLeft =
-    Math.min(
-      Math.max(
-        insets.left + edgeMargin,
-        displayPosition.x + mascotSize / 2 - tutorialBubbleWidth / 2
-      ),
-      width - insets.right - edgeMargin - tutorialBubbleWidth
-    ) - displayPosition.x;
+  const tutorialBubblePosition = useMemo(() => {
+    const target = tutorial.activeTargetRect;
+    const estimatedHeight = 176;
+    const minLeft = insets.left + edgeMargin;
+    const maxLeft = width - insets.right - edgeMargin - tutorialBubbleWidth;
+    const left = target
+      ? Math.min(
+          Math.max(
+            minLeft,
+            target.x + target.width / 2 - tutorialBubbleWidth / 2
+          ),
+          maxLeft
+        )
+      : Math.min(Math.max(minLeft, displayPosition.x), maxLeft);
+    const below = target ? target.y + target.height + 12 : displayPosition.y + mascotSize + 8;
+    const above = target ? target.y - estimatedHeight - 12 : displayPosition.y - estimatedHeight - 8;
+    const top =
+      below + estimatedHeight <= height - insets.bottom - edgeMargin
+        ? below
+        : Math.max(insets.top + edgeMargin, above);
+    return {
+      left: left - displayPosition.x,
+      top: top - displayPosition.y
+    };
+  }, [
+    displayPosition.x,
+    displayPosition.y,
+    height,
+    insets.bottom,
+    insets.left,
+    insets.right,
+    insets.top,
+    tutorial.activeTargetRect,
+    tutorialBubbleWidth,
+    width
+  ]);
   const rotation = Animated.add(
     openTilt.interpolate({ inputRange: [0, 1], outputRange: [0, 0.7] }),
     dragTilt
@@ -443,30 +469,15 @@ export function BtbMascotOverlay() {
       >
         {tutorial.activeTip ? (
           <View
-            pointerEvents="none"
-            style={[
-              styles.tutorialHighlight,
-              {
-                width: tutorial.activeTip.highlight?.width ?? 240,
-                height: tutorial.activeTip.highlight?.height ?? 96,
-                left:
-                  mascotSize / 2 -
-                  (tutorial.activeTip.highlight?.width ?? 240) / 2,
-                top:
-                  mascotSize / 2 -
-                  (tutorial.activeTip.highlight?.height ?? 96) / 2
-              }
-            ]}
-          />
-        ) : null}
-        {tutorial.activeTip ? (
-          <View
             accessibilityLiveRegion="polite"
             accessibilityRole="summary"
             style={[
               styles.tutorialBubble,
-              menuDown ? styles.tutorialDown : styles.tutorialUp,
-              { left: tutorialBubbleLeft, width: tutorialBubbleWidth }
+              {
+                left: tutorialBubblePosition.left,
+                top: tutorialBubblePosition.top,
+                width: tutorialBubbleWidth
+              }
             ]}
           >
             <Text style={styles.tutorialTitle}>
@@ -640,7 +651,7 @@ const styles = StyleSheet.create({
   },
   greetingLeft: { left: mascotSize + 8 },
   greetingRight: { right: mascotSize + 8 },
-  greetingText: { color: colors.background, fontSize: 12, fontWeight: "900" },
+  greetingText: { color: "#102538", fontSize: 12, fontWeight: "900" },
   tutorialBubble: {
     position: "absolute",
     borderRadius: radii.lg,
@@ -650,22 +661,13 @@ const styles = StyleSheet.create({
     padding: 14,
     ...shadows.card
   },
-  tutorialHighlight: {
-    position: "absolute",
-    borderRadius: radii.lg,
-    borderWidth: 2,
-    borderColor: colors.green,
-    backgroundColor: "rgba(98, 230, 109, 0.08)"
-  },
-  tutorialDown: { top: mascotSize + 8 },
-  tutorialUp: { bottom: mascotSize + 8 },
   tutorialTitle: {
-    color: colors.background,
+    color: "#102538",
     fontSize: 14,
     fontWeight: "900"
   },
   tutorialBody: {
-    color: colors.surfaceStrong,
+    color: "#4D6577",
     fontSize: 11,
     lineHeight: 16,
     marginTop: 5
@@ -678,16 +680,22 @@ const styles = StyleSheet.create({
     marginTop: 12
   },
   tutorialSecondary: {
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: radii.round,
     paddingHorizontal: 10,
     paddingVertical: 8
   },
   tutorialSecondaryText: {
-    color: colors.textSubtle,
+    color: "#617789",
     fontSize: 10,
     fontWeight: "900"
   },
   tutorialPrimary: {
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.blue,
     borderRadius: radii.round,
     paddingHorizontal: 14,
@@ -704,7 +712,7 @@ const styles = StyleSheet.create({
   menuLeft: { left: 0 },
   menuRight: { right: 0 },
   menuItem: {
-    minHeight: 42,
+    minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
@@ -713,7 +721,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radii.round,
-    backgroundColor: "rgba(4, 16, 30, 0.96)",
+    backgroundColor: colors.backgroundElevated,
     ...shadows.card
   },
   menuItemRight: { flexDirection: "row-reverse" },

@@ -52,7 +52,7 @@ export default function resolveAppConfig({
   slug: "btb-mobile-next",
   version: "0.1.0",
   orientation: "portrait",
-  userInterfaceStyle: "dark",
+  userInterfaceStyle: "automatic",
   scheme: "btbmobile",
   icon: "./assets/icon.png",
   plugins: [

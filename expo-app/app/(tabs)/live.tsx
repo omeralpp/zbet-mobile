@@ -28,6 +28,7 @@ import {
   type LiveMatchTab
 } from "@/src/utils/live-match-tabs";
 import { groupMatchesByKickoff } from "@/src/utils/match-groups";
+import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 
 function firstParam(value: string | string[] | undefined): string {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
@@ -124,7 +125,12 @@ export default function LiveScreen() {
       scroll={false}
       title="Canlı maçlar"
     >
-      <View style={styles.filters}>
+      <TutorialTarget
+        id="live-filters"
+        radius={radii.round}
+        style={styles.filterTarget}
+      >
+        <View style={styles.filters}>
         <FilterChip
           count={tabCounts.LIVE}
           label="Canlı"
@@ -157,7 +163,8 @@ export default function LiveScreen() {
           open={decisionOpen}
           value={starFilter}
         />
-      </View>
+        </View>
+      </TutorialTarget>
 
       {query.isLoading ? (
         <LoadingState label="Maç havuzu hazırlanıyor" />
@@ -199,16 +206,25 @@ export default function LiveScreen() {
               tintColor={colors.green}
             />
           }
-          renderItem={({ item: section }) => (
+          renderItem={({ item: section, index: sectionIndex }) => (
             <View style={styles.group}>
               <Text style={styles.sectionTitle}>{section.title}</Text>
-              {section.data.map((match) => (
-                <MatchCard
-                  insight={insightMap.get(match.key)}
-                  key={match.key}
-                  match={match}
-                />
-              ))}
+              {section.data.map((match, matchIndex) =>
+                sectionIndex === 0 && matchIndex === 0 ? (
+                  <TutorialTarget id="live-first-card" key={match.key}>
+                    <MatchCard
+                      insight={insightMap.get(match.key)}
+                      match={match}
+                    />
+                  </TutorialTarget>
+                ) : (
+                  <MatchCard
+                    insight={insightMap.get(match.key)}
+                    key={match.key}
+                    match={match}
+                  />
+                )
+              )}
             </View>
           )}
           showsVerticalScrollIndicator={false}
@@ -226,7 +242,9 @@ const styles = StyleSheet.create({
   filters: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.sm,
+    gap: spacing.sm
+  },
+  filterTarget: {
     marginBottom: spacing.lg
   },
   list: {

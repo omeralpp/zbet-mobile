@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, radii, spacing } from "@/src/theme/theme";
+import { colors, interaction, radii, spacing } from "@/src/theme/theme";
 
 type SectionHeaderProps = {
   title: string;
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.round,
     borderWidth: 1,
     justifyContent: "center",
-    minHeight: 32,
+    minHeight: interaction.minTouchTarget,
     paddingHorizontal: spacing.md
   },
   pressed: {

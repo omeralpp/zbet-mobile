@@ -23,10 +23,19 @@ type TutorialValue = {
   ready: boolean;
   enabled: boolean;
   activeTip: TutorialTip | null;
+  activeTargetRect: TutorialTargetRect | null;
   hasNextOnPage: boolean;
   completeActiveTip: () => void;
   setEnabled: (enabled: boolean) => void;
   restart: () => void;
+  setTargetRect: (targetId: string, rect: TutorialTargetRect | null) => void;
+};
+
+export type TutorialTargetRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 };
 
 const TutorialContext = createContext<TutorialValue | null>(null);
@@ -35,6 +44,10 @@ export function TutorialProvider({ children }: PropsWithChildren) {
   const pathname = usePathname();
   const [ready, setReady] = useState(false);
   const [state, setState] = useState<TutorialState>(defaultTutorialState);
+  const [measuredTarget, setMeasuredTarget] = useState<{
+    id: string;
+    rect: TutorialTargetRect;
+  } | null>(null);
 
   useEffect(() => {
     AsyncStorage.getItem(tutorialStorageKey)
@@ -51,6 +64,10 @@ export function TutorialProvider({ children }: PropsWithChildren) {
   }, []);
 
   const activeTip = ready ? activeTutorialTip(pathname, state) : null;
+  const activeTargetRect =
+    activeTip && measuredTarget?.id === activeTip.targetId
+      ? measuredTarget.rect
+      : null;
   const pageTips = tipsForPath(pathname);
   const hasNextOnPage = Boolean(
     activeTip &&
@@ -78,24 +95,48 @@ export function TutorialProvider({ children }: PropsWithChildren) {
     () => updateState(defaultTutorialState()),
     [updateState]
   );
+  const setTargetRect = useCallback(
+    (targetId: string, rect: TutorialTargetRect | null) => {
+      setMeasuredTarget((current) => {
+        if (!rect) {
+          return current?.id === targetId ? null : current;
+        }
+        if (
+          current?.id === targetId &&
+          current.rect.x === rect.x &&
+          current.rect.y === rect.y &&
+          current.rect.width === rect.width &&
+          current.rect.height === rect.height
+        ) {
+          return current;
+        }
+        return { id: targetId, rect };
+      });
+    },
+    []
+  );
 
   const value = useMemo<TutorialValue>(
     () => ({
       ready,
       enabled: state.enabled,
       activeTip,
+      activeTargetRect,
       hasNextOnPage,
       completeActiveTip,
       setEnabled,
-      restart
+      restart,
+      setTargetRect
     }),
     [
       activeTip,
+      activeTargetRect,
       completeActiveTip,
       hasNextOnPage,
       ready,
       restart,
       setEnabled,
+      setTargetRect,
       state.enabled
     ]
   );

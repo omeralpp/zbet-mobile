@@ -17,9 +17,9 @@ test("continues with the next unseen tip on the same screen", () => {
     activeTutorialTip("/live", {
       version: tutorialVersion,
       enabled: true,
-      completedTipIds: ["live-rate"]
+      completedTipIds: ["live-filters"]
     })?.id,
-    "live-pressure"
+    "live-rate"
   );
 });
 

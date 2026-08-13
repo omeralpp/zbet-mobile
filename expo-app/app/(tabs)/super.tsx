@@ -34,6 +34,7 @@ import {
   matchSuperLogTab,
   type SuperLogTab
 } from "@/src/utils/super-log-tabs";
+import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 
 export default function SuperScreen() {
   const params = useLocalSearchParams<{
@@ -98,7 +99,8 @@ export default function SuperScreen() {
       scroll={false}
       title="Karar günlüğü"
     >
-      <View style={styles.filters}>
+      <TutorialTarget id="super-filters" style={styles.filterTarget}>
+        <View style={styles.filters}>
         <FilterChip
           count={tabCounts.ALL}
           label="Tümü"
@@ -137,7 +139,8 @@ export default function SuperScreen() {
           open={decisionOpen}
           value={starFilter}
         />
-      </View>
+        </View>
+      </TutorialTarget>
       <View style={styles.scopeRow}>
         {dateScope ? <Text style={styles.scope}>{dateScope}</Text> : null}
         <Pressable
@@ -206,7 +209,15 @@ export default function SuperScreen() {
               setDecisionOpen(false);
             }
           }}
-          renderItem={({ item }) => <SuperLogCard log={item} />}
+          renderItem={({ item, index }) =>
+            index === 0 ? (
+              <TutorialTarget id="super-first-card">
+                <SuperLogCard log={item} />
+              </TutorialTarget>
+            ) : (
+              <SuperLogCard log={item} />
+            )
+          }
           showsVerticalScrollIndicator={false}
           windowSize={7}
         />
@@ -222,7 +233,9 @@ const styles = StyleSheet.create({
   filters: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.sm,
+    gap: spacing.sm
+  },
+  filterTarget: {
     marginBottom: spacing.sm
   },
   scope: {

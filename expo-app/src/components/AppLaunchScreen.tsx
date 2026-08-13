@@ -11,7 +11,7 @@ import {
   type LayoutChangeEvent
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, radii, spacing } from "@/src/theme/theme";
+import { colors, radii, spacing, themeMode } from "@/src/theme/theme";
 
 type AppLaunchScreenProps = {
   ready: boolean;
@@ -127,7 +127,11 @@ export function AppLaunchScreen({
 
   return (
     <LinearGradient
-      colors={["#020915", colors.background, "#061D31"]}
+      colors={
+        themeMode === "light"
+          ? [colors.background, colors.backgroundElevated, colors.surfaceStrong]
+          : ["#020915", colors.background, "#061D31"]
+      }
       locations={[0, 0.56, 1]}
       onLayout={onLayout}
       style={styles.container}
@@ -244,7 +248,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: "#071726",
+    backgroundColor: colors.backgroundElevated,
     shadowColor: colors.blue,
     shadowOpacity: 0.85,
     shadowRadius: 10,

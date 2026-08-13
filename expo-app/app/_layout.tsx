@@ -1,7 +1,9 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import * as SplashScreen from "expo-splash-screen";
+import * as SystemUI from "expo-system-ui";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { Appearance } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAuth } from "@/src/auth/AuthProvider";
 import { AppLaunchScreen } from "@/src/components/AppLaunchScreen";
@@ -9,7 +11,7 @@ import { BtbMascotOverlay } from "@/src/mascot/BtbMascotOverlay";
 import { MascotActionsProvider } from "@/src/mascot/MascotActions";
 import { AndroidBackGuard } from "@/src/navigation/AndroidBackGuard";
 import { AppProviders } from "@/src/providers/AppProviders";
-import { colors } from "@/src/theme/theme";
+import { colors, themeMode } from "@/src/theme/theme";
 import { TutorialProvider } from "@/src/tutorial/TutorialProvider";
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -26,10 +28,15 @@ function RootNavigator() {
     SplashScreen.hideAsync().catch(() => undefined);
   }, []);
 
+  useEffect(() => {
+    Appearance.setColorScheme(themeMode);
+    SystemUI.setBackgroundColorAsync(colors.background).catch(() => undefined);
+  }, []);
+
   if (!launchComplete) {
     return (
       <>
-        <StatusBar style="light" />
+        <StatusBar style={themeMode === "light" ? "dark" : "light"} />
         <AppLaunchScreen
           onComplete={handleLaunchComplete}
           onLayout={handleLaunchLayout}
@@ -41,7 +48,7 @@ function RootNavigator() {
 
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style={themeMode === "light" ? "dark" : "light"} />
       <Stack
         screenOptions={{
           contentStyle: { backgroundColor: colors.background },

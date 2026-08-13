@@ -13,7 +13,7 @@ import {
 import { useAuth } from "@/src/auth/AuthProvider";
 import { resolveAuthEntryPresentation } from "@/src/auth/entry-policy";
 import { runtimeConfig } from "@/src/config/runtime";
-import { colors, radii, spacing } from "@/src/theme/theme";
+import { colors, radii, spacing, themeMode } from "@/src/theme/theme";
 
 export default function SignInScreen() {
   const auth = useAuth();
@@ -33,10 +33,14 @@ export default function SignInScreen() {
 
   return (
     <LinearGradient
-      colors={[colors.background, "#071C31", colors.background]}
+      colors={
+        themeMode === "light"
+          ? [colors.background, colors.backgroundElevated, colors.background]
+          : [colors.background, "#071C31", colors.background]
+      }
       style={styles.gradient}
     >
-      <StatusBar style="light" />
+      <StatusBar style={themeMode === "light" ? "dark" : "light"} />
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
           <View style={styles.brandMark}>

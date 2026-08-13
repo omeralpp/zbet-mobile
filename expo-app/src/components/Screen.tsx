@@ -12,7 +12,7 @@ import {
   type ViewStyle
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, spacing } from "@/src/theme/theme";
+import { colors, interaction, spacing } from "@/src/theme/theme";
 
 type ScreenProps = PropsWithChildren<{
   title?: string;
@@ -130,11 +130,14 @@ const styles = StyleSheet.create({
     flex: 1
   },
   content: {
+    width: "100%",
+    maxWidth: interaction.contentMaxWidth,
+    alignSelf: "center",
     paddingHorizontal: spacing.lg,
     paddingBottom: 112
   },
   header: {
-    minHeight: 80,
+    minHeight: 76,
     paddingTop: spacing.lg,
     paddingBottom: spacing.lg,
     flexDirection: "row",
@@ -156,7 +159,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.text,
     fontSize: 28,
-    lineHeight: 34,
+    lineHeight: 36,
     fontWeight: "800",
     letterSpacing: -0.6
   }

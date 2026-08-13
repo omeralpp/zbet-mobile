@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     marginLeft: spacing.lg
   },
   score: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 19,
     lineHeight: 22,
     fontWeight: "900"

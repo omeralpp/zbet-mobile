@@ -27,6 +27,7 @@ import {
 } from "@/src/utils/decision-filters";
 import { formatSigned } from "@/src/utils/format";
 import { refreshPerformanceWidgetFromApi } from "@/src/widgets/performance-widget";
+import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -101,34 +102,36 @@ export default function DashboardScreen() {
         )
       }}
     >
-      <Pressable
-        accessibilityHint="Uygulamanın kısa açıklamasını açar"
-        accessibilityRole="button"
-        onPress={() =>
-          Alert.alert(
-            "BTB Mobile Next",
-            "Canlı maç durumunu, BTB Super kararlarını ve Spor Toto program özetlerini tek yerde, salt okunur ve mobil odaklı sunar.",
-            [{ text: "Anladım" }]
-          )
-        }
-        style={({ pressed }) => [
-          styles.hero,
-          pressed && styles.pressed
-        ]}
-      >
-        <Image
-          resizeMode="contain"
-          source={require("../../assets/icon.png")}
-          style={styles.logo}
-        />
-        <View style={styles.heroCopy}>
-          <Text style={styles.eyebrow}>CANLI KARAR MERKEZİ</Text>
-          <Text style={styles.heroTitle}>Saha şimdi ne söylüyor?</Text>
-          <Text style={styles.heroText}>
-            BTB, Super ve Toto sinyalleri tek mobil akışta.
-          </Text>
-        </View>
-      </Pressable>
+      <TutorialTarget id="home-hero" radius={radii.xl}>
+        <Pressable
+          accessibilityHint="Uygulamanın kısa açıklamasını açar"
+          accessibilityRole="button"
+          onPress={() =>
+            Alert.alert(
+              "BTB Mobile Next",
+              "Canlı maç durumunu, BTB Super kararlarını ve Spor Toto program özetlerini tek yerde, salt okunur ve mobil odaklı sunar.",
+              [{ text: "Anladım" }]
+            )
+          }
+          style={({ pressed }) => [
+            styles.hero,
+            pressed && styles.pressed
+          ]}
+        >
+          <Image
+            resizeMode="contain"
+            source={require("../../assets/icon.png")}
+            style={styles.logo}
+          />
+          <View style={styles.heroCopy}>
+            <Text style={styles.eyebrow}>CANLI KARAR MERKEZİ</Text>
+            <Text style={styles.heroTitle}>Saha şimdi ne söylüyor?</Text>
+            <Text style={styles.heroText}>
+              BTB, Super ve Toto sinyalleri tek mobil akışta.
+            </Text>
+          </View>
+        </Pressable>
+      </TutorialTarget>
 
       <View style={styles.metrics}>
         <MetricCard
@@ -159,19 +162,21 @@ export default function DashboardScreen() {
             liveStarMetricCount(dashboard.liveStarCounts, liveStarFilter)
           )}
         />
-        <MetricCard
-          accent={profitColor}
-          detail={`${dailySuper.won} kazandı · ${dailySuper.lost} kaybetti`}
-          icon="chart-line"
-          label={`Günlük Super · ${starMetricLabel(superStarFilter)}`}
-          onPress={() =>
-            router.push({
-              pathname: "/super",
-              params: { scope: "LATEST_DAY" }
-            } as never)
-          }
-          value={formatSigned(dailySuper.profit)}
-        />
+        <TutorialTarget id="home-super-metric" style={styles.metricTarget}>
+          <MetricCard
+            accent={profitColor}
+            detail={`${dailySuper.won} kazandı · ${dailySuper.lost} kaybetti`}
+            icon="chart-line"
+            label={`Günlük Super · ${starMetricLabel(superStarFilter)}`}
+            onPress={() =>
+              router.push({
+                pathname: "/super",
+                params: { scope: "LATEST_DAY" }
+              } as never)
+            }
+            value={formatSigned(dailySuper.profit)}
+          />
+        </TutorialTarget>
       </View>
 
       {dashboard.featuredMatches.length ? (
@@ -182,9 +187,15 @@ export default function DashboardScreen() {
             onAction={() => router.push("/live" as never)}
             title={featuredTitle}
           />
-          {dashboard.featuredMatches.map((match) => (
-            <MatchCard key={match.key} match={match} />
-          ))}
+          {dashboard.featuredMatches.map((match, index) =>
+            index === 0 ? (
+              <TutorialTarget id="home-featured" key={match.key}>
+                <MatchCard match={match} />
+              </TutorialTarget>
+            ) : (
+              <MatchCard key={match.key} match={match} />
+            )
+          )}
         </>
       ) : null}
 
@@ -264,5 +275,9 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: spacing.md,
     marginTop: spacing.lg
+  },
+  metricTarget: {
+    width: "100%",
+    height: 144
   }
 });

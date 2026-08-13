@@ -1,6 +1,12 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, radii, shadows, spacing } from "@/src/theme/theme";
+import {
+  colors,
+  interaction,
+  radii,
+  shadows,
+  spacing
+} from "@/src/theme/theme";
 import {
   decisionFilterLabel,
   starFilterOptions,
@@ -106,7 +112,7 @@ const styles = StyleSheet.create({
     elevation: 30
   },
   chip: {
-    minHeight: 36,
+    minHeight: interaction.minTouchTarget,
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs,
@@ -130,7 +136,7 @@ const styles = StyleSheet.create({
   },
   menu: {
     position: "absolute",
-    top: 42,
+    top: interaction.minTouchTarget + 6,
     right: 0,
     minWidth: 190,
     padding: spacing.xs,
@@ -141,7 +147,7 @@ const styles = StyleSheet.create({
     ...shadows.card
   },
   option: {
-    minHeight: 38,
+    minHeight: interaction.minTouchTarget,
     justifyContent: "center",
     paddingHorizontal: spacing.md,
     borderRadius: radii.md

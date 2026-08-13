@@ -9,6 +9,7 @@ import {
 } from "@/src/components/StateView";
 import { TotoProgramCard } from "@/src/components/TotoProgramCard";
 import { colors } from "@/src/theme/theme";
+import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 
 export default function TotoScreen() {
   const query = useQuery(totoProgramsQuery);
@@ -50,7 +51,15 @@ export default function TotoScreen() {
               tintColor={colors.green}
             />
           }
-          renderItem={({ item }) => <TotoProgramCard program={item} />}
+          renderItem={({ item, index }) =>
+            index === 0 ? (
+              <TutorialTarget id="toto-first-card">
+                <TotoProgramCard program={item} />
+              </TutorialTarget>
+            ) : (
+              <TotoProgramCard program={item} />
+            )
+          }
           showsVerticalScrollIndicator={false}
         />
       )}
