@@ -6,10 +6,10 @@ Son güncelleme: 2026-08-13
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `OBSERVATION` — 2026-08-13 Mobile cutover batch'i yerel olarak tamamlandı.
-Değişiklikler henüz commit/push edilmedi. BTP deploy, Cloudflare/Firebase/SAP dış
-değişikliği, APK dağıtımı, release signing ve Cordova cutover yapılmadı; her biri
-ayrıca açık onay gerektirir.
+Mod: `OBSERVATION` — 2026-08-13 Mobile cutover batch'i doğrulanıp commit/push edildi.
+Mobile checkpoint `7ba736df03d373a595f8df395e76a45592b24fa5` ile `origin/master`
+üzerindedir. BTP deploy, Cloudflare/Firebase/SAP dış değişikliği, APK dağıtımı,
+release signing ve Cordova cutover yapılmadı; her biri ayrıca açık onay gerektirir.
 
 Yeni task önce yalnız `C:\dev\btb-cdoex\AGENTS.md` ve bu dosyayı tamamen okur.
 Observation tespitleri `docs/OBSERVATION_LOG.md` içindedir. Yeni toplu kod batch'i
@@ -37,9 +37,9 @@ yalnız `btb next cutover start` ile başlar.
 ```text
 zbet-mobile
   branch/upstream : master / origin/master
-  base HEAD       : 8e9b76a5fd8797501ec96e7fe7790a0e99850eb0
-  state           : yerel Mobile cutover değişiklikleri ve dokümanlar açık;
-                    commit/push onayı bekleniyor
+  checkpoint      : 7ba736df03d373a595f8df395e76a45592b24fa5
+  state           : v16 Mobile cutover commit/push tamamlandı; yalnız bu handoff
+                    yenilemesi takip eden docs commit'inde yayımlanır
 
 zbet-cap
   branch/upstream : main / origin/main
@@ -89,13 +89,16 @@ APK'sı doğrulama sonrasında Geri Dönüşüm Kutusu'na taşındı. APK dağı
   olması nedeniyle Bilyoner takım logosu resolver entegrasyonu bekliyor.
 - `NXT-OBS-074`: notification producer sürekliliği için SAP çağrı/SM59 telemetry kanıtı.
 - `NXT-OBS-086`: Toto idempotency düzeltmesi `BTB Toto - Aktif` sahipliğindedir.
+- `NXT-OBS-089`–`NXT-OBS-094`: detay kartı parity, Toto güncellik/sonuç alanları,
+  yıldız sıralaması, güncel baskı kaynağı ve ana sekme swipe talepleri bir sonraki
+  Mobile cutover adayıdır; kaynak alanı isteyen parçalar kanıtlanmadan uygulanmaz.
 - Expo SDK 57 yama sürümleri ayrı dependency bakım batch'i olmalıdır.
 
 ## Exact next steps
 
 1. Observation modunda fiziksel cihaz sonuçlarını topla.
-2. Kullanıcı commit/push isterse yalnız mevcut `zbet-mobile` cutover diff'ini son Git
-   kapılarından geçirip stage/commit/push et.
+2. Kullanıcı `btb next cutover start` derse yalnız aktif ve yeterince açık observation
+   maddelerini yeni yerel batch olarak dondur; veri kaynağı kanıtı isteyenleri ayır.
 3. BFF değişmediği için bu checkpoint'te BTP deploy gerekmez.
 4. APK dağıtımı istenirse v16 ARM64 dosyasını ayrı açık dağıtım onayıyla paylaş.
 
