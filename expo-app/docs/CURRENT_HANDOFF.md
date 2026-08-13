@@ -1,15 +1,15 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-08-11
+Son güncelleme: 2026-08-13
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `OBSERVATION` — 2026-08-11 ikinci Mobile cutover batch'i yerel olarak
-tamamlandı. Commit/push, BTP deploy, Cloudflare/Firebase/SAP dış değişikliği,
-APK dağıtımı, release signing ve Cordova cutover yapılmadı; her biri ayrıca açık
-onay gerektirir.
+Mod: `OBSERVATION` — 2026-08-11 ikinci Mobile cutover batch'i tamamlandı ve
+`c6c75f1` ile `origin/master` üzerine gönderildi. BTP deploy,
+Cloudflare/Firebase/SAP dış değişikliği, APK dağıtımı, release signing ve Cordova
+cutover yapılmadı; her biri ayrıca açık onay gerektirir.
 
 Yeni task önce yalnız `C:\dev\btb-cdoex\AGENTS.md` ve bu dosyayı tamamen okur.
 Observation tespitleri `docs/OBSERVATION_LOG.md` içindedir. Yeni toplu kod batch'i
@@ -37,8 +37,8 @@ yalnız `btb next cutover start` ile başlar.
 ```text
 zbet-mobile
   branch/upstream : master / origin/master
-  base HEAD       : 7593980a19ab55abda57554cec873e11445e8690
-  state           : bu cutover değişiklikleri commit edilmedi ve push edilmedi
+  HEAD            : c6c75f1fae101d29982774340a93189a120b9522
+  state           : temiz; origin/master ile aynı
 
 zbet-cap
   branch          : main
@@ -95,9 +95,7 @@ dağıtılmadı.
 ## Exact next steps
 
 1. Observation modunda fiziksel cihaz sonuçlarını topla.
-2. Kullanıcı ayrıca commit/push onayı verirse yalnız Mobile kapsamındaki değişiklikleri
-   `git diff --check` ve final status sonrası commit/push et.
-3. BFF değişmediği için bu checkpoint'te BTP deploy gerekmez.
-4. APK dağıtımı istenirse v15 ARM64 dosyasını ayrıca açık dağıtım onayıyla paylaş.
+2. BFF değişmediği için bu checkpoint'te BTP deploy gerekmez.
+3. APK dağıtımı istenirse v15 ARM64 dosyasını ayrıca açık dağıtım onayıyla paylaş.
 
 Cutover kanıtı: `docs/observation_archive/cutover_2026-08-11-02.md`.
