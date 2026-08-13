@@ -37,8 +37,9 @@ yalnız `btb next cutover start` ile başlar.
 ```text
 zbet-mobile
   branch/upstream : master / origin/master
-  HEAD            : c6c75f1fae101d29982774340a93189a120b9522
-  state           : temiz; origin/master ile aynı
+  implementation  : c6c75f1fae101d29982774340a93189a120b9522
+  handoff closure : origin/master bu güncel devir belgesini içerir
+  state           : temiz; upstream ile aynı
 
 zbet-cap
   branch          : main
