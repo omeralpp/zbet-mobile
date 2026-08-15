@@ -367,6 +367,8 @@ components:
         pressureSource:
           type: [string, "null"]
           enum: [CURRENT_MATCH, null]
+        pressureProvider: { type: [string, "null"], minLength: 1 }
+        pressureSnapshotAt: { type: [string, "null"], format: date-time }
         lastUpdatedAt: { type: string, format: date-time }
     MatchDetail:
       allOf:

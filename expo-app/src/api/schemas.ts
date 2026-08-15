@@ -29,6 +29,8 @@ export const matchSummarySchema = z.strictObject({
   pressureDiff: finiteNumber.nullable(),
   totalPressure: finiteNumber.nullable(),
   pressureSource: z.literal("CURRENT_MATCH").nullable().default(null),
+  pressureProvider: z.string().min(1).nullable().optional(),
+  pressureSnapshotAt: isoDateTime.nullable().optional(),
   lastUpdatedAt: isoDateTime
 });
 

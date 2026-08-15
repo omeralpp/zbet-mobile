@@ -18,6 +18,7 @@ import {
   matchInsightListSchema,
   matchLeagueContextSchema,
   matchListSchema,
+  matchSummarySchema,
   periodScoreContextSchema,
   superLogListSchema,
   superKpisSchema,
@@ -76,6 +77,51 @@ test("validates the bounded two-team league context", async () => {
   assert.doesNotThrow(() => matchLeagueContextSchema.parse(context));
   assert.throws(() =>
     matchLeagueContextSchema.parse({ ...context, played: 20 })
+  );
+});
+
+test("accepts the current BFF match summary contract including pressure metadata fields", () => {
+  const payload = {
+    key: "2026-08-15:999999:20:45:00",
+    id: 999999,
+    matchDate: "2026-08-15",
+    matchTime: "20:45",
+    league: "Test League",
+    homeTeam: "Home FC",
+    awayTeam: "Away FC",
+    homeScore: 1,
+    awayScore: 0,
+    elapsed: 30,
+    status: "LIVE",
+    selectedOdd: "Ms1X",
+    rating: 3,
+    liveRate: 1.5,
+    currentRate: 1.4,
+    pressureDiff: 12.3,
+    totalPressure: 45.6,
+    pressureSource: "CURRENT_MATCH",
+    pressureProvider: "ZBET_BILYONER_LIVE_CALC",
+    pressureSnapshotAt: "2026-08-15T18:00:00.000Z",
+    lastUpdatedAt: "2026-08-15T18:00:05.000Z"
+  } as const;
+
+  assert.doesNotThrow(() => matchSummarySchema.parse(payload));
+
+  assert.doesNotThrow(() =>
+    matchSummarySchema.parse({
+      ...payload,
+      pressureProvider: null,
+      pressureSnapshotAt: null
+    })
+  );
+
+  const { pressureProvider, pressureSnapshotAt, ...withoutPressureMetadata } = payload;
+  void pressureProvider;
+  void pressureSnapshotAt;
+  assert.doesNotThrow(() => matchSummarySchema.parse(withoutPressureMetadata));
+
+  assert.throws(() =>
+    matchSummarySchema.parse({ ...payload, unexpectedNewBffField: "leak" })
   );
 });
 
