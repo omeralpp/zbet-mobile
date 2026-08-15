@@ -5,12 +5,22 @@ import * as SecureStore from "expo-secure-store";
 import { mobileApi } from "@/src/api";
 import { runtimeConfig } from "@/src/config/runtime";
 import { resolveLegacyNotificationTopic } from "./registration-policy";
+import { pushTokenTimeoutMs, withTimeout } from "./push-token-timeout";
 
 export const notificationChannels = {
   super: "btb_super_goal_v1",
   general: "btb_general_whistle_v1"
 } as const;
 const installationKey = "btb.mobile.installation-id";
+
+async function getDevicePushTokenBounded(): Promise<string> {
+  const deviceToken = await withTimeout(
+    Notifications.getDevicePushTokenAsync(),
+    pushTokenTimeoutMs,
+    "Push token alınamadı (zaman aşımı)."
+  );
+  return String(deviceToken.data);
+}
 
 export async function getInstallationId(): Promise<string> {
   const stored = await SecureStore.getItemAsync(installationKey);
@@ -78,8 +88,7 @@ export async function registerPushDevice(): Promise<string> {
     throw new Error("Bildirim izni verilmedi.");
   }
 
-  const deviceToken = await Notifications.getDevicePushTokenAsync();
-  const token = String(deviceToken.data);
+  const token = await getDevicePushTokenBounded();
   await syncPushToken(token);
   return token;
 }
@@ -90,8 +99,7 @@ export async function restorePushRegistration(): Promise<void> {
     return;
   }
 
-  const deviceToken = await Notifications.getDevicePushTokenAsync();
-  const token = String(deviceToken.data);
+  const token = await getDevicePushTokenBounded();
   await syncPushToken(token);
 }
 
