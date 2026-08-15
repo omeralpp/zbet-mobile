@@ -9,6 +9,7 @@ import {
   formatSuperResult
 } from "@/src/utils/format";
 import { RatingStars } from "./RatingStars";
+import { TeamLogo } from "./TeamLogo";
 
 function resultColor(result: SuperLog["result"]): string {
   if (result === "WON") {
@@ -50,9 +51,15 @@ export function SuperLogCard({ log }: { log: SuperLog }) {
           </Text>
         </View>
       </View>
-      <Text numberOfLines={1} style={styles.match}>
-        {log.matchName}
-      </Text>
+      <View style={styles.matchRow}>
+        <View style={styles.logoPair}>
+          <TeamLogo participantId={log.homeParticipantId} size={18} />
+          <TeamLogo participantId={log.awayParticipantId} size={18} />
+        </View>
+        <Text numberOfLines={1} style={styles.match}>
+          {log.matchName}
+        </Text>
+      </View>
       <Text numberOfLines={1} style={styles.fixtureTime}>
         {formatMatchKeyDateTime(log.matchKey)}
       </Text>
@@ -106,12 +113,22 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     textTransform: "uppercase"
   },
+  matchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginTop: spacing.md
+  },
+  logoPair: {
+    flexDirection: "row",
+    gap: 2
+  },
   match: {
     color: colors.text,
+    flexShrink: 1,
     fontSize: 16,
     lineHeight: 22,
-    fontWeight: "800",
-    marginTop: spacing.md
+    fontWeight: "800"
   },
   reason: {
     color: colors.textMuted,

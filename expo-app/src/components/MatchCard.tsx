@@ -12,18 +12,22 @@ import {
   formatSigned
 } from "@/src/utils/format";
 import { RatingStars } from "./RatingStars";
+import { TeamLogo } from "./TeamLogo";
 
 function TeamName({
   name,
+  participantId,
   position,
   redCards
 }: {
   name: string;
+  participantId?: string | null | undefined;
   position?: number | null | undefined;
   redCards?: number | undefined;
 }) {
   return (
     <View style={styles.teamRow}>
+      <TeamLogo participantId={participantId} size={20} />
       <Text numberOfLines={1} style={styles.team}>
         {name}
       </Text>
@@ -126,11 +130,13 @@ export function MatchCard({
         <View style={styles.teams}>
           <TeamName
             name={match.homeTeam}
+            participantId={match.homeParticipantId}
             position={insight?.homeStandingPosition}
             redCards={insight?.homeRedCards}
           />
           <TeamName
             name={match.awayTeam}
+            participantId={match.awayParticipantId}
             position={insight?.awayStandingPosition}
             redCards={insight?.awayRedCards}
           />
