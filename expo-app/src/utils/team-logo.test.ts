@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getTeamLogoUrl } from "./team-logo";
+import {
+  getTeamLogoUrl,
+  hasAnyTeamLogo,
+  resolveTeamLogoSize,
+  teamLogoSizes
+} from "./team-logo";
 
 test("builds the exact Bilyoner CDN logo URL for a valid participant ID", () => {
   assert.equal(
@@ -36,4 +41,26 @@ test("rejects non-string and malformed participant ID representations", () => {
 
 test("never infers a URL from a team name", () => {
   assert.equal(getTeamLogoUrl("Paris Saint-Germain" as unknown as string), null);
+});
+
+test("keeps one ascending identity scale for every surface", () => {
+  assert.deepEqual(teamLogoSizes, { compact: 18, standard: 24, hero: 40 });
+  assert.ok(teamLogoSizes.compact < teamLogoSizes.standard);
+  assert.ok(teamLogoSizes.standard < teamLogoSizes.hero);
+});
+
+test("resolves each named size and defaults to standard", () => {
+  assert.equal(resolveTeamLogoSize("compact"), 18);
+  assert.equal(resolveTeamLogoSize("standard"), 24);
+  assert.equal(resolveTeamLogoSize("hero"), 40);
+  assert.equal(resolveTeamLogoSize(undefined), 24);
+});
+
+test("detects whether any side of a match has a usable identity", () => {
+  assert.equal(hasAnyTeamLogo("100021", "100022"), true);
+  assert.equal(hasAnyTeamLogo(null, "100022"), true);
+  assert.equal(hasAnyTeamLogo("100021", null), true);
+  assert.equal(hasAnyTeamLogo(null, null), false);
+  assert.equal(hasAnyTeamLogo(undefined, ""), false);
+  assert.equal(hasAnyTeamLogo("has space", null), false);
 });

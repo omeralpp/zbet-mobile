@@ -1,8 +1,11 @@
 import { StyleSheet, Text, View } from "react-native";
 import { colors, radii, spacing } from "@/src/theme/theme";
+import { hasAnyTeamLogo } from "@/src/utils/team-logo";
+import { TeamLogo } from "./TeamLogo";
 
 export type LeagueStandingRow = {
   team: string;
+  participantId?: string | null | undefined;
   position: number | null;
   points: number | null;
   side: "HOME" | "AWAY";
@@ -15,6 +18,9 @@ export function LeagueStandingsTable({
   contextLabel: string;
   rows: LeagueStandingRow[];
 }) {
+  // Keep the crest column out of the table entirely when neither team has a
+  // usable identity, so legacy rows stay clean instead of showing two blanks.
+  const showCrests = hasAnyTeamLogo(...rows.map((row) => row.participantId));
   const orderedRows = [...rows].sort((left, right) => {
     const leftPosition = left.position ?? Number.MAX_SAFE_INTEGER;
     const rightPosition = right.position ?? Number.MAX_SAFE_INTEGER;
@@ -47,9 +53,14 @@ export function LeagueStandingsTable({
                 <Text style={styles.positionText}>{row.position ?? "—"}</Text>
               </View>
             </View>
-            <Text numberOfLines={1} style={[styles.teamText, styles.teamColumn]}>
-              {row.team}
-            </Text>
+            <View style={[styles.teamColumn, styles.teamCell]}>
+              {showCrests ? (
+                <TeamLogo participantId={row.participantId} size="compact" />
+              ) : null}
+              <Text numberOfLines={1} style={styles.teamText}>
+                {row.team}
+              </Text>
+            </View>
             <Text style={[styles.pointsText, styles.pointsColumn]}>
               {row.points ?? "—"}
             </Text>
@@ -132,8 +143,14 @@ const styles = StyleSheet.create({
   teamColumn: {
     flex: 1
   },
+  teamCell: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.sm
+  },
   teamText: {
     color: colors.text,
+    flexShrink: 1,
     fontSize: 13,
     fontWeight: "800"
   },

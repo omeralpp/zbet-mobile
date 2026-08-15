@@ -17,10 +17,12 @@ import {
 import { Screen } from "@/src/components/Screen";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { RatingStars } from "@/src/components/RatingStars";
+import { TeamLogo } from "@/src/components/TeamLogo";
 import { LeagueStandingsTable } from "@/src/components/LeagueStandingsTable";
 import { PressureBalance } from "@/src/components/PressureBalance";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { colors, radii, spacing } from "@/src/theme/theme";
+import { teamLogoSizes } from "@/src/utils/team-logo";
 import {
   formatFixtureDateTime,
   formatPercentage,
@@ -146,7 +148,21 @@ export default function SuperLogDetailScreen() {
               </Text>
             </View>
           </View>
-          <Text style={styles.match}>{log.homeTeam} – {log.awayTeam}</Text>
+          <View style={styles.matchIdentity}>
+            <View style={styles.matchTeam}>
+              <TeamLogo participantId={log.homeParticipantId} size="hero" />
+              <Text numberOfLines={2} style={styles.matchTeamName}>
+                {log.homeTeam}
+              </Text>
+            </View>
+            <Text style={styles.matchVersus}>–</Text>
+            <View style={styles.matchTeam}>
+              <TeamLogo participantId={log.awayParticipantId} size="hero" />
+              <Text numberOfLines={2} style={styles.matchTeamName}>
+                {log.awayTeam}
+              </Text>
+            </View>
+          </View>
           <View style={styles.scoreTimeline}>
             <View style={styles.scorePane}>
               <Text style={styles.scoreLabel}>Karar anı skoru</Text>
@@ -255,12 +271,14 @@ export default function SuperLogDetailScreen() {
             rows={[
               {
                 team: log.homeTeam,
+                participantId: log.homeParticipantId,
                 position: log.homeStandingPosition || null,
                 points: log.homeStandingPoints,
                 side: "HOME"
               },
               {
                 team: log.awayTeam,
+                participantId: log.awayParticipantId,
                 position: log.awayStandingPosition || null,
                 points: log.awayStandingPoints,
                 side: "AWAY"
@@ -341,7 +359,33 @@ const styles = StyleSheet.create({
   },
   result: { fontSize: 10, fontWeight: "900" },
   fixtureTime: { color: colors.textSubtle, fontSize: 10, marginTop: 4 },
-  match: { color: colors.text, fontSize: 22, fontWeight: "900", marginTop: spacing.lg },
+  matchIdentity: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.md,
+    marginTop: spacing.lg
+  },
+  matchTeam: {
+    alignItems: "center",
+    flex: 1,
+    gap: spacing.sm
+  },
+  matchTeamName: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: "900",
+    lineHeight: 20,
+    textAlign: "center"
+  },
+  matchVersus: {
+    // Pin the separator to the crest row instead of the block centre, so it
+    // reads as a connector rather than floating between crest and name.
+    alignSelf: "flex-start",
+    color: colors.textMuted,
+    fontSize: 15,
+    fontWeight: "900",
+    lineHeight: teamLogoSizes.hero
+  },
   scoreTimeline: {
     flexDirection: "row",
     flexWrap: "wrap",

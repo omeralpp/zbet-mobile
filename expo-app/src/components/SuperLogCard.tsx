@@ -8,8 +8,9 @@ import {
   formatSigned,
   formatSuperResult
 } from "@/src/utils/format";
+import { hasAnyTeamLogo } from "@/src/utils/team-logo";
 import { RatingStars } from "./RatingStars";
-import { TeamLogo } from "./TeamLogo";
+import { TeamLogoPair } from "./TeamLogo";
 
 function resultColor(result: SuperLog["result"]): string {
   if (result === "WON") {
@@ -52,10 +53,13 @@ export function SuperLogCard({ log }: { log: SuperLog }) {
         </View>
       </View>
       <View style={styles.matchRow}>
-        <View style={styles.logoPair}>
-          <TeamLogo participantId={log.homeParticipantId} size={18} />
-          <TeamLogo participantId={log.awayParticipantId} size={18} />
-        </View>
+        {hasAnyTeamLogo(log.homeParticipantId, log.awayParticipantId) ? (
+          <TeamLogoPair
+            awayParticipantId={log.awayParticipantId}
+            homeParticipantId={log.homeParticipantId}
+            size="compact"
+          />
+        ) : null}
         <Text numberOfLines={1} style={styles.match}>
           {log.matchName}
         </Text>
@@ -116,12 +120,9 @@ const styles = StyleSheet.create({
   matchRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs,
-    marginTop: spacing.md
-  },
-  logoPair: {
-    flexDirection: "row",
-    gap: 2
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    minHeight: 22
   },
   match: {
     color: colors.text,

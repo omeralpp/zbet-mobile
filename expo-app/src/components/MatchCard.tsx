@@ -27,7 +27,7 @@ function TeamName({
 }) {
   return (
     <View style={styles.teamRow}>
-      <TeamLogo participantId={participantId} size={20} />
+      <TeamLogo participantId={participantId} size="standard" />
       <Text numberOfLines={1} style={styles.team}>
         {name}
       </Text>

@@ -21,6 +21,7 @@ import {
   matchSuperLogsQuery
 } from "@/src/api/queries";
 import { RatingStars } from "@/src/components/RatingStars";
+import { TeamLogo } from "@/src/components/TeamLogo";
 import { LeagueStandingsTable } from "@/src/components/LeagueStandingsTable";
 import { PressureBalance } from "@/src/components/PressureBalance";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
@@ -50,15 +51,19 @@ function firstParam(value: string | string[] | undefined): string {
 
 function TeamHeroName({
   name,
+  participantId,
   position,
   redCards
 }: {
   name: string;
+  participantId?: string | null | undefined;
   position?: number | null | undefined;
   redCards: number;
 }) {
   return (
-    <View style={styles.teamNameRow}>
+    <View style={styles.teamIdentity}>
+      <TeamLogo participantId={participantId} size="hero" />
+      <View style={styles.teamNameRow}>
       <Text numberOfLines={2} style={styles.team}>
         {name}
       </Text>
@@ -78,6 +83,7 @@ function TeamHeroName({
           ) : null}
         </View>
       ) : null}
+      </View>
     </View>
   );
 }
@@ -246,6 +252,7 @@ export default function MatchDetailScreen() {
           <View style={styles.teamBlock}>
             <TeamHeroName
               name={match.homeTeam}
+              participantId={match.homeParticipantId}
               position={insight?.homeStandingPosition}
               redCards={insight?.homeRedCards ?? match.homeRedCards}
             />
@@ -262,9 +269,10 @@ export default function MatchDetailScreen() {
               </Text>
             ) : null}
           </View>
-          <View style={[styles.teamBlock, styles.awayTeam]}>
+          <View style={styles.teamBlock}>
             <TeamHeroName
               name={match.awayTeam}
+              participantId={match.awayParticipantId}
               position={insight?.awayStandingPosition}
               redCards={insight?.awayRedCards ?? match.awayRedCards}
             />
@@ -392,12 +400,14 @@ export default function MatchDetailScreen() {
               rows={[
                 {
                   team: leagueContextQuery.data.homeTeam,
+                  participantId: match.homeParticipantId,
                   position: leagueContextQuery.data.homeStandingPosition,
                   points: leagueContextQuery.data.homeStandingPoints,
                   side: "HOME"
                 },
                 {
                   team: leagueContextQuery.data.awayTeam,
+                  participantId: match.awayParticipantId,
                   position: leagueContextQuery.data.awayStandingPosition,
                   points: leagueContextQuery.data.awayStandingPoints,
                   side: "AWAY"
@@ -582,14 +592,16 @@ const styles = StyleSheet.create({
   teamBlock: {
     flex: 1
   },
-  awayTeam: {
-    alignItems: "flex-end"
+  teamIdentity: {
+    alignItems: "center",
+    gap: spacing.sm
   },
   team: {
     color: colors.text,
     fontSize: 15,
     lineHeight: 20,
-    fontWeight: "800"
+    fontWeight: "800",
+    textAlign: "center"
   },
   teamNameRow: {
     alignItems: "center",
