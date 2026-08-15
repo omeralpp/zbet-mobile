@@ -125,6 +125,53 @@ test("accepts the current BFF match summary contract including pressure metadata
   );
 });
 
+test("accepts valid, missing, and null participant IDs but rejects malformed ones", () => {
+  const base = {
+    key: "2026-08-15:999999:20:45:00",
+    id: 999999,
+    matchDate: "2026-08-15",
+    matchTime: "20:45",
+    league: "Test League",
+    homeTeam: "Home FC",
+    awayTeam: "Away FC",
+    homeScore: 1,
+    awayScore: 0,
+    elapsed: 30,
+    status: "LIVE",
+    selectedOdd: "Ms1X",
+    rating: 3,
+    liveRate: 1.5,
+    currentRate: 1.4,
+    pressureDiff: null,
+    totalPressure: null,
+    pressureSource: null,
+    lastUpdatedAt: "2026-08-15T18:00:05.000Z"
+  } as const;
+
+  assert.doesNotThrow(() =>
+    matchSummarySchema.parse({
+      ...base,
+      homeParticipantId: "100021",
+      awayParticipantId: "100022"
+    })
+  );
+  assert.doesNotThrow(() =>
+    matchSummarySchema.parse({
+      ...base,
+      homeParticipantId: null,
+      awayParticipantId: null
+    })
+  );
+  assert.doesNotThrow(() => matchSummarySchema.parse(base));
+
+  assert.throws(() =>
+    matchSummarySchema.parse({ ...base, homeParticipantId: "" })
+  );
+  assert.throws(() =>
+    matchSummarySchema.parse({ ...base, homeParticipantId: 100021 })
+  );
+});
+
 test("keeps the checked-in OpenAPI document parseable and route-complete", async () => {
   const source = await readFile(
     new URL("../../contracts/mobile-api.openapi.yaml", import.meta.url),

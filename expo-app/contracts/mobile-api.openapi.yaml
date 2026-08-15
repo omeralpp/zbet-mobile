@@ -350,6 +350,8 @@ components:
         league: { type: string, minLength: 1 }
         homeTeam: { type: string, minLength: 1 }
         awayTeam: { type: string, minLength: 1 }
+        homeParticipantId: { type: [string, "null"], minLength: 1 }
+        awayParticipantId: { type: [string, "null"], minLength: 1 }
         homeScore: { type: integer, minimum: 0 }
         awayScore: { type: integer, minimum: 0 }
         elapsed: { type: integer, minimum: 0 }
@@ -556,6 +558,8 @@ components:
         key: { type: string, minLength: 1 }
         matchKey: { type: string, minLength: 1 }
         matchName: { type: string, minLength: 1 }
+        homeParticipantId: { type: [string, "null"], minLength: 1 }
+        awayParticipantId: { type: [string, "null"], minLength: 1 }
         createdAt: { type: string, format: date-time }
         elapsed: { type: integer, minimum: 0 }
         selectedOdd: { type: string, minLength: 1 }
