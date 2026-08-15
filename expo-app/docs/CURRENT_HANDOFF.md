@@ -87,14 +87,20 @@ Final ARM64 artifact build ve imza/hash doğrulaması bu handoff'un aşağıdaki
 cutover kapanışında kaydedilir:
 
 ```text
-Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-cutover-20260813-v20-final.apk
+Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-pilot-stabilization.apk
 Package : com.btb.mobile.next
 Version : 0.1.0 (1)
 ABI     : arm64-v8a
-Size    : 48,186,309 bytes
-SHA-256 : FA4B569D91B0E3CE1C41F43C377A6976C82ED5F217EBED6BA6D71CF99F440793
-Signing : APK Signature Scheme v2; pilot debug certificate
+Size    : 48,188,549 bytes
+SHA-256 : 3baf3df08e4c7a1c15228965d1d41477d6e976cd4860a9c5df68e8899477f4a7
+Config  : authMode=pilot, mobileApiUrl=https://api.surklase.com
+Build   : 2026-08-15 — current-pressure schema fix (b9445dd) + push-token
+          registration timeout (1dd0afe); emulator-validated, physical
+          phone verification pending.
 ```
+
+Önceki final artifact (2026-08-13, `btb-mobile-next-arm64-cutover-20260813-v20-final.apk`)
+`docs/observation_archive/cutover_2026-08-13-02.md` içinde kayıtlıdır.
 
 ## Bilyoner takım logo eşlemesi
 
@@ -138,3 +144,4 @@ Signing : APK Signature Scheme v2; pilot debug certificate
    dış deploy kapılarını yeniden açık onayla işlet.
 
 Cutover kanıtı: `docs/observation_archive/cutover_2026-08-13-02.md`.
+2026-08-15 stabilizasyon kanıtı: `docs/observation_archive/cutover_2026-08-15.md`.
