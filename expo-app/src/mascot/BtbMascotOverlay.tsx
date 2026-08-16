@@ -23,6 +23,12 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radii, shadows } from "@/src/theme/theme";
 import { useTutorial } from "@/src/tutorial/TutorialProvider";
+import {
+  bibiIdleDurations,
+  nextIdleDelayMs,
+  pickIdleBehavior,
+  type BibiIdleBehavior
+} from "./idle-behavior";
 import { useMascotActions } from "./MascotActions";
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
@@ -107,7 +113,10 @@ export function BtbMascotOverlay() {
   const [blinkFrame, setBlinkFrame] = useState<0 | 1 | 2>(0);
   const [showGreeting, setShowGreeting] = useState(true);
   const [reduceMotion, setReduceMotion] = useState(false);
-  const [floatY] = useState(() => new Animated.Value(0));
+  const [dragging, setDragging] = useState(false);
+  const [idleX] = useState(() => new Animated.Value(0));
+  const [idleY] = useState(() => new Animated.Value(0));
+  const [idleTilt] = useState(() => new Animated.Value(0));
   const [pressScale] = useState(() => new Animated.Value(1));
   const [openTilt] = useState(() => new Animated.Value(0));
   const [dragTilt] = useState(() => new Animated.Value(0));
@@ -182,6 +191,10 @@ export function BtbMascotOverlay() {
     ? tutorialPosition
     : visiblePosition;
   const open = !tutorial.activeTip && openPath === pathname;
+  // Idle expression is suppressed the moment another interaction owns Bibi, so
+  // an interrupted blink can never freeze a half-closed frame on screen.
+  const idleSuppressed =
+    reduceMotion || open || dragging || Boolean(tutorial.activeTip);
 
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled()
@@ -209,58 +222,119 @@ export function BtbMascotOverlay() {
     return () => clearTimeout(greetingTimer);
   }, []);
 
+  // Bibi is still by default. A short micro-animation plays only after a long
+  // quiet window, never repeats the previous one, and stands down completely
+  // while the menu, the guide, a drag, or reduce-motion is active.
   useEffect(() => {
-    floatY.stopAnimation();
-    floatY.setValue(0);
-    if (reduceMotion) {
+    idleX.setValue(0);
+    idleY.setValue(0);
+    idleTilt.setValue(0);
+    if (reduceMotion || open || dragging || tutorial.activeTip) {
       return;
     }
-    const animation = Animated.loop(
+    let disposed = false;
+    let previous: BibiIdleBehavior | null = null;
+    const timers = new Set<ReturnType<typeof setTimeout>>();
+    const later = (callback: () => void, delay: number) => {
+      const timer = setTimeout(() => {
+        timers.delete(timer);
+        if (!disposed) {
+          callback();
+        }
+      }, delay);
+      timers.add(timer);
+    };
+    const tiltOnce = (toValue: number) => {
       Animated.sequence([
-        Animated.timing(floatY, {
-          toValue: -2,
-          duration: 1800,
+        Animated.spring(idleTilt, {
+          toValue,
+          damping: 11,
+          stiffness: 220,
           useNativeDriver: true
         }),
-        Animated.timing(floatY, {
+        Animated.spring(idleTilt, {
           toValue: 0,
-          duration: 1800,
+          damping: 14,
+          stiffness: 190,
           useNativeDriver: true
         })
-      ])
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [floatY, reduceMotion]);
-
-  useEffect(() => {
-    let disposed = false;
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    const later = (callback: () => void, delay: number) => {
-      const timer = setTimeout(callback, delay);
-      timers.push(timer);
+      ]).start();
+    };
+    const play = (behavior: BibiIdleBehavior) => {
+      if (behavior === "blink") {
+        setBlinkFrame(1);
+        later(() => setBlinkFrame(2), 55);
+        later(() => setBlinkFrame(1), 130);
+        later(() => setBlinkFrame(0), 190);
+        return;
+      }
+      if (behavior === "doubleBlink") {
+        setBlinkFrame(2);
+        later(() => setBlinkFrame(0), 80);
+        later(() => setBlinkFrame(2), 210);
+        later(() => setBlinkFrame(0), 300);
+        return;
+      }
+      if (behavior === "wink") {
+        setBlinkFrame(1);
+        tiltOnce(0.3);
+        later(() => setBlinkFrame(0), 210);
+        return;
+      }
+      if (behavior === "bob") {
+        Animated.sequence([
+          Animated.spring(idleY, {
+            toValue: -3,
+            damping: 9,
+            stiffness: 230,
+            useNativeDriver: true
+          }),
+          Animated.spring(idleY, {
+            toValue: 0,
+            damping: 12,
+            stiffness: 200,
+            useNativeDriver: true
+          })
+        ]).start();
+        return;
+      }
+      Animated.sequence([
+        Animated.timing(idleX, {
+          toValue: -2.5,
+          duration: 260,
+          useNativeDriver: true
+        }),
+        Animated.timing(idleX, {
+          toValue: 2.5,
+          duration: 340,
+          useNativeDriver: true
+        }),
+        Animated.timing(idleX, {
+          toValue: 0,
+          duration: 260,
+          useNativeDriver: true
+        })
+      ]).start();
     };
     const schedule = () => {
       later(() => {
-        if (disposed || open) {
-          schedule();
-          return;
-        }
-        setBlinkFrame(1);
-        later(() => setBlinkFrame(2), 55);
-        later(() => setBlinkFrame(1), 125);
-        later(() => {
-          setBlinkFrame(0);
-          schedule();
-        }, 190);
-      }, 3800 + Math.round(Math.random() * 2400));
+        const behavior = pickIdleBehavior(Math.random(), previous);
+        previous = behavior;
+        play(behavior);
+        later(schedule, bibiIdleDurations[behavior]);
+      }, nextIdleDelayMs(Math.random()));
     };
     schedule();
     return () => {
       disposed = true;
       timers.forEach(clearTimeout);
+      timers.clear();
+      setBlinkFrame(0);
+      idleX.stopAnimation();
+      idleY.stopAnimation();
+      idleTilt.stopAnimation();
     };
-  }, [open]);
+  }, [dragging, idleTilt, idleX, idleY, open, reduceMotion, tutorial.activeTip]);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -318,6 +392,7 @@ export function BtbMascotOverlay() {
           Math.abs(gesture.dx) > 6 || Math.abs(gesture.dy) > 6,
         onPanResponderGrant: () => {
           setOpenPath(null);
+          setDragging(true);
           if (Platform.OS !== "web") {
             Haptics.selectionAsync().catch(() => undefined);
           }
@@ -339,6 +414,7 @@ export function BtbMascotOverlay() {
           }
         },
         onPanResponderRelease: (_, gesture) => {
+          setDragging(false);
           const next = clampPosition(
             {
               x: visiblePosition.x + gesture.dx,
@@ -359,6 +435,7 @@ export function BtbMascotOverlay() {
           }).start();
         },
         onPanResponderTerminate: () => {
+          setDragging(false);
           dragTranslation.setValue({ x: 0, y: 0 });
           dragTilt.setValue(0);
         }
@@ -436,8 +513,11 @@ export function BtbMascotOverlay() {
     width
   ]);
   const rotation = Animated.add(
-    openTilt.interpolate({ inputRange: [0, 1], outputRange: [0, 0.7] }),
-    dragTilt
+    Animated.add(
+      openTilt.interpolate({ inputRange: [0, 1], outputRange: [0, 0.7] }),
+      dragTilt
+    ),
+    idleTilt
   ).interpolate({ inputRange: [-1, 1], outputRange: ["-8deg", "8deg"] });
 
   const animatePress = (toValue: number) => {
@@ -567,7 +647,8 @@ export function BtbMascotOverlay() {
         <Animated.View
           style={{
             transform: [
-              { translateY: reduceMotion ? 0 : floatY },
+              { translateX: reduceMotion ? 0 : idleX },
+              { translateY: reduceMotion ? 0 : idleY },
               { scale: pressScale },
               { rotate: reduceMotion ? "0deg" : rotation }
             ]
@@ -592,7 +673,7 @@ export function BtbMascotOverlay() {
             <Animated.View pointerEvents="none" style={[styles.halo, { opacity: halo }]} />
             <Image
               resizeMode="contain"
-              source={bibiFrames[open ? 2 : blinkFrame]}
+              source={bibiFrames[open ? 2 : idleSuppressed ? 0 : blinkFrame]}
               style={styles.bibi}
             />
             <Text style={styles.sparkle}>✦</Text>
