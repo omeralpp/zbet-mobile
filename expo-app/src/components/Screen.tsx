@@ -1,7 +1,16 @@
-import { useMemo, useState, type PropsWithChildren, type ReactNode } from "react";
+import {
+  useMemo,
+  useState,
+  type PropsWithChildren,
+  type ReactNode,
+  type RefObject
+} from "react";
+import * as Haptics from "expo-haptics";
+import { usePathname, useRouter } from "expo-router";
 import {
   Animated,
   PanResponder,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,6 +21,12 @@ import {
   type ViewStyle
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { adjacentMainTab, type MainTabRoute } from "@/src/navigation/main-tabs";
+import {
+  shouldActivateTabSwipe,
+  shouldCommitTabSwipe,
+  tabSwipeTranslation
+} from "@/src/navigation/tab-swipe";
 import { colors, interaction, spacing } from "@/src/theme/theme";
 
 type ScreenProps = PropsWithChildren<{
@@ -21,9 +36,20 @@ type ScreenProps = PropsWithChildren<{
   scroll?: boolean;
   edgeSwipeBack?: boolean;
   onEdgeSwipeBack?: () => void;
+  /** Enables the horizontal main-tab gesture on primary tab screens. */
+  tabSwipe?: boolean;
+  scrollRef?: RefObject<ScrollView | null>;
   contentStyle?: StyleProp<ViewStyle>;
   scrollProps?: Omit<ScrollViewProps, "contentContainerStyle">;
 }>;
+
+const springBack = {
+  toValue: 0,
+  damping: 20,
+  stiffness: 260,
+  mass: 0.7,
+  useNativeDriver: true
+} as const;
 
 export function Screen({
   children,
@@ -33,23 +59,45 @@ export function Screen({
   scroll = true,
   edgeSwipeBack = false,
   onEdgeSwipeBack,
+  tabSwipe = false,
+  scrollRef,
   contentStyle,
   scrollProps
 }: ScreenProps) {
   const { width } = useWindowDimensions();
+  const router = useRouter();
+  const pathname = usePathname();
   const [swipeX] = useState(() => new Animated.Value(0));
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponderCapture: (_, gesture) =>
-          edgeSwipeBack &&
-          gesture.x0 <= 32 &&
-          gesture.dx > 8 &&
-          Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.2,
-        onPanResponderMove: (_, gesture) => {
+
+  // A screen enables exactly one horizontal gesture: detail screens the edge
+  // back swipe, primary tab screens the tab swipe. The active mode is therefore
+  // a property of the screen rather than gesture state that has to be tracked.
+  const panResponder = useMemo(() => {
+    const tabTargetFor = (dx: number): MainTabRoute | null =>
+      adjacentMainTab(pathname, dx < 0 ? "NEXT" : "PREVIOUS");
+
+    return PanResponder.create({
+      onMoveShouldSetPanResponderCapture: (_, gesture) => {
+        if (edgeSwipeBack) {
+          return (
+            gesture.x0 <= 32 &&
+            gesture.dx > 8 &&
+            Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.2
+          );
+        }
+        return tabSwipe && shouldActivateTabSwipe(gesture.dx, gesture.dy);
+      },
+      onPanResponderMove: (_, gesture) => {
+        if (edgeSwipeBack) {
           swipeX.setValue(Math.max(0, Math.min(width, gesture.dx)));
-        },
-        onPanResponderRelease: (_, gesture) => {
+          return;
+        }
+        swipeX.setValue(
+          tabSwipeTranslation(gesture.dx, width, tabTargetFor(gesture.dx) !== null)
+        );
+      },
+      onPanResponderRelease: (_, gesture) => {
+        if (edgeSwipeBack) {
           const shouldGoBack = gesture.dx > 76 || gesture.vx > 0.65;
           if (shouldGoBack && onEdgeSwipeBack) {
             Animated.timing(swipeX, {
@@ -59,24 +107,27 @@ export function Screen({
             }).start(() => onEdgeSwipeBack());
             return;
           }
-          Animated.spring(swipeX, {
-            toValue: 0,
-            damping: 18,
-            stiffness: 220,
-            useNativeDriver: true
-          }).start();
-        },
-        onPanResponderTerminate: () => {
-          Animated.spring(swipeX, {
-            toValue: 0,
-            damping: 18,
-            stiffness: 220,
-            useNativeDriver: true
-          }).start();
+          Animated.spring(swipeX, springBack).start();
+          return;
         }
-      }),
-    [edgeSwipeBack, onEdgeSwipeBack, swipeX, width]
-  );
+        const target = tabTargetFor(gesture.dx);
+        // The tab change is committed immediately while the outgoing content
+        // settles back, so the navigator animation continues the gesture
+        // instead of replacing it after a pause.
+        if (target && shouldCommitTabSwipe(gesture.dx, gesture.vx, true)) {
+          if (Platform.OS !== "web") {
+            Haptics.selectionAsync().catch(() => undefined);
+          }
+          router.navigate(target as never);
+        }
+        Animated.spring(swipeX, springBack).start();
+      },
+      onPanResponderTerminate: () => {
+        Animated.spring(swipeX, springBack).start();
+      }
+    });
+  }, [edgeSwipeBack, onEdgeSwipeBack, pathname, router, swipeX, tabSwipe, width]);
+  const gestureEnabled = edgeSwipeBack || tabSwipe;
   const header =
     title || eyebrow || action ? (
       <View style={styles.header}>
@@ -98,13 +149,17 @@ export function Screen({
   return (
     <SafeAreaView edges={["top"]} style={styles.safeArea}>
       <Animated.View
-        {...(edgeSwipeBack ? panResponder.panHandlers : {})}
-        style={[styles.gestureRoot, edgeSwipeBack && { transform: [{ translateX: swipeX }] }]}
+        {...(gestureEnabled ? panResponder.panHandlers : {})}
+        style={[
+          styles.gestureRoot,
+          gestureEnabled && { transform: [{ translateX: swipeX }] }
+        ]}
       >
         {scroll ? (
           <ScrollView
             contentContainerStyle={[styles.content, contentStyle]}
             keyboardShouldPersistTaps="handled"
+            ref={scrollRef}
             showsVerticalScrollIndicator={false}
             {...scrollProps}
           >

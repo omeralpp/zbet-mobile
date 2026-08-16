@@ -1,18 +1,10 @@
-import { useMemo, type ComponentProps } from "react";
+import type { ComponentProps } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { Tabs, usePathname, useRouter } from "expo-router";
-import {
-  PanResponder,
-  Platform,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-  type ColorValue
-} from "react-native";
+import { Tabs } from "expo-router";
+import { Platform, type ColorValue } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/src/theme/theme";
-import { adjacentMainTab } from "@/src/navigation/main-tabs";
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
 
@@ -30,48 +22,13 @@ function tabIcon(name: IconName) {
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
-  const pathname = usePathname();
-  const router = useRouter();
-  const { height } = useWindowDimensions();
   const bottomPadding = Math.max(insets.bottom, 8);
-  const tabBarHeight = 58 + bottomPadding;
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponderCapture: (_, gesture) => {
-          const horizontal = Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.5;
-          const direction = gesture.dx < 0 ? "NEXT" : "PREVIOUS";
-          return (
-            gesture.y0 < height - tabBarHeight - 8 &&
-            Math.abs(gesture.dx) > 18 &&
-            horizontal &&
-            adjacentMainTab(pathname, direction) !== null
-          );
-        },
-        onPanResponderRelease: (_, gesture) => {
-          if (
-            Math.abs(gesture.dx) < 72 &&
-            Math.abs(gesture.vx) < 0.65
-          ) {
-            return;
-          }
-          const direction = gesture.dx < 0 ? "NEXT" : "PREVIOUS";
-          const target = adjacentMainTab(pathname, direction);
-          if (!target) {
-            return;
-          }
-          if (Platform.OS !== "web") {
-            Haptics.selectionAsync().catch(() => undefined);
-          }
-          router.navigate(target as never);
-        }
-      }),
-    [height, pathname, router, tabBarHeight]
-  );
 
+  // The horizontal tab gesture lives in `Screen` so the drag moves the screen
+  // content with the finger and leaves the tab bar anchored. Keeping it out of
+  // the navigator also stops a capture responder from sitting above every list.
   return (
-    <View {...panResponder.panHandlers} style={styles.root}>
-      <Tabs
+    <Tabs
       screenListeners={{
         tabPress: () => {
           if (Platform.OS !== "web") {
@@ -133,13 +90,6 @@ export default function TabLayout() {
           tabBarIcon: tabIcon("dots-horizontal-circle-outline")
         }}
       />
-      </Tabs>
-    </View>
+    </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1
-  }
-});

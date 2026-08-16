@@ -19,6 +19,7 @@ export default function TotoScreen() {
       contentStyle={styles.screen}
       eyebrow="SPOR TOTO"
       scroll={false}
+      tabSwipe
       title="Programlar"
     >
       {query.isLoading ? (

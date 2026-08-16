@@ -117,6 +117,7 @@ export default function SuperScreen() {
       contentStyle={styles.screen}
       eyebrow="BTB SUPER"
       scroll={false}
+      tabSwipe
       title="Karar günlüğü"
     >
       <TutorialTarget id="super-filters" style={styles.filterTarget}>

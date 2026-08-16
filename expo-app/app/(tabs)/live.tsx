@@ -123,6 +123,7 @@ export default function LiveScreen() {
       contentStyle={styles.screen}
       eyebrow="BTB"
       scroll={false}
+      tabSwipe
       title="Canlı maçlar"
     >
       <TutorialTarget
