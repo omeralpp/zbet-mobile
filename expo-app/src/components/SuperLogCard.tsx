@@ -8,8 +8,10 @@ import {
   formatSigned,
   formatSuperResult
 } from "@/src/utils/format";
+import { superMatchIdentity } from "@/src/utils/super-match-identity";
 import { hasAnyTeamLogo } from "@/src/utils/team-logo";
 import { RatingStars } from "./RatingStars";
+import { TeamIdentityLine } from "./TeamIdentityLine";
 import { TeamLogoPair } from "./TeamLogo";
 
 function resultColor(result: SuperLog["result"]): string {
@@ -28,6 +30,7 @@ function resultColor(result: SuperLog["result"]): string {
 export function SuperLogCard({ log }: { log: SuperLog }) {
   const router = useRouter();
   const color = resultColor(log.result);
+  const identity = superMatchIdentity(log);
 
   return (
     <Pressable
@@ -52,18 +55,29 @@ export function SuperLogCard({ log }: { log: SuperLog }) {
           </Text>
         </View>
       </View>
-      <View style={styles.matchRow}>
-        {hasAnyTeamLogo(log.homeParticipantId, log.awayParticipantId) ? (
-          <TeamLogoPair
+      {identity ? (
+        <View style={styles.identityRow}>
+          <TeamIdentityLine
             awayParticipantId={log.awayParticipantId}
+            awayTeam={identity.awayTeam}
             homeParticipantId={log.homeParticipantId}
-            size="compact"
+            homeTeam={identity.homeTeam}
           />
-        ) : null}
-        <Text numberOfLines={1} style={styles.match}>
-          {log.matchName}
-        </Text>
-      </View>
+        </View>
+      ) : (
+        <View style={styles.matchRow}>
+          {hasAnyTeamLogo(log.homeParticipantId, log.awayParticipantId) ? (
+            <TeamLogoPair
+              awayParticipantId={log.awayParticipantId}
+              homeParticipantId={log.homeParticipantId}
+              size="compact"
+            />
+          ) : null}
+          <Text numberOfLines={1} style={styles.match}>
+            {log.matchName}
+          </Text>
+        </View>
+      )}
       <Text numberOfLines={1} style={styles.fixtureTime}>
         {formatMatchKeyDateTime(log.matchKey)}
       </Text>
@@ -116,6 +130,10 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "900",
     textTransform: "uppercase"
+  },
+  identityRow: {
+    marginTop: spacing.md,
+    minHeight: 22
   },
   matchRow: {
     flexDirection: "row",
