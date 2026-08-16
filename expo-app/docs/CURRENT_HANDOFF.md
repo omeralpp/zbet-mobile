@@ -12,8 +12,10 @@ exact-SHA ile BTP DEV'e deploy edildi. Owner talimatıyla `btb-fcm-proxy-srv`
 sonradan durduruldu ve yeniden açıkça devreye alınması istenene kadar
 kullanılmayacak. Aktif runtime yalnız `api.surklase.com` arkasındaki yerel
 standalone BFF/notification servisidir. Public Cloudflare origin yapılandırması,
-Firebase/SAP dış değişikliği, APK dağıtımı, release signing ve Cordova cutover
-yapılmadı; her biri ayrıca açık onay gerektirir.
+Firebase/SAP dış değişikliği, APK dağıtımı ve release signing yapılmadı; her
+biri ayrıca açık onay gerektirir. Legacy Cordova artık RETIRED — bkz. aşağıdaki
+"Legacy Cordova Emekliye Ayrıldı" bölümü; bir daha cutover/migration konusu
+değildir.
 
 Yeni task önce yalnız `C:\dev\btb-cdoex\AGENTS.md` ve bu dosyayı tamamen okur.
 Observation tespitleri `docs/OBSERVATION_LOG.md` içindedir. Yeni toplu kod batch'i
@@ -115,6 +117,41 @@ kapsamında test edilmedi (yalnız emülatör onayı istendi).
 Sabit sınırlar korundu: ARM64 build yapılmadı, thread-optimizer'a
 dönülmedi, SAP/participant-ID/TeamLogo/Super-Toto/credentials/Firebase'e
 dokunulmadı.
+
+## Legacy Cordova Emekliye Ayrıldı — tamamlandı (2026-08-16)
+
+Owner kararı: **legacy Cordova mobil uygulaması artık aktif bir runtime hedefi
+değil — RETIRED / NO LONGER SUPPORTED.** Tek desteklenen mobil runtime
+`zbet-mobile/expo-app` (Mobile Next / Expo).
+
+Bağlam: BTP Work Zone yeni trial'a taşınırken (`BTB Logs/btp_workzone_migration/
+MIGRATION_NOTES.md`) legacy Cordova kaynağında (`zbet-mobile/www/js/index.js`
+`launchpadBaseUrl`, `zbet-mobile/www/index.html` CSP, `zbet-mobile/config.xml`
+`allow-navigation`) eski (artık geçersiz) trial Work Zone host'u hardcoded
+bulundu, override mekanizması yok. Owner kararı bu değerleri yeni tenant'a
+taşımamak — Cordova'yı emekliye ayırmak.
+
+Doğrulanan kanıt:
+- Hiçbir CI/workflow, `btb-codex` tool'u (`btb-codex/tools/catalog.json`) veya
+  build script'i Cordova build/publish etmiyor; tek build/deploy hedefi
+  `zbet-mobile/expo-app/scripts/build-pilot-apk.ps1`.
+- `zbet-mobile/www/`, `config.xml`, `platforms/`, `plugins/` kaynak olarak
+  saklanıyor (silinmedi) — bu task kapsamında silme/arşivleme yapılmadı, henüz
+  onaylı bir arşivleme prosedürü yok.
+
+Eski trial referansları (`188b143btrial...`) bu üç Cordova dosyasında
+**kasıtlı olarak PATCH EDİLMEDİ** ve READ-ONLY reclassify edildi:
+`RETIRED_CODE / HISTORICAL_RUNTIME_REFERENCE` — artık build/ship edilmedikleri
+için aktif runtime riski taşımıyorlar.
+
+Mobile Next / Expo tarafında ayrı, onaylı bir düzeltme yapıldı:
+`app.config.ts`'teki `legacyLaunchpadUrl` fallback'i eski tenant URL'sini
+içeriyordu, artık `""` — yeni Work Zone sitesi yayınlandığında
+`EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL` ile ayarlanacak. `tsc` temiz, lint temiz,
+180/180 test yeşil.
+
+Sabit sınırlar: Cordova kaynağı silinmedi, yeniden build/publish edilmedi,
+migration başlatılmadı.
 
 ## Son checkpoint
 
