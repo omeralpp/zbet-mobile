@@ -222,6 +222,35 @@ verir; kullanılmaz. 2026-08-15 tarihli
   API 35 emülatörüne kurulup manuel kayıt çalıştırıldı; `Bildirimler hazır`
   döndü, kayıt yazması 11 ms sürdü ve ikinci cihaz kaydı korundu.
 
+### Bildirim incidenti — KAPALI (2026-08-16)
+
+- Bildirim kaydı: **KAPALI**. Fiziksel Xiaomi cihaz kaydı: **DOĞRULANDI**.
+  Fiziksel Xiaomi gerçek bildirim teslimi: **DOĞRULANDI** (manuel tetikli
+  gerçek BTB bildirimi telefonda görüntülendi).
+- Kök neden: cihazın önceki FCM kayıt tokenı Firebase tarafında
+  `UNREGISTERED` durumuna düşmüştü. Her gönderimde telefon hedefleniyor,
+  FCM 404 `UNREGISTERED` dönüyor ve cihaz kayıt defterinden düşürülüyordu.
+  Uygulama verisi temizlenince yeni FCM instance/token alındı ve teslim
+  normale döndü.
+- Hedefleme mekanizması doğrulandı: aktif yol yalnız cihaz kayıt
+  defterindeki **doğrudan FCM tokenları** ile gönderir
+  (`buildFcmMessage` token varsa `message.token` kullanır). Eski `BTB`
+  topic'i aktif teslim yolunda kullanılmaz; yalnız pilot Android'de
+  sınırlı best-effort geriye dönük uyumluluk adımıdır. Topic adı/durumu
+  bu incidente katkı vermedi, topic rename yapılmadı.
+- Telemetri: `zbet-cap` `7e3e823` ile gönderim başına cihaz bazlı teslim
+  kaydı eklendi (registry id öneki, platform, HTTP status, FCM error code,
+  düşürülme bayrağı). Token/kimlik bilgisi loglanmaz. Aynı commit
+  `INVALID_ARGUMENT` hatasında yalnız FCM token alanını işaret ettiğinde
+  cihaz düşürür; hatalı payload artık tüm kayıt defterini silemez.
+- İlgili commit'ler: Mobile `26bfa0b` (+ handoff `ddbcc36`),
+  BFF `23926f8` (device stage izleme) ve `7e3e823` (cihaz bazlı teslim
+  telemetrisi).
+- Aktif bildirim blokajı yok. Kurulu ARM64 artifact değişmedi; yeni APK
+  gerekmedi.
+- Not: `08211fa9` önekli eski kayıt defteri kaydı bilinçli olarak
+  silinmedi; ayrıca talep edilirse kaldırılır.
+
 Önceki final artifact (2026-08-13, `btb-mobile-next-arm64-cutover-20260813-v20-final.apk`)
 `docs/observation_archive/cutover_2026-08-13-02.md` içinde kayıtlıdır.
 
@@ -255,6 +284,12 @@ verir; kullanılmaz. 2026-08-15 tarihli
   doğrulandı; fiziksel cihazdaki görünüm observation sırasında izlenecek.
 - Fiziksel ARM64 telefonda v20 kurulum ve ana sekme swipe/filtre/Toto sonuç görünümü
   observation'da izlenecek.
+- ~~Fiziksel Xiaomi bildirim kaydı ve teslimi~~ — KAPALI, bkz. yukarıdaki
+  "Bildirim incidenti — KAPALI (2026-08-16)".
+
+## Sıradaki milestone
+
+Claude ↔ Codex Thread Optimizer parity.
 
 ## Exact next steps
 
