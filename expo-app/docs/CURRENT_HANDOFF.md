@@ -19,6 +19,47 @@ Yeni task önce yalnız `C:\dev\btb-cdoex\AGENTS.md` ve bu dosyayı tamamen okur
 Observation tespitleri `docs/OBSERVATION_LOG.md` içindedir. Yeni toplu kod batch'i
 yalnız `btb next cutover start` ile başlar.
 
+## Notification Registration Hotfix — tamamlandı (2026-08-16)
+
+`more.tsx`'teki "Cihaz kaydediliyor…" sonsuz askı hatası çözüldü. Kök neden:
+`registerPushDevice()` içinde `getDevicePushTokenAsync()` dışındaki dört native
+çağrı (ilk ve koşulsuz çalışan `ensureNotificationChannels()`,
+`getPermissionsAsync()`, `requestPermissionsAsync()`,
+`subscribeToTopicAsync()`) sınırsızdı; ayrıca `AppProviders.tsx` açılışta
+manuel kayıttan bağımsız `restorePushRegistration()` çalıştırıyor ve
+`addPushTokenListener` üçüncü, bağımsız bir `syncPushToken()` tetikleyicisiydi
+— üç yol birbiriyle yarışabiliyordu.
+
+Çözüm: `src/notifications/registration-machine.ts` — tek sahipli, saf/DI'lı bir
+state machine (`idle/channels/permission_check/permission_request/push_token/
+device_registration/complete/failed`; transaction-token ile tek-uçuş guard ve
+eski sonucun yeni state'i ezmesini engelleyen koruma; izin isteği zaman
+aşımından sonra recheck kurtarma; outer watchdog=30s; dinleyici hatası
+transaction'ı asla bloklamaz). `register.ts` tek bir controller singleton'ına
+sahip; `registerPushDevice()` manuel çağrıyı her zaman önceliklendirir,
+`restorePushRegistration()` controller aktifken erken çıkar ve kendi
+`getPermissionsAsync()`/token çağrıları da sınırlıdır. `more.tsx`
+`useRegistrationState()` ile reaktif stage/hata koduna dayalı Türkçe alt metin
+gösterir; artık hiçbir yol UI'ı süresiz "Cihaz kaydediliyor…" durumunda
+bırakamaz. Merkezi zaman aşımı sabitleri `src/notifications/async-timeout.ts`
+içinde (eski `push-token-timeout.ts` silindi) —
+channels/permissionCheck/legacyTopic=8s, permissionRequest=20s,
+deviceRegistration=25s, watchdog=30s, pushToken=15s (değişmedi).
+
+Doğrulama: `registration-machine.test.ts` (~22 deterministic senaryo:
+her stage için timeout/failure kodu, izin-recheck kurtarma, outer watchdog,
+dinleyici hatası izolasyonu, stale-transaction koruması, single-flight)
++ `async-timeout.test.ts`; Mobile `npm run check` (typecheck + lint +
+133/133 test) yeşil. Android API 35 x86_64 emülatöründe pilot modda smoke
+edildi: manuel kayıt anında tamamlanıyor ("Bildirimler hazır" alert'i),
+alt metin varsayılana dönüyor, hızlı çift dokunuşta ikinci alert
+istiflenmiyor, logcat'te ilgili crash/fatal yok. Fiziksel cihaz bu task
+kapsamında test edilmedi (yalnız emülatör onayı istendi).
+
+Sabit sınırlar korundu: ARM64 build yapılmadı, thread-optimizer'a
+dönülmedi, SAP/participant-ID/TeamLogo/Super-Toto/credentials/Firebase'e
+dokunulmadı.
+
 ## Son checkpoint
 
 - Maç ve Super detay hero kartlarındaki alt metrikler ortak üç kolon ritmine

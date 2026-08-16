@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from "react";
 import { Platform } from "react-native";
 import * as Crypto from "expo-crypto";
 import * as Notifications from "expo-notifications";
@@ -5,7 +6,17 @@ import * as SecureStore from "expo-secure-store";
 import { mobileApi } from "@/src/api";
 import { runtimeConfig } from "@/src/config/runtime";
 import { resolveLegacyNotificationTopic } from "./registration-policy";
-import { pushTokenTimeoutMs, withTimeout } from "./push-token-timeout";
+import {
+  legacyTopicTimeoutMs,
+  permissionCheckTimeoutMs,
+  pushTokenTimeoutMs,
+  withTimeout
+} from "./async-timeout";
+import {
+  createRegistrationController,
+  type RegistrationSnapshot,
+  type StageResult
+} from "./registration-machine";
 
 export const notificationChannels = {
   super: "btb_super_goal_v1",
@@ -41,7 +52,11 @@ export async function syncPushToken(token: string): Promise<void> {
     platform
   );
   if (legacyTopic) {
-    await Notifications.subscribeToTopicAsync(legacyTopic);
+    await withTimeout(
+      Notifications.subscribeToTopicAsync(legacyTopic),
+      legacyTopicTimeoutMs,
+      "Eski bildirim konusuna abone olunamadı (zaman aşımı)."
+    );
   }
   await mobileApi.registerDevice(
     token,
@@ -75,26 +90,49 @@ export async function ensureNotificationChannels(): Promise<void> {
   ]);
 }
 
-export async function registerPushDevice(): Promise<string> {
-  await ensureNotificationChannels();
+// Single authoritative owner of the manual/passive/token-rotation
+// registration transaction — every caller below goes through this one
+// controller so stale async results can never overwrite newer state.
+const registrationController = createRegistrationController({
+  ensureChannels: ensureNotificationChannels,
+  checkPermission: async () =>
+    (await Notifications.getPermissionsAsync()).status === "granted",
+  requestPermission: async () =>
+    (await Notifications.requestPermissionsAsync()).status === "granted",
+  getPushToken: async () =>
+    String((await Notifications.getDevicePushTokenAsync()).data),
+  registerDevice: syncPushToken
+});
 
-  const current = await Notifications.getPermissionsAsync();
-  const permission =
-    current.status === "granted"
-      ? current
-      : await Notifications.requestPermissionsAsync();
+export function useRegistrationState(): RegistrationSnapshot {
+  return useSyncExternalStore(
+    registrationController.subscribe,
+    registrationController.getSnapshot
+  );
+}
 
-  if (permission.status !== "granted") {
-    throw new Error("Bildirim izni verilmedi.");
-  }
+export function isPushRegistrationActive(): boolean {
+  return registrationController.isActive();
+}
 
-  const token = await getDevicePushTokenBounded();
-  await syncPushToken(token);
-  return token;
+// Manual registration always takes precedence: starting a fresh
+// transaction here immediately supersedes whatever was previously running
+// (including a still-in-flight restorePushRegistration or a prior tap),
+// regardless of what triggered it.
+export function registerPushDevice(): Promise<StageResult> {
+  return registrationController.start();
 }
 
 export async function restorePushRegistration(): Promise<void> {
-  const permission = await Notifications.getPermissionsAsync();
+  if (registrationController.isActive()) {
+    return;
+  }
+
+  const permission = await withTimeout(
+    Notifications.getPermissionsAsync(),
+    permissionCheckTimeoutMs,
+    "Bildirim izni kontrol edilemedi (zaman aşımı)."
+  );
   if (permission.status !== "granted") {
     return;
   }

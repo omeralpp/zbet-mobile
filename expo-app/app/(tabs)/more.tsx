@@ -16,9 +16,15 @@ import { useAuth } from "@/src/auth/AuthProvider";
 import { runtimeConfig } from "@/src/config/runtime";
 import { openDeveloperMenu } from "@/src/devtools/developer-menu";
 import {
+  isPushRegistrationActive,
   registerPushDevice,
-  unregisterPushDevice
+  unregisterPushDevice,
+  useRegistrationState
 } from "@/src/notifications/register";
+import type {
+  RegistrationErrorCode,
+  RegistrationStage
+} from "@/src/notifications/registration-machine";
 import {
   getSuperNotificationMinimum,
   setSuperNotificationMinimum,
@@ -112,8 +118,56 @@ function ThemeSwitchRow({
   );
 }
 
+function registrationStageDetail(stage: RegistrationStage): string {
+  switch (stage) {
+    case "channels":
+      return "Bildirim kanalları hazırlanıyor…";
+    case "permission_check":
+      return "Bildirim izni kontrol ediliyor…";
+    case "permission_request":
+      return "Bildirim izni isteniyor…";
+    case "push_token":
+      return "Cihaz kaydediliyor…";
+    case "device_registration":
+      return "Cihaz sunucuya kaydediliyor…";
+    default:
+      return "BTB topic, widget ve uygulama bildirimlerini etkinleştir";
+  }
+}
+
+function registrationErrorDetail(code: RegistrationErrorCode | undefined): string {
+  switch (code) {
+    case "PUSH_CHANNEL_SETUP_TIMEOUT":
+      return "Bildirim kanalları zaman aşımına uğradı.";
+    case "PUSH_CHANNEL_SETUP_FAILED":
+      return "Bildirim kanalları hazırlanamadı.";
+    case "PUSH_PERMISSION_CHECK_TIMEOUT":
+      return "Bildirim izni kontrolü zaman aşımına uğradı.";
+    case "PUSH_PERMISSION_CHECK_FAILED":
+      return "Bildirim izni kontrol edilemedi.";
+    case "PUSH_PERMISSION_REQUEST_FAILED":
+      return "Bildirim izni istemi başarısız oldu.";
+    case "PUSH_PERMISSION_TIMEOUT":
+      return "Bildirim izni zaman aşımına uğradı.";
+    case "PUSH_PERMISSION_DENIED":
+      return "Bildirim izni verilmedi.";
+    case "PUSH_TOKEN_TIMEOUT":
+      return "Push token zaman aşımına uğradı.";
+    case "PUSH_TOKEN_FAILED":
+      return "Push token alınamadı.";
+    case "DEVICE_REGISTER_TIMEOUT":
+      return "Cihaz kaydı zaman aşımına uğradı.";
+    case "DEVICE_REGISTER_FAILED":
+      return "Cihaz kaydı başarısız oldu.";
+    case "REGISTRATION_WATCHDOG_TIMEOUT":
+      return "Bildirim kaydı zaman aşımına uğradı.";
+    default:
+      return "Bilinmeyen hata.";
+  }
+}
+
 export default function MoreScreen() {
-  const [registering, setRegistering] = useState(false);
+  const registration = useRegistrationState();
   const [updatingWidgets, setUpdatingWidgets] = useState(false);
   const [themeChanging, setThemeChanging] = useState(false);
   const [notificationMinimumOpen, setNotificationMinimumOpen] = useState(false);
@@ -157,17 +211,21 @@ export default function MoreScreen() {
   };
 
   const registerNotifications = async () => {
-    setRegistering(true);
+    if (isPushRegistrationActive()) {
+      return;
+    }
     try {
-      await registerPushDevice();
-      Alert.alert("Bildirimler hazır", "Bu cihaz BTB bildirimlerine kaydedildi.");
+      const result = await registerPushDevice();
+      if (result.ok) {
+        Alert.alert("Bildirimler hazır", "Bu cihaz BTB bildirimlerine kaydedildi.");
+      } else {
+        Alert.alert("Bildirim kaydı tamamlanamadı", registrationErrorDetail(result.code));
+      }
     } catch (error) {
       Alert.alert(
         "Bildirim kaydı tamamlanamadı",
         error instanceof Error ? error.message : "Bilinmeyen hata."
       );
-    } finally {
-      setRegistering(false);
     }
   };
 
@@ -258,9 +316,9 @@ export default function MoreScreen() {
         </TutorialTarget>
         <SettingsRow
           detail={
-            registering
-              ? "Cihaz kaydediliyor…"
-              : "BTB topic, widget ve uygulama bildirimlerini etkinleştir"
+            registration.stage === "failed"
+              ? `Bildirim kaydı tamamlanamadı: ${registrationErrorDetail(registration.code)}`
+              : registrationStageDetail(registration.stage)
           }
           icon="bell-ring-outline"
           onPress={registerNotifications}

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { pushTokenTimeoutMs, withTimeout } from "./push-token-timeout";
+import { pushTokenTimeoutMs, withTimeout } from "./async-timeout";
 
 function neverSettles<T>(): Promise<T> {
   return new Promise<T>(() => {});
