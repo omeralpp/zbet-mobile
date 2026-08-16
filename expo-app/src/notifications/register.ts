@@ -5,9 +5,8 @@ import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
 import { mobileApi } from "@/src/api";
 import { runtimeConfig } from "@/src/config/runtime";
-import { resolveLegacyNotificationTopic } from "./registration-policy";
+import { runPushSync } from "./push-sync";
 import {
-  legacyTopicTimeoutMs,
   permissionCheckTimeoutMs,
   pushTokenTimeoutMs,
   withTimeout
@@ -47,22 +46,24 @@ export async function getInstallationId(): Promise<string> {
 
 export async function syncPushToken(token: string): Promise<void> {
   const platform = Platform.OS === "ios" ? "ios" : "android";
-  const legacyTopic = resolveLegacyNotificationTopic(
-    runtimeConfig.authMode,
-    platform
-  );
-  if (legacyTopic) {
-    await withTimeout(
-      Notifications.subscribeToTopicAsync(legacyTopic),
-      legacyTopicTimeoutMs,
-      "Eski bildirim konusuna abone olunamadı (zaman aşımı)."
-    );
-  }
-  await mobileApi.registerDevice(
-    token,
+  await runPushSync({
+    authMode: runtimeConfig.authMode,
     platform,
-    runtimeConfig.authMode === "oauth" ? await getInstallationId() : undefined
-  );
+    registerDevice: async () => {
+      await mobileApi.registerDevice(
+        token,
+        platform,
+        runtimeConfig.authMode === "oauth"
+          ? await getInstallationId()
+          : undefined
+      );
+    },
+    subscribeToLegacyTopic: (topic) =>
+      Notifications.subscribeToTopicAsync(topic),
+    onLegacyTopicFailure: (error) => {
+      console.warn("Legacy notification topic subscription failed", error);
+    }
+  });
 }
 
 export async function ensureNotificationChannels(): Promise<void> {
