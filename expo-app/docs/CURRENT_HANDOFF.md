@@ -1,6 +1,6 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-08-16
+Son güncelleme: 2026-08-17
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
@@ -20,6 +20,35 @@ değildir.
 Yeni task önce yalnız `C:\dev\btb-cdoex\AGENTS.md` ve bu dosyayı tamamen okur.
 Observation tespitleri `docs/OBSERVATION_LOG.md` içindedir. Yeni toplu kod batch'i
 yalnız `btb next cutover start` ile başlar.
+
+## Work Zone deep-link double-hash regresyonu — kapandı (2026-08-17)
+
+2026-08-16 Work Zone migration'ı `EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL` değerini
+sonunda `#Shell-home` ile ayarladı; `src/legacy/routes.ts` bu değeri ham
+temel URL kabul edip kendi `#btb-manage` / `#SporToto-manage` /
+`#SuperLog-display` fragment'ını üzerine ekliyordu. Fiziksel Xiaomi
+kullanımı Better Than Bet / BTB Toto / Super Log açılışlarında `Illegal new
+hash - cannot be parsed: 'Shell-home#btb-manage?...'` hatasını gösterdi;
+Work Zone sitesinin kendisi doğru açılıyordu.
+
+Düzeltme: `routes.ts` içinde merkezi `normalizeWorkZoneBaseUrl()` /
+`buildWorkZoneHomeUrl()`; dört URL üreticisi de (Home + 3 intent) kullanmadan
+önce temel URL'yi normalize eder. `fiori-target.ts` hedefsiz geri dönüşü
+artık `buildWorkZoneHomeUrl()` kullanır. `build-pilot-apk.ps1` yapılandırılan
+tabanda `#` varsa build-time'da artık hata verir. Yerel `.env` fragment'sız
+temel URL'ye güncellendi. 14 yeni regression testi (180 → 194).
+
+Mobile `npm run check`: TypeScript/ESLint/test hepsi temiz. Yeni ARM64 pilot
+APK derlendi, unzip edilip `assets/app.config` içindeki `legacyLaunchpadUrl`
+fragment'sız olduğu ve hiçbir dosyada eski tenant referansı olmadığı
+doğrulandı. **Fiziksel Xiaomi doğrulaması PASSED**: Work Zone ana sayfa,
+üç Fiori uygulamasının deep link'i, eski tenant yönlendirmesi yok, normal
+navigasyon ve bildirim akışı sağlıklı. Ayrıntı:
+`docs/observation_archive/cutover_2026-08-17.md`.
+
+`zbet-mobile` commit `7484502` (+ bu handoff güncellemesi). Sabit sınırlar
+korundu: BTP deploy, Work Zone içeriği, NPL, Cloud Connector, SAP, Fiori
+uygulamaları, retired Cordova ve Super/Toto iş mantığına dokunulmadı.
 
 ## UX / Etkileşim Milestone — tamamlandı (2026-08-16)
 
@@ -179,8 +208,9 @@ migration başlatılmadı.
 ```text
 zbet-mobile
   branch/upstream : master / origin/master
-  source commit   : 04a5635 (Complete Mobile Next observation cutover)
-  state           : kaynak ve deploy kanıtı push edildi; repository clean
+  source commit   : 7484502 (Fix Work Zone deep-link double-hash regression)
+                    + bu handoff/observation kapanış commit'i
+  state           : kaynak push edildi; fiziksel Xiaomi doğrulaması PASSED
 
 zbet-cap
   branch/upstream : main / origin/main
@@ -217,28 +247,32 @@ Mobile Next, Mobile BFF ve kapanış kanıtı kapsamındadır.
 
 ## Final yerel pilot APK
 
-Final ARM64 artifact build ve imza/hash doğrulaması bu handoff'un aşağıdaki alanında
-cutover kapanışında kaydedilir:
-
 ```text
-Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-device-registration-fix.apk
+Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-workzone-deeplink-fix.apk
 Package : com.btb.mobile.next
 Version : 0.1.0 (1)
 ABI     : arm64-v8a
-Size    : 48,232,269 bytes
-SHA-256 : a4d41ed1a7035062315636e7e014431c54678efb8b9ef1812c36aec5580c1f44
-Config  : authMode=pilot, mobileApiUrl=https://api.surklase.com
-Build   : 2026-08-16 — legacy FCM topic no longer blocks device registration
-          (26bfa0b). Fiziksel telefonda manuel kayıt retry'ı bu artifact ile
-          yapılır.
+Size    : 48,234,269 bytes
+SHA-256 : 3AA5F5030CA494788170F42E13996BF42F0895A4D419366E46ED0FAECA43E6BA
+Config  : authMode=pilot, mobileApiUrl=https://api.surklase.com,
+          legacyLaunchpadUrl=https://34dfc21ftrial.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b38042ce-b8ab-4fea-a892-abf4c58a170f
+Build   : 2026-08-17 — Work Zone deep-link double-hash regression fixed
+          (7484502). Fiziksel Xiaomi doğrulaması PASSED: Work Zone ana
+          sayfa, üç Fiori uygulamasının deep link'i, eski tenant yok,
+          navigasyon/bildirim sağlıklı.
 ```
 
-Bir önceki artifact `btb-mobile-next-arm64-ux-milestone.apk` (2026-08-16 11:03)
-aşağıdaki regresyonu taşır ve fiziksel telefonda `DEVICE_REGISTER_TIMEOUT`
-verir; kullanılmaz. 2026-08-15 tarihli
-`btb-mobile-next-arm64-pilot-stabilization.apk`
+Önceki `btb-mobile-next-arm64-workzone-integration.apk` (2026-08-16 23:45)
+bu double-hash regresyonunu taşır ve fiziksel telefonda Fiori deep link'lerini
+açamaz; kullanılmaz — doğrulama sonrası Geri Dönüşüm Kutusu'na taşındı.
+Kendisinden önceki `btb-mobile-next-arm64-device-registration-fix.apk`
+(2026-08-16, `26bfa0b` cihaz kaydı düzeltmesi — bkz. aşağıdaki "Fiziksel
+telefon cihaz kaydı regresyonu" bölümü) ve `btb-mobile-next-arm64-ux-milestone.apk`
+ile x86_64 emülatör paketi de aynı şekilde Geri Dönüşüm Kutusu'na taşındı;
+`.codex-artifacts` artık yalnız yukarıdaki final artifact'ı içeriyor.
+2026-08-15 tarihli `btb-mobile-next-arm64-pilot-stabilization.apk`
 (SHA-256 `3baf3df08e4c7a1c15228965d1d41477d6e976cd4860a9c5df68e8899477f4a7`)
-`62904a0` öncesidir, yani bu regresyondan etkilenmez.
+`62904a0` öncesidir, yani bu regresyondan etkilenmez; ayrı olarak arşivlenmedi.
 
 ### Fiziksel telefon cihaz kaydı regresyonu (2026-08-16)
 
@@ -319,10 +353,13 @@ verir; kullanılmaz. 2026-08-15 tarihli
   kullanılır.
 - Toto skor/teorik ikramiye alanları CAP DEV deploy ve public response ile
   doğrulandı; fiziksel cihazdaki görünüm observation sırasında izlenecek.
-- Fiziksel ARM64 telefonda v20 kurulum ve ana sekme swipe/filtre/Toto sonuç görünümü
-  observation'da izlenecek.
+- Fiziksel ARM64 telefonda filtre/Toto sonuç görünümünün madde bazlı doğrulaması
+  observation'da izlenecek (2026-08-17 fiziksel turu genel navigasyonu sağlıklı
+  buldu ama bu maddeleri tek tek hedeflemedi).
 - ~~Fiziksel Xiaomi bildirim kaydı ve teslimi~~ — KAPALI, bkz. yukarıdaki
   "Bildirim incidenti — KAPALI (2026-08-16)".
+- ~~Work Zone deep-link double-hash regresyonu~~ — KAPALI, bkz. yukarıdaki
+  "Work Zone deep-link double-hash regresyonu — kapandı (2026-08-17)".
 
 ## Sıradaki milestone
 
@@ -340,3 +377,4 @@ Claude ↔ Codex Thread Optimizer parity.
 
 Cutover kanıtı: `docs/observation_archive/cutover_2026-08-13-02.md`.
 2026-08-15 stabilizasyon kanıtı: `docs/observation_archive/cutover_2026-08-15.md`.
+2026-08-17 Work Zone deep-link kapanış kanıtı: `docs/observation_archive/cutover_2026-08-17.md`.
