@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -7,6 +7,7 @@ import {
   Linking,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -22,13 +23,17 @@ import {
 } from "@/src/api/queries";
 import { RatingStars } from "@/src/components/RatingStars";
 import { TeamLogo } from "@/src/components/TeamLogo";
-import { LeagueStandingsTable } from "@/src/components/LeagueStandingsTable";
+import { GamePulseCard } from "@/src/components/GamePulseCard";
+import { StandingsModule } from "@/src/components/StandingsModule";
 import { PressureBalance } from "@/src/components/PressureBalance";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { RatioResultsChart } from "@/src/components/RatioResultsChart";
 import { Screen } from "@/src/components/Screen";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { buildBilyonerMatchUrl } from "@/src/external/bilyoner";
+import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
+import { useModuleLayout } from "@/src/layout/module-layout-store";
+import type { LiveDetailModuleId } from "@/src/layout/module-registry";
 import { colors, radii, spacing } from "@/src/theme/theme";
 import {
   formatCurrentMarketRate,
@@ -144,8 +149,13 @@ export default function MatchDetailScreen() {
   };
   const [showDecision, setShowDecision] = useState(false);
   const [compactHeader, setCompactHeader] = useState(false);
+  const [reordering, setReordering] = useState(false);
+  const scrollRef = useRef<ScrollView | null>(null);
+  const scrollOffset = useRef(0);
+  const { order, reorderVisible } = useModuleLayout("liveDetail");
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      scrollOffset.current = event.nativeEvent.contentOffset.y;
       const next = event.nativeEvent.contentOffset.y > 150;
       setCompactHeader((current) => (current === next ? current : next));
     },
@@ -186,11 +196,248 @@ export default function MatchDetailScreen() {
 
   const match = query.data;
   const insight = insightQuery.data;
+  const leagueContext = leagueContextQuery.data;
   const currentMarket = formatCurrentMarketRate(
     match.currentRate,
     match.selectedOdd,
     "güncel oran"
   );
+  const hasLeagueContext = Boolean(
+    leagueContext &&
+      (leagueContext.homeStandingPosition !== null ||
+        leagueContext.awayStandingPosition !== null ||
+        leagueContext.homeStandingPoints !== null ||
+        leagueContext.awayStandingPoints !== null)
+  );
+
+  // Only modules that currently have data are rendered; the persisted order
+  // still holds a slot for the rest so they return where the user left them.
+  const moduleNodes: Partial<Record<LiveDetailModuleId, ReactNode>> = {
+    gamePulse: <GamePulseCard betRadarId={match.betRadarId} />,
+    odds: (
+      <>
+        <Text style={styles.sectionTitle}>Oran sonuçları</Text>
+        <RatioResultsChart
+          marketRates={insight?.marketRates ?? []}
+          phase={match.ratioPhase}
+          rows={match.ratioResults}
+        />
+      </>
+    ),
+    statistics: (
+      <>
+        <Text style={styles.sectionTitle}>Canlı saha dengesi</Text>
+        <View style={styles.statsCard}>
+          <ComparisonRow
+            away={match.awayBallPossession}
+            home={match.homeBallPossession}
+            label="Topla oynama"
+            suffix="%"
+          />
+          <ComparisonRow
+            away={match.awayTotalShots}
+            home={match.homeTotalShots}
+            label="Toplam şut"
+          />
+          <ComparisonRow
+            away={match.awayShotsOnTarget}
+            home={match.homeShotsOnTarget}
+            label="İsabetli şut"
+          />
+          <ComparisonRow
+            away={match.awayXg}
+            formatter={formatRate}
+            home={match.homeXg}
+            label="xG"
+          />
+          <ComparisonRow
+            away={match.awayCorners}
+            home={match.homeCorners}
+            label="Korner"
+          />
+          <ComparisonRow
+            away={match.awayYellowCards}
+            home={match.homeYellowCards}
+            label="Sarı kart"
+          />
+          <ComparisonRow
+            away={match.awayRedCards}
+            home={match.homeRedCards}
+            label="Kırmızı kart"
+          />
+        </View>
+      </>
+    ),
+    pressure: (
+      <>
+        <Text style={styles.sectionTitle}>Güncel baskı dengesi</Text>
+        <View style={styles.statsCard}>
+          <PressureBalance
+            label="Güncel maç snapshot'ı"
+            pressureDiff={
+              match.pressureSource === "CURRENT_MATCH"
+                ? match.pressureDiff
+                : null
+            }
+            totalPressure={
+              match.pressureSource === "CURRENT_MATCH"
+                ? match.totalPressure
+                : null
+            }
+          />
+        </View>
+      </>
+    ),
+    scoreDistribution: (
+      <>
+        <Text style={styles.sectionTitle}>Skor dağılımı</Text>
+        <View style={styles.distributionCard}>
+          {match.scoreDistribution.length ? (
+            match.scoreDistribution.map((row) => (
+              <View key={row.score} style={styles.distributionRow}>
+                <Text style={styles.distributionScore}>{row.score}</Text>
+                <View style={styles.probabilityTrack}>
+                  <View
+                    style={[
+                      styles.probabilityFill,
+                      { width: `${Math.max(3, row.probability * 100)}%` }
+                    ]}
+                  />
+                </View>
+                <Text style={styles.probability}>
+                  {formatPercentage(row.probability)}
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>Skor dağılımı henüz oluşmadı.</Text>
+          )}
+        </View>
+      </>
+    )
+  };
+
+  if (match.selectedOdd && match.rating > 0) {
+    moduleNodes.decision = (
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => setShowDecision((visible) => !visible)}
+        style={styles.decisionCard}
+      >
+        <View style={styles.decisionHeader}>
+          <View>
+            <Text style={styles.decisionEyebrow}>KARAR ÖZETİ</Text>
+            <Text style={styles.decisionTitle}>BTB neden seçti?</Text>
+          </View>
+          <Text style={styles.decisionToggle}>
+            {showDecision ? "Gizle" : "Göster"}
+          </Text>
+        </View>
+        {showDecision ? (
+          <View style={styles.decisionBody}>
+            <Text style={styles.decisionReason}>
+              {formatDecisionReason(match.decisionReason)}
+            </Text>
+            <Text style={styles.decisionMeta}>
+              {match.selectedOdd}
+              {match.decisionMinute !== null ? ` · ${match.decisionMinute}'` : ""}
+              {match.decisionConfidence !== null
+                ? ` · Güven ${formatPercentage(match.decisionConfidence)}`
+                : ""}
+            </Text>
+            {match.decisionScore !== null ? (
+              <Text style={styles.decisionScore}>
+                Model skoru {match.decisionScore.toFixed(2)}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
+      </Pressable>
+    );
+  }
+
+  if (relatedDecisions.length) {
+    moduleNodes.relatedSuper = (
+      <>
+        <Text style={styles.sectionTitle}>Maçın Super tercihleri</Text>
+        <View style={styles.relatedDecisionCard}>
+          {relatedDecisions.map((log, index) => {
+            const current =
+              log.selectedOdd === match.selectedOdd &&
+              log.rating === match.rating &&
+              log.elapsed === match.decisionMinute;
+            return (
+              <Pressable
+                accessibilityHint="Tarihsel Super karar detayını açar"
+                accessibilityLabel={`${log.rating} yıldız, ${log.elapsed}. dakika, ${log.selectedOdd}`}
+                accessibilityRole="button"
+                key={log.key}
+                onPress={() =>
+                  router.push({
+                    pathname: "/super/[key]",
+                    params: { key: log.key }
+                  } as never)
+                }
+                style={({ pressed }) => [
+                  styles.relatedDecisionRow,
+                  index > 0 && styles.relatedDecisionDivider,
+                  pressed && styles.relatedDecisionPressed
+                ]}
+              >
+                <RatingStars rating={log.rating} size={14} />
+                <Text style={styles.relatedDecisionMinute}>
+                  {log.elapsed}&apos;
+                </Text>
+                <Text style={styles.relatedDecisionOdd}>{log.selectedOdd}</Text>
+                {current ? (
+                  <Text style={styles.currentDecision}>Güncel</Text>
+                ) : (
+                  <MaterialCommunityIcons
+                    color={colors.textMuted}
+                    name="chevron-right"
+                    size={18}
+                  />
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
+      </>
+    );
+  }
+
+  if (hasLeagueContext && leagueContext) {
+    moduleNodes.standings = (
+      <TutorialTarget id="match-standings" radius={radii.lg}>
+        <StandingsModule
+          away={{
+            team: leagueContext.awayTeam,
+            participantId: match.awayParticipantId,
+            position: leagueContext.awayStandingPosition,
+            points: leagueContext.awayStandingPoints,
+            side: "AWAY"
+          }}
+          caption={
+            leagueContext.source === "LATEST_SUPER_DECISION"
+              ? "Son Super kararı kaydından; yalnız doğrulanan iki takım gösterilir."
+              : "Kaynak bekleniyor; yalnız doğrulanan iki takım gösterilir."
+          }
+          home={{
+            team: leagueContext.homeTeam,
+            participantId: match.homeParticipantId,
+            position: leagueContext.homeStandingPosition,
+            points: leagueContext.homeStandingPoints,
+            side: "HOME"
+          }}
+          title="Lig sıralaması"
+        />
+      </TutorialTarget>
+    );
+  }
+
+  const moduleItems = order
+    .filter((id): id is LiveDetailModuleId => Boolean(moduleNodes[id as LiveDetailModuleId]))
+    .map((id) => ({ id, node: moduleNodes[id] }));
 
   return (
     <>
@@ -205,9 +452,11 @@ export default function MatchDetailScreen() {
       edgeSwipeBack
       onEdgeSwipeBack={handleEdgeSwipeBack}
       contentStyle={styles.screen}
+      scrollRef={scrollRef}
       scrollProps={{
         alwaysBounceVertical: true,
         onScroll: handleScroll,
+        scrollEnabled: !reordering,
         scrollEventThrottle: 16,
         refreshControl: (
           <RefreshControl
@@ -298,210 +547,19 @@ export default function MatchDetailScreen() {
         </View>
       </TutorialTarget>
 
-      {match.selectedOdd && match.rating > 0 ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => setShowDecision((visible) => !visible)}
-          style={styles.decisionCard}
-        >
-          <View style={styles.decisionHeader}>
-            <View>
-              <Text style={styles.decisionEyebrow}>KARAR ÖZETİ</Text>
-              <Text style={styles.decisionTitle}>BTB neden seçti?</Text>
-            </View>
-            <Text style={styles.decisionToggle}>
-              {showDecision ? "Gizle" : "Göster"}
-            </Text>
-          </View>
-          {showDecision ? (
-            <View style={styles.decisionBody}>
-              <Text style={styles.decisionReason}>
-                {formatDecisionReason(match.decisionReason)}
-              </Text>
-              <Text style={styles.decisionMeta}>
-                {match.selectedOdd}
-                {match.decisionMinute !== null
-                  ? ` · ${match.decisionMinute}'`
-                  : ""}
-                {match.decisionConfidence !== null
-                  ? ` · Güven ${formatPercentage(match.decisionConfidence)}`
-                  : ""}
-              </Text>
-              {match.decisionScore !== null ? (
-                <Text style={styles.decisionScore}>
-                  Model skoru {match.decisionScore.toFixed(2)}
-                </Text>
-              ) : null}
-            </View>
-          ) : null}
-        </Pressable>
-      ) : null}
-
-      {relatedDecisions.length ? (
-        <>
-          <Text style={styles.sectionTitle}>Maçın Super tercihleri</Text>
-          <View style={styles.relatedDecisionCard}>
-            {relatedDecisions.map((log, index) => {
-              const current =
-                log.selectedOdd === match.selectedOdd &&
-                log.rating === match.rating &&
-                log.elapsed === match.decisionMinute;
-              return (
-                <Pressable
-                  accessibilityHint="Tarihsel Super karar detayını açar"
-                  accessibilityLabel={`${log.rating} yıldız, ${log.elapsed}. dakika, ${log.selectedOdd}`}
-                  accessibilityRole="button"
-                  key={log.key}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/super/[key]",
-                      params: { key: log.key }
-                    } as never)
-                  }
-                  style={({ pressed }) => [
-                    styles.relatedDecisionRow,
-                    index > 0 && styles.relatedDecisionDivider,
-                    pressed && styles.relatedDecisionPressed
-                  ]}
-                >
-                  <RatingStars rating={log.rating} size={14} />
-                  <Text style={styles.relatedDecisionMinute}>{log.elapsed}&apos;</Text>
-                  <Text style={styles.relatedDecisionOdd}>{log.selectedOdd}</Text>
-                  {current ? (
-                    <Text style={styles.currentDecision}>Güncel</Text>
-                  ) : (
-                    <MaterialCommunityIcons
-                      color={colors.textMuted}
-                      name="chevron-right"
-                      size={18}
-                    />
-                  )}
-                </Pressable>
-              );
-            })}
-          </View>
-        </>
-      ) : null}
-
-      {leagueContextQuery.data &&
-      (leagueContextQuery.data.homeStandingPosition !== null ||
-        leagueContextQuery.data.awayStandingPosition !== null ||
-        leagueContextQuery.data.homeStandingPoints !== null ||
-        leagueContextQuery.data.awayStandingPoints !== null) ? (
-        <>
-          <Text style={styles.sectionTitle}>Lig sıralaması</Text>
-          <TutorialTarget id="match-standings">
-            <LeagueStandingsTable
-              contextLabel={
-                leagueContextQuery.data.source === "LATEST_SUPER_DECISION"
-                  ? "Son Super kararı kaydı"
-                  : "Kaynak bekleniyor"
-              }
-              rows={[
-                {
-                  team: leagueContextQuery.data.homeTeam,
-                  participantId: match.homeParticipantId,
-                  position: leagueContextQuery.data.homeStandingPosition,
-                  points: leagueContextQuery.data.homeStandingPoints,
-                  side: "HOME"
-                },
-                {
-                  team: leagueContextQuery.data.awayTeam,
-                  participantId: match.awayParticipantId,
-                  position: leagueContextQuery.data.awayStandingPosition,
-                  points: leagueContextQuery.data.awayStandingPoints,
-                  side: "AWAY"
-                }
-              ]}
-            />
-          </TutorialTarget>
-        </>
-      ) : null}
-
-      <Text style={styles.sectionTitle}>Oran sonuçları</Text>
-      <RatioResultsChart
-        marketRates={insight?.marketRates ?? []}
-        phase={match.ratioPhase}
-        rows={match.ratioResults}
+      <ReorderableModuleList
+        items={moduleItems}
+        onDragStateChange={setReordering}
+        onReorder={(from, to) =>
+          reorderVisible(
+            moduleItems.map((item) => item.id),
+            from,
+            to
+          )
+        }
+        scrollOffsetRef={scrollOffset}
+        scrollRef={scrollRef}
       />
-
-      <Text style={styles.sectionTitle}>Canlı saha dengesi</Text>
-      <View style={styles.statsCard}>
-        <ComparisonRow
-          away={match.awayBallPossession}
-          home={match.homeBallPossession}
-          label="Topla oynama"
-          suffix="%"
-        />
-        <ComparisonRow
-          away={match.awayTotalShots}
-          home={match.homeTotalShots}
-          label="Toplam şut"
-        />
-        <ComparisonRow
-          away={match.awayShotsOnTarget}
-          home={match.homeShotsOnTarget}
-          label="İsabetli şut"
-        />
-        <ComparisonRow
-          away={match.awayXg}
-          formatter={formatRate}
-          home={match.homeXg}
-          label="xG"
-        />
-        <ComparisonRow
-          away={match.awayCorners}
-          home={match.homeCorners}
-          label="Korner"
-        />
-        <ComparisonRow
-          away={match.awayYellowCards}
-          home={match.homeYellowCards}
-          label="Sarı kart"
-        />
-        <ComparisonRow
-          away={match.awayRedCards}
-          home={match.homeRedCards}
-          label="Kırmızı kart"
-        />
-      </View>
-
-      <Text style={styles.sectionTitle}>Güncel baskı dengesi</Text>
-      <View style={styles.statsCard}>
-        <PressureBalance
-          label="Güncel maç snapshot'ı"
-          pressureDiff={
-            match.pressureSource === "CURRENT_MATCH" ? match.pressureDiff : null
-          }
-          totalPressure={
-            match.pressureSource === "CURRENT_MATCH" ? match.totalPressure : null
-          }
-        />
-      </View>
-
-      <Text style={styles.sectionTitle}>Skor dağılımı</Text>
-      <View style={styles.distributionCard}>
-        {match.scoreDistribution.length ? (
-          match.scoreDistribution.map((row) => (
-            <View key={row.score} style={styles.distributionRow}>
-              <Text style={styles.distributionScore}>{row.score}</Text>
-              <View style={styles.probabilityTrack}>
-                <View
-                  style={[
-                    styles.probabilityFill,
-                    { width: `${Math.max(3, row.probability * 100)}%` }
-                  ]}
-                />
-              </View>
-              <Text style={styles.probability}>
-                {formatPercentage(row.probability)}
-              </Text>
-            </View>
-          ))
-        ) : (
-          <Text style={styles.emptyText}>Skor dağılımı henüz oluşmadı.</Text>
-        )}
-      </View>
 
       <View style={styles.actions}>
         <Pressable

@@ -14,6 +14,8 @@ import {
 import { Screen } from "@/src/components/Screen";
 import { useAuth } from "@/src/auth/AuthProvider";
 import { runtimeConfig } from "@/src/config/runtime";
+import { resetModuleOrder } from "@/src/layout/module-layout-store";
+import type { ModuleLayoutSurface } from "@/src/layout/module-layout";
 import { openDeveloperMenu } from "@/src/devtools/developer-menu";
 import {
   isPushRegistrationActive,
@@ -229,6 +231,22 @@ export default function MoreScreen() {
     }
   };
 
+  const restoreLayout = (surface: ModuleLayoutSurface, label: string) => {
+    resetModuleOrder(surface)
+      .then(() =>
+        Alert.alert(
+          "Düzen sıfırlandı",
+          `${label} BTB varsayılan sırasına döndü.`
+        )
+      )
+      .catch((error: unknown) => {
+        Alert.alert(
+          "Düzen sıfırlanamadı",
+          error instanceof Error ? error.message : "Bilinmeyen hata."
+        );
+      });
+  };
+
   const refreshWidgetPreview = async () => {
     setUpdatingWidgets(true);
     try {
@@ -249,7 +267,7 @@ export default function MoreScreen() {
   };
 
   return (
-    <Screen eyebrow="BTB MOBILE" title="Daha fazla">
+    <Screen eyebrow="BTB MOBILE" tabSwipe title="Daha fazla">
       <View style={styles.modeCard}>
         <View style={styles.modeHeader}>
           <View
@@ -291,6 +309,35 @@ export default function MoreScreen() {
           icon="open-in-new"
           onPress={() => Linking.openURL("https://www.bilyoner.com/")}
           title="Bilyoner"
+        />
+      </View>
+
+      <Text style={styles.sectionTitle}>Düzen</Text>
+      <View style={styles.group}>
+        <View style={styles.note}>
+          <Text style={styles.noteText}>
+            Özet, canlı maç detayı ve Super karar detayındaki analiz
+            modüllerini uzun basıp sürükleyerek kendi sıranıza taşıyabilirsiniz.
+            Sıralama bu cihazda saklanır; yeni modüller otomatik eklenir.
+          </Text>
+        </View>
+        <SettingsRow
+          detail="Panodaki bölümleri BTB varsayılan sırasına döndür"
+          icon="view-dashboard-outline"
+          onPress={() => restoreLayout("overview", "Özet düzeni")}
+          title="Özet düzenini sıfırla"
+        />
+        <SettingsRow
+          detail="Canlı maç detayı modüllerini varsayılan sıraya döndür"
+          icon="soccer"
+          onPress={() => restoreLayout("liveDetail", "Canlı detay düzeni")}
+          title="Canlı detay düzenini sıfırla"
+        />
+        <SettingsRow
+          detail="Super karar detayı modüllerini varsayılan sıraya döndür"
+          icon="star-outline"
+          onPress={() => restoreLayout("superDetail", "Super detay düzeni")}
+          title="Super detay düzenini sıfırla"
         />
       </View>
 
@@ -512,6 +559,18 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.7
+  },
+  note: {
+    backgroundColor: colors.surface,
+    borderBottomColor: colors.border,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md
+  },
+  noteText: {
+    color: colors.textMuted,
+    fontSize: 11,
+    lineHeight: 17
   },
   preferenceMenu: {
     padding: spacing.sm,

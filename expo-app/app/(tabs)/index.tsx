@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import {
@@ -6,9 +6,12 @@ import {
   Image,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
-  View
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent
 } from "react-native";
 import { MatchCard } from "@/src/components/MatchCard";
 import { MetricCard } from "@/src/components/MetricCard";
@@ -18,6 +21,9 @@ import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { SuperLogCard } from "@/src/components/SuperLogCard";
 import { TotoProgramCard } from "@/src/components/TotoProgramCard";
 import { dashboardQuery, superKpisQuery } from "@/src/api/queries";
+import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
+import { useModuleLayout } from "@/src/layout/module-layout-store";
+import type { OverviewModuleId } from "@/src/layout/module-registry";
 import { useLiveStarFilter } from "@/src/preferences/LiveStarFilterProvider";
 import { useSuperStarFilter } from "@/src/preferences/SuperStarFilterProvider";
 import { colors, radii, spacing } from "@/src/theme/theme";
@@ -36,6 +42,16 @@ export default function DashboardScreen() {
   const query = useQuery(dashboardQuery);
   const superKpis = useQuery(superKpisQuery);
   const dashboardError = query.error ?? superKpis.error;
+  const [reordering, setReordering] = useState(false);
+  const scrollRef = useRef<ScrollView | null>(null);
+  const scrollOffset = useRef(0);
+  const { order, reorderVisible } = useModuleLayout("overview");
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      scrollOffset.current = event.nativeEvent.contentOffset.y;
+    },
+    []
+  );
 
   useEffect(() => {
     if (!query.data || !superKpis.data) {
@@ -48,7 +64,7 @@ export default function DashboardScreen() {
 
   if (query.isLoading || superKpis.isLoading) {
     return (
-      <Screen eyebrow="BTB Mobile" title="Bugünün merkezi">
+      <Screen eyebrow="BTB Mobile" tabSwipe title="Bugünün merkezi">
         <LoadingState />
       </Screen>
     );
@@ -56,7 +72,7 @@ export default function DashboardScreen() {
 
   if (query.isError || superKpis.isError || !query.data || !superKpis.data) {
     return (
-      <Screen eyebrow="BTB Mobile" title="Bugünün merkezi">
+      <Screen eyebrow="BTB Mobile" tabSwipe title="Bugünün merkezi">
         <ErrorState
           message={
             dashboardError instanceof Error
@@ -73,8 +89,7 @@ export default function DashboardScreen() {
 
   const dashboard = query.data;
   const dailySuper = superKpis.data.buckets[superStarFilter];
-  const profitColor =
-    dailySuper.profit >= 0 ? colors.green : colors.red;
+  const profitColor = dailySuper.profit >= 0 ? colors.green : colors.red;
   const featuredTitle = {
     SELECTED_LIVE: "Öne çıkan canlı maçlar",
     PRESSURE_LIVE: "Takipteki canlı maçlar",
@@ -86,22 +101,8 @@ export default function DashboardScreen() {
       ? "Başlama zamanı en yakın aktif fikstürler"
       : "Skor, oran ve baskı birlikte";
 
-  return (
-    <Screen
-      contentStyle={styles.content}
-      scrollProps={{
-        refreshControl: (
-          <RefreshControl
-            colors={[colors.green]}
-            onRefresh={() =>
-              Promise.all([query.refetch(), superKpis.refetch()])
-            }
-            refreshing={query.isRefetching || superKpis.isRefetching}
-            tintColor={colors.green}
-          />
-        )
-      }}
-    >
+  const moduleNodes: Partial<Record<OverviewModuleId, ReactNode>> = {
+    hero: (
       <TutorialTarget id="home-hero" radius={radii.xl}>
         <Pressable
           accessibilityHint="Uygulamanın kısa açıklamasını açar"
@@ -113,10 +114,7 @@ export default function DashboardScreen() {
               [{ text: "Anladım" }]
             )
           }
-          style={({ pressed }) => [
-            styles.hero,
-            pressed && styles.pressed
-          ]}
+          style={({ pressed }) => [styles.hero, pressed && styles.pressed]}
         >
           <Image
             resizeMode="contain"
@@ -132,7 +130,8 @@ export default function DashboardScreen() {
           </View>
         </Pressable>
       </TutorialTarget>
-
+    ),
+    metrics: (
       <View style={styles.metrics}>
         <MetricCard
           accent={colors.red}
@@ -178,48 +177,98 @@ export default function DashboardScreen() {
           />
         </TutorialTarget>
       </View>
+    ),
+    recentSuper: (
+      <>
+        <SectionHeader
+          actionLabel="Tüm kararlar"
+          caption="En yeni kararlar"
+          onAction={() => router.push("/super" as never)}
+          title="Son Super hareketleri"
+        />
+        {dashboard.recentSuper.map((log) => (
+          <SuperLogCard key={log.key} log={log} />
+        ))}
+      </>
+    )
+  };
 
-      {dashboard.featuredMatches.length ? (
-        <>
-          <SectionHeader
-            actionLabel="Tümünü gör"
-            caption={featuredCaption}
-            onAction={() => router.push("/live" as never)}
-            title={featuredTitle}
+  if (dashboard.featuredMatches.length) {
+    moduleNodes.featured = (
+      <>
+        <SectionHeader
+          actionLabel="Tümünü gör"
+          caption={featuredCaption}
+          onAction={() => router.push("/live" as never)}
+          title={featuredTitle}
+        />
+        {dashboard.featuredMatches.map((match, index) =>
+          index === 0 ? (
+            <TutorialTarget id="home-featured" key={match.key}>
+              <MatchCard match={match} />
+            </TutorialTarget>
+          ) : (
+            <MatchCard key={match.key} match={match} />
+          )
+        )}
+      </>
+    );
+  }
+
+  if (dashboard.latestTotoProgram) {
+    moduleNodes.toto = (
+      <>
+        <SectionHeader
+          actionLabel="Programlar"
+          caption="Toto-native program görünümü"
+          onAction={() => router.push("/toto" as never)}
+          title="Spor Toto"
+        />
+        <TotoProgramCard program={dashboard.latestTotoProgram} />
+      </>
+    );
+  }
+
+  const moduleItems = order
+    .filter((id): id is OverviewModuleId =>
+      Boolean(moduleNodes[id as OverviewModuleId])
+    )
+    .map((id) => ({ id, node: moduleNodes[id] }));
+
+  return (
+    <Screen
+      contentStyle={styles.content}
+      scrollRef={scrollRef}
+      // The horizontal tab gesture stands down while a section is lifted so a
+      // reorder drag can never turn into a tab change.
+      tabSwipe={!reordering}
+      scrollProps={{
+        onScroll: handleScroll,
+        scrollEnabled: !reordering,
+        scrollEventThrottle: 16,
+        refreshControl: (
+          <RefreshControl
+            colors={[colors.green]}
+            onRefresh={() => Promise.all([query.refetch(), superKpis.refetch()])}
+            refreshing={query.isRefetching || superKpis.isRefetching}
+            tintColor={colors.green}
           />
-          {dashboard.featuredMatches.map((match, index) =>
-            index === 0 ? (
-              <TutorialTarget id="home-featured" key={match.key}>
-                <MatchCard match={match} />
-              </TutorialTarget>
-            ) : (
-              <MatchCard key={match.key} match={match} />
-            )
-          )}
-        </>
-      ) : null}
-
-      <SectionHeader
-        actionLabel="Tüm kararlar"
-        caption="En yeni kararlar"
-        onAction={() => router.push("/super" as never)}
-        title="Son Super hareketleri"
+        )
+      }}
+    >
+      <ReorderableModuleList
+        items={moduleItems}
+        onDragStateChange={setReordering}
+        onReorder={(from, to) =>
+          reorderVisible(
+            moduleItems.map((item) => item.id),
+            from,
+            to
+          )
+        }
+        scrollOffsetRef={scrollOffset}
+        scrollRef={scrollRef}
       />
-      {dashboard.recentSuper.map((log) => (
-        <SuperLogCard key={log.key} log={log} />
-      ))}
-
-      {dashboard.latestTotoProgram ? (
-        <>
-          <SectionHeader
-            actionLabel="Programlar"
-            caption="Toto-native program görünümü"
-            onAction={() => router.push("/toto" as never)}
-            title="Spor Toto"
-          />
-          <TotoProgramCard program={dashboard.latestTotoProgram} />
-        </>
-      ) : null}
     </Screen>
   );
 }
