@@ -21,7 +21,7 @@ export const mockMatches: MatchDetail[] = [
     awayTeam: "Gnistan",
     homeParticipantId: "100021",
     awayParticipantId: "100022",
-    betRadarId: "66886932",
+    betRadarId: "70000001",
     homeScore: 1,
     awayScore: 0,
     elapsed: 67,

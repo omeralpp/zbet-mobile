@@ -174,7 +174,7 @@ test("accepts valid, missing, and null participant IDs but rejects malformed one
 
 test("accepts the BetRadar event id on detail and keeps it off summaries", () => {
   const detail = mockMatches[0]!;
-  assert.equal(matchDetailSchema.parse(detail).betRadarId, "66886932");
+  assert.equal(matchDetailSchema.parse(detail).betRadarId, "70000001");
 
   const { betRadarId, ...withoutBetRadarId } = detail;
   void betRadarId;
@@ -183,14 +183,14 @@ test("accepts the BetRadar event id on detail and keeps it off summaries", () =>
     matchDetailSchema.parse({ ...detail, betRadarId: null })
   );
 
-  for (const invalid of ["", "0", "-1", "12.5", "abc", "1 2", 66886932]) {
+  for (const invalid of ["", "0", "-1", "12.5", "abc", "1 2", 70000001]) {
     assert.throws(() =>
       matchDetailSchema.parse({ ...detail, betRadarId: invalid })
     );
   }
 
   assert.throws(() =>
-    matchSummarySchema.parse({ ...mockMatchSummaries[0], betRadarId: "66886932" })
+    matchSummarySchema.parse({ ...mockMatchSummaries[0], betRadarId: "70000001" })
   );
 });
 
