@@ -184,17 +184,43 @@ Final ARM64 artifact build ve imza/hash doğrulaması bu handoff'un aşağıdaki
 cutover kapanışında kaydedilir:
 
 ```text
-Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-pilot-stabilization.apk
+Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-device-registration-fix.apk
 Package : com.btb.mobile.next
 Version : 0.1.0 (1)
 ABI     : arm64-v8a
-Size    : 48,188,549 bytes
-SHA-256 : 3baf3df08e4c7a1c15228965d1d41477d6e976cd4860a9c5df68e8899477f4a7
+Size    : 48,232,269 bytes
+SHA-256 : a4d41ed1a7035062315636e7e014431c54678efb8b9ef1812c36aec5580c1f44
 Config  : authMode=pilot, mobileApiUrl=https://api.surklase.com
-Build   : 2026-08-15 — current-pressure schema fix (b9445dd) + push-token
-          registration timeout (1dd0afe); emulator-validated, physical
-          phone verification pending.
+Build   : 2026-08-16 — legacy FCM topic no longer blocks device registration
+          (26bfa0b). Fiziksel telefonda manuel kayıt retry'ı bu artifact ile
+          yapılır.
 ```
+
+Bir önceki artifact `btb-mobile-next-arm64-ux-milestone.apk` (2026-08-16 11:03)
+aşağıdaki regresyonu taşır ve fiziksel telefonda `DEVICE_REGISTER_TIMEOUT`
+verir; kullanılmaz. 2026-08-15 tarihli
+`btb-mobile-next-arm64-pilot-stabilization.apk`
+(SHA-256 `3baf3df08e4c7a1c15228965d1d41477d6e976cd4860a9c5df68e8899477f4a7`)
+`62904a0` öncesidir, yani bu regresyondan etkilenmez.
+
+### Fiziksel telefon cihaz kaydı regresyonu (2026-08-16)
+
+- Belirti: izin verildikten sonra akış `Cihaz sunucuya kaydediliyor...` aşamasında
+  kalıyor ve `Cihaz kaydı zaman aşımına uğradı.` ile bitiyordu.
+- Kanıt: 11:12 denemesi için şifreli cihaz kayıt defterinde hiçbir yazma yok;
+  son yazma 10:51:44'teki emülatör kaydıydı. POST `/v1/devices` hiç gönderilmedi.
+- Kök neden: `62904a0` eski yayın topic aboneliğini 8 sn ile sınırladı. Bu adım
+  `registerDevice`'tan önce çalışıyordu; `FirebaseMessaging.subscribeToTopic`
+  görevi FCM arka ucuyla eşitlenene kadar beklemede kalır ve bu telefonda sınırı
+  aşıyor. Oluşan `TimeoutError`, aşama zaman aşımından ayırt edilemediği için
+  hiç gönderilmemiş bir istek sunucu zaman aşımı gibi raporlandı.
+- Düzeltme: `26bfa0b` — cihaz kaydı önce çalışır ve sonucu o belirler; eski topic
+  aboneliği arkasında sınırlı best-effort adıma indirildi.
+- Sunucu tarafı sağlam: public `POST /v1/devices` kayıt yazmasını 27 ms'de
+  tamamlıyor; `zbet-cap` `23926f8` ile aşama izleme (`DEVICE_*`) eklendi.
+- Doğrulama: aynı düzeltmenin x86_64 build'i (`btb-mobile-next-x86-64-device-registration-fix.apk`)
+  API 35 emülatörüne kurulup manuel kayıt çalıştırıldı; `Bildirimler hazır`
+  döndü, kayıt yazması 11 ms sürdü ve ikinci cihaz kaydı korundu.
 
 Önceki final artifact (2026-08-13, `btb-mobile-next-arm64-cutover-20260813-v20-final.apk`)
 `docs/observation_archive/cutover_2026-08-13-02.md` içinde kayıtlıdır.
