@@ -1,12 +1,32 @@
+/**
+ * The configured Work Zone base URL is a site URL and must carry no
+ * fragment of its own (`#Shell-home` included) — every caller below adds
+ * exactly one `#<semanticObject>-<action>` (or `#Shell-home` for plain
+ * home navigation). Stripping any existing fragment here, once, keeps a
+ * misconfigured base (e.g. one still carrying `#Shell-home`) from ever
+ * producing a double-hash URL that Work Zone's shell cannot parse.
+ */
+export function normalizeWorkZoneBaseUrl(launchpadBaseUrl: string): string {
+  const fragmentIndex = launchpadBaseUrl.indexOf("#");
+  return fragmentIndex === -1
+    ? launchpadBaseUrl
+    : launchpadBaseUrl.slice(0, fragmentIndex);
+}
+
+export function buildWorkZoneHomeUrl(launchpadBaseUrl: string): string {
+  return `${normalizeWorkZoneBaseUrl(launchpadBaseUrl)}#Shell-home`;
+}
+
 export function buildLegacyMatchUrl(
   launchpadBaseUrl: string,
   matchKey: string
 ): string {
+  const base = normalizeWorkZoneBaseUrl(launchpadBaseUrl);
   const match = matchKey.match(
     /^(\d{4}-\d{2}-\d{2}):(\d+):(\d{2}):(\d{2}):(\d{2})$/
   );
   if (!match) {
-    return `${launchpadBaseUrl}#btb-manage`;
+    return `${base}#btb-manage`;
   }
 
   const [, date, id, hours, minutes, seconds] = match;
@@ -15,7 +35,7 @@ export function buildLegacyMatchUrl(
     `id=${id},uzeit=time'PT${hours}H${minutes}M${seconds}S')`;
 
   return (
-    `${launchpadBaseUrl}#btb-manage?` +
+    `${base}#btb-manage?` +
     "sap-ui-app-id-hint=saas_approuter_com.btb.btb&/" +
     `${entityPath}/?FCLLayout=MidColumnFullScreen`
   );
@@ -26,12 +46,13 @@ export function buildLegacyTotoUrl(
   gcNo: number,
   version: number
 ): string {
+  const base = normalizeWorkZoneBaseUrl(launchpadBaseUrl);
   if (gcNo <= 0 || version <= 0) {
-    return `${launchpadBaseUrl}#SporToto-manage`;
+    return `${base}#SporToto-manage`;
   }
 
   return (
-    `${launchpadBaseUrl}#SporToto-manage?` +
+    `${base}#SporToto-manage?` +
     "sap-ui-app-id-hint=saas_approuter_com.btb.toto.zbettotoapp&/" +
     `Programs(gc_no=${gcNo},version_no=${version})/` +
     "?FCLLayout=MidColumnFullScreen"
@@ -53,6 +74,7 @@ export function buildLegacySuperLogUrl(
     reason: string;
   }
 ): string {
+  const base = normalizeWorkZoneBaseUrl(launchpadBaseUrl);
   if (
     !/^\d{4}-\d{2}-\d{2}$/.test(key.matchDate) ||
     key.matchId <= 0 ||
@@ -62,7 +84,7 @@ export function buildLegacySuperLogUrl(
     key.rating > 5 ||
     !key.reason
   ) {
-    return `${launchpadBaseUrl}#SuperLog-display`;
+    return `${base}#SuperLog-display`;
   }
 
   const entityPath =
@@ -73,7 +95,7 @@ export function buildLegacySuperLogUrl(
     `recalc_reason='${encodeODataText(key.reason)}')`;
 
   return (
-    `${launchpadBaseUrl}#SuperLog-display?` +
+    `${base}#SuperLog-display?` +
     "sap-ui-app-id-hint=saas_approuter_com.btb.superlog.zbetsuperlogreport&/" +
     `${entityPath}/?FCLLayout=MidColumnFullScreen`
   );

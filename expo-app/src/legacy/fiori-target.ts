@@ -1,7 +1,8 @@
 import {
   buildLegacyMatchUrl,
   buildLegacySuperLogUrl,
-  buildLegacyTotoUrl
+  buildLegacyTotoUrl,
+  buildWorkZoneHomeUrl
 } from "./routes";
 
 export type FioriTarget = "launchpad" | "match" | "super" | "toto";
@@ -42,7 +43,7 @@ export function resolveFioriTargetUrl(
   if (params.target === "super" && params.superKey) {
     return buildLegacySuperLogUrl(launchpadUrl, params.superKey);
   }
-  return launchpadUrl;
+  return buildWorkZoneHomeUrl(launchpadUrl);
 }
 
 export function fioriTargetTitle(target: FioriTarget): string {

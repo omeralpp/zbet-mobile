@@ -78,6 +78,38 @@ if (
   throw 'Pilot APK access key is invalid.'
 }
 
+# EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL is public runtime config (the Work Zone
+# entry point URL, not a secret), kept in the local .env rather than the
+# User-scope secret store used above. .env itself is excluded from the
+# staged build below, so it must be promoted into the process environment
+# here or the staged build silently compiles with an empty Work Zone URL.
+if ([string]::IsNullOrWhiteSpace($env:EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL)) {
+  $envFilePath = Join-Path $appRoot '.env'
+  if (Test-Path -LiteralPath $envFilePath) {
+    $envLine = Get-Content -LiteralPath $envFilePath |
+      Where-Object { $_ -match '^EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL=' } |
+      Select-Object -First 1
+    if ($envLine) {
+      $value = ($envLine -replace '^EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL=', '').Trim()
+      if ($value.StartsWith('"') -and $value.EndsWith('"')) {
+        $value = $value.Substring(1, $value.Length - 2)
+      }
+      if ($value) {
+        $env:EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL = $value
+      }
+    }
+  }
+}
+if ([string]::IsNullOrWhiteSpace($env:EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL)) {
+  throw 'Pilot APK must be built with EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL set (Work Zone entry point).'
+}
+if ($env:EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL -match '188b143btrial') {
+  throw 'Pilot APK Work Zone URL references the retired old-tenant host.'
+}
+if ($env:EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL -match '#') {
+  throw 'Pilot APK Work Zone base URL must not carry a fragment (e.g. #Shell-home) — it is a deep-link base, not a navigation target.'
+}
+
 try {
   New-Item -ItemType Directory -Path $resolvedStageRoot | Out-Null
   $excludedNames = @(
