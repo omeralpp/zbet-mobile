@@ -1,6 +1,6 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-08-13
+Son güncelleme: 2026-08-16
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
@@ -18,6 +18,62 @@ yapılmadı; her biri ayrıca açık onay gerektirir.
 Yeni task önce yalnız `C:\dev\btb-cdoex\AGENTS.md` ve bu dosyayı tamamen okur.
 Observation tespitleri `docs/OBSERVATION_LOG.md` içindedir. Yeni toplu kod batch'i
 yalnız `btb next cutover start` ile başlar.
+
+## UX / Etkileşim Milestone — tamamlandı (2026-08-16)
+
+Konsolide Mobile UX batch'i: Super kimlik düzeni, ana navigasyon jesti, Bibi
+idle davranışı, Bilyoner Game Pulse ve üç yüzeyde paylaşılan yeniden
+sıralanabilir modül mimarisi.
+
+**Super crest/takım eşleşmesi.** Karar kartlarında iki arma birlikte, birleşik
+etiketin önünde duruyordu. Artık her arma kendi takımının yanında. Çözümleyici
+önce sözleşmedeki `homeTeam`/`awayTeam` alanlarını kullanır; yalnız sınır
+belirsiz değilse birleşik etiketi böler. SAP ayırıcıyı tutarlı doldurmuyor
+(`Fluminense -Palmeiras`, `Osijek- L. Zagreb` gerçek örnekler), bu yüzden tire
+ancak en az bir tarafında boşluk varsa sınır sayılır — `Saint-Étienne` ve
+`Inter Turku-2` bölünmez.
+
+**BetRadar zinciri (SAP yazımı gerekmedi).** `zbet_cl_main` canlı beslemeden
+`BRDID` değerini `zbet_t_matches-stats_id` alanına yazıyor ve `zbet_cds_005`
+bunu zaten projekte ediyor. BFF `$select`'ine `stats_id` eklendi ve yalnız maç
+detayında `betRadarId` olarak yayınlanıyor. Public API doğrulandı:
+`betRadarId=72440606` (First Vienna - Liefering) gibi gerçek değerler geliyor.
+
+**Game Pulse.** `https://content.bilyoner.com/statics/canli-anlatim-v2/` URL'si
+doğrulanmış kimlikten merkezî olarak kurulur; kimlik yoksa modül dürüst boş
+durum gösterir ve ekranın kalanı çalışır. WebView tek origin'e sabitlenmiş,
+dışarı gezinme reddediliyor, cookie paylaşımı kapalı, hiçbir BTB/pilot/SAP
+değeri frame'e verilmiyor. Kaynak kimliği yalnız event id'ye bağlı olduğundan
+canlı polling WebView'i yeniden yüklemiyor.
+
+**Paylaşılan modül düzeni.** `src/layout/` altında tek mimari: uzun basış
+modülü kaldırır, native-driver transform ile parmağı izler, komşular yer açar;
+kenar auto-scroll yalnız parmak kenar bölgesindeyken tikler. Her yüzeyin kendi
+kalıcı anahtarı var (`overview` / `liveDetail` / `superDetail`). Uzlaştırma
+bilinmeyen id'leri atar, tekrarları onarır, bozuk depoyu varsayılana düşürür ve
+yeni yayınlanan modülleri ekler — eski tercih yeni modülü asla gizleyemez.
+Ekranlar yalnız verisi olan modülleri render eder; iki görünür modül arasındaki
+sürükleme saklı sıraya eşlenir, gizli modüller yerinde kalır.
+
+**Super Detay.** Yalnız sunum: model kanıtı, saha baskısı, havuz/lig bağlamı ve
+puan durumu artık dört eşdeğer modül. Puan Durumu, benzerlik kartının içine
+gömülü olmaktan çıkıp bağımsız iki-takım karşılaştırma modülü oldu; eksik sıra
+gerçek olmayan bir sıralama ima etmemek için nötr tire gösterir.
+
+**Bibi.** Sürekli float döngüsü kaldırıldı. Uzun sessiz aralıktan sonra tek
+kısa davranış oynar (blink / çift blink / etrafa bakış / hafif zıplama / göz
+kırpma), önceki davranışı asla tekrarlamaz; menü, rehber, sürükleme ve
+reduce-motion durumlarında tamamen susar.
+
+**Navigasyon.** Ana sekme jesti navigator sarmalayıcısından `Screen` içine
+taşındı; içerik parmağı anında izler, sınırlı bir peek'e yumuşar, komşusu
+olmayan sekme direnir. Bırakışta sekme hemen değişir ve giden içerik navigator
+animasyonunun altında yerine oturur. Sekme çubuğu sabit kalır ve listelerin
+üstünde artık capture responder yok.
+
+Doğrulama: Mobile typecheck + lint temiz, `173/173` test; BFF `78/78` test.
+Android API 35 x86_64 emülatöründe pilot modda canlı API ile tam UX review
+yapıldı; gerçek `betRadarId` ile Game Pulse yüklendi.
 
 ## Notification Registration Hotfix — tamamlandı (2026-08-16)
 
