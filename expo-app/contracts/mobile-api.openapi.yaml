@@ -399,6 +399,12 @@ components:
             - ratioPhase
             - ratioResults
           properties:
+            betRadarId:
+              description: >-
+                BetRadar event id from SAP zbet_t_matches-stats_id. Detail-only
+                and null when the live feed did not deliver one.
+              type: [string, "null"]
+              pattern: "^[1-9][0-9]{0,17}$"
             decisionMinute:
               type: [integer, "null"]
               minimum: 0
@@ -558,6 +564,8 @@ components:
         key: { type: string, minLength: 1 }
         matchKey: { type: string, minLength: 1 }
         matchName: { type: string, minLength: 1 }
+        homeTeam: { type: [string, "null"], minLength: 1 }
+        awayTeam: { type: [string, "null"], minLength: 1 }
         homeParticipantId: { type: [string, "null"], minLength: 1 }
         awayParticipantId: { type: [string, "null"], minLength: 1 }
         createdAt: { type: string, format: date-time }

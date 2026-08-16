@@ -172,6 +172,42 @@ test("accepts valid, missing, and null participant IDs but rejects malformed one
   );
 });
 
+test("accepts the BetRadar event id on detail and keeps it off summaries", () => {
+  const detail = mockMatches[0]!;
+  assert.equal(matchDetailSchema.parse(detail).betRadarId, "66886932");
+
+  const { betRadarId, ...withoutBetRadarId } = detail;
+  void betRadarId;
+  assert.doesNotThrow(() => matchDetailSchema.parse(withoutBetRadarId));
+  assert.doesNotThrow(() =>
+    matchDetailSchema.parse({ ...detail, betRadarId: null })
+  );
+
+  for (const invalid of ["", "0", "-1", "12.5", "abc", "1 2", 66886932]) {
+    assert.throws(() =>
+      matchDetailSchema.parse({ ...detail, betRadarId: invalid })
+    );
+  }
+
+  assert.throws(() =>
+    matchSummarySchema.parse({ ...mockMatchSummaries[0], betRadarId: "66886932" })
+  );
+});
+
+test("accepts Super log rows with, without, and with null team names", () => {
+  const log = mockSuperLogs[0]!;
+  assert.equal(superLogListSchema.parse([log])[0]!.homeTeam, "Inter Turku");
+
+  const { homeTeam, awayTeam, ...withoutTeams } = log;
+  void homeTeam;
+  void awayTeam;
+  assert.doesNotThrow(() => superLogListSchema.parse([withoutTeams]));
+  assert.doesNotThrow(() =>
+    superLogListSchema.parse([{ ...log, homeTeam: null, awayTeam: null }])
+  );
+  assert.throws(() => superLogListSchema.parse([{ ...log, homeTeam: "" }]));
+});
+
 test("keeps the checked-in OpenAPI document parseable and route-complete", async () => {
   const source = await readFile(
     new URL("../../contracts/mobile-api.openapi.yaml", import.meta.url),

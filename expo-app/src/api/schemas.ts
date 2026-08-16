@@ -87,7 +87,16 @@ export const periodScoreContextSchema = z.strictObject({
     .nullable()
 });
 
+// SAP `stats_id` (BetRadar event id) reaches Mobile only on match detail. It
+// stays optional so a BFF that has not published the field yet still parses.
+const betRadarId = z
+  .string()
+  .regex(/^[1-9][0-9]{0,17}$/)
+  .nullable()
+  .optional();
+
 export const matchDetailSchema = matchSummarySchema.extend({
+  betRadarId,
   decisionMinute: z.number().int().nonnegative().nullable(),
   decisionReason: z.string(),
   decisionScore: finiteNumber.nullable(),
@@ -115,6 +124,10 @@ export const superLogSchema = z.strictObject({
   key: z.string().min(1),
   matchKey: z.string().min(1),
   matchName: z.string().min(1),
+  // Home and away arrive separately so each crest can be bound to its own team.
+  // They stay optional for compatibility with a BFF that only sends matchName.
+  homeTeam: z.string().min(1).nullable().optional(),
+  awayTeam: z.string().min(1).nullable().optional(),
   homeParticipantId: z.string().min(1).nullable().optional(),
   awayParticipantId: z.string().min(1).nullable().optional(),
   createdAt: isoDateTime,
