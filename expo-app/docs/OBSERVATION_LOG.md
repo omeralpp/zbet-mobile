@@ -18,16 +18,10 @@ Kapanış kanıtı: `docs/observation_archive/cutover_2026-08-17-03.md`.
 Dönüşüm Kutusu'na taşındı; `.codex-artifacts` yalnız yukarıdaki doğrulanmış
 `arm64` APK'yı tutar.
 
-`BILYONER_LIVE_CONTEXT_RUNTIME = DISABLED_PENDING_PROVIDER_ACCESS` —
-gerçek sağlayıcı gol/kırmızı kart verisi bu baseline kabulünün parçası
-değildir ve sağlayıcı erişim kontrolleri aşılmaz.
-
-`MOBILE_NEXT_BASELINE_VERIFIED` — 2026-08-17 fiziksel doğrulama PASS.
-Kapanış kanıtı: `docs/observation_archive/cutover_2026-08-17-02.md`.
-
-`BILYONER_LIVE_CONTEXT_RUNTIME = DISABLED_PENDING_PROVIDER_ACCESS` —
-gerçek sağlayıcı Timeline/Kart/Gol verisi bu baseline kabulünün parçası
-değildir ve sağlayıcı erişim kontrolleri aşılmaz.
+`BILYONER_LIVE_CONTEXT_RUNTIME = ENABLED_VIA_SAP_BRIDGE` (2026-08-18) —
+sağlayıcıya SAP'ın halihazırda çalışan HTTP istemcisi üzerinden erişilir
+(`BTB_LIVE_CONTEXT_UPSTREAM=SAP_BRIDGE`). Doğrudan Node yolu kapalıdır ve
+kapalı kalır; TLS parmak izi taklidi, çerez/oturum/giriş otomasyonu yapılmadı.
 
 Bu dosya yalnız gerçek kullanımda açık kalan tespitleri tutar. Observation
 sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
@@ -79,7 +73,7 @@ sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
 
 | NXT-OBS-099 | 2026-08-18 | Live Context gerçek olay yolu — SAP köprüsü (SAP onayı bekliyor) | `READY_FOR_SAP_ACTIVATION_APPROVAL`. 2026-08-18 ölçümü, erişim teşhisini **güçlendirdi**: `curl` artık yalnız hedef uçta değil, SAP'ın üretimde başarıyla kullandığı uçlarda da (`gamelist/all/v1`, `livestatistics`, `standing`) 400 users-api login kapısı alıyor; buna karşılık SAP güncel maç gününü (50 fikstür) Bilyoner'den yüklemiş durumda. `curl` düz `curl/` user-agent gönderirken reddedildiği için fark **header kaynaklı olamaz**; ayrım istemci istek profilindedir. Önceki oturumdaki "curl çalışıyor, Node çalışmıyor" çerçevesi zamanlama tesadüfüydü — kalıcı olgu: **SAP çalışıyor, bu makinedeki doğrudan istemciler kapıda**. Çözüm: çalışan SAP HTTP istemcisini ödünç almak (TLS parmak izi taklidi **değil**). Yerel olarak hazır: `zbet-abap` salt-okunur köprü sınıfı (kalıcılık yok, DDIC yok, dondurulmuş URL şablonu, TVARVC anahtarı + token, boyut sınırı) ve `zbet-cap` SAP_BRIDGE upstream'i + 19 test. SAP nesnesi **oluşturulmadı/aktive edilmedi**; aktivasyon ayrı açık onay gerektirir. | HIGH | OBSERVED |
 
-| NXT-OBS-098 | 2026-08-17 | Gerçek gol/kırmızı kart verisiyle doğrulama | `PENDING_REAL_LIVE_CONTEXT_EVENT_VALIDATION` — **bloklamayan**. Live Context v2 UX'i fiziksel Xiaomi'de tam olarak kabul edildi; sağlayıcı runtime devre dışı olduğu için gerçek GOAL/RED_CARD popülasyonu bu kabulün parçası değildir. Meşru upstream yol açıldığında doğrulanacaklar: gerçek gol satırı (dakika, takım, oyuncu, güncel skor), gerçek kırmızı kart satırı ve `DIRECT_RED`/`SECOND_YELLOW_RED` ayrımı, dolu/boş/bayat/kullanılamıyor geçişleri, `diagnostics.excludedByScope` ve `unclassifiedCardValues` gerçek feed'de beklendiği gibi, tanınmayan kart değerinin kırmızı olarak yayımlanmadığı. **Sağlayıcı yalnız bu testi geçmek için açılmaz**; erişim kararı sahibe aittir (bkz. `NXT-OBS-096`). Yeni APK veya kod değişikliği gerekmez. | MEDIUM | OBSERVED |
+| NXT-OBS-098 | 2026-08-17 | Gerçek gol/kırmızı kart verisiyle doğrulama | `REAL_GOAL_VALIDATION = SERVER_SIDE_PASS / ON_DEVICE_PENDING`, `REAL_RED_CARD_VALIDATION = PENDING`. 2026-08-18: SAP köprüsü aktive edildi ve uçtan uca çalıştı. Gerçek sağlayıcı yanıtı (event 3059015, HTTP 200) BFF route üzerinden `btb.live-context.v2` olarak yayımlandı: 3 gerçek GOAL (1' 1-0, 28' 2-0, 48' 3-0), dizilişler yok, 4 sarı + 12 değişiklik + 2 bölüm işaretçisi `diagnostics.excludedByScope` ile dışlandı. **Cihaz üstü doğrulama yapılmadı**: doğrulama penceresinde canlı/biten uygun maç yoktu (50 fikstürün tamamı `status=01`) ve 3059015 güncel maç listesinde değil. **Gerçek kırmızı kart hâlâ gözlenmedi** — tek gerçek payload'da 4 sarı, 0 kırmızı vardı; kırmızı kart alt tipi (`DIRECT_RED`/`SECOND_YELLOW_RED`) ve `DISMISSAL_WITHOUT_SUBTYPE_VALUES` sözlüğü gerçek veriyle hâlâ doğrulanmadı. Uydurulmayacak; doğal olarak gözlenene kadar açık kalır. | MEDIUM | OBSERVED |
 
 | NXT-OBS-097 | 2026-08-17 | Live Context ürün kapsamı daraltıldı (sahip kararı) | Yayınlanan sözleşme `btb.live-context.v2` ile **yalnız gol ve kırmızı kart** taşır. Sıradan sarı kart, oyuncu değişikliği, bölüm işaretçisi ve muhtelif anlatım kapsam dışıdır; `İlk 11 ve dizilişler` modülü bileşen/ekran/sözleşme/varsayılan düzen dahil tamamen kaldırıldı (mevcut kurulumlar için ek göç gerekmez — düzen uzlaştırma kanonik olmayan id'yi ilk okumada düşürür). Kırmızıda `DIRECT_RED`/`SECOND_YELLOW_RED` ayrımı korunur ve erişilebilirlik etiketinde okunur. Kendi kalesine gol yalnız sağlayıcı açıkça belirtirse korunur. Kart yalnız ihraç olumlu kanıtlanırsa yayımlanır; tanınmayan genel kart değeri `UNCLASSIFIED_CARD` olarak dışlanır ve ham değeri `diagnostics.unclassifiedCardValues` içinde saklanır (yanlış-pozitif kırmızı üretilmez). Kapsam dışı sınıflar `diagnostics.excludedByScope` ile sayılır; `unknownFeedTypes` yalnız anlaşılmayan feed tipleri içindir. `eventSummary` yalnız yayımlanan timeline'dan türetilir, **betimleyicidir ve model girdisi değildir**; üretim Super skorlaması ve gol/kırmızı kart mantığı değiştirilmedi. Emülatörde dört durum da doğrulandı (dolu, boş, bayat, kullanılamıyor). | HIGH | RESOLVED |
 
