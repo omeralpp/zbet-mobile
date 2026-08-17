@@ -385,6 +385,19 @@ ile x86_64 emülatör paketi de aynı şekilde Geri Dönüşüm Kutusu'na taşı
   uygulamasında kullanılan CDN pattern'inin gözlemlenmesiyle tespit edilmiştir.
   Bu nedenle tek merkezi resolver/config ve broken-image göstermeyen fallback
   zorunludur; URL component'lere veya DB'ye dağınık yazılmaz.
+- **CDN, bilinmeyen participant id için 404 değil HTTP 200 döner** ve tek bir
+  sağlayıcı markalı placeholder görseli sunar. İstek başarılı olduğu için
+  `onError` hiçbir zaman tetiklenmez; yalnız hata yoluna dayanan bir fallback
+  bu placeholder'ı takım armasıymış gibi kullanıcıya geçirir.
+- Placeholder yalnız intrinsic boyutundan ayırt edilir (React Native `onLoad`
+  ile bildirir): ölçüm 2026-08-17, sekiz participant id üzerinde — gerçek
+  armalar PNG ve yükseklik 64 (64 ve 49 genişlik görüldü), placeholder ise tam
+  `128x128` WEBP, 1304 bayt ve her seferinde bayt-aynı. Kural bilinçli olarak
+  dardır: başka her geometri gerçek arma sayılır. Sağlayıcı ileride gerçek
+  armaları 128x128 yayınlarsa bu kural yeniden gözden geçirilmelidir.
+- Eksik, geçersiz, hatalı ve placeholder armaların tamamı BTB markasına düşer
+  (paket içi `assets/icon.png`), böylece fallback ağ isteği yapmaz ve döngüye
+  giremez. Sağlayıcının kendi placeholder'ı BTB fallback'i olarak gösterilmez.
 - Yerel Mobile OpenAPI/Zod, BFF `$select`/mapper ve ABAP snapshot'ında `htpi/atpi`
   bulunmadı. Doğru alan zinciri upstream SAP/DDIC/OData'da ayrı yazma/aktivasyon
   onayıyla sağlanmadan takım adından tahmin veya runtime scraping yapılmaz.
