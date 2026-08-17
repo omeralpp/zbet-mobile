@@ -1,4 +1,4 @@
-import { memo, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import {
   ActivityIndicator,
@@ -13,18 +13,23 @@ import {
   isAllowedGamePulseUrl
 } from "@/src/external/bilyoner";
 import { ModuleHeading } from "@/src/components/ModuleHeading";
+import {
+  defaultPulseHeight,
+  parsePulseHeightMessage,
+  pulseHeightProbe,
+  resolvePulseHeight
+} from "@/src/components/game-pulse-sizing";
 import { colors, radii, spacing } from "@/src/theme/theme";
 
 /**
- * Fixed viewport for the provider panel.
+ * Heading plus card shell shared by every state of this module.
  *
- * The provider frame is a self-sizing third-party widget behind an obfuscating
- * script loader, so it is given a stable BTB-owned box instead of a measured
- * one. The box carries the provider's own light surface, which keeps a short
- * pre-match panel from leaving a dark hole inside the card.
+ * The provider panel inside it is a self-sizing third-party widget behind an
+ * obfuscating script loader, so it reports its own content height and the
+ * viewport follows it. Until a measurement arrives the previous fixed height is
+ * used, so a frame that never reports renders exactly as it did before. The
+ * sizing rules live in `game-pulse-sizing`.
  */
-const pulseViewportHeight = 232;
-
 function PulseFrame({ children }: { children: React.ReactNode }) {
   return (
     <>
@@ -42,6 +47,7 @@ function GamePulseCardComponent({
   const [attempt, setAttempt] = useState(0);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState(defaultPulseHeight);
   const webView = useRef<WebView>(null);
   const url = useMemo(() => buildGamePulseUrl(betRadarId), [betRadarId]);
   // The source identity depends only on the event id and the retry counter, so
@@ -50,6 +56,17 @@ function GamePulseCardComponent({
     () => (url ? { uri: url } : undefined),
     [url]
   );
+
+  // Height messages come from a third-party frame, so an unparseable payload
+  // leaves the current height untouched rather than resizing the card.
+  const handleMessage = useCallback((event: { nativeEvent: { data: string } }) => {
+    const reported = parsePulseHeightMessage(event.nativeEvent.data);
+    if (reported === null) {
+      return;
+    }
+    const next = resolvePulseHeight(reported);
+    setViewportHeight((current) => (current === next ? current : next));
+  }, []);
 
   if (!source) {
     return (
@@ -72,7 +89,7 @@ function GamePulseCardComponent({
 
   return (
     <PulseFrame>
-      <View style={styles.viewport}>
+      <View style={[styles.viewport, { height: viewportHeight }]}>
         <WebView
           allowsInlineMediaPlayback
           domStorageEnabled
@@ -95,6 +112,8 @@ function GamePulseCardComponent({
           // once per view. Retry state is owned by `attempt`, which remounts
           // the WebView, so this only has to clear a previous failure.
           onLoadStart={() => setFailed(false)}
+          onMessage={handleMessage}
+          injectedJavaScript={pulseHeightProbe}
           // Anything outside the trusted Bilyoner origin is refused rather than
           // opened, so the module can never become a general browser.
           onShouldStartLoadWithRequest={(request) =>
@@ -158,9 +177,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: "hidden"
   },
+  // Height is supplied at render time from the frame's own measurement. The
+  // light surface is the provider's, which keeps a short pre-match panel from
+  // leaving a dark hole inside the card.
   viewport: {
     backgroundColor: colors.white,
-    height: pulseViewportHeight,
     width: "100%"
   },
   webView: {
@@ -183,7 +204,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.sm,
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.xxl
+    // The empty state is a short message; it never needed the tall provider box.
+    paddingVertical: spacing.lg
   },
   stateTitle: {
     color: colors.text,
