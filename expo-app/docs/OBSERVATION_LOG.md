@@ -2,23 +2,25 @@
 
 Durum: `ACTIVE / OBSERVATION`
 
-Aktif APK (fiziksel Xiaomi ile doğrulanmış baseline — rollback):
-
-```text
-btb-mobile-next-arm64-pilot.apk
-SHA-256: 9D6D1745C10F2F319E204F13AE2FF67DA78B37D9E01229262FB30B371D752A49
-```
-
-Aday APK (Live Context v2, fiziksel doğrulama bekliyor):
+Aktif APK (fiziksel Xiaomi ile doğrulanmış baseline):
 
 ```text
 btb-mobile-next-arm64-live-context-v2.apk
 SHA-256: 3096C0335361F45B6B95B7AFD35AE1A1D9C91E4D6233735F998E1B2B34EB5B28
 ```
 
-`PENDING_REAL_LIVE_CONTEXT_EVENT_VALIDATION` — sağlayıcı runtime devre dışı
-olduğu için gerçek GOAL/RED_CARD verisiyle doğrulama bu APK kabulünün parçası
-değildir; sağlayıcı yalnız bu testi geçmek için açılmaz.
+`MOBILE_NEXT_BASELINE_VERIFIED` + `LIVE_CONTEXT_V2_UI_VERIFIED` —
+2026-08-17 fiziksel doğrulama PASS.
+Kapanış kanıtı: `docs/observation_archive/cutover_2026-08-17-03.md`.
+
+Önceki baseline `btb-mobile-next-arm64-pilot.apk` ve doğrulanmamış ara artifact
+`btb-mobile-next-arm64-ui-polish.apk` cutover prosedürü adım 8 uyarınca Geri
+Dönüşüm Kutusu'na taşındı; `.codex-artifacts` yalnız yukarıdaki doğrulanmış
+`arm64` APK'yı tutar.
+
+`BILYONER_LIVE_CONTEXT_RUNTIME = DISABLED_PENDING_PROVIDER_ACCESS` —
+gerçek sağlayıcı gol/kırmızı kart verisi bu baseline kabulünün parçası
+değildir ve sağlayıcı erişim kontrolleri aşılmaz.
 
 `MOBILE_NEXT_BASELINE_VERIFIED` — 2026-08-17 fiziksel doğrulama PASS.
 Kapanış kanıtı: `docs/observation_archive/cutover_2026-08-17-02.md`.
@@ -74,6 +76,8 @@ sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
 | NXT-OBS-075 | 2026-08-11 | Bibi rehberi ayarları | Daha Fazla ekranında yalnız `Bibi rehberini baştan başlat` eylemi bırakıldı; yinelenen durum satırı kaldırıldı. Android açık tema smoke’unda tek eylem düzeni doğrulandı. | LOW | READY |
 
 | NXT-OBS-076 | 2026-08-11 | Genel UI düzeni ve insan-etkileşim standardı | Ortak `Screen`, filtre, bölüm başlığı ve metrik kartları 44–48 dp dokunma hedefi, 720 dp içerik sınırı, güvenli alan, tutarlı spacing/tipografi ve dar ekranda wrap kurallarıyla düzenlendi. Super ve Maç detay metrikleri okunabilir iki kolon ritmine taşındı; standart `docs/UI_INTERACTION_STANDARD.md` altında yazılı kabul kapısı oldu. Android açık tema emülatöründe giriş, Özet ve Maç Detayı görsel/dokunmatik smoke geçti. | HIGH | READY |
+
+| NXT-OBS-098 | 2026-08-17 | Gerçek gol/kırmızı kart verisiyle doğrulama | `PENDING_REAL_LIVE_CONTEXT_EVENT_VALIDATION` — **bloklamayan**. Live Context v2 UX'i fiziksel Xiaomi'de tam olarak kabul edildi; sağlayıcı runtime devre dışı olduğu için gerçek GOAL/RED_CARD popülasyonu bu kabulün parçası değildir. Meşru upstream yol açıldığında doğrulanacaklar: gerçek gol satırı (dakika, takım, oyuncu, güncel skor), gerçek kırmızı kart satırı ve `DIRECT_RED`/`SECOND_YELLOW_RED` ayrımı, dolu/boş/bayat/kullanılamıyor geçişleri, `diagnostics.excludedByScope` ve `unclassifiedCardValues` gerçek feed'de beklendiği gibi, tanınmayan kart değerinin kırmızı olarak yayımlanmadığı. **Sağlayıcı yalnız bu testi geçmek için açılmaz**; erişim kararı sahibe aittir (bkz. `NXT-OBS-096`). Yeni APK veya kod değişikliği gerekmez. | MEDIUM | OBSERVED |
 
 | NXT-OBS-097 | 2026-08-17 | Live Context ürün kapsamı daraltıldı (sahip kararı) | Yayınlanan sözleşme `btb.live-context.v2` ile **yalnız gol ve kırmızı kart** taşır. Sıradan sarı kart, oyuncu değişikliği, bölüm işaretçisi ve muhtelif anlatım kapsam dışıdır; `İlk 11 ve dizilişler` modülü bileşen/ekran/sözleşme/varsayılan düzen dahil tamamen kaldırıldı (mevcut kurulumlar için ek göç gerekmez — düzen uzlaştırma kanonik olmayan id'yi ilk okumada düşürür). Kırmızıda `DIRECT_RED`/`SECOND_YELLOW_RED` ayrımı korunur ve erişilebilirlik etiketinde okunur. Kendi kalesine gol yalnız sağlayıcı açıkça belirtirse korunur. Kart yalnız ihraç olumlu kanıtlanırsa yayımlanır; tanınmayan genel kart değeri `UNCLASSIFIED_CARD` olarak dışlanır ve ham değeri `diagnostics.unclassifiedCardValues` içinde saklanır (yanlış-pozitif kırmızı üretilmez). Kapsam dışı sınıflar `diagnostics.excludedByScope` ile sayılır; `unknownFeedTypes` yalnız anlaşılmayan feed tipleri içindir. `eventSummary` yalnız yayımlanan timeline'dan türetilir, **betimleyicidir ve model girdisi değildir**; üretim Super skorlaması ve gol/kırmızı kart mantığı değiştirilmedi. Emülatörde dört durum da doğrulandı (dolu, boş, bayat, kullanılamıyor). | HIGH | RESOLVED |
 

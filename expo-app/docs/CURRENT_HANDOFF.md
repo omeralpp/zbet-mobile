@@ -6,9 +6,11 @@ Son güncelleme: 2026-08-17
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `OBSERVATION` — 2026-08-17 Mobile Live Context v1 batch'i uygulandı,
-emülatörde dört durumu da görsel olarak doğrulandı, fiziksel Xiaomi'de kabul
-edildi ve iki mantıksal commit hâlinde push edildi. Aktif runtime yalnız
+Mod: `OBSERVATION` — 2026-08-17 Live Context **v2** batch'i uygulandı (yalnız
+gol + kırmızı kart; dizilişler kaldırıldı), Game Pulse ve takım arması
+düzeltmeleriyle birlikte emülatörde dört durum da görsel olarak doğrulandı,
+fiziksel Xiaomi'de kabul edildi ve ayrı mantıksal commitler hâlinde push edildi.
+Aktif runtime yalnız
 `api.surklase.com` arkasındaki yerel standalone BFF/notification servisidir.
 Owner talimatıyla `btb-fcm-proxy-srv` durdurulmuş durumdadır. Public Cloudflare
 origin yapılandırması, Firebase/SAP dış değişikliği, APK dağıtımı ve release
@@ -18,8 +20,9 @@ Durum:
 
 ```text
 MOBILE_NEXT_BASELINE_VERIFIED
-PENDING_LIVE_MATCH_VALIDATION      (bloklamayan, NXT-OBS-095)
-PROSPECTIVE_PILOT_RUNNING          (300 sn, zbet-cap)
+LIVE_CONTEXT_V2_UI_VERIFIED
+PENDING_REAL_LIVE_CONTEXT_EVENT_VALIDATION   (bloklamayan, NXT-OBS-098)
+PROSPECTIVE_PILOT_RUNNING                    (300 sn, zbet-cap)
 BILYONER_LIVE_CONTEXT_RUNTIME = DISABLED_PENDING_PROVIDER_ACCESS
 ```
 
@@ -284,17 +287,22 @@ migration başlatılmadı.
 ```text
 zbet-mobile
   branch/upstream : master / origin/master
-  HEAD            : e031289  (origin/master ile aynı, temiz)
-                    dd90b00  Add Mobile Live Context v1 to Match Detail
-                    e031289  Place new modules for existing installs and stop the tab-swipe flash
-  state           : fiziksel Xiaomi doğrulaması PASSED
+  HEAD            : 601bcd7  (origin/master ile aynı, temiz)
+                    88b6b7e  Let the Game Pulse frame size its own viewport
+                    5ea27ea  Show the BTB mark instead of the provider placeholder crest
+                    f397bd2  Record the crest placeholder contract and the access classification
+                    a0b865e  Record the UI polish APK as pending physical validation
+                    ecf0138  Show only goals and red cards on Match Detail
+                    601bcd7  Record the Live Context v2 candidate APK
+  state           : fiziksel Xiaomi doğrulaması PASSED (Live Context v2)
 
 zbet-cap
   branch/upstream : main / origin/main
-  HEAD            : 1a759e8  (origin/main ile aynı, temiz)
+  HEAD            : 11b961d  (origin/main ile aynı, temiz)
                     823f7eb  Add provider-neutral Bilyoner live context adapter to Mobile BFF
                     e7b3349  Capture PARTIAL_EXTERNAL prospective decision evidence
                     1a759e8  Make the prospective pilot durable and inspectable
+                    11b961d  Narrow Live Context to goals and red cards
   state           : prospective pilot 300 sn ile çalışıyor
 ```
 
@@ -325,31 +333,7 @@ Mobile Next, Mobile BFF ve kapanış kanıtı kapsamındadır.
   aracı olmadığı için SAP kaynak iddiaları live MCP kanıtı değil yerel ABAP/CDS
   snapshot kanıtıdır.
 
-## Final yerel pilot APK — doğrulanmış baseline
-
-```text
-Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-pilot.apk
-Package : com.btb.mobile.next
-Version : 0.1.0 (1) · targetSdk 36
-ABI     : arm64-v8a
-Size    : 48,253,377 bytes
-SHA-256 : 9D6D1745C10F2F319E204F13AE2FF67DA78B37D9E01229262FB30B371D752A49
-Signing : v2 · fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
-Config  : authMode=pilot, useMocks=false, mobileApiUrl=https://api.surklase.com,
-          legacyLaunchpadUrl=https://34dfc21ftrial.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b38042ce-b8ab-4fea-a892-abf4c58a170f
-Build   : 2026-08-17 — Mobile Live Context v1 + mevcut kurulum modül göçü +
-          ana sekme kaydırma düzeltmesi. Fiziksel Xiaomi doğrulaması PASSED.
-```
-
-İmza sertifikası önceki cihaz APK'sıyla ve assetlinks parmak iziyle aynıdır;
-üstüne kurulum ve App Link davranışı korunur. Tam akış taraması (1.322 girdi):
-eski tenant `188b143btrial` **0**, sağlayıcı detay ucu **0**, SAP parolası **0**,
-Firebase private key **0**, sağlayıcı oturum/çerez materyali **0**.
-
-Önceki `btb-mobile-next-arm64-workzone-deeplink-fix.apk` cutover prosedürü
-uyarınca Geri Dönüşüm Kutusu'na taşındı.
-
-## Aday pilot APK — Live Context v2 (fiziksel doğrulama bekliyor)
+## Doğrulanmış baseline APK
 
 ```text
 Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-live-context-v2.apk
@@ -364,92 +348,25 @@ Config  : authMode=pilot, useMocks=false, mobileApiUrl=https://api.surklase.com,
 Build   : 2026-08-17 — Live Context v2 (yalnız gol + kırmızı kart), dizilişler
           kaldırıldı, Game Pulse kendi yüksekliğini bildiriyor, sağlayıcı
           placeholder arma yerine BTB markası.
-Durum   : READY_FOR_XIAOMI_PHYSICAL_VALIDATION — henüz baseline değildir.
+Durum   : MOBILE_NEXT_BASELINE_VERIFIED — fiziksel Xiaomi doğrulaması PASS
 ```
 
-İmza parmak izi doğrulanmış baseline ile **aynıdır**; üstüne kurulum ve App Link
+İmza sertifikası önceki baseline ile aynıdır; üstüne kurulum ve App Link
 davranışı korunur. Tam akış taraması (1.322 girdi, tamamı bellekte): eski tenant
 `188b143btrial` **0**, sağlayıcı detay ucu `match-card/event` **0**, SAP parolası
 **0**, Firebase private key **0**, sağlayıcı oturum/çerez materyali **0**.
 
-Yayınlanan pakette v2 yüzeyi mevcut (`Goller ve kırmızı kartlar`, boş ve
-kullanılamıyor metinleri, `SECOND_YELLOW_RED`); kaldırılan yüzey **yok**
-(`İlk 11 ve dizilişler`, `KADROLAR`, yedekler, `positionGroup`, `substitutes`,
-`STATUS_MARKER`, `SUBSTITUTION`). Not: Hermes ASCII dışı sabitleri UTF-16LE
-saklar; tarama her iki kodlamada yapılmalıdır. `Canlı saha dengesi` içindeki
-`Sarı kart` satırı SAP kaynaklı istatistiktir ve Live Context kapsamı dışıdır.
+Denetim tuzağı: Hermes ASCII dışı sabitleri **UTF-16LE** saklar; yalnız UTF-8
+arayan tarama Türkçe metinlerde yanlış sonuç verir. `Canlı saha dengesi`
+içindeki `Sarı kart` satırı SAP kaynaklı istatistiktir, Live Context kapsamı
+dışıdır.
 
-`PENDING_REAL_LIVE_CONTEXT_EVENT_VALIDATION` — sağlayıcı runtime devre dışı
-olduğu için gerçek GOAL/RED_CARD verisiyle doğrulama bu APK kabulünün parçası
-**değildir** ve sağlayıcı yalnız bu testi geçmek için açılmaz.
+Cutover prosedürü adım 8 uyarınca `.codex-artifacts` yalnız bu doğrulanmış
+`arm64` APK'yı tutar. Önceki baseline `btb-mobile-next-arm64-pilot.apk` ve
+doğrulanmamış ara artifact `btb-mobile-next-arm64-ui-polish.apk` bu başarılı
+değiştirme kaydedildikten sonra Geri Dönüşüm Kutusu'na taşındı.
 
-Rollback: fiziksel doğrulama PASS olana kadar `btb-mobile-next-arm64-pilot.apk`
-doğrulanmış baseline olarak kalır ve geri dönüşüme gönderilmez. Ara artifact
-`btb-mobile-next-arm64-ui-polish.apk` bu APK tarafından tamamen kapsanır ve
-doğrulama sonrası geri dönüşüme taşınabilir.
-
-Önceki `btb-mobile-next-arm64-workzone-integration.apk` (2026-08-16 23:45)
-bu double-hash regresyonunu taşır ve fiziksel telefonda Fiori deep link'lerini
-açamaz; kullanılmaz — doğrulama sonrası Geri Dönüşüm Kutusu'na taşındı.
-Kendisinden önceki `btb-mobile-next-arm64-device-registration-fix.apk`
-(2026-08-16, `26bfa0b` cihaz kaydı düzeltmesi — bkz. aşağıdaki "Fiziksel
-telefon cihaz kaydı regresyonu" bölümü) ve `btb-mobile-next-arm64-ux-milestone.apk`
-ile x86_64 emülatör paketi de aynı şekilde Geri Dönüşüm Kutusu'na taşındı;
-`.codex-artifacts` artık yalnız yukarıdaki final artifact'ı içeriyor.
-2026-08-15 tarihli `btb-mobile-next-arm64-pilot-stabilization.apk`
-(SHA-256 `3baf3df08e4c7a1c15228965d1d41477d6e976cd4860a9c5df68e8899477f4a7`)
-`62904a0` öncesidir, yani bu regresyondan etkilenmez; ayrı olarak arşivlenmedi.
-
-### Fiziksel telefon cihaz kaydı regresyonu (2026-08-16)
-
-- Belirti: izin verildikten sonra akış `Cihaz sunucuya kaydediliyor...` aşamasında
-  kalıyor ve `Cihaz kaydı zaman aşımına uğradı.` ile bitiyordu.
-- Kanıt: 11:12 denemesi için şifreli cihaz kayıt defterinde hiçbir yazma yok;
-  son yazma 10:51:44'teki emülatör kaydıydı. POST `/v1/devices` hiç gönderilmedi.
-- Kök neden: `62904a0` eski yayın topic aboneliğini 8 sn ile sınırladı. Bu adım
-  `registerDevice`'tan önce çalışıyordu; `FirebaseMessaging.subscribeToTopic`
-  görevi FCM arka ucuyla eşitlenene kadar beklemede kalır ve bu telefonda sınırı
-  aşıyor. Oluşan `TimeoutError`, aşama zaman aşımından ayırt edilemediği için
-  hiç gönderilmemiş bir istek sunucu zaman aşımı gibi raporlandı.
-- Düzeltme: `26bfa0b` — cihaz kaydı önce çalışır ve sonucu o belirler; eski topic
-  aboneliği arkasında sınırlı best-effort adıma indirildi.
-- Sunucu tarafı sağlam: public `POST /v1/devices` kayıt yazmasını 27 ms'de
-  tamamlıyor; `zbet-cap` `23926f8` ile aşama izleme (`DEVICE_*`) eklendi.
-- Doğrulama: aynı düzeltmenin x86_64 build'i (`btb-mobile-next-x86-64-device-registration-fix.apk`)
-  API 35 emülatörüne kurulup manuel kayıt çalıştırıldı; `Bildirimler hazır`
-  döndü, kayıt yazması 11 ms sürdü ve ikinci cihaz kaydı korundu.
-
-### Bildirim incidenti — KAPALI (2026-08-16)
-
-- Bildirim kaydı: **KAPALI**. Fiziksel Xiaomi cihaz kaydı: **DOĞRULANDI**.
-  Fiziksel Xiaomi gerçek bildirim teslimi: **DOĞRULANDI** (manuel tetikli
-  gerçek BTB bildirimi telefonda görüntülendi).
-- Kök neden: cihazın önceki FCM kayıt tokenı Firebase tarafında
-  `UNREGISTERED` durumuna düşmüştü. Her gönderimde telefon hedefleniyor,
-  FCM 404 `UNREGISTERED` dönüyor ve cihaz kayıt defterinden düşürülüyordu.
-  Uygulama verisi temizlenince yeni FCM instance/token alındı ve teslim
-  normale döndü.
-- Hedefleme mekanizması doğrulandı: aktif yol yalnız cihaz kayıt
-  defterindeki **doğrudan FCM tokenları** ile gönderir
-  (`buildFcmMessage` token varsa `message.token` kullanır). Eski `BTB`
-  topic'i aktif teslim yolunda kullanılmaz; yalnız pilot Android'de
-  sınırlı best-effort geriye dönük uyumluluk adımıdır. Topic adı/durumu
-  bu incidente katkı vermedi, topic rename yapılmadı.
-- Telemetri: `zbet-cap` `7e3e823` ile gönderim başına cihaz bazlı teslim
-  kaydı eklendi (registry id öneki, platform, HTTP status, FCM error code,
-  düşürülme bayrağı). Token/kimlik bilgisi loglanmaz. Aynı commit
-  `INVALID_ARGUMENT` hatasında yalnız FCM token alanını işaret ettiğinde
-  cihaz düşürür; hatalı payload artık tüm kayıt defterini silemez.
-- İlgili commit'ler: Mobile `26bfa0b` (+ handoff `ddbcc36`),
-  BFF `23926f8` (device stage izleme) ve `7e3e823` (cihaz bazlı teslim
-  telemetrisi).
-- Aktif bildirim blokajı yok. Kurulu ARM64 artifact değişmedi; yeni APK
-  gerekmedi.
-- Not: `08211fa9` önekli eski kayıt defteri kaydı bilinçli olarak
-  silinmedi; ayrıca talep edilirse kaldırılır.
-
-Önceki final artifact (2026-08-13, `btb-mobile-next-arm64-cutover-20260813-v20-final.apk`)
-`docs/observation_archive/cutover_2026-08-13-02.md` içinde kayıtlıdır.
+Kanıt: `docs/observation_archive/cutover_2026-08-17-03.md`.
 
 ## Bilyoner takım logo eşlemesi
 
@@ -508,21 +425,17 @@ henüz başlatılmadı.
 
 ## Exact next steps
 
-1. Observation modunda kal; `NXT-OBS-095` için uygun bir canlı maç çıktığında
-   fiziksel canlı kontrolü yap (canlı maç açılışı, skor/dakika yenilemesi,
-   Game Pulse, Maç Detayı kararlılığı, collector'ın canlı snapshot'ı yakalaması,
-   SAP/BFF gecikmesi). Yeni APK gerekmez.
+1. Observation modunda kal. `NXT-OBS-098`
+   (`PENDING_REAL_LIVE_CONTEXT_EVENT_VALIDATION`) yalnız meşru upstream yol
+   açıldığında ele alınır; sağlayıcı bu testi geçmek için açılmaz.
 2. `zbet-cap` prospective pilotunu 300 sn'de çalışır bırak; `/health`
-   `prospectiveTelemetry` ile denetle. 72 saat sağlıklı geçerse 7 güne uzat.
-3. `BTB_LIVE_CONTEXT_ENABLED` kapalı kalsın; sağlayıcı erişimi meşru biçimde
-   çözülene kadar açma, giriş/erişim kontrollerini aşma, çerez/oturum
-   otomasyonu yapma.
-4. `btb-fcm-proxy-srv` uygulamasını başlatma veya notification yolu olarak
-   kullanma; yalnız owner açıkça isterse değerlendir.
-5. Participant ID ve current pressure kaynak sözleşmelerini ilgili operasyonel
-   task'a handoff et; Mobile'da tahmini veri üretme.
-6. Yeni observation batch'i yalnız `btb next cutover start` ile aç; commit/push
-   ve dış deploy kapılarını yeniden açık onayla işlet.
+   `prospectiveTelemetry` ile denetle.
+3. `BTB_LIVE_CONTEXT_ENABLED` kapalı kalsın. Erişim kararı sahibe aittir;
+   giriş/erişim kontrolü aşma, çerez/oturum otomasyonu ve parmak izi taklidi
+   kapsam dışıdır. Teşhis: `NXT-OBS-096` (`REQUEST_PROFILE_DIFFERENCE`).
+4. FULL_INTERNAL ve Champion/Challenger başlatılmadı; ayrı karar gerektirir.
+5. Yeni observation batch'i yalnız `btb next cutover start` ile açılır;
+   commit/push ve dış deploy kapıları yeniden açık onayla işletilir.
 
 
 Cutover kanıtı: `docs/observation_archive/cutover_2026-08-17-02.md`.
