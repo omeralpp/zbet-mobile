@@ -349,34 +349,44 @@ Firebase private key **0**, sağlayıcı oturum/çerez materyali **0**.
 Önceki `btb-mobile-next-arm64-workzone-deeplink-fix.apk` cutover prosedürü
 uyarınca Geri Dönüşüm Kutusu'na taşındı.
 
-## Sıradaki pilot APK — fiziksel doğrulama bekliyor
+## Aday pilot APK — Live Context v2 (fiziksel doğrulama bekliyor)
 
 ```text
-Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-ui-polish.apk
+Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-live-context-v2.apk
 Package : com.btb.mobile.next
 Version : 0.1.0 (1) · targetSdk 36
 ABI     : arm64-v8a
-Size    : 48,256,809 bytes
-SHA-256 : 3224C6AE8DC4761C926C4ED7233F571CFCEC1D351C8D5E1BDD1BA70F96B5C6E2
+Size    : 48.248.813 bytes
+SHA-256 : 3096C0335361F45B6B95B7AFD35AE1A1D9C91E4D6233735F998E1B2B34EB5B28
 Signing : v2 · fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
 Config  : authMode=pilot, useMocks=false, mobileApiUrl=https://api.surklase.com,
           legacyLaunchpadUrl=https://34dfc21ftrial.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b38042ce-b8ab-4fea-a892-abf4c58a170f
-Build   : 2026-08-17 — Game Pulse kendi yüksekliğini bildiriyor (232 → ölçülen,
-          emülatörde 162) + sağlayıcı placeholder arma yerine BTB markası.
+Build   : 2026-08-17 — Live Context v2 (yalnız gol + kırmızı kart), dizilişler
+          kaldırıldı, Game Pulse kendi yüksekliğini bildiriyor, sağlayıcı
+          placeholder arma yerine BTB markası.
 Durum   : READY_FOR_XIAOMI_PHYSICAL_VALIDATION — henüz baseline değildir.
 ```
 
-İmza parmak izi doğrulanmış baseline ile **aynıdır**, üstüne kurulum ve App Link
+İmza parmak izi doğrulanmış baseline ile **aynıdır**; üstüne kurulum ve App Link
 davranışı korunur. Tam akış taraması (1.322 girdi, tamamı bellekte): eski tenant
 `188b143btrial` **0**, sağlayıcı detay ucu `match-card/event` **0**, SAP parolası
 **0**, Firebase private key **0**, sağlayıcı oturum/çerez materyali **0**.
-Yayınlanan pakette `sr-widget` ölçüm probu ve `assets/participant` arma pattern'i
-mevcut; eski sabit yükseklik sabiti `pulseViewportHeight` **kalmadı**.
 
-Fiziksel doğrulama PASS olana kadar `btb-mobile-next-arm64-pilot.apk`
-doğrulanmış baseline olarak kalır ve geri dönüşüme **gönderilmez**; PASS sonrası
-eski artifact cutover prosedürü uyarınca geri dönüşüme taşınır ve baseline
-bloğu bu artifact ile güncellenir.
+Yayınlanan pakette v2 yüzeyi mevcut (`Goller ve kırmızı kartlar`, boş ve
+kullanılamıyor metinleri, `SECOND_YELLOW_RED`); kaldırılan yüzey **yok**
+(`İlk 11 ve dizilişler`, `KADROLAR`, yedekler, `positionGroup`, `substitutes`,
+`STATUS_MARKER`, `SUBSTITUTION`). Not: Hermes ASCII dışı sabitleri UTF-16LE
+saklar; tarama her iki kodlamada yapılmalıdır. `Canlı saha dengesi` içindeki
+`Sarı kart` satırı SAP kaynaklı istatistiktir ve Live Context kapsamı dışıdır.
+
+`PENDING_REAL_LIVE_CONTEXT_EVENT_VALIDATION` — sağlayıcı runtime devre dışı
+olduğu için gerçek GOAL/RED_CARD verisiyle doğrulama bu APK kabulünün parçası
+**değildir** ve sağlayıcı yalnız bu testi geçmek için açılmaz.
+
+Rollback: fiziksel doğrulama PASS olana kadar `btb-mobile-next-arm64-pilot.apk`
+doğrulanmış baseline olarak kalır ve geri dönüşüme gönderilmez. Ara artifact
+`btb-mobile-next-arm64-ui-polish.apk` bu APK tarafından tamamen kapsanır ve
+doğrulama sonrası geri dönüşüme taşınabilir.
 
 Önceki `btb-mobile-next-arm64-workzone-integration.apk` (2026-08-16 23:45)
 bu double-hash regresyonunu taşır ve fiziksel telefonda Fiori deep link'lerini

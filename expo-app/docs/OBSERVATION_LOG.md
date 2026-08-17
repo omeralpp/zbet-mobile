@@ -2,12 +2,23 @@
 
 Durum: `ACTIVE / OBSERVATION`
 
-Aktif APK (fiziksel Xiaomi ile doğrulanmış baseline):
+Aktif APK (fiziksel Xiaomi ile doğrulanmış baseline — rollback):
 
 ```text
 btb-mobile-next-arm64-pilot.apk
 SHA-256: 9D6D1745C10F2F319E204F13AE2FF67DA78B37D9E01229262FB30B371D752A49
 ```
+
+Aday APK (Live Context v2, fiziksel doğrulama bekliyor):
+
+```text
+btb-mobile-next-arm64-live-context-v2.apk
+SHA-256: 3096C0335361F45B6B95B7AFD35AE1A1D9C91E4D6233735F998E1B2B34EB5B28
+```
+
+`PENDING_REAL_LIVE_CONTEXT_EVENT_VALIDATION` — sağlayıcı runtime devre dışı
+olduğu için gerçek GOAL/RED_CARD verisiyle doğrulama bu APK kabulünün parçası
+değildir; sağlayıcı yalnız bu testi geçmek için açılmaz.
 
 `MOBILE_NEXT_BASELINE_VERIFIED` — 2026-08-17 fiziksel doğrulama PASS.
 Kapanış kanıtı: `docs/observation_archive/cutover_2026-08-17-02.md`.
