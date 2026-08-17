@@ -2,12 +2,19 @@
 
 Durum: `ACTIVE / OBSERVATION`
 
-Aktif APK:
+Aktif APK (fiziksel Xiaomi ile doğrulanmış baseline):
 
 ```text
-btb-mobile-next-arm64-workzone-deeplink-fix.apk
-SHA-256: 3AA5F5030CA494788170F42E13996BF42F0895A4D419366E46ED0FAECA43E6BA
+btb-mobile-next-arm64-pilot.apk
+SHA-256: 9D6D1745C10F2F319E204F13AE2FF67DA78B37D9E01229262FB30B371D752A49
 ```
+
+`MOBILE_NEXT_BASELINE_VERIFIED` — 2026-08-17 fiziksel doğrulama PASS.
+Kapanış kanıtı: `docs/observation_archive/cutover_2026-08-17-02.md`.
+
+`BILYONER_LIVE_CONTEXT_RUNTIME = DISABLED_PENDING_PROVIDER_ACCESS` —
+gerçek sağlayıcı Timeline/Kart/Gol verisi bu baseline kabulünün parçası
+değildir ve sağlayıcı erişim kontrolleri aşılmaz.
 
 Bu dosya yalnız gerçek kullanımda açık kalan tespitleri tutar. Observation
 sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
@@ -56,6 +63,8 @@ sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
 | NXT-OBS-075 | 2026-08-11 | Bibi rehberi ayarları | Daha Fazla ekranında yalnız `Bibi rehberini baştan başlat` eylemi bırakıldı; yinelenen durum satırı kaldırıldı. Android açık tema smoke’unda tek eylem düzeni doğrulandı. | LOW | READY |
 
 | NXT-OBS-076 | 2026-08-11 | Genel UI düzeni ve insan-etkileşim standardı | Ortak `Screen`, filtre, bölüm başlığı ve metrik kartları 44–48 dp dokunma hedefi, 720 dp içerik sınırı, güvenli alan, tutarlı spacing/tipografi ve dar ekranda wrap kurallarıyla düzenlendi. Super ve Maç detay metrikleri okunabilir iki kolon ritmine taşındı; standart `docs/UI_INTERACTION_STANDARD.md` altında yazılı kabul kapısı oldu. Android açık tema emülatöründe giriş, Özet ve Maç Detayı görsel/dokunmatik smoke geçti. | HIGH | READY |
+
+| NXT-OBS-095 | 2026-08-17 | Canlı maç fiziksel doğrulaması | `PENDING_LIVE_MATCH_VALIDATION` — **bloklamayan**. 2026-08-17 fiziksel Xiaomi turunda uygun canlı maç bulunmadığı için gerçek CANLI durum kontrolü yapılamadı; diğer bütün fiziksel kapılar PASS ve Mobile Next baseline bu madde olmadan kapatıldı. Takip yalnız şunları kapsar: canlı maç normal açılıyor; canlı skor/dakika yenilemesi sağlıklı kalıyor; Game Pulse doğru davranıyor; Maç Detayı canlı durumda kararlı kalıyor; prospective collector canlı snapshot'ı yakalıyor; SAP/BFF gecikmesi sağlıklı kalıyor. Sağlayıcı runtime devre dışı olduğundan gerçek Timeline/Kart/Gol verisi bu maddenin kapsamında **değildir**; kontrol yalnız mevcut canlı davranışı ve dürüst kullanılamıyor durumunu doğrular. Yeni APK veya kod değişikliği gerekmez. | MEDIUM | OBSERVED |
 
 | NXT-OBS-077 | 2026-08-11 | Bibi hedef vurgusu ve kapsamlı rehber | Rehber v2 Özet, Canlı, Super, Toto, Daha Fazla, Maç Detayı ve Super Detayı üzerindeki önemli kart/filtre/özet/sıralama alanlarını hedef kimliğiyle bağlar. Balon ölçülen hedefin üstüne veya altına yerleşir; adımlar kısa ve bağlamsaldır, ilerleme sürümlü saklanır ve tek yeniden başlat eylemi korunur. Android emülatöründe Özet üzerindeki üç ardışık hedef doğrulandı. | MEDIUM | READY |
 

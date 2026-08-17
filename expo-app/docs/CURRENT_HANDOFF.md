@@ -6,20 +6,55 @@ Son güncelleme: 2026-08-17
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `OBSERVATION` — 2026-08-13 ikinci Mobile cutover batch'i uygulandı,
-doğrulandı, iki repoda commit/push edildi ve Mobile BFF'nin korunan CAP yüzeyi
-exact-SHA ile BTP DEV'e deploy edildi. Owner talimatıyla `btb-fcm-proxy-srv`
-sonradan durduruldu ve yeniden açıkça devreye alınması istenene kadar
-kullanılmayacak. Aktif runtime yalnız `api.surklase.com` arkasındaki yerel
-standalone BFF/notification servisidir. Public Cloudflare origin yapılandırması,
-Firebase/SAP dış değişikliği, APK dağıtımı ve release signing yapılmadı; her
-biri ayrıca açık onay gerektirir. Legacy Cordova artık RETIRED — bkz. aşağıdaki
-"Legacy Cordova Emekliye Ayrıldı" bölümü; bir daha cutover/migration konusu
-değildir.
+Mod: `OBSERVATION` — 2026-08-17 Mobile Live Context v1 batch'i uygulandı,
+emülatörde dört durumu da görsel olarak doğrulandı, fiziksel Xiaomi'de kabul
+edildi ve iki mantıksal commit hâlinde push edildi. Aktif runtime yalnız
+`api.surklase.com` arkasındaki yerel standalone BFF/notification servisidir.
+Owner talimatıyla `btb-fcm-proxy-srv` durdurulmuş durumdadır. Public Cloudflare
+origin yapılandırması, Firebase/SAP dış değişikliği, APK dağıtımı ve release
+signing yapılmadı; her biri ayrıca açık onay gerektirir. Legacy Cordova RETIRED.
+
+Durum:
+
+```text
+MOBILE_NEXT_BASELINE_VERIFIED
+PENDING_LIVE_MATCH_VALIDATION      (bloklamayan, NXT-OBS-095)
+PROSPECTIVE_PILOT_RUNNING          (300 sn, zbet-cap)
+BILYONER_LIVE_CONTEXT_RUNTIME = DISABLED_PENDING_PROVIDER_ACCESS
+```
 
 Yeni task önce yalnız `C:\dev\btb-cdoex\AGENTS.md` ve bu dosyayı tamamen okur.
-Observation tespitleri `docs/OBSERVATION_LOG.md` içindedir. Yeni toplu kod batch'i
-yalnız `btb next cutover start` ile başlar.
+Observation tespitleri `docs/OBSERVATION_LOG.md` içindedir. Yeni toplu kod
+batch'i yalnız `btb next cutover start` ile başlar.
+
+## Mobile Live Context v1 — fiziksel baseline doğrulandı (2026-08-17)
+
+Maç Detayı'na iki modül eklendi: `Olaylar` (gol/kart/değişiklik/bölüm
+işaretçisi) ve `İlk 11 ve dizilişler` (diziliş, teknik direktör, mevkiye göre
+gruplanmış ilk 11, katlanmış yedekler). Mobile yalnız
+`GET /v1/btb/matches/:key/live-context` ucunu tüketir ve hiçbir zaman doğrudan
+sağlayıcı çağırmaz; sağlayıcı JSON'u sunucu tarafındaki adaptörde biter. APK
+taramasında sağlayıcı detay ucu (`match-card/event`) **0 kez** geçiyor.
+
+`timeline === null` (alınamadı) ile `timeline === []` (alındı, olay yok) asla
+aynı duruma çözülmez. Durum işaretçisinin serbest metni skor için
+ayrıştırılmaz. `stale` ve `refreshFailed` ayrı kullanıcı sinyalleridir. Hiçbir
+kullanıcı metni sağlayıcı adı, durum kodu veya uygulama terimi içermez. Oyuncu
+adları yalnız görüntü verisidir; `comparisonForm` render çıktısına ulaşmaz ve
+kimlik olarak kullanılmaz.
+
+Sağlayıcı runtime devre dışı olduğu için her iki modül de dürüst
+"Canlı maç olayları şu anda kullanılamıyor." durumunu gösterir; meşru sağlayıcı
+erişimi açıldığında yalnız `BTB_LIVE_CONTEXT_ENABLED=true` yeterlidir —
+uygulama değişikliği veya yeni APK gerekmez.
+
+Ayrıca: mevcut kurulumlarda yeni modüller artık listenin sonuna değil
+`gamePulse` hemen ardına yerleşir (kendi kendini sınırlayan, idempotent göç;
+bir kez kaydedilen konum kullanıcıya aittir), ve ana sekme kaydırmasındaki
+beyaz parlama giderildi — navigator sahne kabı artık BTB arka planını boyuyor
+(`sceneStyle`), stack'in zaten yaptığı şeyin sekme karşılığı.
+
+Kanıt: `docs/observation_archive/cutover_2026-08-17-02.md`.
 
 ## Work Zone deep-link double-hash regresyonu — kapandı (2026-08-17)
 
@@ -208,14 +243,18 @@ migration başlatılmadı.
 ```text
 zbet-mobile
   branch/upstream : master / origin/master
-  source commit   : 7484502 (Fix Work Zone deep-link double-hash regression)
-                    + bu handoff/observation kapanış commit'i
-  state           : kaynak push edildi; fiziksel Xiaomi doğrulaması PASSED
+  HEAD            : e031289  (origin/master ile aynı, temiz)
+                    dd90b00  Add Mobile Live Context v1 to Match Detail
+                    e031289  Place new modules for existing installs and stop the tab-swipe flash
+  state           : fiziksel Xiaomi doğrulaması PASSED
 
 zbet-cap
   branch/upstream : main / origin/main
-  HEAD            : ead7a99584c60c846b1e0f88e77543158b262cbe
-  state           : clean, origin/main ile aynı; exact-SHA BTP DEV deploy edildi
+  HEAD            : 1a759e8  (origin/main ile aynı, temiz)
+                    823f7eb  Add provider-neutral Bilyoner live context adapter to Mobile BFF
+                    e7b3349  Capture PARTIAL_EXTERNAL prospective decision evidence
+                    1a759e8  Make the prospective pilot durable and inspectable
+  state           : prospective pilot 300 sn ile çalışıyor
 ```
 
 Kullanıcıya ait mevcut değişiklikler korunmuştur. Commitler yalnız bu cutover'ın
@@ -245,22 +284,30 @@ Mobile Next, Mobile BFF ve kapanış kanıtı kapsamındadır.
   aracı olmadığı için SAP kaynak iddiaları live MCP kanıtı değil yerel ABAP/CDS
   snapshot kanıtıdır.
 
-## Final yerel pilot APK
+## Final yerel pilot APK — doğrulanmış baseline
 
 ```text
-Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-workzone-deeplink-fix.apk
+Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-pilot.apk
 Package : com.btb.mobile.next
-Version : 0.1.0 (1)
+Version : 0.1.0 (1) · targetSdk 36
 ABI     : arm64-v8a
-Size    : 48,234,269 bytes
-SHA-256 : 3AA5F5030CA494788170F42E13996BF42F0895A4D419366E46ED0FAECA43E6BA
-Config  : authMode=pilot, mobileApiUrl=https://api.surklase.com,
+Size    : 48,253,377 bytes
+SHA-256 : 9D6D1745C10F2F319E204F13AE2FF67DA78B37D9E01229262FB30B371D752A49
+Signing : v2 · fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
+Config  : authMode=pilot, useMocks=false, mobileApiUrl=https://api.surklase.com,
           legacyLaunchpadUrl=https://34dfc21ftrial.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b38042ce-b8ab-4fea-a892-abf4c58a170f
-Build   : 2026-08-17 — Work Zone deep-link double-hash regression fixed
-          (7484502). Fiziksel Xiaomi doğrulaması PASSED: Work Zone ana
-          sayfa, üç Fiori uygulamasının deep link'i, eski tenant yok,
-          navigasyon/bildirim sağlıklı.
+Build   : 2026-08-17 — Mobile Live Context v1 + mevcut kurulum modül göçü +
+          ana sekme kaydırma düzeltmesi. Fiziksel Xiaomi doğrulaması PASSED.
 ```
+
+İmza sertifikası önceki cihaz APK'sıyla ve assetlinks parmak iziyle aynıdır;
+üstüne kurulum ve App Link davranışı korunur. Tam akış taraması (1.322 girdi):
+eski tenant `188b143btrial` **0**, sağlayıcı detay ucu **0**, SAP parolası **0**,
+Firebase private key **0**, sağlayıcı oturum/çerez materyali **0**.
+
+Önceki `btb-mobile-next-arm64-workzone-deeplink-fix.apk` cutover prosedürü
+uyarınca Geri Dönüşüm Kutusu'na taşındı; `.codex-artifacts` yalnız yukarıdaki
+doğrulanmış artifact'ı tutuyor.
 
 Önceki `btb-mobile-next-arm64-workzone-integration.apk` (2026-08-16 23:45)
 bu double-hash regresyonunu taşır ve fiziksel telefonda Fiori deep link'lerini
@@ -363,18 +410,29 @@ ile x86_64 emülatör paketi de aynı şekilde Geri Dönüşüm Kutusu'na taşı
 
 ## Sıradaki milestone
 
-Claude ↔ Codex Thread Optimizer parity.
+Prospective evidence pilotunun izlenmesi (bloklamayan) ve
+`PENDING_LIVE_MATCH_VALIDATION` takibi. FULL_INTERNAL ve Champion/Challenger
+henüz başlatılmadı.
 
 ## Exact next steps
 
-1. Observation modunda fiziksel cihaz sonuçlarını topla.
-2. `btb-fcm-proxy-srv` uygulamasını başlatma, deploy etme veya notification yolu
-   olarak kullanma; yalnız owner açıkça yeniden devreye alınmasını isterse değerlendir.
-3. Participant ID ve current pressure kaynak sözleşmelerini ilgili operasyonel task'a
-   handoff et; Mobile'da tahmini veri üretme.
-4. Yeni observation batch'i yalnız `btb next cutover start` ile aç; commit/push ve
-   dış deploy kapılarını yeniden açık onayla işlet.
+1. Observation modunda kal; `NXT-OBS-095` için uygun bir canlı maç çıktığında
+   fiziksel canlı kontrolü yap (canlı maç açılışı, skor/dakika yenilemesi,
+   Game Pulse, Maç Detayı kararlılığı, collector'ın canlı snapshot'ı yakalaması,
+   SAP/BFF gecikmesi). Yeni APK gerekmez.
+2. `zbet-cap` prospective pilotunu 300 sn'de çalışır bırak; `/health`
+   `prospectiveTelemetry` ile denetle. 72 saat sağlıklı geçerse 7 güne uzat.
+3. `BTB_LIVE_CONTEXT_ENABLED` kapalı kalsın; sağlayıcı erişimi meşru biçimde
+   çözülene kadar açma, giriş/erişim kontrollerini aşma, çerez/oturum
+   otomasyonu yapma.
+4. `btb-fcm-proxy-srv` uygulamasını başlatma veya notification yolu olarak
+   kullanma; yalnız owner açıkça isterse değerlendir.
+5. Participant ID ve current pressure kaynak sözleşmelerini ilgili operasyonel
+   task'a handoff et; Mobile'da tahmini veri üretme.
+6. Yeni observation batch'i yalnız `btb next cutover start` ile aç; commit/push
+   ve dış deploy kapılarını yeniden açık onayla işlet.
 
-Cutover kanıtı: `docs/observation_archive/cutover_2026-08-13-02.md`.
+
+Cutover kanıtı: `docs/observation_archive/cutover_2026-08-17-02.md`.
 2026-08-15 stabilizasyon kanıtı: `docs/observation_archive/cutover_2026-08-15.md`.
 2026-08-17 Work Zone deep-link kapanış kanıtı: `docs/observation_archive/cutover_2026-08-17.md`.
