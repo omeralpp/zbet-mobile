@@ -38,6 +38,16 @@ export default function TabLayout() {
       }}
       screenOptions={{
         animation: "shift",
+        // The navigator paints its own scene container, and without this it
+        // uses React Navigation's default theme background (`rgb(242,242,242)`).
+        // During the shift transition that container is briefly visible between
+        // the two translated screens, which reads as a white flash on the dark
+        // theme. `Screen` paints the BTB background *inside* each scene, so it
+        // cannot cover the container behind them.
+        //
+        // The stack in `app/_layout.tsx` already sets `contentStyle` for exactly
+        // this reason, which is why Detail -> List swipe-back never flashed.
+        sceneStyle: { backgroundColor: colors.background },
         headerShown: false,
         tabBarActiveTintColor: colors.green,
         tabBarInactiveTintColor: colors.textSubtle,

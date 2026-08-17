@@ -11,15 +11,40 @@ export function moduleLayoutStorageKey(surface: ModuleLayoutSurface): string {
 }
 
 /**
+ * Placement rule for a module introduced after a layout was first persisted.
+ *
+ * Appending a new module to the bottom is safe but wrong: a timeline that lands
+ * below every analytical card reads as an afterthought. An anchor says where it
+ * belongs relative to a module the existing layout already knows.
+ */
+export interface ModuleAnchor {
+  /** The newly introduced module. */
+  id: string;
+  /** Insert directly after this module when the new one is not yet stored. */
+  after: string;
+}
+
+/**
  * Reconciles a persisted module order against the current canonical default.
  *
  * A stored preference must survive future releases without ever hiding a module
  * the release introduced, so unknown ids are dropped, duplicates collapse to
- * their first occurrence and every missing default is appended in default order.
+ * their first occurrence and every missing default is restored.
+ *
+ * A missing module with an anchor is inserted directly after its anchor instead
+ * of being appended, which places a newly shipped module where it belongs for
+ * existing installs while leaving every previously stored module in the exact
+ * relative order the user arranged.
+ *
+ * The migration is self-limiting: it only ever acts on ids absent from the
+ * stored order. Once a module has been persisted its position is the user's, so
+ * a later reconciliation never moves it again — including when the user has
+ * deliberately dragged it somewhere else.
  */
 export function reconcileModuleOrder(
   stored: unknown,
-  defaultOrder: readonly string[]
+  defaultOrder: readonly string[],
+  anchors: readonly ModuleAnchor[] = []
 ): string[] {
   const canonical = [...new Set(defaultOrder)];
   if (!Array.isArray(stored)) {
@@ -35,10 +60,24 @@ export function reconcileModuleOrder(
     seen.add(entry);
     reconciled.push(entry);
   }
+
+  // Canonical order matters here: anchoring `lineups` after `timeline` works on
+  // a legacy layout that has neither, because `timeline` is restored first.
   for (const entry of canonical) {
-    if (!seen.has(entry)) {
+    if (seen.has(entry)) {
+      continue;
+    }
+    const anchor = anchors.find((candidate) => candidate.id === entry);
+    const anchorIndex = anchor ? reconciled.indexOf(anchor.after) : -1;
+    if (anchorIndex >= 0) {
+      reconciled.splice(anchorIndex + 1, 0, entry);
+    } else {
+      // No anchor, or the anchor itself is gone from this layout. Appending is
+      // the safe fallback — a module placed oddly is recoverable, a hidden one
+      // is not.
       reconciled.push(entry);
     }
+    seen.add(entry);
   }
   return reconciled;
 }

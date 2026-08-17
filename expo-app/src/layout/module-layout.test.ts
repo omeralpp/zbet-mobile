@@ -163,3 +163,187 @@ test("resolves the drop slot from travelled distance and neighbour heights", () 
   assert.equal(resolveDropIndex(heights, 3, -80), 2);
   assert.equal(resolveDropIndex(heights, 3, -1000), 0);
 });
+
+/* ---------------------------------------------------------------- *
+ * Existing-install migration for modules introduced later
+ * ---------------------------------------------------------------- */
+
+const liveDefaults = [
+  "decision",
+  "gamePulse",
+  "timeline",
+  "lineups",
+  "relatedSuper",
+  "standings",
+  "odds",
+  "statistics",
+  "pressure",
+  "scoreDistribution"
+];
+
+const liveAnchors = [
+  { id: "timeline", after: "gamePulse" },
+  { id: "lineups", after: "timeline" }
+];
+
+/** The persisted liveDetail order shipped before Live Context v1. */
+const legacyStored = [
+  "decision",
+  "gamePulse",
+  "relatedSuper",
+  "standings",
+  "odds",
+  "statistics",
+  "pressure",
+  "scoreDistribution"
+];
+
+test("a fresh layout uses the intended default order", () => {
+  assert.deepEqual(
+    reconcileModuleOrder(null, liveDefaults, liveAnchors),
+    liveDefaults
+  );
+});
+
+test("a legacy layout gains timeline and lineups after gamePulse", () => {
+  assert.deepEqual(reconcileModuleOrder(legacyStored, liveDefaults, liveAnchors), [
+    "decision",
+    "gamePulse",
+    "timeline",
+    "lineups",
+    "relatedSuper",
+    "standings",
+    "odds",
+    "statistics",
+    "pressure",
+    "scoreDistribution"
+  ]);
+});
+
+test("a reordered legacy layout keeps its relative order", () => {
+  const userOrder = [
+    "odds",
+    "decision",
+    "scoreDistribution",
+    "gamePulse",
+    "statistics",
+    "relatedSuper",
+    "standings",
+    "pressure"
+  ];
+
+  const migrated = reconcileModuleOrder(userOrder, liveDefaults, liveAnchors);
+
+  assert.deepEqual(migrated, [
+    "odds",
+    "decision",
+    "scoreDistribution",
+    "gamePulse",
+    "timeline",
+    "lineups",
+    "statistics",
+    "relatedSuper",
+    "standings",
+    "pressure"
+  ]);
+
+  // Every previously stored module keeps its relative order among itself.
+  const before = migrated.filter((id) => userOrder.includes(id));
+  assert.deepEqual(before, userOrder);
+});
+
+test("the migration is idempotent", () => {
+  const once = reconcileModuleOrder(legacyStored, liveDefaults, liveAnchors);
+  const twice = reconcileModuleOrder(once, liveDefaults, liveAnchors);
+  const thrice = reconcileModuleOrder(twice, liveDefaults, liveAnchors);
+
+  assert.deepEqual(twice, once);
+  assert.deepEqual(thrice, once);
+});
+
+test("a user-moved timeline is never repositioned again", () => {
+  // Once persisted, position belongs to the user — including at the very end,
+  // which is exactly where the un-migrated build had put it.
+  const userMoved = [
+    "decision",
+    "gamePulse",
+    "relatedSuper",
+    "standings",
+    "odds",
+    "statistics",
+    "pressure",
+    "scoreDistribution",
+    "lineups",
+    "timeline"
+  ];
+
+  assert.deepEqual(
+    reconcileModuleOrder(userMoved, liveDefaults, liveAnchors),
+    userMoved
+  );
+});
+
+test("a timeline moved to the top stays at the top", () => {
+  const userMoved = [
+    "timeline",
+    "decision",
+    "gamePulse",
+    "lineups",
+    "relatedSuper",
+    "standings",
+    "odds",
+    "statistics",
+    "pressure",
+    "scoreDistribution"
+  ];
+
+  assert.deepEqual(
+    reconcileModuleOrder(userMoved, liveDefaults, liveAnchors),
+    userMoved
+  );
+});
+
+test("a missing anchor falls back to appending rather than hiding", () => {
+  // gamePulse absent from the stored layout: timeline anchors on nothing.
+  const withoutAnchor = ["decision", "odds", "statistics"];
+
+  const migrated = reconcileModuleOrder(
+    withoutAnchor,
+    liveDefaults,
+    liveAnchors
+  );
+
+  assert.equal(migrated.includes("timeline"), true);
+  assert.equal(migrated.includes("lineups"), true);
+  // lineups still anchors on timeline once timeline has been restored.
+  assert.equal(
+    migrated.indexOf("lineups"),
+    migrated.indexOf("timeline") + 1
+  );
+  for (const id of withoutAnchor) {
+    assert.equal(migrated.includes(id), true);
+  }
+});
+
+test("anchors never drop, duplicate or hide a module", () => {
+  const migrated = reconcileModuleOrder(legacyStored, liveDefaults, liveAnchors);
+
+  assert.equal(migrated.length, liveDefaults.length);
+  assert.equal(new Set(migrated).size, migrated.length);
+  for (const id of liveDefaults) {
+    assert.equal(migrated.includes(id), true, `${id} must survive`);
+  }
+});
+
+test("surfaces without anchors are unaffected", () => {
+  const overviewDefaults = ["hero", "metrics", "featured", "recentSuper", "toto"];
+  const stored = ["toto", "hero", "metrics"];
+
+  assert.deepEqual(reconcileModuleOrder(stored, overviewDefaults, []), [
+    "toto",
+    "hero",
+    "metrics",
+    "featured",
+    "recentSuper"
+  ]);
+});

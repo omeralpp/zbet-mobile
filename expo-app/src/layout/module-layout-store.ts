@@ -9,7 +9,7 @@ import {
   resolveVisibleMove,
   type ModuleLayoutSurface
 } from "./module-layout";
-import { moduleLayoutDefaults } from "./module-registry";
+import { moduleLayoutAnchors, moduleLayoutDefaults } from "./module-registry";
 
 type Listener = () => void;
 
@@ -73,7 +73,8 @@ export function hydrateModuleLayouts(): Promise<void> {
           surface,
           reconcileModuleOrder(
             parseStoredModuleOrder(stored.get(moduleLayoutStorageKey(surface))),
-            moduleLayoutDefaults[surface]
+            moduleLayoutDefaults[surface],
+            moduleLayoutAnchors[surface]
           )
         );
       }

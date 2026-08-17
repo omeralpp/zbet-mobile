@@ -1,4 +1,4 @@
-import type { ModuleLayoutSurface } from "./module-layout";
+import type { ModuleAnchor, ModuleLayoutSurface } from "./module-layout";
 
 /**
  * Canonical BTB module order per customizable surface.
@@ -18,6 +18,8 @@ export const overviewModules = [
 export const liveDetailModules = [
   "decision",
   "gamePulse",
+  "timeline",
+  "lineups",
   "relatedSuper",
   "standings",
   "odds",
@@ -50,4 +52,24 @@ export const moduleLayoutLabels: Record<ModuleLayoutSurface, string> = {
   overview: "Özet düzeni",
   liveDetail: "Canlı detay düzeni",
   superDetail: "Super detay düzeni"
+};
+
+/**
+ * Placement for modules introduced after a surface's layout first shipped.
+ *
+ * `timeline` and `lineups` arrived with Live Context v1. Existing installs have
+ * a persisted `liveDetail` order that predates both, so without these anchors
+ * they would be appended below the score distribution instead of sitting with
+ * the other live-context material.
+ */
+export const moduleLayoutAnchors: Record<
+  ModuleLayoutSurface,
+  readonly ModuleAnchor[]
+> = {
+  overview: [],
+  liveDetail: [
+    { id: "timeline", after: "gamePulse" },
+    { id: "lineups", after: "timeline" }
+  ],
+  superDetail: []
 };
