@@ -61,8 +61,9 @@ export function reconcileModuleOrder(
     reconciled.push(entry);
   }
 
-  // Canonical order matters here: anchoring `lineups` after `timeline` works on
-  // a legacy layout that has neither, because `timeline` is restored first.
+  // Canonical order matters here: an anchor can name a module that is itself
+  // being restored in this same pass, and it resolves correctly as long as the
+  // anchor target comes first in the canonical order.
   for (const entry of canonical) {
     if (seen.has(entry)) {
       continue;

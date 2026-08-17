@@ -2,27 +2,28 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { liveContextSchema } from "@/src/api/schemas";
 import {
-  benchCount,
   describeEvent,
-  groupStarters,
+  describeEventForAccessibility,
   minuteLabel,
   resolveFreshnessNotice,
-  resolveLineupsState,
   resolveTimelineState,
-  unavailableMessage
+  unavailableMessage,
+  visibleEvents,
+  type VisibleEvent
 } from "./live-context-view";
+
+const teams = { home: "Brøndby", away: "Sønderjyske" };
 
 function context(overrides: Record<string, unknown> = {}) {
   return liveContextSchema.parse({
     matchKey: "2026-08-17:3059015:20:00:00",
     availability: "OK",
     timeline: [],
-    lineups: null,
     ...overrides
   });
 }
 
-function goal(overrides: Record<string, unknown> = {}) {
+function goal(overrides: Record<string, unknown> = {}): VisibleEvent {
   return {
     eventKey: "GOAL|FIRST_HALF|23|HOME|odegaard",
     kind: "GOAL",
@@ -32,10 +33,9 @@ function goal(overrides: Record<string, unknown> = {}) {
     period: { normalized: "FIRST_HALF" },
     goalKind: "GOAL",
     scorer: { rawName: "Ødegaard, Martin", comparisonForm: "martin-odegaard", isIdentified: false },
-    assist: { rawName: "Player B" },
     scoreAfter: { home: 1, away: 0 },
     ...overrides
-  };
+  } as VisibleEvent;
 }
 
 /* ---------------------------------------------------------------- *
@@ -75,7 +75,7 @@ test("a populated timeline renders events", () => {
 test("provider-disabled and failed read identically to the user", () => {
   assert.equal(
     unavailableMessage("UNAVAILABLE"),
-    "Canlı maç olayları şu anda kullanılamıyor."
+    "Gol ve kırmızı kart bilgisi şu anda kullanılamıyor."
   );
   assert.equal(unavailableMessage("FAILED"), unavailableMessage("UNAVAILABLE"));
   assert.equal(unavailableMessage(undefined), unavailableMessage("UNAVAILABLE"));
@@ -108,101 +108,126 @@ test("no user-facing copy names the provider or an error code", () => {
  * Event rendering
  * ---------------------------------------------------------------- */
 
-test("a goal shows scorer, assist and running score", () => {
-  const display = describeEvent(goal() as never);
+test("a goal shows the team, the scorer and the running score", () => {
+  const display = describeEvent(goal(), teams);
 
   assert.equal(display.kind, "GOAL");
   assert.equal(display.minute, "23'");
-  assert.equal(display.primary, "Ødegaard, Martin");
-  assert.equal(display.secondary, "Asist: Player B");
+  assert.equal(display.team, "Brøndby");
+  assert.equal(display.player, "Ødegaard, Martin");
   assert.equal(display.score, "1-0");
-  assert.equal(display.side, "HOME");
 });
 
-test("a goal without an assist omits the assist line", () => {
-  const display = describeEvent(goal({ assist: null }) as never);
+test("the away side resolves to the away team", () => {
+  const display = describeEvent(goal({ side: "AWAY" }), teams);
 
-  assert.equal(display.secondary, null);
-  assert.equal(display.primary, "Ødegaard, Martin");
+  assert.equal(display.team, "Sønderjyske");
 });
 
 test("a goal without a running score shows no score", () => {
-  assert.equal(describeEvent(goal({ scoreAfter: null }) as never).score, null);
+  assert.equal(describeEvent(goal({ scoreAfter: null }), teams).score, null);
 });
 
-test("yellow and red cards render their own labels", () => {
-  const yellow = describeEvent({
-    eventKey: "c1", kind: "CARD", minute: 41, side: "AWAY",
-    cardKind: "YELLOW", player: { rawName: "Player C" }
-  } as never);
-  const red = describeEvent({
-    eventKey: "c2", kind: "CARD", minute: 77, side: "HOME",
-    cardKind: "RED", player: { rawName: "Player D" }
-  } as never);
+test("an unknown side leaves the team null rather than guessing", () => {
+  const display = describeEvent(goal({ side: null }), teams);
 
-  assert.equal(yellow.primary, "Player C");
-  assert.equal(yellow.secondary, "Sarı kart");
-  assert.equal(red.secondary, "Kırmızı kart");
-  assert.equal(red.score, null);
+  assert.equal(display.team, null);
+  assert.equal(display.player, "Ødegaard, Martin");
 });
 
-test("an unknown card kind still renders a row", () => {
-  const display = describeEvent({
-    eventKey: "c3", kind: "CARD", minute: 12, cardKind: "UNKNOWN",
-    player: { rawName: "Player E" }
-  } as never);
+test("a goal with no scorer degrades without inventing a name", () => {
+  const display = describeEvent(goal({ scorer: null }), teams);
 
-  assert.equal(display.secondary, "Kart");
+  assert.equal(display.player, null);
+  assert.equal(display.team, "Brøndby");
 });
 
-test("a substitution shows both players in and out", () => {
-  const display = describeEvent({
-    eventKey: "s1", kind: "SUBSTITUTION", minute: 58, side: "HOME",
-    playerOn: { rawName: "Player D" }, playerOff: { rawName: "Player E" }
-  } as never);
+/* ------------------------------------------------------------------ *
+ * Red cards
+ * ------------------------------------------------------------------ */
 
-  assert.equal(display.primary, "Player D");
-  assert.equal(display.secondary, "Çıkan: Player E");
+function redCard(overrides: Record<string, unknown> = {}): VisibleEvent {
+  return {
+    eventKey: "RED_CARD|SECOND_HALF|72|HOME|rice",
+    kind: "RED_CARD",
+    minute: 72,
+    minuteLabel: "72'",
+    side: "HOME",
+    period: { normalized: "SECOND_HALF" },
+    redCardType: "DIRECT_RED",
+    player: { rawName: "Rice, Declan" },
+    ...overrides
+  } as VisibleEvent;
+}
+
+test("a red card shows the team and the player, never a score", () => {
+  const display = describeEvent(redCard(), teams);
+
+  assert.equal(display.kind, "RED_CARD");
+  assert.equal(display.team, "Brøndby");
+  assert.equal(display.player, "Rice, Declan");
+  assert.equal(display.score, null);
 });
 
-test("a substitution with an unknown outgoing player degrades", () => {
-  const display = describeEvent({
-    eventKey: "s2", kind: "SUBSTITUTION", minute: 60,
-    playerOn: { rawName: "Player F" }, playerOff: null
-  } as never);
-
-  assert.equal(display.secondary, "Çıkan: —");
+test("every proven dismissal renders as a red card", () => {
+  // UNKNOWN here means "dismissal proven, subtype not stated" - an
+  // unclassifiable card never reaches the app as a red card at all.
+  for (const redCardType of ["DIRECT_RED", "SECOND_YELLOW_RED", "UNKNOWN"]) {
+    const display = describeEvent(redCard({ redCardType }), teams);
+    assert.equal(display.kind, "RED_CARD");
+    assert.equal(display.redCardType, redCardType);
+  }
 });
 
-test("a status marker renders as a period divider", () => {
-  const display = describeEvent({
-    eventKey: "m1", kind: "STATUS_MARKER",
-    period: { normalized: "HALF_TIME" },
-    displayText: "İlk Yarı Sonucu 2 - 0"
-  } as never);
+test("the dismissal type is spoken, so it is not colour-only", () => {
+  const direct = describeEventForAccessibility(redCard(), teams);
+  const second = describeEventForAccessibility(
+    redCard({ redCardType: "SECOND_YELLOW_RED" }),
+    teams
+  );
 
-  assert.equal(display.isMarker, true);
-  assert.equal(display.primary, "Devre arası");
+  assert.match(direct, /Kırmızı kart/);
+  assert.match(second, /İkinci sarıdan kırmızı/);
+  assert.notEqual(direct, second);
 });
 
-test("status marker score text is never parsed into values", () => {
-  const display = describeEvent({
-    eventKey: "m2", kind: "STATUS_MARKER",
-    period: { normalized: "FULL_TIME" },
-    displayText: "Maç Sonucu 3 - 0"
-  } as never);
-
-  assert.equal(display.score, null, "no score is derived from display text");
-  assert.equal(display.primary, "Maç sonu");
+test("an own goal is spoken as one only when the contract says so", () => {
+  assert.match(
+    describeEventForAccessibility(goal({ goalKind: "OWN_GOAL" }), teams),
+    /kendi kalesine/
+  );
+  assert.doesNotMatch(
+    describeEventForAccessibility(goal(), teams),
+    /kendi kalesine/
+  );
 });
 
-test("an unknown event kind still renders rather than disappearing", () => {
-  const display = describeEvent({
-    eventKey: "u1", kind: "UNKNOWN", minute: 61, displayText: "VAR incelemesi"
-  } as never);
+/* ------------------------------------------------------------------ *
+ * Scope
+ * ------------------------------------------------------------------ */
 
-  assert.equal(display.primary, "VAR incelemesi");
-  assert.equal(display.isMarker, false);
+test("only goals and red cards are rendered", () => {
+  const events = visibleEvents([
+    goal(),
+    redCard(),
+    { eventKey: "x", kind: "UNKNOWN" } as never
+  ]);
+
+  assert.equal(events.length, 2);
+  assert.deepEqual(events.map((event) => event.kind), ["GOAL", "RED_CARD"]);
+});
+
+test("a timeline of only unrenderable events is EMPTY, not EVENTS", () => {
+  // An unrecognised kind is a contract change, not an event to draw.
+  const parsed = context({
+    timeline: [{ eventKey: "x", kind: "SUBSTITUTION" }]
+  });
+
+  assert.equal(resolveTimelineState(parsed), "EMPTY");
+});
+
+test("an unretrieved timeline stays UNAVAILABLE even so", () => {
+  assert.equal(resolveTimelineState(context({ timeline: null })), "UNAVAILABLE");
 });
 
 test("a minute label falls back to the numeric minute", () => {
@@ -216,15 +241,15 @@ test("a minute label falls back to the numeric minute", () => {
  * ---------------------------------------------------------------- */
 
 test("the comparison form never reaches the rendered output", () => {
-  const display = describeEvent(goal() as never);
+  const display = describeEvent(goal(), teams);
 
-  assert.equal(display.primary.includes("martin-odegaard"), false);
+  assert.equal(display.player?.includes("martin-odegaard"), false);
   assert.equal(JSON.stringify(display).includes("comparisonForm"), false);
   assert.equal(JSON.stringify(display).includes("isIdentified"), false);
 });
 
 test("no display object carries a player identifier", () => {
-  const display = describeEvent(goal() as never) as unknown as Record<string, unknown>;
+  const display = describeEvent(goal(), teams) as unknown as Record<string, unknown>;
 
   for (const key of ["playerId", "id", "scorerId", "comparisonForm"]) {
     assert.equal(key in display, false, `display must not expose ${key}`);
@@ -279,96 +304,13 @@ test("stale data is never presented as confirmed current", () => {
 });
 
 /* ---------------------------------------------------------------- *
- * Lineups
- * ---------------------------------------------------------------- */
-
-test("missing lineups are unavailable, not an empty squad", () => {
-  assert.equal(resolveLineupsState(context({ lineups: null })), "UNAVAILABLE");
-  assert.equal(resolveLineupsState(undefined), "UNAVAILABLE");
-  assert.equal(resolveLineupsState(context({ lineups: null }), true), "LOADING");
-});
-
-test("present lineups group starters by position", () => {
-  const parsed = context({
-    lineups: {
-      home: {
-        manager: { rawName: "Mikel Arteta" },
-        formation: { label: "4 - 2 - 3 - 1", lines: [4, 2, 3, 1] },
-        starters: [
-          { player: { rawName: "GK" }, positionGroup: "GOALKEEPER" },
-          { player: { rawName: "DF" }, positionGroup: "DEFENCE" },
-          { player: { rawName: "MF" }, positionGroup: "MIDFIELD" }
-        ],
-        substitutes: [{ player: { rawName: "Sub" }, positionGroup: "BENCH" }]
-      },
-      away: null
-    }
-  });
-
-  assert.equal(resolveLineupsState(parsed), "PRESENT");
-  const groups = groupStarters(parsed.lineups?.home ?? null);
-  assert.deepEqual(groups.map((g) => g.group), ["GOALKEEPER", "DEFENCE", "MIDFIELD"]);
-  assert.equal(groups[0]?.label, "Kaleci");
-  assert.equal(benchCount(parsed), 1);
-});
-
-test("one side missing does not hide the other", () => {
-  const parsed = context({
-    lineups: {
-      home: { starters: [{ player: { rawName: "A" }, positionGroup: "DEFENCE" }], substitutes: [] },
-      away: null
-    }
-  });
-
-  assert.equal(resolveLineupsState(parsed), "PRESENT");
-  assert.equal(groupStarters(parsed.lineups?.home ?? null).length, 1);
-  assert.deepEqual(groupStarters(parsed.lineups?.away ?? null), []);
-});
-
-test("a missing formation or manager does not break the side", () => {
-  const parsed = context({
-    lineups: {
-      home: {
-        manager: null,
-        formation: null,
-        starters: [{ player: { rawName: "A" }, positionGroup: "ATTACK" }],
-        substitutes: []
-      },
-      away: null
-    }
-  });
-
-  assert.equal(parsed.lineups?.home?.manager ?? null, null);
-  assert.equal(parsed.lineups?.home?.formation ?? null, null);
-  assert.equal(groupStarters(parsed.lineups?.home ?? null).length, 1);
-});
-
-test("an unknown position group falls back without dropping the player", () => {
-  const parsed = context({
-    lineups: {
-      home: {
-        starters: [{ player: { rawName: "X" }, positionGroup: "SWEEPER" }],
-        substitutes: []
-      },
-      away: null
-    }
-  });
-
-  const groups = groupStarters(parsed.lineups?.home ?? null);
-  assert.equal(groups.length, 1);
-  assert.equal(groups[0]?.group, "UNKNOWN");
-  assert.equal(groups[0]?.players[0]?.player?.rawName, "X");
-});
-
-/* ---------------------------------------------------------------- *
  * Contract tolerance
  * ---------------------------------------------------------------- */
 
 test("an unknown availability degrades instead of throwing", () => {
   const parsed = liveContextSchema.parse({
     availability: "SOMETHING_NEW",
-    timeline: null,
-    lineups: null
+    timeline: null
   });
 
   assert.equal(parsed.availability, "FAILED");
@@ -379,8 +321,7 @@ test("an unknown period degrades to UNKNOWN", () => {
   const parsed = liveContextSchema.parse({
     availability: "OK",
     period: { normalized: "SUDDEN_DEATH" },
-    timeline: [],
-    lineups: null
+    timeline: []
   });
 
   assert.equal(parsed.period?.normalized, "UNKNOWN");
@@ -391,11 +332,9 @@ test("the provider-disabled shape parses and resolves honestly", () => {
     matchKey: "2026-08-17:1:20:00:00",
     availability: "UNAVAILABLE",
     timeline: null,
-    lineups: null,
     freshness: { stale: true, refreshFailed: true }
   });
 
   assert.equal(resolveTimelineState(parsed), "UNAVAILABLE");
-  assert.equal(resolveLineupsState(parsed), "UNAVAILABLE");
   assert.equal(resolveFreshnessNotice(parsed.freshness).visible, true);
 });

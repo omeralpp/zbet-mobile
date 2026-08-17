@@ -26,7 +26,6 @@ import { RatingStars } from "@/src/components/RatingStars";
 import { TeamLogo } from "@/src/components/TeamLogo";
 import { GamePulseCard } from "@/src/components/GamePulseCard";
 import { MatchTimelineCard } from "@/src/components/MatchTimelineCard";
-import { LineupsCard } from "@/src/components/LineupsCard";
 import { LiveContextFreshness } from "@/src/components/LiveContextNotice";
 import { StandingsModule } from "@/src/components/StandingsModule";
 import { PressureBalance } from "@/src/components/PressureBalance";
@@ -224,7 +223,9 @@ export default function MatchDetailScreen() {
     timeline: (
       <>
         <MatchTimelineCard
+          awayTeam={match.awayTeam}
           context={liveContext.data}
+          homeTeam={match.homeTeam}
           isLoading={liveContext.isLoading}
         />
         <LiveContextFreshness
@@ -233,14 +234,6 @@ export default function MatchDetailScreen() {
           stale={liveContext.data?.freshness?.stale}
         />
       </>
-    ),
-    lineups: (
-      <LineupsCard
-        awayTeam={match.awayTeam}
-        context={liveContext.data}
-        homeTeam={match.homeTeam}
-        isLoading={liveContext.isLoading}
-      />
     ),
     odds: (
       <>

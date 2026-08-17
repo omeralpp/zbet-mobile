@@ -1,8 +1,8 @@
 import type {
   LiveContext,
   LiveContextAvailability,
-  LiveLineupSide,
-  LiveMatchEvent
+  LiveMatchEvent,
+  LiveRedCardType
 } from "@/src/api/schemas";
 
 /**
@@ -10,12 +10,15 @@ import type {
  * without a renderer — the same shape as the rest of this codebase's tests.
  *
  * The rule these functions exist to enforce: `timeline === null` (not
- * retrieved) and `timeline === []` (retrieved, genuinely empty) are different
- * statements and must never resolve to the same UI state.
+ * retrieved) and `timeline === []` (retrieved, and the match genuinely has no
+ * goal or red card) are different statements and must never resolve to the same
+ * UI state.
+ *
+ * The module shows goals and red cards only. It is not a commentary feed and
+ * does not imitate the provider's timeline.
  */
 
 export type TimelineState = "LOADING" | "UNAVAILABLE" | "EMPTY" | "EVENTS";
-export type LineupsState = "LOADING" | "UNAVAILABLE" | "PRESENT";
 
 export const periodLabels: Record<string, string> = {
   FIRST_HALF: "İlk yarı",
@@ -26,34 +29,24 @@ export const periodLabels: Record<string, string> = {
   PENALTIES: "Penaltılar"
 };
 
-/** Index lookups return a definite string; the map has an UNKNOWN fallback. */
-function label(map: Record<string, string>, key: string | null | undefined): string {
-  return (key && map[key]) || map.UNKNOWN || "";
-}
-
-export const cardLabels: Record<string, string> = {
-  YELLOW: "Sarı kart",
-  SECOND_YELLOW: "İkinci sarı",
-  RED: "Kırmızı kart",
-  UNKNOWN: "Kart"
+/**
+ * Red-card wording.
+ *
+ * Both types are red cards and read as such. The distinction is preserved
+ * because a second yellow and a straight red are materially different
+ * disciplinary events, and the accessible label is where a user who cannot see
+ * the colour learns which one it was.
+ *
+ * `UNKNOWN` means the source proved a dismissal without naming which kind, so
+ * the plain wording is correct. A card whose dismissal meaning could not be
+ * proven never reaches this app at all — it is excluded server-side rather than
+ * published as a red card — so this label can never stand for a guess.
+ */
+export const redCardLabels: Record<string, string> = {
+  DIRECT_RED: "Kırmızı kart",
+  SECOND_YELLOW_RED: "İkinci sarıdan kırmızı",
+  UNKNOWN: "Kırmızı kart"
 };
-
-export const positionLabels: Record<string, string> = {
-  GOALKEEPER: "Kaleci",
-  DEFENCE: "Defans",
-  MIDFIELD: "Orta saha",
-  ATTACK: "Forvet",
-  BENCH: "Yedek",
-  UNKNOWN: "Diğer"
-};
-
-export const positionGroupOrder = [
-  "GOALKEEPER",
-  "DEFENCE",
-  "MIDFIELD",
-  "ATTACK",
-  "UNKNOWN"
-] as const;
 
 export function resolveTimelineState(
   context: LiveContext | undefined,
@@ -67,17 +60,35 @@ export function resolveTimelineState(
     // Not retrieved. Deliberately never "EMPTY".
     return "UNAVAILABLE";
   }
-  return timeline.length === 0 ? "EMPTY" : "EVENTS";
+  return visibleEvents(timeline).length === 0 ? "EMPTY" : "EVENTS";
 }
 
-export function resolveLineupsState(
-  context: LiveContext | undefined,
-  isLoading?: boolean
-): LineupsState {
-  if (isLoading) {
-    return "LOADING";
+/**
+ * An event this build knows how to draw.
+ *
+ * Narrowing the kind here is what stops an unrecognised event from being
+ * silently rendered as a goal: `describeEvent` only accepts this type, so a row
+ * has to pass through `visibleEvents` before it can reach a renderer.
+ */
+export type VisibleEvent = LiveMatchEvent & { kind: "GOAL" | "RED_CARD" };
+
+/**
+ * Events this build can actually draw.
+ *
+ * A kind this build does not recognise is dropped rather than rendered: the
+ * contract is narrow by design, so an unrecognised row means the contract
+ * changed, and drawing a placeholder for it would be inventing an event.
+ */
+export function visibleEvents(
+  timeline: readonly LiveMatchEvent[] | null | undefined
+): VisibleEvent[] {
+  if (!timeline) {
+    return [];
   }
-  return context?.lineups ? "PRESENT" : "UNAVAILABLE";
+  return timeline.filter(
+    (event): event is VisibleEvent =>
+      event.kind === "GOAL" || event.kind === "RED_CARD"
+  );
 }
 
 /**
@@ -92,7 +103,7 @@ export function unavailableMessage(
 ): string {
   return availability === "DEGRADED"
     ? "Maç olaylarının bir bölümü şu anda alınamadı."
-    : "Canlı maç olayları şu anda kullanılamıyor.";
+    : "Gol ve kırmızı kart bilgisi şu anda kullanılamıyor.";
 }
 
 export function minuteLabel(event: LiveMatchEvent): string {
@@ -104,78 +115,98 @@ export function minuteLabel(event: LiveMatchEvent): string {
     : `${event.minute}'`;
 }
 
+export interface EventTeams {
+  home?: string | null | undefined;
+  away?: string | null | undefined;
+}
+
 export interface EventDisplay {
-  kind: LiveMatchEvent["kind"];
+  kind: "GOAL" | "RED_CARD";
   minute: string;
-  primary: string;
-  secondary: string | null;
+  /** Top line. Null when the feed did not say which side the event belongs to. */
+  team: string | null;
+  /** Second line. */
+  player: string | null;
+  /** Running score after a goal; never shown for a red card. */
   score: string | null;
   side: "HOME" | "AWAY" | null;
-  isMarker: boolean;
+  redCardType: LiveRedCardType | null;
+}
+
+function teamName(
+  side: LiveMatchEvent["side"],
+  teams: EventTeams | undefined
+): string | null {
+  if (side === "HOME") {
+    return teams?.home ?? null;
+  }
+  if (side === "AWAY") {
+    return teams?.away ?? null;
+  }
+  return null;
 }
 
 /**
  * Flattens one event into exactly what a row renders.
  *
- * A status marker carries only a localized sentence; its numbers are never
- * parsed out, because structured period scores already come from a stronger
- * source and a regex over display text would manufacture a second one.
+ * Team on top, player beneath, score on the right for a goal. Nothing is
+ * inferred: a missing scorer stays missing rather than being replaced by a
+ * guess, and an own goal is only ever labelled as one when the contract says so.
  */
-export function describeEvent(event: LiveMatchEvent): EventDisplay {
+export function describeEvent(
+  event: VisibleEvent,
+  teams?: EventTeams
+): EventDisplay {
+  const side = event.side ?? null;
   const base = {
-    kind: event.kind,
     minute: minuteLabel(event),
-    side: event.side ?? null,
-    score: null as string | null,
-    isMarker: false
+    side,
+    team: teamName(side, teams)
   };
 
-  if (event.kind === "GOAL") {
+  if (event.kind === "RED_CARD") {
     return {
       ...base,
-      primary: event.scorer?.rawName ?? "Gol",
-      secondary: event.assist?.rawName ? `Asist: ${event.assist.rawName}` : null,
-      score: event.scoreAfter
-        ? `${event.scoreAfter.home}-${event.scoreAfter.away}`
-        : null
+      kind: "RED_CARD",
+      player: event.player?.rawName ?? null,
+      score: null,
+      redCardType: event.redCardType ?? "UNKNOWN"
     };
   }
 
-  if (event.kind === "CARD") {
-    return {
-      ...base,
-      primary: event.player?.rawName ?? "Kart",
-      secondary: label(cardLabels, event.cardKind)
-    };
-  }
-
-  if (event.kind === "SUBSTITUTION") {
-    return {
-      ...base,
-      primary: event.playerOn?.rawName ?? "Giren oyuncu",
-      secondary: `Çıkan: ${event.playerOff?.rawName ?? "—"}`
-    };
-  }
-
-  if (event.kind === "STATUS_MARKER") {
-    return {
-      ...base,
-      isMarker: true,
-      primary:
-        (event.period?.normalized && periodLabels[event.period.normalized]) ||
-        event.displayText ||
-        "Bölüm",
-      secondary: null
-    };
-  }
-
-  // An unrecognised kind still renders — a gap in the run is worse than a row
-  // the app could not classify.
   return {
     ...base,
-    primary: event.displayText ?? "Olay",
-    secondary: null
+    kind: "GOAL",
+    player: event.scorer?.rawName ?? null,
+    score: event.scoreAfter
+      ? `${event.scoreAfter.home}-${event.scoreAfter.away}`
+      : null,
+    redCardType: null
   };
+}
+
+/** Spoken description for a row, used only as the accessibility label. */
+export function describeEventForAccessibility(
+  event: VisibleEvent,
+  teams?: EventTeams
+): string {
+  const display = describeEvent(event, teams);
+  const kind =
+    display.kind === "GOAL"
+      ? event.goalKind === "OWN_GOAL"
+        ? "kendi kalesine gol"
+        : "gol"
+      : redCardLabels[display.redCardType ?? "UNKNOWN"];
+
+  return [
+    display.minute,
+    kind,
+    display.team,
+    display.player,
+    display.score ? `skor ${display.score}` : null
+  ]
+    .filter(Boolean)
+    .join(", ");
 }
 
 export interface FreshnessNotice {
@@ -214,30 +245,4 @@ export function resolveFreshnessNotice(
       : "Veri güncel olmayabilir";
 
   return { visible: true, message };
-}
-
-export interface StarterGroup {
-  group: string;
-  label: string;
-  players: NonNullable<LiveLineupSide>["starters"];
-}
-
-export function groupStarters(side: LiveLineupSide): StarterGroup[] {
-  if (!side) {
-    return [];
-  }
-  return positionGroupOrder
-    .map((group) => ({
-      group,
-      label: label(positionLabels, group),
-      players: side.starters.filter((slot) => slot.positionGroup === group)
-    }))
-    .filter((entry) => entry.players.length > 0);
-}
-
-export function benchCount(context: LiveContext | undefined): number {
-  return (
-    (context?.lineups?.home?.substitutes.length ?? 0) +
-    (context?.lineups?.away?.substitutes.length ?? 0)
-  );
 }

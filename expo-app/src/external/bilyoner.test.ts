@@ -103,7 +103,6 @@ test("live context source files contain no provider host or endpoint", () => {
   const files = [
     "src/components/live-context-view.ts",
     "src/components/MatchTimelineCard.tsx",
-    "src/components/LineupsCard.tsx",
     "src/components/LiveContextNotice.tsx"
   ];
 

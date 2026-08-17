@@ -172,7 +172,6 @@ const liveDefaults = [
   "decision",
   "gamePulse",
   "timeline",
-  "lineups",
   "relatedSuper",
   "standings",
   "odds",
@@ -181,10 +180,7 @@ const liveDefaults = [
   "scoreDistribution"
 ];
 
-const liveAnchors = [
-  { id: "timeline", after: "gamePulse" },
-  { id: "lineups", after: "timeline" }
-];
+const liveAnchors = [{ id: "timeline", after: "gamePulse" }];
 
 /** The persisted liveDetail order shipped before Live Context v1. */
 const legacyStored = [
@@ -205,12 +201,11 @@ test("a fresh layout uses the intended default order", () => {
   );
 });
 
-test("a legacy layout gains timeline and lineups after gamePulse", () => {
+test("a legacy layout gains timeline after gamePulse", () => {
   assert.deepEqual(reconcileModuleOrder(legacyStored, liveDefaults, liveAnchors), [
     "decision",
     "gamePulse",
     "timeline",
-    "lineups",
     "relatedSuper",
     "standings",
     "odds",
@@ -240,7 +235,6 @@ test("a reordered legacy layout keeps its relative order", () => {
     "scoreDistribution",
     "gamePulse",
     "timeline",
-    "lineups",
     "statistics",
     "relatedSuper",
     "standings",
@@ -273,7 +267,6 @@ test("a user-moved timeline is never repositioned again", () => {
     "statistics",
     "pressure",
     "scoreDistribution",
-    "lineups",
     "timeline"
   ];
 
@@ -288,7 +281,6 @@ test("a timeline moved to the top stays at the top", () => {
     "timeline",
     "decision",
     "gamePulse",
-    "lineups",
     "relatedSuper",
     "standings",
     "odds",
@@ -314,12 +306,6 @@ test("a missing anchor falls back to appending rather than hiding", () => {
   );
 
   assert.equal(migrated.includes("timeline"), true);
-  assert.equal(migrated.includes("lineups"), true);
-  // lineups still anchors on timeline once timeline has been restored.
-  assert.equal(
-    migrated.indexOf("lineups"),
-    migrated.indexOf("timeline") + 1
-  );
   for (const id of withoutAnchor) {
     assert.equal(migrated.includes(id), true);
   }
@@ -346,4 +332,58 @@ test("surfaces without anchors are unaffected", () => {
     "featured",
     "recentSuper"
   ]);
+});
+
+test("a retired module is dropped from an existing install's layout", () => {
+  // `lineups` shipped with Live Context v1 and was removed when the slice
+  // narrowed to goals and red cards. Reconciliation is the whole migration:
+  // an id that is no longer canonical is dropped on the next read, so nothing
+  // has to be written to storage to retire a module.
+  const storedWithRetired = [
+    "decision",
+    "gamePulse",
+    "timeline",
+    "lineups",
+    "relatedSuper",
+    "standings",
+    "odds",
+    "statistics",
+    "pressure",
+    "scoreDistribution"
+  ];
+
+  const migrated = reconcileModuleOrder(
+    storedWithRetired,
+    liveDefaults,
+    liveAnchors
+  );
+
+  assert.equal(migrated.includes("lineups"), false);
+  // Every surviving module keeps the position the user arranged.
+  assert.deepEqual(
+    migrated,
+    storedWithRetired.filter((id) => id !== "lineups")
+  );
+});
+
+test("a retired module does not disturb a user's custom order", () => {
+  const userOrder = [
+    "odds",
+    "lineups",
+    "decision",
+    "timeline",
+    "gamePulse",
+    "relatedSuper",
+    "standings",
+    "statistics",
+    "pressure",
+    "scoreDistribution"
+  ];
+
+  const migrated = reconcileModuleOrder(userOrder, liveDefaults, liveAnchors);
+
+  assert.equal(migrated.includes("lineups"), false);
+  // timeline was already stored, so the anchor must not move it back.
+  assert.equal(migrated.indexOf("timeline"), 2);
+  assert.equal(migrated[0], "odds");
 });

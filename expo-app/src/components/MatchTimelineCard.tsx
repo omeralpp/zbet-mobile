@@ -1,142 +1,102 @@
 import { memo } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
-import type { LiveContext, LiveMatchEvent } from "@/src/api/schemas";
+import type { LiveContext } from "@/src/api/schemas";
 import { ModuleHeading } from "@/src/components/ModuleHeading";
 import { LiveContextNotice } from "@/src/components/LiveContextNotice";
 import {
-  cardLabels,
   describeEvent,
-  minuteLabel,
-  resolveTimelineState
+  describeEventForAccessibility,
+  resolveTimelineState,
+  visibleEvents,
+  type EventTeams,
+  type VisibleEvent
 } from "@/src/components/live-context-view";
 import { colors, radii, spacing } from "@/src/theme/theme";
 
 /**
- * Match timeline.
+ * Match events — goals and red cards.
  *
- * Renders only what the contract actually carries. The distinction that governs
- * this component: `timeline === null` means the events were never retrieved,
- * while `timeline === []` means they were retrieved and the match genuinely has
- * none. Those are different statements and are never rendered the same way.
+ * Deliberately not a commentary feed and not a copy of the provider's timeline.
+ * These are the two event classes that carry decision weight, rendered in BTB's
+ * own visual language: minute, mark, team, player, and the running score.
+ *
+ * The distinction that governs this component: `timeline === null` means the
+ * events were never retrieved, while `timeline === []` means they were
+ * retrieved and the match genuinely has neither. Those are different statements
+ * and are never rendered the same way.
  */
 
-const cardColors: Record<string, string> = {
-  YELLOW: colors.gold,
-  SECOND_YELLOW: colors.orange,
-  RED: colors.red
-};
-
-function EventIcon({ event }: { event: LiveMatchEvent }) {
-  if (event.kind === "GOAL") {
-    return (
-      <MaterialCommunityIcons color={colors.green} name="soccer" size={16} />
-    );
-  }
-  if (event.kind === "CARD") {
-    return (
-      <MaterialCommunityIcons
-        color={cardColors[event.cardKind ?? "UNKNOWN"] ?? colors.textMuted}
-        name="card"
-        size={16}
-      />
-    );
-  }
-  if (event.kind === "SUBSTITUTION") {
-    return (
-      <MaterialCommunityIcons color={colors.blue} name="swap-horizontal" size={16} />
-    );
-  }
-  return (
-    <MaterialCommunityIcons color={colors.textSubtle} name="flag-outline" size={14} />
-  );
+/** A filled square reads as a card at this size; a glyph would not. */
+function RedCardMark() {
+  return <View style={styles.redCard} />;
 }
 
-/** A period marker reads as a divider, not as another event in the run. */
-function PeriodMarker({ label }: { label: string }) {
-  return (
-    <View style={styles.markerRow}>
-      <View style={styles.markerLine} />
-      <Text style={styles.markerText}>{label}</Text>
-      <View style={styles.markerLine} />
-    </View>
-  );
+function EventMark({ kind }: { kind: "GOAL" | "RED_CARD" }) {
+  if (kind === "RED_CARD") {
+    return <RedCardMark />;
+  }
+  return <MaterialCommunityIcons color={colors.green} name="soccer" size={15} />;
 }
 
-function accessibilityLabel(event: LiveMatchEvent): string {
-  const minute = minuteLabel(event);
-  const side = event.side === "HOME" ? "ev sahibi" : event.side === "AWAY" ? "deplasman" : "";
-  if (event.kind === "GOAL") {
-    return `${minute} gol, ${side}, ${event.scorer?.rawName ?? "bilinmeyen oyuncu"}`;
-  }
-  if (event.kind === "CARD") {
-    return `${minute} ${cardLabels[event.cardKind ?? "UNKNOWN"] ?? "kart"}, ${side}, ${event.player?.rawName ?? ""}`;
-  }
-  if (event.kind === "SUBSTITUTION") {
-    return `${minute} oyuncu değişikliği, ${side}, ${event.playerOn?.rawName ?? ""} girdi`;
-  }
-  return `${minute} ${event.displayText ?? "olay"}`;
-}
-
-function TimelineRow({ event }: { event: LiveMatchEvent }) {
-  const display = describeEvent(event);
-
-  if (display.isMarker) {
-    return <PeriodMarker label={display.primary} />;
-  }
+function TimelineRow({
+  event,
+  teams
+}: {
+  event: VisibleEvent;
+  teams: EventTeams;
+}) {
+  const display = describeEvent(event, teams);
+  // Team on top, player beneath. When the feed did not say which side scored,
+  // the player moves up rather than leaving an empty line or inventing a team.
+  const primary = display.team ?? display.player;
+  const secondary = display.team ? display.player : null;
 
   return (
     <View
-      accessibilityLabel={accessibilityLabel(event)}
+      accessibilityLabel={describeEventForAccessibility(event, teams)}
       accessible
       style={styles.row}
     >
       <Text style={styles.minute}>{display.minute}</Text>
-      <View style={styles.icon}>
-        <EventIcon event={event} />
+      <View style={styles.mark}>
+        <EventMark kind={display.kind} />
       </View>
       <View style={styles.body}>
         <Text numberOfLines={1} style={styles.primary}>
-          {display.primary}
+          {primary ?? "—"}
         </Text>
-        {display.secondary ? (
+        {secondary ? (
           <Text numberOfLines={1} style={styles.secondary}>
-            {display.secondary}
+            {secondary}
           </Text>
         ) : null}
       </View>
-
       {display.score ? (
         <Text style={styles.score}>{display.score}</Text>
-      ) : (
-        <View style={styles.sideMarker}>
-          {display.side ? (
-            <View
-              style={[
-                styles.sideDot,
-                display.side === "HOME" ? styles.homeDot : styles.awayDot
-              ]}
-            />
-          ) : null}
-        </View>
-      )}
+      ) : null}
     </View>
   );
 }
 
 function MatchTimelineCardComponent({
+  awayTeam,
   context,
+  homeTeam,
   isLoading
 }: {
+  awayTeam?: string | null | undefined;
   context?: LiveContext | undefined;
+  homeTeam?: string | null | undefined;
   isLoading?: boolean;
 }) {
   const state = resolveTimelineState(context, isLoading);
-  const events = context?.timeline ?? [];
+  const events = visibleEvents(context?.timeline);
+  const teams: EventTeams = { home: homeTeam, away: awayTeam };
 
   return (
     <>
-      <ModuleHeading eyebrow="MAÇ AKIŞI" title="Olaylar" />
+      <ModuleHeading eyebrow="MAÇ AKIŞI" title="Goller ve kırmızı kartlar" />
       <View style={styles.card}>
         {state === "LOADING" ? (
           <Text style={styles.stateBody}>Maç olayları yükleniyor…</Text>
@@ -145,12 +105,12 @@ function MatchTimelineCardComponent({
           <LiveContextNotice availability={context?.availability} />
         ) : state === "EMPTY" ? (
           <Text style={styles.stateBody}>
-            Bu maçta henüz kayıtlı bir olay yok.
+            Bu maçta henüz gol veya kırmızı kart yok.
           </Text>
         ) : (
           <View style={styles.list}>
             {events.map((event) => (
-              <TimelineRow event={event} key={event.eventKey} />
+              <TimelineRow event={event} key={event.eventKey} teams={teams} />
             ))}
           </View>
         )}
@@ -170,24 +130,30 @@ const styles = StyleSheet.create({
     padding: spacing.lg
   },
   list: {
-    gap: spacing.xs
+    gap: spacing.md
   },
   row: {
     alignItems: "center",
     flexDirection: "row",
-    gap: spacing.md,
-    minHeight: 44
+    gap: spacing.md
   },
   minute: {
     color: colors.textMuted,
-    fontSize: 11,
+    fontSize: 12,
+    fontVariant: ["tabular-nums"],
     fontWeight: "800",
-    minWidth: 34,
+    minWidth: 30,
     textAlign: "right"
   },
-  icon: {
+  mark: {
     alignItems: "center",
-    width: 20
+    width: 18
+  },
+  redCard: {
+    backgroundColor: colors.red,
+    borderRadius: 2,
+    height: 15,
+    width: 11
   },
   body: {
     flex: 1,
@@ -200,49 +166,16 @@ const styles = StyleSheet.create({
   },
   secondary: {
     color: colors.textMuted,
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 1
   },
   score: {
     color: colors.text,
-    fontSize: 13,
+    fontSize: 14,
     fontVariant: ["tabular-nums"],
     fontWeight: "900",
-    minWidth: 34,
+    minWidth: 36,
     textAlign: "right"
-  },
-  sideMarker: {
-    alignItems: "flex-end",
-    minWidth: 34
-  },
-  sideDot: {
-    borderRadius: radii.round,
-    height: 6,
-    width: 6
-  },
-  homeDot: {
-    backgroundColor: colors.blue
-  },
-  awayDot: {
-    backgroundColor: colors.green
-  },
-  markerRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: spacing.sm,
-    paddingVertical: spacing.sm
-  },
-  markerLine: {
-    backgroundColor: colors.borderSoft,
-    flex: 1,
-    height: 1
-  },
-  markerText: {
-    color: colors.textSubtle,
-    fontSize: 9,
-    fontWeight: "900",
-    letterSpacing: 1,
-    textTransform: "uppercase"
   },
   stateBody: {
     color: colors.textMuted,

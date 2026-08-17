@@ -27,34 +27,75 @@ Yeni task önce yalnız `C:\dev\btb-cdoex\AGENTS.md` ve bu dosyayı tamamen okur
 Observation tespitleri `docs/OBSERVATION_LOG.md` içindedir. Yeni toplu kod
 batch'i yalnız `btb next cutover start` ile başlar.
 
-## Mobile Live Context v1 — fiziksel baseline doğrulandı (2026-08-17)
+## Live Context ürün kapsamı daraltıldı — v2 (2026-08-17, sahip kararı)
 
-Maç Detayı'na iki modül eklendi: `Olaylar` (gol/kart/değişiklik/bölüm
-işaretçisi) ve `İlk 11 ve dizilişler` (diziliş, teknik direktör, mevkiye göre
-gruplanmış ilk 11, katlanmış yedekler). Mobile yalnız
-`GET /v1/btb/matches/:key/live-context` ucunu tüketir ve hiçbir zaman doğrudan
-sağlayıcı çağırmaz; sağlayıcı JSON'u sunucu tarafındaki adaptörde biter. APK
-taramasında sağlayıcı detay ucu (`match-card/event`) **0 kez** geçiyor.
+Yayınlanan sözleşme artık **yalnız gol ve kırmızı kart** taşır. BTB sağlayıcının
+maç anlatımını çoğaltmaz; bunlar BTB karar mantığına doğrudan etki eden ve
+kullanıcı için en yüksek değerli iki olay sınıfıdır.
 
-`timeline === null` (alınamadı) ile `timeline === []` (alındı, olay yok) asla
-aynı duruma çözülmez. Durum işaretçisinin serbest metni skor için
-ayrıştırılmaz. `stale` ve `refreshFailed` ayrı kullanıcı sinyalleridir. Hiçbir
-kullanıcı metni sağlayıcı adı, durum kodu veya uygulama terimi içermez. Oyuncu
-adları yalnız görüntü verisidir; `comparisonForm` render çıktısına ulaşmaz ve
-kimlik olarak kullanılmaz.
+Maç Detayı'ndaki tek Live Context modülü `Goller ve kırmızı kartlar`. Satır
+düzeni BTB'ye özgüdür ve sağlayıcı timeline'ını taklit etmez: dakika, işaret,
+üstte takım, altında oyuncu, gollerde sağda güncel skor.
 
-Sağlayıcı runtime devre dışı olduğu için her iki modül de dürüst
-"Canlı maç olayları şu anda kullanılamıyor." durumunu gösterir; meşru sağlayıcı
-erişimi açıldığında yalnız `BTB_LIVE_CONTEXT_ENABLED=true` yeterlidir —
-uygulama değişikliği veya yeni APK gerekmez.
+Kapsam dışı bırakılanlar: sıradan sarı kartlar, oyuncu değişiklikleri, bölüm
+işaretçileri ve muhtelif anlatım. `İlk 11 ve dizilişler` modülü **tamamen
+kaldırıldı** — bileşen, ekran bağlantısı, sözleşme alanları ve varsayılan
+düzen kaydı dahil. Mevcut kurulumlarda ayrı bir göç gerekmez: düzen uzlaştırma
+kanonik olmayan id'yi ilk okumada düşürür, kullanıcının sıraladığı diğer
+modüller yerinde kalır.
 
-Ayrıca: mevcut kurulumlarda yeni modüller artık listenin sonuna değil
-`gamePulse` hemen ardına yerleşir (kendi kendini sınırlayan, idempotent göç;
-bir kez kaydedilen konum kullanıcıya aittir), ve ana sekme kaydırmasındaki
-beyaz parlama giderildi — navigator sahne kabı artık BTB arka planını boyuyor
-(`sceneStyle`), stack'in zaten yaptığı şeyin sekme karşılığı.
+Kart yalnız sağlayıcı ihraç olduğunu **olumlu biçimde kanıtlarsa** yayımlanır:
 
-Kanıt: `docs/observation_archive/cutover_2026-08-17-02.md`.
+```text
+bilinen düz kırmızı            -> RED_CARD / DIRECT_RED
+bilinen ikinci sarıdan kırmızı -> RED_CARD / SECOND_YELLOW_RED
+ihraç kanıtlı, alt tip yok     -> RED_CARD / UNKNOWN
+sıradan sarı                   -> yayımlanmaz (YELLOW_CARD)
+diğer her kart değeri          -> yayımlanmaz (UNCLASSIFIED_CARD)
+```
+
+Tanınmayan genel bir kart değeri ihraç kanıtı **değildir** ve kırmızı kart
+olarak yayımlanmaz; BTB kırmızı kartı yüksek değerli bağlam saydığı için
+yanlış-pozitif kırmızı bu modülün yapabileceği en kötü hatadır. İhraç; oyuncu
+metninden, renkten, eksik alt tipten veya olayın yalnızca kart olmasından
+**çıkarılmaz**. `UNCLASSIFIED_CARD` bilinçli olarak `YELLOW_CARD`'dan ayrı
+tutulur: biri BTB'nin burada önemsiz olduğunu bildiği için, diğeri BTB'nin ne
+olduğunu bilmediği için dışlanır. Sınıflandırılamayan kartın ham sağlayıcı
+değeri `diagnostics.unclassifiedCardValues` içinde saklanır.
+
+Kırmızıda ayrım korunur ve erişilebilirlik etiketinde okunur (renge bağımlı
+değildir). Kendi kalesine gol yalnız sağlayıcı açıkça belirtirse korunur;
+addan veya metinden **çıkarım yapılmaz**.
+
+Kapsam dışı sınıflar sessizce atılmaz: `diagnostics.excludedByScope` sınıf
+bazında sayar, `diagnostics.unknownFeedTypes` yalnız BTB'nin anlamadığı feed
+tipleri için ayrılmıştır. İkisini birleştirmek, sağlayıcı tarafındaki bir
+değişikliği BTB ürün kararından ayırt edilemez hâle getirirdi.
+
+`timeline === null` (alınamadı) ile `timeline === []` (alındı, maçta gol/kırmızı
+yok) asla aynı duruma çözülmez. `stale` ve `refreshFailed` ayrı kullanıcı
+sinyalleridir. Hiçbir kullanıcı metni sağlayıcı adı, durum kodu veya uygulama
+terimi içermez. Oyuncu adları yalnız görüntü verisidir; `comparisonForm` render
+çıktısına ulaşmaz ve kimlik olarak kullanılmaz.
+
+`eventSummary` (goalCount, redCardCount, latestGoalMinute, latestRedCardMinute,
+scoreProgression[], redCards[]) yalnız yayımlanan timeline'dan türetilir ve
+ileride prospective kanıtın karar bağlamını yeniden türetmeden saklayabilmesi
+içindir. **Betimleyicidir**: üretim Super skorlaması onu okumaz ve bu besleme
+bir model girdisi değildir. Model girdisi olup olmayacağı, mevcut üretim olay
+sinyalleriyle karşılaştırıldıktan sonra verilecek ayrı bir karardır.
+
+Mobile yalnız `GET /v1/btb/matches/:key/live-context` ucunu tüketir ve hiçbir
+zaman doğrudan sağlayıcı çağırmaz; sağlayıcı JSON'u sunucu tarafındaki adaptörde
+biter. Sağlayıcı runtime devre dışı olduğu için modül dürüst
+"Gol ve kırmızı kart bilgisi şu anda kullanılamıyor." durumunu gösterir; meşru
+erişim açıldığında yalnız `BTB_LIVE_CONTEXT_ENABLED=true` yeterlidir.
+
+Şema `btb.live-context.v2`. Sözleşme: `zbet-cap/docs/mobile-live-context.md`.
+
+Önceki v1 batch'inin kanıtı: `docs/observation_archive/cutover_2026-08-17-02.md`
+(ana sekme kaydırma düzeltmesi ve mevcut kurulum modül göçü orada kayıtlıdır ve
+yürürlüktedir).
 
 ## Work Zone deep-link double-hash regresyonu — kapandı (2026-08-17)
 

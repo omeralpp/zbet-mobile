@@ -19,7 +19,6 @@ export const liveDetailModules = [
   "decision",
   "gamePulse",
   "timeline",
-  "lineups",
   "relatedSuper",
   "standings",
   "odds",
@@ -57,19 +56,21 @@ export const moduleLayoutLabels: Record<ModuleLayoutSurface, string> = {
 /**
  * Placement for modules introduced after a surface's layout first shipped.
  *
- * `timeline` and `lineups` arrived with Live Context v1. Existing installs have
- * a persisted `liveDetail` order that predates both, so without these anchors
- * they would be appended below the score distribution instead of sitting with
- * the other live-context material.
+ * `timeline` arrived with Live Context v1. Existing installs have a persisted
+ * `liveDetail` order that predates it, so without this anchor it would be
+ * appended below the score distribution instead of sitting with the other
+ * live-context material.
+ *
+ * `lineups` shipped alongside it and was removed when the product slice
+ * narrowed to goals and red cards. No anchor is needed to retire it: layout
+ * reconciliation drops any stored id that is no longer canonical, so existing
+ * installs lose it on the next read.
  */
 export const moduleLayoutAnchors: Record<
   ModuleLayoutSurface,
   readonly ModuleAnchor[]
 > = {
   overview: [],
-  liveDetail: [
-    { id: "timeline", after: "gamePulse" },
-    { id: "lineups", after: "timeline" }
-  ],
+  liveDetail: [{ id: "timeline", after: "gamePulse" }],
   superDetail: []
 };

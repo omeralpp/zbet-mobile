@@ -314,8 +314,25 @@ export const liveMatchPeriodSchema = z
   ])
   .catch("UNKNOWN");
 
+/**
+ * Published event kinds.
+ *
+ * The contract carries goals and red cards only — BTB does not reproduce the
+ * provider's commentary. `UNKNOWN` is kept purely as the landing value for a
+ * kind this build has not seen; such a row is dropped rather than rendered,
+ * because there is no honest way to draw an event whose type is unknown.
+ */
 export const liveEventKindSchema = z
-  .enum(["GOAL", "CARD", "SUBSTITUTION", "STATUS_MARKER", "UNKNOWN"])
+  .enum(["GOAL", "RED_CARD", "UNKNOWN"])
+  .catch("UNKNOWN");
+
+/**
+ * `UNKNOWN` means the source proved a dismissal without naming which kind — it
+ * is never the landing value for a card the server could not classify. Those
+ * are excluded server-side and never reach this contract as a red card.
+ */
+export const redCardTypeSchema = z
+  .enum(["DIRECT_RED", "SECOND_YELLOW_RED", "UNKNOWN"])
   .catch("UNKNOWN");
 
 // A person, never an identity. `comparisonForm` is a display/dedup aid and is
@@ -341,42 +358,29 @@ export const liveMatchEventSchema = z.object({
     .optional(),
   goalKind: z.enum(["GOAL", "OWN_GOAL", "PENALTY", "UNKNOWN"]).nullable().optional(),
   scorer: livePersonSchema.optional(),
-  assist: livePersonSchema.optional(),
   scoreAfter: z
     .object({ home: z.number().int(), away: z.number().int() })
     .nullable()
     .optional(),
-  cardKind: z
-    .enum(["YELLOW", "SECOND_YELLOW", "RED", "UNKNOWN"])
-    .nullable()
-    .optional(),
-  player: livePersonSchema.optional(),
-  playerOn: livePersonSchema.optional(),
-  playerOff: livePersonSchema.optional(),
-  displayText: z.string().nullable().optional()
+  redCardType: redCardTypeSchema.nullable().optional(),
+  player: livePersonSchema.optional()
 });
 
-export const liveLineupSlotSchema = z.object({
-  player: livePersonSchema,
-  positionLabel: z.string().nullable().optional(),
-  positionGroup: z
-    .enum(["GOALKEEPER", "DEFENCE", "MIDFIELD", "ATTACK", "BENCH", "UNKNOWN"])
-    .catch("UNKNOWN")
-});
-
-export const liveLineupSideSchema = z
+/**
+ * Derived goal and red-card context.
+ *
+ * Published for research continuity and read here only so the contract stays
+ * one shape end to end. Nothing in the app renders it, and it is not a model
+ * input on either side of the wire.
+ */
+export const liveEventSummarySchema = z
   .object({
-    manager: z.object({ rawName: z.string().min(1) }).nullable().optional(),
-    formation: z
-      .object({
-        label: z.string().min(1),
-        lines: z.array(z.number().int()).nullable().optional()
-      })
-      .nullable()
-      .optional(),
-    starters: z.array(liveLineupSlotSchema).default([]),
-    substitutes: z.array(liveLineupSlotSchema).default([])
+    goalCount: z.number().int(),
+    redCardCount: z.number().int(),
+    latestGoalMinute: z.number().int().nullable().optional(),
+    latestRedCardMinute: z.number().int().nullable().optional()
   })
+  .partial()
   .nullable();
 
 export const liveContextSchema = z.object({
@@ -401,14 +405,10 @@ export const liveContextSchema = z.object({
     })
     .nullable()
     .optional(),
-  // null = not retrieved. [] = retrieved and genuinely empty. Never conflated.
+  // null = not retrieved. [] = retrieved and the match genuinely has no goal or
+  // red card. Never conflated.
   timeline: z.array(liveMatchEventSchema).nullable(),
-  lineups: z
-    .object({
-      home: liveLineupSideSchema,
-      away: liveLineupSideSchema
-    })
-    .nullable(),
+  eventSummary: liveEventSummarySchema.optional(),
   freshness: z
     .object({
       providerFetchedAt: isoDateTime.nullable().optional(),
@@ -422,5 +422,5 @@ export const liveContextSchema = z.object({
 
 export type LiveContext = z.infer<typeof liveContextSchema>;
 export type LiveMatchEvent = z.infer<typeof liveMatchEventSchema>;
-export type LiveLineupSide = z.infer<typeof liveLineupSideSchema>;
+export type LiveRedCardType = z.infer<typeof redCardTypeSchema>;
 export type LiveContextAvailability = z.infer<typeof liveContextAvailabilitySchema>;

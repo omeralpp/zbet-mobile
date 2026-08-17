@@ -462,96 +462,65 @@ function person(rawName: string, shirtNumber?: number) {
 
 const previewTimeline = [
   {
-    eventKey: "GOAL|FIRST_HALF|1|HOME|calafiori",
+    eventKey: "GOAL|FIRST_HALF|18|HOME|calafiori",
     kind: "GOAL",
-    minute: 1,
-    minuteLabel: "1'",
+    minute: 18,
+    minuteLabel: "18'",
     side: "HOME",
     period: { normalized: "FIRST_HALF" },
     goalKind: "GOAL",
     scorer: person("Calafiori, Riccardo"),
-    assist: person("Lewis-Skelly, Myles"),
     scoreAfter: { home: 1, away: 0 }
   },
   {
-    eventKey: "CARD|FIRST_HALF|24|AWAY|foden",
-    kind: "CARD",
-    minute: 24,
-    minuteLabel: "24'",
-    side: "AWAY",
-    period: { normalized: "FIRST_HALF" },
-    cardKind: "YELLOW",
-    player: person("Foden, Phil")
-  },
-  {
-    eventKey: "STATUS|HALF_TIME",
-    kind: "STATUS_MARKER",
-    period: { normalized: "HALF_TIME" },
-    displayText: "İlk Yarı Sonucu 1 - 0"
-  },
-  {
-    eventKey: "SUBS|SECOND_HALF|60|AWAY|cherki",
-    kind: "SUBSTITUTION",
-    minute: 60,
-    minuteLabel: "60'",
-    side: "AWAY",
-    period: { normalized: "SECOND_HALF" },
-    playerOn: person("Cherki, Rayan"),
-    playerOff: person("Foden, Phil")
-  },
-  {
-    eventKey: "CARD|SECOND_HALF|71|HOME|rice",
-    kind: "CARD",
-    minute: 71,
-    minuteLabel: "71'",
-    side: "HOME",
-    period: { normalized: "SECOND_HALF" },
-    cardKind: "RED",
-    player: person("Rice, Declan")
-  },
-  {
-    eventKey: "GOAL|SECOND_HALF|84|AWAY|marmoush",
+    eventKey: "GOAL|FIRST_HALF|30|HOME|havertz",
     kind: "GOAL",
-    minute: 84,
-    minuteLabel: "84'",
+    minute: 30,
+    minuteLabel: "30'",
+    side: "HOME",
+    period: { normalized: "FIRST_HALF" },
+    goalKind: "GOAL",
+    scorer: person("Havertz, Kai"),
+    scoreAfter: { home: 2, away: 0 }
+  },
+  {
+    eventKey: "GOAL|SECOND_HALF|58|AWAY|marmoush",
+    kind: "GOAL",
+    minute: 58,
+    minuteLabel: "58'",
     side: "AWAY",
     period: { normalized: "SECOND_HALF" },
     goalKind: "GOAL",
     scorer: person("Marmoush, Omar"),
-    assist: null,
-    scoreAfter: { home: 1, away: 1 }
+    scoreAfter: { home: 2, away: 1 }
+  },
+  {
+    eventKey: "RED_CARD|SECOND_HALF|72|HOME|rice",
+    kind: "RED_CARD",
+    minute: 72,
+    minuteLabel: "72'",
+    side: "HOME",
+    period: { normalized: "SECOND_HALF" },
+    redCardType: "DIRECT_RED",
+    player: person("Rice, Declan")
+  },
+  {
+    eventKey: "RED_CARD|SECOND_HALF|88|AWAY|foden",
+    kind: "RED_CARD",
+    minute: 88,
+    minuteLabel: "88'",
+    side: "AWAY",
+    period: { normalized: "SECOND_HALF" },
+    redCardType: "SECOND_YELLOW_RED",
+    player: person("Foden, Phil")
   }
 ];
 
-const previewLineups = {
-  home: {
-    manager: { rawName: "Mikel Arteta" },
-    formation: { label: "4 - 2 - 3 - 1", lines: [4, 2, 3, 1] },
-    starters: [
-      { player: person("David Raya", 1), positionLabel: "Kaleci", positionGroup: "GOALKEEPER" },
-      { player: person("Riccardo Calafiori", 33), positionLabel: "Defans", positionGroup: "DEFENCE" },
-      { player: person("Myles Lewis-Skelly", 49), positionLabel: "Defans", positionGroup: "DEFENCE" },
-      { player: person("Declan Rice", 41), positionLabel: "Orta saha", positionGroup: "MIDFIELD" },
-      { player: person("Kai Havertz", 29), positionLabel: "Forvet", positionGroup: "ATTACK" }
-    ],
-    substitutes: [
-      { player: person("Kepa Arrizabalaga", 13), positionLabel: "Yedek", positionGroup: "BENCH" },
-      { player: person("Bukayo Saka", 7), positionLabel: "Yedek", positionGroup: "BENCH" }
-    ]
-  },
-  away: {
-    manager: { rawName: "Enzo Maresca" },
-    formation: { label: "4 - 3 - 3", lines: [4, 3, 3] },
-    starters: [
-      { player: person("Gianluigi Donnarumma", 1), positionLabel: "Kaleci", positionGroup: "GOALKEEPER" },
-      { player: person("Josko Gvardiol", 24), positionLabel: "Defans", positionGroup: "DEFENCE" },
-      { player: person("Phil Foden", 47), positionLabel: "Orta saha", positionGroup: "MIDFIELD" },
-      { player: person("Erling Haaland", 9), positionLabel: "Forvet", positionGroup: "ATTACK" }
-    ],
-    substitutes: [
-      { player: person("Geronimo Rulli", 28), positionLabel: "Yedek", positionGroup: "BENCH" }
-    ]
-  }
+const previewEventSummary = {
+  goalCount: 3,
+  redCardCount: 2,
+  latestGoalMinute: 58,
+  latestRedCardMinute: 88
 };
 
 export function mockLiveContext(key: string, state: MockLiveContextState) {
@@ -561,7 +530,7 @@ export function mockLiveContext(key: string, state: MockLiveContextState) {
       availability: "OK",
       period: { normalized: "SECOND_HALF", displayText: "2. Yarı" },
       timeline: previewTimeline,
-      lineups: previewLineups,
+      eventSummary: previewEventSummary,
       freshness: { ageSeconds: 12, stale: false, refreshFailed: false }
     };
   }
@@ -571,7 +540,7 @@ export function mockLiveContext(key: string, state: MockLiveContextState) {
       matchKey: key,
       availability: "OK",
       timeline: [],
-      lineups: previewLineups,
+      eventSummary: { goalCount: 0, redCardCount: 0 },
       freshness: { ageSeconds: 8, stale: false, refreshFailed: false }
     };
   }
@@ -580,7 +549,7 @@ export function mockLiveContext(key: string, state: MockLiveContextState) {
       matchKey: key,
       availability: "DEGRADED",
       timeline: previewTimeline.slice(0, 3),
-      lineups: previewLineups,
+      eventSummary: previewEventSummary,
       freshness: { ageSeconds: 420, stale: true, refreshFailed: true }
     };
   }
@@ -589,7 +558,7 @@ export function mockLiveContext(key: string, state: MockLiveContextState) {
     matchKey: key,
     availability: "UNAVAILABLE",
     timeline: null,
-    lineups: null,
+    eventSummary: null,
     freshness: { stale: true, refreshFailed: true }
   };
 }
