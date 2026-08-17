@@ -11,6 +11,7 @@ export const queryKeys = {
   match: (key: string) => ["matches", key] as const,
   matchPeriodScore: (key: string) => ["matches", key, "periodScore"] as const,
   matchSuperLogs: (key: string) => ["matches", key, "superLogs"] as const,
+  matchLiveContext: (key: string) => ["matches", key, "liveContext"] as const,
   superLogs: ["superLogs"] as const,
   superKpis: ["superKpis"] as const,
   superLog: (key: string) => ["superLogs", key] as const,
@@ -87,6 +88,21 @@ export function matchSuperLogsQuery(key: string) {
     staleTime: 15_000,
     enabled: Boolean(key),
     retry: 1
+  });
+}
+
+/**
+ * Live context is supplementary to Match Detail, so it never blocks the screen.
+ * A 503 (provider runtime not configured) is a settled answer rather than a
+ * transient fault, so it is not retried.
+ */
+export function matchLiveContextQuery(key: string) {
+  return queryOptions({
+    queryKey: queryKeys.matchLiveContext(key),
+    queryFn: ({ signal }) => mobileApi.getMatchLiveContext(key, signal),
+    staleTime: 30_000,
+    enabled: Boolean(key),
+    retry: false
   });
 }
 

@@ -434,3 +434,162 @@ export const mockSuperKpis: SuperKpis = {
     STAR_4_PLUS: { won: 1, lost: 0, profit: 1.14 }
   }
 };
+
+/* ------------------------------------------------------------------ *
+ * Live context preview fixtures
+ *
+ * Preview/mock builds only. Each mock match maps to one live-context state so
+ * a single preview session can show populated, empty, unavailable and stale
+ * without reconfiguring the app.
+ * ------------------------------------------------------------------ */
+
+export type MockLiveContextState =
+  | "POPULATED"
+  | "EMPTY"
+  | "UNAVAILABLE"
+  | "STALE";
+
+export function mockLiveContextState(key: string): MockLiveContextState {
+  if (key.includes("472910")) return "POPULATED";
+  if (key.includes("472924")) return "EMPTY";
+  if (key.includes("472938")) return "STALE";
+  return "UNAVAILABLE";
+}
+
+function person(rawName: string, shirtNumber?: number) {
+  return { rawName, comparisonForm: null, isIdentified: false, shirtNumber: shirtNumber ?? null };
+}
+
+const previewTimeline = [
+  {
+    eventKey: "GOAL|FIRST_HALF|1|HOME|calafiori",
+    kind: "GOAL",
+    minute: 1,
+    minuteLabel: "1'",
+    side: "HOME",
+    period: { normalized: "FIRST_HALF" },
+    goalKind: "GOAL",
+    scorer: person("Calafiori, Riccardo"),
+    assist: person("Lewis-Skelly, Myles"),
+    scoreAfter: { home: 1, away: 0 }
+  },
+  {
+    eventKey: "CARD|FIRST_HALF|24|AWAY|foden",
+    kind: "CARD",
+    minute: 24,
+    minuteLabel: "24'",
+    side: "AWAY",
+    period: { normalized: "FIRST_HALF" },
+    cardKind: "YELLOW",
+    player: person("Foden, Phil")
+  },
+  {
+    eventKey: "STATUS|HALF_TIME",
+    kind: "STATUS_MARKER",
+    period: { normalized: "HALF_TIME" },
+    displayText: "İlk Yarı Sonucu 1 - 0"
+  },
+  {
+    eventKey: "SUBS|SECOND_HALF|60|AWAY|cherki",
+    kind: "SUBSTITUTION",
+    minute: 60,
+    minuteLabel: "60'",
+    side: "AWAY",
+    period: { normalized: "SECOND_HALF" },
+    playerOn: person("Cherki, Rayan"),
+    playerOff: person("Foden, Phil")
+  },
+  {
+    eventKey: "CARD|SECOND_HALF|71|HOME|rice",
+    kind: "CARD",
+    minute: 71,
+    minuteLabel: "71'",
+    side: "HOME",
+    period: { normalized: "SECOND_HALF" },
+    cardKind: "RED",
+    player: person("Rice, Declan")
+  },
+  {
+    eventKey: "GOAL|SECOND_HALF|84|AWAY|marmoush",
+    kind: "GOAL",
+    minute: 84,
+    minuteLabel: "84'",
+    side: "AWAY",
+    period: { normalized: "SECOND_HALF" },
+    goalKind: "GOAL",
+    scorer: person("Marmoush, Omar"),
+    assist: null,
+    scoreAfter: { home: 1, away: 1 }
+  }
+];
+
+const previewLineups = {
+  home: {
+    manager: { rawName: "Mikel Arteta" },
+    formation: { label: "4 - 2 - 3 - 1", lines: [4, 2, 3, 1] },
+    starters: [
+      { player: person("David Raya", 1), positionLabel: "Kaleci", positionGroup: "GOALKEEPER" },
+      { player: person("Riccardo Calafiori", 33), positionLabel: "Defans", positionGroup: "DEFENCE" },
+      { player: person("Myles Lewis-Skelly", 49), positionLabel: "Defans", positionGroup: "DEFENCE" },
+      { player: person("Declan Rice", 41), positionLabel: "Orta saha", positionGroup: "MIDFIELD" },
+      { player: person("Kai Havertz", 29), positionLabel: "Forvet", positionGroup: "ATTACK" }
+    ],
+    substitutes: [
+      { player: person("Kepa Arrizabalaga", 13), positionLabel: "Yedek", positionGroup: "BENCH" },
+      { player: person("Bukayo Saka", 7), positionLabel: "Yedek", positionGroup: "BENCH" }
+    ]
+  },
+  away: {
+    manager: { rawName: "Enzo Maresca" },
+    formation: { label: "4 - 3 - 3", lines: [4, 3, 3] },
+    starters: [
+      { player: person("Gianluigi Donnarumma", 1), positionLabel: "Kaleci", positionGroup: "GOALKEEPER" },
+      { player: person("Josko Gvardiol", 24), positionLabel: "Defans", positionGroup: "DEFENCE" },
+      { player: person("Phil Foden", 47), positionLabel: "Orta saha", positionGroup: "MIDFIELD" },
+      { player: person("Erling Haaland", 9), positionLabel: "Forvet", positionGroup: "ATTACK" }
+    ],
+    substitutes: [
+      { player: person("Geronimo Rulli", 28), positionLabel: "Yedek", positionGroup: "BENCH" }
+    ]
+  }
+};
+
+export function mockLiveContext(key: string, state: MockLiveContextState) {
+  if (state === "POPULATED") {
+    return {
+      matchKey: key,
+      availability: "OK",
+      period: { normalized: "SECOND_HALF", displayText: "2. Yarı" },
+      timeline: previewTimeline,
+      lineups: previewLineups,
+      freshness: { ageSeconds: 12, stale: false, refreshFailed: false }
+    };
+  }
+  if (state === "EMPTY") {
+    // Retrieved successfully, and the match genuinely has no events yet.
+    return {
+      matchKey: key,
+      availability: "OK",
+      timeline: [],
+      lineups: previewLineups,
+      freshness: { ageSeconds: 8, stale: false, refreshFailed: false }
+    };
+  }
+  if (state === "STALE") {
+    return {
+      matchKey: key,
+      availability: "DEGRADED",
+      timeline: previewTimeline.slice(0, 3),
+      lineups: previewLineups,
+      freshness: { ageSeconds: 420, stale: true, refreshFailed: true }
+    };
+  }
+  // Not retrieved. null, never [].
+  return {
+    matchKey: key,
+    availability: "UNAVAILABLE",
+    timeline: null,
+    lineups: null,
+    freshness: { stale: true, refreshFailed: true }
+  };
+}

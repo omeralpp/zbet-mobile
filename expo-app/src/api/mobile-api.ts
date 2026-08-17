@@ -1,5 +1,6 @@
 import type {
   Dashboard,
+  LiveContext,
   MatchDetail,
   MatchInsight,
   MatchLeagueContext,
@@ -25,6 +26,11 @@ export interface MobileApi {
     key: string,
     signal?: AbortSignal
   ): Promise<PeriodScoreContext>;
+  /**
+   * Provider-neutral live match context. Mobile never calls a provider
+   * directly; this is the only route that carries timeline and lineup data.
+   */
+  getMatchLiveContext(key: string, signal?: AbortSignal): Promise<LiveContext>;
   getMatchSuperLogs(key: string, signal?: AbortSignal): Promise<SuperLog[]>;
   getSuperLogs(signal?: AbortSignal): Promise<SuperLog[]>;
   getSuperKpis(signal?: AbortSignal): Promise<SuperKpis>;

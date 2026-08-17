@@ -288,3 +288,139 @@ export type TotoProgram = z.infer<typeof totoProgramSchema>;
 export type TotoFixture = z.infer<typeof totoFixtureSchema>;
 export type TotoPrediction = z.infer<typeof totoPredictionSchema>;
 export type Dashboard = z.infer<typeof dashboardSchema>;
+
+/* ------------------------------------------------------------------ *
+ * Live Context
+ *
+ * Provider-neutral by contract. No field below names a provider, and the app
+ * must never learn provider JSON vocabulary — the adapter terminates it at the
+ * BFF. Enums stay open with `.catch(...)` so an upstream value this build has
+ * not seen degrades to UNKNOWN instead of failing the whole screen.
+ * ------------------------------------------------------------------ */
+
+export const liveContextAvailabilitySchema = z
+  .enum(["OK", "DEGRADED", "UNAVAILABLE", "FAILED"])
+  .catch("FAILED");
+
+export const liveMatchPeriodSchema = z
+  .enum([
+    "FIRST_HALF",
+    "HALF_TIME",
+    "SECOND_HALF",
+    "FULL_TIME",
+    "EXTRA_TIME",
+    "PENALTIES",
+    "UNKNOWN"
+  ])
+  .catch("UNKNOWN");
+
+export const liveEventKindSchema = z
+  .enum(["GOAL", "CARD", "SUBSTITUTION", "STATUS_MARKER", "UNKNOWN"])
+  .catch("UNKNOWN");
+
+// A person, never an identity. `comparisonForm` is a display/dedup aid and is
+// deliberately not surfaced to navigation or any lookup.
+export const livePersonSchema = z
+  .object({
+    rawName: z.string().min(1),
+    comparisonForm: z.string().nullable().optional(),
+    isIdentified: z.boolean().optional(),
+    shirtNumber: z.number().int().nullable().optional()
+  })
+  .nullable();
+
+export const liveMatchEventSchema = z.object({
+  eventKey: z.string().min(1),
+  kind: liveEventKindSchema,
+  minute: z.number().int().nullable().optional(),
+  minuteLabel: z.string().nullable().optional(),
+  side: z.enum(["HOME", "AWAY"]).nullable().optional(),
+  period: z
+    .object({ normalized: liveMatchPeriodSchema })
+    .partial()
+    .optional(),
+  goalKind: z.enum(["GOAL", "OWN_GOAL", "PENALTY", "UNKNOWN"]).nullable().optional(),
+  scorer: livePersonSchema.optional(),
+  assist: livePersonSchema.optional(),
+  scoreAfter: z
+    .object({ home: z.number().int(), away: z.number().int() })
+    .nullable()
+    .optional(),
+  cardKind: z
+    .enum(["YELLOW", "SECOND_YELLOW", "RED", "UNKNOWN"])
+    .nullable()
+    .optional(),
+  player: livePersonSchema.optional(),
+  playerOn: livePersonSchema.optional(),
+  playerOff: livePersonSchema.optional(),
+  displayText: z.string().nullable().optional()
+});
+
+export const liveLineupSlotSchema = z.object({
+  player: livePersonSchema,
+  positionLabel: z.string().nullable().optional(),
+  positionGroup: z
+    .enum(["GOALKEEPER", "DEFENCE", "MIDFIELD", "ATTACK", "BENCH", "UNKNOWN"])
+    .catch("UNKNOWN")
+});
+
+export const liveLineupSideSchema = z
+  .object({
+    manager: z.object({ rawName: z.string().min(1) }).nullable().optional(),
+    formation: z
+      .object({
+        label: z.string().min(1),
+        lines: z.array(z.number().int()).nullable().optional()
+      })
+      .nullable()
+      .optional(),
+    starters: z.array(liveLineupSlotSchema).default([]),
+    substitutes: z.array(liveLineupSlotSchema).default([])
+  })
+  .nullable();
+
+export const liveContextSchema = z.object({
+  matchKey: z.string().nullable().optional(),
+  availability: liveContextAvailabilitySchema,
+  status: z
+    .object({ normalized: z.string(), displayText: z.string().nullable().optional() })
+    .partial()
+    .optional(),
+  period: z
+    .object({
+      normalized: liveMatchPeriodSchema,
+      displayText: z.string().nullable().optional()
+    })
+    .partial()
+    .optional(),
+  tournament: z.object({ name: z.string() }).nullable().optional(),
+  venue: z
+    .object({
+      name: z.string().nullable(),
+      neutral: z.boolean().nullable()
+    })
+    .nullable()
+    .optional(),
+  // null = not retrieved. [] = retrieved and genuinely empty. Never conflated.
+  timeline: z.array(liveMatchEventSchema).nullable(),
+  lineups: z
+    .object({
+      home: liveLineupSideSchema,
+      away: liveLineupSideSchema
+    })
+    .nullable(),
+  freshness: z
+    .object({
+      providerFetchedAt: isoDateTime.nullable().optional(),
+      ageSeconds: z.number().nullable().optional(),
+      stale: z.boolean().optional(),
+      refreshFailed: z.boolean().optional()
+    })
+    .partial()
+    .optional()
+});
+
+export type LiveContext = z.infer<typeof liveContextSchema>;
+export type LiveMatchEvent = z.infer<typeof liveMatchEventSchema>;
+export type LiveLineupSide = z.infer<typeof liveLineupSideSchema>;
+export type LiveContextAvailability = z.infer<typeof liveContextAvailabilitySchema>;

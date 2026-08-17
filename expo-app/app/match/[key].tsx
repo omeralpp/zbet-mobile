@@ -17,6 +17,7 @@ import {
 import {
   matchInsightQuery,
   matchLeagueContextQuery,
+  matchLiveContextQuery,
   matchPeriodScoreQuery,
   matchQuery,
   matchSuperLogsQuery
@@ -24,6 +25,9 @@ import {
 import { RatingStars } from "@/src/components/RatingStars";
 import { TeamLogo } from "@/src/components/TeamLogo";
 import { GamePulseCard } from "@/src/components/GamePulseCard";
+import { MatchTimelineCard } from "@/src/components/MatchTimelineCard";
+import { LineupsCard } from "@/src/components/LineupsCard";
+import { LiveContextFreshness } from "@/src/components/LiveContextNotice";
 import { StandingsModule } from "@/src/components/StandingsModule";
 import { PressureBalance } from "@/src/components/PressureBalance";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
@@ -166,6 +170,9 @@ export default function MatchDetailScreen() {
   const leagueContextQuery = useQuery(matchLeagueContextQuery(key));
   const periodScoreQuery = useQuery(matchPeriodScoreQuery(key));
   const superLogs = useQuery(matchSuperLogsQuery(key));
+  // Supplementary context. Its failure must never take Match Detail down, so it
+  // is never consulted for the screen's loading or error state.
+  const liveContext = useQuery(matchLiveContextQuery(key));
   const relatedDecisions = useMemo(
     () => relatedSuperDecisions(superLogs.data ?? [], key),
     [key, superLogs.data]
@@ -214,6 +221,27 @@ export default function MatchDetailScreen() {
   // still holds a slot for the rest so they return where the user left them.
   const moduleNodes: Partial<Record<LiveDetailModuleId, ReactNode>> = {
     gamePulse: <GamePulseCard betRadarId={match.betRadarId} />,
+    timeline: (
+      <>
+        <MatchTimelineCard
+          context={liveContext.data}
+          isLoading={liveContext.isLoading}
+        />
+        <LiveContextFreshness
+          ageSeconds={liveContext.data?.freshness?.ageSeconds}
+          refreshFailed={liveContext.data?.freshness?.refreshFailed}
+          stale={liveContext.data?.freshness?.stale}
+        />
+      </>
+    ),
+    lineups: (
+      <LineupsCard
+        awayTeam={match.awayTeam}
+        context={liveContext.data}
+        homeTeam={match.homeTeam}
+        isLoading={liveContext.isLoading}
+      />
+    ),
     odds: (
       <>
         <Text style={styles.sectionTitle}>Oran sonuçları</Text>
@@ -467,7 +495,8 @@ export default function MatchDetailScreen() {
                   insightQuery.refetch(),
                   leagueContextQuery.refetch(),
                   periodScoreQuery.refetch(),
-                  superLogs.refetch()
+                  superLogs.refetch(),
+                  liveContext.refetch()
                 ])
               }
               refreshing={

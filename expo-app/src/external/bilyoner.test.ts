@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   buildBilyonerMatchUrl,
   buildBilyonerTotoUrl,
@@ -87,4 +89,56 @@ test("Game Pulse yalnız güvenilir Bilyoner origin'ini kabul eder", () => {
   ]) {
     assert.equal(isAllowedGamePulseUrl(candidate), false, candidate);
   }
+});
+
+/* ------------------------------------------------------------------ *
+ * Live context boundary
+ *
+ * Mobile consumes live context only through the BFF. The provider adapter
+ * terminates provider JSON server-side, so no provider host, path or field name
+ * may appear anywhere in the app's live-context path.
+ * ------------------------------------------------------------------ */
+
+test("live context source files contain no provider host or endpoint", () => {
+  const files = [
+    "src/components/live-context-view.ts",
+    "src/components/MatchTimelineCard.tsx",
+    "src/components/LineupsCard.tsx",
+    "src/components/LiveContextNotice.tsx"
+  ];
+
+  for (const file of files) {
+    const source = readFileSync(join(process.cwd(), file), "utf8");
+    for (const forbidden of [
+      "bilyoner",
+      "match-card",
+      "api/mobile",
+      "feedType",
+      "eventStatusId",
+      "currentPeriodId",
+      "scorerName",
+      "betradarId",
+      "fetch("
+    ]) {
+      assert.equal(
+        source.toLowerCase().includes(forbidden.toLowerCase()),
+        false,
+        `${file} must not reference ${forbidden}`
+      );
+    }
+  }
+});
+
+test("only the BFF live-context route is used by the API client", () => {
+  const client = readFileSync(
+    join(process.cwd(), "src/api/http-mobile-api.ts"),
+    "utf8"
+  );
+
+  assert.ok(client.includes("/live-context"));
+  assert.equal(
+    client.toLowerCase().includes("bilyoner"),
+    false,
+    "the API client must never name a provider"
+  );
 });

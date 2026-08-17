@@ -1,4 +1,5 @@
 import {
+  liveContextSchema,
   dashboardSchema,
   matchDetailSchema,
   matchInsightListSchema,
@@ -19,7 +20,9 @@ import {
   mockMatches,
   mockSuperKpis,
   mockSuperLogs,
-  mockTotoPrograms
+  mockTotoPrograms,
+  mockLiveContext,
+  mockLiveContextState
 } from "./mock-data";
 import { MobileApiError, type MobileApi } from "./mobile-api";
 
@@ -104,6 +107,14 @@ export const mockMobileApi: MobileApi = {
     return matchDetailSchema.parse(clone(match));
   },
 
+  // Preview mode exercises every live-context state so all four can be seen
+  // without touching pilot or production configuration. The state is chosen by
+  // match id purely so one preview session covers the whole matrix.
+  async getMatchLiveContext(key, signal) {
+    await mockDelay(signal);
+    const state = mockLiveContextState(key);
+    return liveContextSchema.parse(mockLiveContext(key, state));
+  },
   async getMatchPeriodScore(key, signal) {
     await mockDelay(signal);
     const match = mockMatches.find((candidate) => candidate.key === key);

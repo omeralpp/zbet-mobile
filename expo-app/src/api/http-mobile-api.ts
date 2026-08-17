@@ -11,6 +11,7 @@ import {
   matchInsightSchema,
   matchLeagueContextSchema,
   matchListSchema,
+  liveContextSchema,
   periodScoreContextSchema,
   superLogDetailSchema,
   superLogListSchema,
@@ -136,6 +137,13 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
       request(
         `/v1/btb/matches/${encodeURIComponent(key)}/period-score`,
         periodScoreContextSchema,
+        {},
+        signal
+      ),
+    getMatchLiveContext: (key, signal) =>
+      request(
+        `/v1/btb/matches/${encodeURIComponent(key)}/live-context`,
+        liveContextSchema,
         {},
         signal
       ),
