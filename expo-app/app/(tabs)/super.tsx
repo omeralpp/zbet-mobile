@@ -44,6 +44,12 @@ import {
   sortSuperLogs,
   type SuperStarSort
 } from "@/src/utils/decision-filters";
+import {
+  resolveSuperDayScope,
+  superDayScopeForLabel,
+  superDayScopeLabel,
+  superDayScopeLabels
+} from "@/src/utils/super-day-scope";
 import type { SuperLog } from "@/src/api/schemas";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 
@@ -55,8 +61,11 @@ export default function SuperScreen() {
   const rawScope = Array.isArray(params.scope)
     ? params.scope[0]
     : params.scope;
-  const latestDayOnly = rawScope === "LATEST_DAY";
-  const activeDayScope = latestDayOnly ? "Bugün" : "Tüm günler";
+  // Resolved rather than compared inline, so the screen and the default live in
+  // one tested place instead of drifting apart at a string literal.
+  const dayScope = resolveSuperDayScope(rawScope);
+  const latestDayOnly = dayScope === "LATEST_DAY";
+  const activeDayScope = superDayScopeLabel(dayScope);
   const [tab, setTab] = useState<SuperLogTab>("ALL");
   const { filter: starFilter, setFilter: setStarFilter } =
     useSuperStarFilter();
@@ -206,7 +215,12 @@ export default function SuperScreen() {
           </Pressable>
           {dayScopeOpen ? (
             <View accessibilityRole="menu" style={styles.dayScopeMenu}>
-              {(["Bugün", "Tüm günler"] as const).map((label) => {
+              {(
+                [
+                  superDayScopeLabels.LATEST_DAY,
+                  superDayScopeLabels.ALL
+                ] as const
+              ).map((label) => {
                 const selected = label === activeDayScope;
                 return (
                   <Pressable
@@ -215,14 +229,13 @@ export default function SuperScreen() {
                     key={label}
                     onPress={() => {
                       setDayScopeOpen(false);
-                      router.replace(
-                        label === "Bugün"
-                          ? ({
-                              pathname: "/super",
-                              params: { scope: "LATEST_DAY" }
-                            } as never)
-                          : ("/super" as never)
-                      );
+                      // Both directions carry an explicit scope. Clearing the
+                      // parameter would now resolve straight back to Bugün and
+                      // make "Tüm günler" impossible to select.
+                      router.replace({
+                        pathname: "/super",
+                        params: { scope: superDayScopeForLabel(label) }
+                      } as never);
                     }}
                     style={({ pressed }) => [
                       styles.dayScopeOption,
