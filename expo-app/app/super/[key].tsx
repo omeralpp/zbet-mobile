@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
   Pressable,
@@ -130,19 +129,6 @@ export default function SuperLogDetailScreen() {
     log.awayStandingPosition > 0 ||
     log.homeStandingPoints > 0 ||
     log.awayStandingPoints > 0;
-  // A lift above the base rate is BTB backing the selection; below it is BTB
-  // pricing it lower than the market's starting point. Direction only - no
-  // threshold, no judgement about whether the lift was correct.
-  const liftDelta =
-    log.superProbability !== null && log.baseProbability !== null
-      ? log.superProbability - log.baseProbability
-      : 0;
-  const probabilityLift =
-    liftDelta > 0.0005
-      ? { icon: "trending-up" as const, color: semantic.positive }
-      : liftDelta < -0.0005
-        ? { icon: "trending-down" as const, color: semantic.negative }
-        : { icon: "minus" as const, color: colors.textMuted };
   const resultColor =
     log.result === "WON"
       ? colors.green
@@ -162,38 +148,27 @@ export default function SuperLogDetailScreen() {
           <SurfaceMaterial accent={semantic.intelligence} radius={radii.lg} />
           <Text style={styles.reason}>{formatDecisionReason(log.reason)}</Text>
 
-          {/* The two probabilities are one statement, not two metrics: the lift
-              from the base rate to BTB's own is what the model actually did
-              here. Drawn as movement, the way an odd is, so the reader sees a
-              direction instead of arithmetic between two boxes. */}
-          {log.baseProbability !== null && log.superProbability !== null ? (
-            <View style={styles.liftRow}>
-              <Text style={styles.liftFrom}>
-                {formatPercentage(log.baseProbability)}
-              </Text>
-              <MaterialCommunityIcons
-                color={probabilityLift.color}
-                name={probabilityLift.icon}
-                size={18}
-              />
-              <Text style={[styles.liftTo, { color: probabilityLift.color }]}>
-                {formatPercentage(log.superProbability)}
-              </Text>
-              <Text style={styles.liftLabel}>temel → Super olasılığı</Text>
-            </View>
-          ) : null}
-
-          {/* Edge and model score are the headline of the decision. The
-              adjustments behind them matter to a reader who is auditing the
-              call, not to one who is reading it. */}
+          {/* The score is the model's answer, so it leads. Base probability sits
+              beside it as its own quantity rather than as the first step of a
+              pipeline: it is not a term in the score formula, and drawing it as
+              one would describe arithmetic the backend does not perform.
+              See `model-summary.ts` for what the formula actually is. */}
+          <View style={styles.modelHeadline}>
+            <Text style={styles.modelScoreValue}>
+              {log.modelScore === null ? "—" : formatSigned(log.modelScore)}
+            </Text>
+            <Text style={styles.modelScoreLabel}>model skoru</Text>
+          </View>
           <View style={styles.primaryMetrics}>
-            <Metric label="edge" value={formatSigned(log.edgeScore)} />
             <Metric
-              label="model skoru"
+              label="temel olasılık"
               value={
-                log.modelScore === null ? "—" : formatSigned(log.modelScore)
+                log.baseProbability === null
+                  ? "—"
+                  : formatPercentage(log.baseProbability)
               }
             />
+            <Metric label="edge" value={formatSigned(log.edgeScore)} />
           </View>
 
           <Pressable
@@ -212,16 +187,35 @@ export default function SuperLogDetailScreen() {
           </Pressable>
 
           {showModelDetail ? (
-            <View style={styles.metricGrid}>
-              <Metric
-                label="uyumluluk"
-                value={formatSigned(log.compatibilityScore)}
-              />
-              <Metric
-                label="hizalama"
-                value={formatSigned(log.alignmentScore)}
-              />
-            </View>
+            <>
+              {/* `GİRDİLER`, not terms. Each of these reaches the score through
+                  a market-dependent weight, alongside an intercept and a
+                  red-market penalty this surface does not show, so no column of
+                  numbers here adds up to the score above. */}
+              <Text style={styles.contributorHeading}>MODEL GİRDİLERİ</Text>
+              <View style={styles.metricGrid}>
+                <Metric
+                  label="baskı etkisi"
+                  value={formatSigned(log.pressureAdjustment)}
+                />
+                <Metric
+                  label="durum etkisi"
+                  value={formatSigned(log.stateAdjustment)}
+                />
+                <Metric
+                  label="uyumluluk"
+                  value={formatSigned(log.compatibilityScore)}
+                />
+                <Metric
+                  label="hizalama"
+                  value={formatSigned(log.alignmentScore)}
+                />
+              </View>
+              <Text style={styles.contributorNote}>
+                Bu değerler modele ağırlıklı olarak girer; toplamları model
+                skorunu vermez.
+              </Text>
+            </>
           ) : null}
 
           {log.aiComment ? (
@@ -586,24 +580,27 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     lineHeight: teamLogoSizes.hero
   },
-  liftRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    gap: spacing.sm,
+  modelHeadline: {
+    marginTop: spacing.lg,
+    gap: spacing.xs
+  },
+  modelScoreValue: {
+    color: colors.text,
+    ...typeScale.display
+  },
+  modelScoreLabel: {
+    color: colors.textSubtle,
+    ...typeScale.label
+  },
+  contributorHeading: {
+    color: colors.bronze,
+    ...typeScale.eyebrow,
     marginTop: spacing.lg
   },
-  liftFrom: {
-    color: colors.textMuted,
-    ...typeScale.metricCompact
-  },
-  liftTo: {
-    ...typeScale.metric
-  },
-  liftLabel: {
+  contributorNote: {
     color: colors.textSubtle,
-    ...typeScale.label,
-    width: "100%"
+    ...typeScale.bodyCompact,
+    marginTop: spacing.md
   },
   primaryMetrics: {
     flexDirection: "row",
