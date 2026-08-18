@@ -1,34 +1,92 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-08-17
+Son güncelleme: 2026-08-18
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `OBSERVATION` — 2026-08-17 Live Context **v2** batch'i uygulandı (yalnız
-gol + kırmızı kart; dizilişler kaldırıldı), Game Pulse ve takım arması
-düzeltmeleriyle birlikte emülatörde dört durum da görsel olarak doğrulandı,
-fiziksel Xiaomi'de kabul edildi ve ayrı mantıksal commitler hâlinde push edildi.
-Aktif runtime yalnız
-`api.surklase.com` arkasındaki yerel standalone BFF/notification servisidir.
-Owner talimatıyla `btb-fcm-proxy-srv` durdurulmuş durumdadır. Public Cloudflare
-origin yapılandırması, Firebase/SAP dış değişikliği, APK dağıtımı ve release
-signing yapılmadı; her biri ayrıca açık onay gerektirir. Legacy Cordova RETIRED.
+Mod: `OBSERVATION` — 2026-08-18 Live Context v2 gerçek olay yolu kapatıldı. SAP
+köprüsü aktive edildi, uçtan uca doğrulandı ve runtime `SAP_BRIDGE` upstream'i
+ile açıldı. Mobile kaynak değişikliği olmadı; doğrulanmış APK baseline'ı aynı
+kaldı. Aktif runtime yalnız `api.surklase.com` arkasındaki yerel standalone
+BFF/notification servisidir. Owner talimatıyla `btb-fcm-proxy-srv` durdurulmuş
+durumdadır. Public Cloudflare origin yapılandırması, Firebase/SAP dış
+değişikliği, APK dağıtımı ve release signing yapılmadı; her biri ayrıca açık
+onay gerektirir. Legacy Cordova RETIRED.
 
 Durum:
 
 ```text
+LIVE_CONTEXT_V2_ACCEPTED
+REAL_GOAL_PHYSICAL_PASS
+RED_CARD_OWNER_ACCEPTED
+NO_NEW_APK_REQUIRED
 MOBILE_NEXT_BASELINE_VERIFIED
-LIVE_CONTEXT_V2_UI_VERIFIED
-PENDING_REAL_LIVE_CONTEXT_EVENT_VALIDATION   (bloklamayan, NXT-OBS-098)
-PROSPECTIVE_PILOT_RUNNING                    (300 sn, zbet-cap)
-BILYONER_LIVE_CONTEXT_RUNTIME = DISABLED_PENDING_PROVIDER_ACCESS
+PROSPECTIVE_PILOT_RUNNING                  (300 sn, zbet-cap)
+BILYONER_LIVE_CONTEXT_RUNTIME = ENABLED_VIA_SAP_BRIDGE
 ```
 
 Yeni task önce yalnız `C:\dev\btb-cdoex\AGENTS.md` ve bu dosyayı tamamen okur.
 Observation tespitleri `docs/OBSERVATION_LOG.md` içindedir. Yeni toplu kod
 batch'i yalnız `btb next cutover start` ile başlar.
+
+## Live Context v2 gerçek olay yolu — kapatıldı (2026-08-18)
+
+Sağlayıcıya **SAP'ın halihazırda çalışan HTTP istemcisi** üzerinden erişilir.
+Bilyoner genel olarak erişilemez değildir; ayrım istemci istek profilindedir:
+
+```text
+SAP gömülü HTTP istemcisi  -> çalışıyor
+curl, aynı makine          -> 400 users-api login kapısı
+Node fetch / node:https    -> 400 users-api login kapısı
+```
+
+`curl` düz `curl/` user-agent gönderirken de reddedildiği için fark header
+kaynaklı olamaz. Çözüm çalışan istemciyi ödünç almaktır; TLS parmak izi taklidi,
+çerez/oturum/giriş otomasyonu yapılmadı ve kapsam dışıdır.
+
+**SAP köprüsü** (`ZBET_CL_PROVIDER_BRIDGE` + `/sap/bc/zbet/provider/detail` +
+TVARVC): salt okunur, kalıcılık yok, DDIC yok. Çağıran URL seçemez — yalnız
+sayısal event id derleme zamanı sabitine yerleştirilir. Taşıma
+`zbet_cl_main=>get_instance( )->get_rss( )`, değiştirilmeden kullanıldı. Köprü
+alan katmanı değildir; sağlayıcının baytlarını olduğu gibi iletir, normalizasyon
+BFF'te kalır.
+
+Uçtan uca doğrulandı: canlı route `HTTP 200`, `btb.live-context.v2`, 3 gerçek
+gol, `lineups` yok; aynı payload'daki 4 sarı + 12 değişiklik + 2 bölüm
+işaretçisi `diagnostics.excludedByScope` ile dışlandı. Cache `MISS -> HIT`, TTL
+penceresi başına tek upstream isteği.
+
+```text
+BTB_LIVE_CONTEXT_ENABLED       true
+BTB_LIVE_CONTEXT_UPSTREAM      SAP_BRIDGE   (DIRECT açılmadı, açılmayacak)
+BTB_LIVE_CONTEXT_BRIDGE_TOKEN  ayarlı (yazdırılmaz)
+cache TTL                      LIVE 30s · HALF_TIME 60s · FINISHED 5dk
+akış                           Mobile -> BFF -> cache/single-flight -> SAP_BRIDGE
+                               -> zbet_cl_main->get_rss -> Bilyoner
+```
+
+Kabul:
+
+```text
+REAL_GOAL_VALIDATION     = PHYSICAL_PASS
+REAL_RED_CARD_VALIDATION = OWNER_ACCEPTED_PENDING_NATURAL_OBSERVATION
+```
+
+Gerçek GOAL olayları fiziksel Xiaomi doğrulamasında görüldü. Kırmızı kart
+uygulaması doğrulanmış sözleşme, normalizer semantiği ve otomatik testler
+temelinde sahip tarafından kabul edildi; **gerçek bir kırmızı kartın fiziksel
+olarak gözlendiği iddia edilmemektedir.** Bugüne dek hiçbir gerçek sağlayıcı
+yanıtında kırmızı kart görülmedi (tek gerçek payload: 4 sarı, 0 kırmızı), bu
+yüzden `DIRECT_RED`/`SECOND_YELLOW_RED` ve dismissal-without-subtype sözlüğü
+gerçek veriyle hâlâ doğrulanmadı. Doğal bir kırmızı kart yalnız gözlemsel
+doğrulamadır, release engeli değildir; sorun çıkarsa yeni defect açılır.
+
+Yeni besleme **üretim model girdisi değildir**: Super/Toto skorlaması, eşikler ve
+gol/kırmızı kart mantığı değiştirilmedi; `eventSummary` betimleyicidir.
+
+Kanıt: `docs/observation_archive/cutover_2026-08-18.md`.
 
 ## Live Context ürün kapsamı daraltıldı — v2 (2026-08-17, sahip kararı)
 
@@ -285,25 +343,27 @@ migration başlatılmadı.
 ## Repo durumu
 
 ```text
-zbet-mobile
-  branch/upstream : master / origin/master
-  HEAD            : 601bcd7  (origin/master ile aynı, temiz)
-                    88b6b7e  Let the Game Pulse frame size its own viewport
-                    5ea27ea  Show the BTB mark instead of the provider placeholder crest
-                    f397bd2  Record the crest placeholder contract and the access classification
-                    a0b865e  Record the UI polish APK as pending physical validation
-                    ecf0138  Show only goals and red cards on Match Detail
-                    601bcd7  Record the Live Context v2 candidate APK
-  state           : fiziksel Xiaomi doğrulaması PASSED (Live Context v2)
+zbet-abap
+  branch/upstream : main / origin/main
+  HEAD            : 89ad8d9  (origin ile aynı, temiz)
+                    89ad8d9  Add a read-only provider transport bridge
+  state           : köprü SAP'ta aktif; DDIC/tablo/kalıcılık yok
 
 zbet-cap
   branch/upstream : main / origin/main
-  HEAD            : 11b961d  (origin/main ile aynı, temiz)
-                    823f7eb  Add provider-neutral Bilyoner live context adapter to Mobile BFF
-                    e7b3349  Capture PARTIAL_EXTERNAL prospective decision evidence
-                    1a759e8  Make the prospective pilot durable and inspectable
+  HEAD            : 2a8c0ca  (origin ile aynı, temiz)
                     11b961d  Narrow Live Context to goals and red cards
-  state           : prospective pilot 300 sn ile çalışıyor
+                    2ab2ef6  Route Live Context through the SAP bridge upstream
+                    2a8c0ca  Pass the bridge upstream settings through to the BFF
+  state           : Live Context runtime açık (SAP_BRIDGE); pilot 300 sn
+
+zbet-mobile
+  branch/upstream : master / origin/master
+  HEAD            : 545c7d5  (origin ile aynı; kapanış commitleri bunun üstünde)
+                    ecf0138  Show only goals and red cards on Match Detail
+                    a0b3533  Close the Live Context v2 cutover on the verified baseline
+                    545c7d5  Record Live Context running on the SAP bridge
+  state           : Mobile kaynak değişikliği yok; APK baseline değişmedi
 ```
 
 Kullanıcıya ait mevcut değişiklikler korunmuştur. Commitler yalnız bu cutover'ın
@@ -425,17 +485,38 @@ henüz başlatılmadı.
 
 ## Exact next steps
 
-1. Observation modunda kal. `NXT-OBS-098`
-   (`PENDING_REAL_LIVE_CONTEXT_EVENT_VALIDATION`) yalnız meşru upstream yol
-   açıldığında ele alınır; sağlayıcı bu testi geçmek için açılmaz.
+1. Observation modunda kal. Live Context runtime `SAP_BRIDGE` ile açıktır;
+   `DIRECT` upstream açılmaz.
 2. `zbet-cap` prospective pilotunu 300 sn'de çalışır bırak; `/health`
    `prospectiveTelemetry` ile denetle.
-3. `BTB_LIVE_CONTEXT_ENABLED` kapalı kalsın. Erişim kararı sahibe aittir;
-   giriş/erişim kontrolü aşma, çerez/oturum otomasyonu ve parmak izi taklidi
-   kapsam dışıdır. Teşhis: `NXT-OBS-096` (`REQUEST_PROFILE_DIFFERENCE`).
-4. FULL_INTERNAL ve Champion/Challenger başlatılmadı; ayrı karar gerektirir.
-5. Yeni observation batch'i yalnız `btb next cutover start` ile açılır;
-   commit/push ve dış deploy kapıları yeniden açık onayla işletilir.
+3. Doğal bir kırmızı kart geldiğinde `Olaylar` modülünde alt tip ayrımını
+   gözlemsel olarak doğrula. **Release engeli değildir**; sorun çıkarsa yeni
+   defect aç.
+4. Sıradaki milestone: `DECISION SAFETY / EVENT-TRANSITION CONFLICT REVIEW`
+   (aşağıdaki adli vakalarla). Bu thread'de başlatılmadı.
+5. FULL_INTERNAL ve Champion/Challenger başlatılmadı; ayrı karar gerektirir.
+6. Yeni observation batch'i yalnız `btb next cutover start` ile açılır;
+   commit/push ve dış deploy kapıları açık onayla işletilir.
+
+## Sıradaki milestone — DECISION SAFETY / EVENT-TRANSITION CONFLICT REVIEW
+
+Amaç: `MODEL_WRONG` ile `INCOHERENT_SNAPSHOT / EVENT_TRANSITION_UNSAFE` ayrımını
+yapmak ve geçiş anında bozulmuş gözlemlerin ileride ROI/kalibrasyon/
+Champion-Challenger veri setlerini kirletmesini önlemek. Kapsam: VAR geçişleri,
+penaltılar, ani oran sıçramaları, skor/oran çelişkisi, market askı/yeniden
+açılışı, gol çevresinde bayat skor, kırmızı kart sonrası yeniden fiyatlama.
+
+Adli vakalar:
+
+```text
+1) Jong Utrecht - Vitesse   52'  BTB snapshot 1-1, Live Context golü -> 1-2
+                                 Ms1X @ 3.36, ODDS_CHANGED
+                                 final 1-3, karar LOST
+2) Pachuca - Puebla         90'  şüpheli Ms1X @ 9.53
+                                 Live Context 90+ golü -> 2-3
+```
+
+Bu milestone Super/Toto model mantığını değiştirme yetkisi taşımaz; önce teşhis.
 
 
 Cutover kanıtı: `docs/observation_archive/cutover_2026-08-17-02.md`.
