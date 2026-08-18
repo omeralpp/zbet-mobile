@@ -6,52 +6,163 @@ Son güncelleme: 2026-08-18
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `DESIGN V2 PHYSICAL FEEDBACK + BIBI EXPERIENCE PASS — KOD TAMAM, COMMIT ONAYI BEKLİYOR` —
-Design V2 APK'sı sahibin Xiaomi cihazında fiziksel olarak kullanıldı. Genel
-Design V2 yönü kabul edildi; bu milestone fiziksel kullanımda çıkan maddeleri
-düzeltir. Phase B ve Phase C tamamlandı ve push edildi (`6fd3346`, `d881ac2`).
-Phase D, Xiaomi canlı kart düzeni ve Phase F/G **çalışma ağacında tamamlandı ve
-henüz commit edilmedi**; Phase E kodda kapatılamaz ve
-`ASSET_GENERATION_DEPENDENCY` olarak kaydedildi. Ayrıntı aşağıdaki
-"Fresh-thread devir" bölümündedir.
+Mod: `BTB ROADMAP MILESTONE 2/11 — LOGO / BRAND ASSET` —
+Milestone 1 (Design V2 fiziksel geri bildirim kapanışı) sahibin Xiaomi
+cihazında fiziksel olarak doğrulandı ve **KAPALI**. Çelişkili runtime kanıtı
+çıkmadıkça yeniden açılmaz. Milestone 2 marka varlığı üzerinde çalışıyor:
+varlık mimarisi kararlaştırıldı, kod tarafı hazırlandı, üretim brief'i yazıldı
+ve Milestone 1'den devreden tek erteleme (`güncel baskı farkı` etiketi)
+kapatıldı. Kalan tek bağımlılık dışarıda üretilecek görsel varlıktır.
 
-Önceki mod (referans): `PRODUCT DESIGN V2 — CLOSEOUT` — Dokuz Product Design V2 batch'i tamamlandı
-ve owner tarafından kabul edildi. Mobile kaynağı `b57625e` baseline'ının üstüne
-dokuz commit ile değişti; bu nedenle doğrulanmış Live Context v2 APK baseline'ı
-artık kaynağı temsil etmiyor ve yeni bir pilot APK gerekiyor. Değişiklikler
-yalnız sunumdur: tahmin, model, Toto, Live Context sözleşmesi, BFF ve SAP
-davranışına dokunulmadı ve `zbet-cap` / `zbet-abap` / `btb-codex` hiç
-değiştirilmedi.
-
-Live Context runtime hâlâ `SAP_BRIDGE` upstream'i ile açıktır. Aktif runtime
-yalnız `api.surklase.com` arkasındaki yerel standalone BFF/notification
-servisidir. Owner talimatıyla `btb-fcm-proxy-srv` durdurulmuş durumdadır. Public
-Cloudflare origin yapılandırması, Firebase/SAP dış değişikliği, APK dağıtımı ve
-release signing yapılmadı; her biri ayrıca açık onay gerektirir. Legacy Cordova
-RETIRED.
+Roadmap: **1/11 KAPALI = %9,1** · Şu anki milestone: **2/11 — Logo / Brand
+Asset**. Decision Safety ve sonraki milestone'lar bu task'ta başlatılmaz.
 
 Durum:
 
 ```text
-PRODUCT_DESIGN_V2_COMPLETE                 (ff50051..21a1f57)
-DESIGN_V2_APK_PHYSICALLY_USED              (owner Xiaomi; yön kabul edildi)
-FEEDBACK_PASS_CODE_COMPLETE                (B+C push edildi; D, layout, F/G commit bekliyor)
-AWAITING_COMMIT_APPROVAL                   (zbet-mobile çalışma ağacı kirli)
-PHASE_E_BLOCKED_ON_ASSET                   (ASSET_GENERATION_DEPENDENCY, NXT-OBS-101)
-READY_FOR_XIAOMI_PRODUCT_DESIGN_V2_VALIDATION
-NEW_APK_REQUIRED                           (Design V2 kaynağı APK'da yok)
-MOBILE_NEXT_BASELINE_VERIFIED              (Live Context v2 APK, geri dönüş noktası)
+MILESTONE_1_CLOSED_PHYSICALLY_VALIDATED     (Design V2 geri bildirim pass, owner Xiaomi)
+BTB_ROADMAP = 1/11 CLOSED (%9,1)
+MILESTONE_2_IN_PROGRESS                     (logo / brand asset)
+BRAND_ASSET_ARCHITECTURE_DECIDED            (üç rol, iki export, bir sözleşme)
+BRAND_INTEGRATION_PREPARED                  (src/theme/brand.ts + brand-mark.ts + check:brand)
+DEFERRED_PRESSURE_LABEL_FIXED               (`baskı farkı`, 360dp'de doğrulandı)
+ASSET_GENERATION_DEPENDENCY                 (NXT-OBS-101 · docs/ASSET_GENERATION_BRIEF.md)
+READY_FOR_BTB_LOGO_ASSET_GENERATION
+NO_NEW_APK_YET                              (APK yalnız varlık indikten sonra)
+MOBILE_NEXT_BASELINE_VERIFIED               (Live Context v2 APK, geri dönüş noktası)
 LIVE_CONTEXT_V2_ACCEPTED
 REAL_GOAL_PHYSICAL_PASS
 RED_CARD_OWNER_ACCEPTED
-PROSPECTIVE_PILOT_RUNNING                  (300 sn, zbet-cap — değiştirilmedi)
+PROSPECTIVE_PILOT_RUNNING                   (300 sn, zbet-cap — değiştirilmedi)
 BILYONER_LIVE_CONTEXT_RUNTIME = ENABLED_VIA_SAP_BRIDGE
 ```
 
-## Fresh-thread devir — Design V2 fiziksel geri bildirim + Bibi pass
+Live Context runtime hâlâ `SAP_BRIDGE` upstream'i ile açıktır. Aktif runtime
+yalnız `api.surklase.com` arkasındaki yerel standalone BFF/notification
+servisidir. Public Cloudflare origin yapılandırması, Firebase/SAP dış
+değişikliği, APK dağıtımı ve release signing yapılmadı; her biri ayrıca açık
+onay gerektirir. Legacy Cordova RETIRED.
 
-Bu bölüm yeni bir thread'in tam olarak buradan devam etmesi için yazıldı.
-Yeni thread önce `AGENTS.md` ve bu dosyayı okur, sonra `git log` ile doğrular.
+## Milestone 2 — Logo / Brand Asset (2026-08-18)
+
+`zbet-mobile` HEAD bu milestone'da üç commit ilerledi. `zbet-cap`, `zbet-abap`
+ve `btb-codex` **hiç** değiştirilmedi; `btb-assets` yalnız okundu.
+
+```text
+f3d628d  Ertelenen Xiaomi etiketi: `güncel baskı farkı` -> `baskı farkı`
+69a1417  Widget modülünün Gradle çıktısı .gitignore'a alındı
+361a080  Marka varlığı sözleşmesi, üç rol, doğrulayıcı ve üretim brief'i
+```
+
+Kapı: TypeScript temiz, ESLint temiz, **398/398** test (öncesi 392),
+`git diff --check` temiz.
+
+### Varlık topolojisi (ölçüldü, varsayılmadı)
+
+Marka raster'ı **beş** yerde kullanılıyordu, üç değil. Önceki devir üç tanesini
+saymıştı; Özet hero ve takım arması fallback'i eksikti:
+
+```text
+app.config.ts            icon                                 (uygulama ikonu)
+app.config.ts            android.adaptiveIcon.foregroundImage
+AppLaunchScreen.tsx      açılış ekranı logosu                  132 dp
+app/(tabs)/index.tsx     Özet hero                              68 dp
+TeamLogo.tsx             takım arması yoksa BTB fallback        40/24/18 dp
+```
+
+Bildirim küçük ikonu bu raster'ı **kullanmıyor**: rol zaten
+`modules/btb-widget/.../btb_notification_icon.xml` tek renkli vektörüyle
+çözülmüş ve hem Firebase hem Expo metadata anahtarına kayıtlı.
+`assets/notification-icon.png` bu rolü taşıyormuş gibi duran, hiçbir yerden
+referans verilmeyen, marka dosyasıyla **bayt bayt aynı** bir kopyaydı; silindi
+ve yerine bir test kondu.
+
+Splash native tarafta logosuz: `assets/splash-transparent.xml` 1dp saydam
+şekildir, açılış markasını `AppLaunchScreen` çizer.
+
+En yüksek çözünürlüklü kaynak uygulama içinde değil: `btb-assets/btb-logo.png`
+(1254x1254, tam kilit) ve `btb-assets/btb-logo-shell.png` (1024x1024, amblem).
+Uygulamanın 192px raster'ı ikincisinin küçültülmüşüdür (192px'te ortalama luma
+farkı 0.74/255). `btb-assets` hiçbir uygulama tarafından referans edilmiyor ve
+bu milestone'da değiştirilmedi.
+
+### Mimari karar — tek master değil, üç rol
+
+Rol ayrımı platform semantiğinden geliyor, tercihten değil:
+
+- **marka işareti** — ürün çizer, kendi seçtiği boyutta, tuvali doldurmasını
+  ister;
+- **adaptive launcher foreground** — Android maskeler, yalnız tuvalin iç %66'sı
+  garanti; tuvali dolduran sanat eseri kendi kenarlarını kaybeder. Bugün
+  launcher'ın kalkanı kırpmasının sebebi tam olarak budur;
+- **bildirim küçük ikonu** — sistem alfa maskesi olarak çizer, rengi atar;
+  vektör kalmak zorunda.
+
+`src/theme/brand.ts` bu üç rolü ayrı ayrı adlandırır. İlk ikisi bugün hâlâ aynı
+baytları gösteriyor, çünkü bugünkü opak raster'ın mekanik olarak
+kenarlıklandırılmış bir kopyası launcher'a yüzen bir kare koyardı — düzeltme
+değil. Güvenli bölge export'u geldiğinde değişen tek şey `brand.ts` içindeki
+tek satırdır.
+
+`src/theme/brand-mark.ts` uygulamanın markayı yüklediği **tek** yerdir; üç
+ekran da oradan alır. `app.config.ts` yolları aynı sözleşmeden okur ve
+`src/theme/brand.test.ts` ikisinin sessizce ayrışmasını engeller.
+
+### Doğrulayıcı
+
+`npm run check:brand` verilen varlığı sözleşmeye karşı ölçer: PNG biçimi ve
+8-bit RGBA, kare tuval, en az 1024px, gerçek saydam piksel, dört köşenin α=0
+olması, rolüne göre içerik/tuval oranı, optik merkez ve eski zeminden kalan
+yarı saydam hale oranı. Bağımlılığı yok; PNG'yi `zlib` ile çözer.
+
+Bugün **FAIL** veriyor — mevcut varlığın gerçek durumu bu. `npm run check`
+kapısına, varlığı indiren commit'te eklenecek.
+
+### Ertelenen Xiaomi etiketi — kapandı
+
+`güncel baskı farkı` (18 karakter) -> `baskı farkı` (11). Anlam kaybı yok:
+bloğa sayı yalnız `pressureSource === "CURRENT_MATCH"` iken ulaşır, yani
+güncellik kodda zorlanıyor; canlı kart zaten şimdiki zaman yüzeyi; Super karar
+ekranı aynı büyüklüğü zaten `baskı farkı` diye adlandırıyor. Erişilebilirlik
+etiketi `Güncel baskı farkı` olarak kaldı — konuşmada taşacak satır yok.
+`güncel veri bekleniyor` kısaltılmadı, kontrollü ikinci satıra bırakıldı:
+oradaki `güncel`, `NXT-OBS-092`'nin ayrımını taşıyor.
+
+Kural artık test edilen modülde: bir sayının yanındaki etiket, cihazın kabul
+ettiği en geniş etiketten (`market kapalı`, 13 karakter) uzun olamaz.
+
+### Görsel doğrulama (Android 15 emülatör, 1080x2400 @ 480dpi = 360dp)
+
+Xiaomi genişliği emülatörde `wm density 480` ile üretildi ve sonra sıfırlandı.
+
+| Yüzey | Koyu | Açık | Sonuç |
+| --- | --- | --- | --- |
+| Canlı liste kart altı | ✓ | ✓ | `baskı farkı` tek satır, taşma yok, `-24,8` / `+16,4` yanında okunur |
+| Özet hero | ✓ | ✓ | marka yükleniyor; gömülü kare **görünür**, açık temada belirgin |
+| Açılış ekranı | ✓ | ✓ | marka yükleniyor; `borderRadius: 30` telafisi yuvarlak kare olarak görünür |
+| Takım arması fallback | ✓ | ✓ | yeni yoldan yükleniyor; 24 dp'de koyu kare |
+
+Yeniden adlandırma sonrası hiçbir yüzeyde kırık görsel yok. Kare zemin her
+yüzeyde duruyor — beklenen davranış, varlık henüz gelmedi.
+
+### Sıradaki adım
+
+1. **Varlık üretimi.** `docs/ASSET_GENERATION_BRIEF.md` dış görsel üretim
+   adımının tek girdisidir. Kaynaklar commit edilmeyen
+   `.codex-artifacts/brand-source/` altına kopyalandı.
+2. Varlık gelince: `npm run check:brand` -> entegrasyon (tek commit'te
+   `brand.ts` yolu, `borderRadius: 30` kaldırma, `check` kapısına ekleme,
+   `expo prebuild`) -> koyu/açık görsel doğrulama.
+3. Sonra ARM64 pilot APK ve fiziksel Xiaomi doğrulaması. **Ara APK
+   derlenmez**; marka değişikliği görünür olduğu için fiziksel doğrulama
+   zorunludur.
+4. Push ayrı açık onay bekliyor; commit'ler yerelde duruyor.
+
+## Milestone 1 arşivi — Design V2 fiziksel geri bildirim + Bibi pass (KAPALI)
+
+Milestone 1 kapandı ve sahibin Xiaomi cihazında fiziksel olarak doğrulandı.
+Aşağısı tarihsel kayıttır: ne yapıldığını ve neden öyle yapıldığını saklar.
+Çelişkili runtime kanıtı çıkmadıkça yeniden açılmaz.
 
 ### Tamamlanan
 
@@ -93,7 +204,7 @@ tarafı kulüp adı olmayan sözcüklerle söyler, nötr ray satırın taraf ken
 işaretler, dakika kolonu sabit kalır. Renk bilinçli olarak kullanılmadı: ev/deplasman
 bu palette semantik durum değildir ve sözleşmede güvenilir takım rengi yoktur.
 
-### Bu thread'de tamamlanan (commit edilmedi)
+### Milestone 1'de tamamlanan (tamamı commit edildi: `5fa1910..d7672ea`)
 
 Kapı, her adımdan sonra: TypeScript temiz, ESLint temiz, `git diff --check`
 temiz. Test sayısı **342 → 387** (45 yeni test). `zbet-cap`, `zbet-abap`,
@@ -196,15 +307,13 @@ hiçbir ekran onu okumuyordu ve eski `null` sözlüğünü pinliyordu — varsay
 sessizce kaymasına açık bırakan tam olarak buydu. Regresyon testi varsayılanı,
 etiketleri ve iki yönlü eşleşmeyi pinler.
 
-### Sıradaki adım
+### Milestone 1 kapanışı
 
-1. **Commit onayı.** `zbet-mobile` çalışma ağacı kirli; commit/push yapılmadı ve
-   ayrı açık onay gerektirir. Değişen dosyalar için `git status --short`.
-2. Onay sonrası **yeni ARM64 pilot APK** ve fiziksel Xiaomi doğrulaması:
-   panel aç/kapa + kalıcılık, yatay sekme kaydırmasında kazara açılma olmaması,
-   canlı kart alt satırının Xiaomi genişliğinde taşmaması, Bibi ipucunun bir kez
-   görünüp tekrar etmemesi, `Sessiz` modun rehberi kapatmaması.
-3. Phase E yalnız gerçek marka varlığı geldiğinde ilerler.
+Tüm maddeler commit edildi, ARM64 pilot APK derlendi ve sahibin Xiaomi
+cihazında fiziksel olarak kullanıldı. Design V2 yönü ve bu pass'in maddeleri
+kabul edildi. Fiziksel kullanımdan tek erteleme çıktı — `güncel baskı farkı`
+etiketinin uzunluğu — ve o da Milestone 2'de kapatıldı (`f3d628d`).
+Phase E kodda kapatılamaz olduğu için Milestone 2'ye devredildi.
 
 ### Korunacaklar (kanıtlanmış Design V2 davranışı)
 

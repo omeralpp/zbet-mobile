@@ -1,19 +1,26 @@
 # BTB Mobile Next — Observation Log
 
-Durum: `DESIGN V2 PHYSICAL FEEDBACK + BIBI EXPERIENCE PASS — KOD TAMAM,
-COMMIT ONAYI BEKLİYOR`
+Durum: `BTB ROADMAP MILESTONE 2/11 — LOGO / BRAND ASSET`
 
-Product Design V2 dokuz batch ile tamamlandı (`ff50051..21a1f57`). Değişiklikler
-yalnız sunumdur; tahmin, model, Toto, Live Context sözleşmesi, BFF ve SAP
-davranışı değişmedi. Fiziksel Xiaomi doğrulaması bekleniyor; kontrol listesi
-`docs/CURRENT_HANDOFF.md` içindedir.
+Roadmap: **1/11 KAPALI = %9,1**. Milestone 1 (Design V2 fiziksel geri bildirim
+kapanışı) sahibin Xiaomi cihazında fiziksel olarak doğrulandı ve kapandı;
+çelişkili runtime kanıtı çıkmadıkça yeniden açılmaz. Product Design V2'nin
+kendisi dokuz batch ile tamamlanmıştı (`ff50051..21a1f57`) ve yalnız sunumdur;
+tahmin, model, Toto, Live Context sözleşmesi, BFF ve SAP davranışı değişmedi.
 
-Doğrulama bekleyen aday APK (Design V2 geri bildirim pass):
+Milestone 1'den devreden tek erteleme — canlı kart `güncel baskı farkı`
+etiketinin Xiaomi genişliğinde uzun kalması — Milestone 2'de kapatıldı
+(`f3d628d`). Ayrıntı ve görsel doğrulama `docs/CURRENT_HANDOFF.md` içindedir.
+
+Fiziksel Xiaomi ile doğrulanmış APK (Milestone 1 kapanışı):
 
 ```text
 btb-mobile-next-arm64-design-v2-feedback.apk
 SHA-256: D7B5B5364D8C9E5A9CF8AC44E76147D426D958CCBFF4021B12FADB877CFF684A
 ```
+
+Sonraki APK yalnız marka varlığı entegre edildikten sonra derlenir; ara APK
+derlenmez.
 
 Fiziksel Xiaomi ile doğrulanmış geri dönüş baseline'ı (değişmedi):
 
@@ -92,8 +99,8 @@ sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
 | NXT-OBS-076 | 2026-08-11 | Genel UI düzeni ve insan-etkileşim standardı | Ortak `Screen`, filtre, bölüm başlığı ve metrik kartları 44–48 dp dokunma hedefi, 720 dp içerik sınırı, güvenli alan, tutarlı spacing/tipografi ve dar ekranda wrap kurallarıyla düzenlendi. Super ve Maç detay metrikleri okunabilir iki kolon ritmine taşındı; standart `docs/UI_INTERACTION_STANDARD.md` altında yazılı kabul kapısı oldu. Android açık tema emülatöründe giriş, Özet ve Maç Detayı görsel/dokunmatik smoke geçti. | HIGH | READY |
 
 | NXT-OBS-100 | 2026-08-18 | Doğal kırmızı kart gözlemi (release engeli değil) | Gerçek bir kırmızı kart doğal olarak oluştuğunda `Olaylar` modülünde şunlar gözlemsel olarak doğrulanır: satırın kırmızı kart olarak görünmesi, `DIRECT_RED` / `SECOND_YELLOW_RED` ayrımının erişilebilirlik etiketinde okunması, skorun kırmızı kart satırında gösterilmemesi, sarı kartın hâlâ görünmemesi ve `diagnostics` sayaçlarının beklendiği gibi olması. Sağlayıcı sözlüğünde `RED_CARD` / `SECOND_YELLOW_CARD` / `YELLOW_RED_CARD` ve dismissal-without-subtype değerleri gerçek veriyle henüz görülmedi. Sorun çıkarsa yeni defect açılır; kırmızı kart uydurulmaz. | LOW | OBSERVED |
-| NXT-OBS-101 | 2026-08-18 | Kanonik BTB marka varlığı (Phase E) | `assets/icon.png` kare koyu zemini raster'ın **içine gömülü** taşıyor: 192x192 RGBA, tam saydam piksel sayısı **0**, alfa aralığı 221..255, dört köşe de `(0, 8, 27, α=221)`. Zemin container kaynaklı değildir, bu yüzden kodda düzeltilemez. `ASSET_GENERATION_DEPENDENCY` kaydedildi; ayrıntı ve kanıt aşağıdaki bölümdedir. Placeholder, zemini silinmiş ya da rengi kaydırılmış varlık üretilmedi. | HIGH | BLOCKED_ON_ASSET |
-
+| NXT-OBS-101 | 2026-08-18 | Kanonik BTB marka varlığı | Marka raster'ı kare koyu zemini **içinde** taşıyor: 192x192 RGBA, tam saydam piksel **0**, alfa 221..255, dört köşe `(0, 8, 27, α=221)`. Kodda kapatılamaz. Milestone 2'de topoloji yeniden ölçüldü ve **beş** kullanım yeri bulundu (önceki sayım üç diyordu; Özet hero ve takım arması fallback'i eksikti). Rol mimarisi kararlaştırıldı, kod tek sözleşmeye bağlandı (`src/theme/brand.ts`), doğrulayıcı yazıldı (`npm run check:brand`, bugün FAIL) ve üretim brief'i hazırlandı (`docs/ASSET_GENERATION_BRIEF.md`). Placeholder, zemini silinmiş veya rengi kaydırılmış varlık üretilmedi. | HIGH | BLOCKED_ON_ASSET |
+| NXT-OBS-102 | 2026-08-18 | Canlı kart baskı etiketi (fiziksel Xiaomi) | `güncel baskı farkı` 360dp satırda sayının yanında taşıyordu. Etiket `baskı farkı` oldu; güncellik `pressureSource === "CURRENT_MATCH"` kapısıyla kodda zorlandığı ve canlı kart zaten şimdiki zaman yüzeyi olduğu için anlam kaybı yok. `güncel veri bekleniyor` kısaltılmadı, kontrollü ikinci satıra alındı. Emülatörde 360dp koyu ve açık temada doğrulandı (`f3d628d`); fiziksel Xiaomi doğrulaması bir sonraki APK ile. | MEDIUM | READY |
 | NXT-OBS-099 | 2026-08-18 | Live Context gerçek olay yolu — SAP köprüsü (SAP onayı bekliyor) | `READY_FOR_SAP_ACTIVATION_APPROVAL`. 2026-08-18 ölçümü, erişim teşhisini **güçlendirdi**: `curl` artık yalnız hedef uçta değil, SAP'ın üretimde başarıyla kullandığı uçlarda da (`gamelist/all/v1`, `livestatistics`, `standing`) 400 users-api login kapısı alıyor; buna karşılık SAP güncel maç gününü (50 fikstür) Bilyoner'den yüklemiş durumda. `curl` düz `curl/` user-agent gönderirken reddedildiği için fark **header kaynaklı olamaz**; ayrım istemci istek profilindedir. Önceki oturumdaki "curl çalışıyor, Node çalışmıyor" çerçevesi zamanlama tesadüfüydü — kalıcı olgu: **SAP çalışıyor, bu makinedeki doğrudan istemciler kapıda**. Çözüm: çalışan SAP HTTP istemcisini ödünç almak (TLS parmak izi taklidi **değil**). Yerel olarak hazır: `zbet-abap` salt-okunur köprü sınıfı (kalıcılık yok, DDIC yok, dondurulmuş URL şablonu, TVARVC anahtarı + token, boyut sınırı) ve `zbet-cap` SAP_BRIDGE upstream'i + 19 test. SAP nesnesi **oluşturulmadı/aktive edilmedi**; aktivasyon ayrı açık onay gerektirir. | HIGH | OBSERVED |
 
 | NXT-OBS-098 | 2026-08-17 | Gerçek gol/kırmızı kart verisiyle doğrulama | **KAPANDI (2026-08-18 release).** `REAL_GOAL_VALIDATION = PHYSICAL_PASS` — gerçek GOAL olayları fiziksel Xiaomi doğrulamasında görüldü; sunucu tarafında da uçtan uca kanıtlandı (canlı route HTTP 200, `btb.live-context.v2`, 3 gerçek gol, dizilişler yok, 4 sarı + 12 değişiklik + 2 bölüm işaretçisi `excludedByScope` ile dışlandı). `REAL_RED_CARD_VALIDATION = OWNER_ACCEPTED_PENDING_NATURAL_OBSERVATION` — kırmızı kart uygulaması doğrulanmış sözleşme, normalizer semantiği ve otomatik testler temelinde sahip tarafından kabul edildi. **Gerçek bir kırmızı kartın fiziksel olarak gözlendiği iddia edilmiyor**; bugüne dek hiçbir gerçek sağlayıcı yanıtında kırmızı kart görülmedi. Doğal bir kırmızı kart yalnız gözlemsel doğrulamadır ve release engeli değildir — bkz. `NXT-OBS-100`. | MEDIUM | CLOSED |
@@ -208,18 +215,30 @@ Durumlar: `OBSERVED`, `READY`, `DEFERRED`, `RESOLVED`.
 
 Phase E izi tamamlandı. Bu bir kod kusuru değildir ve kodda kapatılamaz.
 
-**Kanonik varlık.** Tek BTB marka raster'ı `assets/icon.png` (192x192 RGBA).
-Üç yerde kullanılır:
+**Kanonik varlık.** Tek BTB marka raster'ı, bugün
+`assets/brand/btb-mark.png` (192x192 RGBA). **Beş** yerde kullanılır — 2026-08-18
+Milestone 2 ölçümü, önceki üç maddelik sayımın düzeltmesi:
 
 ```text
-app.config.ts:57   icon
-app.config.ts:86   android.adaptiveIcon.foregroundImage
-AppLaunchScreen.tsx:145  uygulama içi açılış logosu
+app.config.ts            icon
+app.config.ts            android.adaptiveIcon.foregroundImage
+AppLaunchScreen.tsx      uygulama içi açılış logosu          132 dp
+app/(tabs)/index.tsx     Özet hero                            68 dp
+TeamLogo.tsx             takım arması yoksa BTB fallback      40/24/18 dp
 ```
 
-Uygulama ikonu ile uygulama içi logo **aynı kaynağı** paylaşır. Handoff'un
-"ortak kaynak kanıtlanmadıkça app icon değiştirilmez" koşulu bu yüzden
-karşılanmıştır: aynı dosya değişince her iki yüzey birden değişir.
+Uygulama ikonu ile uygulama içi logo **aynı kaynağı** paylaşır, yani tek dosya
+değişince her yüzey birden değişir. Uygulama içi üç kullanım artık tek modülden
+(`src/theme/brand-mark.ts`) geçer, config yolları da aynı sözleşmeden
+(`src/theme/brand.ts`) okunur.
+
+**En yüksek çözünürlüklü kaynak uygulamada değil.** `btb-assets/btb-logo.png`
+(1254x1254, amblem + `BTB` + `BETTER THAN BET` kilidi) ve
+`btb-assets/btb-logo-shell.png` (1024x1024, yalnız amblem) aynı markanın
+ustalarıdır; uygulamanın 192px raster'ı ikincisinin küçültülmüşüdür (192px'e
+indirgenmiş iki görüntü arasında ortalama luma farkı 0.74/255). `btb-assets`
+hiçbir uygulama tarafından referans edilmiyor ve bu milestone'da
+değiştirilmedi.
 
 **Kare zemin nereden geliyor.** Raster'ın içinden. Ölçüm:
 
@@ -256,11 +275,22 @@ Varlık geldiğinde beklenen biçim: adaptive-icon foreground kuralına uygun,
 tam saydam zeminli, içeriği iç güvenli bölgede duran kare tuval. Takım
 armalarına dokunulmadı.
 
-**Yan bulgu — `assets/notification-icon.png` ölü kopya.** Dosya
-`assets/icon.png` ile **bayt bayt aynıdır** (`sha256` eşleşiyor) ve hiçbir yerden
-referans verilmemektedir: `app.config.ts` içindeki `expo-notifications`
-eklentisi yalnız `color` ve `sounds` alır, `icon` almaz; kaynakta ve Android
-kaynaklarında da geçmez. Android bildirim küçük ikonu alfa maskesi olarak
-çizildiği için, tamamen opak bir raster küçük ikon yerine dolu bir kare verir.
-Bu doğrudan `NXT-OBS-002` ile ilgilidir. Dosya **silinmedi** — varlık kararı
-sahibindir; yalnız kaydedildi.
+**`assets/notification-icon.png` — silindi (2026-08-18).** Dosya marka
+raster'ı ile **bayt bayt aynıydı** (`sha256` eşleşiyordu) ve hiçbir yerden
+referans verilmiyordu. Bildirim küçük ikonu rolünü taşıdığı sanılabilirdi ama
+taşımıyordu: o rol
+`modules/btb-widget/android/src/main/res/drawable/btb_notification_icon.xml`
+tek renkli vektörüne aittir ve `AndroidManifest.xml` içinde hem
+`com.google.firebase.messaging.default_notification_icon` hem
+`expo.modules.notifications.default_notification_icon` anahtarına kayıtlıdır.
+Android küçük ikonu alfa maskesi olarak çizip rengi attığı için opak bir raster
+zaten dolu bir kare verirdi — vektör doğru cevaptır. Ölü kopya kaldırıldı ve
+`src/theme/brand.test.ts` bir raster'ın bu rolü geri almasını engelliyor.
+`NXT-OBS-002` bu yüzden bildirim ikonu tarafında bir varlık bağımlılığı taşımaz.
+
+**Doğrulayıcı (2026-08-18).** `npm run check:brand` verilen bir varlığı
+sözleşmeye karşı ölçer: PNG biçimi ve 8-bit RGBA, kare tuval, en az 1024px,
+gerçek saydam piksel, dört köşenin α=0 olması, rolüne göre içerik/tuval oranı,
+optik merkez ve eski zeminden kalan yarı saydam hale oranı. Bugün **FAIL**
+verir; mevcut varlığın gerçek durumu budur. Üretim brief'i:
+`docs/ASSET_GENERATION_BRIEF.md`.
