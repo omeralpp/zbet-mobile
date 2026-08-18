@@ -131,7 +131,37 @@ konduğunda yeni varlık daha okunur ve açık temada kutusu yok.
 | Özet hero | ✓ | ✓ | kare **yok**; marka doğrudan kartın üstünde |
 | Canlı liste arma fallback | ✓ | ✓ | dairenin içinde şeffaf marka; kare yok |
 | Canlı kart alt satırı | ✓ | ✓ | `baskı farkı` tek satır, taşma yok |
-| Açılış ekranı | — | — | dev-client kendi splash'ı ile örttüğü için release APK'da doğrulanır |
+| Açılış ekranı | ✓ | — | release APK'da: **kare yok, yuvarlatma yok, köşe kırpılması yok**; glow gradyana karışıyor |
+| Launcher ikonu | ✓ | — | release APK kurulu; daire maskede kalkan **tam**, arkasında `#04101E` görünüyor |
+
+### APK
+
+```text
+btb-mobile-next-arm64-brand-asset.apk           (aday, fiziksel doğrulama bekliyor)
+SHA-256  522F904E9EB047E072F0C25F98210B98F343DBBD8ED2848D6214E7D50E9A721D
+imza     fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c  (v2 şeması)
+paket    com.btb.mobile.next · versionName 0.1.0 · native-code arm64-v8a
+```
+
+İmza parmak izi mevcut kurulumla aynı, bu yüzden APK kaldırmadan üzerine
+kurulur. `btb-mobile-next-arm64-design-v2-feedback.apk` bu aday fiziksel
+doğrulamayı geçene kadar geri dönüşüme alınmaz.
+
+**Denetim.** APK içindeki launcher katmanları ölçüldü: `ic_launcher_foreground`
+432x432 **%79,2 saydam**, köşe alfası **0**; 324/216/162/108 türevleri aynı.
+Yani opak kare artefaktın kendisinden gitmiştir. Sır taraması temiz: legacy FCM
+server key deseni, PEM private key, `private_key` / `client_secret` alanı ve
+service-account işaretçisi **yok**.
+
+Emülatör doğrulaması için ayrıca `x86_64` paketi derlendi
+(SHA-256 `E4FDA8A990F01CFB9E631C29C8ED11C7EBF010AFCCF4637AAFCD94F3B9856032`) —
+emülatör x86_64 olduğu için arm64 APK kurulamıyor. Cutover prosedürü adım 8
+uyarınca doğrulama sonrası silindi; `.codex-artifacts` yalnız `arm64`
+artefaktları tutar.
+
+**Release runtime smoke (emülatör, x86_64 paketi).** Pilot kapısı açıldı, canlı
+API'ye bağlanıldı ve gerçek canlı maç listelendi (`BREZILYA SERIE B`, 50').
+Koyu ve açık temada Özet, Canlı listesi ve açılış ekranı doğrulandı.
 
 ### Sıradaki adım
 
