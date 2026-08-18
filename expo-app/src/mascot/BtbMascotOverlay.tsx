@@ -33,6 +33,9 @@ import {
   bibiPresence,
   shouldRenderBibi
 } from "./bibi-presence";
+import { resolveBubblePosition } from "./bubble-position";
+import { useDiscovery } from "./DiscoveryProvider";
+import { gestureSpring } from "@/src/theme/motion";
 import { useReducedMotion } from "@/src/theme/use-reduced-motion";
 import { useMascotActions } from "./MascotActions";
 
@@ -47,6 +50,8 @@ type MenuItem = {
 
 const storageKey = "btb-mobile-next-bibi-position-v3";
 const mascotSize = 58;
+/** Quiet moment after arriving on a surface before discovery may speak. */
+const discoverySettleMs = 1600;
 const edgeMargin = 10;
 const bibiFrames = [
   require("../../assets/mascot/bibi-open.png"),
@@ -114,6 +119,10 @@ export function BtbMascotOverlay() {
   const router = useRouter();
   const { pageActions } = useMascotActions();
   const tutorial = useTutorial();
+  const discovery = useDiscovery();
+  // Pulled out so the settle effect depends on the stable callback rather than
+  // on the provider value, which changes whenever a hint opens or closes.
+  const considerDiscovery = discovery.consider;
   const [openPath, setOpenPath] = useState<string | null>(null);
   const [blinkFrame, setBlinkFrame] = useState<0 | 1 | 2>(0);
   const [showGreeting, setShowGreeting] = useState(true);
@@ -194,6 +203,51 @@ export function BtbMascotOverlay() {
     visiblePosition,
     width
   ]);
+  // Discovery waits for the user to settle on a surface. A hint that appears in
+  // the same frame as the screen reads as something the product pushed rather
+  // than as something Bibi noticed, and it lands while the user is still
+  // deciding where to look.
+  useEffect(() => {
+    const timer = setTimeout(
+      () =>
+        considerDiscovery(pathname, {
+          presence: bibiPresence(pathname),
+          tutorialActive: Boolean(tutorial.activeTip)
+        }),
+      discoverySettleMs
+    );
+    return () => clearTimeout(timer);
+  }, [considerDiscovery, pathname, tutorial.activeTip]);
+
+  // One short motion, once, when a hint arrives — never a loop. `LiveDot` stays
+  // the product's only continuous ambient animation, because a second one would
+  // compete with it for the single meaning ambient motion carries here:
+  // something is happening right now.
+  useEffect(() => {
+    if (!discovery.activeHint || reduceMotion) {
+      return undefined;
+    }
+    const nudge = Animated.sequence([
+      Animated.spring(idleY, {
+        toValue: -7,
+        damping: 9,
+        stiffness: 320,
+        mass: 0.7,
+        useNativeDriver: true
+      }),
+      Animated.spring(idleY, {
+        toValue: 0,
+        ...gestureSpring,
+        useNativeDriver: true
+      })
+    ]);
+    nudge.start();
+    return () => {
+      nudge.stop();
+      idleY.setValue(0);
+    };
+  }, [discovery.activeHint, idleY, reduceMotion]);
+
   const displayPosition = tutorial.activeTip
     ? tutorialPosition
     : visiblePosition;
@@ -201,7 +255,11 @@ export function BtbMascotOverlay() {
   // Idle expression is suppressed the moment another interaction owns Bibi, so
   // an interrupted blink can never freeze a half-closed frame on screen.
   const idleSuppressed =
-    reduceMotion || open || dragging || Boolean(tutorial.activeTip);
+    reduceMotion ||
+    open ||
+    dragging ||
+    Boolean(tutorial.activeTip) ||
+    Boolean(discovery.activeHint);
 
   useEffect(() => {
     AsyncStorage.getItem(storageKey)
@@ -225,7 +283,13 @@ export function BtbMascotOverlay() {
     idleX.setValue(0);
     idleY.setValue(0);
     idleTilt.setValue(0);
-    if (reduceMotion || open || dragging || tutorial.activeTip) {
+    if (
+      reduceMotion ||
+      open ||
+      dragging ||
+      tutorial.activeTip ||
+      discovery.activeHint
+    ) {
       return;
     }
     let disposed = false;
@@ -330,7 +394,16 @@ export function BtbMascotOverlay() {
       idleY.stopAnimation();
       idleTilt.stopAnimation();
     };
-  }, [dragging, idleTilt, idleX, idleY, open, reduceMotion, tutorial.activeTip]);
+  }, [
+    discovery.activeHint,
+    dragging,
+    idleTilt,
+    idleX,
+    idleY,
+    open,
+    reduceMotion,
+    tutorial.activeTip
+  ]);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -472,42 +545,52 @@ export function BtbMascotOverlay() {
     300,
     Math.max(220, width - insets.left - insets.right - 32)
   );
-  const tutorialBubblePosition = useMemo(() => {
-    const target = tutorial.activeTargetRect;
-    const estimatedHeight = 176;
-    const minLeft = insets.left + edgeMargin;
-    const maxLeft = width - insets.right - edgeMargin - tutorialBubbleWidth;
-    const left = target
-      ? Math.min(
-          Math.max(
-            minLeft,
-            target.x + target.width / 2 - tutorialBubbleWidth / 2
-          ),
-          maxLeft
-        )
-      : Math.min(Math.max(minLeft, displayPosition.x), maxLeft);
-    const below = target ? target.y + target.height + 12 : displayPosition.y + mascotSize + 8;
-    const above = target ? target.y - estimatedHeight - 12 : displayPosition.y - estimatedHeight - 8;
-    const top =
-      below + estimatedHeight <= height - insets.bottom - edgeMargin
-        ? below
-        : Math.max(insets.top + edgeMargin, above);
-    return {
-      left: left - displayPosition.x,
-      top: top - displayPosition.y
-    };
-  }, [
-    displayPosition.x,
-    displayPosition.y,
-    height,
-    insets.bottom,
-    insets.left,
-    insets.right,
-    insets.top,
-    tutorial.activeTargetRect,
-    tutorialBubbleWidth,
-    width
-  ]);
+  const bubbleFrame = useMemo(
+    () => ({
+      anchorSize: mascotSize,
+      bubbleWidth: tutorialBubbleWidth,
+      viewportWidth: width,
+      viewportHeight: height,
+      insetTop: insets.top,
+      insetBottom: insets.bottom,
+      insetLeft: insets.left,
+      insetRight: insets.right,
+      edgeMargin
+    }),
+    [
+      height,
+      insets.bottom,
+      insets.left,
+      insets.right,
+      insets.top,
+      tutorialBubbleWidth,
+      width
+    ]
+  );
+  const tutorialBubblePosition = useMemo(
+    () =>
+      resolveBubblePosition({
+        ...bubbleFrame,
+        anchorX: displayPosition.x,
+        anchorY: displayPosition.y,
+        estimatedHeight: 176,
+        target: tutorial.activeTargetRect
+      }),
+    [bubbleFrame, displayPosition.x, displayPosition.y, tutorial.activeTargetRect]
+  );
+  // A discovery hint has no measured element to point at, so it sits against
+  // Bibi and relies on the same clamp to stay on screen.
+  const discoveryBubblePosition = useMemo(
+    () =>
+      resolveBubblePosition({
+        ...bubbleFrame,
+        anchorX: displayPosition.x,
+        anchorY: displayPosition.y,
+        estimatedHeight: 148,
+        target: null
+      }),
+    [bubbleFrame, displayPosition.x, displayPosition.y]
+  );
   const rotation = Animated.add(
     Animated.add(
       openTilt.interpolate({ inputRange: [0, 1], outputRange: [0, 0.7] }),
@@ -606,6 +689,52 @@ export function BtbMascotOverlay() {
           </View>
         ) : null}
 
+        {/* A hint never shares the screen with a guide step or the menu: Bibi
+            says one thing at a time, and the guide is the one the user asked
+            for. `ambient` keeps it off the dense analytical surfaces. */}
+        {discovery.activeHint && !tutorial.activeTip && !open && ambient ? (
+          <View
+            accessibilityLiveRegion="polite"
+            accessibilityRole="summary"
+            style={[
+              styles.tutorialBubble,
+              {
+                left: discoveryBubblePosition.left,
+                top: discoveryBubblePosition.top,
+                width: tutorialBubbleWidth
+              }
+            ]}
+          >
+            <Text style={styles.discoveryEyebrow}>BUNU BİLİYOR MUYDUN</Text>
+            <Text style={styles.tutorialTitle}>
+              {discovery.activeHint.title}
+            </Text>
+            <Text style={styles.tutorialBody}>{discovery.activeHint.body}</Text>
+            <View style={styles.tutorialActions}>
+              <Pressable
+                accessibilityLabel="Bibi ipuçlarını sessize al"
+                onPress={() => discovery.setPace("QUIET")}
+                style={({ pressed }) => [
+                  styles.tutorialSecondary,
+                  pressed && styles.menuItemPressed
+                ]}
+              >
+                <Text style={styles.tutorialSecondaryText}>Sessize al</Text>
+              </Pressable>
+              <Pressable
+                accessibilityLabel="Bu ipucunu kapat"
+                onPress={() => discovery.dismissActiveHint()}
+                style={({ pressed }) => [
+                  styles.tutorialPrimary,
+                  pressed && styles.menuItemPressed
+                ]}
+              >
+                <Text style={styles.tutorialPrimaryText}>Anladım</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
+
         {open && ambient ? (
           <View
             style={[
@@ -637,7 +766,7 @@ export function BtbMascotOverlay() {
           </View>
         ) : null}
 
-        {showGreeting && !tutorial.activeTip && ambient ? (
+        {showGreeting && !tutorial.activeTip && !discovery.activeHint && ambient ? (
           <View
             pointerEvents="none"
             style={[
@@ -746,6 +875,15 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(244, 248, 252, 0.98)",
     padding: 14,
     ...shadows.card
+  },
+  discoveryEyebrow: {
+    // Names the bubble as something the product volunteered, so it is never
+    // mistaken for a guide step the user opened.
+    color: "#6C8398",
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 1.1,
+    marginBottom: 4
   },
   tutorialTitle: {
     color: "#102538",

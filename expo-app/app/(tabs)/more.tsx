@@ -14,6 +14,7 @@ import {
 import { Screen } from "@/src/components/Screen";
 import { useAuth } from "@/src/auth/AuthProvider";
 import { runtimeConfig } from "@/src/config/runtime";
+import { expandAllModules } from "@/src/layout/module-collapse-store";
 import { resetModuleOrder } from "@/src/layout/module-layout-store";
 import type { ModuleLayoutSurface } from "@/src/layout/module-layout";
 import { openDeveloperMenu } from "@/src/devtools/developer-menu";
@@ -41,6 +42,7 @@ import {
   themeMode,
   typeScale
 } from "@/src/theme/theme";
+import { useDiscovery } from "@/src/mascot/DiscoveryProvider";
 import { useTutorial } from "@/src/tutorial/TutorialProvider";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import {
@@ -179,6 +181,7 @@ export default function MoreScreen() {
   const auth = useAuth();
   const router = useRouter();
   const tutorial = useTutorial();
+  const discovery = useDiscovery();
 
   useEffect(() => {
     getSuperNotificationMinimum()
@@ -232,12 +235,16 @@ export default function MoreScreen() {
     }
   };
 
+  // Order and collapse are stored independently, but this control is the user's
+  // one way back to the default layout, so it has to undo both. A reset that
+  // restored the order and left the panels shut would leave someone who closed
+  // several modules with no way to find them again short of reopening each.
   const restoreLayout = (surface: ModuleLayoutSurface, label: string) => {
-    resetModuleOrder(surface)
+    Promise.all([resetModuleOrder(surface), expandAllModules(surface)])
       .then(() =>
         Alert.alert(
           "Düzen sıfırlandı",
-          `${label} BTB varsayılan sırasına döndü.`
+          `${label} BTB varsayılan sırasına döndü ve tüm modüller açıldı.`
         )
       )
       .catch((error: unknown) => {
@@ -347,6 +354,22 @@ export default function MoreScreen() {
         <ThemeSwitchRow
           changing={themeChanging}
           onChange={changeTheme}
+        />
+        <SettingsRow
+          detail={
+            discovery.pace === "QUIET"
+              ? "Bibi kendiliğinden ipucu vermiyor; rehber açıldığında yine çalışır"
+              : "Bibi ara sıra bilinmeyen bir özelliği hatırlatır; rehber ayrı çalışır"
+          }
+          icon={
+            discovery.pace === "QUIET" ? "bell-sleep-outline" : "lightbulb-on-outline"
+          }
+          onPress={() =>
+            discovery.setPace(discovery.pace === "QUIET" ? "NORMAL" : "QUIET")
+          }
+          title={
+            discovery.pace === "QUIET" ? "Bibi ipuçları: Sessiz" : "Bibi ipuçları: Normal"
+          }
         />
         <TutorialTarget id="more-tutorial-restart" radius={0}>
           <SettingsRow

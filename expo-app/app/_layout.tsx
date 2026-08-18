@@ -8,6 +8,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAuth } from "@/src/auth/AuthProvider";
 import { AppLaunchScreen } from "@/src/components/AppLaunchScreen";
 import { BtbMascotOverlay } from "@/src/mascot/BtbMascotOverlay";
+import { DiscoveryProvider } from "@/src/mascot/DiscoveryProvider";
 import { MascotActionsProvider } from "@/src/mascot/MascotActions";
 import { AndroidBackGuard } from "@/src/navigation/AndroidBackGuard";
 import { AppProviders } from "@/src/providers/AppProviders";
@@ -97,7 +98,11 @@ export default function RootLayout() {
       <AppProviders>
         <MascotActionsProvider>
           <TutorialProvider>
-            <RootNavigator />
+            {/* Inside the tutorial so discovery can stand down while a guide
+                step is on screen; the two never compete for Bibi. */}
+            <DiscoveryProvider>
+              <RootNavigator />
+            </DiscoveryProvider>
           </TutorialProvider>
         </MascotActionsProvider>
       </AppProviders>
