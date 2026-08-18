@@ -235,6 +235,13 @@ const styles = StyleSheet.create({
   logo: {
     width: 132,
     height: 132,
+    // Compensation, not styling. `assets/icon.png` carries its dark square
+    // ground baked into the raster — it has no fully transparent pixel — so the
+    // rounding here is what stops a hard navy square appearing over the launch
+    // gradient. When the canonical transparent-ground brand asset lands this
+    // radius must be removed in the same change, or it will clip the corners of
+    // artwork that no longer needs masking. See ASSET_GENERATION_DEPENDENCY in
+    // docs/OBSERVATION_LOG.md.
     borderRadius: 30
   },
   logoStage: {

@@ -6,11 +6,13 @@ Son güncelleme: 2026-08-18
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `DESIGN V2 PHYSICAL FEEDBACK + BIBI EXPERIENCE PASS — DEVAM EDİYOR` —
+Mod: `DESIGN V2 PHYSICAL FEEDBACK + BIBI EXPERIENCE PASS — KOD TAMAM, COMMIT ONAYI BEKLİYOR` —
 Design V2 APK'sı sahibin Xiaomi cihazında fiziksel olarak kullanıldı. Genel
 Design V2 yönü kabul edildi; bu milestone fiziksel kullanımda çıkan maddeleri
-düzeltir. Phase B ve Phase C tamamlandı ve push edildi; Phase D, Xiaomi kart
-düzeni, Phase E ve Phase F/G açık. Ayrıntı ve tam sıra aşağıdaki
+düzeltir. Phase B ve Phase C tamamlandı ve push edildi (`6fd3346`, `d881ac2`).
+Phase D, Xiaomi canlı kart düzeni ve Phase F/G **çalışma ağacında tamamlandı ve
+henüz commit edilmedi**; Phase E kodda kapatılamaz ve
+`ASSET_GENERATION_DEPENDENCY` olarak kaydedildi. Ayrıntı aşağıdaki
 "Fresh-thread devir" bölümündedir.
 
 Önceki mod (referans): `PRODUCT DESIGN V2 — CLOSEOUT` — Dokuz Product Design V2 batch'i tamamlandı
@@ -33,8 +35,9 @@ Durum:
 ```text
 PRODUCT_DESIGN_V2_COMPLETE                 (ff50051..21a1f57)
 DESIGN_V2_APK_PHYSICALLY_USED              (owner Xiaomi; yön kabul edildi)
-FEEDBACK_PASS_IN_PROGRESS                  (Phase B + C bitti; D, layout, E, F/G açık)
-READY_FOR_FRESH_THREAD_CONTINUATION
+FEEDBACK_PASS_CODE_COMPLETE                (B+C push edildi; D, layout, F/G commit bekliyor)
+AWAITING_COMMIT_APPROVAL                   (zbet-mobile çalışma ağacı kirli)
+PHASE_E_BLOCKED_ON_ASSET                   (ASSET_GENERATION_DEPENDENCY, NXT-OBS-101)
 READY_FOR_XIAOMI_PRODUCT_DESIGN_V2_VALIDATION
 NEW_APK_REQUIRED                           (Design V2 kaynağı APK'da yok)
 MOBILE_NEXT_BASELINE_VERIFIED              (Live Context v2 APK, geri dönüş noktası)
@@ -90,64 +93,118 @@ tarafı kulüp adı olmayan sözcüklerle söyler, nötr ray satırın taraf ken
 işaretler, dakika kolonu sabit kalır. Renk bilinçli olarak kullanılmadı: ev/deplasman
 bu palette semantik durum değildir ve sözleşmede güvenilir takım rengi yoktur.
 
-### Kalan sıra
+### Bu thread'de tamamlanan (commit edilmedi)
 
-1. **Phase D — açılır/kapanır paneller + kalıcılık**
-   - `Match Detail` ve `Super Decision Detail` analitik modülleri panel olur.
-   - Hero asla kaybolmaz: maç kimliği, skor/durum, BTB güncel kararı; Super'de
-     kimlik, `KARAR ANI`, seçim, sinyal/rating, varsa `SONUÇ`.
-   - Gerçek kayıt `src/layout/module-registry.ts` üzerinden okunur; yukarıdaki
-     örnek listeler körlemesine kullanılmaz.
-   - İlk yükseltmede varsayılan **OPEN**; mevcut kullanıcıdan bilgi saklanmaz.
-   - Kalıcılık `surface + stable module id` ile anahtarlanır, görünen metinle
-     değil.
-   - `ORDER` ve `EXPANDED/COLLAPSED` **bağımsız** tercihlerdir. Mevcut
-     `reconcileModuleOrder` migrasyon/uzlaştırma davranışı bozulmaz.
-   - Yatay sekme kaydırması sırasında kazara açılma olmaz; dikey scroll kalitesi
-     korunur; reduced-motion uyumlu.
+Kapı, her adımdan sonra: TypeScript temiz, ESLint temiz, `git diff --check`
+temiz. Test sayısı **342 → 387** (45 yeni test). `zbet-cap`, `zbet-abap`,
+`btb-codex` bu thread'de de hiç değiştirilmedi.
 
-2. **Xiaomi canlı kart responsive düzen düzeltmesi**
-   - `src/components/MatchCard.tsx` alt metrik satırı Xiaomi genişliğinde
-     sıkışıyor/taşıyor, özellikle aday/seçim üretilmemiş durumda:
-     `İzleniyor` + `Aday bekleniyor` + `oran bekleniyor` + `güncel baskı farkı`
-     aynı satırda dört uzun Türkçe etiket demek.
-   - Kart **yeniden tasarlanmaz**. Sınırlı responsive düzeltme: esnek genişlik,
-     sarma, dikey yığma veya duruma bağlı sadeleştirme.
-   - Beklenen en temiz çözüm: seçim yokken üç ayrı "bekleniyor" etiketi tek
-     dürüst ifadeye indirilir (Batch 8 honest-state sözlüğüyle uyumlu), artı
-     `flexWrap` / `minWidth: 0` / `flexShrink` ile savunma.
-   - Null / `—` değerler, yüksek oran, yüksek baskı, status-pill kombinasyonları
-     ve uzun Türkçe etiketler test edilir. Diğer canlı kart durumları ve
-     Super liste/detay kartları aynı desen için taranır.
-   - Uygun bir regresyon testi veya layout-stress fixture eklenir.
+**1. Phase D — açılır/kapanır paneller + kalıcılık. TAMAM.**
 
-3. **Phase E — kanonik logo izi**
-   - Önce kanonik varlık izlenir: hangi dosya kanonik, nerede kullanılıyor,
-     raster mı vektör mü, kare zemin **container** kaynaklı mı yoksa raster'ın
-     **içine gömülü** mü.
-   - Container kaynaklıysa kodda düzeltilir.
-   - Raster yeniden üretimi gerekiyorsa `ASSET_GENERATION_DEPENDENCY` kaydedilir.
-   - **Placeholder veya mekanik olarak yeniden renklendirilmiş varlık
-     üretilmez.** Gerekli değişim, zemini silinmiş eski logo ya da renkleri
-     kaydırılmış hâli değil; gerçek anlamda yeniden tasarlanmış, şeffaf zeminli
-     BTB Intelligence Noir / Arcane-esinli özgün marka varlığıdır.
-   - Bu ortamda görsel üretme/düzenleme yeteneği yoktur; bu durumda doğru sonuç
-     bağımlılığı kaydetmek ve kodun güvenli kısmını tamamlamaktır.
-   - App icon, kanonik varlık yapısı ortak kaynak olduğunu kanıtlamadıkça
-     değiştirilmez. Takım armalarına dokunulmaz.
+`liveDetail` (9 modül) ve `superDetail` (4 modül) modülleri panel oldu. Gerçek
+kayıt `src/layout/module-registry.ts` üzerinden okundu; handoff'taki örnek
+listeler kullanılmadı. `overview` kapsam dışı bırakıldı — handoff yalnız iki
+analitik yüzeyi adlandırıyor.
 
-4. **Phase F/G — Bibi motion + feature discovery**
-   - Owner kararı: Bibi milestone'dan **düşmedi**; kendi odaklı pass'ine bırakıldı.
-   - Kısa tek seferlik mikro animasyon + uzun cooldown + bağlamsal tetikleyici.
-     Kalıcı ikinci sürekli döngü **eklenmez**; `LiveDot` ürünün tek sürekli
-     ambient animasyonu olarak kalır.
-   - Discovery: seen-state, frequency cap, cooldown, dismiss, tekrar etmeme.
-     Yalnız yerel; promosyon mesajı için backend bağımlılığı eklenmez.
-   - `More` içinde basit kullanıcı kontrolü (örn. `NORMAL` / `QUIET`);
-     tutorial çalışmaya devam eder.
-   - Analitik yüzeylerde route-presence kuralları **regresyona uğramaz**:
-     Match Detail ve Super Decision Detail'de ambient Bibi yok; yalnız
-     `GUIDE_ONLY` kısa görünüm.
+- Yeni: `module-collapse.ts` (saf kural), `module-collapse-store.ts` (kalıcılık),
+  `CollapsibleModule.tsx` (panel), `module-collapse.test.ts` (17 test).
+- Kalıcılık `surface + kanonik modül id` ile anahtarlanır; görünen metin
+  saklanmaz. Depo anahtarı sıralamanınkinden **ayrıdır**.
+- Saklanan değer **kapalı** kümedir. Depoda olmayan modül açıktır: bu yüzden
+  panelleri ilk gören kurulumda her şey **OPEN** gelir ve sonradan yayınlanan
+  her modül de açık gelir. Açık kümeyi saklamak ikisini de tersine çevirirdi.
+- `ORDER` ve `EXPANDED/COLLAPSED` bağımsızdır; `reconcileModuleOrder` davranışı
+  değişmedi (mevcut testleri aynen geçiyor). Bağımsızlık ayrıca test edildi.
+- Hero yapısal olarak korunur: her iki ekranda da hero `ReorderableModuleList`in
+  **dışında** render edilir, yani kapatılması mümkün değildir.
+- Başlığa dokunma yalnız gerçek bir dokunuşsa çalışır: hareket reorder slop'u
+  içinde ve süre reorder hold eşiğinin altında. Yatay sekme kaydırması, dikey
+  scroll ve reorder'a dönüşmüş basış paneli açmaz/kapatmaz.
+- Gövde yükseklik animasyonu **yok** — modüllerde WebView, canlı timeline ve
+  grafikler var. Durum değişimini chevron taşır; reduced-motion onu da sıfırlar.
+- `TutorialTarget` panelin **dışında** kalır (`match-standings`), böylece modül
+  kapalıyken de rehber hedefi ölçülebilir durumda durur.
+- `Daha Fazla > düzeni sıfırla` artık sıralamayı **ve** kapalı panelleri geri
+  alır; tek çıkış yolu olduğu için yalnız birini geri almak tuzak olurdu.
+- Yan düzeltme: reorder'a dönüşüp hiç hareket etmeden bırakılan basış modülü
+  havada bırakıp scroll'u kilitliyordu. Başlıklar artık dokunulabilir olduğu
+  için bu nadir jest sıradanlaştı; `ReorderableModuleList` dokunuş bitişinde
+  askıda kalan drag'i kapatıyor.
+
+**2. Xiaomi canlı kart düzeni. TAMAM.**
+
+Kart yeniden tasarlanmadı. `deriveLiveCardFooter` (saf, test edilmiş) kuralı:
+karar verilmiş kart market ve baskı bloklarını **her zaman** gösterir
+(`market kapalı` ve `güncel veri bekleniyor` gerçek cevaplardır); karar
+verilmemiş kart yalnız gerçek değeri olan bloğu gösterir. Böylece
+`Aday bekleniyor` + `oran bekleniyor` + `güncel veri bekleniyor` üçlüsü tek
+dürüst ifadeye iner. Savunma: `flexWrap`, `minWidth: 0`, `flexShrink` ve seçim
+metninde `numberOfLines`. `SuperLogCard` aynı desen için tarandı ve aynı savunma
+eklendi. Layout-stress fixture kusuru doğrudan koda bağlar: hiçbir durum birden
+fazla `bekleniyor` etiketi üretemez.
+
+**3. Phase E — kanonik logo izi. KODDA KAPATILAMAZ.**
+
+Kare zemin raster'ın **içine gömülü**: `assets/icon.png` 192x192 RGBA, tam
+saydam piksel **0**, köşeler `(0, 8, 27, α=221)`. APK'ya giren
+`ic_launcher_foreground.webp` de kenardan kenara opak; bildirilen
+`#04101E` adaptive arka plan hiç görünmüyor. Container kaynaklı olmadığı için
+kodda düzeltilecek bir şey yok. `ASSET_GENERATION_DEPENDENCY` kanıtlarıyla
+`docs/OBSERVATION_LOG.md` (`NXT-OBS-101`) içinde kayıtlı. Placeholder,
+zemini silinmiş veya rengi kaydırılmış varlık **üretilmedi**. App icon ile
+uygulama içi logo aynı dosyayı paylaşıyor (ortak kaynak kanıtlandı), yani varlık
+geldiğinde tek değişiklik iki yüzeyi birden düzeltir. Takım armalarına
+dokunulmadı. Kodda yapılan tek şey: `AppLaunchScreen` içindeki
+`borderRadius: 30`ın bir stil değil gömülü kareyi gizleyen telafi olduğu ve
+gerçek varlıkla birlikte kaldırılması gerektiği işaretlendi.
+
+**4. Phase F/G — Bibi motion + feature discovery. TAMAM.**
+
+- Yeni: `feature-discovery.ts` (saf motor, 17 test), `DiscoveryProvider.tsx`,
+  `bubble-position.ts` (+ 6 test).
+- Dört ipucu, hepsi bugün var olan ve görünür affordance'ı olmayan yetenekler
+  için: özet modül sıralama, detay panelleri, Super yıldız süzgeci, düzen
+  sıfırlama.
+- Pacing: 4 saat cooldown, günde en fazla 2, aynı ipucu asla iki kez.
+  İpucu **gösterildiği anda** emekliye ayrılır.
+- Tutorial ve discovery ayrı depo, ayrı hız, ayrı anahtar. `QUIET` yalnız
+  discovery'i susturur; rehber çalışmaya devam eder. Kontrol:
+  `Daha Fazla > Bibi ipuçları: Normal / Sessiz`.
+- Rehber adımı, presence veya pace tarafından bastırılan ipucu **slot
+  harcamaz**.
+- Route-presence regresyonu yok: `bibi-presence.ts` hiç değiştirilmedi ve motor
+  kuralı route yazımına değil `bibiPresence`e karşı doğrular. Match Detail ve
+  Super Decision Detail'de ambient Bibi yok.
+- Motion: ipucu geldiğinde **tek seferlik** kısa mikro animasyon, sonra
+  hareketsizlik. İkinci sürekli döngü eklenmedi; `LiveDot` ürünün tek sürekli
+  ambient animasyonu olarak kaldı. Reduced-motion animasyonu düşürür, ipucunu
+  korur.
+- Discovery tamamen yereldir; hiçbir backend bağımlılığı eklenmedi.
+
+**5. Super gün kapsamı varsayılanı — `Bugün`. TAMAM (sahip isteği).**
+
+Yalnız sunum/varsayılan durum değişikliği. Kapsam route parametresinde tutulur;
+kalıcı bir kullanıcı tercihi **yoktur** (denetlendi), bu yüzden ezilen bir tercih
+de yok. `resolveSuperDayScope` artık parametre yokken `LATEST_DAY` döndürür.
+`Tüm günler` açık bir `scope=ALL` değeri taşır — eskiden parametreyi temizleyerek
+ifade ediliyordu ve yeni varsayılanla bu seçim ulaşılamaz hâle gelirdi.
+`Bugün`ün anlamı değişmedi: yüklenen kararlardaki **en yeni maç günü**, cihazın
+takvim günü değil. Backend sorgu semantiği, Super karar mantığı ve geçmiş veri
+değişmedi; süzme zaten istemci tarafındadır. Özet ekranındaki `LATEST_DAY` derin
+bağlantısı aynı kapsamı açar. Kullanılmayan `getSuperDayScopeAction` kaldırıldı;
+hiçbir ekran onu okumuyordu ve eski `null` sözlüğünü pinliyordu — varsayılanın
+sessizce kaymasına açık bırakan tam olarak buydu. Regresyon testi varsayılanı,
+etiketleri ve iki yönlü eşleşmeyi pinler.
+
+### Sıradaki adım
+
+1. **Commit onayı.** `zbet-mobile` çalışma ağacı kirli; commit/push yapılmadı ve
+   ayrı açık onay gerektirir. Değişen dosyalar için `git status --short`.
+2. Onay sonrası **yeni ARM64 pilot APK** ve fiziksel Xiaomi doğrulaması:
+   panel aç/kapa + kalıcılık, yatay sekme kaydırmasında kazara açılma olmaması,
+   canlı kart alt satırının Xiaomi genişliğinde taşmaması, Bibi ipucunun bir kez
+   görünüp tekrar etmemesi, `Sessiz` modun rehberi kapatmaması.
+3. Phase E yalnız gerçek marka varlığı geldiğinde ilerler.
 
 ### Korunacaklar (kanıtlanmış Design V2 davranışı)
 

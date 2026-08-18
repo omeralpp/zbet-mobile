@@ -90,6 +90,9 @@ BTB's own analytical material, as opposed to football data it merely relays.
   and as prose in its own detail.
 - Module headings use `ModuleHeading` with a bronze eyebrow. A reordered stack
   has to keep reading as a structured cockpit rather than a pile of cards.
+- A module that is hosted by a collapsible panel does not draw its own heading.
+  The panel owns it, so a closed module is exactly its header and never a header
+  with a second one still showing underneath.
 
 ### System states — `system-state.ts`
 
@@ -193,6 +196,38 @@ most serious error this product can make in its UI.
 - Keep section titles, cards, filters, empty states, and actions in a consistent
   vertical rhythm. Text must wrap or truncate intentionally and never collide.
 
+### Collapsible modules — `CollapsibleModule.tsx`, `module-collapse.ts`
+
+- The analytical surfaces (`liveDetail`, `superDetail`) render each module as a
+  panel. Reorder decides what a user scrolls past first; collapse is what lets
+  them stop scrolling past a module they do not use.
+- Order and collapse are independent preferences under separate storage keys.
+  Collapsing a module never moves it, and reordering never opens or closes one.
+- Persistence is keyed by `surface + stable registry id`, never by visible text,
+  so retitling a module cannot strand or re-target a stored preference.
+- The stored value is the **collapsed** set. A module absent from storage is
+  open, which is what makes the first panelled build open everything for an
+  existing install and every module shipped later arrive open. Storing the
+  expanded set would invert both.
+- Ids the surface no longer publishes are dropped, and an unreadable store
+  resolves to nothing collapsed. The invariant matches order reconciliation: a
+  preference may rearrange what the product shows, never conceal something the
+  user has not had the chance to see.
+- The hero is never a module. It stays outside the reorderable list on both
+  detail screens, so match identity, score and the BTB decision — and on Super,
+  `KARAR ANI`, the selection, the signal and `SONUÇ` — cannot be collapsed away.
+- A header press only toggles when it was a real tap: travel within the reorder
+  slop and shorter than the reorder hold. A scroll, a horizontal swipe, or a
+  press that already lifted the module for reordering leaves the panel alone.
+- The body mounts and unmounts rather than animating to a measured height. These
+  modules hold a provider WebView, a live timeline and several charts, and a
+  height transition over that content is what makes a live screen feel slow. The
+  chevron carries the state change, and reduced motion collapses even that.
+- A tutorial target that wraps a module sits outside its panel, so the target
+  stays mounted and measurable when the user has closed the module.
+- `More` → layout reset restores both preferences: default order **and** every
+  panel open. It is the only way back, so it cannot restore just one of them.
+
 ## Interaction
 
 - Interactive controls use at least a 44 dp hit target; 48 dp is preferred for
@@ -237,6 +272,38 @@ most serious error this product can make in its UI.
 - Only the described component receives the temporary BTB-green border.
 - Completing, closing, or leaving the step restores the component immediately.
 - The speech bubble is placed above or below the target and must not hide it.
+- Bubble geometry is resolved by `bubble-position.ts` for every bubble. Below is
+  preferred, above is the fallback, and the result is always clamped inside the
+  safe area — including for a bubble with no target, which is the case the
+  clamp exists for.
+
+### Feature discovery — `feature-discovery.ts`, `DiscoveryProvider.tsx`
+
+- Discovery is the product volunteering something; the tutorial is the user
+  asking. They keep separate stores, separate pacing and separate switches. A
+  user who silences discovery keeps the guide.
+- A hint may only name a capability that ships and has no visible affordance. A
+  hint for something with a button on screen is noise; a hint for something
+  unbuilt is a lie.
+- Hints live on tab routes. A `GUIDE_ONLY` surface carries no ambient Bibi, and
+  a hint is ambient by definition, so a hint about a detail-screen gesture is
+  offered on the list that leads there. The engine enforces this against
+  `bibiPresence`, not against the route spelling.
+- Pacing: one hint per long cooldown, a hard daily cap on the local calendar
+  day, and never the same hint twice. A hint is retired when it is *shown* —
+  the user cannot un-see it, so offering it again would be repetition whatever
+  they did with it.
+- A hint suppressed by the tutorial, by presence or by pace does not spend a
+  slot. Someone reading Match Detail finds their hints intact afterwards.
+- Discovery is local. No hint is fetched, scheduled or targeted from a server;
+  building that transport is how a help feature becomes a marketing surface.
+- Motion: a hint arrives with **one** short micro-animation, then stillness.
+  `LiveDot` remains the product's only continuous ambient animation — a second
+  loop would compete with it for the one meaning ambient motion carries here.
+  Reduced motion drops the micro-animation and keeps the hint.
+- Bibi says one thing at a time. A hint never shares the screen with a guide
+  step, the quick menu or the greeting, and idle motion stands down while it is
+  up.
 
 ## Evidence
 

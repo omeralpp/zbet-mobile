@@ -1,6 +1,7 @@
 # BTB Mobile Next — Observation Log
 
-Durum: `PRODUCT DESIGN V2 — CLOSEOUT`
+Durum: `DESIGN V2 PHYSICAL FEEDBACK + BIBI EXPERIENCE PASS — KOD TAMAM,
+COMMIT ONAYI BEKLİYOR`
 
 Product Design V2 dokuz batch ile tamamlandı (`ff50051..21a1f57`). Değişiklikler
 yalnız sunumdur; tahmin, model, Toto, Live Context sözleşmesi, BFF ve SAP
@@ -79,6 +80,7 @@ sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
 | NXT-OBS-076 | 2026-08-11 | Genel UI düzeni ve insan-etkileşim standardı | Ortak `Screen`, filtre, bölüm başlığı ve metrik kartları 44–48 dp dokunma hedefi, 720 dp içerik sınırı, güvenli alan, tutarlı spacing/tipografi ve dar ekranda wrap kurallarıyla düzenlendi. Super ve Maç detay metrikleri okunabilir iki kolon ritmine taşındı; standart `docs/UI_INTERACTION_STANDARD.md` altında yazılı kabul kapısı oldu. Android açık tema emülatöründe giriş, Özet ve Maç Detayı görsel/dokunmatik smoke geçti. | HIGH | READY |
 
 | NXT-OBS-100 | 2026-08-18 | Doğal kırmızı kart gözlemi (release engeli değil) | Gerçek bir kırmızı kart doğal olarak oluştuğunda `Olaylar` modülünde şunlar gözlemsel olarak doğrulanır: satırın kırmızı kart olarak görünmesi, `DIRECT_RED` / `SECOND_YELLOW_RED` ayrımının erişilebilirlik etiketinde okunması, skorun kırmızı kart satırında gösterilmemesi, sarı kartın hâlâ görünmemesi ve `diagnostics` sayaçlarının beklendiği gibi olması. Sağlayıcı sözlüğünde `RED_CARD` / `SECOND_YELLOW_CARD` / `YELLOW_RED_CARD` ve dismissal-without-subtype değerleri gerçek veriyle henüz görülmedi. Sorun çıkarsa yeni defect açılır; kırmızı kart uydurulmaz. | LOW | OBSERVED |
+| NXT-OBS-101 | 2026-08-18 | Kanonik BTB marka varlığı (Phase E) | `assets/icon.png` kare koyu zemini raster'ın **içine gömülü** taşıyor: 192x192 RGBA, tam saydam piksel sayısı **0**, alfa aralığı 221..255, dört köşe de `(0, 8, 27, α=221)`. Zemin container kaynaklı değildir, bu yüzden kodda düzeltilemez. `ASSET_GENERATION_DEPENDENCY` kaydedildi; ayrıntı ve kanıt aşağıdaki bölümdedir. Placeholder, zemini silinmiş ya da rengi kaydırılmış varlık üretilmedi. | HIGH | BLOCKED_ON_ASSET |
 
 | NXT-OBS-099 | 2026-08-18 | Live Context gerçek olay yolu — SAP köprüsü (SAP onayı bekliyor) | `READY_FOR_SAP_ACTIVATION_APPROVAL`. 2026-08-18 ölçümü, erişim teşhisini **güçlendirdi**: `curl` artık yalnız hedef uçta değil, SAP'ın üretimde başarıyla kullandığı uçlarda da (`gamelist/all/v1`, `livestatistics`, `standing`) 400 users-api login kapısı alıyor; buna karşılık SAP güncel maç gününü (50 fikstür) Bilyoner'den yüklemiş durumda. `curl` düz `curl/` user-agent gönderirken reddedildiği için fark **header kaynaklı olamaz**; ayrım istemci istek profilindedir. Önceki oturumdaki "curl çalışıyor, Node çalışmıyor" çerçevesi zamanlama tesadüfüydü — kalıcı olgu: **SAP çalışıyor, bu makinedeki doğrudan istemciler kapıda**. Çözüm: çalışan SAP HTTP istemcisini ödünç almak (TLS parmak izi taklidi **değil**). Yerel olarak hazır: `zbet-abap` salt-okunur köprü sınıfı (kalıcılık yok, DDIC yok, dondurulmuş URL şablonu, TVARVC anahtarı + token, boyut sınırı) ve `zbet-cap` SAP_BRIDGE upstream'i + 19 test. SAP nesnesi **oluşturulmadı/aktive edilmedi**; aktivasyon ayrı açık onay gerektirir. | HIGH | OBSERVED |
 
@@ -99,6 +101,39 @@ sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
 | NXT-OBS-080 | 2026-08-11 | Bibi hedef vurgusu regresyonu | Sabit koordinat ve tahminî dikdörtgenler kaldırıldı. `TutorialTarget` gerçek React Native bileşenini `measureInWindow` ile ölçer, yalnız aktif nesnenin sınırına 2 dp BTB yeşili çizer ve adım/ekran/kapanış değişiminde çerçeveyi temizler. Özet hero, Günlük Super ve ilk maç hedeflerinde ardışık emülatör ekran kanıtı alındı; eski büyük çerçeve özel durumu düzeltilip tekrar doğrulandı. Fiziksel telefon parity’si observation’da beklenir. | HIGH | READY |
 
 | NXT-OBS-081 | 2026-08-11 | Açık tema kapsam netliği | Açık tema yalnız arka plan değil; yüzey, metin, sınır, durum, grafik, Bibi, sistem durum çubuğu, giriş/splash ve navigation renklerini ortak semantik paletten üretir. Giriş, Özet, Maç Detayı, rehber balonu ve hedef çerçeveleri açık tema release APK üzerinde görsel doğrulandı; seçim koyu varsayımı bozmadan kalıcıdır. | MEDIUM | READY |
+
+## 2026-08-18 Design V2 geri bildirim pass disposition
+
+Fiziksel Xiaomi kullanımından çıkan dört maddelik sıra kapatıldı. Kod çalışma
+ağacındadır ve **commit edilmemiştir**; commit/push ayrı açık onay gerektirir.
+Kapı her adımda temiz: TypeScript, ESLint, `git diff --check` ve **387/387**
+test (öncesi 342).
+
+- **Phase D — paneller + kalıcılık.** `liveDetail` ve `superDetail` modülleri
+  açılır/kapanır panel oldu. Kalıcılık `surface + kanonik modül id` ile ayrı bir
+  depo anahtarında; saklanan değer kapalı kümedir, bu yüzden mevcut kurulum
+  yükseltmede her şeyi açık bulur ve sonradan yayınlanan modül gizlenemez.
+  Sıralama tercihi ve panel tercihi bağımsızdır. Hero yapısal olarak kapatılamaz.
+- **Xiaomi canlı kart.** Alt metrik satırı yeniden tasarlanmadı; karar
+  verilmemiş kartta yalnız gerçek değeri olan blok gösteriliyor, böylece üç ayrı
+  `bekleniyor` etiketi tek dürüst ifadeye indi. Taşmaya karşı `flexWrap` /
+  `minWidth: 0` / `flexShrink` savunması eklendi, `SuperLogCard` da tarandı.
+- **Phase E.** Kodda kapatılamaz; `NXT-OBS-101` ve aşağıdaki
+  `ASSET_GENERATION_DEPENDENCY` bölümüne bakınız.
+- **Phase F/G.** Bibi tek seferlik mikro animasyon + uzun cooldown'lı yerel
+  feature-discovery motoru. `LiveDot` ürünün tek sürekli ambient animasyonu
+  olarak kaldı. `bibi-presence.ts` değiştirilmedi; Match Detail ve Super
+  Decision Detail'de ambient Bibi yok. `Daha Fazla > Bibi ipuçları` ile
+  `Normal` / `Sessiz`; `Sessiz` rehberi kapatmaz.
+
+- **Super gün kapsamı varsayılanı (sahip isteği).** Karar günlüğü ilk açılışta
+  `Bugün` kapsamında başlar. Kapsam route parametresindedir; kalıcı kullanıcı
+  tercihi yoktur, bu yüzden ezilen bir tercih de yok. `Tüm günler` artık açık
+  `scope=ALL` taşır, aksi hâlde seçilemez olurdu. `Bugün` yine en yeni maç günü
+  demektir; backend, karar mantığı ve geçmiş veri değişmedi.
+
+Fiziksel doğrulama bu maddelerin hiçbiri için **yapılmadı** — yeni ARM64 pilot
+APK gerekiyor ve o da commit onayından sonra gelir.
 
 ## 2026-08-17 cutover disposition
 
@@ -156,3 +191,64 @@ Durumlar: `OBSERVED`, `READY`, `DEFERRED`, `RESOLVED`.
 - `docs/observation_archive/cutover_2026-08-11-02.md`
 - `docs/observation_archive/cutover_2026-08-13-01.md`
 - `docs/observation_archive/cutover_2026-08-17.md`
+
+## ASSET_GENERATION_DEPENDENCY — kanonik BTB marka varlığı (2026-08-18)
+
+Phase E izi tamamlandı. Bu bir kod kusuru değildir ve kodda kapatılamaz.
+
+**Kanonik varlık.** Tek BTB marka raster'ı `assets/icon.png` (192x192 RGBA).
+Üç yerde kullanılır:
+
+```text
+app.config.ts:57   icon
+app.config.ts:86   android.adaptiveIcon.foregroundImage
+AppLaunchScreen.tsx:145  uygulama içi açılış logosu
+```
+
+Uygulama ikonu ile uygulama içi logo **aynı kaynağı** paylaşır. Handoff'un
+"ortak kaynak kanıtlanmadıkça app icon değiştirilmez" koşulu bu yüzden
+karşılanmıştır: aynı dosya değişince her iki yüzey birden değişir.
+
+**Kare zemin nereden geliyor.** Raster'ın içinden. Ölçüm:
+
+```text
+assets/icon.png            192x192 RGBA · tam saydam piksel 0 · alfa 221..255
+                           köşeler (0, 8, 27, α=221) — koyu lacivert, saydam değil
+ic_launcher_foreground.webp 432x432 · tam saydam piksel 0 · köşeler (0, 8, 27, 221)
+ic_launcher.webp            192x192 · tam saydam piksel 0
+ic_launcher_round.webp      192x192 · tam saydam piksel 7951
+```
+
+Üçüncü satır belirleyici: APK'ya giren adaptive-icon **foreground** katmanı
+kenardan kenara opak bir karedir. `mipmap-anydpi-v26/ic_launcher.xml` bir
+`<background android:drawable="@color/iconBackground"/>` (`#04101E`) bildirir,
+ama opak foreground onu tamamen örttüğü için bu arka plan hiç görünmez. Dördüncü
+satır aynı sonucu tersten doğrular: yuvarlak varyantta saydam piksel vardır,
+çünkü üretici aynı opak kareyi daire ile **kırpmıştır**. Launcher maskesi de bu
+yüzden zemini değil, markanın kendi kenarlarını kırpar.
+
+**Kodda ne yapıldı.** `AppLaunchScreen` logosundaki `borderRadius: 30` bir stil
+tercihi değil, gömülü kareyi açılış gradyanı üzerinde gizleyen bir telafidir.
+Kaldırılmadı — kaldırmak bugün görünür bir regresyon olurdu — ama gerçek varlık
+geldiğinde aynı değişiklikte kaldırılması gerektiği kod içinde işaretlendi;
+aksi hâlde artık maskelenmesi gerekmeyen bir çizimin köşelerini kırpar.
+
+**Bağımlılık.** Gereken şey, şeffaf zeminli, gerçek anlamda yeniden tasarlanmış
+BTB Intelligence Noir / Arcane-esinli özgün marka varlığıdır. Bu ortamda görsel
+üretme/düzenleme yeteneği yoktur ve şunlar bilinçli olarak **yapılmamıştır**:
+placeholder üretmek, mevcut logonun zeminini silmek, renklerini kaydırmak veya
+mekanik olarak yeniden renklendirmek. Bunların hepsi handoff'ta açıkça
+yasaklanmıştır ve hiçbiri marka sorununu çözmez.
+
+Varlık geldiğinde beklenen biçim: adaptive-icon foreground kuralına uygun,
+tam saydam zeminli, içeriği iç güvenli bölgede duran kare tuval. Takım
+armalarına dokunulmadı.
+
+**Yan bulgu — `assets/notification-icon.png` ölü kopya.** Dosya
+`assets/icon.png` ile **bayt bayt aynıdır** (`sha256` eşleşiyor) ve hiçbir yerden
+referans verilmemektedir: `app.config.ts` içindeki `expo-notifications`
+eklentisi yalnız `color` ve `sounds` alır, `icon` almaz; kaynakta ve Android
+kaynaklarında da geçmez. Android bildirim küçük ikonu alfa maskesi olarak
+çizildiği için, tamamen opak bir raster küçük ikon yerine dolu bir kare verir.
+Bu doğrudan `NXT-OBS-002` ile ilgilidir. Dosya **silinmedi** — varlık kararı
+sahibindir; yalnız kaydedildi.
