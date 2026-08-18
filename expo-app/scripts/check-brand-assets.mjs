@@ -126,7 +126,13 @@ function measure(image) {
         transparent += 1;
         continue;
       }
-      if (alpha === 255) {
+      // Not `=== 255`. A generated master routinely tops out a shade below
+      // full opacity across its whole body — this one peaked at 254 — and
+      // treating that as translucency reported a 45% halo on artwork that has
+      // none. Anything at 250 or above is opaque to the eye and to the
+      // compositor; what this check is actually hunting is the faint wash a
+      // careless cutout leaves where the old ground used to be.
+      if (alpha >= 250) {
         opaque += 1;
       }
       // Anything the eye can see counts as content. A wash of alpha 1-10 across
@@ -237,9 +243,10 @@ for (const role of roles) {
     checks.push(["içerik bulunamadı", false]);
   }
 
-  // A generated cutout often leaves a faint rectangle of alpha 1-12 where the
-  // old ground used to be. It is invisible on white and a grey box on the
-  // launch gradient, so it is a failure, not a rounding error.
+  // A careless cutout leaves a faint rectangle where the old ground used to be:
+  // invisible on white, a grey box on the launch gradient. Real artwork spends
+  // partial alpha only on its own edges and glow, which is a small share of the
+  // canvas — this master spends 3%. A quarter of the canvas is not an edge.
   const halo = report.total - report.transparent - report.opaque;
   checks.push([
     `yarı saydam piksel oranı %${((halo / report.total) * 100).toFixed(1)} (kenar yumuşatma payı)`,

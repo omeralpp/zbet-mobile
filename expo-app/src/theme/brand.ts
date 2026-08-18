@@ -10,21 +10,19 @@
  *   padding;
  * - the **adaptive launcher foreground**, drawn by the launcher. Android masks
  *   it to whatever shape the device uses and keeps only the inner 66% of the
- *   canvas safe, so artwork that fills the frame loses its own edges — which is
- *   exactly what the current shared raster does;
+ *   canvas safe, so artwork that fills the frame loses its own edges;
  * - the **notification small icon**, drawn by the system as an alpha mask.
  *   Colour is discarded; a fully opaque raster becomes a filled square. This
  *   role is already answered by a monochrome vector and must stay a vector.
  *
- * The mark and the launcher foreground therefore cannot be the same bytes once
- * a real asset exists: one wants to fill its box, the other has to sit inside a
- * safe zone. They currently share a file, which is why the launcher mask clips
- * the shield rather than the ground around it. The two constants below are
- * deliberately separate names for that reason, and the asset that lands splits
- * them without touching a call site.
+ * The mark and the launcher foreground are therefore two files: one fills its
+ * box, the other sits inside the safe zone. Both are derived from a single
+ * generated master by `scripts/derive-brand-exports.py`, so they can never
+ * drift into two different drawings, and `npm run check:brand` measures each
+ * against the geometry its role requires.
  *
- * Evidence, measurements and the replacement brief:
- * `docs/ASSET_GENERATION_BRIEF.md` and `ASSET_GENERATION_DEPENDENCY` in
+ * How the artwork was specified and what it replaced:
+ * `docs/ASSET_GENERATION_BRIEF.md`, and `NXT-OBS-101` in
  * `docs/OBSERVATION_LOG.md`.
  */
 
@@ -32,15 +30,15 @@
 export const btbBrandMarkPath = "./assets/brand/btb-mark.png";
 
 /**
- * Still the mark. The launcher foreground keeps sharing the mark's bytes until
- * the safe-zone export exists, because a mechanically padded copy of today's
- * opaque raster would put a floating dark square on the launcher background
- * rather than fix anything. When the real exports land this points at
- * `./assets/brand/btb-adaptive-foreground.png` and nothing else moves.
+ * The same artwork, scaled into the region Android guarantees. Derived from the
+ * generated master by `scripts/derive-brand-exports.py`, which only crops,
+ * scales and centres — the two files are the same drawing at two geometries,
+ * not two drawings.
  */
-export const btbAdaptiveIconForegroundPath = btbBrandMarkPath;
+export const btbAdaptiveIconForegroundPath =
+  "./assets/brand/btb-adaptive-foreground.png";
 
-/** Revealed only once the foreground actually carries transparency. */
+/** Visible at last: the foreground above is genuinely transparent. */
 export const btbAdaptiveIconBackground = "#04101E";
 
 /**

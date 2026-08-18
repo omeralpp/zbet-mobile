@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "tsx --test \"src/**/*.test.ts\"",
-    "check": "npm run typecheck && npm run lint && npm test",
+    "check": "npm run typecheck && npm run lint && npm test && npm run check:brand",
     "check:brand": "tsx scripts/check-brand-assets.mjs",
     "doctor": "expo-doctor"
   },
