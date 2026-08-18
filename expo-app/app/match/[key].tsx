@@ -24,6 +24,7 @@ import {
 } from "@/src/api/queries";
 import { ModuleHeading } from "@/src/components/ModuleHeading";
 import { RatingStars } from "@/src/components/RatingStars";
+import { LiveDot } from "@/src/components/LiveDot";
 import { SignalMeter } from "@/src/components/SignalMeter";
 import {
   SurfaceDivider,
@@ -581,7 +582,7 @@ export default function MatchDetailScreen() {
             </Text>
           </View>
           <View style={[styles.elapsedPill, live && styles.elapsedPillLive]}>
-            {live ? <View style={styles.liveDot} /> : null}
+            {live ? <LiveDot /> : null}
             <Text style={[styles.elapsed, live && styles.elapsedLive]}>
               {formatElapsed(match.status, match.elapsed)}
             </Text>
@@ -748,12 +749,6 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: 5
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: semantic.live
   },
   elapsedPillLive: {
     backgroundColor: semantic.liveSoft,

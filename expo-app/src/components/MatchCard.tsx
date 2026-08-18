@@ -11,6 +11,7 @@ import {
   formatFixtureDateTime,
   formatSigned
 } from "@/src/utils/format";
+import { LiveDot } from "./LiveDot";
 import { SurfaceDivider, SurfaceMaterial } from "./SurfaceMaterial";
 import { RatingStars } from "./RatingStars";
 import { TeamLogo } from "./TeamLogo";
@@ -121,7 +122,7 @@ export function MatchCard({
           {match.league}
         </Text>
         <View style={[styles.timePill, live && styles.livePill]}>
-          {live ? <View style={styles.liveDot} /> : null}
+          {live ? <LiveDot /> : null}
           <Text style={[styles.timeText, live && styles.liveText]}>
             {formatFixtureDateTime(match.matchDate, match.matchTime)}
             {live || match.status === "FINISHED"
@@ -274,12 +275,6 @@ const styles = StyleSheet.create({
     backgroundColor: semantic.liveSoft,
     borderWidth: 1,
     borderColor: semantic.live
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: semantic.live
   },
   timeText: {
     color: colors.textMuted,

@@ -38,7 +38,8 @@ import {
   colors,
   radii,
   spacing,
-  themeMode
+  themeMode,
+  typeScale
 } from "@/src/theme/theme";
 import { useTutorial } from "@/src/tutorial/TutorialProvider";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
@@ -523,21 +524,18 @@ const styles = StyleSheet.create({
   },
   modeTitle: {
     color: colors.text,
-    fontSize: 15,
-    fontWeight: "900"
+    ...typeScale.decision
   },
   modeDetail: {
     color: colors.textMuted,
-    fontSize: 12,
-    lineHeight: 18,
+    ...typeScale.body,
     marginTop: spacing.sm
   },
+  // Section labels here are the same grammar as a module eyebrow elsewhere,
+  // so they take the same role and the same structural bronze.
   sectionTitle: {
-    color: colors.textMuted,
-    fontSize: 11,
-    fontWeight: "900",
-    letterSpacing: 1,
-    textTransform: "uppercase",
+    color: colors.bronze,
+    ...typeScale.eyebrow,
     marginTop: spacing.xxl,
     marginBottom: spacing.sm
   },
@@ -569,8 +567,7 @@ const styles = StyleSheet.create({
   },
   noteText: {
     color: colors.textMuted,
-    fontSize: 11,
-    lineHeight: 17
+    ...typeScale.bodyCompact
   },
   preferenceMenu: {
     padding: spacing.sm,
@@ -591,14 +588,12 @@ const styles = StyleSheet.create({
   preferenceStars: {
     width: 72,
     color: colors.gold,
-    fontSize: 12,
-    fontWeight: "900"
+    ...typeScale.label
   },
   preferenceOptionText: {
     flex: 1,
     color: colors.textMuted,
-    fontSize: 12,
-    fontWeight: "800"
+    ...typeScale.bodyCompact
   },
   preferenceOptionTextSelected: {
     color: colors.white
@@ -616,19 +611,16 @@ const styles = StyleSheet.create({
   },
   rowTitle: {
     color: colors.text,
-    fontSize: 14,
-    fontWeight: "800"
+    ...typeScale.identity
   },
   rowDetail: {
     color: colors.textSubtle,
-    fontSize: 10,
-    lineHeight: 15,
-    marginTop: 2
+    ...typeScale.bodyCompact,
+    marginTop: spacing.xs
   },
   boundary: {
     color: colors.textSubtle,
-    fontSize: 11,
-    lineHeight: 17,
+    ...typeScale.bodyCompact,
     textAlign: "center",
     marginTop: spacing.xxxl,
     paddingHorizontal: spacing.lg

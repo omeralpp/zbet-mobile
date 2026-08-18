@@ -9,7 +9,6 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { usePathname, useRouter } from "expo-router";
 import {
-  AccessibilityInfo,
   Animated,
   Image,
   PanResponder,
@@ -34,6 +33,7 @@ import {
   bibiPresence,
   shouldRenderBibi
 } from "./bibi-presence";
+import { useReducedMotion } from "@/src/theme/use-reduced-motion";
 import { useMascotActions } from "./MascotActions";
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
@@ -117,7 +117,9 @@ export function BtbMascotOverlay() {
   const [openPath, setOpenPath] = useState<string | null>(null);
   const [blinkFrame, setBlinkFrame] = useState<0 | 1 | 2>(0);
   const [showGreeting, setShowGreeting] = useState(true);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  // Shared with every other animated surface, so the device preference cannot
+  // be honoured here and quietly ignored elsewhere.
+  const reduceMotion = useReducedMotion();
   const [dragging, setDragging] = useState(false);
   const [idleX] = useState(() => new Animated.Value(0));
   const [idleY] = useState(() => new Animated.Value(0));
@@ -200,17 +202,6 @@ export function BtbMascotOverlay() {
   // an interrupted blink can never freeze a half-closed frame on screen.
   const idleSuppressed =
     reduceMotion || open || dragging || Boolean(tutorial.activeTip);
-
-  useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled()
-      .then(setReduceMotion)
-      .catch(() => undefined);
-    const subscription = AccessibilityInfo.addEventListener(
-      "reduceMotionChanged",
-      setReduceMotion
-    );
-    return () => subscription.remove();
-  }, []);
 
   useEffect(() => {
     AsyncStorage.getItem(storageKey)

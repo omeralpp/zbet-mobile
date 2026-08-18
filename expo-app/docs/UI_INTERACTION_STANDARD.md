@@ -176,6 +176,13 @@ most serious error this product can make in its UI.
 - `emphasis.alert` is reserved for change the user is waiting on — a goal, a new
   Super decision. Routine refetches use `emphasis.arrive`.
 - Ambient loops are the first thing reduced motion drops.
+- Read the device preference through `useReducedMotion`, never by calling
+  `AccessibilityInfo` in a component. A preference half the product honours is
+  worse than one it ignores, because the user cannot tell which half.
+- `LiveDot` is the only continuous animation in the product and it has to stay
+  that way. A live match is the one thing that changes whether or not the user
+  is looking; everything else animates on a discrete event. It fades rather than
+  scales, because a moving footprint drags the eye on a list being scanned.
 
 ## Layout
 
