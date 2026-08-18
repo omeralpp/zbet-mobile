@@ -127,6 +127,23 @@ most serious error this product can make in its UI.
   it. A missing band would let the reader assume the screen is still complete.
 - Nothing below the seam may be styled so that it looks available above it.
 
+### Palette
+
+- Dark is the flagship: deep ink ground, layered midnight surfaces, aqua-teal
+  live energy, jade positive, crimson negative, amber warning, bronze structure.
+- Light is not the dark theme inverted. Warm off-white ground, cool-tinted card
+  surfaces, deep navy type. Depth comes from temperature rather than another
+  step of grey.
+- Accent hues are chosen by worst-case separation, not by name. A literal
+  emerald positive sat 17 degrees from the live aqua and the two collapsed; jade
+  holds 33, which is the widest this set can carry. Prefer the measurement over
+  the label.
+- `violet` is reserved emphasis with no default consumer. It earns its rarity by
+  not appearing until something genuinely warrants it.
+- Changing a palette value must keep `keepsCardEdgeReadable` passing against the
+  pre-v2 benchmark. The material may gain depth; it may never trade the edge of
+  a card for it.
+
 ### Depth — `elevation.ts`
 
 - Four rungs: `flat`, `raised`, `floating`, `glow`. Call `depth(level)`.

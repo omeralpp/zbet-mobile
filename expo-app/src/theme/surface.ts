@@ -42,14 +42,14 @@ export type ThemeName = "dark" | "light";
  * flat fill was, and lift the top well past it.
  */
 export const surfaceGradients = {
-  dark: ["#0E2740", "#0A1E31"],
-  light: ["#FFFFFF", "#F6FAFC"]
+  dark: ["#143552", "#0C2136"],
+  light: ["#FFFFFF", "#F4F8FC"]
 } as const satisfies Record<ThemeName, readonly [string, string]>;
 
 /** Page ground each material sits on, used to check edge readability. */
 export const pageBackgrounds = {
-  dark: "#04101E",
-  light: "#F3F7FA"
+  dark: "#030B16",
+  light: "#F0EBE4"
 } as const satisfies Record<ThemeName, string>;
 
 /**

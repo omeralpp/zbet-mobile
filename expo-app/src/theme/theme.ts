@@ -35,34 +35,46 @@ export {
 export const themeStorageKey = "btb-mobile-next-theme-v1";
 
 const darkColors = {
-  background: "#04101E",
-  backgroundElevated: "#071726",
-  surface: "#0A1D31",
-  surfaceStrong: "#102A43",
-  border: "#173B59",
-  borderSoft: "#102E48",
-  text: "#F4F8FC",
-  textMuted: "#94A9BC",
-  textSubtle: "#6E879D",
-  blue: "#1597E5",
-  blueSoft: "#0F5F91",
-  green: "#62E66D",
-  greenSoft: "#174A32",
+  // Deep ink. The old ground was a navy that read as "dark blue UI"; this one
+  // reads as unlit space, which is what lets a single teal trace look like
+  // energy rather than like another colour on a coloured background.
+  background: "#030B16",
+  backgroundElevated: "#06101D",
+  surface: "#143552",
+  surfaceStrong: "#16324D",
+  border: "#1E4468",
+  borderSoft: "#14304A",
+  text: "#F2F7FC",
+  textMuted: "#9AB0C4",
+  textSubtle: "#6F8AA3",
+  // Intelligence moved deeper and more saturated, away from the live teal
+  // rather than toward it. Two technological accents only read as two if they
+  // are far enough apart at the size a dot renders.
+  blue: "#2E86F0",
+  blueSoft: "#10375F",
+  // Positive is jade rather than mint. A literal emerald sat 17 degrees from
+  // the live aqua and the two collapsed into each other; this holds 33, which
+  // is the widest worst-case separation this set can carry.
+  green: "#4ADE80",
+  greenSoft: "#10402A",
+  // Warning is deliberately unchanged. It already reads as amber, and moving it
+  // further warm would have closed the gap to the structural bronze for a
+  // difference of three degrees.
   gold: "#F5C542",
   goldSoft: "#4A3C12",
-  red: "#FF6573",
-  redSoft: "#4D2028",
-  // BTB's live signature. Chosen for hue distance rather than brightness: pure
-  // cyan sits 15-18 degrees from Fiori blue and collapses into it at the size a
-  // live dot actually renders, while this aqua-teal holds 28 degrees from blue
-  // and 50 from BTB green - the widest worst-case separation available from
-  // every meaning it can appear beside. 10.9:1 on the deep navy ground.
-  teal: "#3AD9CB",
-  tealSoft: "#0E424D",
-  // Structural metal, never a signal. Safe beside the rating gold because it is
-  // separated by saturation rather than hue: roughly half as saturated, so it
-  // reads as material and cannot be mistaken for a star or a warning.
+  // Crimson rather than coral: deeper, less sugary, and still unmistakably the
+  // colour of a lost decision and a red card.
+  red: "#FA4E67",
+  redSoft: "#4A1A26",
+  // BTB's live signature, brightened slightly against the deeper ground.
+  teal: "#3FE0D2",
+  tealSoft: "#0E4650",
+  // Structural metal, never a signal. Separated from the warning amber by
+  // saturation and luminance rather than by hue.
   bronze: "#B08046",
+  // Reserved emphasis. Deliberately unused: violet earns its rarity by not
+  // appearing until something genuinely warrants it.
+  violet: "#A78BFA",
   orange: "#FF9A55",
   white: "#FFFFFF",
   black: "#000000"
@@ -71,26 +83,30 @@ const darkColors = {
 export type ThemeColors = { [Key in keyof typeof darkColors]: string };
 
 const lightColors: ThemeColors = {
-  background: "#F3F7FA",
+  // Light is not the dark theme inverted. The ground is a warm off-white and
+  // the surfaces above it are cool, so depth comes from temperature rather than
+  // from another step of grey. Warm paper, cool instrument.
+  background: "#F0EBE4",
   backgroundElevated: "#FFFFFF",
   surface: "#FFFFFF",
-  surfaceStrong: "#E7F0F6",
-  border: "#B9CFDD",
-  borderSoft: "#D5E2EA",
-  text: "#102538",
-  textMuted: "#4D6577",
-  textSubtle: "#6C8190",
-  blue: "#087FC1",
-  blueSoft: "#0F6FA6",
-  green: "#198A43",
-  greenSoft: "#DDF4E5",
-  gold: "#9B7200",
-  goldSoft: "#F8EDC8",
-  red: "#C93F51",
-  redSoft: "#F8DDE1",
-  teal: "#046C7A",
-  tealSoft: "#D7EFF2",
+  surfaceStrong: "#E9EFF5",
+  border: "#CBD8E2",
+  borderSoft: "#DFE7EE",
+  text: "#0B1B2E",
+  textMuted: "#4A5F73",
+  textSubtle: "#5C7186",
+  blue: "#1663C9",
+  blueSoft: "#12539F",
+  green: "#0F7A4A",
+  greenSoft: "#D9F0E3",
+  gold: "#8A6410",
+  goldSoft: "#F6EBCB",
+  red: "#C1304A",
+  redSoft: "#F8DCE1",
+  teal: "#04707F",
+  tealSoft: "#D3EDF0",
   bronze: "#8A5F2B",
+  violet: "#6D4AC4",
   orange: "#C86521",
   white: "#FFFFFF",
   black: "#000000"

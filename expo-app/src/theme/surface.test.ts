@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   contrastRatio,
   keepsCardEdgeReadable,
+  relativeLuminance,
   keepsEnergyScarce,
   pageBackgrounds,
   resolveEdgeTrace,
@@ -11,10 +12,16 @@ import {
   traceWidthRatio
 } from "./surface";
 
-/** Separation the flat fill had before the material existed. */
+/**
+ * Separation the pre-v2 flat fill had on the pre-v2 ground.
+ *
+ * These literals are a historical benchmark, not current palette values: the
+ * material is only allowed to move if every edge stays at least as readable as
+ * the flat fill it replaced, even after the palette itself evolved.
+ */
 const flatSurfaceSeparation = {
-  dark: contrastRatio("#0A1D31", pageBackgrounds.dark),
-  light: contrastRatio("#FFFFFF", pageBackgrounds.light)
+  dark: contrastRatio("#0A1D31", "#04101E"),
+  light: contrastRatio("#FFFFFF", "#F3F7FA")
 };
 
 test("a trace can never close into a border", () => {
@@ -68,19 +75,32 @@ test("depth is never bought with the edge of the card", () => {
 });
 
 test("a light card stays lighter than the page it sits on", () => {
+  // Compared by luminance, not by hex string. A warm page and a cool card can
+  // order one way as text and the other way as light, and the earlier string
+  // comparison would have passed an inverted material without noticing.
   const [top, bottom] = resolveSurfaceGradient("light");
-  assert.ok(top > pageBackgrounds.light);
+  const page = relativeLuminance(pageBackgrounds.light);
+  assert.ok(relativeLuminance(top) > page);
   assert.ok(
-    bottom > pageBackgrounds.light,
+    relativeLuminance(bottom) > page,
     "shading a light card past its own page inverts the material"
+  );
+});
+
+test("the light material keeps both edges readable on the warm ground", () => {
+  assert.ok(
+    keepsCardEdgeReadable(
+      resolveSurfaceGradient("light"),
+      pageBackgrounds.light,
+      flatSurfaceSeparation.light
+    )
   );
 });
 
 test("the material adds real depth rather than a token gradient", () => {
   const dark = resolveSurfaceGradient("dark");
   assert.ok(
-    contrastRatio(dark[0], pageBackgrounds.dark) >
-      contrastRatio("#0A1D31", pageBackgrounds.dark),
+    contrastRatio(dark[0], pageBackgrounds.dark) > flatSurfaceSeparation.dark,
     "the lit top edge is the point: it must beat the old flat fill"
   );
 });
