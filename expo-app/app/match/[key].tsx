@@ -22,7 +22,13 @@ import {
   matchQuery,
   matchSuperLogsQuery
 } from "@/src/api/queries";
+import { ModuleHeading } from "@/src/components/ModuleHeading";
 import { RatingStars } from "@/src/components/RatingStars";
+import { SignalMeter } from "@/src/components/SignalMeter";
+import {
+  SurfaceDivider,
+  SurfaceMaterial
+} from "@/src/components/SurfaceMaterial";
 import { TeamLogo } from "@/src/components/TeamLogo";
 import { GamePulseCard } from "@/src/components/GamePulseCard";
 import { MatchTimelineCard } from "@/src/components/MatchTimelineCard";
@@ -37,7 +43,15 @@ import { buildBilyonerMatchUrl } from "@/src/external/bilyoner";
 import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
 import { useModuleLayout } from "@/src/layout/module-layout-store";
 import type { LiveDetailModuleId } from "@/src/layout/module-registry";
-import { colors, radii, semantic, spacing, typeScale } from "@/src/theme/theme";
+import {
+  colors,
+  fontWeights,
+  radii,
+  semantic,
+  shadows,
+  spacing,
+  typeScale
+} from "@/src/theme/theme";
 import {
   formatCurrentMarketRate,
   formatDecisionReason,
@@ -47,6 +61,7 @@ import {
   formatRate
 } from "@/src/utils/format";
 import { relatedSuperDecisions } from "@/src/utils/related-super-decisions";
+import { deriveLiveRateTrend } from "@/src/utils/live-card-indicators";
 
 function firstParam(value: string | string[] | undefined): string {
   const raw = Array.isArray(value) ? value[0] ?? "" : value ?? "";
@@ -209,6 +224,31 @@ export default function MatchDetailScreen() {
     match.selectedOdd,
     "güncel oran"
   );
+  // Reuses the list card's trend derivation, so Match Detail and the Live list
+  // can never disagree about which way an odd moved.
+  const trend = deriveLiveRateTrend(match.liveRate, match.currentRate);
+  const movement = {
+    UP: {
+      icon: "trending-up" as const,
+      color: semantic.positive,
+      label: "seçimden yükseldi"
+    },
+    DOWN: {
+      icon: "trending-down" as const,
+      color: semantic.negative,
+      label: "seçimden düştü"
+    },
+    STABLE: {
+      icon: "minus" as const,
+      color: colors.textMuted,
+      label: "seçimden değişmedi"
+    },
+    UNAVAILABLE: {
+      icon: "minus" as const,
+      color: colors.textSubtle,
+      label: "güncel oran bekleniyor"
+    }
+  }[trend];
   const hasLeagueContext = Boolean(
     leagueContext &&
       (leagueContext.homeStandingPosition !== null ||
@@ -238,7 +278,7 @@ export default function MatchDetailScreen() {
     ),
     odds: (
       <>
-        <Text style={styles.sectionTitle}>Oran sonuçları</Text>
+        <ModuleHeading eyebrow="PİYASA" title="Oran sonuçları" />
         <RatioResultsChart
           marketRates={insight?.marketRates ?? []}
           phase={match.ratioPhase}
@@ -248,8 +288,9 @@ export default function MatchDetailScreen() {
     ),
     statistics: (
       <>
-        <Text style={styles.sectionTitle}>Canlı saha dengesi</Text>
+        <ModuleHeading eyebrow="SAHA" title="Canlı saha dengesi" />
         <View style={styles.statsCard}>
+          <SurfaceMaterial radius={radii.lg} />
           <ComparisonRow
             away={match.awayBallPossession}
             home={match.homeBallPossession}
@@ -292,8 +333,9 @@ export default function MatchDetailScreen() {
     ),
     pressure: (
       <>
-        <Text style={styles.sectionTitle}>Güncel baskı dengesi</Text>
+        <ModuleHeading eyebrow="BASKI" title="Güncel baskı dengesi" />
         <View style={styles.statsCard}>
+          <SurfaceMaterial radius={radii.lg} />
           <PressureBalance
             label="Güncel maç snapshot'ı"
             pressureDiff={
@@ -312,8 +354,9 @@ export default function MatchDetailScreen() {
     ),
     scoreDistribution: (
       <>
-        <Text style={styles.sectionTitle}>Skor dağılımı</Text>
+        <ModuleHeading eyebrow="OLASILIK" title="Skor dağılımı" />
         <View style={styles.distributionCard}>
+          <SurfaceMaterial radius={radii.lg} />
           {match.scoreDistribution.length ? (
             match.scoreDistribution.map((row) => (
               <View key={row.score} style={styles.distributionRow}>
@@ -342,35 +385,51 @@ export default function MatchDetailScreen() {
   if (match.selectedOdd && match.rating > 0) {
     moduleNodes.decision = (
       <Pressable
+        accessibilityHint={
+          showDecision ? "Model ayrıntılarını gizler" : "Model ayrıntılarını açar"
+        }
         accessibilityRole="button"
         onPress={() => setShowDecision((visible) => !visible)}
         style={styles.decisionCard}
       >
-        <View style={styles.decisionHeader}>
-          <View>
-            <Text style={styles.decisionEyebrow}>KARAR ÖZETİ</Text>
-            <Text style={styles.decisionTitle}>BTB neden seçti?</Text>
-          </View>
+        <SurfaceMaterial accent={semantic.intelligence} radius={radii.lg} />
+        <Text style={styles.decisionEyebrow}>KARAR ÖZETİ</Text>
+        {/* The reason is the answer to the question the card asks, so it is the
+            headline rather than something revealed after a tap. Only the model
+            internals sit behind the disclosure - a reader who wants to know why
+            gets an answer immediately, and a reader who wants the numbers asks
+            for them. */}
+        <Text style={styles.decisionReason}>
+          {formatDecisionReason(match.decisionReason)}
+        </Text>
+        <View style={styles.decisionFacts}>
+          {match.decisionMinute !== null ? (
+            <Text style={styles.decisionFact}>{match.decisionMinute}&apos; karar</Text>
+          ) : null}
+          {match.selectedOdd ? (
+            <Text style={styles.decisionFact}>{match.selectedOdd}</Text>
+          ) : null}
           <Text style={styles.decisionToggle}>
-            {showDecision ? "Gizle" : "Göster"}
+            {showDecision ? "Modeli gizle" : "Modeli göster"}
           </Text>
         </View>
         {showDecision ? (
           <View style={styles.decisionBody}>
-            <Text style={styles.decisionReason}>
-              {formatDecisionReason(match.decisionReason)}
-            </Text>
-            <Text style={styles.decisionMeta}>
-              {match.selectedOdd}
-              {match.decisionMinute !== null ? ` · ${match.decisionMinute}'` : ""}
-              {match.decisionConfidence !== null
-                ? ` · Güven ${formatPercentage(match.decisionConfidence)}`
-                : ""}
-            </Text>
+            {match.decisionConfidence !== null ? (
+              <View style={styles.decisionMetric}>
+                <Text style={styles.decisionMetricValue}>
+                  {formatPercentage(match.decisionConfidence)}
+                </Text>
+                <Text style={styles.decisionMetricLabel}>güven</Text>
+              </View>
+            ) : null}
             {match.decisionScore !== null ? (
-              <Text style={styles.decisionScore}>
-                Model skoru {match.decisionScore.toFixed(2)}
-              </Text>
+              <View style={styles.decisionMetric}>
+                <Text style={styles.decisionMetricValue}>
+                  {match.decisionScore.toFixed(2)}
+                </Text>
+                <Text style={styles.decisionMetricLabel}>model skoru</Text>
+              </View>
             ) : null}
           </View>
         ) : null}
@@ -381,8 +440,9 @@ export default function MatchDetailScreen() {
   if (relatedDecisions.length) {
     moduleNodes.relatedSuper = (
       <>
-        <Text style={styles.sectionTitle}>Maçın Super tercihleri</Text>
+        <ModuleHeading eyebrow="KARAR GEÇMİŞİ" title="Maçın Super tercihleri" />
         <View style={styles.relatedDecisionCard}>
+          <SurfaceMaterial radius={radii.lg} />
           {relatedDecisions.map((log, index) => {
             const current =
               log.selectedOdd === match.selectedOdd &&
@@ -507,14 +567,21 @@ export default function MatchDetailScreen() {
     >
       <TutorialTarget id="match-summary" radius={radii.xl}>
         <View style={styles.scoreHero}>
+        <SurfaceMaterial
+          {...(live ? { accent: semantic.live } : {})}
+          radius={radii.xl}
+        />
         <View style={styles.leagueRow}>
           <View style={styles.leagueCopy}>
-            <Text style={styles.league}>{match.league}</Text>
+            <Text numberOfLines={1} style={styles.league}>
+              {match.league}
+            </Text>
             <Text style={styles.fixtureTime}>
               {formatFixtureDateTime(match.matchDate, match.matchTime)}
             </Text>
           </View>
           <View style={[styles.elapsedPill, live && styles.elapsedPillLive]}>
+            {live ? <View style={styles.liveDot} /> : null}
             <Text style={[styles.elapsed, live && styles.elapsedLive]}>
               {formatElapsed(match.status, match.elapsed)}
             </Text>
@@ -530,13 +597,14 @@ export default function MatchDetailScreen() {
             />
           </View>
           <View style={styles.scoreBlock}>
-            <Text style={styles.scoreContext}>Maç skoru</Text>
             <Text style={styles.score}>
-              {match.homeScore} – {match.awayScore}
+              {match.homeScore}
+              <Text style={styles.scoreSeparator}> - </Text>
+              {match.awayScore}
             </Text>
             {periodScoreQuery.data?.halfTimeScore ? (
               <Text style={styles.halfTimeScore}>
-                İlk yarı {periodScoreQuery.data.halfTimeScore.homeScore}-
+                İY {periodScoreQuery.data.halfTimeScore.homeScore}-
                 {periodScoreQuery.data.halfTimeScore.awayScore}
               </Text>
             ) : null}
@@ -550,21 +618,37 @@ export default function MatchDetailScreen() {
             />
           </View>
         </View>
-        <View style={styles.selectionRow}>
-          <View style={styles.heroMetric}>
-            <RatingStars rating={match.rating} size={16} />
+        {/* The verdict band. The score above is what happened; this is what
+            BTB makes of it. Giving the verdict its own lit band instead of a
+            third row of loose metrics is what stops the hero reading as a
+            scoreboard with statistics attached. */}
+        <SurfaceDivider
+          {...(live ? { accent: semantic.live } : {})}
+          style={styles.heroDivider}
+        />
+        <Text style={styles.verdictEyebrow}>BTB SEÇİMİ</Text>
+        <View style={styles.verdictRow}>
+          <View style={styles.verdictCopy}>
             <Text numberOfLines={1} style={styles.selection}>
               {match.selectedOdd || "Super adayı bekleniyor"}
             </Text>
-            <Text style={styles.rateLabel}>seçim</Text>
+            <SignalMeter rating={match.rating} />
           </View>
-          <View style={[styles.heroMetric, styles.heroMetricCenter]}>
-            <Text style={styles.rateValue}>{formatRate(match.liveRate)}</Text>
-            <Text style={styles.rateLabel}>seçim oranı</Text>
-          </View>
-          <View style={[styles.heroMetric, styles.heroMetricEnd]}>
-            <Text style={styles.rateValue}>{currentMarket.value}</Text>
-            <Text style={styles.rateLabel}>{currentMarket.label}</Text>
+          <View style={styles.movementBlock}>
+            <View style={styles.movementRow}>
+              <Text style={styles.movementFrom}>
+                {formatRate(match.liveRate)}
+              </Text>
+              <MaterialCommunityIcons
+                color={movement.color}
+                name={movement.icon}
+                size={16}
+              />
+              <Text style={[styles.movementTo, { color: movement.color }]}>
+                {currentMarket.value}
+              </Text>
+            </View>
+            <Text style={styles.movementLabel}>{movement.label}</Text>
           </View>
         </View>
         </View>
@@ -627,11 +711,11 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg
   },
   scoreHero: {
-    backgroundColor: colors.surface,
     borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.xl
+    borderColor: colors.borderSoft,
+    padding: spacing.xl,
+    ...shadows.card
   },
   leagueRow: {
     flexDirection: "row",
@@ -641,8 +725,7 @@ const styles = StyleSheet.create({
   },
   league: {
     color: colors.textMuted,
-    fontSize: 11,
-    fontWeight: "800",
+    ...typeScale.micro,
     textTransform: "uppercase"
   },
   leagueCopy: {
@@ -660,8 +743,17 @@ const styles = StyleSheet.create({
   elapsedPill: {
     backgroundColor: colors.surfaceStrong,
     borderRadius: radii.round,
-    paddingHorizontal: spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
     paddingVertical: 5
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: semantic.live
   },
   elapsedPillLive: {
     backgroundColor: semantic.liveSoft,
@@ -716,104 +808,122 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: "900"
   },
-  scoreContext: {
-    color: colors.textSubtle,
-    fontSize: 9,
-    fontWeight: "800",
-    marginBottom: spacing.xs
-  },
   score: {
     color: colors.text,
-    fontSize: 27,
-    fontWeight: "900",
-    paddingHorizontal: spacing.lg
+    ...typeScale.display,
+    paddingHorizontal: spacing.md,
+    textAlign: "center"
+  },
+  // The separator recedes so the two numbers read as one value rather than as
+  // three glyphs of equal weight.
+  scoreSeparator: {
+    color: colors.textSubtle,
+    fontWeight: fontWeights.medium
   },
   scoreBlock: {
     alignItems: "center"
   },
   halfTimeScore: {
-    color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: "800",
-    marginTop: 3
+    color: colors.textSubtle,
+    ...typeScale.label,
+    marginTop: spacing.xs,
+    textAlign: "center"
   },
-  selectionRow: {
-    minHeight: 72,
-    paddingTop: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderSoft,
+  heroDivider: {
+    marginTop: spacing.xl,
+    marginBottom: spacing.lg
+  },
+  verdictEyebrow: {
+    color: colors.bronze,
+    ...typeScale.eyebrow,
+    marginBottom: spacing.sm
+  },
+  verdictRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: spacing.lg
+  },
+  verdictCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: spacing.sm
+  },
+  movementBlock: {
+    alignItems: "flex-end"
+  },
+  movementRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.md
+    gap: spacing.xs
   },
-  heroMetric: {
-    flex: 1,
-    minWidth: 0
+  // The rate BTB selected at is context for where the market is now, so it sits
+  // quieter than the current number it points to.
+  movementFrom: {
+    color: colors.textMuted,
+    ...typeScale.metricCompact
   },
-  heroMetricCenter: {
-    alignItems: "center"
+  movementTo: {
+    ...typeScale.metric
   },
-  heroMetricEnd: {
-    alignItems: "flex-end"
+  movementLabel: {
+    color: colors.textSubtle,
+    ...typeScale.label,
+    marginTop: spacing.xs
   },
   selection: {
     color: colors.text,
-    fontSize: 13,
-    fontWeight: "900",
-    marginTop: 3
-  },
-  rateValue: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: "900"
-  },
-  rateLabel: {
-    color: colors.textSubtle,
-    fontSize: 9,
-    marginTop: 2
+    ...typeScale.decision
   },
   decisionCard: {
-    backgroundColor: colors.backgroundElevated,
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.borderSoft,
     padding: spacing.lg,
     marginTop: spacing.lg
   },
-  decisionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: spacing.md
-  },
   decisionEyebrow: {
-    color: colors.green,
-    fontSize: 9,
-    fontWeight: "900",
-    letterSpacing: 1
-  },
-  decisionTitle: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: "900",
-    marginTop: 2
+    color: colors.bronze,
+    ...typeScale.eyebrow
   },
   decisionToggle: {
-    color: colors.blue,
-    fontSize: 11,
-    fontWeight: "900"
+    color: semantic.intelligence,
+    ...typeScale.label,
+    marginLeft: "auto"
+  },
+  decisionFacts: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    marginTop: spacing.md
+  },
+  decisionFact: {
+    color: colors.textMuted,
+    ...typeScale.label
   },
   decisionBody: {
     borderTopWidth: 1,
     borderTopColor: colors.borderSoft,
-    gap: spacing.xs,
+    flexDirection: "row",
+    gap: spacing.xxl,
     marginTop: spacing.md,
     paddingTop: spacing.md
   },
+  decisionMetric: {
+    gap: spacing.xs
+  },
+  decisionMetricValue: {
+    color: colors.text,
+    ...typeScale.metric
+  },
+  decisionMetricLabel: {
+    color: colors.textSubtle,
+    ...typeScale.label
+  },
   decisionReason: {
     color: colors.text,
-    fontSize: 13,
-    fontWeight: "800"
+    ...typeScale.decision,
+    marginTop: spacing.sm
   },
   decisionMeta: {
     color: colors.textMuted,
@@ -825,7 +935,6 @@ const styles = StyleSheet.create({
     fontSize: 10
   },
   relatedDecisionCard: {
-    backgroundColor: colors.backgroundElevated,
     borderColor: colors.borderSoft,
     borderRadius: radii.lg,
     borderWidth: 1,
@@ -862,16 +971,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     textTransform: "uppercase"
   },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: "900",
-    marginTop: spacing.xxl,
-    marginBottom: spacing.md
-  },
   statsCard: {
-    backgroundColor: colors.backgroundElevated,
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.borderSoft,
@@ -929,7 +1029,6 @@ const styles = StyleSheet.create({
     borderRadius: radii.round
   },
   distributionCard: {
-    backgroundColor: colors.backgroundElevated,
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.borderSoft,

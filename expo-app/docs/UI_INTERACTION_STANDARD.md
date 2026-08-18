@@ -61,6 +61,27 @@ headers, global chrome — stays deliberately quiet.
   hero) and never substitutes for positive, warning, live or rating. It is safe
   beside the rating gold because it is separated by saturation, not hue.
 
+### Intelligence surfaces
+
+BTB's own analytical material, as opposed to football data it merely relays.
+
+- A flagship hero carries the score *and* the verdict as two bands separated by
+  a lit divider. The score is what happened; the verdict is what BTB makes of
+  it. A third row of loose metrics under a scoreboard is what made the old
+  screen read as a generic sports app.
+- `SignalMeter` draws an existing rating as signal strength using the
+  intelligence accent. Dim segments always render, so the ceiling stays legible
+  and a two-of-five never reads as a full short bar. Stars stay in dense list
+  rows, where a five-shape read really is the fastest parse.
+- Odds are shown as movement — selected rate, direction, current rate — using
+  the same `deriveLiveRateTrend` the list card uses, so two surfaces can never
+  disagree about which way an odd moved.
+- Explainability leads with the answer. The reason a decision was made is the
+  card's headline; only model internals sit behind progressive disclosure. A
+  reader who wants to know *why* should never have to tap for it.
+- Module headings use `ModuleHeading` with a bronze eyebrow. A reordered stack
+  has to keep reading as a structured cockpit rather than a pile of cards.
+
 ### Depth — `elevation.ts`
 
 - Four rungs: `flat`, `raised`, `floating`, `glow`. Call `depth(level)`.

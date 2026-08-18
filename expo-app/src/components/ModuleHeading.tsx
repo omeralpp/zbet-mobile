@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { colors, spacing } from "@/src/theme/theme";
+import { colors, spacing, typeScale } from "@/src/theme/theme";
 
 /**
  * Shared heading for a customizable analytical module.
@@ -29,17 +29,14 @@ const styles = StyleSheet.create({
     marginTop: spacing.xxl
   },
   eyebrow: {
-    color: colors.green,
-    fontSize: 9,
-    fontWeight: "900",
-    letterSpacing: 1
+    // Bronze rather than BTB green: a module label is structure, and green is
+    // reserved for reporting that something went well.
+    color: colors.bronze,
+    ...typeScale.eyebrow
   },
   title: {
     color: colors.text,
-    fontSize: 18,
-    fontWeight: "900",
-    letterSpacing: -0.2,
-    lineHeight: 24,
-    marginTop: 2
+    ...typeScale.moduleTitle,
+    marginTop: spacing.xs
   }
 });
