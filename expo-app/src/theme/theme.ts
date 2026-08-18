@@ -46,6 +46,13 @@ const darkColors = {
   goldSoft: "#4A3C12",
   red: "#FF6573",
   redSoft: "#4D2028",
+  // BTB's live signature. Chosen for hue distance rather than brightness: pure
+  // cyan sits 15-18 degrees from Fiori blue and collapses into it at the size a
+  // live dot actually renders, while this aqua-teal holds 28 degrees from blue
+  // and 50 from BTB green - the widest worst-case separation available from
+  // every meaning it can appear beside. 10.9:1 on the deep navy ground.
+  teal: "#3AD9CB",
+  tealSoft: "#0E424D",
   orange: "#FF9A55",
   white: "#FFFFFF",
   black: "#000000"
@@ -71,6 +78,8 @@ const lightColors: ThemeColors = {
   goldSoft: "#F8EDC8",
   red: "#C93F51",
   redSoft: "#F8DDE1",
+  teal: "#046C7A",
+  tealSoft: "#D7EFF2",
   orange: "#C86521",
   white: "#FFFFFF",
   black: "#000000"
@@ -140,9 +149,10 @@ export const shadows = {
 /**
  * Meaning-level colour names, resolved against the active palette.
  *
- * A screen should ask for `semantic.live` rather than `colors.red`. The hue is
- * the same today; the difference is that the request now records what the
- * surface meant, which is what makes retuning a meaning a one-line change.
+ * A screen asks for `semantic.live` rather than `colors.red`. The layer paid for
+ * itself immediately: giving live state its own signature was a one-line change
+ * here plus the palette entry, instead of a survey of every surface that had
+ * spelled "this match is happening" as red.
  */
 export const semantic = resolveSemanticColors(colors);
 

@@ -20,6 +20,7 @@ import {
   type StyleProp,
   type ViewStyle
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { adjacentMainTab, type MainTabRoute } from "@/src/navigation/main-tabs";
 import {
@@ -27,7 +28,7 @@ import {
   shouldCommitTabSwipe,
   tabSwipeTranslation
 } from "@/src/navigation/tab-swipe";
-import { colors, interaction, spacing } from "@/src/theme/theme";
+import { colors, interaction, spacing, typeScale } from "@/src/theme/theme";
 
 type ScreenProps = PropsWithChildren<{
   title?: string;
@@ -38,6 +39,15 @@ type ScreenProps = PropsWithChildren<{
   onEdgeSwipeBack?: () => void;
   /** Enables the horizontal main-tab gesture on primary tab screens. */
   tabSwipe?: boolean;
+  /**
+   * Semantic colour for the header trace when the screen currently carries that
+   * state — `semantic.live` while live matches are on it, for example.
+   *
+   * Omitted, the trace stays inert. This is the only place the shell itself is
+   * allowed to light up, and it only ever reports something true about the
+   * content below it.
+   */
+  accent?: string;
   scrollRef?: RefObject<ScrollView | null>;
   contentStyle?: StyleProp<ViewStyle>;
   scrollProps?: Omit<ScrollViewProps, "contentContainerStyle">;
@@ -60,6 +70,7 @@ export function Screen({
   edgeSwipeBack = false,
   onEdgeSwipeBack,
   tabSwipe = false,
+  accent,
   scrollRef,
   contentStyle,
   scrollProps
@@ -128,14 +139,28 @@ export function Screen({
     });
   }, [edgeSwipeBack, onEdgeSwipeBack, pathname, router, swipeX, tabSwipe, width]);
   const gestureEnabled = edgeSwipeBack || tabSwipe;
+  // A hairline that fades out from the leading edge rather than a rule that
+  // crosses the screen: it reads as the residue of something moving through the
+  // interface instead of as a divider, which is the whole difference between a
+  // signature and a border. It carries the accent only when the screen has a
+  // state to report, so an inert screen stays completely calm.
+  const traceColor = accent ?? colors.border;
   const header =
     title || eyebrow || action ? (
-      <View style={styles.header}>
-        <View style={styles.headerCopy}>
-          {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
-          {title ? <Text style={styles.title}>{title}</Text> : null}
+      <View>
+        <View style={styles.header}>
+          <View style={styles.headerCopy}>
+            {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
+            {title ? <Text style={styles.title}>{title}</Text> : null}
+          </View>
+          {action}
         </View>
-        {action}
+        <LinearGradient
+          colors={[traceColor, `${traceColor}00`]}
+          end={{ x: 1, y: 0 }}
+          start={{ x: 0, y: 0 }}
+          style={[styles.trace, accent ? styles.traceAccent : null]}
+        />
       </View>
     ) : null;
 
@@ -194,7 +219,7 @@ const styles = StyleSheet.create({
   header: {
     minHeight: 76,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.md,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -203,19 +228,24 @@ const styles = StyleSheet.create({
   headerCopy: {
     flex: 1
   },
+  trace: {
+    height: 1,
+    opacity: 0.45,
+    marginBottom: spacing.lg
+  },
+  traceAccent: {
+    opacity: 0.9
+  },
   eyebrow: {
-    color: colors.green,
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
+    // Previously BTB green on every screen, which made the brand accent ambient
+    // and left it unable to mean "won" anywhere else. Muted here, so green is
+    // spent only where it reports something.
+    color: colors.textSubtle,
+    ...typeScale.eyebrow,
     marginBottom: spacing.xs
   },
   title: {
     color: colors.text,
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: "800",
-    letterSpacing: -0.6
+    ...typeScale.pageTitle
   }
 });

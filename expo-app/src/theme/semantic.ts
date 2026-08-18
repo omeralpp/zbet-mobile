@@ -1,20 +1,21 @@
 /**
  * Semantic colour layer.
  *
- * The palette names hues (`green`, `red`, `gold`). Screens should name meaning.
- * Without that layer the two most loaded hues each carry several unrelated jobs:
- * `green` is the active tab, the eyebrow and a won decision; `red` is the live
- * pill, a lost decision, a red card and a connection error. A user reading a
- * live match therefore sees the same red for "this match is happening now" and
- * "this decision lost", and no amount of layout fixes that.
+ * The palette names hues (`green`, `red`, `gold`). Screens name meaning.
  *
- * This module does not repaint anything. It gives every meaning its own name,
- * mapped onto the hue it already uses, so a screen migrated in a later batch
- * asks for `live` rather than `red`. Once every surface asks by meaning, giving
- * `live` its own hue is a one-line change instead of a survey of the codebase.
+ * Without this layer the two most loaded hues each carried several unrelated
+ * jobs: `green` was the active tab, the eyebrow and a won decision; `red` was
+ * the live pill, a lost decision, a red card and a connection error. A user
+ * reading a live list saw the same red for "this match is happening now" and
+ * "this decision lost", so the strongest colour on screen carried no direction.
  *
- * The remaining overlaps are recorded in `semanticCollisions` rather than left
- * to be rediscovered. That list is the design debt this layer exists to pay off.
+ * Live state now has its own signature and is no longer spelled in loss red.
+ * That separation was a single mapping change precisely because every surface
+ * had first been migrated to ask by meaning — which is the whole argument for
+ * this layer existing.
+ *
+ * Overlaps that remain are recorded in `semanticCollisions` rather than left to
+ * be rediscovered. That list is the design debt this layer exists to pay off.
  */
 
 /** The palette shape this layer needs. Kept structural so it stays testable. */
@@ -36,6 +37,8 @@ export interface SemanticPalette {
   goldSoft: string;
   red: string;
   redSoft: string;
+  teal: string;
+  tealSoft: string;
   orange: string;
 }
 
@@ -49,7 +52,10 @@ export interface SemanticColors {
   /** A lost decision, an unprofitable outcome, a negative delta. */
   negative: string;
   negativeSoft: string;
-  /** This match is happening right now. Not a judgement about it. */
+  /**
+   * This match is happening right now. Deliberately not a judgement about it,
+   * and deliberately not the red that a lost decision uses.
+   */
   live: string;
   liveSoft: string;
   /** Something needs attention but nothing has failed. */
@@ -75,8 +81,8 @@ export function resolveSemanticColors(
     positiveSoft: palette.greenSoft,
     negative: palette.red,
     negativeSoft: palette.redSoft,
-    live: palette.red,
-    liveSoft: palette.redSoft,
+    live: palette.teal,
+    liveSoft: palette.tealSoft,
     warning: palette.gold,
     warningSoft: palette.goldSoft,
     stale: palette.gold,
@@ -103,15 +109,6 @@ export interface SemanticCollision {
  * not a bug to be found again by the next person reading a live match screen.
  */
 export const semanticCollisions: readonly SemanticCollision[] = [
-  {
-    roles: ["live", "negative"],
-    note:
-      "A live match and a lost decision are both red, so the strongest colour on " +
-      "a live list carries no direction. Giving `live` its own signature is the " +
-      "single highest-value palette change available, and it changes how the " +
-      "product reads at a glance.",
-    ownerDecision: true
-  },
   {
     roles: ["stale", "warning"],
     note:

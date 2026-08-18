@@ -29,6 +29,11 @@ import {
   pickIdleBehavior,
   type BibiIdleBehavior
 } from "./idle-behavior";
+import {
+  allowsAmbientBibi,
+  bibiPresence,
+  shouldRenderBibi
+} from "./bibi-presence";
 import { useMascotActions } from "./MascotActions";
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
@@ -529,10 +534,19 @@ export function BtbMascotOverlay() {
     }).start();
   };
 
+  // Presence is resolved after every hook so the early return never changes the
+  // hook order. On a dense analytical surface Bibi is absent until the tutorial
+  // actually needs her, and arrives with the menu and greeting suppressed.
+  const presence = bibiPresence(pathname);
+  const ambient = allowsAmbientBibi(presence);
+  if (!shouldRenderBibi(presence, Boolean(tutorial.activeTip))) {
+    return null;
+  }
+
   return (
     <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
       <Animated.View
-        {...(tutorial.activeTip ? {} : panResponder.panHandlers)}
+        {...(tutorial.activeTip || !ambient ? {} : panResponder.panHandlers)}
         style={[
           styles.anchor,
           {
@@ -601,7 +615,7 @@ export function BtbMascotOverlay() {
           </View>
         ) : null}
 
-        {open ? (
+        {open && ambient ? (
           <View
             style={[
               styles.menu,
@@ -632,7 +646,7 @@ export function BtbMascotOverlay() {
           </View>
         ) : null}
 
-        {showGreeting && !tutorial.activeTip ? (
+        {showGreeting && !tutorial.activeTip && ambient ? (
           <View
             pointerEvents="none"
             style={[
@@ -659,7 +673,7 @@ export function BtbMascotOverlay() {
               tutorial.activeTip ? "Bibi rehber anlatımı" : "Bibi hızlı menü"
             }
             accessibilityRole="button"
-            disabled={Boolean(tutorial.activeTip)}
+            disabled={Boolean(tutorial.activeTip) || !ambient}
             onPress={() => {
               setOpenPath(open ? null : pathname);
               if (Platform.OS !== "web") {

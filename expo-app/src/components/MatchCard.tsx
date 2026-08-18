@@ -2,7 +2,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { MatchInsight, MatchSummary } from "@/src/api/schemas";
-import { colors, radii, shadows, spacing } from "@/src/theme/theme";
+import { colors, radii, semantic, shadows, spacing, typeScale } from "@/src/theme/theme";
 import { deriveLiveRateTrend } from "@/src/utils/live-card-indicators";
 import { derivePressureBalance } from "@/src/utils/pressure-balance";
 import {
@@ -260,21 +260,25 @@ const styles = StyleSheet.create({
     gap: spacing.xs
   },
   livePill: {
-    backgroundColor: colors.redSoft
+    // Live state used loss red, so a match in progress and a decision that lost
+    // were the same colour. It now carries BTB's own live signature and says
+    // only that the match is happening.
+    backgroundColor: semantic.liveSoft,
+    borderWidth: 1,
+    borderColor: semantic.live
   },
   liveDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.red
+    backgroundColor: semantic.live
   },
   timeText: {
     color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: "900"
+    ...typeScale.micro
   },
   liveText: {
-    color: colors.red
+    color: semantic.live
   },
   scoreRow: {
     flexDirection: "row",

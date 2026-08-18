@@ -26,7 +26,7 @@ import { useModuleLayout } from "@/src/layout/module-layout-store";
 import type { OverviewModuleId } from "@/src/layout/module-registry";
 import { useLiveStarFilter } from "@/src/preferences/LiveStarFilterProvider";
 import { useSuperStarFilter } from "@/src/preferences/SuperStarFilterProvider";
-import { colors, radii, spacing } from "@/src/theme/theme";
+import { colors, radii, semantic, spacing } from "@/src/theme/theme";
 import {
   liveStarMetricCount,
   starMetricLabel
@@ -134,7 +134,9 @@ export default function DashboardScreen() {
     metrics: (
       <View style={styles.metrics}>
         <MetricCard
-          accent={colors.red}
+          // The live-match counter used loss red. It counts matches in progress
+          // and says nothing about how they are going.
+          accent={semantic.live}
           detail="aktif takip"
           icon="access-point"
           label="Canlı maç"

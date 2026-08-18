@@ -37,7 +37,7 @@ import { buildBilyonerMatchUrl } from "@/src/external/bilyoner";
 import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
 import { useModuleLayout } from "@/src/layout/module-layout-store";
 import type { LiveDetailModuleId } from "@/src/layout/module-registry";
-import { colors, radii, spacing } from "@/src/theme/theme";
+import { colors, radii, semantic, spacing, typeScale } from "@/src/theme/theme";
 import {
   formatCurrentMarketRate,
   formatDecisionReason,
@@ -201,6 +201,7 @@ export default function MatchDetailScreen() {
   }
 
   const match = query.data;
+  const live = match.status === "LIVE" || match.status === "HALF_TIME";
   const insight = insightQuery.data;
   const leagueContext = leagueContextQuery.data;
   const currentMarket = formatCurrentMarketRate(
@@ -513,8 +514,8 @@ export default function MatchDetailScreen() {
               {formatFixtureDateTime(match.matchDate, match.matchTime)}
             </Text>
           </View>
-          <View style={styles.elapsedPill}>
-            <Text style={styles.elapsed}>
+          <View style={[styles.elapsedPill, live && styles.elapsedPillLive]}>
+            <Text style={[styles.elapsed, live && styles.elapsedLive]}>
               {formatElapsed(match.status, match.elapsed)}
             </Text>
           </View>
@@ -653,16 +654,26 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginTop: 3
   },
+  // The minute pill was loss red for every status, so a finished match wore the
+  // same signal as one in progress and neither of them meant anything. It now
+  // carries the live signature only while the match is actually live.
   elapsedPill: {
-    backgroundColor: colors.redSoft,
+    backgroundColor: colors.surfaceStrong,
     borderRadius: radii.round,
     paddingHorizontal: spacing.sm,
     paddingVertical: 5
   },
+  elapsedPillLive: {
+    backgroundColor: semantic.liveSoft,
+    borderWidth: 1,
+    borderColor: semantic.live
+  },
   elapsed: {
-    color: colors.red,
-    fontSize: 10,
-    fontWeight: "900"
+    color: colors.textMuted,
+    ...typeScale.micro
+  },
+  elapsedLive: {
+    color: semantic.live
   },
   scoreRow: {
     flexDirection: "row",

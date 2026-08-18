@@ -27,8 +27,15 @@ screen asks for a role, never a literal.
   hue (`colors.red`, `colors.green`).
 - Known overlaps are recorded in `semanticCollisions` and covered by a test. A
   new overlap belongs on that register with a note, not in a component.
-- `live` and `negative` are still the same red. That is an open owner decision:
-  separating them changes how a live list reads at a glance.
+- `live` is BTB's own aqua-teal and is never loss red. The hue was picked for
+  hue *distance*, not brightness: pure cyan sits 15-18 degrees from Fiori blue
+  and collapses into it at the size a live dot actually renders, while the
+  aqua-teal holds 28 degrees from blue and 50 from BTB green.
+- A live signal reports that a match is in progress and nothing about how it is
+  going. A status pill that renders for every status is not a live signal — gate
+  it on `LIVE`/`HALF_TIME` or leave it neutral.
+- Red is reserved for loss, red cards and errors. Green is reserved for positive
+  outcomes and brand navigation; it is no longer spent on screen eyebrows.
 
 ### Depth — `elevation.ts`
 
@@ -77,6 +84,23 @@ screen asks for a role, never a literal.
   remain readable together.
 
 ## Bibi guidance
+
+### Presence
+
+- Presence is a property of the surface, resolved by `bibi-presence.ts`.
+- `FULL` — the ambient mascot with drag, idle motion, greeting and quick menu.
+  Brand, orientation and helper surfaces.
+- `GUIDE_ONLY` — no ambient presence. Bibi appears solely to deliver an active
+  tutorial step and leaves when it finishes. Match Detail and Super Decision
+  Detail are `GUIDE_ONLY`: a floating character the user has to move aside is
+  competing with the data they opened the screen to read.
+- `GUIDE_ONLY` never means "not rendered". The tutorial targets components on
+  `/match/` and `/super/` and Bibi is what renders those steps, so removing her
+  outright would break the guide rather than withdraw her from it.
+- Adding a route to `denseAnalyticalRoutes` requires a matching prefix *and* a
+  segment after it, so a list route never inherits its detail route's rule.
+
+### Behaviour
 
 - A guide step binds to a real rendered component by target ID and measured
   layout. Estimated screen coordinates are not allowed.

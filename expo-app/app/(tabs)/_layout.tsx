@@ -4,7 +4,7 @@ import * as Haptics from "expo-haptics";
 import { Tabs } from "expo-router";
 import { Platform, type ColorValue } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors } from "@/src/theme/theme";
+import { colors, typeScale } from "@/src/theme/theme";
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
 
@@ -59,10 +59,10 @@ export default function TabLayout() {
           borderTopColor: colors.border,
           backgroundColor: colors.backgroundElevated
         },
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: "800"
-        }
+        // The label was 10pt/800: under the readable floor, and on a weight the
+        // Android system family has no face for. `micro` is the smallest role
+        // the scale allows and renders at a weight that actually exists.
+        tabBarLabelStyle: typeScale.micro
       }}
     >
       <Tabs.Screen

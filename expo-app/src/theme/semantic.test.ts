@@ -24,6 +24,8 @@ const palette: SemanticPalette = {
   goldSoft: "#golds",
   red: "#red",
   redSoft: "#reds",
+  teal: "#teal",
+  tealSoft: "#teals",
   orange: "#orange"
 };
 
@@ -32,7 +34,7 @@ test("meaning maps onto the hue each surface already uses", () => {
   assert.equal(semantic.intelligence, palette.blue);
   assert.equal(semantic.positive, palette.green);
   assert.equal(semantic.negative, palette.red);
-  assert.equal(semantic.live, palette.red);
+  assert.equal(semantic.live, palette.teal);
   assert.equal(semantic.stale, palette.gold);
   assert.equal(semantic.unavailable, palette.textSubtle);
 });
@@ -57,11 +59,22 @@ test("every recorded collision is real", () => {
   }
 });
 
-test("the live and negative collision stays flagged for the owner", () => {
-  const live = semanticCollisions.find(
+test("live state no longer borrows the colour of a lost decision", () => {
+  const semantic = resolveSemanticColors(palette);
+  assert.notEqual(
+    semantic.live,
+    semantic.negative,
+    "a match in progress must not read as a decision that lost"
+  );
+  assert.notEqual(semantic.live, semantic.positive);
+  assert.notEqual(
+    semantic.live,
+    semantic.intelligence,
+    "live energy and BTB's analytical accent are different statements"
+  );
+  const stale = semanticCollisions.some(
     (collision) =>
       collision.roles.includes("live") && collision.roles.includes("negative")
   );
-  assert.ok(live, "the live and negative overlap must stay on the register");
-  assert.equal(live?.ownerDecision, true);
+  assert.equal(stale, false, "the resolved overlap must leave the register");
 });

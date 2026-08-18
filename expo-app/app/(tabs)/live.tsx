@@ -19,7 +19,7 @@ import {
   ErrorState,
   LoadingState
 } from "@/src/components/StateView";
-import { colors, radii, spacing } from "@/src/theme/theme";
+import { colors, radii, semantic, spacing } from "@/src/theme/theme";
 import {
   isStarDecisionFilter
 } from "@/src/utils/decision-filters";
@@ -120,6 +120,9 @@ export default function LiveScreen() {
 
   return (
     <Screen
+      // The shell reports live-ness only while something is actually live, so
+      // the trace is evidence rather than theming.
+      {...(tabCounts.LIVE > 0 ? { accent: semantic.live } : {})}
       contentStyle={styles.screen}
       eyebrow="BTB"
       scroll={false}
