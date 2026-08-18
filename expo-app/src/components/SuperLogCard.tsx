@@ -1,8 +1,16 @@
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { SuperLog } from "@/src/api/schemas";
-import { colors, radii, spacing } from "@/src/theme/theme";
 import {
+  colors,
+  radii,
+  semantic,
+  shadows,
+  spacing,
+  typeScale
+} from "@/src/theme/theme";
+import {
+  formatDecisionReason,
   formatMatchKeyDateTime,
   formatRate,
   formatSigned,
@@ -11,6 +19,7 @@ import {
 import { superMatchIdentity } from "@/src/utils/super-match-identity";
 import { hasAnyTeamLogo } from "@/src/utils/team-logo";
 import { RatingStars } from "./RatingStars";
+import { SurfaceMaterial } from "./SurfaceMaterial";
 import { TeamIdentityLine } from "./TeamIdentityLine";
 import { TeamLogoPair } from "./TeamLogo";
 
@@ -31,6 +40,11 @@ export function SuperLogCard({ log }: { log: SuperLog }) {
   const router = useRouter();
   const color = resultColor(log.result);
   const identity = superMatchIdentity(log);
+  // Energy marks the decisions still in play. A settled row is history and has
+  // its result pill; an open one is the only thing on the screen that can still
+  // change, which is what makes it worth the accent. Most rows are settled, so
+  // the language stays scarce on its own.
+  const open = log.result !== "WON" && log.result !== "LOST" && log.result !== "VOID";
 
   return (
     <Pressable
@@ -47,6 +61,10 @@ export function SuperLogCard({ log }: { log: SuperLog }) {
       }
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
+      <SurfaceMaterial
+        {...(open ? { accent: semantic.intelligence } : {})}
+        radius={radii.lg}
+      />
       <View style={styles.header}>
         <RatingStars rating={log.rating} />
         <View style={[styles.resultPill, { backgroundColor: `${color}1F` }]}>
@@ -82,7 +100,7 @@ export function SuperLogCard({ log }: { log: SuperLog }) {
         {formatMatchKeyDateTime(log.matchKey)}
       </Text>
       <Text numberOfLines={1} style={styles.reason}>
-        {log.reason}
+        {formatDecisionReason(log.reason)}
       </Text>
       <View style={styles.footer}>
         <View>
@@ -106,12 +124,12 @@ export function SuperLogCard({ log }: { log: SuperLog }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.backgroundElevated,
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.borderSoft,
     padding: spacing.lg,
-    marginBottom: spacing.md
+    marginBottom: spacing.md,
+    ...shadows.card
   },
   pressed: {
     opacity: 0.75
@@ -127,8 +145,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.round
   },
   resultText: {
-    fontSize: 10,
-    fontWeight: "900",
+    ...typeScale.micro,
     textTransform: "uppercase"
   },
   identityRow: {
@@ -145,20 +162,17 @@ const styles = StyleSheet.create({
   match: {
     color: colors.text,
     flexShrink: 1,
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: "800"
+    ...typeScale.identity
   },
   reason: {
     color: colors.textMuted,
-    fontSize: 11,
-    marginTop: 2
+    ...typeScale.bodyCompact,
+    marginTop: spacing.xs
   },
   fixtureTime: {
     color: colors.textSubtle,
-    fontSize: 10,
-    fontWeight: "700",
-    marginTop: 3
+    ...typeScale.label,
+    marginTop: spacing.xs
   },
   footer: {
     flexDirection: "row",
@@ -172,12 +186,11 @@ const styles = StyleSheet.create({
   },
   value: {
     color: colors.text,
-    fontSize: 14,
-    fontWeight: "900"
+    ...typeScale.metricCompact
   },
   label: {
     color: colors.textSubtle,
-    fontSize: 9,
-    marginTop: 2
+    ...typeScale.label,
+    marginTop: spacing.xs
   }
 });

@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
   Pressable,
@@ -18,7 +19,11 @@ import {
 import { Screen } from "@/src/components/Screen";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { ModuleHeading } from "@/src/components/ModuleHeading";
-import { RatingStars } from "@/src/components/RatingStars";
+import { SignalMeter } from "@/src/components/SignalMeter";
+import {
+  SurfaceDivider,
+  SurfaceMaterial
+} from "@/src/components/SurfaceMaterial";
 import { StandingsModule } from "@/src/components/StandingsModule";
 import { TeamLogo } from "@/src/components/TeamLogo";
 import { PressureBalance } from "@/src/components/PressureBalance";
@@ -26,10 +31,20 @@ import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
 import { useModuleLayout } from "@/src/layout/module-layout-store";
 import type { SuperDetailModuleId } from "@/src/layout/module-registry";
-import { colors, radii, spacing } from "@/src/theme/theme";
+import {
+  colors,
+  fontWeights,
+  interaction,
+  radii,
+  semantic,
+  shadows,
+  spacing,
+  typeScale
+} from "@/src/theme/theme";
 import { teamLogoSizes } from "@/src/utils/team-logo";
 import {
   formatFixtureDateTime,
+  formatDecisionReason,
   formatPercentage,
   formatRate,
   formatSigned,
@@ -69,6 +84,7 @@ export default function SuperLogDetailScreen() {
   };
   const key = firstParam(params.key);
   const [compactHeader, setCompactHeader] = useState(false);
+  const [showModelDetail, setShowModelDetail] = useState(false);
   const [reordering, setReordering] = useState(false);
   const scrollRef = useRef<ScrollView | null>(null);
   const scrollOffset = useRef(0);
@@ -114,6 +130,19 @@ export default function SuperLogDetailScreen() {
     log.awayStandingPosition > 0 ||
     log.homeStandingPoints > 0 ||
     log.awayStandingPoints > 0;
+  // A lift above the base rate is BTB backing the selection; below it is BTB
+  // pricing it lower than the market's starting point. Direction only - no
+  // threshold, no judgement about whether the lift was correct.
+  const liftDelta =
+    log.superProbability !== null && log.baseProbability !== null
+      ? log.superProbability - log.baseProbability
+      : 0;
+  const probabilityLift =
+    liftDelta > 0.0005
+      ? { icon: "trending-up" as const, color: semantic.positive }
+      : liftDelta < -0.0005
+        ? { icon: "trending-down" as const, color: semantic.negative }
+        : { icon: "minus" as const, color: colors.textMuted };
   const resultColor =
     log.result === "WON"
       ? colors.green
@@ -130,37 +159,71 @@ export default function SuperLogDetailScreen() {
       <>
         <ModuleHeading eyebrow="MODEL" title="Karar özeti" />
         <View style={styles.card}>
-          <Text style={styles.reason}>{log.reason}</Text>
-          <View style={styles.metricGrid}>
-            <Metric
-              label="base probability"
-              value={
-                log.baseProbability === null
-                  ? "—"
-                  : formatPercentage(log.baseProbability)
-              }
-            />
-            <Metric
-              label="super probability"
-              value={
-                log.superProbability === null
-                  ? "—"
-                  : formatPercentage(log.superProbability)
-              }
-            />
+          <SurfaceMaterial accent={semantic.intelligence} radius={radii.lg} />
+          <Text style={styles.reason}>{formatDecisionReason(log.reason)}</Text>
+
+          {/* The two probabilities are one statement, not two metrics: the lift
+              from the base rate to BTB's own is what the model actually did
+              here. Drawn as movement, the way an odd is, so the reader sees a
+              direction instead of arithmetic between two boxes. */}
+          {log.baseProbability !== null && log.superProbability !== null ? (
+            <View style={styles.liftRow}>
+              <Text style={styles.liftFrom}>
+                {formatPercentage(log.baseProbability)}
+              </Text>
+              <MaterialCommunityIcons
+                color={probabilityLift.color}
+                name={probabilityLift.icon}
+                size={18}
+              />
+              <Text style={[styles.liftTo, { color: probabilityLift.color }]}>
+                {formatPercentage(log.superProbability)}
+              </Text>
+              <Text style={styles.liftLabel}>temel → Super olasılığı</Text>
+            </View>
+          ) : null}
+
+          {/* Edge and model score are the headline of the decision. The
+              adjustments behind them matter to a reader who is auditing the
+              call, not to one who is reading it. */}
+          <View style={styles.primaryMetrics}>
+            <Metric label="edge" value={formatSigned(log.edgeScore)} />
             <Metric
               label="model skoru"
               value={
                 log.modelScore === null ? "—" : formatSigned(log.modelScore)
               }
             />
-            <Metric label="edge" value={formatSigned(log.edgeScore)} />
-            <Metric
-              label="uyumluluk"
-              value={formatSigned(log.compatibilityScore)}
-            />
-            <Metric label="hizalama" value={formatSigned(log.alignmentScore)} />
           </View>
+
+          <Pressable
+            accessibilityHint={
+              showModelDetail
+                ? "Model ayrıntılarını gizler"
+                : "Model ayrıntılarını açar"
+            }
+            accessibilityRole="button"
+            onPress={() => setShowModelDetail((visible) => !visible)}
+            style={styles.disclosure}
+          >
+            <Text style={styles.disclosureText}>
+              {showModelDetail ? "Ayrıntıyı gizle" : "Model ayrıntısı"}
+            </Text>
+          </Pressable>
+
+          {showModelDetail ? (
+            <View style={styles.metricGrid}>
+              <Metric
+                label="uyumluluk"
+                value={formatSigned(log.compatibilityScore)}
+              />
+              <Metric
+                label="hizalama"
+                value={formatSigned(log.alignmentScore)}
+              />
+            </View>
+          ) : null}
+
           {log.aiComment ? (
             <Text style={styles.comment}>{log.aiComment}</Text>
           ) : null}
@@ -180,11 +243,11 @@ export default function SuperLogDetailScreen() {
               value={formatSigned(log.awayPressure)}
             />
             <Metric
-              label="pressure adjustment"
+              label="baskı düzeltmesi"
               value={formatSigned(log.pressureAdjustment)}
             />
             <Metric
-              label="state adjustment"
+              label="durum düzeltmesi"
               value={formatSigned(log.stateAdjustment)}
             />
           </View>
@@ -216,7 +279,7 @@ export default function SuperLogDetailScreen() {
           <View style={styles.cardDivider} />
           <Text style={styles.groupLabel}>Benzerlik ve lig gücü</Text>
           <View style={styles.metricGrid}>
-            <Metric label="deviation" value={log.deviation.toFixed(2)} />
+            <Metric label="sapma" value={log.deviation.toFixed(2)} />
             <Metric
               label="lig PPG farkı"
               value={
@@ -295,6 +358,7 @@ export default function SuperLogDetailScreen() {
       >
         <TutorialTarget id="super-summary" radius={radii.xl}>
           <View style={styles.hero}>
+            <SurfaceMaterial radius={radii.xl} />
             <View style={styles.heroHeader}>
               <View style={styles.heroMeta}>
                 <Text numberOfLines={1} style={styles.league}>
@@ -334,64 +398,70 @@ export default function SuperLogDetailScreen() {
                 </Text>
               </View>
             </View>
-            <View style={styles.scoreTimeline}>
-              <View style={styles.scorePane}>
-                <Text style={styles.scoreLabel}>Karar anı skoru</Text>
+            {/* Two temporal bands, not one stack of metrics.
+                Everything above the seam was knowable when BTB decided;
+                everything below it only became true afterwards. The previous
+                layout put the settled profit in the same row and at the same
+                weight as the selection rate, which reads as though the outcome
+                were part of the decision. Separating them is the point of the
+                screen, so it is drawn as structure rather than implied by
+                labels. */}
+            <SurfaceDivider style={styles.bandDivider} />
+            <Text style={styles.bandEyebrow}>
+              KARAR ANI · {log.elapsed}&apos;
+            </Text>
+            <View style={styles.bandRow}>
+              <View style={styles.bandCell}>
                 <Text style={styles.score}>
-                  {log.decisionHomeScore} - {log.decisionAwayScore}
+                  {log.decisionHomeScore}
+                  <Text style={styles.scoreSeparator}> - </Text>
+                  {log.decisionAwayScore}
                 </Text>
-                {periodScoreQuery.data?.halfTimeScore ? (
-                  <Text style={styles.halfTimeScore}>
-                    İlk yarı {periodScoreQuery.data.halfTimeScore.homeScore}-
-                    {periodScoreQuery.data.halfTimeScore.awayScore}
-                  </Text>
-                ) : (
-                  <Text style={styles.halfTimeScore}>İlk yarı skoru yok</Text>
-                )}
+                <Text style={styles.bandLabel}>
+                  {periodScoreQuery.data?.halfTimeScore
+                    ? `İY ${periodScoreQuery.data.halfTimeScore.homeScore}-${periodScoreQuery.data.halfTimeScore.awayScore}`
+                    : "ilk yarı skoru yok"}
+                </Text>
               </View>
-              <View
-                style={[
-                  styles.scorePane,
-                  settled && log.finalScore
-                    ? { borderColor: `${resultColor}66` }
-                    : null
-                ]}
-              >
-                <Text style={styles.scoreLabel}>Maç sonucu</Text>
+              <View style={[styles.bandCell, styles.bandCellWide]}>
+                <Text numberOfLines={1} style={styles.selection}>
+                  {log.selectedOdd}
+                </Text>
+                <SignalMeter rating={log.rating} />
+              </View>
+              <View style={[styles.bandCell, styles.bandCellEnd]}>
+                <Text style={styles.bandValue}>{formatRate(log.liveRate)}</Text>
+                <Text style={styles.bandLabel}>seçim oranı</Text>
+              </View>
+            </View>
+
+            {/* The seam. Bronze because it is structure, not a verdict: it must
+                not take the colour of the result it introduces. */}
+            <SurfaceDivider accent={colors.bronze} style={styles.bandSeam} />
+            <Text style={[styles.bandEyebrow, styles.outcomeEyebrow]}>
+              SONUÇ
+            </Text>
+            <View style={styles.bandRow}>
+              <View style={[styles.bandCell, styles.bandCellWide]}>
                 {settled && log.finalScore ? (
                   <>
                     <Text style={[styles.score, { color: resultColor }]}>
                       {log.finalScore.replace("-", " - ")}
                     </Text>
-                    <Text style={styles.halfTimeScore}>Biten skor</Text>
+                    <Text style={styles.bandLabel}>biten skor</Text>
                   </>
                 ) : (
                   <>
                     <Text style={styles.pendingScore}>—</Text>
-                    <Text style={styles.halfTimeScore}>Sonuç bekleniyor</Text>
+                    <Text style={styles.bandLabel}>sonuç bekleniyor</Text>
                   </>
                 )}
               </View>
-            </View>
-            <View style={styles.selectionRow}>
-              <View style={styles.selectionBlock}>
-                <RatingStars rating={log.rating} />
-                <Text numberOfLines={1} style={styles.selection}>
-                  {log.selectedOdd}
-                </Text>
-                <Text style={styles.heroMetricLabel}>seçim</Text>
-              </View>
-              <View style={[styles.heroMetric, styles.heroMetricCenter]}>
-                <Text style={styles.heroMetricValue}>
-                  {formatRate(log.liveRate)}
-                </Text>
-                <Text style={styles.heroMetricLabel}>seçim oranı</Text>
-              </View>
-              <View style={[styles.heroMetric, styles.heroMetricEnd]}>
-                <Text style={[styles.heroMetricValue, { color: resultColor }]}>
+              <View style={[styles.bandCell, styles.bandCellEnd]}>
+                <Text style={[styles.bandValue, { color: resultColor }]}>
                   {log.profit === null ? "—" : formatSigned(log.profit)}
                 </Text>
-                <Text style={styles.heroMetricLabel}>kâr</Text>
+                <Text style={styles.bandLabel}>kâr</Text>
               </View>
             </View>
           </View>
@@ -460,8 +530,8 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface
+    borderColor: colors.borderSoft,
+    ...shadows.card
   },
   heroHeader: {
     flexDirection: "row",
@@ -516,74 +586,94 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     lineHeight: teamLogoSizes.hero
   },
-  scoreTimeline: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.md,
-    marginTop: spacing.lg
-  },
-  scorePane: {
-    flex: 1,
-    minWidth: 132,
-    padding: spacing.md,
-    borderRadius: radii.lg,
-    backgroundColor: colors.backgroundElevated,
-    borderWidth: 1,
-    borderColor: colors.borderSoft
-  },
-  scoreLabel: { color: colors.textSubtle, fontSize: 9, fontWeight: "800" },
-  score: {
-    color: colors.text,
-    fontSize: 28,
-    fontWeight: "900",
-    marginTop: spacing.sm
-  },
-  pendingScore: {
-    color: colors.textMuted,
-    fontSize: 28,
-    fontWeight: "900",
-    marginTop: spacing.sm
-  },
-  halfTimeScore: {
-    color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: "800",
-    marginTop: 3
-  },
-  selectionRow: {
-    minHeight: 72,
+  liftRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.md,
-    marginTop: spacing.xl,
-    paddingTop: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderSoft
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginTop: spacing.lg
   },
-  selectionBlock: {
+  liftFrom: {
+    color: colors.textMuted,
+    ...typeScale.metricCompact
+  },
+  liftTo: {
+    ...typeScale.metric
+  },
+  liftLabel: {
+    color: colors.textSubtle,
+    ...typeScale.label,
+    width: "100%"
+  },
+  primaryMetrics: {
+    flexDirection: "row",
+    gap: spacing.xxxl,
+    marginTop: spacing.lg
+  },
+  disclosure: {
+    minHeight: interaction.minTouchTarget,
+    justifyContent: "center"
+  },
+  disclosureText: {
+    color: semantic.intelligence,
+    ...typeScale.label
+  },
+  bandDivider: {
+    marginTop: spacing.xl,
+    marginBottom: spacing.lg
+  },
+  // The seam gets more air than the divider above it, so the eye registers a
+  // boundary rather than another row.
+  bandSeam: {
+    marginTop: spacing.xxl,
+    marginBottom: spacing.lg
+  },
+  bandEyebrow: {
+    color: colors.bronze,
+    ...typeScale.eyebrow,
+    marginBottom: spacing.md
+  },
+  outcomeEyebrow: {
+    color: colors.textSubtle
+  },
+  bandRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: spacing.lg
+  },
+  bandCell: {
+    gap: spacing.xs
+  },
+  bandCellWide: {
     flex: 1,
     minWidth: 0
   },
+  bandCellEnd: {
+    alignItems: "flex-end"
+  },
+  bandValue: {
+    color: colors.text,
+    ...typeScale.metric
+  },
+  bandLabel: {
+    color: colors.textSubtle,
+    ...typeScale.label
+  },
+  score: {
+    color: colors.text,
+    ...typeScale.score
+  },
+  scoreSeparator: {
+    color: colors.textSubtle,
+    fontWeight: fontWeights.medium
+  },
+  pendingScore: {
+    color: colors.textMuted,
+    ...typeScale.score
+  },
   selection: {
     color: colors.text,
-    fontSize: 15,
-    fontWeight: "900",
-    marginTop: 4
-  },
-  heroMetric: { flex: 1, minWidth: 0 },
-  heroMetricCenter: { alignItems: "center" },
-  heroMetricEnd: { alignItems: "flex-end" },
-  heroMetricValue: {
-    color: colors.text,
-    fontSize: 16,
-    lineHeight: 21,
-    fontWeight: "900"
-  },
-  heroMetricLabel: {
-    color: colors.textSubtle,
-    fontSize: 9,
-    lineHeight: 13,
-    marginTop: 2
+    ...typeScale.decision
   },
   card: {
     padding: spacing.xl,
@@ -605,7 +695,11 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     textTransform: "uppercase"
   },
-  reason: { color: colors.green, fontSize: 14, fontWeight: "900" },
+  // A decision reason is not a positive outcome, so it does not take BTB green.
+  reason: {
+    color: colors.text,
+    ...typeScale.decision
+  },
   metricGrid: {
     flexDirection: "row",
     flexWrap: "wrap",

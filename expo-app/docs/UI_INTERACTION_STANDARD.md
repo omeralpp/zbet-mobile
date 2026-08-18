@@ -79,8 +79,31 @@ BTB's own analytical material, as opposed to football data it merely relays.
 - Explainability leads with the answer. The reason a decision was made is the
   card's headline; only model internals sit behind progressive disclosure. A
   reader who wants to know *why* should never have to tap for it.
+- Two related probabilities are one statement. Base and Super probability are
+  drawn as a lift with a direction, the same way an odd is drawn as movement,
+  rather than as two numbers the reader has to subtract.
+- Model internals stay out of user-facing labels. `base probability`,
+  `pressure adjustment` and `state adjustment` were shipped verbatim; labels
+  name what a reader sees, not what the model calls it.
+- A decision reason is formatted through `formatDecisionReason` everywhere it
+  appears. The same decision must not read as `SCORE_CHANGED / HOME` in a list
+  and as prose in its own detail.
 - Module headings use `ModuleHeading` with a bronze eyebrow. A reordered stack
   has to keep reading as a structured cockpit rather than a pile of cards.
+
+### Temporal integrity
+
+A historical decision screen shows two kinds of fact, and confusing them is the
+most serious error this product can make in its UI.
+
+- Decision-time state and outcome live in **separate labelled bands** with a
+  structural seam between them, not in adjacent boxes of equal weight. Profit
+  next to selection rate reads as though the result were part of the decision.
+- The seam is bronze. It is structure and must not take the colour of the
+  result it introduces.
+- An unsettled decision renders the outcome band as pending rather than hiding
+  it. A missing band would let the reader assume the screen is still complete.
+- Nothing below the seam may be styled so that it looks available above it.
 
 ### Depth — `elevation.ts`
 
