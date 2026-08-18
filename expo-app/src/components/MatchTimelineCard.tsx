@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from "react-native";
 import type { LiveContext } from "@/src/api/schemas";
 import { ModuleHeading } from "@/src/components/ModuleHeading";
 import { LiveContextNotice } from "@/src/components/LiveContextNotice";
+import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import {
   describeEvent,
   describeEventForAccessibility,
@@ -12,7 +13,19 @@ import {
   type EventTeams,
   type VisibleEvent
 } from "@/src/components/live-context-view";
-import { colors, radii, spacing } from "@/src/theme/theme";
+import {
+  colors,
+  radii,
+  semantic,
+  spacing,
+  typeScale
+} from "@/src/theme/theme";
+import {
+  isInset,
+  resolveSideAlignment,
+  resolveSideLabel,
+  spokenSide
+} from "./timeline-attribution";
 
 /**
  * Match events — goals and red cards.
@@ -36,7 +49,7 @@ function EventMark({ kind }: { kind: "GOAL" | "RED_CARD" }) {
   if (kind === "RED_CARD") {
     return <RedCardMark />;
   }
-  return <MaterialCommunityIcons color={colors.green} name="soccer" size={15} />;
+  return <MaterialCommunityIcons color={colors.text} name="soccer" size={15} />;
 }
 
 function TimelineRow({
@@ -51,30 +64,53 @@ function TimelineRow({
   // the player moves up rather than leaving an empty line or inventing a team.
   const primary = display.team ?? display.player;
   const secondary = display.team ? display.player : null;
+  const alignment = resolveSideAlignment(display.side);
+  const sideLabel = resolveSideLabel(display.side);
+  const inset = isInset(display.side);
+  const spoken = spokenSide(display.side);
 
   return (
     <View
-      accessibilityLabel={describeEventForAccessibility(event, teams)}
+      accessibilityLabel={[describeEventForAccessibility(event, teams), spoken]
+        .filter(Boolean)
+        .join(", ")}
       accessible
-      style={styles.row}
+      style={styles.rowWrap}
     >
+      {/* The minute stays in a fixed column so the time axis remains straight
+          to scan; only the event body shifts by side. */}
       <Text style={styles.minute}>{display.minute}</Text>
-      <View style={styles.mark}>
-        <EventMark kind={display.kind} />
-      </View>
-      <View style={styles.body}>
-        <Text numberOfLines={1} style={styles.primary}>
-          {primary ?? "—"}
-        </Text>
-        {secondary ? (
-          <Text numberOfLines={1} style={styles.secondary}>
-            {secondary}
-          </Text>
+      <View
+        style={[
+          styles.row,
+          alignment !== "UNKNOWN" && styles.rowAttributed,
+          inset && styles.rowInset
+        ]}
+      >
+        <View style={styles.mark}>
+          <EventMark kind={display.kind} />
+        </View>
+        <View style={styles.body}>
+          <View style={styles.primaryLine}>
+            {sideLabel ? (
+              <View style={styles.sideChip}>
+                <Text style={styles.sideChipText}>{sideLabel}</Text>
+              </View>
+            ) : null}
+            <Text numberOfLines={1} style={styles.primary}>
+              {primary ?? "—"}
+            </Text>
+          </View>
+          {secondary ? (
+            <Text numberOfLines={1} style={styles.secondary}>
+              {secondary}
+            </Text>
+          ) : null}
+        </View>
+        {display.score ? (
+          <Text style={styles.score}>{display.score}</Text>
         ) : null}
       </View>
-      {display.score ? (
-        <Text style={styles.score}>{display.score}</Text>
-      ) : null}
     </View>
   );
 }
@@ -98,6 +134,7 @@ function MatchTimelineCardComponent({
     <>
       <ModuleHeading eyebrow="MAÇ AKIŞI" title="Goller ve kırmızı kartlar" />
       <View style={styles.card}>
+        <SurfaceMaterial radius={radii.lg} />
         {state === "LOADING" ? (
           <Text style={styles.stateBody}>Maç olayları yükleniyor…</Text>
         ) : state === "UNAVAILABLE" ? (
@@ -123,7 +160,6 @@ export const MatchTimelineCard = memo(MatchTimelineCardComponent);
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.backgroundElevated,
     borderColor: colors.borderSoft,
     borderRadius: radii.lg,
     borderWidth: 1,
@@ -132,25 +168,59 @@ const styles = StyleSheet.create({
   list: {
     gap: spacing.md
   },
-  row: {
+  rowWrap: {
     alignItems: "center",
     flexDirection: "row",
     gap: spacing.md
   },
+  row: {
+    alignItems: "center",
+    flex: 1,
+    flexDirection: "row",
+    gap: spacing.md,
+    minWidth: 0
+  },
+  // A neutral rail, not a coloured one. Home and away are not semantic states
+  // in this palette, and no reliable team-colour data exists in the contract.
+  rowAttributed: {
+    borderLeftWidth: 2,
+    borderLeftColor: colors.border,
+    paddingLeft: spacing.md
+  },
+  // Away events sit inset, so a run of same-side goals forms a column and an
+  // alternating sequence reads as a staircase before any text is read.
+  rowInset: {
+    marginLeft: spacing.xl
+  },
   minute: {
     color: colors.textMuted,
-    fontSize: 12,
+    ...typeScale.meta,
     fontVariant: ["tabular-nums"],
-    fontWeight: "800",
     minWidth: 30,
     textAlign: "right"
+  },
+  primaryLine: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.sm,
+    minWidth: 0
+  },
+  sideChip: {
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: radii.sm,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 1
+  },
+  sideChipText: {
+    color: colors.textMuted,
+    ...typeScale.micro
   },
   mark: {
     alignItems: "center",
     width: 18
   },
   redCard: {
-    backgroundColor: colors.red,
+    backgroundColor: semantic.negative,
     borderRadius: 2,
     height: 15,
     width: 11
@@ -161,26 +231,24 @@ const styles = StyleSheet.create({
   },
   primary: {
     color: colors.text,
-    fontSize: 13,
-    fontWeight: "800"
+    flexShrink: 1,
+    ...typeScale.identityCompact
   },
   secondary: {
     color: colors.textMuted,
-    fontSize: 12,
-    marginTop: 1
+    ...typeScale.label,
+    marginTop: spacing.xs
   },
   score: {
     color: colors.text,
-    fontSize: 14,
+    ...typeScale.metricCompact,
     fontVariant: ["tabular-nums"],
-    fontWeight: "900",
     minWidth: 36,
     textAlign: "right"
   },
   stateBody: {
     color: colors.textMuted,
-    fontSize: 12,
-    lineHeight: 17,
+    ...typeScale.bodyCompact,
     textAlign: "center",
     paddingVertical: spacing.md
   }
