@@ -103,8 +103,10 @@ export function SuperLogCard({ log }: { log: SuperLog }) {
         {formatDecisionReason(log.reason)}
       </Text>
       <View style={styles.footer}>
-        <View>
-          <Text style={styles.value}>{log.selectedOdd}</Text>
+        <View style={styles.footerLead}>
+          <Text numberOfLines={1} style={styles.value}>
+            {log.selectedOdd}
+          </Text>
           <Text style={styles.label}>{log.elapsed}&apos; seçim</Text>
         </View>
         <View style={styles.alignEnd}>
@@ -179,7 +181,14 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     justifyContent: "space-between",
     gap: spacing.md,
-    marginTop: spacing.lg
+    marginTop: spacing.lg,
+    // Same defence as the live card: the market label is short here, but a long
+    // selection string is the one value that can still outgrow a 360dp row.
+    flexWrap: "wrap"
+  },
+  footerLead: {
+    flexShrink: 1,
+    minWidth: 0
   },
   alignEnd: {
     alignItems: "flex-end"

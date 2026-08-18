@@ -3,7 +3,10 @@ import { usePathname, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { MatchInsight, MatchSummary } from "@/src/api/schemas";
 import { colors, radii, semantic, shadows, spacing, typeScale } from "@/src/theme/theme";
-import { deriveLiveRateTrend } from "@/src/utils/live-card-indicators";
+import {
+  deriveLiveCardFooter,
+  deriveLiveRateTrend
+} from "@/src/utils/live-card-indicators";
 import { derivePressureBalance } from "@/src/utils/pressure-balance";
 import {
   formatElapsed,
@@ -97,6 +100,11 @@ export function MatchCard({
       : pressureBalance.direction === "AWAY"
         ? colors.green
         : colors.textSubtle;
+  const footer = deriveLiveCardFooter(
+    match.selectedOdd,
+    match.currentRate,
+    pressureBalance.hasData
+  );
 
   return (
     <Pressable
@@ -159,73 +167,72 @@ export function MatchCard({
       />
 
       <View style={styles.bottomRow}>
-        <View>
+        <View style={styles.decisionBlock}>
           <RatingStars rating={match.rating} />
-          <Text style={styles.odd}>
+          <Text numberOfLines={1} style={styles.odd}>
             {match.selectedOdd || "Aday bekleniyor"}
           </Text>
         </View>
-        <View
-          accessibilityLabel={`Canlı oran ${currentMarket.value}, ${
-            rateTrend === "UP"
-              ? "seçim oranından yüksek"
-              : rateTrend === "DOWN"
-                ? "seçim oranından düşük"
-                : "değişim yok veya oran kapalı"
-          }`}
-          style={styles.rateBlock}
-        >
-          <View style={styles.rateHeadline}>
-            {rateTrend !== "UNAVAILABLE" ? (
-              <MaterialCommunityIcons
-                color={rateTrendColor}
-                name={rateTrendIcon}
-                size={17}
-              />
-            ) : null}
-            <Text style={[styles.rate, { color: rateTrendColor }]}>
-              {currentMarket.value}
-            </Text>
+        {footer.showsRate ? (
+          <View
+            accessibilityLabel={`Canlı oran ${currentMarket.value}, ${
+              rateTrend === "UP"
+                ? "seçim oranından yüksek"
+                : rateTrend === "DOWN"
+                  ? "seçim oranından düşük"
+                  : "değişim yok veya oran kapalı"
+            }`}
+            style={styles.rateBlock}
+          >
+            <View style={styles.rateHeadline}>
+              {rateTrend !== "UNAVAILABLE" ? (
+                <MaterialCommunityIcons
+                  color={rateTrendColor}
+                  name={rateTrendIcon}
+                  size={17}
+                />
+              ) : null}
+              <Text style={[styles.rate, { color: rateTrendColor }]}>
+                {currentMarket.value}
+              </Text>
+            </View>
+            <Text style={styles.rateLabel}>{currentMarket.label}</Text>
           </View>
-          <Text style={styles.rateLabel}>{currentMarket.label}</Text>
-        </View>
-        <View
-          accessibilityLabel={
-            pressureBalance.hasData
-              ? `Güncel baskı farkı ${formatSigned(match.pressureDiff ?? 0, 1)}, ${
-                  pressureBalance.direction === "HOME"
-                    ? "ev sahibi baskıda"
-                    : pressureBalance.direction === "AWAY"
-                      ? "deplasman baskıda"
-                      : "dengeli"
-                }`
-              : "Baskı verisi bekleniyor"
-          }
-          style={styles.pressureBlock}
-        >
-          <MaterialCommunityIcons
-            color={pressureColor}
-            name={pressureIcon}
-            size={18}
-          />
-          <View>
-            <Text
-              style={[
-                styles.pressure,
-                {
-                  color: pressureColor
-                }
-              ]}
-            >
-              {pressureBalance.hasData
-                ? formatSigned(match.pressureDiff ?? 0, 1)
-                : "—"}
-            </Text>
-            <Text style={styles.pressureLabel}>
-              {pressureBalance.hasData ? "güncel baskı farkı" : "güncel veri bekleniyor"}
-            </Text>
+        ) : null}
+        {footer.showsPressure ? (
+          <View
+            accessibilityLabel={
+              pressureBalance.hasData
+                ? `Güncel baskı farkı ${formatSigned(match.pressureDiff ?? 0, 1)}, ${
+                    pressureBalance.direction === "HOME"
+                      ? "ev sahibi baskıda"
+                      : pressureBalance.direction === "AWAY"
+                        ? "deplasman baskıda"
+                        : "dengeli"
+                  }`
+                : "Baskı verisi bekleniyor"
+            }
+            style={styles.pressureBlock}
+          >
+            <MaterialCommunityIcons
+              color={pressureColor}
+              name={pressureIcon}
+              size={18}
+            />
+            <View style={styles.pressureCopy}>
+              <Text style={[styles.pressure, { color: pressureColor }]}>
+                {pressureBalance.hasData
+                  ? formatSigned(match.pressureDiff ?? 0, 1)
+                  : "—"}
+              </Text>
+              <Text style={styles.pressureLabel}>
+                {pressureBalance.hasData
+                  ? "güncel baskı farkı"
+                  : "güncel veri bekleniyor"}
+              </Text>
+            </View>
           </View>
-        </View>
+        ) : null}
       </View>
     </Pressable>
   );
@@ -332,7 +339,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: spacing.md
+    gap: spacing.md,
+    // Last line of defence. The footer drops the blocks that have nothing to
+    // report, but a long selection string next to a three-digit pressure value
+    // can still outgrow a 360dp card, and wrapping to a second line is the only
+    // failure mode here that neither truncates a Turkish label into nonsense nor
+    // pushes content past the card edge.
+    flexWrap: "wrap"
+  },
+  decisionBlock: {
+    flexShrink: 1,
+    minWidth: 0
   },
   odd: {
     color: colors.text,
@@ -341,7 +358,12 @@ const styles = StyleSheet.create({
   },
   rateBlock: {
     alignItems: "flex-end",
-    marginLeft: "auto"
+    flexShrink: 1,
+    // Keeps the two market and pressure blocks grouped at the right edge while
+    // the decision block holds the left, which is the reading order the card
+    // shipped with.
+    marginLeft: "auto",
+    minWidth: 0
   },
   rateHeadline: {
     alignItems: "center",
@@ -360,7 +382,13 @@ const styles = StyleSheet.create({
   pressureBlock: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 3
+    flexShrink: 1,
+    gap: 3,
+    minWidth: 0
+  },
+  pressureCopy: {
+    flexShrink: 1,
+    minWidth: 0
   },
   pressure: {
     ...typeScale.micro
