@@ -2,7 +2,6 @@ import { memo } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 import type { LiveContext } from "@/src/api/schemas";
-import { ModuleHeading } from "@/src/components/ModuleHeading";
 import { LiveContextNotice } from "@/src/components/LiveContextNotice";
 import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import {
@@ -132,7 +131,6 @@ function MatchTimelineCardComponent({
 
   return (
     <>
-      <ModuleHeading eyebrow="MAÇ AKIŞI" title="Goller ve kırmızı kartlar" />
       <View style={styles.card}>
         <SurfaceMaterial radius={radii.lg} />
         {state === "LOADING" ? (

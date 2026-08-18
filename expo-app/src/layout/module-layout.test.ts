@@ -4,7 +4,7 @@ import {
   moduleLayoutStorageKey,
   moduleLayoutSurfaces,
   moveModule,
-  parseStoredModuleOrder,
+  parseStoredModulePreference,
   reconcileModuleOrder,
   resolveDropIndex,
   resolveVisibleMove
@@ -76,11 +76,11 @@ test("falls back to the canonical default for corrupted storage", () => {
   assert.deepEqual(reconcileModuleOrder({ order: [] }, defaults), [...defaults]);
   assert.deepEqual(reconcileModuleOrder([1, 2, 3], defaults), [...defaults]);
   assert.deepEqual(
-    reconcileModuleOrder(parseStoredModuleOrder("{oops"), defaults),
+    reconcileModuleOrder(parseStoredModulePreference("{oops"), defaults),
     [...defaults]
   );
   assert.deepEqual(
-    reconcileModuleOrder(parseStoredModuleOrder(null), defaults),
+    reconcileModuleOrder(parseStoredModulePreference(null), defaults),
     [...defaults]
   );
 });
@@ -89,7 +89,7 @@ test("round-trips a stored order through serialized storage text", () => {
   const stored = ["statistics", "odds", "gamePulse", "pressure"];
   assert.deepEqual(
     reconcileModuleOrder(
-      parseStoredModuleOrder(JSON.stringify(stored)),
+      parseStoredModulePreference(JSON.stringify(stored)),
       defaults
     ),
     stored

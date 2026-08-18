@@ -11,6 +11,19 @@ export function moduleLayoutStorageKey(surface: ModuleLayoutSurface): string {
 }
 
 /**
+ * How long a finger must rest on a module before the list lifts it to reorder.
+ *
+ * Exported because the reorder gesture is not the only one that starts on a
+ * module: a panel header sits inside the same touch area and has to know when a
+ * press has already become a hold, so both read one threshold rather than
+ * drifting apart at two literals.
+ */
+export const moduleReorderActivationDelayMs = 420;
+
+/** Finger travel that means the gesture is a scroll or swipe, not a press. */
+export const moduleReorderActivationSlop = 12;
+
+/**
  * Placement rule for a module introduced after a layout was first persisted.
  *
  * Appending a new module to the bottom is safe but wrong: a timeline that lands
@@ -83,8 +96,16 @@ export function reconcileModuleOrder(
   return reconciled;
 }
 
-/** Parses raw storage text without letting corrupted JSON reach the caller. */
-export function parseStoredModuleOrder(raw: string | null | undefined): unknown {
+/**
+ * Parses raw storage text without letting corrupted JSON reach the caller.
+ *
+ * Shared by every persisted module preference so a corrupted store has a single
+ * policy instead of one per feature: unreadable text resolves to `null` and
+ * each preference falls back to its own canonical default.
+ */
+export function parseStoredModulePreference(
+  raw: string | null | undefined
+): unknown {
   if (typeof raw !== "string" || !raw) {
     return null;
   }

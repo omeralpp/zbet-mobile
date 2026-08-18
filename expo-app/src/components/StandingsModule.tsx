@@ -1,6 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
 import { colors, radii, spacing } from "@/src/theme/theme";
-import { ModuleHeading } from "./ModuleHeading";
 import { TeamLogo } from "./TeamLogo";
 
 export type StandingsTeam = {
@@ -12,7 +11,6 @@ export type StandingsTeam = {
 };
 
 type StandingsModuleProps = {
-  title: string;
   caption: string;
   home: StandingsTeam;
   away: StandingsTeam;
@@ -83,9 +81,12 @@ function StandingsRow({ team }: { team: StandingsTeam }) {
  *
  * The BTB contract only guarantees the two teams of the decision, so this is a
  * deliberate head-to-head module rather than a partial league table.
+ *
+ * The module heading is rendered by the collapsible panel that hosts this, so a
+ * closed panel is genuinely just its header rather than a header with a second
+ * one still showing underneath.
  */
 export function StandingsModule({
-  title,
   caption,
   home,
   away
@@ -103,7 +104,6 @@ export function StandingsModule({
 
   return (
     <>
-      <ModuleHeading eyebrow="PUAN DURUMU" title={title} />
       <View style={styles.card}>
         <StandingsRow team={home} />
         <View style={styles.gapStrip}>

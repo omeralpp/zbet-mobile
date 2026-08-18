@@ -4,7 +4,7 @@ import {
   moduleLayoutStorageKey,
   moduleLayoutSurfaces,
   moveModule,
-  parseStoredModuleOrder,
+  parseStoredModulePreference,
   reconcileModuleOrder,
   resolveVisibleMove,
   type ModuleLayoutSurface
@@ -72,7 +72,7 @@ export function hydrateModuleLayouts(): Promise<void> {
         commit(
           surface,
           reconcileModuleOrder(
-            parseStoredModuleOrder(stored.get(moduleLayoutStorageKey(surface))),
+            parseStoredModulePreference(stored.get(moduleLayoutStorageKey(surface))),
             moduleLayoutDefaults[surface],
             moduleLayoutAnchors[surface]
           )

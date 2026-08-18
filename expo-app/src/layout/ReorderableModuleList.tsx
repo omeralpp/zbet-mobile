@@ -21,7 +21,11 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radii } from "@/src/theme/theme";
-import { resolveDropIndex } from "./module-layout";
+import {
+  moduleReorderActivationDelayMs,
+  moduleReorderActivationSlop,
+  resolveDropIndex
+} from "./module-layout";
 
 export type ReorderableModuleItem = {
   id: string;
@@ -42,10 +46,6 @@ type ModuleSlot = {
   height: number;
 };
 
-/** Hold duration before a press turns into a reorder drag. */
-const activationDelayMs = 420;
-/** Finger travel that cancels activation because the user is scrolling. */
-const activationSlop = 12;
 const autoScrollEdge = 96;
 const autoScrollStep = 9;
 const autoScrollIntervalMs = 16;
@@ -373,7 +373,7 @@ export function ReorderableModuleList({
       holdOrigin.current = { x, y };
       pointerY.current = y;
       clearHold();
-      holdTimer.current = setTimeout(() => activate(id), activationDelayMs);
+      holdTimer.current = setTimeout(() => activate(id), moduleReorderActivationDelayMs);
     },
     [activate, clearHold]
   );
@@ -385,8 +385,8 @@ export function ReorderableModuleList({
         return;
       }
       if (
-        Math.abs(x - holdOrigin.current.x) > activationSlop ||
-        Math.abs(y - holdOrigin.current.y) > activationSlop
+        Math.abs(x - holdOrigin.current.x) > moduleReorderActivationSlop ||
+        Math.abs(y - holdOrigin.current.y) > moduleReorderActivationSlop
       ) {
         clearHold();
       }
@@ -453,6 +453,27 @@ export function ReorderableModuleList({
     []
   );
 
+  /**
+   * Ends whatever the touch had started.
+   *
+   * A hold that promoted a module but never moved leaves the pan responder
+   * unused, so its release arrives here as a plain touch end rather than as a
+   * gesture release. Without this the module would stay lifted and the screen
+   * would stay unscrollable until the next drag. Now that a panel header is
+   * tappable this is no longer a rare gesture: a slow tap on a header crosses
+   * the hold threshold with the finger perfectly still.
+   *
+   * Safe to reach twice — `finishDrag` clears the active drag before it settles,
+   * so a real gesture release that also bubbles a touch end is a no-op here.
+   */
+  const releaseTouch = useCallback(() => {
+    if (drag.current) {
+      finishDrag();
+      return;
+    }
+    clearHold();
+  }, [clearHold, finishDrag]);
+
   const handleDragMove = useCallback(
     (pageY: number, dy: number) => {
       pointerY.current = pageY;
@@ -471,7 +492,7 @@ export function ReorderableModuleList({
           id={item.id}
           key={item.id}
           node={item.node}
-          onHoldEnd={clearHold}
+          onHoldEnd={releaseTouch}
           onHoldMove={handleHoldMove}
           onHoldStart={handleHoldStart}
           onDragEnd={finishDrag}

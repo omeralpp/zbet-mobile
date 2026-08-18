@@ -17,7 +17,6 @@ import {
 } from "@/src/api/queries";
 import { Screen } from "@/src/components/Screen";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
-import { ModuleHeading } from "@/src/components/ModuleHeading";
 import { SignalMeter } from "@/src/components/SignalMeter";
 import {
   SurfaceDivider,
@@ -27,6 +26,7 @@ import { StandingsModule } from "@/src/components/StandingsModule";
 import { TeamLogo } from "@/src/components/TeamLogo";
 import { PressureBalance } from "@/src/components/PressureBalance";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
+import { CollapsibleModule } from "@/src/layout/CollapsibleModule";
 import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
 import { useModuleLayout } from "@/src/layout/module-layout-store";
 import type { SuperDetailModuleId } from "@/src/layout/module-registry";
@@ -52,6 +52,35 @@ import {
 
 function firstParam(value: string | string[] | undefined): string {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
+}
+
+/**
+ * One Super detay module, as a collapsible panel.
+ *
+ * The surface binding lives here for the same reason as its Canlı detay twin:
+ * a module declares its registry id and heading and nothing else.
+ */
+function SuperDetailPanel({
+  children,
+  eyebrow,
+  id,
+  title
+}: {
+  children: ReactNode;
+  eyebrow: string;
+  id: SuperDetailModuleId;
+  title: string;
+}) {
+  return (
+    <CollapsibleModule
+      eyebrow={eyebrow}
+      moduleId={id}
+      surface="superDetail"
+      title={title}
+    >
+      {children}
+    </CollapsibleModule>
+  );
 }
 
 function Metric({
@@ -142,8 +171,7 @@ export default function SuperLogDetailScreen() {
   // their own modules so the decision metrics are not diluted by description.
   const moduleNodes: Partial<Record<SuperDetailModuleId, ReactNode>> = {
     decisionSummary: (
-      <>
-        <ModuleHeading eyebrow="MODEL" title="Karar özeti" />
+      <SuperDetailPanel eyebrow="MODEL" id="decisionSummary" title="Karar özeti">
         <View style={styles.card}>
           <SurfaceMaterial accent={semantic.intelligence} radius={radii.lg} />
           <Text style={styles.reason}>{formatDecisionReason(log.reason)}</Text>
@@ -222,11 +250,14 @@ export default function SuperLogDetailScreen() {
             <Text style={styles.comment}>{log.aiComment}</Text>
           ) : null}
         </View>
-      </>
+      </SuperDetailPanel>
     ),
     decisionField: (
-      <>
-        <ModuleHeading eyebrow="SAHA" title="Karar anındaki saha" />
+      <SuperDetailPanel
+        eyebrow="SAHA"
+        id="decisionField"
+        title="Karar anındaki saha"
+      >
         <View style={styles.card}>
           <View style={styles.metricGrid}>
             <Metric label="toplam baskı" value={formatSigned(log.totalPressure)} />
@@ -251,11 +282,14 @@ export default function SuperLogDetailScreen() {
             totalPressure={log.totalPressure}
           />
         </View>
-      </>
+      </SuperDetailPanel>
     ),
     similarity: (
-      <>
-        <ModuleHeading eyebrow="BAĞLAM" title="Benzerlik ve lig bağlamı" />
+      <SuperDetailPanel
+        eyebrow="BAĞLAM"
+        id="similarity"
+        title="Benzerlik ve lig bağlamı"
+      >
         <View style={styles.card}>
           <Text style={styles.groupLabel}>Havuz derinliği</Text>
           <View style={styles.metricGrid}>
@@ -286,30 +320,35 @@ export default function SuperLogDetailScreen() {
             />
           </View>
         </View>
-      </>
+      </SuperDetailPanel>
     )
   };
 
   if (hasStandingContext) {
     moduleNodes.standings = (
-      <StandingsModule
-        away={{
-          team: log.awayTeam,
-          participantId: log.awayParticipantId,
-          position: log.awayStandingPosition || null,
-          points: log.awayStandingPoints,
-          side: "AWAY"
-        }}
-        caption="Karar anındaki kayıt; yalnız SAP'ın doğruladığı iki takım gösterilir."
-        home={{
-          team: log.homeTeam,
-          participantId: log.homeParticipantId,
-          position: log.homeStandingPosition || null,
-          points: log.homeStandingPoints,
-          side: "HOME"
-        }}
+      <SuperDetailPanel
+        eyebrow="PUAN DURUMU"
+        id="standings"
         title="Karar anındaki lig"
-      />
+      >
+        <StandingsModule
+          away={{
+            team: log.awayTeam,
+            participantId: log.awayParticipantId,
+            position: log.awayStandingPosition || null,
+            points: log.awayStandingPoints,
+            side: "AWAY"
+          }}
+          caption="Karar anındaki kayıt; yalnız SAP'ın doğruladığı iki takım gösterilir."
+          home={{
+            team: log.homeTeam,
+            participantId: log.homeParticipantId,
+            position: log.homeStandingPosition || null,
+            points: log.homeStandingPoints,
+            side: "HOME"
+          }}
+        />
+      </SuperDetailPanel>
     );
   }
 

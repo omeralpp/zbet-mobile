@@ -22,7 +22,6 @@ import {
   matchQuery,
   matchSuperLogsQuery
 } from "@/src/api/queries";
-import { ModuleHeading } from "@/src/components/ModuleHeading";
 import { RatingStars } from "@/src/components/RatingStars";
 import { LiveDot } from "@/src/components/LiveDot";
 import { SignalMeter } from "@/src/components/SignalMeter";
@@ -41,6 +40,7 @@ import { RatioResultsChart } from "@/src/components/RatioResultsChart";
 import { Screen } from "@/src/components/Screen";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { buildBilyonerMatchUrl } from "@/src/external/bilyoner";
+import { CollapsibleModule } from "@/src/layout/CollapsibleModule";
 import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
 import { useModuleLayout } from "@/src/layout/module-layout-store";
 import type { LiveDetailModuleId } from "@/src/layout/module-registry";
@@ -71,6 +71,36 @@ function firstParam(value: string | string[] | undefined): string {
   } catch {
     return raw;
   }
+}
+
+/**
+ * One Canlı detay module, as a collapsible panel.
+ *
+ * A thin binding of `CollapsibleModule` to this surface: each module then names
+ * only its registry id and its heading, and `liveDetail` cannot be mistyped at
+ * nine separate call sites.
+ */
+function LiveDetailPanel({
+  children,
+  eyebrow,
+  id,
+  title
+}: {
+  children: ReactNode;
+  eyebrow: string;
+  id: LiveDetailModuleId;
+  title: string;
+}) {
+  return (
+    <CollapsibleModule
+      eyebrow={eyebrow}
+      moduleId={id}
+      surface="liveDetail"
+      title={title}
+    >
+      {children}
+    </CollapsibleModule>
+  );
 }
 
 function TeamHeroName({
@@ -261,9 +291,17 @@ export default function MatchDetailScreen() {
   // Only modules that currently have data are rendered; the persisted order
   // still holds a slot for the rest so they return where the user left them.
   const moduleNodes: Partial<Record<LiveDetailModuleId, ReactNode>> = {
-    gamePulse: <GamePulseCard betRadarId={match.betRadarId} />,
+    gamePulse: (
+      <LiveDetailPanel eyebrow="MAÇIN NABZI" id="gamePulse" title="Canlı tempo">
+        <GamePulseCard betRadarId={match.betRadarId} />
+      </LiveDetailPanel>
+    ),
     timeline: (
-      <>
+      <LiveDetailPanel
+        eyebrow="MAÇ AKIŞI"
+        id="timeline"
+        title="Goller ve kırmızı kartlar"
+      >
         <MatchTimelineCard
           awayTeam={match.awayTeam}
           context={liveContext.data}
@@ -275,21 +313,19 @@ export default function MatchDetailScreen() {
           refreshFailed={liveContext.data?.freshness?.refreshFailed}
           stale={liveContext.data?.freshness?.stale}
         />
-      </>
+      </LiveDetailPanel>
     ),
     odds: (
-      <>
-        <ModuleHeading eyebrow="PİYASA" title="Oran sonuçları" />
+      <LiveDetailPanel eyebrow="PİYASA" id="odds" title="Oran sonuçları">
         <RatioResultsChart
           marketRates={insight?.marketRates ?? []}
           phase={match.ratioPhase}
           rows={match.ratioResults}
         />
-      </>
+      </LiveDetailPanel>
     ),
     statistics: (
-      <>
-        <ModuleHeading eyebrow="SAHA" title="Canlı saha dengesi" />
+      <LiveDetailPanel eyebrow="SAHA" id="statistics" title="Canlı saha dengesi">
         <View style={styles.statsCard}>
           <SurfaceMaterial radius={radii.lg} />
           <ComparisonRow
@@ -330,11 +366,14 @@ export default function MatchDetailScreen() {
             label="Kırmızı kart"
           />
         </View>
-      </>
+      </LiveDetailPanel>
     ),
     pressure: (
-      <>
-        <ModuleHeading eyebrow="BASKI" title="Güncel baskı dengesi" />
+      <LiveDetailPanel
+        eyebrow="BASKI"
+        id="pressure"
+        title="Güncel baskı dengesi"
+      >
         <View style={styles.statsCard}>
           <SurfaceMaterial radius={radii.lg} />
           <PressureBalance
@@ -351,11 +390,14 @@ export default function MatchDetailScreen() {
             }
           />
         </View>
-      </>
+      </LiveDetailPanel>
     ),
     scoreDistribution: (
-      <>
-        <ModuleHeading eyebrow="OLASILIK" title="Skor dağılımı" />
+      <LiveDetailPanel
+        eyebrow="OLASILIK"
+        id="scoreDistribution"
+        title="Skor dağılımı"
+      >
         <View style={styles.distributionCard}>
           <SurfaceMaterial radius={radii.lg} />
           {match.scoreDistribution.length ? (
@@ -379,69 +421,73 @@ export default function MatchDetailScreen() {
             <Text style={styles.emptyText}>Skor dağılımı henüz oluşmadı.</Text>
           )}
         </View>
-      </>
+      </LiveDetailPanel>
     )
   };
 
   if (match.selectedOdd && match.rating > 0) {
     moduleNodes.decision = (
-      <Pressable
-        accessibilityHint={
-          showDecision ? "Model ayrıntılarını gizler" : "Model ayrıntılarını açar"
-        }
-        accessibilityRole="button"
-        onPress={() => setShowDecision((visible) => !visible)}
-        style={styles.decisionCard}
-      >
-        <SurfaceMaterial accent={semantic.intelligence} radius={radii.lg} />
-        <Text style={styles.decisionEyebrow}>KARAR ÖZETİ</Text>
-        {/* The reason is the answer to the question the card asks, so it is the
-            headline rather than something revealed after a tap. Only the model
-            internals sit behind the disclosure - a reader who wants to know why
-            gets an answer immediately, and a reader who wants the numbers asks
-            for them. */}
-        <Text style={styles.decisionReason}>
-          {formatDecisionReason(match.decisionReason)}
-        </Text>
-        <View style={styles.decisionFacts}>
-          {match.decisionMinute !== null ? (
-            <Text style={styles.decisionFact}>{match.decisionMinute}&apos; karar</Text>
-          ) : null}
-          {match.selectedOdd ? (
-            <Text style={styles.decisionFact}>{match.selectedOdd}</Text>
-          ) : null}
-          <Text style={styles.decisionToggle}>
-            {showDecision ? "Modeli gizle" : "Modeli göster"}
+      <LiveDetailPanel eyebrow="KARAR" id="decision" title="Karar özeti">
+        <Pressable
+          accessibilityHint={
+            showDecision ? "Model ayrıntılarını gizler" : "Model ayrıntılarını açar"
+          }
+          accessibilityRole="button"
+          onPress={() => setShowDecision((visible) => !visible)}
+          style={styles.decisionCard}
+        >
+          <SurfaceMaterial accent={semantic.intelligence} radius={radii.lg} />
+          {/* The reason is the answer to the question the card asks, so it is the
+              headline rather than something revealed after a tap. Only the model
+              internals sit behind the disclosure - a reader who wants to know why
+              gets an answer immediately, and a reader who wants the numbers asks
+              for them. */}
+          <Text style={styles.decisionReason}>
+            {formatDecisionReason(match.decisionReason)}
           </Text>
-        </View>
-        {showDecision ? (
-          <View style={styles.decisionBody}>
-            {match.decisionConfidence !== null ? (
-              <View style={styles.decisionMetric}>
-                <Text style={styles.decisionMetricValue}>
-                  {formatPercentage(match.decisionConfidence)}
-                </Text>
-                <Text style={styles.decisionMetricLabel}>güven</Text>
-              </View>
+          <View style={styles.decisionFacts}>
+            {match.decisionMinute !== null ? (
+              <Text style={styles.decisionFact}>{match.decisionMinute}&apos; karar</Text>
             ) : null}
-            {match.decisionScore !== null ? (
-              <View style={styles.decisionMetric}>
-                <Text style={styles.decisionMetricValue}>
-                  {match.decisionScore.toFixed(2)}
-                </Text>
-                <Text style={styles.decisionMetricLabel}>model skoru</Text>
-              </View>
+            {match.selectedOdd ? (
+              <Text style={styles.decisionFact}>{match.selectedOdd}</Text>
             ) : null}
+            <Text style={styles.decisionToggle}>
+              {showDecision ? "Modeli gizle" : "Modeli göster"}
+            </Text>
           </View>
-        ) : null}
-      </Pressable>
+          {showDecision ? (
+            <View style={styles.decisionBody}>
+              {match.decisionConfidence !== null ? (
+                <View style={styles.decisionMetric}>
+                  <Text style={styles.decisionMetricValue}>
+                    {formatPercentage(match.decisionConfidence)}
+                  </Text>
+                  <Text style={styles.decisionMetricLabel}>güven</Text>
+                </View>
+              ) : null}
+              {match.decisionScore !== null ? (
+                <View style={styles.decisionMetric}>
+                  <Text style={styles.decisionMetricValue}>
+                    {match.decisionScore.toFixed(2)}
+                  </Text>
+                  <Text style={styles.decisionMetricLabel}>model skoru</Text>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+        </Pressable>
+      </LiveDetailPanel>
     );
   }
 
   if (relatedDecisions.length) {
     moduleNodes.relatedSuper = (
-      <>
-        <ModuleHeading eyebrow="KARAR GEÇMİŞİ" title="Maçın Super tercihleri" />
+      <LiveDetailPanel
+        eyebrow="KARAR GEÇMİŞİ"
+        id="relatedSuper"
+        title="Maçın Super tercihleri"
+      >
         <View style={styles.relatedDecisionCard}>
           <SurfaceMaterial radius={radii.lg} />
           {relatedDecisions.map((log, index) => {
@@ -485,35 +531,40 @@ export default function MatchDetailScreen() {
             );
           })}
         </View>
-      </>
+      </LiveDetailPanel>
     );
   }
 
   if (hasLeagueContext && leagueContext) {
     moduleNodes.standings = (
       <TutorialTarget id="match-standings" radius={radii.lg}>
-        <StandingsModule
-          away={{
-            team: leagueContext.awayTeam,
-            participantId: match.awayParticipantId,
-            position: leagueContext.awayStandingPosition,
-            points: leagueContext.awayStandingPoints,
-            side: "AWAY"
-          }}
-          caption={
-            leagueContext.source === "LATEST_SUPER_DECISION"
-              ? "Son Super kararı kaydından; yalnız doğrulanan iki takım gösterilir."
-              : "Kaynak bekleniyor; yalnız doğrulanan iki takım gösterilir."
-          }
-          home={{
-            team: leagueContext.homeTeam,
-            participantId: match.homeParticipantId,
-            position: leagueContext.homeStandingPosition,
-            points: leagueContext.homeStandingPoints,
-            side: "HOME"
-          }}
+        <LiveDetailPanel
+          eyebrow="PUAN DURUMU"
+          id="standings"
           title="Lig sıralaması"
-        />
+        >
+          <StandingsModule
+            away={{
+              team: leagueContext.awayTeam,
+              participantId: match.awayParticipantId,
+              position: leagueContext.awayStandingPosition,
+              points: leagueContext.awayStandingPoints,
+              side: "AWAY"
+            }}
+            caption={
+              leagueContext.source === "LATEST_SUPER_DECISION"
+                ? "Son Super kararı kaydından; yalnız doğrulanan iki takım gösterilir."
+                : "Kaynak bekleniyor; yalnız doğrulanan iki takım gösterilir."
+            }
+            home={{
+              team: leagueContext.homeTeam,
+              participantId: match.homeParticipantId,
+              position: leagueContext.homeStandingPosition,
+              points: leagueContext.homeStandingPoints,
+              side: "HOME"
+            }}
+          />
+        </LiveDetailPanel>
       </TutorialTarget>
     );
   }
@@ -874,12 +925,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.borderSoft,
-    padding: spacing.lg,
-    marginTop: spacing.lg
-  },
-  decisionEyebrow: {
-    color: colors.bronze,
-    ...typeScale.eyebrow
+    padding: spacing.lg
   },
   decisionToggle: {
     color: semantic.intelligence,

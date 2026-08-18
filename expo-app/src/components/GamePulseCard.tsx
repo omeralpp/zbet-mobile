@@ -12,7 +12,6 @@ import {
   buildGamePulseUrl,
   isAllowedGamePulseUrl
 } from "@/src/external/bilyoner";
-import { ModuleHeading } from "@/src/components/ModuleHeading";
 import {
   defaultPulseHeight,
   parsePulseHeightMessage,
@@ -22,7 +21,7 @@ import {
 import { colors, radii, spacing } from "@/src/theme/theme";
 
 /**
- * Heading plus card shell shared by every state of this module.
+ * Card shell shared by every state of this module.
  *
  * The provider panel inside it is a self-sizing third-party widget behind an
  * obfuscating script loader, so it reports its own content height and the
@@ -31,12 +30,7 @@ import { colors, radii, spacing } from "@/src/theme/theme";
  * sizing rules live in `game-pulse-sizing`.
  */
 function PulseFrame({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      <ModuleHeading eyebrow="MAÇIN NABZI" title="Canlı tempo" />
-      <View style={styles.card}>{children}</View>
-    </>
-  );
+  return <View style={styles.card}>{children}</View>;
 }
 
 function GamePulseCardComponent({
