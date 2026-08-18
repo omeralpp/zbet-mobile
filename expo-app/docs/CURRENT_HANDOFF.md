@@ -168,7 +168,11 @@ Koyu ve açık temada Özet, Canlı listesi ve açılış ekranı doğrulandı.
 1. **Sahip fiziksel Xiaomi doğrulaması** — marka her yüzeyde görünür
    değiştiği için zorunlu. Kontrol listesi aşağıda.
 2. Doğrulama geçerse Milestone 2 kapanır ve roadmap %18,2 olur.
-3. Milestone 3 (Decision Safety) mutasyonu ondan önce başlamaz.
+3. Milestone 3 (Decision Safety) mutasyonu ondan önce başlamaz — ayrıca
+   **girdisi de eksik**: `R1–R11` gereksinimleri ve adli sonuç bu çalışma
+   alanında hiçbir dosyada yok (tarandı). Yol haritasının kanonik kaydı ve
+   Milestone 3'ün salt-okunur envanteri `BTB Logs/BTB_ROADMAP.md` içindedir.
+   O madde `BTB - Aktif` task'ının sahipliğindedir.
 
 ### Xiaomi fiziksel doğrulama kontrol listesi — marka varlığı
 
