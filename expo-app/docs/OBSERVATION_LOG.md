@@ -1,6 +1,11 @@
 # BTB Mobile Next — Observation Log
 
-Durum: `ACTIVE / OBSERVATION`
+Durum: `PRODUCT DESIGN V2 — CLOSEOUT`
+
+Product Design V2 dokuz batch ile tamamlandı (`ff50051..21a1f57`). Değişiklikler
+yalnız sunumdur; tahmin, model, Toto, Live Context sözleşmesi, BFF ve SAP
+davranışı değişmedi. Fiziksel Xiaomi doğrulaması bekleniyor; kontrol listesi
+`docs/CURRENT_HANDOFF.md` içindedir.
 
 Aktif APK (fiziksel Xiaomi ile doğrulanmış baseline):
 

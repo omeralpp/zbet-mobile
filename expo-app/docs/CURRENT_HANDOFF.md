@@ -6,26 +6,60 @@ Son güncelleme: 2026-08-18
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `OBSERVATION` — 2026-08-18 Live Context v2 gerçek olay yolu kapatıldı. SAP
-köprüsü aktive edildi, uçtan uca doğrulandı ve runtime `SAP_BRIDGE` upstream'i
-ile açıldı. Mobile kaynak değişikliği olmadı; doğrulanmış APK baseline'ı aynı
-kaldı. Aktif runtime yalnız `api.surklase.com` arkasındaki yerel standalone
-BFF/notification servisidir. Owner talimatıyla `btb-fcm-proxy-srv` durdurulmuş
-durumdadır. Public Cloudflare origin yapılandırması, Firebase/SAP dış
-değişikliği, APK dağıtımı ve release signing yapılmadı; her biri ayrıca açık
-onay gerektirir. Legacy Cordova RETIRED.
+Mod: `PRODUCT DESIGN V2 — CLOSEOUT` — Dokuz Product Design V2 batch'i tamamlandı
+ve owner tarafından kabul edildi. Mobile kaynağı `b57625e` baseline'ının üstüne
+dokuz commit ile değişti; bu nedenle doğrulanmış Live Context v2 APK baseline'ı
+artık kaynağı temsil etmiyor ve yeni bir pilot APK gerekiyor. Değişiklikler
+yalnız sunumdur: tahmin, model, Toto, Live Context sözleşmesi, BFF ve SAP
+davranışına dokunulmadı ve `zbet-cap` / `zbet-abap` / `btb-codex` hiç
+değiştirilmedi.
+
+Live Context runtime hâlâ `SAP_BRIDGE` upstream'i ile açıktır. Aktif runtime
+yalnız `api.surklase.com` arkasındaki yerel standalone BFF/notification
+servisidir. Owner talimatıyla `btb-fcm-proxy-srv` durdurulmuş durumdadır. Public
+Cloudflare origin yapılandırması, Firebase/SAP dış değişikliği, APK dağıtımı ve
+release signing yapılmadı; her biri ayrıca açık onay gerektirir. Legacy Cordova
+RETIRED.
 
 Durum:
 
 ```text
+PRODUCT_DESIGN_V2_COMPLETE                 (ff50051..21a1f57)
+READY_FOR_XIAOMI_PRODUCT_DESIGN_V2_VALIDATION
+NEW_APK_REQUIRED                           (Design V2 kaynağı APK'da yok)
+MOBILE_NEXT_BASELINE_VERIFIED              (Live Context v2 APK, geri dönüş noktası)
 LIVE_CONTEXT_V2_ACCEPTED
 REAL_GOAL_PHYSICAL_PASS
 RED_CARD_OWNER_ACCEPTED
-NO_NEW_APK_REQUIRED
-MOBILE_NEXT_BASELINE_VERIFIED
-PROSPECTIVE_PILOT_RUNNING                  (300 sn, zbet-cap)
+PROSPECTIVE_PILOT_RUNNING                  (300 sn, zbet-cap — değiştirilmedi)
 BILYONER_LIVE_CONTEXT_RUNTIME = ENABLED_VIA_SAP_BRIDGE
 ```
+
+## Product Design V2 — tamamlandı (2026-08-18)
+
+Mobile SHA: `21a1f57` (`origin/master` ile aynı). Baseline: `b57625e`.
+
+```text
+ff50051  Design System v2 token temeli
+8de1936  Canlı kimliği + Bibi yoğun yüzeylerden çekildi
+912b093  Özet + Canlı listesi: Intelligence Noir yüzey dili
+7a22fe5  Maç Detayı skor tahtası yerine BTB kararı etrafında kuruldu
+2e56530  Super kararında karar anı ile sonuç ayrıldı
+6ff7e2c  Üç durum yerine ürünün gerçek sekiz durumu
+3880da2  Her iki tema Intelligence Noir paletine taşındı
+a6bdea2  Toto ortak sisteme alındı
+21a1f57  İkincil yüzeyler + canlı nabız
+```
+
+Tasarım kuralları tek kaynakta: `docs/UI_INTERACTION_STANDARD.md`.
+
+Kalite kapısı: TypeScript, ESLint ve `321/321` test temiz; `git diff --check`
+temiz. Emülatör doğrulaması koyu ve açık temada yapıldı. Fiziksel Xiaomi
+doğrulaması **yapılmadı** — kontrol listesi aşağıdadır.
+
+Owner kararları: düşen oran renk konvansiyonu bu milestone'da değiştirilmedi
+(ayrı ürün kararı olarak kaydedildi); Super model etiketleri kullanıcı yüzünde
+Türkçe kalır.
 
 Yeni task önce yalnız `C:\dev\btb-cdoex\AGENTS.md` ve bu dosyayı tamamen okur.
 Observation tespitleri `docs/OBSERVATION_LOG.md` içindedir. Yeni toplu kod
@@ -319,6 +353,75 @@ içeriyordu, artık `""` — yeni Work Zone sitesi yayınlandığında
 Sabit sınırlar: Cordova kaynağı silinmedi, yeniden build/publish edilmedi,
 migration başlatılmadı.
 
+## Product Design V2 aday APK — fiziksel doğrulama bekliyor
+
+```text
+Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-design-v2.apk
+Kaynak  : 21a1f57 (Product Design V2)
+Package : com.btb.mobile.next
+Version : 0.1.0 (1) · targetSdk 36 · compileSdk 36
+ABI     : arm64-v8a (yalnız; APK içinde tek lib dizini)
+Size    : 48.271.941 bayt
+SHA-256 : 8EB20F8F5774FB40FCE060E76DACC848F83C1928A19C27C3716DA4D60062AEEF
+Signing : v2 · fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
+Config  : authMode=pilot, useMocks=false, mobileApiUrl=https://api.surklase.com,
+          legacyLaunchpadUrl=https://34dfc21ftrial.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b38042ce-b8ab-4fea-a892-abf4c58a170f
+Durum   : PENDING_PHYSICAL_VALIDATION
+```
+
+İmza sertifikası doğrulanmış baseline ile **aynıdır**; üstüne kurulum ve App Link
+davranışı korunur.
+
+İçerik taraması (1.258 giriş, açılmış ağaç taramadan sonra silindi). Tarama önce
+beklenen işaretlerle doğrulandı, çünkü yalnız sıfır dönen bir tarama bozuk
+taramadan ayırt edilemez:
+
+```text
+beklenen var  : api.surklase.com 1 · 34dfc21ftrial 1 · com.btb.mobile.next 17
+yasak         : 188b143btrial 0 (UTF-8 ve UTF-16LE) · match-card/event 0
+                BEGIN PRIVATE KEY 0 · private_key 0 · JSESSIONID 0
+Hermes tuzağı : UTF-16LE tespiti kanıtlandı (Türkçe sabit UTF-16LE olarak bulundu)
+```
+
+Pilot erişim anahtarı beklendiği gibi gömülüdür (doğrulanmış baseline ile aynı
+profil). Değeri hiçbir log, rapor veya commit'e yazılmadı.
+
+Doğrulanmış baseline `btb-mobile-next-arm64-live-context-v2.apk` **silinmedi**;
+Design V2 APK'sı fiziksel doğrulamayı geçene kadar geri dönüş noktasıdır.
+
+## Xiaomi fiziksel doğrulama kontrol listesi — Product Design V2
+
+Yeni Design V2 APK'sı için. Geçene kadar `btb-mobile-next-arm64-live-context-v2.apk`
+geri dönüş noktasıdır ve silinmez.
+
+| # | Kontrol | Beklenen |
+| --- | --- | --- |
+| 1 | Soğuk açılış | Beyaz parlama yok; açılış ekranından Özet'e temiz geçiş |
+| 2 | Kimlik doğrulama | Pilot oturum açılır; mevcut kurulumun üstüne yükseltme oturumu bozmaz |
+| 3 | Özet | Hero kompakt, metrik kartlarında iz (trace) var, canlı sayaç teal |
+| 4 | Canlı | Canlı pill'leri teal ve nabız atıyor; biten maç nötr `MS` |
+| 5 | Yatay sekme kaydırma | Özet ↔ Canlı ↔ Super ↔ Toto ↔ Daha Fazla; ilk/son sekmede wrap yok |
+| 6 | Maç Detayı | Skor bandı + BTB SEÇİMİ bandı; sinyal ölçer; oran hareketi yönü |
+| 7 | Game Pulse | Kendi yüksekliğini bildiriyor; kompakt yükseklik davranışı bozulmadı |
+| 8 | Gol / kırmızı kart zaman çizelgesi | Yalnız gol ve kırmızı kart; tazelik uyarısı doğru |
+| 9 | Modül sıralama | Uzun bas-sürükle çalışıyor; sıra cihazda kalıcı |
+| 10 | Super listesi | Açık karar iz taşıyor, sonuçlanan kararlar geri çekiliyor |
+| 11 | Super karar detayı | `KARAR ANI` ile `SONUÇ` bantları bronz dikişle ayrık |
+| 12 | Toto | Program durumu doğru tonda; kapasite çubuğu analitik mavi |
+| 13 | Toto detayı | Bronz `KUPON` başlığı; sonuç renkleri doğru |
+| 14 | Daha Fazla | Bronz bölüm etiketleri; satır metni okunur |
+| 15 | Work Zone / derin bağlantı | Çift hash regresyonu yok; Fiori açılıyor |
+| 16 | Bildirimler | Kayıt ve teslim; bildirimden doğru ekrana dönüş |
+| 17 | Koyu tema | Derin mürekkep zemin; kart kenarları kaybolmuyor |
+| 18 | Açık tema | Sıcak zemin, serin kart; metin lacivert ve okunur |
+| 19 | Bibi kuralları | Maç Detayı ve Super karar detayında ambient Bibi **yok**; rehber adımı hâlâ çalışıyor |
+| 20 | Beyaz parlama | Sekme geçişlerinde ve detay dönüşlerinde yok |
+| 21 | Kırpma / taşma | Uzun Türkçe kulüp adları, yüksek skor, yüksek oran, 90+ dakika |
+| 22 | Güvenli alanlar | Durum çubuğu ve gezinme çubuğu çakışması yok; alt sekme erişilebilir |
+
+Bulgular `docs/OBSERVATION_LOG.md` içine yazılır; kod değişikliği yalnız
+`btb next cutover start` ile açılır.
+
 ## Son checkpoint
 
 - Maç ve Super detay hero kartlarındaki alt metrikler ortak üç kolon ritmine
@@ -479,7 +582,10 @@ Kanıt: `docs/observation_archive/cutover_2026-08-17-03.md`.
 
 ## Sıradaki milestone
 
-Prospective evidence pilotunun izlenmesi (bloklamayan) ve
+Product Design V2 APK'sının fiziksel Xiaomi doğrulaması. Geçene kadar
+`btb-mobile-next-arm64-live-context-v2.apk` geri dönüş noktası olarak korunur.
+
+Arka planda: prospective evidence pilotunun izlenmesi (bloklamayan) ve
 `PENDING_LIVE_MATCH_VALIDATION` takibi. FULL_INTERNAL ve Champion/Challenger
 henüz başlatılmadı.
 
@@ -492,13 +598,17 @@ henüz başlatılmadı.
 3. Doğal bir kırmızı kart geldiğinde `Olaylar` modülünde alt tip ayrımını
    gözlemsel olarak doğrula. **Release engeli değildir**; sorun çıkarsa yeni
    defect aç.
-4. Sıradaki milestone: `DECISION SAFETY / EVENT-TRANSITION CONFLICT REVIEW`
-   (aşağıdaki adli vakalarla). Bu thread'de başlatılmadı.
+4. `DECISION SAFETY / EVENT-TRANSITION CONFLICT REVIEW` başka bir BTB
+   thread'inde tamamlandı. Sonuçları o thread'in kanonik kayıtlarındadır ve
+   buradan yeniden yorumlanmaz; aşağıdaki bölüm yalnız tarihsel kapsam kaydıdır.
 5. FULL_INTERNAL ve Champion/Challenger başlatılmadı; ayrı karar gerektirir.
 6. Yeni observation batch'i yalnız `btb next cutover start` ile açılır;
    commit/push ve dış deploy kapıları açık onayla işletilir.
 
-## Sıradaki milestone — DECISION SAFETY / EVENT-TRANSITION CONFLICT REVIEW
+## DECISION SAFETY / EVENT-TRANSITION CONFLICT REVIEW — başka thread'de kapandı
+
+Bu bölüm kapsamın tarihsel kaydıdır. Sonuçlar ve kararlar o thread'in kanonik
+kayıtlarında tutulur; Mobile Product Design V2 bunları değiştirmedi.
 
 Amaç: `MODEL_WRONG` ile `INCOHERENT_SNAPSHOT / EVENT_TRANSITION_UNSAFE` ayrımını
 yapmak ve geçiş anında bozulmuş gözlemlerin ileride ROI/kalibrasyon/
