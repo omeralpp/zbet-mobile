@@ -1,34 +1,36 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-08-18
+Son güncelleme: 2026-08-19
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `BTB ROADMAP MILESTONE 2/11 — LOGO / BRAND ASSET` —
-Milestone 1 (Design V2 fiziksel geri bildirim kapanışı) sahibin Xiaomi
-cihazında fiziksel olarak doğrulandı ve **KAPALI**. Çelişkili runtime kanıtı
-çıkmadıkça yeniden açılmaz. Milestone 2 marka varlığı üzerinde çalışıyor:
-varlık mimarisi kararlaştırıldı, kod tarafı hazırlandı, üretim brief'i yazıldı
-ve Milestone 1'den devreden tek erteleme (`güncel baskı farkı` etiketi)
-kapatıldı. Kalan tek bağımlılık dışarıda üretilecek görsel varlıktır.
+Mod: `BTB ROADMAP MILESTONE 2/11 — LOGO / BRAND ASSET · UYGULAMA TAMAM,
+SAHİP FİZİKSEL DOĞRULAMASI BEKLİYOR` — Üretilen BTB Intelligence Noir varlığı
+doğrulandı, deterministik olarak normalize edildi, iki kanonik role türetildi
+ve entegre edildi. Kare zemin kaynağından kaldırıldı; açılış ekranındaki
+telafi de aynı değişiklikte gitti. Kalan tek şey sahibin Xiaomi cihazındaki
+fiziksel doğrulamasıdır — kod, test, doğrulayıcı, emülatör ve APK tarafı
+tamamdır.
 
 Roadmap: **1/11 KAPALI = %9,1** · Şu anki milestone: **2/11 — Logo / Brand
-Asset**. Decision Safety ve sonraki milestone'lar bu task'ta başlatılmaz.
+Asset** (uygulama tamam, kapanış sahip doğrulamasına bağlı). Milestone 3
+(Decision Safety) mutasyonu Milestone 2 meşru olarak kapanmadan başlamaz.
 
 Durum:
 
 ```text
-MILESTONE_1_CLOSED_PHYSICALLY_VALIDATED     (Design V2 geri bildirim pass, owner Xiaomi)
+MILESTONE_1_CLOSED_PHYSICALLY_VALIDATED     (owner Xiaomi)
 BTB_ROADMAP = 1/11 CLOSED (%9,1)
-MILESTONE_2_IN_PROGRESS                     (logo / brand asset)
-BRAND_ASSET_ARCHITECTURE_DECIDED            (üç rol, iki export, bir sözleşme)
-BRAND_INTEGRATION_PREPARED                  (src/theme/brand.ts + brand-mark.ts + check:brand)
-DEFERRED_PRESSURE_LABEL_FIXED               (`baskı farkı`, 360dp'de doğrulandı)
-ASSET_GENERATION_DEPENDENCY                 (NXT-OBS-101 · docs/ASSET_GENERATION_BRIEF.md)
-READY_FOR_BTB_LOGO_ASSET_GENERATION
-NO_NEW_APK_YET                              (APK yalnız varlık indikten sonra)
+MILESTONE_2_IMPLEMENTATION_COMPLETE
+OWNER_PHYSICAL_VALIDATION_PENDING           (Xiaomi; marka her yüzeyde görünür değişti)
+BRAND_ASSET_INTEGRATED                      (şeffaf 1024² master + adaptive foreground)
+BRAND_VALIDATOR_GREEN                       (npm run check:brand, iki rol de PASS)
+LAUNCH_COMPENSATION_REMOVED                 (borderRadius: 30 kaldırıldı)
+MOBILE_GATE_GREEN                           (TypeScript + ESLint + 398/398 + check:brand)
+DARK_LIGHT_EMULATOR_VALIDATED               (360dp, Android 15)
+SMALL_SIZE_VALIDATED                        (132/68/40/24/18 dp — siluet 18 dp'de korunuyor)
 MOBILE_NEXT_BASELINE_VERIFIED               (Live Context v2 APK, geri dönüş noktası)
 LIVE_CONTEXT_V2_ACCEPTED
 REAL_GOAL_PHYSICAL_PASS
@@ -43,120 +45,120 @@ servisidir. Public Cloudflare origin yapılandırması, Firebase/SAP dış
 değişikliği, APK dağıtımı ve release signing yapılmadı; her biri ayrıca açık
 onay gerektirir. Legacy Cordova RETIRED.
 
-## Milestone 2 — Logo / Brand Asset (2026-08-18)
+## Milestone 2 — Logo / Brand Asset
 
-`zbet-mobile` HEAD bu milestone'da üç commit ilerledi. `zbet-cap`, `zbet-abap`
-ve `btb-codex` **hiç** değiştirilmedi; `btb-assets` yalnız okundu.
+`zbet-mobile` bu milestone'da dört commit ilerledi. `zbet-cap`, `zbet-abap` ve
+`btb-codex` **hiç** değiştirilmedi; `btb-assets` yalnız okundu.
 
 ```text
 f3d628d  Ertelenen Xiaomi etiketi: `güncel baskı farkı` -> `baskı farkı`
 69a1417  Widget modülünün Gradle çıktısı .gitignore'a alındı
 361a080  Marka varlığı sözleşmesi, üç rol, doğrulayıcı ve üretim brief'i
+a8ba66b  Intelligence Noir varlığı entegre edildi, telafi kaldırıldı
 ```
 
-Kapı: TypeScript temiz, ESLint temiz, **398/398** test (öncesi 392),
-`git diff --check` temiz.
+### Gelen varlık ve yapılan tek işlem
 
-### Varlık topolojisi (ölçüldü, varsayılmadı)
-
-Marka raster'ı **beş** yerde kullanılıyordu, üç değil. Önceki devir üç tanesini
-saymıştı; Özet hero ve takım arması fallback'i eksikti:
+Sahibin ürettiği aday:
 
 ```text
-app.config.ts            icon                                 (uygulama ikonu)
-app.config.ts            android.adaptiveIcon.foregroundImage
-AppLaunchScreen.tsx      açılış ekranı logosu                  132 dp
-app/(tabs)/index.tsx     Özet hero                              68 dp
-TeamLogo.tsx             takım arması yoksa BTB fallback        40/24/18 dp
+1536x1024 · PNG · 8-bit RGBA
+tam saydam piksel  879.133 (%55,9) · dört köşe α=0
+yarı saydam        %3 — tamamı kendi kenarı ve glow'u
+beyaz saçak        yok (yarı saydam bandın ortalama RGB luması 55)
+görünür içerik     1136x1017, tuvalin üstünden 3 px, altından 4 px uzakta
 ```
 
-Bildirim küçük ikonu bu raster'ı **kullanmıyor**: rol zaten
-`modules/btb-widget/.../btb_notification_icon.xml` tek renkli vektörüyle
-çözülmüş ve hem Firebase hem Expo metadata anahtarına kayıtlı.
-`assets/notification-icon.png` bu rolü taşıyormuş gibi duran, hiçbir yerden
-referans verilmeyen, marka dosyasıyla **bayt bayt aynı** bir kopyaydı; silindi
-ve yerine bir test kondu.
+Yani gerçekten şeffaf, beyaz zemin kalıntısı yok ve BTB kimliği yerinde:
+kalkan, saha şeması, yükselen sütunlar, düğümlü çizgi + ok, top, çift sinyal
+yayı, bronz yapı. Tek uyumsuzluk **paketlemeydi**: tuval kare değildi ve
+optik pay yoktu.
 
-Splash native tarafta logosuz: `assets/splash-transparent.xml` 1dp saydam
-şekildir, açılış markasını `AppLaunchScreen` çizer.
+Bu yüzden sanat eserine dokunulmadı. `scripts/derive-brand-exports.py` yalnız
+üç şey yapar — görünür içeriğe kırp, küçült, saydam kare tuvale ortala:
 
-En yüksek çözünürlüklü kaynak uygulama içinde değil: `btb-assets/btb-logo.png`
-(1254x1254, tam kilit) ve `btb-assets/btb-logo-shell.png` (1024x1024, amblem).
-Uygulamanın 192px raster'ı ikincisinin küçültülmüşüdür (192px'te ortalama luma
-farkı 0.74/255). `btb-assets` hiçbir uygulama tarafından referans edilmiyor ve
-bu milestone'da değiştirilmedi.
+```text
+assets/brand/btb-mark.png                1024x1024 · içerik %92 (942x843)
+assets/brand/btb-adaptive-foreground.png 1024x1024 · içerik %62 (635x568)
+```
 
-### Mimari karar — tek master değil, üç rol
+Renk değiştirilmedi, yeniden çizilmedi, **büyütülmedi** (araç büyütmeyi
+reddeder). İki dosya aynı çizimin iki geometrisidir.
 
-Rol ayrımı platform semantiğinden geliyor, tercihten değil:
+### Kanıt
 
-- **marka işareti** — ürün çizer, kendi seçtiği boyutta, tuvali doldurmasını
-  ister;
-- **adaptive launcher foreground** — Android maskeler, yalnız tuvalin iç %66'sı
-  garanti; tuvali dolduran sanat eseri kendi kenarlarını kaybeder. Bugün
-  launcher'ın kalkanı kırpmasının sebebi tam olarak budur;
-- **bildirim küçük ikonu** — sistem alfa maskesi olarak çizer, rengi atar;
-  vektör kalmak zorunda.
+`npm run check:brand` iki rol için de PASS: kare tuval, ≥1024px, gerçek
+saydamlık, köşeler α=0, role göre içerik oranı, optik merkez (0.500, 0.500) ve
+yarı saydam oran (%3,0 / %1,3).
 
-`src/theme/brand.ts` bu üç rolü ayrı ayrı adlandırır. İlk ikisi bugün hâlâ aynı
-baytları gösteriyor, çünkü bugünkü opak raster'ın mekanik olarak
-kenarlıklandırılmış bir kopyası launcher'a yüzen bir kare koyardı — düzeltme
-değil. Güvenli bölge export'u geldiğinde değişen tek şey `brand.ts` içindeki
-tek satırdır.
+`expo prebuild` sonrası Android türevleri — kök nedenin kapandığının ölçülmüş
+kanıtı:
 
-`src/theme/brand-mark.ts` uygulamanın markayı yüklediği **tek** yerdir; üç
-ekran da oradan alır. `app.config.ts` yolları aynı sözleşmeden okur ve
-`src/theme/brand.test.ts` ikisinin sessizce ayrışmasını engeller.
+```text
+                        önce                     sonra
+ic_launcher_foreground  0 saydam piksel          %79 saydam
+köşe alfa               221 (opak lacivert)      0
+sonuç                   #04101E arka plan hiç    arka plan görünür,
+                        görünmüyor               maske markanın kenarını kırpmıyor
+```
 
-### Doğrulayıcı
+### Doğrulayıcıda düzeltilen şey
 
-`npm run check:brand` verilen varlığı sözleşmeye karşı ölçer: PNG biçimi ve
-8-bit RGBA, kare tuval, en az 1024px, gerçek saydam piksel, dört köşenin α=0
-olması, rolüne göre içerik/tuval oranı, optik merkez ve eski zeminden kalan
-yarı saydam hale oranı. Bağımlılığı yok; PNG'yi `zlib` ile çözer.
+`check-brand-assets.mjs` "opak" için tam `255` istiyordu. Bu master gövdesi
+boyunca bir tık altında kalıyor (ham dosyada tepe 254), bu yüzden doğrulayıcı
+%45 hale bildiriyordu — varlığın gerçek yarı saydam payı %3 ve tamamı kendi
+kenarında. Eşik `>= 250` oldu; kontrolün baştan beri söylemek istediği buydu.
+Varlık zayıflatılmadı, ölçüt düzeltildi.
 
-Bugün **FAIL** veriyor — mevcut varlığın gerçek durumu bu. `npm run check`
-kapısına, varlığı indiren commit'te eklenecek.
+### Küçük boy doğrulaması (xxhdpi, 3x gerçek piksel)
 
-### Ertelenen Xiaomi etiketi — kapandı
+| dp | piksel | sonuç |
+| --- | --- | --- |
+| 132 | 396 | tam okunur |
+| 68 | 204 | tüm unsurlar okunur |
+| 40 | 120 | kalkan, top, yaylar, sütunlar okunur |
+| 24 | 72 | siluet ve top net; sütunlar dokuya iner |
+| 18 | 54 | **siluet korunuyor** — kalkan konturu, top, çift yay, yükselen çizgi |
 
-`güncel baskı farkı` (18 karakter) -> `baskı farkı` (11). Anlam kaybı yok:
-bloğa sayı yalnız `pressureSource === "CURRENT_MATCH"` iken ulaşır, yani
-güncellik kodda zorlanıyor; canlı kart zaten şimdiki zaman yüzeyi; Super karar
-ekranı aynı büyüklüğü zaten `baskı farkı` diye adlandırıyor. Erişilebilirlik
-etiketi `Güncel baskı farkı` olarak kaldı — konuşmada taşacak satır yok.
-`güncel veri bekleniyor` kısaltılmadı, kontrollü ikinci satıra bırakıldı:
-oradaki `güncel`, `NXT-OBS-092`'nin ayrımını taşıyor.
+18 dp'de detay sadeleşiyor ama kimlik kayboluyor değil; eski markla yan yana
+konduğunda yeni varlık daha okunur ve açık temada kutusu yok.
+`SMALL_SIZE_ASSET_REFINEMENT_REQUIRED` **gerekmedi**.
 
-Kural artık test edilen modülde: bir sayının yanındaki etiket, cihazın kabul
-ettiği en geniş etiketten (`market kapalı`, 13 karakter) uzun olamaz.
-
-### Görsel doğrulama (Android 15 emülatör, 1080x2400 @ 480dpi = 360dp)
-
-Xiaomi genişliği emülatörde `wm density 480` ile üretildi ve sonra sıfırlandı.
+### Emülatör görsel doğrulaması (Android 15, 1080x2400 @ 480dpi = 360dp)
 
 | Yüzey | Koyu | Açık | Sonuç |
 | --- | --- | --- | --- |
-| Canlı liste kart altı | ✓ | ✓ | `baskı farkı` tek satır, taşma yok, `-24,8` / `+16,4` yanında okunur |
-| Özet hero | ✓ | ✓ | marka yükleniyor; gömülü kare **görünür**, açık temada belirgin |
-| Açılış ekranı | ✓ | ✓ | marka yükleniyor; `borderRadius: 30` telafisi yuvarlak kare olarak görünür |
-| Takım arması fallback | ✓ | ✓ | yeni yoldan yükleniyor; 24 dp'de koyu kare |
-
-Yeniden adlandırma sonrası hiçbir yüzeyde kırık görsel yok. Kare zemin her
-yüzeyde duruyor — beklenen davranış, varlık henüz gelmedi.
+| Özet hero | ✓ | ✓ | kare **yok**; marka doğrudan kartın üstünde |
+| Canlı liste arma fallback | ✓ | ✓ | dairenin içinde şeffaf marka; kare yok |
+| Canlı kart alt satırı | ✓ | ✓ | `baskı farkı` tek satır, taşma yok |
+| Açılış ekranı | — | — | dev-client kendi splash'ı ile örttüğü için release APK'da doğrulanır |
 
 ### Sıradaki adım
 
-1. **Varlık üretimi.** `docs/ASSET_GENERATION_BRIEF.md` dış görsel üretim
-   adımının tek girdisidir. Kaynaklar commit edilmeyen
-   `.codex-artifacts/brand-source/` altına kopyalandı.
-2. Varlık gelince: `npm run check:brand` -> entegrasyon (tek commit'te
-   `brand.ts` yolu, `borderRadius: 30` kaldırma, `check` kapısına ekleme,
-   `expo prebuild`) -> koyu/açık görsel doğrulama.
-3. Sonra ARM64 pilot APK ve fiziksel Xiaomi doğrulaması. **Ara APK
-   derlenmez**; marka değişikliği görünür olduğu için fiziksel doğrulama
-   zorunludur.
-4. Push ayrı açık onay bekliyor; commit'ler yerelde duruyor.
+1. **Sahip fiziksel Xiaomi doğrulaması** — marka her yüzeyde görünür
+   değiştiği için zorunlu. Kontrol listesi aşağıda.
+2. Doğrulama geçerse Milestone 2 kapanır ve roadmap %18,2 olur.
+3. Milestone 3 (Decision Safety) mutasyonu ondan önce başlamaz.
+
+### Xiaomi fiziksel doğrulama kontrol listesi — marka varlığı
+
+Kurulum yolu: yeni APK mevcut kurulumla aynı imza parmak izini taşır, bu yüzden
+kaldırmadan üzerine kurulur.
+
+| # | Alan | Beklenen |
+| --- | --- | --- |
+| 1 | Launcher ikonu | Kalkan maskenin içinde tam duruyor; kenarları kırpılmıyor, arkasında koyu lacivert zemin görünüyor |
+| 2 | Launcher — yuvarlak tema | Daire maskede de kalkan kırpılmıyor |
+| 3 | Açılış ekranı | Marka açılış gradyanının üstünde; **kare veya yuvarlak kare zemin yok**, köşe kırpılması yok |
+| 4 | Özet hero | Marka kartın üstünde; kutu yok, hale yok |
+| 5 | Canlı liste — arma yok | BTB marka dairesi içinde okunur; 24 dp'de bulanık değil |
+| 6 | Açık tema | Aynı yüzeyler açık temada; koyu kutu veya gri saçak yok |
+| 7 | Küçük boy okunurluğu | Liste satırlarında marka kalkan olarak tanınıyor |
+| 8 | Bildirim küçük ikonu | Gerçek FCM bildiriminde vektör ikon; dolu kare **değil** |
+| 9 | Canlı kart baskı etiketi | `baskı farkı` tek satır, taşma yok |
+| 10 | Genel regresyon | Özet, Canlı, Super, Toto, Daha Fazla, Work Zone deep-link ve bildirim dönüşü bozulmadı |
+
+Bulgular `docs/OBSERVATION_LOG.md` içine yazılır.
 
 ## Milestone 1 arşivi — Design V2 fiziksel geri bildirim + Bibi pass (KAPALI)
 
