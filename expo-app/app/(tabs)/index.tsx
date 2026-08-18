@@ -26,6 +26,7 @@ import { useModuleLayout } from "@/src/layout/module-layout-store";
 import type { OverviewModuleId } from "@/src/layout/module-registry";
 import { useLiveStarFilter } from "@/src/preferences/LiveStarFilterProvider";
 import { useSuperStarFilter } from "@/src/preferences/SuperStarFilterProvider";
+import { btbBrandMark } from "@/src/theme/brand-mark";
 import { colors, radii, semantic, spacing, typeScale } from "@/src/theme/theme";
 import {
   liveStarMetricCount,
@@ -123,7 +124,7 @@ export default function DashboardScreen() {
           <SurfaceMaterial accent={colors.bronze} radius={radii.xl} />
           <Image
             resizeMode="contain"
-            source={require("../../assets/icon.png")}
+            source={btbBrandMark}
             style={styles.logo}
           />
           <View style={styles.heroCopy}>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Image, StyleSheet, View } from "react-native";
+import { btbBrandMark } from "@/src/theme/brand-mark";
 import { colors, radii } from "@/src/theme/theme";
 import {
   getTeamLogoUrl,
@@ -7,13 +8,6 @@ import {
   resolveTeamLogoSize,
   type TeamLogoSize
 } from "@/src/utils/team-logo";
-
-/**
- * Canonical BTB mark, reused from the app icon rather than duplicated. It is a
- * bundled local asset, so falling back never issues a network request and can
- * never loop.
- */
-const btbFallbackLogo = require("../../assets/icon.png");
 
 export function TeamLogo({
   participantId,
@@ -52,7 +46,7 @@ export function TeamLogo({
       <View accessibilityElementsHidden style={frame}>
         <Image
           resizeMode="contain"
-          source={btbFallbackLogo}
+          source={btbBrandMark}
           style={styles.fallback}
         />
       </View>

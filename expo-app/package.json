@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "test": "tsx --test \"src/**/*.test.ts\"",
     "check": "npm run typecheck && npm run lint && npm test",
+    "check:brand": "tsx scripts/check-brand-assets.mjs",
     "doctor": "expo-doctor"
   },
   "dependencies": {

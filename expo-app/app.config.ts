@@ -1,5 +1,10 @@
 import type { ExpoConfig, ConfigContext } from "expo/config";
 import {
+  btbAdaptiveIconBackground,
+  btbAdaptiveIconForegroundPath,
+  btbBrandMarkPath
+} from "./src/theme/brand.ts";
+import {
   productionOAuthRedirectUri,
   resolveMobileAuthMode,
   validateNoPublicOAuthSecrets,
@@ -54,7 +59,7 @@ export default function resolveAppConfig({
   orientation: "portrait",
   userInterfaceStyle: "automatic",
   scheme: "btbmobile",
-  icon: "./assets/icon.png",
+  icon: btbBrandMarkPath,
   plugins: [
     "expo-router",
     "expo-secure-store",
@@ -83,8 +88,8 @@ export default function resolveAppConfig({
   android: {
     package: previewPackage,
     adaptiveIcon: {
-      foregroundImage: "./assets/icon.png",
-      backgroundColor: "#04101E"
+      foregroundImage: btbAdaptiveIconForegroundPath,
+      backgroundColor: btbAdaptiveIconBackground
     },
     ...(googleServicesFile ? { googleServicesFile } : {}),
     predictiveBackGestureEnabled: false,

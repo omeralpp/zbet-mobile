@@ -11,6 +11,7 @@ import {
   type LayoutChangeEvent
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { btbBrandMark } from "@/src/theme/brand-mark";
 import { colors, radii, spacing, themeMode } from "@/src/theme/theme";
 
 type AppLaunchScreenProps = {
@@ -142,7 +143,7 @@ export function AppLaunchScreen({
           <Image
             accessibilityIgnoresInvertColors
             resizeMode="contain"
-            source={require("../../assets/icon.png")}
+            source={btbBrandMark}
             style={styles.logo}
           />
           <Animated.View

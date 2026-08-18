@@ -17,5 +17,21 @@ module.exports = defineConfig([
     rules: {
       "no-console": ["warn", { allow: ["warn", "error"] }]
     }
+  },
+  {
+    // Repository tooling, not app code: it runs in Node and reporting to stdout
+    // is the entire point of it.
+    files: ["scripts/**/*.mjs"],
+    languageOptions: {
+      globals: {
+        Buffer: "readonly",
+        URL: "readonly",
+        console: "readonly",
+        process: "readonly"
+      }
+    },
+    rules: {
+      "no-console": "off"
+    }
   }
 ]);
