@@ -8,12 +8,24 @@ yalnız sunumdur; tahmin, model, Toto, Live Context sözleşmesi, BFF ve SAP
 davranışı değişmedi. Fiziksel Xiaomi doğrulaması bekleniyor; kontrol listesi
 `docs/CURRENT_HANDOFF.md` içindedir.
 
-Aktif APK (fiziksel Xiaomi ile doğrulanmış baseline):
+Doğrulama bekleyen aday APK (Design V2 geri bildirim pass):
+
+```text
+btb-mobile-next-arm64-design-v2-feedback.apk
+SHA-256: D7B5B5364D8C9E5A9CF8AC44E76147D426D958CCBFF4021B12FADB877CFF684A
+```
+
+Fiziksel Xiaomi ile doğrulanmış geri dönüş baseline'ı (değişmedi):
 
 ```text
 btb-mobile-next-arm64-live-context-v2.apk
 SHA-256: 3096C0335361F45B6B95B7AFD35AE1A1D9C91E4D6233735F998E1B2B34EB5B28
 ```
+
+Üç APK de aynı imza parmak izini taşır
+(`fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c`), bu yüzden
+aday APK mevcut kurulumun üzerine kaldırmadan kurulur ve panel göçü gerçekten
+sınanır. Aday doğrulanana kadar hiçbir APK geri dönüşüme alınmaz.
 
 `LIVE_CONTEXT_V2_ACCEPTED` + `REAL_GOAL_PHYSICAL_PASS` +
 `RED_CARD_OWNER_ACCEPTED` + `NO_NEW_APK_REQUIRED` +

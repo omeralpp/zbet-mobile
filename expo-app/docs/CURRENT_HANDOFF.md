@@ -225,10 +225,66 @@ değiştirilmedi; yalnız okundu.
 
 ### APK durumu
 
-Bu milestone Mobile kaynağını değiştirdiği için kapanışta **yeni ARM64 pilot
-APK** gerekir. `btb-mobile-next-arm64-live-context-v2.apk` ve
-`btb-mobile-next-arm64-design-v2.apk` yeni APK fiziksel doğrulamayı geçene kadar
-**silinmez**.
+Yeni kanonik ARM64 pilot APK derlendi:
+
+```text
+.codex-artifacts/btb-mobile-next-arm64-design-v2-feedback.apk
+SHA-256 D7B5B5364D8C9E5A9CF8AC44E76147D426D958CCBFF4021B12FADB877CFF684A
+imza    fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
+```
+
+`btb-mobile-next-arm64-live-context-v2.apk` ve
+`btb-mobile-next-arm64-design-v2.apk` bu APK fiziksel doğrulamayı geçene kadar
+**geri dönüşüme alınmaz**. Üç APK de aynı imza parmak izini taşır, bu yüzden
+yeni APK mevcut kurulumun üzerine kaldırmadan kurulur.
+
+## Xiaomi fiziksel doğrulama kontrol listesi — Design V2 geri bildirim pass
+
+Artefakt: `.codex-artifacts/btb-mobile-next-arm64-design-v2-feedback.apk`
+SHA-256 `D7B5B5364D8C9E5A9CF8AC44E76147D426D958CCBFF4021B12FADB877CFF684A`.
+
+**Kurulum yolu önemlidir.** Yeni APK, cihazdaki mevcut APK ile **aynı imza
+parmak iziyle** imzalıdır (`fac61745...`), bu yüzden kaldırmadan üzerine kurulur.
+Panellerin "mevcut kurulum yükseltmede her şeyi açık bulur" göçünü yalnız bu
+yol gerçekten sınar. Önce üzerine yükselterek doğrula; istersen ardından temiz
+kurulumla tekrar bak.
+
+| # | Alan | Beklenen |
+| --- | --- | --- |
+| 1 | Soğuk açılış / auth | Splash → pilot oturum açılır, hata/boş ekran yok |
+| 2 | Özet | Modüller görünür, sayılar dolu, sıralama korunmuş |
+| 3 | Canlı liste | Maçlar listelenir, canlı nabız çalışır |
+| 4 | Aday üretilmemiş kart | Alt satır tek dürüst ifade: `İzleniyor` + `Aday bekleniyor`; ikinci/üçüncü `bekleniyor` etiketi **yok** |
+| 5 | Taşma / kırpılma | Hiçbir kartta yatay taşma, kesik Türkçe etiket veya kart kenarını aşan metin yok |
+| 6 | Maç Detayı | Hero (kimlik, skor, `BTB SEÇİMİ`) her zaman görünür |
+| 7 | Gol / kırmızı kart atfı | Ev/deplasman doğru tarafta, girinti ve `EV`/`DEP` çipi tutarlı |
+| 8 | Açılır paneller | Başlığa dokunma modülü açar/kapatır, chevron döner |
+| 9 | Kapanma kalıcılığı | Kapatılan modül ekrandan çıkıp dönünce ve uygulama yeniden başlayınca kapalı kalır |
+| 10 | Yükseltme göçü | Yükseltme sonrası **tüm** paneller açık gelir; hiçbir modül gizli değil |
+| 11 | Sıralama bağımsızlığı | Modül taşıma hâlâ çalışır; taşımak paneli açmaz/kapatmaz, kapatmak modülü taşımaz |
+| 12 | Kazara açılma | Yatay sekme kaydırması ve dikey scroll sırasında panel kendiliğinden açılıp kapanmaz |
+| 13 | Game Pulse | Widget yüklenir; kimlik yoksa dürüst boş durum |
+| 14 | Super Detayı | Hero'da kimlik, `KARAR ANI`, seçim, sinyal ve `SONUÇ` görünür |
+| 15 | Düzeltilmiş model özeti | `MODEL GİRDİLERİ` uydurma "lift" olasılığı göstermez; terimlerin toplamı skor değildir notu okunur |
+| 16 | Super panelleri | Dört modül de açılır/kapanır ve kalıcıdır |
+| 17 | Super varsayılan gün | Karar günlüğü ilk açılışta `Bugün`; `Tüm günler` seçilebilir ve seçim korunur |
+| 18 | Bugün verisi yokken | Veri yoksa dürüst boş durum; hata gibi görünmez |
+| 19 | Bibi normal mod | Bir yüzeye yerleşince en fazla bir ipucu, tek kısa animasyonla |
+| 20 | Bibi cooldown | Aynı ipucu tekrar etmez; kapatınca hemen ikincisi gelmez |
+| 21 | Bibi sessiz mod | `Daha Fazla > Bibi ipuçları: Sessiz` sonrası ipucu gelmez |
+| 22 | Rehber hâlâ çalışır | Sessiz moddayken bile Bibi rehberi baştan başlatılabilir ve adımlar görünür |
+| 23 | Analitik yüzeyler | Maç ve Super detayında ambient Bibi **yok**; yalnız rehber adımı |
+| 24 | Azaltılmış hareket | Sistem "animasyonları azalt" açıkken ipucu görünür ama animasyon yok; `LiveDot` dışında sürekli döngü yok |
+| 25 | Toto | Program, tahmin ve kupon ekranları bozulmadan çalışır |
+| 26 | Daha Fazla | Düzeni sıfırla hem sırayı hem kapalı panelleri geri alır |
+| 27 | Work Zone / deep link | Better Than Bet, BTB Toto ve Super Log doğru açılır; `Illegal new hash` yok |
+| 28 | Bildirimler | Gerçek FCM bildirimi gelir ve doğru ekrana götürür |
+| 29 | Koyu / açık tema | Her iki temada palet, kontrast ve panel başlıkları okunur |
+| 30 | Sekme kaydırma | Sekmeler arası yatay geçiş akıcı; beyaz flaş yok |
+| 31 | Scroll performansı | Uzun listelerde ve panelli detaylarda takılma yok |
+
+Bulgular `docs/OBSERVATION_LOG.md` içine yazılır; observation sırasında kod
+değiştirilmez.
 
 ## Product Design V2 — tamamlandı (2026-08-18)
 
