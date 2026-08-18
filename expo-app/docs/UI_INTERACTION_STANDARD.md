@@ -113,6 +113,22 @@ decides how loudly it is allowed to present itself.
   the ambient mascot. She is never shown beside a problem: a friendly character
   next to a real failure reads as the product not taking it seriously.
 
+### Toto
+
+Toto is a distinct product with its own information architecture, not a distinct
+app. It shares the shell, typography, spacing, card grammar, material and state
+vocabulary; only its content differs.
+
+- Program lifecycle status maps onto conventions the product already has, via
+  `toto-status.ts`: active is in-play like a live match, waiting is open like an
+  undecided Super decision, resulted recedes like a settled row, and error is
+  the only one treated as a problem. Collapsing them is what once let a failed
+  program look like a waiting one.
+- Capacity is a readout and takes the analytical accent, not the colour of a
+  won decision.
+- The covered outcome deliberately keeps its raw gold: it is the middle tier of
+  a three-tier scale and the semantic vocabulary has no honest name for it yet.
+
 ### Temporal integrity
 
 A historical decision screen shows two kinds of fact, and confusing them is the

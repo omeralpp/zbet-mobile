@@ -2,7 +2,16 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { TotoProgram } from "@/src/api/schemas";
-import { colors, radii, spacing } from "@/src/theme/theme";
+import {
+  colors,
+  radii,
+  semantic,
+  shadows,
+  spacing,
+  typeScale
+} from "@/src/theme/theme";
+import { SurfaceMaterial } from "./SurfaceMaterial";
+import { totoProgramTone } from "@/src/utils/toto-status";
 import {
   formatProgramStatus,
   formatSigned
@@ -15,7 +24,18 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
     1,
     program.maxColumns > 0 ? program.columns / program.maxColumns : 0
   );
-  const active = program.status === "ACTIVE";
+  const tone = totoProgramTone(program.status);
+  const statusColor =
+    tone === "LIVE"
+      ? semantic.live
+      : tone === "OPEN"
+        ? semantic.intelligence
+        : tone === "PROBLEM"
+          ? semantic.negative
+          : colors.textMuted;
+  // Only a program that can still change earns the accent. A resulted one is
+  // history and recedes, exactly as a settled Super row does.
+  const inPlay = tone === "LIVE" || tone === "OPEN";
 
   return (
     <Pressable
@@ -34,10 +54,14 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
       }
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
+      <SurfaceMaterial
+        {...(inPlay ? { accent: statusColor } : {})}
+        radius={radii.lg}
+      />
       <View style={styles.header}>
-        <View style={styles.icon}>
+        <View style={[styles.icon, { backgroundColor: `${statusColor}1F` }]}>
           <MaterialCommunityIcons
-            color={colors.green}
+            color={statusColor}
             name="ticket-confirmation-outline"
             size={22}
           />
@@ -47,12 +71,9 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
           <Text style={styles.week}>{program.weekText}</Text>
         </View>
         <View
-          style={[
-            styles.statusPill,
-            active && styles.activeStatusPill
-          ]}
+          style={[styles.statusPill, { backgroundColor: `${statusColor}1F` }]}
         >
-          <Text style={[styles.status, active && styles.activeStatus]}>
+          <Text style={[styles.status, { color: statusColor }]}>
             {formatProgramStatus(program.status)}
           </Text>
         </View>
@@ -87,12 +108,12 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
     borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     padding: spacing.lg,
-    marginBottom: spacing.md
+    marginBottom: spacing.md,
+    ...shadows.card
   },
   pressed: {
     opacity: 0.76
@@ -107,39 +128,28 @@ const styles = StyleSheet.create({
     height: 42,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: radii.md,
-    backgroundColor: colors.greenSoft
+    borderRadius: radii.md
   },
   headerCopy: {
     flex: 1
   },
   title: {
     color: colors.text,
-    fontSize: 17,
-    fontWeight: "900"
+    ...typeScale.decision
   },
   week: {
     color: colors.textMuted,
-    fontSize: 11,
-    marginTop: 2
+    ...typeScale.label,
+    marginTop: spacing.xs
   },
   statusPill: {
     paddingHorizontal: spacing.sm,
     paddingVertical: 6,
-    borderRadius: radii.round,
-    backgroundColor: colors.goldSoft
+    borderRadius: radii.round
   },
   status: {
-    color: colors.gold,
-    fontSize: 9,
-    fontWeight: "900",
+    ...typeScale.micro,
     textTransform: "uppercase"
-  },
-  activeStatusPill: {
-    backgroundColor: colors.greenSoft
-  },
-  activeStatus: {
-    color: colors.green
   },
   metrics: {
     flexDirection: "row",
@@ -149,13 +159,12 @@ const styles = StyleSheet.create({
   },
   metricValue: {
     color: colors.text,
-    fontSize: 16,
-    fontWeight: "900"
+    ...typeScale.metricCompact
   },
   metricLabel: {
     color: colors.textSubtle,
-    fontSize: 9,
-    marginTop: 2
+    ...typeScale.label,
+    marginTop: spacing.xs
   },
   track: {
     height: 5,
@@ -164,14 +173,16 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginTop: spacing.lg
   },
+  // Capacity is a readout, not an outcome, so it takes the analytical accent
+  // rather than the colour of a won decision.
   fill: {
     height: "100%",
     borderRadius: radii.round,
-    backgroundColor: colors.green
+    backgroundColor: semantic.intelligence
   },
   capacity: {
     color: colors.textSubtle,
-    fontSize: 9,
+    ...typeScale.label,
     textAlign: "right",
     marginTop: spacing.xs
   }

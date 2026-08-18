@@ -11,13 +11,22 @@ import {
 } from "react-native";
 import type { TotoPrediction } from "@/src/api/schemas";
 import { totoProgramQuery } from "@/src/api/queries";
+import { ModuleHeading } from "@/src/components/ModuleHeading";
 import { Screen } from "@/src/components/Screen";
+import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import {
   buildBilyonerMatchUrl,
   buildBilyonerTotoUrl
 } from "@/src/external/bilyoner";
-import { colors, radii, spacing } from "@/src/theme/theme";
+import {
+  colors,
+  radii,
+  semantic,
+  shadows,
+  spacing,
+  typeScale
+} from "@/src/theme/theme";
 import {
   formatFixtureDateTime,
   formatPercentage,
@@ -26,21 +35,25 @@ import {
   formatTryCurrency
 } from "@/src/utils/format";
 import { summarizeTotoResults } from "@/src/utils/toto-results";
+import { totoProgramTone } from "@/src/utils/toto-status";
 
 function predictionResultPresentation(result: TotoPrediction["result"]): {
   color: string;
   label: string;
 } {
   if (result === "MAIN_HIT") {
-    return { color: colors.green, label: "ANA TAHMİN" };
+    return { color: semantic.positive, label: "ANA TAHMİN" };
   }
   if (result === "COVERED") {
+    // Deliberately still the raw gold. A covered prediction is the middle tier
+    // of a three-tier outcome scale, and it is neither a warning nor a partial
+    // positive - the semantic vocabulary has no honest name for it yet.
     return { color: colors.gold, label: "KUPONDA" };
   }
   if (result === "MISS") {
-    return { color: colors.red, label: "KAPSAM DIŞI" };
+    return { color: semantic.negative, label: "KAPSAM DIŞI" };
   }
-  return { color: colors.blue, label: "BEKLİYOR" };
+  return { color: semantic.intelligence, label: "BEKLİYOR" };
 }
 
 function openBilyoner(eventId: number | null): void {
@@ -102,6 +115,15 @@ export default function TotoProgramDetailScreen() {
   }
 
   const program = query.data;
+  const statusTone = totoProgramTone(program.status);
+  const statusColor =
+    statusTone === "LIVE"
+      ? semantic.live
+      : statusTone === "OPEN"
+        ? semantic.intelligence
+        : statusTone === "PROBLEM"
+          ? semantic.negative
+          : colors.textMuted;
   const resultSummary = summarizeTotoResults(program.predictions);
   const resultTotal = resultSummary.total || program.fixtures.length;
 
@@ -123,20 +145,13 @@ export default function TotoProgramDetailScreen() {
       }}
     >
       <View style={styles.hero}>
+        <SurfaceMaterial radius={radii.xl} />
         <Text style={styles.eyebrow}>{program.weekText}</Text>
         <Text style={styles.title}>Program {program.gcNo}</Text>
         <View
-          style={[
-            styles.statusPill,
-            program.status === "ACTIVE" && styles.statusPillActive
-          ]}
+          style={[styles.statusPill, { backgroundColor: `${statusColor}1F` }]}
         >
-          <Text
-            style={[
-              styles.status,
-              program.status === "ACTIVE" && styles.statusActive
-            ]}
-          >
+          <Text style={[styles.status, { color: statusColor }]}>
             {formatProgramStatus(program.status)}
           </Text>
         </View>
@@ -273,9 +288,10 @@ export default function TotoProgramDetailScreen() {
         </View>
       ) : null}
 
-      <Text style={styles.sectionTitle}>
-        {program.predictions.length ? "Tahminler" : "Aktif fikstür"}
-      </Text>
+      <ModuleHeading
+        eyebrow="KUPON"
+        title={program.predictions.length ? "Tahminler" : "Aktif fikstür"}
+      />
       {program.predictions.length ? program.predictions.map((prediction) => {
         const presentation = predictionResultPresentation(prediction.result);
         return (
@@ -410,18 +426,17 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg
   },
   hero: {
-    backgroundColor: colors.surface,
     borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.xl
+    borderColor: colors.borderSoft,
+    padding: spacing.xl,
+    ...shadows.card
   },
+  // Bronze, like every other module and hero label. The week was BTB green,
+  // which spent the positive accent on a date.
   eyebrow: {
-    color: colors.green,
-    fontSize: 11,
-    fontWeight: "900",
-    letterSpacing: 1,
-    textTransform: "uppercase"
+    color: colors.bronze,
+    ...typeScale.eyebrow
   },
   title: {
     color: colors.text,
@@ -434,20 +449,11 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     paddingHorizontal: spacing.md,
     paddingVertical: 6,
-    borderRadius: radii.round,
-    backgroundColor: colors.goldSoft
+    borderRadius: radii.round
   },
   status: {
-    color: colors.gold,
-    fontSize: 10,
-    fontWeight: "900",
+    ...typeScale.micro,
     textTransform: "uppercase"
-  },
-  statusPillActive: {
-    backgroundColor: colors.greenSoft
-  },
-  statusActive: {
-    color: colors.green
   },
   metrics: {
     flexDirection: "row",
@@ -465,8 +471,8 @@ const styles = StyleSheet.create({
   },
   metricLabel: {
     color: colors.textSubtle,
-    fontSize: 9,
-    marginTop: 2
+    ...typeScale.label,
+    marginTop: spacing.xs
   },
   distribution: {
     color: colors.textMuted,
@@ -475,7 +481,7 @@ const styles = StyleSheet.create({
   },
   updatedAt: {
     color: colors.textSubtle,
-    fontSize: 10,
+    ...typeScale.label,
     marginTop: spacing.sm
   },
   resultProgressCard: {
@@ -520,8 +526,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md
   },
   resultMetric: {
-    fontSize: 10,
-    fontWeight: "900"
+    ...typeScale.micro
   },
   resultLegend: {
     flexDirection: "row",
@@ -549,9 +554,8 @@ const styles = StyleSheet.create({
   },
   prizeDescription: {
     color: colors.textSubtle,
-    fontSize: 9,
-    lineHeight: 13,
-    marginTop: 2
+    ...typeScale.label,
+    marginTop: spacing.xs
   },
   prizeValue: {
     color: colors.green,
@@ -571,15 +575,7 @@ const styles = StyleSheet.create({
   },
   legendText: {
     color: colors.textMuted,
-    fontSize: 10
-  },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: "900",
-    marginTop: spacing.xxl,
-    marginBottom: spacing.md
+    ...typeScale.label
   },
   predictionCard: {
     minHeight: 76,
@@ -619,8 +615,8 @@ const styles = StyleSheet.create({
   },
   predictionMeta: {
     color: colors.textSubtle,
-    fontSize: 9,
-    marginTop: 4
+    ...typeScale.label,
+    marginTop: spacing.xs
   },
   pickBlock: {
     alignItems: "flex-end"
@@ -631,28 +627,24 @@ const styles = StyleSheet.create({
     fontWeight: "900"
   },
   result: {
-    fontSize: 9,
-    fontWeight: "900",
-    marginTop: 3
+    ...typeScale.micro,
+    marginTop: spacing.xs
   },
   actualResult: {
     color: colors.textSubtle,
-    fontSize: 8,
-    fontWeight: "700",
-    marginTop: 2
+    ...typeScale.label,
+    marginTop: spacing.xs
   },
   finalScore: {
     color: colors.textMuted,
-    fontSize: 9,
-    fontWeight: "800",
-    marginTop: 2
+    ...typeScale.label,
+    marginTop: spacing.xs
   },
   waitingPrediction: {
     color: colors.gold,
     maxWidth: 72,
     textAlign: "right",
-    fontSize: 9,
-    fontWeight: "800"
+    ...typeScale.label
   },
   emptyFixtures: {
     color: colors.textMuted,
@@ -694,8 +686,7 @@ const styles = StyleSheet.create({
   },
   safetyNote: {
     color: colors.textSubtle,
-    fontSize: 10,
-    lineHeight: 15,
+    ...typeScale.bodyCompact,
     textAlign: "center",
     marginTop: spacing.md,
     paddingHorizontal: spacing.lg
