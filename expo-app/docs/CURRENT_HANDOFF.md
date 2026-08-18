@@ -6,7 +6,14 @@ Son güncelleme: 2026-08-18
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `PRODUCT DESIGN V2 — CLOSEOUT` — Dokuz Product Design V2 batch'i tamamlandı
+Mod: `DESIGN V2 PHYSICAL FEEDBACK + BIBI EXPERIENCE PASS — DEVAM EDİYOR` —
+Design V2 APK'sı sahibin Xiaomi cihazında fiziksel olarak kullanıldı. Genel
+Design V2 yönü kabul edildi; bu milestone fiziksel kullanımda çıkan maddeleri
+düzeltir. Phase B ve Phase C tamamlandı ve push edildi; Phase D, Xiaomi kart
+düzeni, Phase E ve Phase F/G açık. Ayrıntı ve tam sıra aşağıdaki
+"Fresh-thread devir" bölümündedir.
+
+Önceki mod (referans): `PRODUCT DESIGN V2 — CLOSEOUT` — Dokuz Product Design V2 batch'i tamamlandı
 ve owner tarafından kabul edildi. Mobile kaynağı `b57625e` baseline'ının üstüne
 dokuz commit ile değişti; bu nedenle doğrulanmış Live Context v2 APK baseline'ı
 artık kaynağı temsil etmiyor ve yeni bir pilot APK gerekiyor. Değişiklikler
@@ -25,6 +32,9 @@ Durum:
 
 ```text
 PRODUCT_DESIGN_V2_COMPLETE                 (ff50051..21a1f57)
+DESIGN_V2_APK_PHYSICALLY_USED              (owner Xiaomi; yön kabul edildi)
+FEEDBACK_PASS_IN_PROGRESS                  (Phase B + C bitti; D, layout, E, F/G açık)
+READY_FOR_FRESH_THREAD_CONTINUATION
 READY_FOR_XIAOMI_PRODUCT_DESIGN_V2_VALIDATION
 NEW_APK_REQUIRED                           (Design V2 kaynağı APK'da yok)
 MOBILE_NEXT_BASELINE_VERIFIED              (Live Context v2 APK, geri dönüş noktası)
@@ -34,6 +44,134 @@ RED_CARD_OWNER_ACCEPTED
 PROSPECTIVE_PILOT_RUNNING                  (300 sn, zbet-cap — değiştirilmedi)
 BILYONER_LIVE_CONTEXT_RUNTIME = ENABLED_VIA_SAP_BRIDGE
 ```
+
+## Fresh-thread devir — Design V2 fiziksel geri bildirim + Bibi pass
+
+Bu bölüm yeni bir thread'in tam olarak buradan devam etmesi için yazıldı.
+Yeni thread önce `AGENTS.md` ve bu dosyayı okur, sonra `git log` ile doğrular.
+
+### Tamamlanan
+
+```text
+6fd3346  Phase B  Super model özeti semantik düzeltmesi
+d881ac2  Phase C  Gol / kırmızı kart takım atfı (HOME/AWAY)
+```
+
+Kapı (her iki phase sonrası): TypeScript temiz, ESLint temiz, **342/342** test
+geçti, `git diff --check` temiz. `zbet-mobile` HEAD = `d881ac2`.
+
+**Phase B — kanıtlanmış semantik, yeniden yorumlanmayacak.**
+`superProbability`, `super_current_rate` alanından gelir ve ABAP içinde
+`(rate_won_super / rate_total) * 100` olarak hesaplanır; yani temel olasılıkla
+aynı türde bir büyüklüktür, ikinci bağımsız bir model çıktısı değildir. Bu yüzden
+`temel → Super olasılığı` "lift" gösterimi kaldırıldı ve yerine yeni bir olasılık
+**uydurulmadı**. Gerçek skor formülü ağırlıklı ve sabit terimlidir:
+
+```text
+final_score = intercept
+            + edge          * w_edge
+            + pressure      * w_pressure
+            + state         * w_state
+            + compatibility * w_compat
+            + alignment     * w_align
+            + redPenalty    * w_red
+```
+
+Temel olasılık bu formülde bir terim **değildir**; ağırlıklar markete göre
+değişir; UI'ın hiç göstermediği bir intercept ve bir red-market penalty terimi
+vardır; ayrıca skoru EV üzerinden üreten ikinci bir kod yolu mevcuttur. Bu
+nedenle `MODEL GİRDİLERİ` bölümü değerlerin toplamının model skorunu vermediğini
+açıkça yazar. Kurallar `src/utils/model-summary.ts` içinde **test edilen veri**
+olarak durur. Bu semantik yeniden açılmaz veya yeniden yorumlanmaz.
+
+**Phase C.** Taraf bilgisi zaten sözleşmede vardı; hiçbir şey türetilmedi.
+Deplasman satırları içeri girintilenir ve rayı içeri kayar, `EV` / `DEP` çipi
+tarafı kulüp adı olmayan sözcüklerle söyler, nötr ray satırın taraf kenarını
+işaretler, dakika kolonu sabit kalır. Renk bilinçli olarak kullanılmadı: ev/deplasman
+bu palette semantik durum değildir ve sözleşmede güvenilir takım rengi yoktur.
+
+### Kalan sıra
+
+1. **Phase D — açılır/kapanır paneller + kalıcılık**
+   - `Match Detail` ve `Super Decision Detail` analitik modülleri panel olur.
+   - Hero asla kaybolmaz: maç kimliği, skor/durum, BTB güncel kararı; Super'de
+     kimlik, `KARAR ANI`, seçim, sinyal/rating, varsa `SONUÇ`.
+   - Gerçek kayıt `src/layout/module-registry.ts` üzerinden okunur; yukarıdaki
+     örnek listeler körlemesine kullanılmaz.
+   - İlk yükseltmede varsayılan **OPEN**; mevcut kullanıcıdan bilgi saklanmaz.
+   - Kalıcılık `surface + stable module id` ile anahtarlanır, görünen metinle
+     değil.
+   - `ORDER` ve `EXPANDED/COLLAPSED` **bağımsız** tercihlerdir. Mevcut
+     `reconcileModuleOrder` migrasyon/uzlaştırma davranışı bozulmaz.
+   - Yatay sekme kaydırması sırasında kazara açılma olmaz; dikey scroll kalitesi
+     korunur; reduced-motion uyumlu.
+
+2. **Xiaomi canlı kart responsive düzen düzeltmesi**
+   - `src/components/MatchCard.tsx` alt metrik satırı Xiaomi genişliğinde
+     sıkışıyor/taşıyor, özellikle aday/seçim üretilmemiş durumda:
+     `İzleniyor` + `Aday bekleniyor` + `oran bekleniyor` + `güncel baskı farkı`
+     aynı satırda dört uzun Türkçe etiket demek.
+   - Kart **yeniden tasarlanmaz**. Sınırlı responsive düzeltme: esnek genişlik,
+     sarma, dikey yığma veya duruma bağlı sadeleştirme.
+   - Beklenen en temiz çözüm: seçim yokken üç ayrı "bekleniyor" etiketi tek
+     dürüst ifadeye indirilir (Batch 8 honest-state sözlüğüyle uyumlu), artı
+     `flexWrap` / `minWidth: 0` / `flexShrink` ile savunma.
+   - Null / `—` değerler, yüksek oran, yüksek baskı, status-pill kombinasyonları
+     ve uzun Türkçe etiketler test edilir. Diğer canlı kart durumları ve
+     Super liste/detay kartları aynı desen için taranır.
+   - Uygun bir regresyon testi veya layout-stress fixture eklenir.
+
+3. **Phase E — kanonik logo izi**
+   - Önce kanonik varlık izlenir: hangi dosya kanonik, nerede kullanılıyor,
+     raster mı vektör mü, kare zemin **container** kaynaklı mı yoksa raster'ın
+     **içine gömülü** mü.
+   - Container kaynaklıysa kodda düzeltilir.
+   - Raster yeniden üretimi gerekiyorsa `ASSET_GENERATION_DEPENDENCY` kaydedilir.
+   - **Placeholder veya mekanik olarak yeniden renklendirilmiş varlık
+     üretilmez.** Gerekli değişim, zemini silinmiş eski logo ya da renkleri
+     kaydırılmış hâli değil; gerçek anlamda yeniden tasarlanmış, şeffaf zeminli
+     BTB Intelligence Noir / Arcane-esinli özgün marka varlığıdır.
+   - Bu ortamda görsel üretme/düzenleme yeteneği yoktur; bu durumda doğru sonuç
+     bağımlılığı kaydetmek ve kodun güvenli kısmını tamamlamaktır.
+   - App icon, kanonik varlık yapısı ortak kaynak olduğunu kanıtlamadıkça
+     değiştirilmez. Takım armalarına dokunulmaz.
+
+4. **Phase F/G — Bibi motion + feature discovery**
+   - Owner kararı: Bibi milestone'dan **düşmedi**; kendi odaklı pass'ine bırakıldı.
+   - Kısa tek seferlik mikro animasyon + uzun cooldown + bağlamsal tetikleyici.
+     Kalıcı ikinci sürekli döngü **eklenmez**; `LiveDot` ürünün tek sürekli
+     ambient animasyonu olarak kalır.
+   - Discovery: seen-state, frequency cap, cooldown, dismiss, tekrar etmeme.
+     Yalnız yerel; promosyon mesajı için backend bağımlılığı eklenmez.
+   - `More` içinde basit kullanıcı kontrolü (örn. `NORMAL` / `QUIET`);
+     tutorial çalışmaya devam eder.
+   - Analitik yüzeylerde route-presence kuralları **regresyona uğramaz**:
+     Match Detail ve Super Decision Detail'de ambient Bibi yok; yalnız
+     `GUIDE_ONLY` kısa görünüm.
+
+### Korunacaklar (kanıtlanmış Design V2 davranışı)
+
+Intelligence Noir koyu tema ve premium açık yorum; semantik palet; canlı teal
+kimliği; bronz yapısal aksan; jade pozitif; crimson negatif; tipografi ölçeği ve
+11pt taban; materyal/derinlik grameri ve kart kenarı okunabilirliği; dürüst
+durum sözlüğü (yalnız `OFFLINE` alarm eder); temporal bütünlük (`KARAR ANI` /
+`SONUÇ` mimari ayrımı); Bibi `GUIDE_ONLY` kuralları; alt gezinme; güvenli
+alanlar; sekme kaydırma; modül sıralama ve kalıcılığı; logo fallback; derin
+bağlantılar; bildirimler; Work Zone; Game Pulse kompakt boyutlandırma;
+Live Context v2 (yalnız gol + kırmızı kart).
+
+### Değişmeyenler
+
+`zbet-cap`, `zbet-abap`, `btb-codex` bu milestone'da **hiç** değiştirilmedi.
+Prospective collector değiştirilmedi. Tahmin/model/backend semantiği
+değiştirilmedi; yalnız okundu.
+
+### APK durumu
+
+Bu milestone Mobile kaynağını değiştirdiği için kapanışta **yeni ARM64 pilot
+APK** gerekir. `btb-mobile-next-arm64-live-context-v2.apk` ve
+`btb-mobile-next-arm64-design-v2.apk` yeni APK fiziksel doğrulamayı geçene kadar
+**silinmez**.
 
 ## Product Design V2 — tamamlandı (2026-08-18)
 
