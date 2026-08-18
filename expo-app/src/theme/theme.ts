@@ -5,6 +5,7 @@ import {
   type ThemeMode
 } from "./theme-preference";
 import { resolveDepth, type DepthLevel, type DepthPalette } from "./elevation";
+import { resolveSurfaceGradient } from "./surface";
 import { resolveSemanticColors } from "./semantic";
 import { syncWidgetTheme } from "@/src/widgets/btb-widget";
 
@@ -25,6 +26,11 @@ export {
 } from "./motion";
 export { semanticCollisions, type SemanticColors } from "./semantic";
 export { isSingleDepthTreatment, type DepthLevel } from "./elevation";
+export {
+  keepsEnergyScarce,
+  resolveEdgeTrace,
+  traceWidthRatio
+} from "./surface";
 
 export const themeStorageKey = "btb-mobile-next-theme-v1";
 
@@ -53,6 +59,10 @@ const darkColors = {
   // every meaning it can appear beside. 10.9:1 on the deep navy ground.
   teal: "#3AD9CB",
   tealSoft: "#0E424D",
+  // Structural metal, never a signal. Safe beside the rating gold because it is
+  // separated by saturation rather than hue: roughly half as saturated, so it
+  // reads as material and cannot be mistaken for a star or a warning.
+  bronze: "#B08046",
   orange: "#FF9A55",
   white: "#FFFFFF",
   black: "#000000"
@@ -80,6 +90,7 @@ const lightColors: ThemeColors = {
   redSoft: "#F8DDE1",
   teal: "#046C7A",
   tealSoft: "#D7EFF2",
+  bronze: "#8A5F2B",
   orange: "#C86521",
   white: "#FFFFFF",
   black: "#000000"
@@ -172,6 +183,9 @@ const depthPalette: DepthPalette = {
 export function depth(level: DepthLevel, accent?: string) {
   return resolveDepth(level, depthPalette, themeMode, accent);
 }
+
+/** Intelligence Noir card material for the active theme, top stop first. */
+export const surfaceGradient = resolveSurfaceGradient(themeMode);
 
 export const interaction = {
   minTouchTarget: 44,

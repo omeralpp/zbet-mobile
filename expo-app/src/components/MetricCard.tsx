@@ -1,12 +1,20 @@
 import type { ComponentProps } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { SurfaceMaterial } from "./SurfaceMaterial";
 import {
   Pressable,
   StyleSheet,
   Text,
   View
 } from "react-native";
-import { colors, interaction, radii, shadows, spacing } from "@/src/theme/theme";
+import {
+  colors,
+  interaction,
+  radii,
+  shadows,
+  spacing,
+  typeScale
+} from "@/src/theme/theme";
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
 
@@ -29,6 +37,11 @@ export function MetricCard({
 }: MetricCardProps) {
   const content = (
     <>
+      {/* A metric card's accent is its identity, so it earns a trace. It used to
+          be a solid 3px bar across the full width, which is a lit border by
+          another name - three of them side by side were the loudest thing on
+          the screen and drowned out the live cards below. */}
+      <SurfaceMaterial accent={accent} radius={radii.lg} />
       <View style={[styles.iconWrap, { backgroundColor: `${accent}1F` }]}>
         <MaterialCommunityIcons color={accent} name={icon} size={20} />
       </View>
@@ -47,7 +60,7 @@ export function MetricCard({
   );
 
   if (!onPress) {
-    return <View style={[styles.card, { borderTopColor: accent }]}>{content}</View>;
+    return <View style={styles.card}>{content}</View>;
   }
 
   return (
@@ -56,11 +69,7 @@ export function MetricCard({
       accessibilityLabel={`${label}: ${value}`}
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.card,
-        { borderTopColor: accent },
-        pressed && styles.pressed
-      ]}
+      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
       {content}
     </Pressable>
@@ -71,11 +80,9 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     minWidth: 148,
-    minHeight: interaction.preferredTouchTarget * 3,
-    backgroundColor: colors.surface,
+    minHeight: interaction.preferredTouchTarget * 2.6,
     borderWidth: 1,
     borderColor: colors.borderSoft,
-    borderTopWidth: 3,
     borderRadius: radii.lg,
     padding: spacing.lg,
     ...shadows.card
@@ -94,21 +101,16 @@ const styles = StyleSheet.create({
   },
   value: {
     color: colors.text,
-    fontSize: 24,
-    lineHeight: 28,
-    fontWeight: "900",
-    letterSpacing: -0.4
+    ...typeScale.metric
   },
   label: {
-    color: colors.textMuted,
-    fontSize: 12,
-    lineHeight: 17,
-    fontWeight: "700",
-    marginTop: 2
+    color: colors.text,
+    ...typeScale.label,
+    marginTop: spacing.xs
   },
   detail: {
     color: colors.textSubtle,
-    fontSize: 11,
+    ...typeScale.micro,
     marginTop: spacing.xs
   }
 });

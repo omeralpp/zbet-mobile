@@ -11,6 +11,7 @@ import {
   formatFixtureDateTime,
   formatSigned
 } from "@/src/utils/format";
+import { SurfaceDivider, SurfaceMaterial } from "./SurfaceMaterial";
 import { RatingStars } from "./RatingStars";
 import { TeamLogo } from "./TeamLogo";
 
@@ -111,6 +112,10 @@ export function MatchCard({
       }
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
+      <SurfaceMaterial
+        {...(live ? { accent: semantic.live } : {})}
+        radius={radii.lg}
+      />
       <View style={styles.topRow}>
         <Text numberOfLines={1} style={styles.league}>
           {match.league}
@@ -147,7 +152,10 @@ export function MatchCard({
         </View>
       </View>
 
-      <View style={styles.divider} />
+      <SurfaceDivider
+        {...(live ? { accent: semantic.live } : {})}
+        style={styles.divider}
+      />
 
       <View style={styles.bottomRow}>
         <View>
@@ -224,7 +232,9 @@ export function MatchCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
+    // The fill is the Intelligence Noir material, so the card clips its corners
+    // and lets that layer paint. The border stays soft even when the card is
+    // live: the energy is the edge trace, never a lit outline.
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.borderSoft,
@@ -245,13 +255,11 @@ const styles = StyleSheet.create({
   league: {
     color: colors.textMuted,
     flex: 1,
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 0.5,
+    ...typeScale.micro,
     textTransform: "uppercase"
   },
   timePill: {
-    minHeight: 26,
+    minHeight: 28,
     borderRadius: radii.round,
     backgroundColor: colors.surfaceStrong,
     paddingHorizontal: spacing.sm,
@@ -292,9 +300,7 @@ const styles = StyleSheet.create({
   team: {
     color: colors.text,
     flexShrink: 1,
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: "700"
+    ...typeScale.identity
   },
   teamRow: {
     alignItems: "center",
@@ -304,8 +310,7 @@ const styles = StyleSheet.create({
   },
   rank: {
     color: colors.green,
-    fontSize: 10,
-    fontWeight: "900"
+    ...typeScale.micro
   },
   redCardBadge: {
     alignItems: "center",
@@ -314,8 +319,7 @@ const styles = StyleSheet.create({
   },
   redCardCount: {
     color: colors.red,
-    fontSize: 9,
-    fontWeight: "900"
+    ...typeScale.micro
   },
   scores: {
     alignItems: "center",
@@ -324,13 +328,9 @@ const styles = StyleSheet.create({
   },
   score: {
     color: colors.text,
-    fontSize: 19,
-    lineHeight: 22,
-    fontWeight: "900"
+    ...typeScale.score
   },
   divider: {
-    height: 1,
-    backgroundColor: colors.borderSoft,
     marginVertical: spacing.lg
   },
   bottomRow: {
@@ -340,10 +340,9 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   odd: {
-    color: colors.textMuted,
-    fontSize: 11,
-    fontWeight: "700",
-    marginTop: 3
+    color: colors.text,
+    ...typeScale.metricCompact,
+    marginTop: spacing.xs
   },
   rateBlock: {
     alignItems: "flex-end",
@@ -356,13 +355,12 @@ const styles = StyleSheet.create({
   },
   rate: {
     color: colors.text,
-    fontSize: 16,
-    fontWeight: "900"
+    ...typeScale.metricCompact
   },
   rateLabel: {
     color: colors.textSubtle,
-    fontSize: 9,
-    marginTop: 1
+    ...typeScale.label,
+    marginTop: spacing.xs
   },
   pressureBlock: {
     flexDirection: "row",
@@ -370,12 +368,10 @@ const styles = StyleSheet.create({
     gap: 3
   },
   pressure: {
-    fontSize: 13,
-    fontWeight: "900"
+    ...typeScale.micro
   },
   pressureLabel: {
     color: colors.textSubtle,
-    fontSize: 8,
-    marginTop: 1
+    ...typeScale.label
   }
 });

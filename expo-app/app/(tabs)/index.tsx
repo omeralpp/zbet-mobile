@@ -26,13 +26,14 @@ import { useModuleLayout } from "@/src/layout/module-layout-store";
 import type { OverviewModuleId } from "@/src/layout/module-registry";
 import { useLiveStarFilter } from "@/src/preferences/LiveStarFilterProvider";
 import { useSuperStarFilter } from "@/src/preferences/SuperStarFilterProvider";
-import { colors, radii, semantic, spacing } from "@/src/theme/theme";
+import { colors, radii, semantic, spacing, typeScale } from "@/src/theme/theme";
 import {
   liveStarMetricCount,
   starMetricLabel
 } from "@/src/utils/decision-filters";
 import { formatSigned } from "@/src/utils/format";
 import { refreshPerformanceWidgetFromApi } from "@/src/widgets/performance-widget";
+import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 
 export default function DashboardScreen() {
@@ -116,6 +117,10 @@ export default function DashboardScreen() {
           }
           style={({ pressed }) => [styles.hero, pressed && styles.pressed]}
         >
+          {/* Bronze rather than a semantic accent: the hero is the brand
+              surface, and metal marks it as premium without claiming that
+              anything on it is live, positive or in need of attention. */}
+          <SurfaceMaterial accent={colors.bronze} radius={radii.xl} />
           <Image
             resizeMode="contain"
             source={require("../../assets/icon.png")}
@@ -280,46 +285,40 @@ const styles = StyleSheet.create({
     paddingTop: 72
   },
   hero: {
-    minHeight: 170,
+    minHeight: 132,
     borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    padding: spacing.xl,
+    borderColor: colors.borderSoft,
+    padding: spacing.lg,
     flexDirection: "row",
-    alignItems: "center",
-    overflow: "hidden"
+    alignItems: "center"
   },
   pressed: {
     opacity: 0.82
   },
   logo: {
-    width: 92,
-    height: 92,
+    width: 68,
+    height: 68,
     marginRight: spacing.lg
   },
   heroCopy: {
     flex: 1
   },
   eyebrow: {
-    color: colors.green,
-    fontSize: 10,
-    fontWeight: "900",
-    letterSpacing: 1.2
+    color: colors.bronze,
+    ...typeScale.eyebrow
   },
+  // The tagline is brand, not signal. It gave up the top of the screen so live
+  // material could rise into it.
   heroTitle: {
     color: colors.text,
-    fontSize: 24,
-    lineHeight: 29,
-    fontWeight: "900",
-    letterSpacing: -0.5,
+    ...typeScale.moduleTitle,
     marginTop: spacing.sm
   },
   heroText: {
     color: colors.textMuted,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: spacing.sm
+    ...typeScale.bodyCompact,
+    marginTop: spacing.xs
   },
   metrics: {
     flexDirection: "row",

@@ -37,6 +37,30 @@ screen asks for a role, never a literal.
 - Red is reserved for loss, red cards and errors. Green is reserved for positive
   outcomes and brand navigation; it is no longer spent on screen eyebrows.
 
+### Content surfaces — `surface.ts`, `SurfaceMaterial.tsx`
+
+Intelligence Noir applies to content surfaces only. The shell — navigation,
+headers, global chrome — stays deliberately quiet.
+
+- A card is layered ink: a vertical gradient lit at the top, not a flat fill.
+  Use `SurfaceMaterial` and pass the card's own `radius`.
+- The material clips itself. Never put `overflow: "hidden"` on a card that also
+  carries `elevation`: on Android that combination can drop the card's children
+  entirely, which is exactly how the metric cards once rendered as empty boxes.
+- The edge trace fades out before the far corner and may never span the full
+  width (`traceWidthRatio`). A full-width trace is a lit border, which is the
+  neon failure this language exists to avoid.
+- A trace carries a semantic accent only when the surface reports something —
+  a live match. Everything else gets the inert highlight. `keepsEnergyScarce`
+  states the intent: if most cards on a screen glow, none of them does.
+- Depth is never bought with the edge of the card. Both gradient stops must stay
+  at least as separated from the page as the old flat fill, and a test enforces
+  it — a gradient can lift its top edge convincingly while sinking its bottom
+  into the background, and the cards then dissolve downward.
+- Bronze is structural, never semantic. It marks a premium surface (the brand
+  hero) and never substitutes for positive, warning, live or rating. It is safe
+  beside the rating gold because it is separated by saturation, not hue.
+
 ### Depth — `elevation.ts`
 
 - Four rungs: `flat`, `raised`, `floating`, `glow`. Call `depth(level)`.
