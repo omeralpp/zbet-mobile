@@ -1,39 +1,105 @@
+import type { ComponentProps } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { usePathname } from "expo-router";
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   StyleSheet,
   Text,
   View
 } from "react-native";
-import { colors, radii, spacing } from "@/src/theme/theme";
+import {
+  colors,
+  interaction,
+  radii,
+  semantic,
+  spacing,
+  typeScale
+} from "@/src/theme/theme";
+import { bibiPresence } from "@/src/mascot/bibi-presence";
+import { SurfaceMaterial } from "./SurfaceMaterial";
+import {
+  isAlarming,
+  resolveSystemState,
+  type SystemStateKind,
+  type SystemStateTone
+} from "./system-state";
 
-export function LoadingState({ label = "Veriler hazırlanıyor" }: { label?: string }) {
-  return (
-    <View style={styles.container}>
-      <ActivityIndicator color={colors.blue} size="large" />
-      <Text style={styles.message}>{label}</Text>
-    </View>
-  );
+type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
+
+function toneColor(tone: SystemStateTone): string {
+  if (tone === "PROBLEM") {
+    return semantic.negative;
+  }
+  if (tone === "CAUTION") {
+    return semantic.warning;
+  }
+  if (tone === "WAITING") {
+    return semantic.intelligence;
+  }
+  return colors.textSubtle;
 }
 
-export function ErrorState({
+/**
+ * One rendering for every system state.
+ *
+ * Tone drives the whole presentation, so a screen cannot accidentally dress a
+ * closed market as a crash: it names the situation and the vocabulary decides
+ * how loud that situation is allowed to be.
+ *
+ * Bibi appears only on the calm states, and only where ambient presence is
+ * already allowed. Deriving that from `bibiPresence` rather than a prop means
+ * an empty state on Match Detail cannot smuggle the mascot back onto a surface
+ * Batch 2 deliberately cleared. She is also kept away from anything alarming —
+ * a friendly character next to a real problem reads as the product not taking
+ * it seriously.
+ */
+export function SystemState({
+  kind,
+  title,
   message,
   onRetry
 }: {
-  message: string;
+  kind: SystemStateKind;
+  title?: string;
+  message?: string;
   onRetry?: () => void;
 }) {
+  const pathname = usePathname();
+  const spec = resolveSystemState(kind);
+  const accent = toneColor(spec.tone);
+  const alarming = isAlarming(spec.tone);
+  const showMascot =
+    !alarming &&
+    spec.tone === "NEUTRAL" &&
+    bibiPresence(pathname) === "FULL";
+  const showRetry = spec.retryable && Boolean(onRetry);
+
   return (
     <View style={styles.container}>
-      <MaterialCommunityIcons
-        color={colors.red}
-        name="cloud-alert-outline"
-        size={34}
+      <SurfaceMaterial
+        {...(alarming ? { accent } : {})}
+        radius={radii.lg}
       />
-      <Text style={styles.title}>Bağlantı kurulamadı</Text>
-      <Text style={styles.message}>{message}</Text>
-      {onRetry ? (
+      {kind === "LOADING" ? (
+        <ActivityIndicator color={accent} size="large" />
+      ) : showMascot ? (
+        <Image
+          resizeMode="contain"
+          source={require("../../assets/mascot/bibi-half.png")}
+          style={styles.mascot}
+        />
+      ) : (
+        <MaterialCommunityIcons
+          color={accent}
+          name={spec.icon as IconName}
+          size={32}
+        />
+      )}
+      <Text style={styles.title}>{title ?? spec.title}</Text>
+      <Text style={styles.message}>{message ?? spec.body}</Text>
+      {showRetry ? (
         <Pressable onPress={onRetry} style={styles.button}>
           <Text style={styles.buttonText}>Tekrar dene</Text>
         </Pressable>
@@ -42,24 +108,48 @@ export function ErrorState({
   );
 }
 
+/** Loading. Kept as a named entry point because it reads better at call sites. */
+export function LoadingState({ label }: { label?: string }) {
+  return <SystemState kind="LOADING" {...(label ? { title: label } : {})} />;
+}
+
+/**
+ * A request that failed outright.
+ *
+ * This is the one place a screen has nothing to show and retrying can help, so
+ * it is the only common state that carries problem styling.
+ */
+export function ErrorState({
+  message,
+  onRetry
+}: {
+  message: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <SystemState
+      kind="OFFLINE"
+      message={message}
+      title="Bağlantı kurulamadı"
+      {...(onRetry ? { onRetry } : {})}
+    />
+  );
+}
+
+/** Nothing here, which is a normal answer rather than a failure. */
 export function EmptyState({
   title,
-  message
+  message,
+  kind = "EMPTY"
 }: {
   title: string;
   message: string;
+  kind?: Extract<
+    SystemStateKind,
+    "EMPTY" | "NO_LIVE_MATCH" | "NO_DECISION"
+  >;
 }) {
-  return (
-    <View style={styles.container}>
-      <MaterialCommunityIcons
-        color={colors.textSubtle}
-        name="soccer-field"
-        size={34}
-      />
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.message}>{message}</Text>
-    </View>
-  );
+  return <SystemState kind={kind} message={message} title={title} />;
 }
 
 const styles = StyleSheet.create({
@@ -68,35 +158,36 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: spacing.xxl,
-    backgroundColor: colors.backgroundElevated,
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.borderSoft
   },
+  mascot: {
+    width: 54,
+    height: 54
+  },
   title: {
     color: colors.text,
-    fontSize: 17,
-    fontWeight: "800",
-    marginTop: spacing.md
+    ...typeScale.moduleTitle,
+    marginTop: spacing.md,
+    textAlign: "center"
   },
   message: {
     color: colors.textMuted,
-    fontSize: 13,
-    lineHeight: 19,
+    ...typeScale.body,
     textAlign: "center",
     marginTop: spacing.sm
   },
   button: {
     marginTop: spacing.lg,
-    minHeight: 44,
+    minHeight: interaction.minTouchTarget,
     justifyContent: "center",
     paddingHorizontal: spacing.xl,
     borderRadius: radii.round,
-    backgroundColor: colors.blue
+    backgroundColor: semantic.intelligence
   },
   buttonText: {
     color: colors.white,
-    fontSize: 14,
-    fontWeight: "800"
+    ...typeScale.label
   }
 });

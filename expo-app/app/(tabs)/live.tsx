@@ -189,6 +189,7 @@ export default function LiveScreen() {
           keyExtractor={(section) => section.key}
           ListEmptyComponent={
             <EmptyState
+              kind="NO_LIVE_MATCH"
               message="Bu filtreye uyan bir maç bulunmuyor."
               title="Maç yok"
             />

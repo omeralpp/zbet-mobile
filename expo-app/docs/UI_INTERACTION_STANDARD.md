@@ -91,6 +91,28 @@ BTB's own analytical material, as opposed to football data it merely relays.
 - Module headings use `ModuleHeading` with a bronze eyebrow. A reordered stack
   has to keep reading as a structured cockpit rather than a pile of cards.
 
+### System states — `system-state.ts`
+
+Eight situations, one vocabulary. A screen names the situation; the vocabulary
+decides how loudly it is allowed to present itself.
+
+- `LOADING` `EMPTY` `NO_LIVE_MATCH` `NO_DECISION` `STALE` `REFRESH_FAILED`
+  `UNAVAILABLE` `OFFLINE`.
+- **Only `OFFLINE` may look alarming.** A closed market, an empty filter and a
+  quiet provider are situations where the rest of the screen still works and the
+  user has nothing to do. Dressing them as errors teaches people to ignore error
+  styling, which costs the one case that really needed it.
+- **Retry appears only where retrying can change the answer.** A retry button on
+  an empty list re-fetches the same emptiness and implies the user erred.
+- `REFRESH_FAILED` and `UNAVAILABLE` read identically to a reader; the
+  difference matters to telemetry. Neither names a provider, a status code or an
+  error code — a test enforces this across every state's copy.
+- `STALE` is the only state that keeps real content underneath it, and it never
+  presents that content as confirmed.
+- Bibi appears on calm states only, and only where `bibiPresence` already allows
+  the ambient mascot. She is never shown beside a problem: a friendly character
+  next to a real failure reads as the product not taking it seriously.
+
 ### Temporal integrity
 
 A historical decision screen shows two kinds of fact, and confusing them is the

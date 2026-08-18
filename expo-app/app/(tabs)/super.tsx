@@ -273,6 +273,7 @@ export default function SuperScreen() {
           keyExtractor={(item) => item.key}
           ListEmptyComponent={
             <EmptyState
+              kind="NO_DECISION"
               message="Bu görünüm için bir Super kararı bulunmuyor."
               title="Karar yok"
             />

@@ -5,7 +5,7 @@ import {
   resolveFreshnessNotice,
   unavailableMessage
 } from "@/src/components/live-context-view";
-import { colors, spacing } from "@/src/theme/theme";
+import { colors, semantic, spacing, typeScale } from "@/src/theme/theme";
 
 /**
  * Honest state for live context that could not be retrieved.
@@ -27,7 +27,7 @@ export function LiveContextNotice({
   return (
     <View style={styles.container}>
       <MaterialCommunityIcons
-        color={colors.textSubtle}
+        color={semantic.unavailable}
         name="timeline-clock-outline"
         size={26}
       />
@@ -65,7 +65,7 @@ export function LiveContextFreshness({
   return (
     <View accessibilityLabel={message} accessible style={styles.freshness}>
       <MaterialCommunityIcons
-        color={colors.gold}
+        color={semantic.stale}
         name="clock-alert-outline"
         size={12}
       />
@@ -83,14 +83,12 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.text,
-    fontSize: 12.5,
-    fontWeight: "800",
+    ...typeScale.label,
     textAlign: "center"
   },
   body: {
     color: colors.textMuted,
-    fontSize: 11,
-    lineHeight: 16,
+    ...typeScale.bodyCompact,
     textAlign: "center"
   },
   freshness: {
@@ -101,8 +99,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm
   },
   freshnessText: {
-    color: colors.gold,
-    fontSize: 10,
-    fontWeight: "700"
+    color: semantic.stale,
+    ...typeScale.label
   }
 });
