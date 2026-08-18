@@ -4,9 +4,27 @@ import {
   parseThemeMode,
   type ThemeMode
 } from "./theme-preference";
+import { resolveDepth, type DepthLevel, type DepthPalette } from "./elevation";
+import { resolveSemanticColors } from "./semantic";
 import { syncWidgetTheme } from "@/src/widgets/btb-widget";
 
 export { parseThemeMode, type ThemeMode } from "./theme-preference";
+export {
+  fontWeights,
+  minimumFontSize,
+  typeScale,
+  type TypeRole,
+  type TypeRoleName
+} from "./typography";
+export {
+  durations,
+  emphasis,
+  gestureSpring,
+  motionDuration,
+  allowsAmbientMotion
+} from "./motion";
+export { semanticCollisions, type SemanticColors } from "./semantic";
+export { isSingleDepthTreatment, type DepthLevel } from "./elevation";
 
 export const themeStorageKey = "btb-mobile-next-theme-v1";
 
@@ -118,6 +136,32 @@ export const shadows = {
     elevation: 4
   }
 } as const;
+
+/**
+ * Meaning-level colour names, resolved against the active palette.
+ *
+ * A screen should ask for `semantic.live` rather than `colors.red`. The hue is
+ * the same today; the difference is that the request now records what the
+ * surface meant, which is what makes retuning a meaning a one-line change.
+ */
+export const semantic = resolveSemanticColors(colors);
+
+const depthPalette: DepthPalette = {
+  border: colors.border,
+  borderSoft: colors.borderSoft,
+  shadow: colors.black
+};
+
+/**
+ * Resolves one rung of the depth ladder for the active theme.
+ *
+ * `accent` applies to `glow` only, and a glow should be given the semantic
+ * colour of whatever it is reporting — a live match, a fresh decision — so the
+ * edge lighting stays a signal rather than a finish.
+ */
+export function depth(level: DepthLevel, accent?: string) {
+  return resolveDepth(level, depthPalette, themeMode, accent);
+}
 
 export const interaction = {
   minTouchTarget: 44,

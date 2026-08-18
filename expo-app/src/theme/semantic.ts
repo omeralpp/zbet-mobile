@@ -1,0 +1,129 @@
+/**
+ * Semantic colour layer.
+ *
+ * The palette names hues (`green`, `red`, `gold`). Screens should name meaning.
+ * Without that layer the two most loaded hues each carry several unrelated jobs:
+ * `green` is the active tab, the eyebrow and a won decision; `red` is the live
+ * pill, a lost decision, a red card and a connection error. A user reading a
+ * live match therefore sees the same red for "this match is happening now" and
+ * "this decision lost", and no amount of layout fixes that.
+ *
+ * This module does not repaint anything. It gives every meaning its own name,
+ * mapped onto the hue it already uses, so a screen migrated in a later batch
+ * asks for `live` rather than `red`. Once every surface asks by meaning, giving
+ * `live` its own hue is a one-line change instead of a survey of the codebase.
+ *
+ * The remaining overlaps are recorded in `semanticCollisions` rather than left
+ * to be rediscovered. That list is the design debt this layer exists to pay off.
+ */
+
+/** The palette shape this layer needs. Kept structural so it stays testable. */
+export interface SemanticPalette {
+  background: string;
+  backgroundElevated: string;
+  surface: string;
+  surfaceStrong: string;
+  border: string;
+  borderSoft: string;
+  text: string;
+  textMuted: string;
+  textSubtle: string;
+  blue: string;
+  blueSoft: string;
+  green: string;
+  greenSoft: string;
+  gold: string;
+  goldSoft: string;
+  red: string;
+  redSoft: string;
+  orange: string;
+}
+
+export interface SemanticColors {
+  /** BTB's analytical accent: the product is thinking or has an opinion. */
+  intelligence: string;
+  intelligenceSoft: string;
+  /** A won decision, a profitable outcome, a positive delta. */
+  positive: string;
+  positiveSoft: string;
+  /** A lost decision, an unprofitable outcome, a negative delta. */
+  negative: string;
+  negativeSoft: string;
+  /** This match is happening right now. Not a judgement about it. */
+  live: string;
+  liveSoft: string;
+  /** Something needs attention but nothing has failed. */
+  warning: string;
+  warningSoft: string;
+  /** Retrieved, but older than the freshness threshold. */
+  stale: string;
+  staleSoft: string;
+  /** Not retrievable right now. Distinct from empty and from failed. */
+  unavailable: string;
+  unavailableSoft: string;
+  /** No signal either way. The absence of an opinion, not a weak one. */
+  neutral: string;
+}
+
+export function resolveSemanticColors(
+  palette: SemanticPalette
+): SemanticColors {
+  return {
+    intelligence: palette.blue,
+    intelligenceSoft: palette.blueSoft,
+    positive: palette.green,
+    positiveSoft: palette.greenSoft,
+    negative: palette.red,
+    negativeSoft: palette.redSoft,
+    live: palette.red,
+    liveSoft: palette.redSoft,
+    warning: palette.gold,
+    warningSoft: palette.goldSoft,
+    stale: palette.gold,
+    staleSoft: palette.goldSoft,
+    unavailable: palette.textSubtle,
+    unavailableSoft: palette.surfaceStrong,
+    neutral: palette.textSubtle
+  };
+}
+
+export interface SemanticCollision {
+  /** The two meanings that currently render identically. */
+  roles: readonly [keyof SemanticColors, keyof SemanticColors];
+  /** Why they collide and what a user cannot tell apart because of it. */
+  note: string;
+  /** `true` when resolving it is a visible identity decision for the owner. */
+  ownerDecision: boolean;
+}
+
+/**
+ * Meanings that are still spelled with the same hue.
+ *
+ * Recorded, not hidden. A collision here is a known cost with a known owner —
+ * not a bug to be found again by the next person reading a live match screen.
+ */
+export const semanticCollisions: readonly SemanticCollision[] = [
+  {
+    roles: ["live", "negative"],
+    note:
+      "A live match and a lost decision are both red, so the strongest colour on " +
+      "a live list carries no direction. Giving `live` its own signature is the " +
+      "single highest-value palette change available, and it changes how the " +
+      "product reads at a glance.",
+    ownerDecision: true
+  },
+  {
+    roles: ["stale", "warning"],
+    note:
+      "Freshness already uses gold and reads correctly as caution. Separating " +
+      "them is only worth doing if a surface ever needs both at once.",
+    ownerDecision: false
+  },
+  {
+    roles: ["unavailable", "neutral"],
+    note:
+      "Both resolve to the subtle text tone. Acceptable: an unavailable value " +
+      "and an absent one should recede equally, and neither is actionable.",
+    ownerDecision: false
+  }
+];

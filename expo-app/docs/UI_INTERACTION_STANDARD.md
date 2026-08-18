@@ -2,6 +2,51 @@
 
 This is the shared acceptance contract for native Mobile Next screens.
 
+## Design system v2
+
+The token layer lives in `src/theme` and is imported through `theme.ts`. A
+screen asks for a role, never a literal.
+
+### Typography — `typography.ts`
+
+- Use a `typeScale` role. New literal `fontSize` values are a review finding.
+- Weights are `400 / 500 / 700 / 900` only. Android's default family ships no
+  other faces, so a requested `800` silently resolves to a neighbour and reads
+  as the same step as `900`.
+- Minimum rendered size is 11pt. Sizes 8–10 do not survive Android font scaling
+  on a live match surface.
+- Prose is `400`/`500`. `900` is reserved for numerics — scores, odds, metrics.
+  Weight is the product's primary emphasis channel and only works while most of
+  the screen is not using it.
+- Large numerics track negative; small text tracks positive. `eyebrow` is the
+  only uppercased role.
+
+### Colour — `semantic.ts`
+
+- Ask for meaning (`semantic.live`, `semantic.positive`, `semantic.stale`), not
+  hue (`colors.red`, `colors.green`).
+- Known overlaps are recorded in `semanticCollisions` and covered by a test. A
+  new overlap belongs on that register with a note, not in a component.
+- `live` and `negative` are still the same red. That is an open owner decision:
+  separating them changes how a live list reads at a glance.
+
+### Depth — `elevation.ts`
+
+- Four rungs: `flat`, `raised`, `floating`, `glow`. Call `depth(level)`.
+- A surface picks exactly one rung. Border plus shadow plus glow on the same
+  card is the specific failure that turns futuristic into noisy.
+- `glow` is reserved for meaning — live state, a fresh decision — and takes the
+  semantic colour of whatever it reports. A glow with no meaning is decoration.
+
+### Motion — `motion.ts`
+
+- Use a named duration (`reveal`, `transition`, `ambient`), not a literal.
+- Resolve every duration through `motionDuration(name, reduceMotion)`. Reduced
+  motion returns `0`, so a skipped animation must still land on its end state.
+- `emphasis.alert` is reserved for change the user is waiting on — a goal, a new
+  Super decision. Routine refetches use `emphasis.arrive`.
+- Ambient loops are the first thing reduced motion drops.
+
 ## Layout
 
 - Use the shared spacing, radius, semantic color, and typography tokens.
