@@ -56,3 +56,34 @@ export function deriveLiveCardFooter(
   }
   return { showsRate: currentRate !== null, showsPressure: hasPressureData };
 }
+
+/**
+ * Longest caption the live card footer may place beside a real number.
+ *
+ * Not a guess: `market kapalı` is the longest footer caption the physical
+ * Xiaomi round accepted on that 360dp row, and `güncel baskı farkı` at eighteen
+ * characters is the one it rejected. Thirteen is therefore the widest caption
+ * this row is known to carry, and anything wider has to justify itself as a
+ * waiting caption that is allowed to wrap.
+ */
+export const maxLiveCardValueCaption = 13;
+
+/**
+ * What the pressure block calls itself.
+ *
+ * The card says `baskı farkı` rather than `güncel baskı farkı` because the
+ * surface already carries the tense. A number only ever reaches this block when
+ * `pressureSource === "CURRENT_MATCH"`, so the currency of the figure is
+ * enforced in code rather than asserted in a caption, and the Super decision
+ * screen already names the same quantity `baskı farkı` under its own
+ * `karar anı` framing. Dropping the adjective removes a claim the reader cannot
+ * act on differently — not information.
+ *
+ * The waiting caption keeps `güncel`, where the word is the whole point: the
+ * match has pressure history but no current reading, which is exactly the
+ * distinction `NXT-OBS-092` was opened for. It is longer than the ceiling above
+ * and wraps to a controlled second line instead of being shortened into a lie.
+ */
+export function pressureFooterCaption(hasPressureData: boolean): string {
+  return hasPressureData ? "baskı farkı" : "güncel veri bekleniyor";
+}

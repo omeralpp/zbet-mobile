@@ -5,7 +5,8 @@ import type { MatchInsight, MatchSummary } from "@/src/api/schemas";
 import { colors, radii, semantic, shadows, spacing, typeScale } from "@/src/theme/theme";
 import {
   deriveLiveCardFooter,
-  deriveLiveRateTrend
+  deriveLiveRateTrend,
+  pressureFooterCaption
 } from "@/src/utils/live-card-indicators";
 import { derivePressureBalance } from "@/src/utils/pressure-balance";
 import {
@@ -201,6 +202,9 @@ export function MatchCard({
         ) : null}
         {footer.showsPressure ? (
           <View
+            // The spoken label keeps `Güncel` that the visible caption drops.
+            // Speech has no row width to lose, and a listener cannot see the
+            // live card framing that makes the figure's currency obvious.
             accessibilityLabel={
               pressureBalance.hasData
                 ? `Güncel baskı farkı ${formatSigned(match.pressureDiff ?? 0, 1)}, ${
@@ -225,10 +229,11 @@ export function MatchCard({
                   ? formatSigned(match.pressureDiff ?? 0, 1)
                   : "—"}
               </Text>
-              <Text style={styles.pressureLabel}>
-                {pressureBalance.hasData
-                  ? "güncel baskı farkı"
-                  : "güncel veri bekleniyor"}
+              {/* Two lines, not one: the waiting caption is the only footer
+                  caption wider than the row's proven ceiling, and it earns the
+                  wrap rather than being truncated into a different claim. */}
+              <Text numberOfLines={2} style={styles.pressureLabel}>
+                {pressureFooterCaption(pressureBalance.hasData)}
               </Text>
             </View>
           </View>

@@ -3,7 +3,9 @@ import test from "node:test";
 import { formatCurrentMarketRate } from "./format";
 import {
   deriveLiveCardFooter,
-  deriveLiveRateTrend
+  deriveLiveRateTrend,
+  maxLiveCardValueCaption,
+  pressureFooterCaption
 } from "./live-card-indicators";
 import { derivePressureBalance } from "./pressure-balance";
 
@@ -127,9 +129,7 @@ function footerLabels(state: (typeof layoutStress)[number]): string[] {
     );
   }
   if (footer.showsPressure) {
-    labels.push(
-      pressure.hasData ? "güncel baskı farkı" : "güncel veri bekleniyor"
-    );
+    labels.push(pressureFooterCaption(pressure.hasData));
   }
   return labels;
 }
@@ -156,4 +156,36 @@ test("every live card state renders the block count it has evidence for", () => 
       `${state.name}: beklenen ${state.blocks} blok`
     );
   }
+});
+
+test("a caption that sits beside a number stays inside the proven row width", () => {
+  // The physical Xiaomi defect. `güncel baskı farkı` was eighteen characters
+  // next to a signed pressure figure; `market kapalı` at thirteen is the widest
+  // caption the same row was observed to carry. Captions that report a missing
+  // value are exempt and wrap instead — they cannot be shortened without
+  // changing what they claim.
+  for (const state of layoutStress) {
+    // The selection string is not a caption: it is user-facing market copy of
+    // unbounded length and the card already holds it to a single line.
+    const captions = footerLabels(state).slice(1);
+    for (const caption of captions) {
+      if (caption.includes("bekleniyor")) {
+        continue;
+      }
+      assert.ok(
+        caption.length <= maxLiveCardValueCaption,
+        `${state.name}: "${caption}" ${caption.length} karakter`
+      );
+    }
+  }
+});
+
+test("the pressure caption spends characters on tense only when it has none", () => {
+  // `CURRENT_MATCH` gating is what makes the figure current, so the caption
+  // does not repeat it. The waiting caption keeps `güncel` because there the
+  // word carries the whole distinction between no reading now and no pressure
+  // at all.
+  assert.equal(pressureFooterCaption(true), "baskı farkı");
+  assert.ok(!pressureFooterCaption(true).includes("güncel"));
+  assert.ok(pressureFooterCaption(false).includes("güncel"));
 });
