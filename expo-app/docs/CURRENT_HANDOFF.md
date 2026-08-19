@@ -6,25 +6,25 @@ Son güncelleme: 2026-08-19
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `BTB ROADMAP MILESTONE 2/11 — LOGO / BRAND ASSET · UYGULAMA TAMAM,
-SAHİP FİZİKSEL DOĞRULAMASI BEKLİYOR` — Üretilen BTB Intelligence Noir varlığı
+Mod: `BTB ROADMAP MILESTONE 2/11 — LOGO / BRAND ASSET · KAPALI, FİZİKSEL
+OLARAK DOĞRULANDI` — Sahip Xiaomi doğrulamasını tamamladı ve yeni BTB
+Intelligence Noir marka entegrasyonunu kabul etti. Üretilen varlık
 doğrulandı, deterministik olarak normalize edildi, iki kanonik role türetildi
 ve entegre edildi. Kare zemin kaynağından kaldırıldı; açılış ekranındaki
-telafi de aynı değişiklikte gitti. Kalan tek şey sahibin Xiaomi cihazındaki
-fiziksel doğrulamasıdır — kod, test, doğrulayıcı, emülatör ve APK tarafı
-tamamdır.
+telafi de aynı değişiklikte gitti.
 
-Roadmap: **1/11 KAPALI = %9,1** · Şu anki milestone: **2/11 — Logo / Brand
-Asset** (uygulama tamam, kapanış sahip doğrulamasına bağlı). Milestone 3
-(Decision Safety) mutasyonu Milestone 2 meşru olarak kapanmadan başlamaz.
+Roadmap: **2/11 KAPALI = %18,2** · Şu anki milestone: **3/11 — Decision
+Safety Implementation** (`BTB - Aktif` sahipliğinde; şartnamesi
+`zbet-abap/docs/DECISION_SAFETY.md`). Milestone 2 yeniden açılmaz.
 
 Durum:
 
 ```text
 MILESTONE_1_CLOSED_PHYSICALLY_VALIDATED     (owner Xiaomi)
-BTB_ROADMAP = 1/11 CLOSED (%9,1)
-MILESTONE_2_IMPLEMENTATION_COMPLETE
-OWNER_PHYSICAL_VALIDATION_PENDING           (Xiaomi; marka her yüzeyde görünür değişti)
+MILESTONE_2_CLOSED                          (logo / brand asset)
+PHYSICALLY_VALIDATED                        (owner Xiaomi, 2026-08-19)
+ROADMAP_2_OF_11 = %18,2
+MILESTONE_3_CURRENT                         (Decision Safety — zbet-abap sahipliğinde)
 BRAND_ASSET_INTEGRATED                      (şeffaf 1024² master + adaptive foreground)
 BRAND_VALIDATOR_GREEN                       (npm run check:brand, iki rol de PASS)
 LAUNCH_COMPENSATION_REMOVED                 (borderRadius: 30 kaldırıldı)
@@ -163,11 +163,17 @@ artefaktları tutar.
 API'ye bağlanıldı ve gerçek canlı maç listelendi (`BREZILYA SERIE B`, 50').
 Koyu ve açık temada Özet, Canlı listesi ve açılış ekranı doğrulandı.
 
+### Kapanış
+
+Sahip Xiaomi fiziksel doğrulamasını **2026-08-19'da tamamladı** ve marka
+entegrasyonunu kabul etti. Milestone 2 `CLOSED / PHYSICALLY_VALIDATED`.
+Aşağıdaki kontrol listesi tarihsel kayıt olarak korunur. APK, denetim ve
+emülatör kanıtları değişmeden durur.
+
 ### Sıradaki adım
 
-1. **Sahip fiziksel Xiaomi doğrulaması** — marka her yüzeyde görünür
-   değiştiği için zorunlu. Kontrol listesi aşağıda.
-2. Doğrulama geçerse Milestone 2 kapanır ve roadmap %18,2 olur.
+1. Milestone 3 — Decision Safety. Bu Mobile task'ının kapsamı **dışındadır**;
+   `BTB - Aktif` sahipliğindedir. Şartname: `zbet-abap/docs/DECISION_SAFETY.md`.
 3. Milestone 3 (Decision Safety) mutasyonu ondan önce başlamaz — ayrıca
    **girdisi de eksik**: `R1–R11` gereksinimleri ve adli sonuç bu çalışma
    alanında hiçbir dosyada yok (tarandı). Yol haritasının kanonik kaydı ve
