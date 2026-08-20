@@ -691,29 +691,35 @@ export default function MatchDetailScreen() {
         />
         <Text style={styles.verdictEyebrow}>BTB SEÇİMİ</Text>
         <View style={styles.verdictRow}>
-          <View style={styles.verdictCopy}>
+          <View style={[styles.verdictCell, styles.verdictCellWide]}>
             <Text numberOfLines={1} style={styles.selection}>
               {match.selectedOdd || "Aday bekleniyor"}
             </Text>
             <SignalMeter rating={match.rating} />
           </View>
-          <View style={styles.movementBlock}>
+          <View style={[styles.verdictCell, styles.verdictCellEnd]}>
+            <Text style={styles.verdictValue}>
+              {formatRate(match.liveRate)}
+            </Text>
+            <Text style={styles.verdictLabel}>seçim oranı</Text>
+          </View>
+          <View style={[styles.verdictCell, styles.verdictCellEnd]}>
             <View style={styles.movementRow}>
-              <Text style={styles.movementFrom}>
-                {formatRate(match.liveRate)}
-              </Text>
               <MaterialCommunityIcons
                 color={movement.color}
                 name={movement.icon}
                 size={iconSizes.small}
               />
               <ChangeEmphasis token={currentMarket.value}>
-                <Text style={[styles.movementTo, { color: movement.color }]}>
+                <Text
+                  accessibilityLabel={`${currentMarket.value} - ${movement.label}`}
+                  style={[styles.verdictValue, { color: movement.color }]}
+                >
                   {currentMarket.value}
                 </Text>
               </ChangeEmphasis>
             </View>
-            <Text style={styles.movementLabel}>{movement.label}</Text>
+            <Text style={styles.verdictLabel}>{currentMarket.label}</Text>
           </View>
         </View>
         </View>
@@ -904,15 +910,16 @@ const styles = StyleSheet.create({
   verdictRow: {
     flexDirection: "row",
     alignItems: "flex-end",
-    justifyContent: "space-between",
     gap: spacing.lg
   },
-  verdictCopy: {
-    flex: 1,
-    minWidth: 0,
-    gap: spacing.sm
+  verdictCell: {
+    gap: spacing.xs
   },
-  movementBlock: {
+  verdictCellWide: {
+    flex: 1,
+    minWidth: 0
+  },
+  verdictCellEnd: {
     alignItems: "flex-end"
   },
   movementRow: {
@@ -920,19 +927,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.xs
   },
-  // The rate BTB selected at is context for where the market is now, so it sits
-  // quieter than the current number it points to.
-  movementFrom: {
-    color: colors.textMuted,
-    ...typeScale.metricCompact
-  },
-  movementTo: {
+  verdictValue: {
+    color: colors.text,
     ...typeScale.metric
   },
-  movementLabel: {
+  verdictLabel: {
     color: colors.textSubtle,
-    ...typeScale.label,
-    marginTop: spacing.xs
+    ...typeScale.label
   },
   selection: {
     color: colors.text,

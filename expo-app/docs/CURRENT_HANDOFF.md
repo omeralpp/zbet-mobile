@@ -1,17 +1,30 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-08-19
+Son güncelleme: 2026-08-21
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `BTB ROADMAP MILESTONE 2/11 — LOGO / BRAND ASSET · KAPALI, FİZİKSEL
-OLARAK DOĞRULANDI` — Sahip Xiaomi doğrulamasını tamamladı ve yeni BTB
-Intelligence Noir marka entegrasyonunu kabul etti. Üretilen varlık
-doğrulandı, deterministik olarak normalize edildi, iki kanonik role türetildi
-ve entegre edildi. Kare zemin kaynağından kaldırıldı; açılış ekranındaki
-telafi de aynı değişiklikte gitti.
+Mod: `OBSERVATION` — 2026-08-21 `mobile cutover start` batch'i kapandı.
+`NXT-OBS-089` kısmen uygulandı: canlı maç detayının verdict satırı `Seçim /
+Seçim oranı / Güncel oran` üç dengeli koluna geçirildi (`app/match/[key].tsx`).
+Super detay kartı tarafı kasıtlı, belgeli bir tasarım kararıyla (kâr karar
+satırından ayrı "sonuç" bandında) çeliştiği için uygulanmadı; blocker olarak
+`docs/OBSERVATION_LOG.md` "2026-08-21 cutover disposition" altında kayıtlı,
+owner kararı bekliyor. Diğer 7 `OBSERVED` madde bu batch'in kapsamı dışında
+kaldı (SAP/Toto producer sahipliği veya fiziksel/gerçek-olay gözlemi
+bekliyor). Kapı temiz: `npm run typecheck`, `npm run lint`, `npm test`
+(401/401); `npm run doctor` bu shell'de env kaynaklı hatayla çıktı,
+değişiklikle ilgisi doğrulanamadı. Bu batch'te yeni APK üretilmedi veya
+dağıtılmadı; deploy ayrı açık onay bekliyor.
+
+BTB ROADMAP MILESTONE 2/11 — LOGO / BRAND ASSET KAPALI, FİZİKSEL OLARAK
+DOĞRULANDI. Sahip Xiaomi doğrulamasını tamamladı ve yeni BTB Intelligence
+Noir marka entegrasyonunu kabul etti. Üretilen varlık doğrulandı,
+deterministik olarak normalize edildi, iki kanonik role türetildi ve entegre
+edildi. Kare zemin kaynağından kaldırıldı; açılış ekranındaki telafi de aynı
+değişiklikte gitti.
 
 Roadmap: **2/11 KAPALI = %18,2** · Şu anki milestone: **3/11 — Decision
 Safety Implementation** (`BTB - Aktif` sahipliğinde; şartnamesi

@@ -95,7 +95,7 @@ sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
 | NXT-OBS-087 | 2026-08-13 | Kullanıcıya özel Super notification yıldız eşiği | Backend notification tablosundaki minimum yıldız sistem geneli alt sınır olarak kalmalı (ör. `1`); kullanıcı Mobile `Daha Fazla > Bildirimler` altında ayrı bir `Super bildirim eşiği` seçebilmeli: `1+`, `2+`, `3+`, `4+`, `5 yıldız`. Bu tercih liste/Super filtrelerinden bağımsız, yerel ve kalıcı olmalı; varsayılan `1+` mevcut davranışı korumalıdır. Etkin görünür eşik fiilen `max(backend global minimum, kullanıcı tercihi)` olur; Mobile backend’in izin vermediği daha düşük yıldızı geri açamaz. Mevcut Android FCM mesajları data-only çalışıyor ve background task önce widget’ları güncelleyip sonra yerel görünür notification üretiyor. Bu nedenle Android pilot için en güvenli çözüm tüm geçerli veriyi almaya devam edip widget güncellemesini her mesajda çalıştırmak, yalnız `presentAndroidNotification` adımını AsyncStorage’daki kullanıcı eşiğine göre bastırmaktır; böylece düşük yıldız bildirimi görünmez ama performans/widget güncelliği bozulmaz. Seçim UI’si mevcut yıldız seçeneklerini yeniden kullanmalı, değer değişince sonraki mesajdan itibaren etkili olmalı; bozuk/eksik tercih fail-safe `1+` olmalı. General ve Toto bildirimleri etkilenmemeli. Testler eşik altı Super’de `widget updated + notification not presented`, eşik ve üstünde ikisinin de çalışması, tercih kalıcılığı, geçersiz rating ve cold/background task durumunu kapsamalıdır. Pilot Android’ın legacy `BTB` topic aboneliği görünür filtreyi bypass edebilecek ikinci bir üretici hattı olmadığı kanıtlanmalı veya kontrollü biçimde kaldırılmalıdır. OAuth/iOS çoklu cihaz aşamasında hesap bazlı server-side tercih ayrıca tasarlanabilir; mevcut pilotta tercih cihaz/kurulum bazlıdır. | MEDIUM | READY |
 | NXT-OBS-088 | 2026-08-13 | Dark/Light switch ve Android widget tema eşleşmesi | `Daha Fazla > Uygulama görünümü` mevcut açılır/uyarı seçimi yerine erişilebilir bir `Switch` olmalı; kapalı durum `Açık`, açık durum `Koyu` temayı temsil etmeli ve görünen metin yalnız renge bağlı kalmadan aktif modu belirtmelidir. Switch en az 44–48 dp dokunma alanı, erişilebilirlik rolü/durum açıklaması ve tema değişirken tekrarlı dokunmayı önleyen kısa geçiş durumu taşımalıdır. Tema tercihi mevcut kalıcı uygulama ayarında tek kaynak olarak korunmalı; seçim değiştiğinde uygulama temasından önce native widget katmanına senkronize edilerek hem BTB bildirim widget’ı hem BTB Performans widget’ı veri kaybetmeden hemen yeniden çizilmelidir. Bilyoner/widget içerik verileri değişmemeli; yalnız arka plan, yüzey, metin, ayırıcı, pasif halka ve vurgu renkleri merkezi light/dark widget paletinden gelmelidir. Native `btb-widget` modülü tek bir `setTheme`/resolver giriş noktası ve ortak preference kullanmalı; CDN veya renk değerleri provider’lara dağınık hard-code edilmemelidir. Uygulama açılışında ve widget yeniden oluşturulduğunda kayıtlı tercih tekrar senkronize edilmeli; eksik/geçersiz değer mevcut koyu tema davranışına güvenli biçimde dönmelidir. İki widget provider’ı aynı preference değişikliğinde `updateAllWidgets` ile güncellenmeli. Testler switch kalıcılığı, uygulama yeniden yüklenmesi öncesi native senkronizasyon, iki modda iki widget’ın okunabilirliği/kontrastı, mevcut widget verisinin korunması, bozuk tercih fallback’i ve fiziksel Android launcher smoke kontrolünü kapsamalıdır. | MEDIUM | READY |
 
-| NXT-OBS-089 | 2026-08-13 | Maç ve Super detay özet kartı görsel parity | Fiziksel ekran karşılaştırmasında iki detay kartının temel dili uyumlu olsa da alt metrik yerleşimi farklı yoğunlukta kalıyor. Super kartındaki karar/biten skor ayrımı tarihsel bağlam için korunmalı; ancak seçim, seçim oranı ve kâr aynı yatay metrik ritmine alınarak soldaki yığılma ve gereksiz kart yüksekliği azaltılmalı. Canlı kartta seçim solda, seçim oranı ile güncel oran sağda dikey yığılıyor; bu bölüm `Seçim / Seçim oranı / Güncel oran` şeklinde dengeli üç kolon olmalı. İki kart lig-tarih-durum üst satırı, takım/maç adı alanı, ayırıcı, label/value baseline, iç padding ve minimum yükseklik için ortak hero token/bileşen düzenini paylaşmalı; buna karşılık `karar anı ↔ biten skor` ile `canlı skor` semantiği tek tipe zorlanmamalıdır. Uzun takım ve lig adları, büyük yazı, dar ekran, açık/koyu tema ve gelecekte participant ID geldiğinde eklenecek kulüp logoları layout sıçraması oluşturmadan desteklenmelidir. | MEDIUM | OBSERVED |
+| NXT-OBS-089 | 2026-08-13 | Maç ve Super detay özet kartı görsel parity | Fiziksel ekran karşılaştırmasında iki detay kartının temel dili uyumlu olsa da alt metrik yerleşimi farklı yoğunlukta kalıyor. Super kartındaki karar/biten skor ayrımı tarihsel bağlam için korunmalı; ancak seçim, seçim oranı ve kâr aynı yatay metrik ritmine alınarak soldaki yığılma ve gereksiz kart yüksekliği azaltılmalı. Canlı kartta seçim solda, seçim oranı ile güncel oran sağda dikey yığılıyor; bu bölüm `Seçim / Seçim oranı / Güncel oran` şeklinde dengeli üç kolon olmalı. İki kart lig-tarih-durum üst satırı, takım/maç adı alanı, ayırıcı, label/value baseline, iç padding ve minimum yükseklik için ortak hero token/bileşen düzenini paylaşmalı; buna karşılık `karar anı ↔ biten skor` ile `canlı skor` semantiği tek tipe zorlanmamalıdır. Uzun takım ve lig adları, büyük yazı, dar ekran, açık/koyu tema ve gelecekte participant ID geldiğinde eklenecek kulüp logoları layout sıçraması oluşturmadan desteklenmelidir. **KISMEN UYGULANDI (2026-08-21) — bkz. aşağıdaki disposition.** | MEDIUM | OBSERVED |
 
 | NXT-OBS-090 | 2026-08-13 | Toto program güncelliği ve ikramiye görünümü | Toto Programı detayında güvenilir `updatedAt` alanı Mobile DTO ve BFF mapper'da mevcut; ekran program başlığı veya Sonuçlar kartı yakınında yerel tarih-saatle `Son güncelleme: 13 Ağu 2026 · 10:02` biçiminde göstermeli ve bu değeri cihazın sorgu zamanı gibi sunmamalıdır. Mevcut Mobile/BFF Toto sözleşmesinde ikramiye alanı bulunmuyor. Sonuç kaynağında doğrulanmış ikramiye mevcutsa sözleşmeye nullable tutar ve para birimi (ör. `prizeAmount`, `prizeCurrency`) eklenmeli; yalnız sonuçlanmış programda ve pozitif/geçerli tutarda Sonuçlar kartında `İkramiye` olarak para formatıyla gösterilmelidir. Eksik değer `0` gibi yorumlanmamalı, tahmin/main hit/kapsam sayısından tutar türetilmemeli ve alan yoksa bölüm tamamen gizlenmelidir. Kaynak SAP/Toto alanı, OData adı ve para birimi cutover öncesi ilgili `BTB Toto - Aktif` sahipliğinde doğrulanmalı; Mobile tarafı yalnız sabit read-only DTO'yu göstermelidir. | MEDIUM | READY |
 
@@ -134,6 +134,46 @@ sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
 | NXT-OBS-080 | 2026-08-11 | Bibi hedef vurgusu regresyonu | Sabit koordinat ve tahminî dikdörtgenler kaldırıldı. `TutorialTarget` gerçek React Native bileşenini `measureInWindow` ile ölçer, yalnız aktif nesnenin sınırına 2 dp BTB yeşili çizer ve adım/ekran/kapanış değişiminde çerçeveyi temizler. Özet hero, Günlük Super ve ilk maç hedeflerinde ardışık emülatör ekran kanıtı alındı; eski büyük çerçeve özel durumu düzeltilip tekrar doğrulandı. Fiziksel telefon parity’si observation’da beklenir. | HIGH | READY |
 
 | NXT-OBS-081 | 2026-08-11 | Açık tema kapsam netliği | Açık tema yalnız arka plan değil; yüzey, metin, sınır, durum, grafik, Bibi, sistem durum çubuğu, giriş/splash ve navigation renklerini ortak semantik paletten üretir. Giriş, Özet, Maç Detayı, rehber balonu ve hedef çerçeveleri açık tema release APK üzerinde görsel doğrulandı; seçim koyu varsayımı bozmadan kalıcıdır. | MEDIUM | READY |
+
+## 2026-08-21 cutover disposition
+
+- `NXT-OBS-089` **kısmen** uygulandı, `OBSERVED` olarak kaldı çünkü madde iki
+  ayrı talep içeriyordu ve yalnız biri çelişkisizdi.
+  - **Canlı kart (uygulandı).** `app/match/[key].tsx` verdict satırı iki
+    kolonluk dikey yığından (`seçim solda` / `seçim oranı + güncel oran sağda
+    üst üste`) `Seçim / Seçim oranı / Güncel oran` üç kolonuna geçirildi;
+    kolon isimlendirmesi ve hücre ritmi (`bandCell`/`bandCellWide`/
+    `bandCellEnd`) Super detay ekranının zaten kurulu örüntüsünü birebir
+    izler. Yön ikonu/renk semantiği (`movement.color`/`movement.icon`) ve
+    market-kapalı/oran-bekleniyor durumları değişmeden taşındı; yön metni
+    (`seçimden yükseldi` vb.) görünür etiketten kaldırılmadı, değer alanının
+    `accessibilityLabel`'ına taşındı. `npm run typecheck`, `npm run lint`
+    (`app/match/[key].tsx` kapsamlı) ve `npm test` (401/401) temiz geçti.
+  - **Super kart (uygulanmadı — çelişki, blocker olarak raporlanıyor).**
+    Madde metni "seçim, seçim oranı ve kâr aynı yatay metrik ritmine
+    alınmalı" diyor; ancak `app/super/[key].tsx` içindeki mevcut kod bunun
+    tam tersini kasıtlı olarak uyguluyor ve bunu satır içi yorumla
+    gerekçelendiriyor: kâr (`profit`) karar anı bandından (`seçim` + `seçim
+    oranı`) bilinçli olarak ayrı bir "sonuç" bandına alınmış, çünkü kârın
+    karar satırıyla aynı sırada/ağırlıkta gösterilmesi önceki tasarımda
+    "sonucun kararın bir parçasıymış gibi okunmasına" yol açıyordu. Madde
+    aynı satırda "karar/biten skor ayrımı korunmalı" da diyor — bu ikisi
+    birbiriyle doğrudan çelişiyor. Kod tarafındaki ayrım kasıtlı, belgeli bir
+    tasarım kararı olduğu için varsayımla geri alınmadı; prosedürün
+    "belirsiz iş kararı ... varsayımla uygulanmaz, blocker olarak raporlanır"
+    kuralı burada işletildi. Karar sahibi gerekiyor: (a) mevcut iki-bant
+    ayrımı doğru, madde metni bu kısımda güncellenip kapatılsın, ya da
+    (b) kâr gerçekten seçim/seçim oranıyla aynı satıra alınsın ve mevcut
+    tasarım yorumundaki gerekçe bilerek geri alınsın. Hiçbir kod değişikliği
+    yapılmadı.
+- Diğer 7 `OBSERVED` maddesi (`NXT-OBS-073`, `074`, `086`, `095`, `096`,
+  `099`, `100`) bu batch'te kapsam dışı kaldı: `073`/`086` SAP DDIC/CDS veya
+  Toto producer sahipliğinde ayrı onay gerektiriyor, `074` kök nedeni SAP
+  producer/SM59 tarafında (Mobile kod değişikliği değil), `096`/`099` sahip
+  kararı veya ayrı SAP aktivasyon onayı bekliyor, `095`/`100` kod değil
+  fiziksel/gerçek-olay gözlemi bekliyor. Hiçbiri bu batch'in kapsamına
+  alınmadı.
+- Kod ağacı **commit edilmemiştir**; commit/push ayrı açık onay gerektirir.
 
 ## 2026-08-18 Design V2 geri bildirim pass disposition
 
