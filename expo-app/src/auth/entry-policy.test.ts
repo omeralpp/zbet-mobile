@@ -25,3 +25,11 @@ test("keeps preview direct and OAuth dependent on its session bootstrap", () => 
     "Kurumsal oturum"
   );
 });
+
+test("keeps implementation terminology out of pilot-facing entry copy", () => {
+  for (const mode of ["pilot", "oauth"] as const) {
+    const presentation = resolveAuthEntryPresentation(mode);
+    const copy = Object.values(presentation).join(" ");
+    assert.doesNotMatch(copy, /\b(?:BFF|OAuth|PKCE|Fiori|Livescore)\b/i);
+  }
+});

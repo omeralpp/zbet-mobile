@@ -5,7 +5,13 @@ import {
   resolveFreshnessNotice,
   unavailableMessage
 } from "@/src/components/live-context-view";
-import { colors, semantic, spacing, typeScale } from "@/src/theme/theme";
+import {
+  colors,
+  iconSizes,
+  semantic,
+  spacing,
+  typeScale
+} from "@/src/theme/theme";
 
 /**
  * Honest state for live context that could not be retrieved.
@@ -29,7 +35,7 @@ export function LiveContextNotice({
       <MaterialCommunityIcons
         color={semantic.unavailable}
         name="timeline-clock-outline"
-        size={26}
+        size={iconSizes.navigation}
       />
       <Text style={styles.title}>{message}</Text>
       <Text style={styles.body}>
@@ -67,7 +73,7 @@ export function LiveContextFreshness({
       <MaterialCommunityIcons
         color={semantic.stale}
         name="clock-alert-outline"
-        size={12}
+        size={iconSizes.micro}
       />
       <Text style={styles.freshnessText}>{message}</Text>
     </View>

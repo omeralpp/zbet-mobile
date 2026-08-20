@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import {
   colors,
+  iconSizes,
   interaction,
   radii,
   shadows,
@@ -95,7 +96,7 @@ export function DecisionFilterChip({
         <MaterialCommunityIcons
           color={active ? colors.white : colors.gold}
           name="star-four-points"
-          size={15}
+          size={iconSizes.small}
         />
         <Text style={[styles.chipText, active && styles.chipTextSelected]}>
           {decisionFilterLabel(value)}{count === undefined ? "" : ` ${count}`}
@@ -109,13 +110,13 @@ export function DecisionFilterChip({
             }
             color={active ? colors.white : colors.gold}
             name={sortValue === "RATING_DESC" ? "arrow-down" : "arrow-up"}
-            size={14}
+            size={iconSizes.small}
           />
         ) : null}
         <MaterialCommunityIcons
           color={active ? colors.white : colors.textMuted}
           name={open ? "chevron-up" : "chevron-down"}
-          size={16}
+          size={iconSizes.inline}
         />
       </Pressable>
 
@@ -203,7 +204,7 @@ export function DecisionFilterChip({
                       <MaterialCommunityIcons
                         color={colors.white}
                         name="check"
-                        size={16}
+                        size={iconSizes.small}
                       />
                     ) : null}
                   </View>

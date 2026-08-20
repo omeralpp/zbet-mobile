@@ -12,6 +12,7 @@ import {
   View
 } from "react-native";
 import { Screen } from "@/src/components/Screen";
+import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import { useAuth } from "@/src/auth/AuthProvider";
 import { runtimeConfig } from "@/src/config/runtime";
 import { expandAllModules } from "@/src/layout/module-collapse-store";
@@ -37,7 +38,9 @@ import {
 import {
   applyThemeMode,
   colors,
+  iconSizes,
   radii,
+  semantic,
   spacing,
   themeMode,
   typeScale
@@ -70,7 +73,11 @@ function SettingsRow({
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
       <View style={styles.rowIcon}>
-        <MaterialCommunityIcons color={colors.blue} name={icon} size={22} />
+        <MaterialCommunityIcons
+          color={colors.blue}
+          name={icon}
+          size={iconSizes.control}
+        />
       </View>
       <View style={styles.rowCopy}>
         <Text style={styles.rowTitle}>{title}</Text>
@@ -79,7 +86,7 @@ function SettingsRow({
       <MaterialCommunityIcons
         color={colors.textSubtle}
         name="chevron-right"
-        size={22}
+        size={iconSizes.control}
       />
     </Pressable>
   );
@@ -99,13 +106,13 @@ function ThemeSwitchRow({
         <MaterialCommunityIcons
           color={colors.blue}
           name={dark ? "weather-night" : "white-balance-sunny"}
-          size={22}
+          size={iconSizes.control}
         />
       </View>
       <View style={styles.rowCopy}>
         <Text style={styles.rowTitle}>Koyu tema</Text>
         <Text style={styles.rowDetail}>
-          {dark ? "Koyu" : "Açık"} görünüm etkin · uygulama ve widgetlar birlikte değişir
+          {dark ? "Koyu" : "Açık"} görünüm etkin · uygulama ve widget’lar birlikte değişir
         </Text>
       </View>
       <Switch
@@ -132,11 +139,11 @@ function registrationStageDetail(stage: RegistrationStage): string {
     case "permission_request":
       return "Bildirim izni isteniyor…";
     case "push_token":
-      return "Cihaz kaydediliyor…";
+      return "Bildirim bağlantısı hazırlanıyor…";
     case "device_registration":
-      return "Cihaz sunucuya kaydediliyor…";
+      return "Cihaz bildirimlere bağlanıyor…";
     default:
-      return "BTB topic, widget ve uygulama bildirimlerini etkinleştir";
+      return "BTB maç ve karar bildirimlerini etkinleştir";
   }
 }
 
@@ -157,9 +164,9 @@ function registrationErrorDetail(code: RegistrationErrorCode | undefined): strin
     case "PUSH_PERMISSION_DENIED":
       return "Bildirim izni verilmedi.";
     case "PUSH_TOKEN_TIMEOUT":
-      return "Push token zaman aşımına uğradı.";
+      return "Bildirim bağlantısı zaman aşımına uğradı.";
     case "PUSH_TOKEN_FAILED":
-      return "Push token alınamadı.";
+      return "Bildirim bağlantısı kurulamadı.";
     case "DEVICE_REGISTER_TIMEOUT":
       return "Cihaz kaydı zaman aşımına uğradı.";
     case "DEVICE_REGISTER_FAILED":
@@ -277,32 +284,38 @@ export default function MoreScreen() {
   return (
     <Screen eyebrow="BTB MOBILE" tabSwipe title="Daha fazla">
       <View style={styles.modeCard}>
+        <SurfaceMaterial
+          accent={
+            runtimeConfig.useMocks ? semantic.warning : semantic.positive
+          }
+          radius={radii.lg}
+        />
         <View style={styles.modeHeader}>
           <View
             style={[
               styles.modeDot,
               {
                 backgroundColor: runtimeConfig.useMocks
-                  ? colors.gold
-                  : colors.green
+                  ? semantic.warning
+                  : semantic.positive
               }
             ]}
           />
           <Text style={styles.modeTitle}>
-            {runtimeConfig.useMocks ? "Preview veri modu" : "Canlı mobil API"}
+            {runtimeConfig.useMocks ? "Önizleme modu" : "Canlı veriler bağlı"}
           </Text>
         </View>
         <Text style={styles.modeDetail}>
           {runtimeConfig.useMocks
-            ? "Native deneyim gerçek SAP bağlantısı açılmadan güvenli örnek verilerle çalışıyor."
-            : runtimeConfig.mobileApiUrl}
+            ? "Uygulama güvenli örnek veriler gösteriyor."
+            : "Maç ve karar verileri güvenli bağlantı üzerinden güncelleniyor."}
         </Text>
       </View>
 
       <Text style={styles.sectionTitle}>Bağlantılar</Text>
       <View style={styles.group}>
         <SettingsRow
-          detail="Gelişmiş işlemler ve tam Fiori ekranları"
+          detail="Gelişmiş BTB ekranlarını web üzerinde aç"
           icon="view-dashboard-variant-outline"
           onPress={() =>
             router.push({
@@ -310,7 +323,7 @@ export default function MoreScreen() {
               params: { target: "launchpad" }
             })
           }
-          title="Fiori Launchpad"
+          title="BTB Web Uygulamaları"
         />
         <SettingsRow
           detail="Bilyoner uygulaması veya web sitesi"
@@ -403,18 +416,22 @@ export default function MoreScreen() {
           style={({ pressed }) => [styles.row, pressed && styles.pressed]}
         >
           <View style={styles.rowIcon}>
-            <MaterialCommunityIcons color={colors.gold} name="star-outline" size={22} />
+            <MaterialCommunityIcons
+              color={colors.gold}
+              name="star-outline"
+              size={iconSizes.control}
+            />
           </View>
           <View style={styles.rowCopy}>
             <Text style={styles.rowTitle}>Super bildirim eşiği</Text>
             <Text style={styles.rowDetail}>
-              Yalnız {notificationMinimum}+ yıldız görünür bildirim gönderilir; widget verisi korunur
+              Yalnız {notificationMinimum}+ yıldız Super kararları görünür bildirim gönderir
             </Text>
           </View>
           <MaterialCommunityIcons
             color={colors.textSubtle}
             name={notificationMinimumOpen ? "chevron-up" : "chevron-down"}
-            size={22}
+            size={iconSizes.control}
           />
         </Pressable>
         {notificationMinimumOpen ? (
@@ -451,7 +468,11 @@ export default function MoreScreen() {
                     {minimum === 5 ? "5 yıldız" : `${minimum}+ yıldız`}
                   </Text>
                   {selected ? (
-                    <MaterialCommunityIcons color={colors.white} name="check" size={18} />
+                    <MaterialCommunityIcons
+                      color={colors.white}
+                      name="check"
+                      size={iconSizes.inline}
+                    />
                   ) : null}
                 </Pressable>
               );
@@ -520,8 +541,8 @@ export default function MoreScreen() {
       ) : null}
 
       <Text style={styles.boundary}>
-        BTB ve Toto aynı native kabuğu paylaşır; model kararları ve performans
-        metrikleri birbirine karıştırılmaz.
+        BTB canlı maçları ve Spor Toto programları aynı uygulamada sunulur;
+        karar ve performans bilgileri kendi bağlamında değerlendirilir.
       </Text>
     </Screen>
   );

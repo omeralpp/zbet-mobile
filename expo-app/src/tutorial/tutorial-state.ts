@@ -68,7 +68,7 @@ export const tutorialTips: readonly TutorialTip[] = [
   {
     id: "match-league",
     title: "Lig bağlamı",
-    body: "SAP’ta doğrulanan iki takımın sıra ve puanını bu kompakt tabloda görebilirsin.",
+    body: "Doğrulanan iki takımın sıra ve puanını bu kompakt tabloda görebilirsin.",
     route: "/match/",
     match: "PREFIX",
     targetId: "match-standings"

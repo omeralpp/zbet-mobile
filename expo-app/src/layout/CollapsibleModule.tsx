@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { ModuleHeading } from "@/src/components/ModuleHeading";
 import { motionDuration } from "@/src/theme/motion";
-import { colors, spacing } from "@/src/theme/theme";
+import { colors, iconSizes, spacing } from "@/src/theme/theme";
 import { useReducedMotion } from "@/src/theme/use-reduced-motion";
 import { shouldTogglePanel } from "./module-collapse";
 import { useModuleCollapse } from "./module-collapse-store";
@@ -129,7 +129,7 @@ export function CollapsibleModule({
               <MaterialCommunityIcons
                 color={colors.textMuted}
                 name="chevron-up"
-                size={20}
+                size={iconSizes.control}
               />
             </Animated.View>
           }

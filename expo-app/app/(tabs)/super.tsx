@@ -22,6 +22,7 @@ import {
 import { SuperLogCard } from "@/src/components/SuperLogCard";
 import {
   colors,
+  iconSizes,
   interaction,
   radii,
   shadows,
@@ -204,13 +205,13 @@ export default function SuperScreen() {
             <MaterialCommunityIcons
               color={colors.blue}
               name="calendar-range"
-              size={16}
+              size={iconSizes.small}
             />
             <Text style={styles.dayScopeAction}>{activeDayScope}</Text>
             <MaterialCommunityIcons
               color={colors.textMuted}
               name={dayScopeOpen ? "chevron-up" : "chevron-down"}
-              size={16}
+              size={iconSizes.small}
             />
           </Pressable>
           {dayScopeOpen ? (
@@ -255,7 +256,7 @@ export default function SuperScreen() {
                       <MaterialCommunityIcons
                         color={colors.white}
                         name="check"
-                        size={17}
+                        size={iconSizes.inline}
                       />
                     ) : null}
                   </Pressable>
@@ -273,7 +274,7 @@ export default function SuperScreen() {
           message={
             query.error instanceof Error
               ? query.error.message
-              : "Super Log alınamadı."
+              : "Super kararları alınamadı."
           }
           onRetry={() => query.refetch()}
         />

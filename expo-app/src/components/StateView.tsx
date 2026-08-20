@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import {
   colors,
+  iconSizes,
   interaction,
   radii,
   semantic,
@@ -77,7 +78,13 @@ export function SystemState({
   const showRetry = spec.retryable && Boolean(onRetry);
 
   return (
-    <View style={styles.container}>
+    <View
+      accessibilityLiveRegion={kind === "LOADING" ? "polite" : undefined}
+      accessibilityRole={
+        kind === "LOADING" ? "progressbar" : alarming ? "alert" : undefined
+      }
+      style={styles.container}
+    >
       <SurfaceMaterial
         {...(alarming ? { accent } : {})}
         radius={radii.lg}
@@ -94,13 +101,18 @@ export function SystemState({
         <MaterialCommunityIcons
           color={accent}
           name={spec.icon as IconName}
-          size={32}
+          size={iconSizes.state}
         />
       )}
       <Text style={styles.title}>{title ?? spec.title}</Text>
       <Text style={styles.message}>{message ?? spec.body}</Text>
       {showRetry ? (
-        <Pressable onPress={onRetry} style={styles.button}>
+        <Pressable
+          accessibilityHint="Bu ekranın verilerini yeniden yükler"
+          accessibilityRole="button"
+          onPress={onRetry}
+          style={styles.button}
+        >
           <Text style={styles.buttonText}>Tekrar dene</Text>
         </Pressable>
       ) : null}

@@ -2,7 +2,15 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { MatchInsight, MatchSummary } from "@/src/api/schemas";
-import { colors, radii, semantic, shadows, spacing, typeScale } from "@/src/theme/theme";
+import {
+  colors,
+  iconSizes,
+  radii,
+  semantic,
+  shadows,
+  spacing,
+  typeScale
+} from "@/src/theme/theme";
 import {
   deriveLiveCardFooter,
   deriveLiveRateTrend,
@@ -16,6 +24,7 @@ import {
   formatSigned
 } from "@/src/utils/format";
 import { LiveDot } from "./LiveDot";
+import { ChangeEmphasis } from "./ChangeEmphasis";
 import { SurfaceDivider, SurfaceMaterial } from "./SurfaceMaterial";
 import { RatingStars } from "./RatingStars";
 import { TeamLogo } from "./TeamLogo";
@@ -47,7 +56,11 @@ function TeamName({
           accessibilityLabel={`${name}, ${redCards} kırmızı kart`}
           style={styles.redCardBadge}
         >
-          <MaterialCommunityIcons color={colors.red} name="card" size={13} />
+          <MaterialCommunityIcons
+            color={semantic.negative}
+            name="card"
+            size={iconSizes.micro}
+          />
           {redCards > 1 ? (
             <Text style={styles.redCardCount}>{redCards}</Text>
           ) : null}
@@ -81,9 +94,9 @@ export function MatchCard({
         : "minus";
   const rateTrendColor =
     rateTrend === "UP"
-      ? colors.green
+      ? semantic.positive
       : rateTrend === "DOWN"
-        ? colors.red
+        ? semantic.negative
         : colors.textSubtle;
   const pressureBalance = derivePressureBalance(
     match.pressureSource === "CURRENT_MATCH" ? match.totalPressure : null,
@@ -96,11 +109,9 @@ export function MatchCard({
         ? "airplane"
         : "scale-balance";
   const pressureColor =
-    pressureBalance.direction === "HOME"
-      ? colors.blue
-      : pressureBalance.direction === "AWAY"
-        ? colors.green
-        : colors.textSubtle;
+    pressureBalance.direction === "BALANCED"
+      ? semantic.neutral
+      : semantic.intelligence;
   const footer = deriveLiveCardFooter(
     match.selectedOdd,
     match.currentRate,
@@ -157,8 +168,12 @@ export function MatchCard({
           />
         </View>
         <View style={styles.scores}>
-          <Text style={styles.score}>{match.homeScore}</Text>
-          <Text style={styles.score}>{match.awayScore}</Text>
+          <ChangeEmphasis kind="alert" token={match.homeScore}>
+            <Text style={styles.score}>{match.homeScore}</Text>
+          </ChangeEmphasis>
+          <ChangeEmphasis kind="alert" token={match.awayScore}>
+            <Text style={styles.score}>{match.awayScore}</Text>
+          </ChangeEmphasis>
         </View>
       </View>
 
@@ -169,10 +184,18 @@ export function MatchCard({
 
       <View style={styles.bottomRow}>
         <View style={styles.decisionBlock}>
-          <RatingStars rating={match.rating} />
+          <Text style={styles.decisionEyebrow}>BTB SEÇİMİ</Text>
           <Text numberOfLines={1} style={styles.odd}>
             {match.selectedOdd || "Aday bekleniyor"}
           </Text>
+          <View style={styles.ratingRow}>
+            <RatingStars rating={match.rating} />
+            <Text style={styles.ratingLabel}>
+              {match.rating > 0
+                ? `BTB rating · ${Math.min(5, match.rating)}/5`
+                : "BTB rating"}
+            </Text>
+          </View>
         </View>
         {footer.showsRate ? (
           <View
@@ -185,18 +208,21 @@ export function MatchCard({
             }`}
             style={styles.rateBlock}
           >
-            <View style={styles.rateHeadline}>
+            <ChangeEmphasis
+              style={styles.rateHeadline}
+              token={currentMarket.value}
+            >
               {rateTrend !== "UNAVAILABLE" ? (
                 <MaterialCommunityIcons
                   color={rateTrendColor}
                   name={rateTrendIcon}
-                  size={17}
+                  size={iconSizes.inline}
                 />
               ) : null}
               <Text style={[styles.rate, { color: rateTrendColor }]}>
                 {currentMarket.value}
               </Text>
-            </View>
+            </ChangeEmphasis>
             <Text style={styles.rateLabel}>{currentMarket.label}</Text>
           </View>
         ) : null}
@@ -221,7 +247,7 @@ export function MatchCard({
             <MaterialCommunityIcons
               color={pressureColor}
               name={pressureIcon}
-              size={18}
+              size={iconSizes.control}
             />
             <View style={styles.pressureCopy}>
               <Text style={[styles.pressure, { color: pressureColor }]}>
@@ -316,7 +342,7 @@ const styles = StyleSheet.create({
     minWidth: 0
   },
   rank: {
-    color: colors.green,
+    color: semantic.neutral,
     ...typeScale.micro
   },
   redCardBadge: {
@@ -325,7 +351,7 @@ const styles = StyleSheet.create({
     gap: 2
   },
   redCardCount: {
-    color: colors.red,
+    color: semantic.negative,
     ...typeScale.micro
   },
   scores: {
@@ -356,10 +382,25 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     minWidth: 0
   },
+  decisionEyebrow: {
+    color: colors.bronze,
+    ...typeScale.eyebrow
+  },
   odd: {
     color: colors.text,
-    ...typeScale.metricCompact,
+    ...typeScale.decision,
     marginTop: spacing.xs
+  },
+  ratingRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginTop: spacing.sm
+  },
+  ratingLabel: {
+    color: colors.textSubtle,
+    ...typeScale.label
   },
   rateBlock: {
     alignItems: "flex-end",

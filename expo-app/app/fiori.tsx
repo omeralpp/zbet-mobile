@@ -29,7 +29,15 @@ import {
   parseSapWebAllowedHosts
 } from "@/src/legacy/sap-web-boundary";
 import { useMascotActions } from "@/src/mascot/MascotActions";
-import { colors, spacing } from "@/src/theme/theme";
+import {
+  colors,
+  iconSizes,
+  interaction,
+  radii,
+  semantic,
+  spacing,
+  typeScale
+} from "@/src/theme/theme";
 
 function firstParam(value: string | string[] | undefined): string {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
@@ -174,7 +182,7 @@ export default function FioriScreen() {
         ) : null}
         <View pointerEvents="none" style={styles.optionalBadge}>
           <Text style={styles.optionalBadgeText}>
-            {error ? "Opsiyonel SAP • kullanılamıyor" : "Opsiyonel SAP entegrasyonu"}
+            {error ? "BTB WEB • KULLANILAMIYOR" : "BTB WEB"}
           </Text>
         </View>
         <WebView
@@ -184,12 +192,12 @@ export default function FioriScreen() {
           injectedJavaScriptBeforeContentLoaded={fioriShellFocusScript}
           javaScriptEnabled
           mixedContentMode="never"
-          onError={(event) => {
-            setError(event.nativeEvent.description || "Fiori yüklenemedi.");
+          onError={() => {
+            setError("BTB Web bağlantısı şu anda kurulamadı.");
           }}
           onHttpError={(event) => {
             if (event.nativeEvent.statusCode >= 400) {
-              setError(`Fiori HTTP ${event.nativeEvent.statusCode} hatası.`);
+              setError("BTB Web bağlantısı şu anda kurulamadı.");
             }
           }}
           onLoadProgress={(event) => {
@@ -211,7 +219,7 @@ export default function FioriScreen() {
             if (request.url.startsWith("https://")) {
               setBlockedUrl(request.url);
               setError(
-                "SAP yönlendirmesi güvenli alan listesinin dışında kaldı. Native BTB çalışmaya devam ediyor."
+                "Bu bağlantı güvenli BTB Web alanının dışında kaldığı için açılmadı."
               );
               return false;
             }
@@ -220,7 +228,7 @@ export default function FioriScreen() {
               return false;
             }
             setError(
-              "Desteklenmeyen SAP yönlendirmesi engellendi. Native BTB çalışmaya devam ediyor."
+              "Bu bağlantı BTB Web tarafından desteklenmiyor."
             );
             return false;
           }}
@@ -235,17 +243,19 @@ export default function FioriScreen() {
         {error ? (
           <View style={styles.errorOverlay}>
             <MaterialCommunityIcons
-              color={colors.red}
+              color={semantic.negative}
               name="cloud-alert-outline"
-              size={42}
+              size={iconSizes.hero}
             />
-            <Text style={styles.errorTitle}>Fiori sayfası açılamadı</Text>
+            <Text style={styles.errorTitle}>BTB Web açılamadı</Text>
             <Text style={styles.errorMessage}>{error}</Text>
             <Text style={styles.optionalMessage}>
-              Fiori / Work Zone isteğe bağlı SAP entegrasyonudur; Dashboard,
-              Super, Toto, bildirimler ve widget&apos;lar bu hatadan etkilenmez.
+              Bu web görünümü isteğe bağlıdır; BTB Mobile, Super, Toto,
+              bildirimler ve widget&apos;lar çalışmaya devam eder.
             </Text>
             <Pressable
+              accessibilityHint="BTB Web sayfasını yeniden yükler"
+              accessibilityRole="button"
               onPress={() => {
                 setError(null);
                 webView.current?.reload();
@@ -254,7 +264,12 @@ export default function FioriScreen() {
             >
               <Text style={styles.retryText}>Yeniden dene</Text>
             </Pressable>
-            <Pressable onPress={openExternal} style={styles.external}>
+            <Pressable
+              accessibilityHint="BTB Web sayfasını sistem tarayıcısında açar"
+              accessibilityRole="button"
+              onPress={openExternal}
+              style={styles.external}
+            >
               <Text style={styles.retryText}>Sistem tarayıcısında aç</Text>
             </Pressable>
           </View>
@@ -281,7 +296,7 @@ const styles = StyleSheet.create({
   },
   progress: {
     height: "100%",
-    backgroundColor: colors.green
+    backgroundColor: semantic.intelligence
   },
   optionalBadge: {
     position: "absolute",
@@ -292,14 +307,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 999,
+    borderColor: colors.borderSoft,
+    borderRadius: radii.round,
     backgroundColor: colors.surfaceStrong
   },
   optionalBadgeText: {
     color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: "800"
+    ...typeScale.micro
   },
   webContainer: {
     flex: 1,
@@ -318,41 +332,41 @@ const styles = StyleSheet.create({
   },
   errorTitle: {
     color: colors.text,
-    fontSize: 18,
-    fontWeight: "900",
+    ...typeScale.moduleTitle,
     marginTop: spacing.lg
   },
   errorMessage: {
     color: colors.textMuted,
-    fontSize: 12,
-    lineHeight: 18,
+    ...typeScale.body,
     textAlign: "center",
     marginTop: spacing.sm
   },
   optionalMessage: {
     color: colors.textMuted,
-    fontSize: 11,
-    lineHeight: 17,
+    ...typeScale.bodyCompact,
     textAlign: "center",
     marginTop: spacing.md
   },
   retry: {
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: spacing.xl,
+    minHeight: interaction.minTouchTarget,
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderRadius: 999,
-    backgroundColor: colors.blue
+    borderRadius: radii.round,
+    backgroundColor: semantic.intelligence
   },
   retryText: {
     color: colors.white,
-    fontSize: 13,
-    fontWeight: "900"
+    ...typeScale.label
   },
   external: {
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: spacing.md,
+    minHeight: interaction.minTouchTarget,
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderRadius: 999,
+    borderRadius: radii.round,
     backgroundColor: colors.surfaceStrong
   }
 });

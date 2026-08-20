@@ -67,7 +67,7 @@ export default function DashboardScreen() {
   if (query.isLoading || superKpis.isLoading) {
     return (
       <Screen eyebrow="BTB Mobile" tabSwipe title="Bugünün merkezi">
-        <LoadingState />
+        <LoadingState label="Bugünün BTB görünümü hazırlanıyor" />
       </Screen>
     );
   }
@@ -91,7 +91,8 @@ export default function DashboardScreen() {
 
   const dashboard = query.data;
   const dailySuper = superKpis.data.buckets[superStarFilter];
-  const profitColor = dailySuper.profit >= 0 ? colors.green : colors.red;
+  const profitColor =
+    dailySuper.profit >= 0 ? semantic.positive : semantic.negative;
   const featuredTitle = {
     SELECTED_LIVE: "Öne çıkan canlı maçlar",
     PRESSURE_LIVE: "Takipteki canlı maçlar",
@@ -228,7 +229,7 @@ export default function DashboardScreen() {
       <>
         <SectionHeader
           actionLabel="Programlar"
-          caption="Toto-native program görünümü"
+          caption="Güncel Spor Toto programı"
           onAction={() => router.push("/toto" as never)}
           title="Spor Toto"
         />

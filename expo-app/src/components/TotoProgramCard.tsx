@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { TotoProgram } from "@/src/api/schemas";
 import {
   colors,
+  iconSizes,
   radii,
   semantic,
   shadows,
@@ -63,7 +64,7 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
           <MaterialCommunityIcons
             color={statusColor}
             name="ticket-confirmation-outline"
-            size={22}
+            size={iconSizes.control}
           />
         </View>
         <View style={styles.headerCopy}>

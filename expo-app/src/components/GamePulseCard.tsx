@@ -18,7 +18,13 @@ import {
   pulseHeightProbe,
   resolvePulseHeight
 } from "@/src/components/game-pulse-sizing";
-import { colors, radii, spacing } from "@/src/theme/theme";
+import {
+  colors,
+  iconSizes,
+  radii,
+  semantic,
+  spacing
+} from "@/src/theme/theme";
 
 /**
  * Card shell shared by every state of this module.
@@ -67,14 +73,14 @@ function GamePulseCardComponent({
       <PulseFrame>
         <View style={styles.state}>
           <MaterialCommunityIcons
-            color={colors.textSubtle}
+            color={semantic.unavailable}
             name="pulse"
-            size={30}
+            size={iconSizes.state}
           />
-          <Text style={styles.stateTitle}>Canlı tempo yayını yok</Text>
+          <Text style={styles.stateTitle}>Canlı tempo bekleniyor</Text>
           <Text style={styles.stateBody}>
-            Bu maç için sağlayıcı etkinlik kimliği gelmedi. Diğer analiz
-            modülleri çalışmaya devam eder.
+            Bu maç için canlı tempo verisi henüz sunulmuyor. Diğer analizler
+            kullanılabilir.
           </Text>
         </View>
       </PulseFrame>
@@ -125,24 +131,30 @@ function GamePulseCardComponent({
           thirdPartyCookiesEnabled={false}
         />
         {loading && !failed ? (
-          <View pointerEvents="none" style={styles.overlay}>
-            <ActivityIndicator color={colors.green} />
-            <Text style={styles.stateBody}>Canlı tempo yükleniyor…</Text>
+          <View
+            accessibilityLiveRegion="polite"
+            accessibilityRole="progressbar"
+            pointerEvents="none"
+            style={styles.overlay}
+          >
+            <ActivityIndicator color={semantic.live} />
+            <Text style={styles.stateBody}>Canlı tempo verisi bekleniyor</Text>
           </View>
         ) : null}
         {failed ? (
-          <View style={styles.overlay}>
+          <View accessibilityRole="alert" style={styles.overlay}>
             <MaterialCommunityIcons
-              color={colors.red}
+              color={semantic.negative}
               name="cloud-alert-outline"
-              size={30}
+              size={iconSizes.state}
             />
-            <Text style={styles.stateTitle}>Canlı tempo yüklenemedi</Text>
+            <Text style={styles.stateTitle}>Canlı tempo açılamadı</Text>
             <Text style={styles.stateBody}>
-              Sağlayıcı görünümü şu anda açılamıyor. Maç detayının geri kalanı
-              etkilenmez.
+              Canlı tempo verisi şu anda açılamıyor. Maç detayının geri kalanı
+              kullanılabilir.
             </Text>
             <Pressable
+              accessibilityHint="Canlı tempo verisini yeniden yükler"
               accessibilityRole="button"
               onPress={() => {
                 setFailed(false);
@@ -215,7 +227,7 @@ const styles = StyleSheet.create({
   },
   retry: {
     alignItems: "center",
-    backgroundColor: colors.green,
+    backgroundColor: semantic.intelligence,
     borderRadius: radii.round,
     justifyContent: "center",
     marginTop: spacing.xs,
@@ -226,7 +238,7 @@ const styles = StyleSheet.create({
     opacity: 0.75
   },
   retryText: {
-    color: colors.background,
+    color: colors.white,
     fontSize: 13,
     fontWeight: "900"
   },
@@ -234,6 +246,8 @@ const styles = StyleSheet.create({
     color: colors.textSubtle,
     fontSize: 9,
     marginTop: spacing.sm,
+    paddingBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
     textAlign: "right"
   }
 });

@@ -19,12 +19,16 @@ import {
  */
 export function SignalMeter({
   rating,
-  label = "sinyal"
+  label
 }: {
   rating: number | null | undefined;
   label?: string;
 }) {
   const segments = resolveSignalSegments(rating);
+  const level = segments.filter((segment) => segment === "LIT").length;
+  const resolvedLabel =
+    label ??
+    (level > 0 ? `BTB rating · ${level}/5` : "BTB rating · İzleniyor");
 
   return (
     <View
@@ -43,7 +47,7 @@ export function SignalMeter({
           />
         ))}
       </View>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.label}>{resolvedLabel}</Text>
     </View>
   );
 }

@@ -4,19 +4,30 @@ import * as Haptics from "expo-haptics";
 import { Tabs } from "expo-router";
 import { Platform, type ColorValue } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, typeScale } from "@/src/theme/theme";
+import { colors, iconSizes, typeScale } from "@/src/theme/theme";
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
 
 function tabIcon(name: IconName) {
   return function TabIcon({
     color,
+    focused,
     size
   }: {
     color: ColorValue;
+    focused: boolean;
     size: number;
   }) {
-    return <MaterialCommunityIcons color={color} name={name} size={size} />;
+    return (
+      <MaterialCommunityIcons
+        color={color}
+        name={name}
+        size={Math.min(
+          size,
+          focused ? iconSizes.navigation : iconSizes.control
+        )}
+      />
+    );
   };
 }
 

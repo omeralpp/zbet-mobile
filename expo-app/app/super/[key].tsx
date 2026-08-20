@@ -339,7 +339,7 @@ export default function SuperLogDetailScreen() {
             points: log.awayStandingPoints,
             side: "AWAY"
           }}
-          caption="Karar anındaki kayıt; yalnız SAP'ın doğruladığı iki takım gösterilir."
+          caption="Karar anındaki kayıt; yalnız doğrulanan iki takım gösterilir."
           home={{
             team: log.homeTeam,
             participantId: log.homeParticipantId,
@@ -516,6 +516,8 @@ export default function SuperLogDetailScreen() {
 
         <View style={styles.actions}>
           <Pressable
+            accessibilityHint="Kararın gelişmiş BTB Web görünümünü açar"
+            accessibilityRole="button"
             onPress={() =>
               router.push({
                 pathname: "/fiori",
@@ -532,9 +534,11 @@ export default function SuperLogDetailScreen() {
             }
             style={styles.primaryAction}
           >
-            <Text style={styles.primaryActionText}>Fiori Super Log’da aç</Text>
+            <Text style={styles.primaryActionText}>BTB Web’de aç</Text>
           </Pressable>
           <Pressable
+            accessibilityHint="Bu karşılaşmanın güncel maç detayını açar"
+            accessibilityRole="button"
             onPress={() =>
               router.push({
                 pathname: "/match/[key]",
@@ -549,8 +553,8 @@ export default function SuperLogDetailScreen() {
           </Pressable>
         </View>
         <Text style={styles.safetyNote}>
-          Bu ekran dokunulan Super Log satırının tarihsel snapshot&apos;ını
-          gösterir; güncel maç verisiyle değiştirilmez.
+          Bu ekran seçilen Super kararının tarihsel kaydını gösterir; güncel maç
+          verisiyle değiştirilmez.
         </Text>
       </Screen>
     </>

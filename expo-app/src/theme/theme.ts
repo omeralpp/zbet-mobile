@@ -22,7 +22,8 @@ export {
   emphasis,
   gestureSpring,
   motionDuration,
-  allowsAmbientMotion
+  allowsAmbientMotion,
+  type EmphasisName
 } from "./motion";
 export { semanticCollisions, type SemanticColors } from "./semantic";
 export { isSingleDepthTreatment, type DepthLevel } from "./elevation";
@@ -161,6 +162,21 @@ export const radii = {
   lg: 18,
   xl: 24,
   round: 999
+} as const;
+
+/**
+ * Visual icon sizes, separate from the larger interactive target around them.
+ * Keeping these on one small scale prevents dense rows from feeling heavy and
+ * stops supporting status marks from becoming too small to identify quickly.
+ */
+export const iconSizes = {
+  micro: 14,
+  small: 16,
+  inline: 18,
+  control: 20,
+  navigation: 24,
+  state: 30,
+  hero: 40
 } as const;
 
 export const shadows = {

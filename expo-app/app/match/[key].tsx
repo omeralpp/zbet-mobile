@@ -23,6 +23,7 @@ import {
   matchSuperLogsQuery
 } from "@/src/api/queries";
 import { RatingStars } from "@/src/components/RatingStars";
+import { ChangeEmphasis } from "@/src/components/ChangeEmphasis";
 import { LiveDot } from "@/src/components/LiveDot";
 import { SignalMeter } from "@/src/components/SignalMeter";
 import {
@@ -47,6 +48,7 @@ import type { LiveDetailModuleId } from "@/src/layout/module-registry";
 import {
   colors,
   fontWeights,
+  iconSizes,
   radii,
   semantic,
   shadows,
@@ -131,7 +133,11 @@ function TeamHeroName({
           accessibilityLabel={`${name}, ${redCards} kırmızı kart`}
           style={styles.redCardBadge}
         >
-          <MaterialCommunityIcons color={colors.red} name="card" size={14} />
+          <MaterialCommunityIcons
+            color={colors.red}
+            name="card"
+            size={iconSizes.micro}
+          />
           {redCards > 1 ? (
             <Text style={styles.redCardCount}>{redCards}</Text>
           ) : null}
@@ -377,7 +383,7 @@ export default function MatchDetailScreen() {
         <View style={styles.statsCard}>
           <SurfaceMaterial radius={radii.lg} />
           <PressureBalance
-            label="Güncel maç snapshot'ı"
+            label="Güncel maç verisi"
             pressureDiff={
               match.pressureSource === "CURRENT_MATCH"
                 ? match.pressureDiff
@@ -513,7 +519,7 @@ export default function MatchDetailScreen() {
                   pressed && styles.relatedDecisionPressed
                 ]}
               >
-                <RatingStars rating={log.rating} size={14} />
+                <RatingStars rating={log.rating} size={iconSizes.micro} />
                 <Text style={styles.relatedDecisionMinute}>
                   {log.elapsed}&apos;
                 </Text>
@@ -524,7 +530,7 @@ export default function MatchDetailScreen() {
                   <MaterialCommunityIcons
                     color={colors.textMuted}
                     name="chevron-right"
-                    size={18}
+                    size={iconSizes.inline}
                   />
                 )}
               </Pressable>
@@ -554,7 +560,7 @@ export default function MatchDetailScreen() {
             caption={
               leagueContext.source === "LATEST_SUPER_DECISION"
                 ? "Son Super kararı kaydından; yalnız doğrulanan iki takım gösterilir."
-                : "Kaynak bekleniyor; yalnız doğrulanan iki takım gösterilir."
+                : "Lig bilgisi bekleniyor; yalnız doğrulanan iki takım gösterilir."
             }
             home={{
               team: leagueContext.homeTeam,
@@ -594,7 +600,7 @@ export default function MatchDetailScreen() {
         scrollEventThrottle: 16,
         refreshControl: (
           <RefreshControl
-            colors={[colors.green]}
+            colors={[semantic.live]}
               onRefresh={() =>
                 Promise.all([
                   query.refetch(),
@@ -612,7 +618,7 @@ export default function MatchDetailScreen() {
                 periodScoreQuery.isRefetching ||
                 superLogs.isRefetching
               }
-            tintColor={colors.green}
+            tintColor={semantic.live}
           />
         )
       }}
@@ -649,11 +655,16 @@ export default function MatchDetailScreen() {
             />
           </View>
           <View style={styles.scoreBlock}>
-            <Text style={styles.score}>
-              {match.homeScore}
-              <Text style={styles.scoreSeparator}> - </Text>
-              {match.awayScore}
-            </Text>
+            <ChangeEmphasis
+              kind="alert"
+              token={`${match.homeScore}:${match.awayScore}`}
+            >
+              <Text style={styles.score}>
+                {match.homeScore}
+                <Text style={styles.scoreSeparator}> - </Text>
+                {match.awayScore}
+              </Text>
+            </ChangeEmphasis>
             {periodScoreQuery.data?.halfTimeScore ? (
               <Text style={styles.halfTimeScore}>
                 İY {periodScoreQuery.data.halfTimeScore.homeScore}-
@@ -682,7 +693,7 @@ export default function MatchDetailScreen() {
         <View style={styles.verdictRow}>
           <View style={styles.verdictCopy}>
             <Text numberOfLines={1} style={styles.selection}>
-              {match.selectedOdd || "Super adayı bekleniyor"}
+              {match.selectedOdd || "Aday bekleniyor"}
             </Text>
             <SignalMeter rating={match.rating} />
           </View>
@@ -694,11 +705,13 @@ export default function MatchDetailScreen() {
               <MaterialCommunityIcons
                 color={movement.color}
                 name={movement.icon}
-                size={16}
+                size={iconSizes.small}
               />
-              <Text style={[styles.movementTo, { color: movement.color }]}>
-                {currentMarket.value}
-              </Text>
+              <ChangeEmphasis token={currentMarket.value}>
+                <Text style={[styles.movementTo, { color: movement.color }]}>
+                  {currentMarket.value}
+                </Text>
+              </ChangeEmphasis>
             </View>
             <Text style={styles.movementLabel}>{movement.label}</Text>
           </View>
@@ -722,6 +735,8 @@ export default function MatchDetailScreen() {
 
       <View style={styles.actions}>
         <Pressable
+          accessibilityHint="Maçın Bilyoner sayfasını açar"
+          accessibilityRole="button"
           onPress={() =>
             Linking.openURL(buildBilyonerMatchUrl(match.id)).catch(() =>
               Alert.alert(
@@ -735,6 +750,8 @@ export default function MatchDetailScreen() {
           <Text style={styles.bilyonerActionText}>Bilyoner&apos;da aç</Text>
         </Pressable>
         <Pressable
+          accessibilityHint="Gelişmiş maç ekranını açar"
+          accessibilityRole="button"
           onPress={() =>
             router.push({
               pathname: "/fiori",
@@ -746,12 +763,12 @@ export default function MatchDetailScreen() {
           }
           style={styles.fioriAction}
         >
-          <Text style={styles.fioriActionText}>Fiori&apos;de aç</Text>
+          <Text style={styles.fioriActionText}>BTB Web&apos;de aç</Text>
         </Pressable>
       </View>
       <Text style={styles.safetyNote}>
         Maç sayfası Bilyoner uygulamasında; uygulama yoksa güvenli web
-        sayfasında açılır. BTB görünümü salt okunurdur.
+        sayfasında açılır. Gelişmiş BTB ekranı ayrı bir web görünümünde açılır.
       </Text>
       </Screen>
     </>

@@ -8,11 +8,11 @@ import type { ModuleAnchor, ModuleLayoutSurface } from "./module-layout";
  * through layout reconciliation.
  */
 export const overviewModules = [
-  "hero",
-  "metrics",
   "featured",
+  "metrics",
   "recentSuper",
-  "toto"
+  "toto",
+  "hero"
 ] as const;
 
 export const liveDetailModules = [

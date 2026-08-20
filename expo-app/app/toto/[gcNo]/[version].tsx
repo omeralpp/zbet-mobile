@@ -394,6 +394,7 @@ export default function TotoProgramDetailScreen() {
           </Text>
         </Pressable>
         <Pressable
+          accessibilityHint="Programın gelişmiş BTB Web görünümünü açar"
           accessibilityRole="button"
           onPress={() =>
             router.push({
@@ -410,12 +411,12 @@ export default function TotoProgramDetailScreen() {
             pressed && styles.actionPressed
           ]}
         >
-          <Text style={styles.primaryActionText}>Fiori programını aç</Text>
+          <Text style={styles.primaryActionText}>BTB Web’de aç</Text>
         </Pressable>
       </View>
       <Text style={styles.safetyNote}>
-        Tahmin üretme, sonuç importu ve kontrollü güncelleme native preview’da
-        çalıştırılmaz.
+        Tahmin üretme, sonuç kaydetme ve program güncelleme işlemleri bu mobil
+        görünümde yapılmaz.
       </Text>
     </Screen>
   );

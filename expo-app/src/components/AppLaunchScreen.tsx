@@ -12,7 +12,13 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { btbBrandMark } from "@/src/theme/brand-mark";
-import { colors, radii, spacing, themeMode } from "@/src/theme/theme";
+import {
+  colors,
+  iconSizes,
+  radii,
+  spacing,
+  themeMode
+} from "@/src/theme/theme";
 
 type AppLaunchScreenProps = {
   ready: boolean;
@@ -163,7 +169,7 @@ export function AppLaunchScreen({
             <MaterialCommunityIcons
               color={colors.white}
               name="soccer"
-              size={30}
+              size={iconSizes.state}
             />
           </Animated.View>
         </View>

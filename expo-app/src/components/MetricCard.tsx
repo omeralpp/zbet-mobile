@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import {
   colors,
+  iconSizes,
   interaction,
   radii,
   shadows,
@@ -43,7 +44,11 @@ export function MetricCard({
           the screen and drowned out the live cards below. */}
       <SurfaceMaterial accent={accent} radius={radii.lg} />
       <View style={[styles.iconWrap, { backgroundColor: `${accent}1F` }]}>
-        <MaterialCommunityIcons color={accent} name={icon} size={20} />
+        <MaterialCommunityIcons
+          color={accent}
+          name={icon}
+          size={iconSizes.control}
+        />
       </View>
       <Text numberOfLines={1} style={styles.value}>
         {value}

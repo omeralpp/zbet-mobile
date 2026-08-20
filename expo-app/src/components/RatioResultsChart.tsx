@@ -4,8 +4,15 @@ import type {
   MatchMarketRate,
   RatioResult
 } from "@/src/api/schemas";
-import { colors, radii, spacing } from "@/src/theme/theme";
+import {
+  colors,
+  radii,
+  semantic,
+  spacing,
+  typeScale
+} from "@/src/theme/theme";
 import { formatRate } from "@/src/utils/format";
+import { SurfaceMaterial } from "./SurfaceMaterial";
 
 type RatioPhase = NonNullable<MatchDetail["ratioPhase"]>;
 
@@ -14,10 +21,30 @@ const phaseDefinitions: {
   field: keyof Pick<RatioResult, "kickOff" | "halfTime" | "live">;
   label: string;
   color: string;
+  softColor: string;
 }[] = [
-  { key: "KICK_OFF", field: "kickOff", label: "Kick-Off", color: colors.blue },
-  { key: "HALF_TIME", field: "halfTime", label: "Devre", color: colors.gold },
-  { key: "LIVE", field: "live", label: "Canlı", color: colors.green }
+  {
+    key: "KICK_OFF",
+    field: "kickOff",
+    label: "Kick-Off",
+    color: semantic.intelligence,
+    softColor: semantic.intelligenceSoft
+  },
+  {
+    key: "HALF_TIME",
+    field: "halfTime",
+    label: "Devre",
+    // Half-time is a structural boundary, not a warning or an outcome.
+    color: colors.bronze,
+    softColor: colors.surfaceStrong
+  },
+  {
+    key: "LIVE",
+    field: "live",
+    label: "Canlı",
+    color: semantic.live,
+    softColor: semantic.liveSoft
+  }
 ];
 
 function visiblePhases(phase: RatioPhase, rows: RatioResult[]) {
@@ -37,10 +64,11 @@ export function RatioResultsChart({
   rows: RatioResult[];
 }) {
   const phases = phase ? visiblePhases(phase, rows) : [];
-  const activeLabel = phaseDefinitions.find((item) => item.key === phase)?.label;
+  const activePhase = phaseDefinitions.find((item) => item.key === phase);
 
   return (
     <View style={styles.card}>
+      <SurfaceMaterial radius={radii.lg} />
       <View style={styles.header}>
         <View style={styles.headerCopy}>
           <Text style={styles.title}>Geçmiş sonuç eşleşmesi</Text>
@@ -48,9 +76,19 @@ export function RatioResultsChart({
             Benzer oran ve skor koşullarındaki sonuç yüzdeleri
           </Text>
         </View>
-        {activeLabel ? (
-          <View style={styles.phasePill}>
-            <Text style={styles.phasePillText}>{activeLabel}</Text>
+        {activePhase ? (
+          <View
+            style={[
+              styles.phasePill,
+              {
+                backgroundColor: activePhase.softColor,
+                borderColor: activePhase.color
+              }
+            ]}
+          >
+            <Text style={[styles.phasePillText, { color: activePhase.color }]}>
+              {activePhase.label}
+            </Text>
           </View>
         ) : null}
       </View>
@@ -140,7 +178,6 @@ const styles = StyleSheet.create({
     borderColor: colors.borderSoft,
     borderRadius: radii.lg,
     borderWidth: 1,
-    backgroundColor: colors.backgroundElevated,
     padding: spacing.lg
   },
   header: {
@@ -153,27 +190,21 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.text,
-    fontSize: 14,
-    fontWeight: "900"
+    ...typeScale.identity
   },
   caption: {
     color: colors.textMuted,
-    fontSize: 10,
-    lineHeight: 15,
-    marginTop: 3
+    ...typeScale.bodyCompact,
+    marginTop: spacing.xs
   },
   phasePill: {
-    borderColor: colors.green,
     borderRadius: radii.round,
     borderWidth: 1,
-    backgroundColor: colors.greenSoft,
     paddingHorizontal: spacing.sm,
     paddingVertical: 5
   },
   phasePillText: {
-    color: colors.green,
-    fontSize: 9,
-    fontWeight: "900"
+    ...typeScale.micro
   },
   legend: {
     flexDirection: "row",
@@ -193,8 +224,7 @@ const styles = StyleSheet.create({
   },
   legendText: {
     color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: "700"
+    ...typeScale.micro
   },
   rows: {
     gap: spacing.md,
@@ -210,8 +240,7 @@ const styles = StyleSheet.create({
   },
   betType: {
     color: colors.text,
-    fontSize: 11,
-    fontWeight: "900"
+    ...typeScale.identityCompact
   },
   marketRate: {
     alignItems: "center",
@@ -220,13 +249,11 @@ const styles = StyleSheet.create({
   },
   marketRateLabel: {
     color: colors.textSubtle,
-    fontSize: 9,
-    fontWeight: "700"
+    ...typeScale.label
   },
   marketRateValue: {
-    color: colors.green,
-    fontSize: 11,
-    fontWeight: "900"
+    color: semantic.live,
+    ...typeScale.metricCompact
   },
   marketRateClosed: {
     color: colors.textMuted
@@ -255,13 +282,11 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     width: 30,
     textAlign: "right",
-    fontSize: 9,
-    fontWeight: "800"
+    ...typeScale.label
   },
   empty: {
     color: colors.textMuted,
-    fontSize: 11,
-    lineHeight: 17,
+    ...typeScale.bodyCompact,
     marginTop: spacing.lg,
     textAlign: "center"
   }

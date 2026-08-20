@@ -28,19 +28,19 @@ export function resolveAuthEntryPresentation(
     return {
       securityTitle: "Pilot erişimi",
       securityText:
-        "Bu pilot sürüm kullanıcı adı veya parola istemez. Devam ettiğinizde yalnız salt okunur Mobile BFF erişimi kullanılır.",
+        "Bu pilot sürüm kullanıcı adı veya parola istemez. Devam ettiğinizde yalnız görüntüleme amaçlı güvenli BTB erişimi kullanılır.",
       buttonText: "Pilot uygulamasına gir",
       footerText:
-        "Bu ekran kullanıcı kimliği doğrulamaz. Kurumsal kullanıcı girişi, OAuth ortamı devreye alındığında etkinleşir."
+        "Bu pilot erişim kişisel bir kullanıcı hesabı oluşturmaz."
     };
   }
 
   return {
     securityTitle: "Kurumsal oturum",
     securityText:
-      "Parolanız uygulamada tutulmaz. Giriş, OAuth 2.0 Authorization Code ve PKCE akışıyla tamamlanır.",
+      "Parolanız uygulamada tutulmaz. Giriş, güvenli kurumsal doğrulama üzerinden tamamlanır.",
     buttonText: "Güvenli giriş yap",
     footerText:
-      "İlk sürüm salt okunur çalışır. Livescore ve program yenileme gibi değişiklik yapan işlemler doğrulanmış Fiori ekranında açılır."
+      "Mobil görünüm salt okunur çalışır. Maç veya program güncellemesi gerektiren işlemler BTB Web ekranında açılır."
   };
 }

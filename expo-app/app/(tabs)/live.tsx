@@ -19,7 +19,13 @@ import {
   ErrorState,
   LoadingState
 } from "@/src/components/StateView";
-import { colors, radii, semantic, spacing } from "@/src/theme/theme";
+import {
+  colors,
+  radii,
+  semantic,
+  spacing,
+  typeScale
+} from "@/src/theme/theme";
 import {
   isStarDecisionFilter
 } from "@/src/utils/decision-filters";
@@ -171,7 +177,7 @@ export default function LiveScreen() {
       </TutorialTarget>
 
       {query.isLoading ? (
-        <LoadingState label="Maç havuzu hazırlanıyor" />
+        <LoadingState label="Canlı maçlar hazırlanıyor" />
       ) : query.isError ? (
         <ErrorState
           message={
@@ -203,12 +209,12 @@ export default function LiveScreen() {
           }}
           refreshControl={
             <RefreshControl
-              colors={[colors.green]}
+              colors={[semantic.live]}
               onRefresh={() =>
                 Promise.all([query.refetch(), insightsQuery.refetch()])
               }
               refreshing={query.isRefetching || insightsQuery.isRefetching}
-              tintColor={colors.green}
+              tintColor={semantic.live}
             />
           }
           renderItem={({ item: section, index: sectionIndex }) => (
@@ -256,7 +262,7 @@ const styles = StyleSheet.create({
     paddingBottom: 112
   },
   group: {
-    borderColor: `${colors.green}40`,
+    borderColor: colors.borderSoft,
     borderRadius: radii.xl,
     borderWidth: 1,
     marginBottom: spacing.lg,
@@ -265,9 +271,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: colors.textMuted,
-    fontSize: 11,
-    fontWeight: "900",
-    letterSpacing: 0.4,
+    ...typeScale.meta,
     marginBottom: spacing.sm,
     marginTop: spacing.xs
   }

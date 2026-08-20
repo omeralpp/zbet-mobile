@@ -20,7 +20,7 @@ import {
   useWindowDimensions
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, radii, shadows } from "@/src/theme/theme";
+import { colors, iconSizes, radii, shadows } from "@/src/theme/theme";
 import { useTutorial } from "@/src/tutorial/TutorialProvider";
 import {
   bibiIdleDurations,
@@ -531,7 +531,7 @@ export function BtbMascotOverlay() {
       items.push({
         key: "fiori",
         icon: "view-dashboard-variant-outline",
-        label: "Fiori",
+        label: "BTB Web",
         onPress: () =>
           router.push({ pathname: "/fiori", params: { target: "launchpad" } })
       });
@@ -758,7 +758,11 @@ export function BtbMascotOverlay() {
                 ]}
               >
                 <View style={styles.menuIcon}>
-                  <MaterialCommunityIcons color={colors.text} name={item.icon} size={19} />
+                  <MaterialCommunityIcons
+                    color={colors.text}
+                    name={item.icon}
+                    size={iconSizes.control}
+                  />
                 </View>
                 <Text style={styles.menuLabel}>{item.label}</Text>
               </Pressable>

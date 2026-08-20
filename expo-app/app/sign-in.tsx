@@ -5,15 +5,22 @@ import { StatusBar } from "expo-status-bar";
 import {
   ActivityIndicator,
   Pressable,
-  SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   View
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/src/auth/AuthProvider";
 import { resolveAuthEntryPresentation } from "@/src/auth/entry-policy";
 import { runtimeConfig } from "@/src/config/runtime";
-import { colors, radii, spacing, themeMode } from "@/src/theme/theme";
+import {
+  colors,
+  iconSizes,
+  radii,
+  spacing,
+  themeMode
+} from "@/src/theme/theme";
 
 export default function SignInScreen() {
   const auth = useAuth();
@@ -30,6 +37,9 @@ export default function SignInScreen() {
   };
 
   const unavailable = auth.status === "configuration-error";
+  const visibleAuthError = unavailable
+    ? "Güvenli giriş şu anda kullanılamıyor."
+    : auth.error;
 
   return (
     <LinearGradient
@@ -42,19 +52,22 @@ export default function SignInScreen() {
     >
       <StatusBar style={themeMode === "light" ? "dark" : "light"} />
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.brandMark}>
             <MaterialCommunityIcons
               color={colors.green}
               name="soccer"
-              size={44}
+              size={iconSizes.hero}
             />
           </View>
           <Text style={styles.eyebrow}>BTB MOBILE</Text>
           <Text style={styles.title}>Maçın ritmi,{`\n`}doğrudan cebinde.</Text>
           <Text style={styles.description}>
             BTB canlı maçları, Super karar geçmişi ve Spor Toto programları için
-            hızlı, güvenli ve mobile özel deneyim.
+            hızlı, güvenli ve mobil odaklı bir deneyim.
           </Text>
 
           <View style={styles.securityCard}>
@@ -62,7 +75,7 @@ export default function SignInScreen() {
               <MaterialCommunityIcons
                 color={colors.blue}
                 name="shield-lock-outline"
-                size={22}
+                size={iconSizes.control}
               />
             </View>
             <View style={styles.securityCopy}>
@@ -75,19 +88,23 @@ export default function SignInScreen() {
             </View>
           </View>
 
-          {auth.error ? (
+          {visibleAuthError ? (
             <View style={styles.errorBox}>
               <MaterialCommunityIcons
                 color={colors.red}
                 name="alert-circle-outline"
-                size={18}
+                size={iconSizes.inline}
               />
-              <Text style={styles.errorText}>{auth.error}</Text>
+              <Text style={styles.errorText}>{visibleAuthError}</Text>
             </View>
           ) : null}
 
           <Pressable
             accessibilityRole="button"
+            accessibilityState={{
+              busy: submitting,
+              disabled: submitting || unavailable
+            }}
             disabled={submitting || unavailable}
             onPress={signIn}
             style={({ pressed }) => [
@@ -102,13 +119,13 @@ export default function SignInScreen() {
               <>
                 <Text style={styles.buttonText}>
                   {unavailable
-                    ? "Bağlantı yapılandırılmalı"
+                    ? "Güvenli giriş kullanılamıyor"
                     : presentation.buttonText}
                 </Text>
                 <MaterialCommunityIcons
                   color={colors.background}
                   name="arrow-right"
-                  size={20}
+                  size={iconSizes.control}
                 />
               </>
             )}
@@ -117,7 +134,7 @@ export default function SignInScreen() {
           <Text style={styles.footer}>
             {presentation.footerText}
           </Text>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -131,9 +148,10 @@ const styles = StyleSheet.create({
     flex: 1
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: "center",
-    paddingHorizontal: spacing.xxl
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.xxl
   },
   brandMark: {
     width: 76,
