@@ -53,6 +53,12 @@ import {
 } from "@/src/utils/super-day-scope";
 import type { SuperLog } from "@/src/api/schemas";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
+import {
+  adjacentLocalTab,
+  type TabSwipeDirection
+} from "@/src/navigation/tab-swipe";
+
+const localTabs = ["ALL", "OPEN"] as const;
 
 export default function SuperScreen() {
   const params = useLocalSearchParams<{
@@ -121,11 +127,29 @@ export default function SuperScreen() {
         : formatSuperDateScope(scopedLogs.map((log) => log.createdAt)),
     [latestDayOnly, latestMatchDate, scopedLogs]
   );
+  const localTabSwipe = useMemo(() => {
+    const previous = adjacentLocalTab(tab, localTabs, "PREVIOUS");
+    const next = adjacentLocalTab(tab, localTabs, "NEXT");
+    return {
+      hasNext: next !== null,
+      hasPrevious: previous !== null,
+      onNavigate: (direction: TabSwipeDirection) => {
+        const target = adjacentLocalTab(tab, localTabs, direction);
+        if (!target) {
+          return;
+        }
+        setDecisionOpen(false);
+        setDayScopeOpen(false);
+        setTab(target);
+      }
+    };
+  }, [tab]);
 
   return (
     <Screen
       contentStyle={styles.screen}
       eyebrow="BTB SUPER"
+      localTabSwipe={localTabSwipe}
       scroll={false}
       tabSwipe
       title="Karar günlüğü"

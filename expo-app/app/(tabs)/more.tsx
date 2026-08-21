@@ -371,8 +371,8 @@ export default function MoreScreen() {
         <SettingsRow
           detail={
             discovery.pace === "QUIET"
-              ? "Bibi kendiliğinden ipucu vermiyor; rehber açıldığında yine çalışır"
-              : "Bibi ara sıra bilinmeyen bir özelliği hatırlatır; rehber ayrı çalışır"
+              ? "Jinx kendiliğinden ipucu vermiyor; rehber açıldığında yine çalışır"
+              : "Jinx ara sıra bilinmeyen bir özelliği hatırlatır; rehber ayrı çalışır"
           }
           icon={
             discovery.pace === "QUIET" ? "bell-sleep-outline" : "lightbulb-on-outline"
@@ -381,7 +381,7 @@ export default function MoreScreen() {
             discovery.setPace(discovery.pace === "QUIET" ? "NORMAL" : "QUIET")
           }
           title={
-            discovery.pace === "QUIET" ? "Bibi ipuçları: Sessiz" : "Bibi ipuçları: Normal"
+            discovery.pace === "QUIET" ? "Jinx ipuçları: Sessiz" : "Jinx ipuçları: Normal"
           }
         />
         <TutorialTarget id="more-tutorial-restart" radius={0}>
@@ -391,11 +391,11 @@ export default function MoreScreen() {
             onPress={() => {
               tutorial.restart();
               Alert.alert(
-                "Bibi rehberi baştan başladı",
+                "Jinx rehberi baştan başladı",
                 "Ekranları açtıkça kısa anlatımlar yeniden gösterilecek."
               );
             }}
-            title="Bibi rehberini baştan başlat"
+            title="Jinx rehberini baştan başlat"
           />
         </TutorialTarget>
         <SettingsRow

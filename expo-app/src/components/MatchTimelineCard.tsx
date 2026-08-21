@@ -21,12 +21,7 @@ import {
   spacing,
   typeScale
 } from "@/src/theme/theme";
-import {
-  isInset,
-  resolveSideAlignment,
-  resolveSideLabel,
-  spokenSide
-} from "./timeline-attribution";
+import { resolveSideLabel, spokenSide } from "./timeline-attribution";
 
 /**
  * Match events — goals and red cards.
@@ -61,63 +56,119 @@ function EventMark({ kind }: { kind: "GOAL" | "RED_CARD" }) {
 
 function TimelineRow({
   event,
+  isFirst,
+  isLast,
+  isLatest,
   teams
 }: {
   event: VisibleEvent;
+  isFirst: boolean;
+  isLast: boolean;
+  isLatest: boolean;
   teams: EventTeams;
 }) {
   const display = describeEvent(event, teams);
-  // Team on top, player beneath. When the feed did not say which side scored,
-  // the player moves up rather than leaving an empty line or inventing a team.
   const primary = display.team ?? display.player;
   const secondary = display.team ? display.player : null;
-  const alignment = resolveSideAlignment(display.side);
   const sideLabel = resolveSideLabel(display.side);
-  const inset = isInset(display.side);
   const spoken = spokenSide(display.side);
+  const copy = (
+    <View
+      style={[
+        styles.eventCard,
+        display.side === "HOME" ? styles.eventCardHome : styles.eventCardAway,
+        isLatest && styles.eventCardLatest
+      ]}
+    >
+      <View
+        style={[
+          styles.eventMeta,
+          display.side === "HOME" ? styles.alignEnd : styles.alignStart
+        ]}
+      >
+        {sideLabel ? (
+          <View style={styles.sideChip}>
+            <Text style={styles.sideChipText}>{sideLabel}</Text>
+          </View>
+        ) : null}
+        <Text style={styles.kindLabel}>
+          {display.kind === "GOAL" ? "GOL" : "KIRMIZI KART"}
+        </Text>
+      </View>
+      <Text
+        numberOfLines={2}
+        style={[
+          styles.primary,
+          display.side === "HOME" ? styles.textEnd : styles.textStart
+        ]}
+      >
+        {primary ?? "Olay tarafı belirtilmedi"}
+      </Text>
+      {secondary ? (
+        <Text
+          numberOfLines={1}
+          style={[
+            styles.secondary,
+            display.side === "HOME" ? styles.textEnd : styles.textStart
+          ]}
+        >
+          {secondary}
+        </Text>
+      ) : null}
+      {isLatest ? <Text style={styles.latestLabel}>SON OLAY</Text> : null}
+    </View>
+  );
 
   return (
     <View
-      accessibilityLabel={[describeEventForAccessibility(event, teams), spoken]
+      accessibilityLabel={[
+        describeEventForAccessibility(event, teams),
+        spoken,
+        isLatest ? "son olay" : null
+      ]
         .filter(Boolean)
         .join(", ")}
       accessible
       style={styles.rowWrap}
     >
-      {/* The minute stays in a fixed column so the time axis remains straight
-          to scan; only the event body shifts by side. */}
-      <Text style={styles.minute}>{display.minute}</Text>
-      <View
-        style={[
-          styles.row,
-          alignment !== "UNKNOWN" && styles.rowAttributed,
-          inset && styles.rowInset
-        ]}
-      >
-        <View style={styles.mark}>
+      <View style={styles.lane}>
+        {display.side === "HOME" ? copy : null}
+      </View>
+      <View style={styles.axis}>
+        <View
+          style={[
+            styles.rail,
+            isFirst && styles.railFirst,
+            isLast && styles.railLast
+          ]}
+        />
+        <View
+          style={[
+            styles.minutePill,
+            isLatest && styles.minutePillLatest
+          ]}
+        >
+          <Text
+            style={[styles.minute, isLatest && styles.minuteLatest]}
+          >
+            {display.minute}
+          </Text>
+        </View>
+        <View style={[styles.mark, isLatest && styles.markLatest]}>
           <EventMark kind={display.kind} />
         </View>
-        <View style={styles.body}>
-          <View style={styles.primaryLine}>
-            {sideLabel ? (
-              <View style={styles.sideChip}>
-                <Text style={styles.sideChipText}>{sideLabel}</Text>
-              </View>
-            ) : null}
-            <Text numberOfLines={1} style={styles.primary}>
-              {primary ?? "—"}
-            </Text>
-          </View>
-          {secondary ? (
-            <Text numberOfLines={1} style={styles.secondary}>
-              {secondary}
-            </Text>
-          ) : null}
-        </View>
         {display.score ? (
-          <Text style={styles.score}>{display.score}</Text>
+          <View style={styles.scorePill}>
+            <Text style={styles.score}>{display.score}</Text>
+          </View>
         ) : null}
       </View>
+      <View style={styles.lane}>
+        {display.side === "AWAY" ? copy : null}
+      </View>
+      {display.side === null ? (
+        <View style={styles.unknownEvent}>{copy}</View>
+      ) : null}
     </View>
   );
 }
@@ -137,14 +188,20 @@ function TimelineList({
 
   return (
     <View style={styles.list}>
-      {events.map((event) => (
+      {events.map((event, index) => (
         <ChangeEmphasis
           announceOnMount={!initialEventKeys.has(event.eventKey)}
           key={event.eventKey}
           kind="alert"
           token={event.eventKey}
         >
-          <TimelineRow event={event} teams={teams} />
+          <TimelineRow
+            event={event}
+            isFirst={index === 0}
+            isLast={index === events.length - 1}
+            isLatest={index === events.length - 1}
+            teams={teams}
+          />
         </ChangeEmphasis>
       ))}
     </View>
@@ -211,44 +268,101 @@ const styles = StyleSheet.create({
     padding: spacing.lg
   },
   list: {
-    gap: spacing.md
+    gap: 0
   },
   rowWrap: {
-    alignItems: "center",
+    alignItems: "stretch",
     flexDirection: "row",
-    gap: spacing.md
+    minHeight: 108,
+    position: "relative"
   },
-  row: {
-    alignItems: "center",
+  lane: {
     flex: 1,
-    flexDirection: "row",
-    gap: spacing.md,
     minWidth: 0
   },
-  // A neutral rail, not a coloured one. Home and away are not semantic states
-  // in this palette, and no reliable team-colour data exists in the contract.
-  rowAttributed: {
-    borderLeftWidth: 2,
-    borderLeftColor: colors.border,
-    paddingLeft: spacing.md
+  axis: {
+    alignItems: "center",
+    minWidth: 68,
+    paddingBottom: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    paddingTop: spacing.sm,
+    position: "relative"
   },
-  // Away events sit inset, so a run of same-side goals forms a column and an
-  // alternating sequence reads as a staircase before any text is read.
-  rowInset: {
-    marginLeft: spacing.xl
+  rail: {
+    backgroundColor: colors.bronze,
+    bottom: 0,
+    left: "50%",
+    opacity: 0.55,
+    position: "absolute",
+    top: 0,
+    width: 2
+  },
+  railFirst: {
+    top: 24
+  },
+  railLast: {
+    bottom: 52
+  },
+  minutePill: {
+    backgroundColor: colors.surfaceStrong,
+    borderColor: colors.border,
+    borderRadius: radii.round,
+    borderWidth: 1,
+    minWidth: 48,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    zIndex: 2
+  },
+  minutePillLatest: {
+    backgroundColor: semantic.liveSoft,
+    borderColor: semantic.live
   },
   minute: {
     color: colors.textMuted,
     ...typeScale.meta,
     fontVariant: ["tabular-nums"],
-    minWidth: 30,
-    textAlign: "right"
+    textAlign: "center"
   },
-  primaryLine: {
+  minuteLatest: {
+    color: semantic.live
+  },
+  eventCard: {
+    borderColor: colors.borderSoft,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    marginVertical: spacing.sm,
+    minHeight: 80,
+    padding: spacing.sm
+  },
+  eventCardHome: {
+    alignItems: "flex-end"
+  },
+  eventCardAway: {
+    alignItems: "flex-start"
+  },
+  eventCardLatest: {
+    borderColor: semantic.live
+  },
+  eventMeta: {
     alignItems: "center",
     flexDirection: "row",
-    gap: spacing.sm,
-    minWidth: 0
+    flexWrap: "wrap",
+    gap: spacing.xs
+  },
+  alignEnd: {
+    justifyContent: "flex-end"
+  },
+  alignStart: {
+    justifyContent: "flex-start"
+  },
+  kindLabel: {
+    color: colors.textSubtle,
+    ...typeScale.micro
+  },
+  latestLabel: {
+    color: semantic.live,
+    ...typeScale.micro,
+    marginTop: spacing.xs
   },
   sideChip: {
     backgroundColor: colors.surfaceStrong,
@@ -262,7 +376,18 @@ const styles = StyleSheet.create({
   },
   mark: {
     alignItems: "center",
-    width: 18
+    backgroundColor: colors.backgroundElevated,
+    borderColor: colors.border,
+    borderRadius: radii.round,
+    borderWidth: 1,
+    height: 30,
+    justifyContent: "center",
+    marginTop: spacing.xs,
+    width: 30,
+    zIndex: 2
+  },
+  markLatest: {
+    borderColor: semantic.live
   },
   redCard: {
     backgroundColor: semantic.negative,
@@ -270,26 +395,44 @@ const styles = StyleSheet.create({
     height: 15,
     width: 11
   },
-  body: {
-    flex: 1,
-    minWidth: 0
-  },
   primary: {
     color: colors.text,
-    flexShrink: 1,
-    ...typeScale.identityCompact
+    ...typeScale.identityCompact,
+    marginTop: spacing.xs
   },
   secondary: {
     color: colors.textMuted,
     ...typeScale.label,
-    marginTop: spacing.xs
+    marginTop: 2
+  },
+  textEnd: {
+    textAlign: "right"
+  },
+  textStart: {
+    textAlign: "left"
+  },
+  scorePill: {
+    backgroundColor: colors.backgroundElevated,
+    borderColor: colors.bronze,
+    borderRadius: radii.sm,
+    borderWidth: 1,
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    zIndex: 2
   },
   score: {
     color: colors.text,
-    ...typeScale.metricCompact,
+    ...typeScale.meta,
     fontVariant: ["tabular-nums"],
-    minWidth: 36,
-    textAlign: "right"
+    textAlign: "center"
+  },
+  unknownEvent: {
+    bottom: spacing.sm,
+    left: 76,
+    position: "absolute",
+    right: 0,
+    top: spacing.sm
   },
   stateRow: {
     alignItems: "center",

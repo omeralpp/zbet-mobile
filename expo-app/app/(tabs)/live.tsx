@@ -35,6 +35,10 @@ import {
 } from "@/src/utils/live-match-tabs";
 import { groupMatchesByKickoff } from "@/src/utils/match-groups";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
+import {
+  adjacentLocalTab,
+  type TabSwipeDirection
+} from "@/src/navigation/tab-swipe";
 
 function firstParam(value: string | string[] | undefined): string {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
@@ -66,6 +70,8 @@ function routeTab(
   }
   return "LIVE";
 }
+
+const localTabs = ["LIVE", "ALL"] as const;
 
 export default function LiveScreen() {
   const params = useLocalSearchParams<{
@@ -116,6 +122,22 @@ export default function LiveScreen() {
     };
   }, [query.data, starFilter]);
   const sections = useMemo(() => groupMatchesByKickoff(matches), [matches]);
+  const localTabSwipe = useMemo(() => {
+    const previous = adjacentLocalTab(tab, localTabs, "PREVIOUS");
+    const next = adjacentLocalTab(tab, localTabs, "NEXT");
+    return {
+      hasNext: next !== null,
+      hasPrevious: previous !== null,
+      onNavigate: (direction: TabSwipeDirection) => {
+        const target = adjacentLocalTab(tab, localTabs, direction);
+        if (!target) {
+          return;
+        }
+        setDecisionOpen(false);
+        router.setParams({ scope: target, filter: undefined });
+      }
+    };
+  }, [router, tab]);
   const insightMap = useMemo(
     () =>
       new Map(
@@ -131,6 +153,7 @@ export default function LiveScreen() {
       {...(tabCounts.LIVE > 0 ? { accent: semantic.live } : {})}
       contentStyle={styles.screen}
       eyebrow="BTB"
+      localTabSwipe={localTabSwipe}
       scroll={false}
       tabSwipe
       title="Canlı maçlar"

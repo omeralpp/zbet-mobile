@@ -13,6 +13,28 @@ export const tabSwipe = {
   resistanceRatio: 0.05
 } as const;
 
+export type TabSwipeDirection = "NEXT" | "PREVIOUS";
+
+/**
+ * Resolves a page-local segmented tab before the shell changes main tabs.
+ *
+ * Dropdown-driven filters are intentionally absent from `order`; when the
+ * current value is not one of the visible local tabs this returns null and the
+ * main-tab gesture keeps ownership.
+ */
+export function adjacentLocalTab<T extends string>(
+  current: T,
+  order: readonly T[],
+  direction: TabSwipeDirection
+): T | null {
+  const index = order.indexOf(current);
+  if (index < 0) {
+    return null;
+  }
+  const targetIndex = direction === "NEXT" ? index + 1 : index - 1;
+  return order[targetIndex] ?? null;
+}
+
 export function shouldActivateTabSwipe(dx: number, dy: number): boolean {
   return (
     Math.abs(dx) > tabSwipe.activationDx &&

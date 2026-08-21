@@ -94,7 +94,7 @@ export function SystemState({
       ) : showMascot ? (
         <Image
           resizeMode="contain"
-          source={require("../../assets/mascot/bibi-half.png")}
+          source={require("../../assets/mascot/jinx-half.png")}
           style={styles.mascot}
         />
       ) : (

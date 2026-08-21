@@ -124,7 +124,7 @@ export const tutorialTips: readonly TutorialTip[] = [
   {
     id: "more-tutorial",
     title: "Rehber senin kontrolünde",
-    body: "Bibi rehberini buradan kapatabilir, kaldığın yerden açabilir veya baştan başlatabilirsin.",
+    body: "Jinx rehberini buradan kapatabilir, kaldığın yerden açabilir veya baştan başlatabilirsin.",
     route: "/more",
     match: "EXACT",
     targetId: "more-tutorial-restart"

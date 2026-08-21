@@ -26,7 +26,8 @@ import { adjacentMainTab, type MainTabRoute } from "@/src/navigation/main-tabs";
 import {
   shouldActivateTabSwipe,
   shouldCommitTabSwipe,
-  tabSwipeTranslation
+  tabSwipeTranslation,
+  type TabSwipeDirection
 } from "@/src/navigation/tab-swipe";
 import { colors, interaction, spacing, typeScale } from "@/src/theme/theme";
 
@@ -39,6 +40,12 @@ type ScreenProps = PropsWithChildren<{
   onEdgeSwipeBack?: () => void;
   /** Enables the horizontal main-tab gesture on primary tab screens. */
   tabSwipe?: boolean;
+  /** Gives visible page-local tabs first refusal before the main tab changes. */
+  localTabSwipe?: {
+    hasNext: boolean;
+    hasPrevious: boolean;
+    onNavigate: (direction: TabSwipeDirection) => void;
+  };
   /**
    * Semantic colour for the header trace when the screen currently carries that
    * state — `semantic.live` while live matches are on it, for example.
@@ -70,6 +77,7 @@ export function Screen({
   edgeSwipeBack = false,
   onEdgeSwipeBack,
   tabSwipe = false,
+  localTabSwipe,
   accent,
   scrollRef,
   contentStyle,
@@ -84,8 +92,23 @@ export function Screen({
   // back swipe, primary tab screens the tab swipe. The active mode is therefore
   // a property of the screen rather than gesture state that has to be tracked.
   const panResponder = useMemo(() => {
-    const tabTargetFor = (dx: number): MainTabRoute | null =>
-      adjacentMainTab(pathname, dx < 0 ? "NEXT" : "PREVIOUS");
+    const tabTargetFor = (
+      dx: number
+    ):
+      | { kind: "LOCAL"; direction: TabSwipeDirection }
+      | { kind: "MAIN"; route: MainTabRoute }
+      | null => {
+      const direction: TabSwipeDirection = dx < 0 ? "NEXT" : "PREVIOUS";
+      const hasLocalTarget =
+        direction === "NEXT"
+          ? localTabSwipe?.hasNext
+          : localTabSwipe?.hasPrevious;
+      if (hasLocalTarget) {
+        return { kind: "LOCAL", direction };
+      }
+      const route = adjacentMainTab(pathname, direction);
+      return route ? { kind: "MAIN", route } : null;
+    };
 
     return PanResponder.create({
       onMoveShouldSetPanResponderCapture: (_, gesture) => {
@@ -129,7 +152,11 @@ export function Screen({
           if (Platform.OS !== "web") {
             Haptics.selectionAsync().catch(() => undefined);
           }
-          router.navigate(target as never);
+          if (target.kind === "LOCAL") {
+            localTabSwipe?.onNavigate(target.direction);
+          } else {
+            router.navigate(target.route as never);
+          }
         }
         Animated.spring(swipeX, springBack).start();
       },
@@ -137,7 +164,16 @@ export function Screen({
         Animated.spring(swipeX, springBack).start();
       }
     });
-  }, [edgeSwipeBack, onEdgeSwipeBack, pathname, router, swipeX, tabSwipe, width]);
+  }, [
+    edgeSwipeBack,
+    localTabSwipe,
+    onEdgeSwipeBack,
+    pathname,
+    router,
+    swipeX,
+    tabSwipe,
+    width
+  ]);
   const gestureEnabled = edgeSwipeBack || tabSwipe;
   // A hairline that fades out from the leading edge rather than a rule that
   // crosses the screen: it reads as the residue of something moving through the

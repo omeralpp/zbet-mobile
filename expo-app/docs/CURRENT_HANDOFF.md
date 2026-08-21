@@ -6,18 +6,50 @@ Son güncelleme: 2026-08-21
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `OBSERVATION` — 2026-08-21 `mobile cutover start` batch'i kapandı.
-`NXT-OBS-089` kısmen uygulandı: canlı maç detayının verdict satırı `Seçim /
-Seçim oranı / Güncel oran` üç dengeli koluna geçirildi (`app/match/[key].tsx`).
-Super detay kartı tarafı kasıtlı, belgeli bir tasarım kararıyla (kâr karar
-satırından ayrı "sonuç" bandında) çeliştiği için uygulanmadı; blocker olarak
-`docs/OBSERVATION_LOG.md` "2026-08-21 cutover disposition" altında kayıtlı,
-owner kararı bekliyor. Diğer 7 `OBSERVED` madde bu batch'in kapsamı dışında
-kaldı (SAP/Toto producer sahipliği veya fiziksel/gerçek-olay gözlemi
-bekliyor). Kapı temiz: `npm run typecheck`, `npm run lint`, `npm test`
-(401/401); `npm run doctor` bu shell'de env kaynaklı hatayla çıktı,
-değişiklikle ilgisi doğrulanamadı. Bu batch'te yeni APK üretilmedi veya
-dağıtılmadı; deploy ayrı açık onay bekliyor.
+Mod: `OBSERVATION` — 2026-08-21 `btb next cutover start` batch'i (03) yerel
+olarak kapandı. Freeze edilen `NXT-OBS-105`–`110` satırlarının tamamı
+sınıflandırıldı; açık `OBSERVED` kalmadı. `105` canlı Super sonuç bandı, `106`
+yerel sekme öncelikli yatay jest, `107` merkezi gol/kırmızı kart akışı ve `110`
+özgün Jinx kimliği fiziksel Xiaomi kabulüyle `RESOLVED`; gerçek Toto ödeme alanı
+olmayan `108` ile doğrulanmış
+kickoff fiyatı olmayan `109` `DEFERRED` oldu.
+
+Mobile TypeScript/ESLint/unit/brand kontrolleri, izole preview native prebuild ve
+tek ARM64 debug APK derlemesi geçti. APK
+`.codex-artifacts/btb-mobile-next-arm64-debug.apk`, SHA-256
+`0E5314080BAF284C5C73224125DE0EFE0A5B506D9233922E059B04E7A1943331`.
+Normal Expo dependency check, batch öncesi baz çizgide dokuz SDK 57 patch
+önerisi bildiriyor; bağımsız dependency yükseltmesi yapılmadı. Sonraki Android
+15 x86_64 release emülatör smoke'unda `105` gerçek açık Super kararıyla
+`0-1 · 83' canlı`, `106` Canlı ve Super yerel-sekme/ana-sekme geçişleri,
+`107` üç gerçek gol içeren merkezi akış ve `110` Jinx'in koyu/açık görünümü,
+ayar metinleri, hızlı menüsü ve kapalı-göz frame'i geçti. Geçici release APK
+`53.919.417` bayttı (SHA-256
+`30B65B24A67D591ADD574FAE1AC595D32B79D593DFEE2C41768C428BC3F401FA`) ve
+doğrulama sonrası Geri Dönüşüm Kutusu'na taşındı. Aynı doğrulanmış kaynaktan
+fiziksel telefon için yerel
+ARM64 release adayı üretildi: `.codex-artifacts/btb-mobile-next-arm64-cutover-03.apk`
+(`53.343.273` bayt; yalnız `arm64-v8a`; APK Signature Scheme v2 doğrulandı;
+SHA-256 `E8A02ED307FC4455C70705883263DD6C276BA8D9E9285263875F747BD0E1443E`).
+Pilot debug sertifikasının SHA-256 özeti
+`fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c`;
+owner 2026-08-21'de aday APK'nın fiziksel Xiaomi testini tamamlayıp Mobile parity'yi
+kabul etti. BFF/SAP/model değişmedi;
+commit/push, deploy, production signing ve dış sistem değişikliği yapılmadı.
+
+Önceki (02) batch: sekiz eski `OBSERVED` satır sınıflandırıldı; `095` fiziksel
+canlı maç kanıtıyla çözüldü, `096` superseded oldu, `099` tarihsel çözüm olarak
+korundu; upstream/owner/gerçek-olay bekleyen `073`, `074`, `086`, `089` ve
+`100` `DEFERRED` oldu.
+
+Yeni `NXT-OBS-104`, SAP bridge SICF dayanıklılığını izler. Owner'ın `detail`
+düğümünü yeniden oluşturmasından hemen sonra salt-okunur 401/200 ve BFF
+`availability=OK` kanıtı alındı; kapanış kontrolünde uç yeniden 404'e döndü.
+SAP yazma veya aktivasyon yapılmadı. Yerel `zbet-cap` checkpoint'i ek upstream
+isteği üretmeyen pasif `/health.liveContextTelemetry` görünürlüğü ekler; hedefli
+testler `34/34`, resmi BFF test ve production build kalite kapısı geçti. Mobile
+kaynak değişmedi, yeni APK üretilmedi. Commit/push, deploy ve SAP kalıcı çözümü
+ayrı açık onay bekliyor.
 
 BTB ROADMAP MILESTONE 2/11 — LOGO / BRAND ASSET KAPALI, FİZİKSEL OLARAK
 DOĞRULANDI. Sahip Xiaomi doğrulamasını tamamladı ve yeni BTB Intelligence
@@ -863,53 +895,44 @@ Bulgular `docs/OBSERVATION_LOG.md` içine yazılır; kod değişikliği yalnız
 ```text
 zbet-abap
   branch/upstream : main / origin/main
-  HEAD            : 89ad8d9  (origin ile aynı, temiz)
-                    89ad8d9  Add a read-only provider transport bridge
-  state           : köprü SAP'ta aktif; DDIC/tablo/kalıcılık yok
+  HEAD            : 702c05f  (origin ile aynı, temiz)
+  state           : handler sınıfı yerelde mevcut; live SICF kapanışta yeniden
+                    404, SICF nesnesi sürüm kontrollü değil
 
 zbet-cap
   branch/upstream : main / origin/main
-  HEAD            : 2a8c0ca  (origin ile aynı, temiz)
+  HEAD            : 2a8c0ca  (origin ile aynı; 5 bounded dosya dirty)
                     11b961d  Narrow Live Context to goals and red cards
                     2ab2ef6  Route Live Context through the SAP bridge upstream
                     2a8c0ca  Pass the bridge upstream settings through to the BFF
-  state           : Live Context runtime açık (SAP_BRIDGE); pilot 300 sn
+  state           : pasif liveContextTelemetry yerel; test/build kapısı geçti,
+                    commit/deploy edilmedi
 
 zbet-mobile
   branch/upstream : master / origin/master
-  HEAD            : 545c7d5  (origin ile aynı; kapanış commitleri bunun üstünde)
-                    ecf0138  Show only goals and red cards on Match Detail
-                    a0b3533  Close the Live Context v2 cutover on the verified baseline
-                    545c7d5  Record Live Context running on the SAP bridge
-  state           : Mobile kaynak değişikliği yok; APK baseline değişmedi
+  HEAD            : 3396d4b  (origin ile aynı; yalnız docs dirty)
+                    3396d4b  Match detail: split verdict row into Selection /
+                             Selection odds / Current odds
+  state           : Mobile kaynak değişikliği yok; observation log, handoff ve
+                    yeni kapanış arşivi yerel; APK baseline değişmedi
 ```
 
-Kullanıcıya ait mevcut değişiklikler korunmuştur. Commitler yalnız bu cutover'ın
-Mobile Next, Mobile BFF ve kapanış kanıtı kapsamındadır.
+Kullanıcıya ait mevcut değişiklikler korundu. `btb-codex` içindeki iki bağımsız
+dirty dosyaya dokunulmadı. Bu batch'te hiçbir commit veya push yapılmadı.
 
 ## Doğrulama
 
-- Mobile `npm run check`: TypeScript, ESLint ve `96/96` test geçti.
-- BFF `npm test`: `65/65` test geçti.
-- Kompakt Mobile BFF kalite kapısı geçti.
-- Expo Doctor `19/20`: yalnız bilinen yedi Expo SDK 57 patch farkı açık; bu özellik
-  batch'ine dependency yükseltmesi karıştırılmadı.
-- Public `https://api.surklase.com` read-only dashboard/matches/Toto smoke ve yeni
-  Mobile Zod şemasıyla geriye uyumluluk parse kontrolü geçti.
-- CAP exact-SHA MTA geçici Node 24 build ortamında üretildi; archive SHA-256
-  `EE6C1471A51DBB735DDFA74A8D56C6CD5975630E9A61BFBCC02878209055DA0C`.
-- BTP DEV MTA operation `4067016a-9756-11f1-91c3-eeee0a9f1a4c` tamamlandı;
-  deploy kanıtı alındı. Owner'ın sonraki talimatıyla `btb-fcm-proxy-srv`
-  `requested state: stopped`, `0/1` durumuna getirildi.
-- Public Mobile BFF origin yeni source ile yeniden başlatıldı. Gerçek Toto detail
-  response `theoreticalPrize`, `payoutDescription`, `updatedAt`, `homeScore` ve
-  `awayScore` alanlarını taşıdı; public `/health` pilot auth, SAP backend, device
-  registry ve notification bileşenlerinin hazır olduğunu doğruladı.
-- Android API 35 x86_64 emülatöründe açık tema, canlı API, ana sekme swipe,
-  Karar Günlüğü modal yıldız/sıralama menüsü ve seçim hit-test'i smoke edildi.
-- SAP MCP readiness çalıştırıldı; görünür araç listesinde repository/source-read
-  aracı olmadığı için SAP kaynak iddiaları live MCP kanıtı değil yerel ABAP/CDS
-  snapshot kanıtıdır.
+- Hedefli BFF testleri `34/34` geçti.
+- Resmi Mobile BFF kalite kapısında tüm testler ve production build geçti.
+- Fiziksel Xiaomi görüntüsü 57′ canlı skor/dakika, Game Pulse, Maç Detayı ve
+  48′ Super kararını doğruladı.
+- Public prospective telemetry `246/246` successful cycle, `0` failure ve `464`
+  match observation gösterdi.
+- SICF owner düzeltmesinden sonra doğrudan HTTP kanıtı kısa süre tokensız `401`,
+  tokenlı `200` ve BFF `availability=OK` gösterdi; kapanışta uç yeniden `404`
+  oldu. Bu live ADT/MCP kanıtı değildir; SAP MCP repository aracı kullanılamadı.
+- Mobile kaynak değişmediği için Mobile type/lint/test tekrarlanmadı ve yeni APK
+  üretilmedi. Deploy veya dış sistem değişikliği yapılmadı.
 
 ## Doğrulanmış baseline APK
 
@@ -978,10 +1001,12 @@ Kanıt: `docs/observation_archive/cutover_2026-08-17-03.md`.
 
 ## Açık observation / blokajlar
 
-- `NXT-OBS-073`: participant ID zinciri eksik; kulüp logoları doğru veri gelene kadar
-  deferred.
-- `NXT-OBS-074`: notification producer sürekliliği için SAP çağrı/SM59 telemetry kanıtı.
-- `NXT-OBS-086`: Toto idempotency düzeltmesi `BTB Toto - Aktif` sahipliğindedir.
+- Freeze edilen sekiz maddeden açık `OBSERVED` kalmadı. `NXT-OBS-073`, `074`,
+  `086`, `089` ve `100` doğru sahip/kanıt gelene kadar `DEFERRED`.
+- `NXT-OBS-104`: `/sap/bc/zbet/provider/detail` live SICF düğümü owner'ın yeniden
+  oluşturmasından sonra kısa süre çalışıp yeniden 404'e döndü. Kalıcı çözüm,
+  ayrı SAP onayıyla SICF nesnesini sürümlemek, hedefte aktive etmek ve restart/
+  session sınırından sonra read-back yapmaktır.
 - `NXT-OBS-092`: Mobile/BFF tarihsel baskıyı artık güncel diye göstermez; gerçek
   current-match pressure alanı SAP/OData'da yayınlanana kadar veri bekleme fallback'i
   kullanılır.
@@ -997,27 +1022,27 @@ Kanıt: `docs/observation_archive/cutover_2026-08-17-03.md`.
 
 ## Sıradaki milestone
 
-Product Design V2 APK'sının fiziksel Xiaomi doğrulaması. Geçene kadar
-`btb-mobile-next-arm64-live-context-v2.apk` geri dönüş noktası olarak korunur.
-
-Arka planda: prospective evidence pilotunun izlenmesi (bloklamayan) ve
-`PENDING_LIVE_MATCH_VALIDATION` takibi. FULL_INTERNAL ve Champion/Challenger
-henüz başlatılmadı.
+Observation modunda kal. Sonraki teknik kapı, `NXT-OBS-104` için SAP SICF
+kalıcılığının ayrı operasyonel onayla çözülmesidir. Mobile APK baseline değişmedi;
+FULL_INTERNAL ve Champion/Challenger başlatılmadı.
 
 ## Exact next steps
 
-1. Observation modunda kal. Live Context runtime `SAP_BRIDGE` ile açıktır;
-   `DIRECT` upstream açılmaz.
-2. `zbet-cap` prospective pilotunu 300 sn'de çalışır bırak; `/health`
-   `prospectiveTelemetry` ile denetle.
-3. Doğal bir kırmızı kart geldiğinde `Olaylar` modülünde alt tip ayrımını
-   gözlemsel olarak doğrula. **Release engeli değildir**; sorun çıkarsa yeni
-   defect aç.
-4. `DECISION SAFETY / EVENT-TRANSITION CONFLICT REVIEW` başka bir BTB
+1. Ayrı SAP yazma/aktivasyon onayı verilirse `detail` SICF nesnesini abapGit
+   kapsamına al, doğru hedefte aktive et ve restart/session sınırından sonra
+   tokensız 401 + tokenlı 200 + BFF OK read-back kanıtı al.
+2. Ayrı commit/push onayı verilirse yalnız bounded `zbet-cap` telemetry yamasıyla
+   Mobile dokümantasyon checkpoint'ini ilgili repolarda hazırla; dirty kullanıcı
+   dosyalarını dahil etme.
+3. Ayrı exact-SHA `DEPLOY-DEV` onayı verilirse BFF yamasını DEV/public runtime'a
+   yayınla ve `/health.liveContextTelemetry` alanını doğrula. Production hedefleme.
+4. Doğal bir kırmızı kart geldiğinde alt tip ayrımını yalnız gözlemsel doğrula;
+   bu release engeli değildir.
+5. `DECISION SAFETY / EVENT-TRANSITION CONFLICT REVIEW` başka bir BTB
    thread'inde tamamlandı. Sonuçları o thread'in kanonik kayıtlarındadır ve
    buradan yeniden yorumlanmaz; aşağıdaki bölüm yalnız tarihsel kapsam kaydıdır.
-5. FULL_INTERNAL ve Champion/Challenger başlatılmadı; ayrı karar gerektirir.
-6. Yeni observation batch'i yalnız `btb next cutover start` ile açılır;
+6. FULL_INTERNAL ve Champion/Challenger başlatılmadı; ayrı karar gerektirir.
+7. Yeni observation batch'i yalnız `btb next cutover start` ile açılır;
    commit/push ve dış deploy kapıları açık onayla işletilir.
 
 ## DECISION SAFETY / EVENT-TRANSITION CONFLICT REVIEW — başka thread'de kapandı

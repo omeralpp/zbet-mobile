@@ -12,6 +12,7 @@ import {
   type NativeSyntheticEvent
 } from "react-native";
 import {
+  matchQuery,
   superLogPeriodScoreQuery,
   superLogQuery
 } from "@/src/api/queries";
@@ -49,6 +50,7 @@ import {
   formatSigned,
   formatSuperResult
 } from "@/src/utils/format";
+import { deriveSuperOutcomeBand } from "@/src/utils/super-outcome-band";
 
 function firstParam(value: string | string[] | undefined): string {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
@@ -127,6 +129,12 @@ export default function SuperLogDetailScreen() {
   );
   const query = useQuery(superLogQuery(key));
   const periodScoreQuery = useQuery(superLogPeriodScoreQuery(key));
+  const currentMatchQuery = useQuery({
+    ...matchQuery(query.data?.matchKey ?? ""),
+    // The outcome band is current match state, not a frozen Super snapshot.
+    // Poll only while the decision is open; settled history stays inert.
+    refetchInterval: query.data?.result === "OPEN" ? 30_000 : false
+  });
 
   if (query.isLoading) {
     return (
@@ -152,7 +160,7 @@ export default function SuperLogDetailScreen() {
   }
 
   const log = query.data;
-  const settled = log.result === "WON" || log.result === "LOST";
+  const outcomeBand = deriveSuperOutcomeBand(log, currentMatchQuery.data);
   const hasStandingContext =
     log.homeStandingPosition > 0 ||
     log.awayStandingPosition > 0 ||
@@ -381,9 +389,17 @@ export default function SuperLogDetailScreen() {
             <RefreshControl
               colors={[colors.gold]}
               onRefresh={() =>
-                Promise.all([query.refetch(), periodScoreQuery.refetch()])
+                Promise.all([
+                  query.refetch(),
+                  periodScoreQuery.refetch(),
+                  currentMatchQuery.refetch()
+                ])
               }
-              refreshing={query.isRefetching || periodScoreQuery.isRefetching}
+              refreshing={
+                query.isRefetching ||
+                periodScoreQuery.isRefetching ||
+                currentMatchQuery.isRefetching
+              }
               tintColor={colors.gold}
             />
           )
@@ -475,20 +491,26 @@ export default function SuperLogDetailScreen() {
               SONUÇ
             </Text>
             <View style={styles.bandRow}>
-              <View style={[styles.bandCell, styles.bandCellWide]}>
-                {settled && log.finalScore ? (
-                  <>
-                    <Text style={[styles.score, { color: resultColor }]}>
-                      {log.finalScore.replace("-", " - ")}
-                    </Text>
-                    <Text style={styles.bandLabel}>biten skor</Text>
-                  </>
-                ) : (
-                  <>
-                    <Text style={styles.pendingScore}>—</Text>
-                    <Text style={styles.bandLabel}>sonuç bekleniyor</Text>
-                  </>
-                )}
+              <View
+                accessibilityLabel={outcomeBand.accessibilityLabel}
+                accessible
+                style={[styles.bandCell, styles.bandCellWide]}
+              >
+                <Text
+                  style={[
+                    outcomeBand.kind === "PENDING"
+                      ? styles.pendingScore
+                      : styles.score,
+                    outcomeBand.kind === "SETTLED"
+                      ? { color: resultColor }
+                      : outcomeBand.kind === "LIVE"
+                        ? { color: semantic.live }
+                        : null
+                  ]}
+                >
+                  {outcomeBand.score}
+                </Text>
+                <Text style={styles.bandLabel}>{outcomeBand.label}</Text>
               </View>
               <View style={[styles.bandCell, styles.bandCellEnd]}>
                 <Text style={[styles.bandValue, { color: resultColor }]}>

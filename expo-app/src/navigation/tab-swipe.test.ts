@@ -1,11 +1,25 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  adjacentLocalTab,
   shouldActivateTabSwipe,
   shouldCommitTabSwipe,
   tabSwipe,
   tabSwipeTranslation
 } from "./tab-swipe";
+
+test("prefers a visible local tab in the swipe direction", () => {
+  const tabs = ["LIVE", "ALL"] as const;
+  assert.equal(adjacentLocalTab("LIVE", tabs, "NEXT"), "ALL");
+  assert.equal(adjacentLocalTab("ALL", tabs, "PREVIOUS"), "LIVE");
+});
+
+test("hands the gesture to main tabs at a local edge or dropdown state", () => {
+  const tabs = ["LIVE", "ALL"] as const;
+  assert.equal(adjacentLocalTab("LIVE", tabs, "PREVIOUS"), null);
+  assert.equal(adjacentLocalTab("ALL", tabs, "NEXT"), null);
+  assert.equal(adjacentLocalTab("STAR", tabs as readonly string[], "NEXT"), null);
+});
 
 test("activates only for a clearly horizontal gesture", () => {
   assert.equal(shouldActivateTabSwipe(40, 4), true);

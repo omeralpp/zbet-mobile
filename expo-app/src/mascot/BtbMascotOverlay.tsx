@@ -54,9 +54,9 @@ const mascotSize = 58;
 const discoverySettleMs = 1600;
 const edgeMargin = 10;
 const bibiFrames = [
-  require("../../assets/mascot/bibi-open.png"),
-  require("../../assets/mascot/bibi-half.png"),
-  require("../../assets/mascot/bibi-closed.png")
+  require("../../assets/mascot/jinx-open.png"),
+  require("../../assets/mascot/jinx-half.png"),
+  require("../../assets/mascot/jinx-closed.png")
 ] as const;
 
 function parseStoredPosition(value: string | null): Position | null {
@@ -654,7 +654,7 @@ export function BtbMascotOverlay() {
             <Text style={styles.tutorialBody}>{tutorial.activeTip.body}</Text>
             <View style={styles.tutorialActions}>
               <Pressable
-                accessibilityLabel="Bibi rehberini kapat"
+                accessibilityLabel="Jinx rehberini kapat"
                 onPress={() => {
                   setOpenPath(null);
                   tutorial.setEnabled(false);
@@ -712,7 +712,7 @@ export function BtbMascotOverlay() {
             <Text style={styles.tutorialBody}>{discovery.activeHint.body}</Text>
             <View style={styles.tutorialActions}>
               <Pressable
-                accessibilityLabel="Bibi ipuçlarını sessize al"
+                accessibilityLabel="Jinx ipuçlarını sessize al"
                 onPress={() => discovery.setPace("QUIET")}
                 style={({ pressed }) => [
                   styles.tutorialSecondary,
@@ -778,7 +778,7 @@ export function BtbMascotOverlay() {
               menuRight ? styles.greetingRight : styles.greetingLeft
             ]}
           >
-            <Text style={styles.greetingText}>Bibi hazır</Text>
+            <Text style={styles.greetingText}>Jinx hazır</Text>
           </View>
         ) : null}
 
@@ -794,7 +794,7 @@ export function BtbMascotOverlay() {
         >
           <Pressable
             accessibilityLabel={
-              tutorial.activeTip ? "Bibi rehber anlatımı" : "Bibi hızlı menü"
+              tutorial.activeTip ? "Jinx rehber anlatımı" : "Jinx hızlı menü"
             }
             accessibilityRole="button"
             disabled={Boolean(tutorial.activeTip) || !ambient}
