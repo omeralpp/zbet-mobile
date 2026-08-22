@@ -35,8 +35,14 @@ APK SHA-256
 `5D0ECB8C19514BCCF75EF8CDC574F7F7760EA3018896A989CEE2355265B77217`).
 Paket, ABI, imza ve server-secret taraması geçti. Önceki APK ve geçici ekran
 kanıtları Geri Dönüşüm Kutusu'na taşındı; yalnız bu final artefakt tutuluyor.
-Commit/push, deploy, production signing veya dış sistem değişikliği yapılmadı.
-Ayrıntı:
+Mobile batch `7585aaa` ile, Super 200 BFF sözleşmesi `0832b16` ile ve önceki
+pasif Live Context telemetry checkpoint'i `19aa8f8` ile commit/push edildi.
+Temiz `zbet-cap` `19aa8f8` kaynağından mevcut yerel pilot runtime bir kez
+yeniden başlatıldı; Cloudflare yapılandırması değiştirilmedi. Yerel ve public
+health yeni `liveContextTelemetry` alanını gösterdi, public
+`/v1/super/logs` pilot read-back'i tam 200 satır döndürdü. Production signing,
+BTP/Cloudflare yapılandırma deploy'u, Firebase/SAP yazısı veya Cordova cutover
+yapılmadı. Ayrıntı:
 `docs/observation_archive/cutover_2026-08-22.md`.
 
 Önceki (03) batch: `NXT-OBS-105`–`110` sınıflandırıldı; `105`, `106`, `107`
@@ -907,73 +913,63 @@ zbet-abap
 
 zbet-cap
   branch/upstream : main / origin/main
-  HEAD            : 2a8c0ca  (origin ile aynı; 5 bounded dosya dirty)
-                    11b961d  Narrow Live Context to goals and red cards
-                    2ab2ef6  Route Live Context through the SAP bridge upstream
-                    2a8c0ca  Pass the bridge upstream settings through to the BFF
-  state           : pasif liveContextTelemetry yerel; test/build kapısı geçti,
-                    commit/deploy edilmedi
+  HEAD            : 19aa8f8  (origin ile aynı, temiz)
+                    0832b16  Raise Mobile Super history limit
+                    19aa8f8  Expose passive Live Context telemetry
+  state           : mevcut yerel pilot runtime clean 19aa8f8 kaynağından
+                    yeniden başladı; public health/read-back geçti
 
 zbet-mobile
   branch/upstream : master / origin/master
-  HEAD            : 3396d4b  (origin ile aynı; yalnız docs dirty)
-                    3396d4b  Match detail: split verdict row into Selection /
-                             Selection odds / Current odds
-  state           : Mobile kaynak değişikliği yok; observation log, handoff ve
-                    yeni kapanış arşivi yerel; APK baseline değişmedi
+  functional SHA  : 7585aaa  Complete Mobile observation UX batch
+  state           : functional source origin/master'da; bu kapanış belgeleri
+                    de current HEAD ile push edilir. Yalnız daha önce var olan
+                    untracked `cutover_2026-08-21-02.md` kapsam dışı korunur
 ```
 
-Kullanıcıya ait mevcut değişiklikler korundu. `btb-codex` içindeki iki bağımsız
-dirty dosyaya dokunulmadı. Bu batch'te hiçbir commit veya push yapılmadı.
+Kullanıcıya ait kapsam dışı dosya korundu. `btb-codex` içindeki bağımsız dirty
+dosyalara dokunulmadı. Mevcut batch'in APK, commit/push, pilot runtime ve
+dokümantasyon kapanışında bekleyen işlem yoktur.
 
 ## Doğrulama
 
-- Hedefli BFF testleri `34/34` geçti.
-- Resmi Mobile BFF kalite kapısında tüm testler ve production build geçti.
-- Fiziksel Xiaomi görüntüsü 57′ canlı skor/dakika, Game Pulse, Maç Detayı ve
-  48′ Super kararını doğruladı.
-- Public prospective telemetry `246/246` successful cycle, `0` failure ve `464`
-  match observation gösterdi.
-- SICF owner düzeltmesinden sonra doğrudan HTTP kanıtı kısa süre tokensız `401`,
-  tokenlı `200` ve BFF `availability=OK` gösterdi; kapanışta uç yeniden `404`
-  oldu. Bu live ADT/MCP kanıtı değildir; SAP MCP repository aracı kullanılamadı.
-- Mobile kaynak değişmediği için Mobile type/lint/test tekrarlanmadı ve yeni APK
-  üretilmedi. Deploy veya dış sistem değişikliği yapılmadı.
+- Mobile `npm run check`: TypeScript, ESLint, 414 test, OpenAPI ve brand geçti.
+- Resmi Mobile BFF kapısı: tüm testler ve production build geçti; gerçek 200
+  fixture sıralama, kayıpsız map, bounded URL ve `$top=200` sözleşmesini geçti.
+- Android 15 x86_64 compile/install/launch ve hedefli UI smoke geçti.
+- Final ARM64 pilot release APK build, ABI, package, v2 imza, SHA-256 ve
+  server/private-key/session taraması geçti.
+- Clean CAP `19aa8f8` runtime restart sonrası local/public health hazır;
+  `liveContextTelemetry` her iki yüzeyde mevcut ve authenticated public
+  `/v1/super/logs` read-back'i tam 200 satır döndürdü.
+- Fiziksel Xiaomi bu son batch için bağlı değildi; sahip Android 15 görsel ve
+  teknik/public read-back kanıtını observation kapanışı için kabul etti.
 
 ## Doğrulanmış baseline APK
 
 ```text
-Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-live-context-v2.apk
+Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-cutover-04.apk
 Package : com.btb.mobile.next
-Version : 0.1.0 (1) · targetSdk 36
-ABI     : arm64-v8a
-Size    : 48.248.813 bytes
-SHA-256 : 3096C0335361F45B6B95B7AFD35AE1A1D9C91E4D6233735F998E1B2B34EB5B28
+Version : 0.1.0 (1) · targetSdk 36 · compileSdk 36
+ABI     : arm64-v8a (yalnız)
+Size    : 53.347.881 bytes
+SHA-256 : 5D0ECB8C19514BCCF75EF8CDC574F7F7760EA3018896A989CEE2355265B77217
 Signing : v2 · fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
-Config  : authMode=pilot, useMocks=false, mobileApiUrl=https://api.surklase.com,
-          legacyLaunchpadUrl=https://34dfc21ftrial.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b38042ce-b8ab-4fea-a892-abf4c58a170f
-Build   : 2026-08-17 — Live Context v2 (yalnız gol + kırmızı kart), dizilişler
-          kaldırıldı, Game Pulse kendi yüksekliğini bildiriyor, sağlayıcı
-          placeholder arma yerine BTB markası.
-Durum   : MOBILE_NEXT_BASELINE_VERIFIED — fiziksel Xiaomi doğrulaması PASS
+Config  : authMode=pilot · useMocks=false · API=https://api.surklase.com
+Source  : 7585aaa + CAP public runtime 19aa8f8
+Durum   : FINAL_PILOT_ARTIFACT — owner'a paylaşıldı
 ```
 
 İmza sertifikası önceki baseline ile aynıdır; üstüne kurulum ve App Link
-davranışı korunur. Tam akış taraması (1.322 girdi, tamamı bellekte): eski tenant
-`188b143btrial` **0**, sağlayıcı detay ucu `match-card/event` **0**, SAP parolası
-**0**, Firebase private key **0**, sağlayıcı oturum/çerez materyali **0**.
-
-Denetim tuzağı: Hermes ASCII dışı sabitleri **UTF-16LE** saklar; yalnız UTF-8
-arayan tarama Türkçe metinlerde yanlış sonuç verir. `Canlı saha dengesi`
-içindeki `Sarı kart` satırı SAP kaynaklı istatistiktir, Live Context kapsamı
-dışıdır.
+davranışı korunur. Bellek içi APK taramasında legacy FCM server key, PEM/private
+key, `private_key`, `client_secret`, service-account ve `JSESSIONID` eşleşmesi
+**0** bulundu; değerler hiçbir log veya belgeye yazılmadı.
 
 Cutover prosedürü adım 8 uyarınca `.codex-artifacts` yalnız bu doğrulanmış
-`arm64` APK'yı tutar. Önceki baseline `btb-mobile-next-arm64-pilot.apk` ve
-doğrulanmamış ara artifact `btb-mobile-next-arm64-ui-polish.apk` bu başarılı
-değiştirme kaydedildikten sonra Geri Dönüşüm Kutusu'na taşındı.
+`arm64` APK'yı tutar. Önceki APK'lar ve geçici ekran kanıtları Geri Dönüşüm
+Kutusu'na taşındı.
 
-Kanıt: `docs/observation_archive/cutover_2026-08-17-03.md`.
+Kanıt: `docs/observation_archive/cutover_2026-08-22.md`.
 
 ## Bilyoner takım logo eşlemesi
 
@@ -1007,6 +1003,8 @@ Kanıt: `docs/observation_archive/cutover_2026-08-17-03.md`.
 
 ## Açık observation / blokajlar
 
+- `NXT-OBS-111`–`116` tamamı `RESOLVED`; bu batch'ten açık `OBSERVED` veya
+  `READY` ve kapanış işlemi kalmadı.
 - Freeze edilen sekiz maddeden açık `OBSERVED` kalmadı. `NXT-OBS-073`, `074`,
   `086`, `089` ve `100` doğru sahip/kanıt gelene kadar `DEFERRED`.
 - `NXT-OBS-104`: `/sap/bc/zbet/provider/detail` live SICF düğümü owner'ın yeniden
@@ -1029,26 +1027,24 @@ Kanıt: `docs/observation_archive/cutover_2026-08-17-03.md`.
 ## Sıradaki milestone
 
 Observation modunda kal. Sonraki teknik kapı, `NXT-OBS-104` için SAP SICF
-kalıcılığının ayrı operasyonel onayla çözülmesidir. Mobile APK baseline değişmedi;
+kalıcılığının ayrı operasyonel onayla çözülmesidir. Final Mobile pilot APK
+paylaşıldı; current batch'in commit/push/runtime kapanışı tamamlandı.
 FULL_INTERNAL ve Champion/Challenger başlatılmadı.
 
 ## Exact next steps
 
-1. Ayrı SAP yazma/aktivasyon onayı verilirse `detail` SICF nesnesini abapGit
+1. Mevcut batch için APK, commit, push, runtime restart/read-back veya belge
+   kapanışı beklemiyor; observation modunda yeni fiziksel bulguları kaydet.
+2. Ayrı SAP yazma/aktivasyon onayı verilirse `detail` SICF nesnesini abapGit
    kapsamına al, doğru hedefte aktive et ve restart/session sınırından sonra
    tokensız 401 + tokenlı 200 + BFF OK read-back kanıtı al.
-2. Ayrı commit/push onayı verilirse yalnız bounded `zbet-cap` telemetry yamasıyla
-   Mobile dokümantasyon checkpoint'ini ilgili repolarda hazırla; dirty kullanıcı
-   dosyalarını dahil etme.
-3. Ayrı exact-SHA `DEPLOY-DEV` onayı verilirse BFF yamasını DEV/public runtime'a
-   yayınla ve `/health.liveContextTelemetry` alanını doğrula. Production hedefleme.
-4. Doğal bir kırmızı kart geldiğinde alt tip ayrımını yalnız gözlemsel doğrula;
+3. Doğal bir kırmızı kart geldiğinde alt tip ayrımını yalnız gözlemsel doğrula;
    bu release engeli değildir.
-5. `DECISION SAFETY / EVENT-TRANSITION CONFLICT REVIEW` başka bir BTB
+4. `DECISION SAFETY / EVENT-TRANSITION CONFLICT REVIEW` başka bir BTB
    thread'inde tamamlandı. Sonuçları o thread'in kanonik kayıtlarındadır ve
    buradan yeniden yorumlanmaz; aşağıdaki bölüm yalnız tarihsel kapsam kaydıdır.
-6. FULL_INTERNAL ve Champion/Challenger başlatılmadı; ayrı karar gerektirir.
-7. Yeni observation batch'i yalnız `btb next cutover start` ile açılır;
+5. FULL_INTERNAL ve Champion/Challenger başlatılmadı; ayrı karar gerektirir.
+6. Yeni observation batch'i yalnız `btb next cutover start` ile açılır;
    commit/push ve dış deploy kapıları açık onayla işletilir.
 
 ## DECISION SAFETY / EVENT-TRANSITION CONFLICT REVIEW — başka thread'de kapandı

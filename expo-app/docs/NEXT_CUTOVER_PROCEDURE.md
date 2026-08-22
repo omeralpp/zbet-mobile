@@ -57,6 +57,25 @@ varsayımla commit kapsamına alınmaz.
 BTP deploy, Cloudflare DNS/Tunnel yayını, Firebase veya SAP dış değişikliği,
 release imzalama/dağıtım ve Cordova cutover her seferinde ayrı açık onay ister.
 
+## `observation moduna kadar devam et`
+
+Sahip doğrulanmış bir batch için bu ifadeyi açıkça kullandığında amaç yalnız
+yerel kodu bırakmak değil, aynı dondurulmuş kapsamın hâlâ uygulanabilir bütün
+kapanış adımlarını tamamlayıp yeniden observation moduna dönmektir:
+
+- tek final fiziksel-telefon ARM64 pilot APK'sını üret, doğrula ve paylaş;
+- yalnız bounded batch dosyalarını stage/commit/push et;
+- BFF değiştiyse mevcut onaylı yerel pilot runtime'ı temiz pushed SHA'dan bir
+  kez yeniden başlat ve bounded public read-back yap;
+- archive/handoff/SHA/artefakt kanıtlarını güncelle ve bu son belge değişikliğini
+  de commit/push et.
+
+Bu ifade frozen batch dışındaki SAP/Firebase yazısını, Cloudflare DNS/Tunnel
+yapılandırma değişikliğini, production signing/dağıtımı, BTP Work Zone deploy'u
+veya Cordova cutover'ı kapsamaz. Bir adapter ayrıca exact-SHA `DEPLOY-DEV`
+tokenı istiyorsa o daha sıkı kapı korunur; akış o kapı tamamlanmadan observation
+kapanışı ilan etmez.
+
 ## Kapanış
 
 Tamamlanan maddeler
