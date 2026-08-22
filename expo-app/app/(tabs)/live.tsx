@@ -31,6 +31,7 @@ import {
 } from "@/src/utils/decision-filters";
 import {
   matchLiveTab,
+  resolveLiveMatchTab,
   type LiveMatchTab
 } from "@/src/utils/live-match-tabs";
 import { groupMatchesByKickoff } from "@/src/utils/match-groups";
@@ -51,27 +52,14 @@ function routeTab(
 ): LiveMatchTab {
   const scope = firstParam(scopeValue);
   const legacy = firstParam(legacyFilter);
-  if (["LIVE", "ALL", "STAR"].includes(scope)) {
-    return scope as LiveMatchTab;
-  }
-  // Preserve old notification/deep-link compatibility without keeping a
-  // separate selected tab in the current UI.
-  if (scope === "SELECTED" || legacy === "SELECTED") {
-    return "STAR";
-  }
-  if (legacy === "ALL") {
-    return "ALL";
-  }
-  if (
-    legacy === "HIGH_STAR" ||
+  return resolveLiveMatchTab(
+    scope,
+    legacy,
     isStarDecisionFilter(firstParam(decisionValue))
-  ) {
-    return "STAR";
-  }
-  return "LIVE";
+  );
 }
 
-const localTabs = ["LIVE", "ALL"] as const;
+const localTabs = ["LIVE", "FIXTURE"] as const;
 
 export default function LiveScreen() {
   const params = useLocalSearchParams<{
@@ -117,7 +105,9 @@ export default function LiveScreen() {
     const source = query.data ?? [];
     return {
       LIVE: source.filter((match) => matchLiveTab(match, "LIVE", starFilter)).length,
-      ALL: source.filter((match) => matchLiveTab(match, "ALL", starFilter)).length,
+      FIXTURE: source.filter((match) =>
+        matchLiveTab(match, "FIXTURE", starFilter)
+      ).length,
       STAR: source.filter((match) => matchLiveTab(match, "STAR", starFilter)).length
     };
   }, [query.data, starFilter]);
@@ -174,13 +164,13 @@ export default function LiveScreen() {
           selected={tab === "LIVE"}
         />
         <FilterChip
-          count={tabCounts.ALL}
-          label="Tümü"
+          count={tabCounts.FIXTURE}
+          label="Fikstür"
           onPress={() => {
             setDecisionOpen(false);
-            router.setParams({ scope: "ALL", filter: undefined });
+            router.setParams({ scope: "FIXTURE", filter: undefined });
           }}
-          selected={tab === "ALL"}
+          selected={tab === "FIXTURE"}
         />
         <DecisionFilterChip
           active={tab === "STAR"}
@@ -219,8 +209,12 @@ export default function LiveScreen() {
           ListEmptyComponent={
             <EmptyState
               kind="NO_LIVE_MATCH"
-              message="Bu filtreye uyan bir maç bulunmuyor."
-              title="Maç yok"
+              message={
+                tab === "FIXTURE"
+                  ? "Yakında başlayacak planlı bir maç bulunmuyor."
+                  : "Bu filtreye uyan bir maç bulunmuyor."
+              }
+              title={tab === "FIXTURE" ? "Yaklaşan maç yok" : "Maç yok"}
             />
           }
           maxToRenderPerBatch={4}

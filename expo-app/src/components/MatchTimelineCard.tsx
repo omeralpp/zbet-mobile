@@ -1,10 +1,18 @@
 import { memo, useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import type { LiveContext } from "@/src/api/schemas";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View
+} from "react-native";
+import type { LiveContext, SuperLog } from "@/src/api/schemas";
 import { LiveContextNotice } from "@/src/components/LiveContextNotice";
 import { ChangeEmphasis } from "@/src/components/ChangeEmphasis";
+import { RatingStars } from "@/src/components/RatingStars";
 import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
+import { buildMatchTimelineFeed } from "@/src/components/match-timeline-feed";
 import {
   describeEvent,
   describeEventForAccessibility,
@@ -173,11 +181,98 @@ function TimelineRow({
   );
 }
 
+function SuperDecisionRow({
+  decision,
+  isCurrent,
+  isFirst,
+  isLast,
+  onPress,
+  sharesMinute
+}: {
+  decision: SuperLog;
+  isCurrent: boolean;
+  isFirst: boolean;
+  isLast: boolean;
+  onPress: ((decision: SuperLog) => void) | undefined;
+  sharesMinute: boolean;
+}) {
+  return (
+    <Pressable
+      accessibilityHint="Super karar detayını açar"
+      accessibilityLabel={[
+        `${decision.elapsed}. dakika Super tercihi`,
+        `${decision.rating} yıldız`,
+        decision.selectedOdd,
+        isCurrent ? "güncel tercih" : null,
+        sharesMinute ? "başka bir olayla aynı dakika; kesin sıralama bilinmiyor" : null
+      ]
+        .filter(Boolean)
+        .join(", ")}
+      accessibilityRole="button"
+      disabled={!onPress}
+      onPress={() => onPress?.(decision)}
+      style={({ pressed }) => [
+        styles.rowWrap,
+        styles.superRow,
+        pressed && styles.superRowPressed
+      ]}
+    >
+      <View style={[styles.lane, styles.superMeta]}>
+        <Text style={styles.superLabel}>SUPER</Text>
+        <RatingStars rating={decision.rating} size={iconSizes.micro} />
+      </View>
+      <View style={styles.axis}>
+        <View
+          style={[
+            styles.rail,
+            styles.superRail,
+            isFirst && styles.railFirst,
+            isLast && styles.railLast
+          ]}
+        />
+        <View style={[styles.minutePill, styles.superMinutePill]}>
+          <Text style={[styles.minute, styles.superMinute]}>
+            {decision.elapsed}&apos;
+          </Text>
+        </View>
+        <View style={[styles.mark, styles.superMark]}>
+          <MaterialCommunityIcons
+            color={colors.gold}
+            name="star"
+            size={iconSizes.small}
+          />
+        </View>
+      </View>
+      <View style={[styles.lane, styles.superSelection]}>
+        <Text numberOfLines={2} style={styles.superOdd}>
+          {decision.selectedOdd}
+        </Text>
+        <View style={styles.superAction}>
+          {isCurrent ? (
+            <Text style={styles.currentDecision}>GÜNCEL</Text>
+          ) : null}
+          <MaterialCommunityIcons
+            color={colors.textMuted}
+            name="chevron-right"
+            size={iconSizes.inline}
+          />
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
 function TimelineList({
+  currentDecisionKey,
+  decisions,
   events,
+  onDecisionPress,
   teams
 }: {
+  currentDecisionKey: string | null | undefined;
+  decisions: SuperLog[];
   events: VisibleEvent[];
+  onDecisionPress: ((decision: SuperLog) => void) | undefined;
   teams: EventTeams;
 }) {
   // The first content payload is the quiet baseline. A later event gets a new
@@ -185,25 +280,38 @@ function TimelineList({
   const [initialEventKeys] = useState(
     () => new Set(events.map((event) => event.eventKey))
   );
+  const feed = buildMatchTimelineFeed(events, decisions, currentDecisionKey);
 
   return (
     <View style={styles.list}>
-      {events.map((event, index) => (
-        <ChangeEmphasis
-          announceOnMount={!initialEventKeys.has(event.eventKey)}
-          key={event.eventKey}
-          kind="alert"
-          token={event.eventKey}
-        >
-          <TimelineRow
-            event={event}
+      {feed.map((entry, index) =>
+        entry.kind === "EVENT" ? (
+          <ChangeEmphasis
+            announceOnMount={!initialEventKeys.has(entry.event.eventKey)}
+            key={entry.key}
+            kind="alert"
+            token={entry.event.eventKey}
+          >
+            <TimelineRow
+              event={entry.event}
+              isFirst={index === 0}
+              isLast={index === feed.length - 1}
+              isLatest={entry.isLatestEvent}
+              teams={teams}
+            />
+          </ChangeEmphasis>
+        ) : (
+          <SuperDecisionRow
+            decision={entry.decision}
+            isCurrent={entry.isCurrent}
             isFirst={index === 0}
-            isLast={index === events.length - 1}
-            isLatest={index === events.length - 1}
-            teams={teams}
+            isLast={index === feed.length - 1}
+            key={entry.key}
+            onPress={onDecisionPress}
+            sharesMinute={entry.sharesMinute}
           />
-        </ChangeEmphasis>
-      ))}
+        )
+      )}
     </View>
   );
 }
@@ -211,13 +319,19 @@ function TimelineList({
 function MatchTimelineCardComponent({
   awayTeam,
   context,
+  currentDecisionKey,
+  decisions = [],
   homeTeam,
-  isLoading
+  isLoading,
+  onDecisionPress
 }: {
   awayTeam?: string | null | undefined;
   context?: LiveContext | undefined;
+  currentDecisionKey?: string | null;
+  decisions?: SuperLog[];
   homeTeam?: string | null | undefined;
   isLoading?: boolean;
+  onDecisionPress?: (decision: SuperLog) => void;
 }) {
   const state = resolveTimelineState(context, isLoading);
   const events = visibleEvents(context?.timeline);
@@ -227,7 +341,7 @@ function MatchTimelineCardComponent({
     <>
       <View style={styles.card}>
         <SurfaceMaterial radius={radii.lg} />
-        {state === "LOADING" ? (
+        {state === "LOADING" && decisions.length === 0 ? (
           <View
             accessibilityLiveRegion="polite"
             accessibilityRole="progressbar"
@@ -236,10 +350,10 @@ function MatchTimelineCardComponent({
             <ActivityIndicator color={semantic.live} />
             <Text style={styles.stateBody}>Maç akışı verisi bekleniyor</Text>
           </View>
-        ) : state === "UNAVAILABLE" ? (
+        ) : state === "UNAVAILABLE" && decisions.length === 0 ? (
           // Not retrieved. Never rendered as "no events".
           <LiveContextNotice availability={context?.availability} />
-        ) : state === "EMPTY" ? (
+        ) : state === "EMPTY" && decisions.length === 0 ? (
           <View style={styles.stateRow}>
             <MaterialCommunityIcons
               color={semantic.neutral}
@@ -251,7 +365,35 @@ function MatchTimelineCardComponent({
             </Text>
           </View>
         ) : (
-          <TimelineList events={events} teams={teams} />
+          <>
+            {state === "LOADING" ? (
+              <View style={styles.sourceNotice}>
+                <ActivityIndicator color={semantic.live} size="small" />
+                <Text style={styles.sourceNoticeText}>
+                  Maç olayları yükleniyor; Super tercihleri hazır.
+                </Text>
+              </View>
+            ) : state === "UNAVAILABLE" ? (
+              <View style={styles.sourceNotice}>
+                <Text style={styles.sourceNoticeText}>
+                  Maç olayları alınamadı; Super tercihleri gösteriliyor.
+                </Text>
+              </View>
+            ) : state === "EMPTY" ? (
+              <View style={styles.sourceNotice}>
+                <Text style={styles.sourceNoticeText}>
+                  Henüz gol veya kırmızı kart yok.
+                </Text>
+              </View>
+            ) : null}
+            <TimelineList
+              currentDecisionKey={currentDecisionKey}
+              decisions={decisions}
+              events={events}
+              onDecisionPress={onDecisionPress}
+              teams={teams}
+            />
+          </>
         )}
       </View>
     </>
@@ -444,5 +586,62 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     ...typeScale.bodyCompact,
     textAlign: "center"
+  },
+  sourceNotice: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.sm,
+    paddingBottom: spacing.sm
+  },
+  sourceNoticeText: {
+    color: colors.textMuted,
+    flex: 1,
+    ...typeScale.label
+  },
+  superRow: {
+    borderRadius: radii.md
+  },
+  superRowPressed: {
+    backgroundColor: colors.goldSoft,
+    opacity: 0.82
+  },
+  superMeta: {
+    alignItems: "flex-end",
+    justifyContent: "center"
+  },
+  superLabel: {
+    color: colors.gold,
+    ...typeScale.micro,
+    marginBottom: spacing.xs
+  },
+  superRail: {
+    backgroundColor: colors.gold
+  },
+  superMinutePill: {
+    borderColor: colors.gold
+  },
+  superMinute: {
+    color: colors.gold
+  },
+  superMark: {
+    borderColor: colors.gold
+  },
+  superSelection: {
+    alignItems: "flex-start",
+    justifyContent: "center"
+  },
+  superOdd: {
+    color: colors.text,
+    ...typeScale.identityCompact
+  },
+  superAction: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.xs,
+    marginTop: spacing.xs
+  },
+  currentDecision: {
+    color: semantic.positive,
+    ...typeScale.micro
   }
 });

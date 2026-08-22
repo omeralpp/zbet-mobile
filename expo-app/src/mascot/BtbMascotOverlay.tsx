@@ -49,7 +49,7 @@ type MenuItem = {
 };
 
 const storageKey = "btb-mobile-next-bibi-position-v3";
-const mascotSize = 58;
+const mascotSize = 68;
 /** Quiet moment after arriving on a surface before discovery may speak. */
 const discoverySettleMs = 1600;
 const edgeMargin = 10;
@@ -142,7 +142,6 @@ export function BtbMascotOverlay() {
   const [guideTranslation] = useState(
     () => new Animated.ValueXY({ x: 0, y: 0 })
   );
-  const [halo] = useState(() => new Animated.Value(0.2));
   const defaultPosition = useMemo(
     () => ({
       x: Math.max(
@@ -408,24 +407,16 @@ export function BtbMascotOverlay() {
   useEffect(() => {
     if (reduceMotion) {
       openTilt.setValue(0);
-      halo.setValue(open ? 1 : 0.2);
       return;
     }
-    Animated.parallel([
-      Animated.spring(openTilt, {
-        toValue: open ? 1 : 0,
-        damping: 13,
-        stiffness: 150,
-        mass: 0.7,
-        useNativeDriver: true
-      }),
-      Animated.timing(halo, {
-        toValue: open ? 1 : 0.2,
-        duration: 220,
-        useNativeDriver: true
-      })
-    ]).start();
-  }, [halo, open, openTilt, reduceMotion]);
+    Animated.spring(openTilt, {
+      toValue: open ? 1 : 0,
+      damping: 13,
+      stiffness: 150,
+      mass: 0.7,
+      useNativeDriver: true
+    }).start();
+  }, [open, openTilt, reduceMotion]);
 
   useEffect(() => {
     const next = {
@@ -808,7 +799,6 @@ export function BtbMascotOverlay() {
             onPressOut={() => animatePress(1)}
             style={styles.toggle}
           >
-            <Animated.View pointerEvents="none" style={[styles.halo, { opacity: halo }]} />
             <Image
               resizeMode="contain"
               source={bibiFrames[open ? 2 : idleSuppressed ? 0 : blinkFrame]}
@@ -835,18 +825,6 @@ const styles = StyleSheet.create({
     height: mascotSize,
     alignItems: "center",
     justifyContent: "center"
-  },
-  halo: {
-    position: "absolute",
-    top: 2,
-    right: 2,
-    bottom: 2,
-    left: 2,
-    borderRadius: radii.round,
-    borderWidth: 2,
-    borderColor: colors.green,
-    backgroundColor: colors.blueSoft,
-    ...shadows.card
   },
   bibi: { width: mascotSize, height: mascotSize },
   sparkle: {

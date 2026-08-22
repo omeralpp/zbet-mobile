@@ -4,15 +4,16 @@ import {
   type StarDecisionFilter
 } from "./decision-filters";
 
-export type SuperLogTab = "ALL" | "OPEN" | "STAR";
+export type SuperLogTab = "ALL" | "STAR";
 
 export function matchSuperLogTab(
   log: SuperLog,
   tab: SuperLogTab,
-  starFilter: StarDecisionFilter
+  starFilter: StarDecisionFilter,
+  onlyOpen = false
 ): boolean {
-  if (tab === "OPEN") {
-    return log.result === "OPEN";
+  if (onlyOpen && log.result !== "OPEN") {
+    return false;
   }
   if (tab === "STAR") {
     return superDecisionFilter(log, starFilter);

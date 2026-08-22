@@ -1,41 +1,47 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-08-21
+Son güncelleme: 2026-08-22
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `OBSERVATION` — 2026-08-21 `btb next cutover start` batch'i (03) yerel
-olarak kapandı. Freeze edilen `NXT-OBS-105`–`110` satırlarının tamamı
-sınıflandırıldı; açık `OBSERVED` kalmadı. `105` canlı Super sonuç bandı, `106`
-yerel sekme öncelikli yatay jest, `107` merkezi gol/kırmızı kart akışı ve `110`
-özgün Jinx kimliği fiziksel Xiaomi kabulüyle `RESOLVED`; gerçek Toto ödeme alanı
-olmayan `108` ile doğrulanmış
-kickoff fiyatı olmayan `109` `DEFERRED` oldu.
+Mod: `OBSERVATION` — 2026-08-22 `btb next cutover start` batch'i kapandı.
+Freeze edilen `NXT-OBS-111`–`116` satırlarında açık `OBSERVED` veya `READY`
+kalmadı; altı madde de yerel kanıtları geçip sahip tarafından kabul edilerek
+`RESOLVED` oldu. Ana sekmeler tam
+genişlikte eş zamanlı kayıyor, Super kararları gol/kart zaman akışına eklendi,
+`Açık` sekmesi bağımsız switch oldu, Canlı'daki `Tümü` yalnız `NOT_STARTED`
+maçları gösteren `Fikstür` oldu, ana Super geçmişi 200'e çıkarıldı ve Jinx'in
+ayrı halo'su kaldırılıp ortak boyutu 58dp'den 68dp'ye büyütüldü.
 
-Mobile TypeScript/ESLint/unit/brand kontrolleri, izole preview native prebuild ve
-tek ARM64 debug APK derlemesi geçti. APK
-`.codex-artifacts/btb-mobile-next-arm64-debug.apk`, SHA-256
-`0E5314080BAF284C5C73224125DE0EFE0A5B506D9233922E059B04E7A1943331`.
-Normal Expo dependency check, batch öncesi baz çizgide dokuz SDK 57 patch
-önerisi bildiriyor; bağımsız dependency yükseltmesi yapılmadı. Sonraki Android
-15 x86_64 release emülatör smoke'unda `105` gerçek açık Super kararıyla
-`0-1 · 83' canlı`, `106` Canlı ve Super yerel-sekme/ana-sekme geçişleri,
-`107` üç gerçek gol içeren merkezi akış ve `110` Jinx'in koyu/açık görünümü,
-ayar metinleri, hızlı menüsü ve kapalı-göz frame'i geçti. Geçici release APK
-`53.919.417` bayttı (SHA-256
-`30B65B24A67D591ADD574FAE1AC595D32B79D593DFEE2C41768C428BC3F401FA`) ve
-doğrulama sonrası Geri Dönüşüm Kutusu'na taşındı. Aynı doğrulanmış kaynaktan
-fiziksel telefon için yerel
-ARM64 release adayı üretildi: `.codex-artifacts/btb-mobile-next-arm64-cutover-03.apk`
-(`53.343.273` bayt; yalnız `arm64-v8a`; APK Signature Scheme v2 doğrulandı;
-SHA-256 `E8A02ED307FC4455C70705883263DD6C276BA8D9E9285263875F747BD0E1443E`).
-Pilot debug sertifikasının SHA-256 özeti
+Mobile TypeScript/ESLint/414 unit/OpenAPI/brand kapısı ve resmi BFF test +
+production build kapısı geçti. Gerçek 200 satırlık provider fixture'ı sıralama,
+kayıpsız eşleme ve `$top=200` sözleşmesini doğruladı; maç detayının ayrı 50
+sınırı korundu. Preview prebuild ile Android 15 x86_64 debug
+derleme/kurulum/açılış ve hedefli UI smoke geçti; ölümcül Android/React Native
+logu bulunmadı. Yerel APK `95.954.229` bayt ve SHA-256
+`C6EF48FF94F9AB9D757579BCB77A0BD23C51D7ACE1E6B5108EEDFDB4A21130E2`.
+Expo Doctor yalnız dokuz mevcut SDK 57 patch önerisi nedeniyle non-zero;
+bağımsız dependency yükseltmesi yapılmadı. Fiziksel Xiaomi parity'si ve fiziksel
+200 satırlık uzun liste kaydırması yapılmadı; sahip mevcut Android 15 görsel
+kanıtı ile 200 satırlık teknik sözleşme/test kanıtını observation kapanışı için
+kabul etti. Observation kapanışından sonra sahibin paylaşım isteğiyle tek final
+telefon artefaktı üretildi:
+`.codex-artifacts/btb-mobile-next-arm64-cutover-04.apk` (`53.347.881` bayt;
+yalnız `arm64-v8a`; APK Signature Scheme v2; debug/pilot sertifika SHA-256
 `fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c`;
-owner 2026-08-21'de aday APK'nın fiziksel Xiaomi testini tamamlayıp Mobile parity'yi
-kabul etti. BFF/SAP/model değişmedi;
-commit/push, deploy, production signing ve dış sistem değişikliği yapılmadı.
+APK SHA-256
+`5D0ECB8C19514BCCF75EF8CDC574F7F7760EA3018896A989CEE2355265B77217`).
+Paket, ABI, imza ve server-secret taraması geçti. Önceki APK ve geçici ekran
+kanıtları Geri Dönüşüm Kutusu'na taşındı; yalnız bu final artefakt tutuluyor.
+Commit/push, deploy, production signing veya dış sistem değişikliği yapılmadı.
+Ayrıntı:
+`docs/observation_archive/cutover_2026-08-22.md`.
+
+Önceki (03) batch: `NXT-OBS-105`–`110` sınıflandırıldı; `105`, `106`, `107`
+ve `110` fiziksel Xiaomi kabulüyle `RESOLVED`, gerçek Toto ödeme alanı olmayan
+`108` ile doğrulanmış kickoff fiyatı olmayan `109` `DEFERRED` oldu.
 
 Önceki (02) batch: sekiz eski `OBSERVED` satır sınıflandırıldı; `095` fiziksel
 canlı maç kanıtıyla çözüldü, `096` superseded oldu, `099` tarihsel çözüm olarak

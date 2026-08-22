@@ -134,6 +134,7 @@ paths:
             application/json:
               schema:
                 type: array
+                maxItems: 200
                 items:
                   $ref: "#/components/schemas/SuperLog"
         default:

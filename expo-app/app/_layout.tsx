@@ -13,6 +13,7 @@ import { MascotActionsProvider } from "@/src/mascot/MascotActions";
 import { AndroidBackGuard } from "@/src/navigation/AndroidBackGuard";
 import { AppProviders } from "@/src/providers/AppProviders";
 import { colors, themeMode } from "@/src/theme/theme";
+import { useReducedMotion } from "@/src/theme/use-reduced-motion";
 import { TutorialProvider } from "@/src/tutorial/TutorialProvider";
 import { syncWidgetTheme } from "@/src/widgets/btb-widget";
 
@@ -20,6 +21,7 @@ SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 function RootNavigator() {
   const auth = useAuth();
+  const reduceMotion = useReducedMotion();
   const [launchComplete, setLaunchComplete] = useState(false);
   const hasSession =
     auth.status === "authenticated" || auth.status === "preview";
@@ -54,6 +56,7 @@ function RootNavigator() {
       <StatusBar style={themeMode === "light" ? "dark" : "light"} />
       <Stack
         screenOptions={{
+          animation: reduceMotion ? "none" : "slide_from_right",
           contentStyle: { backgroundColor: colors.background },
           headerStyle: { backgroundColor: colors.backgroundElevated },
           headerTintColor: colors.text,

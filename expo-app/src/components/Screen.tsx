@@ -134,11 +134,11 @@ export function Screen({
         if (edgeSwipeBack) {
           const shouldGoBack = gesture.dx > 76 || gesture.vx > 0.65;
           if (shouldGoBack && onEdgeSwipeBack) {
-            Animated.timing(swipeX, {
-              toValue: width,
-              duration: 160,
-              useNativeDriver: true
-            }).start(() => onEdgeSwipeBack());
+            // Hand the committed gesture to the stack immediately. Letting
+            // this view finish its own exit first created a visible seam before
+            // the native paired transition began.
+            swipeX.setValue(0);
+            onEdgeSwipeBack();
             return;
           }
           Animated.spring(swipeX, springBack).start();
@@ -155,7 +155,12 @@ export function Screen({
           if (target.kind === "LOCAL") {
             localTabSwipe?.onNavigate(target.direction);
           } else {
+            // The bottom-tab navigator now moves both scenes the full screen
+            // width. Reset the finger-follow transform so it does not stack a
+            // second translation on top of that paired transition.
+            swipeX.setValue(0);
             router.navigate(target.route as never);
+            return;
           }
         }
         Animated.spring(swipeX, springBack).start();

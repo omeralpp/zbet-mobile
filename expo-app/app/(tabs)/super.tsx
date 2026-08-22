@@ -7,6 +7,7 @@ import {
   Pressable,
   RefreshControl,
   StyleSheet,
+  Switch,
   Text,
   View
 } from "react-native";
@@ -53,13 +54,6 @@ import {
 } from "@/src/utils/super-day-scope";
 import type { SuperLog } from "@/src/api/schemas";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
-import {
-  adjacentLocalTab,
-  type TabSwipeDirection
-} from "@/src/navigation/tab-swipe";
-
-const localTabs = ["ALL", "OPEN"] as const;
-
 export default function SuperScreen() {
   const params = useLocalSearchParams<{
     scope?: string | string[];
@@ -74,6 +68,7 @@ export default function SuperScreen() {
   const latestDayOnly = dayScope === "LATEST_DAY";
   const activeDayScope = superDayScopeLabel(dayScope);
   const [tab, setTab] = useState<SuperLogTab>("ALL");
+  const [onlyOpen, setOnlyOpen] = useState(false);
   const { filter: starFilter, setFilter: setStarFilter } =
     useSuperStarFilter();
   const [decisionOpen, setDecisionOpen] = useState(false);
@@ -103,22 +98,29 @@ export default function SuperScreen() {
     () =>
       sortSuperLogs(
         scopedLogs.filter(
-          (log) => matchSuperLogTab(log, tab, starFilter)
+          (log) => matchSuperLogTab(log, tab, starFilter, onlyOpen)
         ),
         sort
       ),
-    [scopedLogs, sort, starFilter, tab]
+    [onlyOpen, scopedLogs, sort, starFilter, tab]
   );
   useEffect(() => {
     listRef.current?.scrollToOffset({ animated: true, offset: 0 });
-  }, [sort]);
+  }, [onlyOpen, sort, tab]);
   const tabCounts = useMemo(
     () => ({
-      ALL: scopedLogs.filter((log) => matchSuperLogTab(log, "ALL", starFilter)).length,
-      OPEN: scopedLogs.filter((log) => matchSuperLogTab(log, "OPEN", starFilter)).length,
-      STAR: scopedLogs.filter((log) => matchSuperLogTab(log, "STAR", starFilter)).length
+      ALL: scopedLogs.filter((log) =>
+        matchSuperLogTab(log, "ALL", starFilter, onlyOpen)
+      ).length,
+      STAR: scopedLogs.filter((log) =>
+        matchSuperLogTab(log, "STAR", starFilter, onlyOpen)
+      ).length
     }),
-    [scopedLogs, starFilter]
+    [onlyOpen, scopedLogs, starFilter]
+  );
+  const openCount = useMemo(
+    () => scopedLogs.filter((log) => log.result === "OPEN").length,
+    [scopedLogs]
   );
   const dateScope = useMemo(
     () =>
@@ -127,82 +129,78 @@ export default function SuperScreen() {
         : formatSuperDateScope(scopedLogs.map((log) => log.createdAt)),
     [latestDayOnly, latestMatchDate, scopedLogs]
   );
-  const localTabSwipe = useMemo(() => {
-    const previous = adjacentLocalTab(tab, localTabs, "PREVIOUS");
-    const next = adjacentLocalTab(tab, localTabs, "NEXT");
-    return {
-      hasNext: next !== null,
-      hasPrevious: previous !== null,
-      onNavigate: (direction: TabSwipeDirection) => {
-        const target = adjacentLocalTab(tab, localTabs, direction);
-        if (!target) {
-          return;
-        }
-        setDecisionOpen(false);
-        setDayScopeOpen(false);
-        setTab(target);
-      }
-    };
-  }, [tab]);
-
   return (
     <Screen
       contentStyle={styles.screen}
       eyebrow="BTB SUPER"
-      localTabSwipe={localTabSwipe}
       scroll={false}
       tabSwipe
       title="Karar günlüğü"
     >
       <TutorialTarget id="super-filters" style={styles.filterTarget}>
         <View style={styles.filters}>
-        <FilterChip
-          count={tabCounts.ALL}
-          label="Tümü"
-          onPress={() => {
-            setDecisionOpen(false);
-            setDayScopeOpen(false);
-            setTab("ALL");
-          }}
-          selected={tab === "ALL"}
-        />
-        <FilterChip
-          count={tabCounts.OPEN}
-          label="Açık"
-          onPress={() => {
-            setDecisionOpen(false);
-            setDayScopeOpen(false);
-            setTab("OPEN");
-          }}
-          selected={tab === "OPEN"}
-        />
-        <DecisionFilterChip
-          active={tab === "STAR"}
-          count={tabCounts.STAR}
-          onActivate={() => setTab("STAR")}
-          onChange={(value) => {
-            setStarFilter(value);
-            setTab("STAR");
-            refreshPerformanceWidgetFromApi(value).catch(
-              (error: unknown) => {
-                console.warn(
-                  "Super tercihi widgeta uygulanamadı.",
-                  error
-                );
-              }
-            );
-          }}
-          onSortChange={setSort}
-          onOpenChange={(open) => {
-            setDecisionOpen(open);
-            if (open) {
+          <FilterChip
+            count={tabCounts.ALL}
+            label="Tümü"
+            onPress={() => {
+              setDecisionOpen(false);
               setDayScopeOpen(false);
-            }
-          }}
-          open={decisionOpen}
-          value={starFilter}
-          sortValue={sort}
-        />
+              setTab("ALL");
+            }}
+            selected={tab === "ALL"}
+          />
+          <DecisionFilterChip
+            active={tab === "STAR"}
+            count={tabCounts.STAR}
+            onActivate={() => setTab("STAR")}
+            onChange={(value) => {
+              setStarFilter(value);
+              setTab("STAR");
+              refreshPerformanceWidgetFromApi(value).catch(
+                (error: unknown) => {
+                  console.warn(
+                    "Super tercihi widgeta uygulanamadı.",
+                    error
+                  );
+                }
+              );
+            }}
+            onSortChange={setSort}
+            onOpenChange={(open) => {
+              setDecisionOpen(open);
+              if (open) {
+                setDayScopeOpen(false);
+              }
+            }}
+            open={decisionOpen}
+            value={starFilter}
+            sortValue={sort}
+          />
+          <View
+            style={[
+              styles.openFilter,
+              query.isRefetching && styles.openFilterDisabled
+            ]}
+          >
+            <Text style={styles.openFilterLabel}>Yalnız açık {openCount}</Text>
+            <Switch
+              accessibilityLabel="Yalnız açık kararları göster"
+              accessibilityRole="switch"
+              accessibilityState={{
+                checked: onlyOpen,
+                disabled: query.isRefetching
+              }}
+              disabled={query.isRefetching}
+              onValueChange={(value) => {
+                setDecisionOpen(false);
+                setDayScopeOpen(false);
+                setOnlyOpen(value);
+              }}
+              thumbColor={onlyOpen ? colors.white : colors.textMuted}
+              trackColor={{ false: colors.surfaceStrong, true: colors.blue }}
+              value={onlyOpen}
+            />
+          </View>
         </View>
       </TutorialTarget>
       <View style={styles.scopeRow}>
@@ -358,9 +356,29 @@ const styles = StyleSheet.create({
     paddingBottom: 0
   },
   filters: {
+    alignItems: "center",
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.sm
+  },
+  openFilter: {
+    alignItems: "center",
+    borderColor: colors.borderSoft,
+    borderRadius: radii.round,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing.xs,
+    minHeight: interaction.minTouchTarget,
+    paddingLeft: spacing.md,
+    paddingRight: spacing.xs
+  },
+  openFilterLabel: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: "800"
+  },
+  openFilterDisabled: {
+    opacity: 0.5
   },
   filterTarget: {
     marginBottom: spacing.sm

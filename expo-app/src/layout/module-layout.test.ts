@@ -172,7 +172,6 @@ const liveDefaults = [
   "decision",
   "gamePulse",
   "timeline",
-  "relatedSuper",
   "standings",
   "odds",
   "statistics",
@@ -186,7 +185,6 @@ const liveAnchors = [{ id: "timeline", after: "gamePulse" }];
 const legacyStored = [
   "decision",
   "gamePulse",
-  "relatedSuper",
   "standings",
   "odds",
   "statistics",
@@ -206,7 +204,6 @@ test("a legacy layout gains timeline after gamePulse", () => {
     "decision",
     "gamePulse",
     "timeline",
-    "relatedSuper",
     "standings",
     "odds",
     "statistics",
@@ -222,7 +219,6 @@ test("a reordered legacy layout keeps its relative order", () => {
     "scoreDistribution",
     "gamePulse",
     "statistics",
-    "relatedSuper",
     "standings",
     "pressure"
   ];
@@ -236,7 +232,6 @@ test("a reordered legacy layout keeps its relative order", () => {
     "gamePulse",
     "timeline",
     "statistics",
-    "relatedSuper",
     "standings",
     "pressure"
   ]);
@@ -261,7 +256,6 @@ test("a user-moved timeline is never repositioned again", () => {
   const userMoved = [
     "decision",
     "gamePulse",
-    "relatedSuper",
     "standings",
     "odds",
     "statistics",
@@ -281,7 +275,6 @@ test("a timeline moved to the top stays at the top", () => {
     "timeline",
     "decision",
     "gamePulse",
-    "relatedSuper",
     "standings",
     "odds",
     "statistics",
@@ -334,11 +327,9 @@ test("surfaces without anchors are unaffected", () => {
   ]);
 });
 
-test("a retired module is dropped from an existing install's layout", () => {
-  // `lineups` shipped with Live Context v1 and was removed when the slice
-  // narrowed to goals and red cards. Reconciliation is the whole migration:
-  // an id that is no longer canonical is dropped on the next read, so nothing
-  // has to be written to storage to retire a module.
+test("retired modules are dropped from an existing install's layout", () => {
+  // `relatedSuper` now lives inside timeline. Reconciliation is the whole
+  // migration, just as it was for the earlier retired `lineups` module.
   const storedWithRetired = [
     "decision",
     "gamePulse",
@@ -359,10 +350,13 @@ test("a retired module is dropped from an existing install's layout", () => {
   );
 
   assert.equal(migrated.includes("lineups"), false);
+  assert.equal(migrated.includes("relatedSuper"), false);
   // Every surviving module keeps the position the user arranged.
   assert.deepEqual(
     migrated,
-    storedWithRetired.filter((id) => id !== "lineups")
+    storedWithRetired.filter(
+      (id) => id !== "lineups" && id !== "relatedSuper"
+    )
   );
 });
 
@@ -383,6 +377,7 @@ test("a retired module does not disturb a user's custom order", () => {
   const migrated = reconcileModuleOrder(userOrder, liveDefaults, liveAnchors);
 
   assert.equal(migrated.includes("lineups"), false);
+  assert.equal(migrated.includes("relatedSuper"), false);
   // timeline was already stored, so the anchor must not move it back.
   assert.equal(migrated.indexOf("timeline"), 2);
   assert.equal(migrated[0], "odds");

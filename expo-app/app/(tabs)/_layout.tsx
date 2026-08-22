@@ -1,9 +1,19 @@
-import type { ComponentProps } from "react";
+import { useMemo, type ComponentProps } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Tabs } from "expo-router";
-import { Platform, type ColorValue } from "react-native";
+import {
+  Animated,
+  Platform,
+  useWindowDimensions,
+  type ColorValue
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  mainTabTransitionSpec,
+  mainTabTranslationRange
+} from "@/src/navigation/screen-transitions";
+import { useReducedMotion } from "@/src/theme/use-reduced-motion";
 import { colors, iconSizes, typeScale } from "@/src/theme/theme";
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
@@ -33,13 +43,32 @@ function tabIcon(name: IconName) {
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const reduceMotion = useReducedMotion();
   const bottomPadding = Math.max(insets.bottom, 8);
+  const sceneStyleInterpolator = useMemo(
+    () =>
+      ({ current }: { current: { progress: Animated.AnimatedInterpolation<number> } }) => ({
+        sceneStyle: {
+          transform: [
+            {
+              translateX: current.progress.interpolate({
+                inputRange: [-1, 0, 1],
+                outputRange: [...mainTabTranslationRange(width)]
+              })
+            }
+          ]
+        }
+      }),
+    [width]
+  );
 
   // The horizontal tab gesture lives in `Screen` so the drag moves the screen
   // content with the finger and leaves the tab bar anchored. Keeping it out of
   // the navigator also stops a capture responder from sitting above every list.
   return (
     <Tabs
+      detachInactiveScreens={false}
       screenListeners={{
         tabPress: () => {
           if (Platform.OS !== "web") {
@@ -48,7 +77,13 @@ export default function TabLayout() {
         }
       }}
       screenOptions={{
-        animation: "shift",
+        ...(reduceMotion
+          ? { animation: "none" as const }
+          : {
+              sceneStyleInterpolator,
+              transitionSpec: mainTabTransitionSpec
+            }),
+        lazy: false,
         // The navigator paints its own scene container, and without this it
         // uses React Navigation's default theme background (`rgb(242,242,242)`).
         // During the shift transition that container is briefly visible between

@@ -19,7 +19,6 @@ export const liveDetailModules = [
   "decision",
   "gamePulse",
   "timeline",
-  "relatedSuper",
   "standings",
   "odds",
   "statistics",
@@ -61,10 +60,8 @@ export const moduleLayoutLabels: Record<ModuleLayoutSurface, string> = {
  * appended below the score distribution instead of sitting with the other
  * live-context material.
  *
- * `lineups` shipped alongside it and was removed when the product slice
- * narrowed to goals and red cards. No anchor is needed to retire it: layout
- * reconciliation drops any stored id that is no longer canonical, so existing
- * installs lose it on the next read.
+ * `lineups` and, later, `relatedSuper` were retired. Super decisions now live
+ * inside `timeline`; reconciliation drops both old ids from persisted layouts.
  */
 export const moduleLayoutAnchors: Record<
   ModuleLayoutSurface,

@@ -22,7 +22,6 @@ import {
   matchQuery,
   matchSuperLogsQuery
 } from "@/src/api/queries";
-import { RatingStars } from "@/src/components/RatingStars";
 import { ChangeEmphasis } from "@/src/components/ChangeEmphasis";
 import { LiveDot } from "@/src/components/LiveDot";
 import { SignalMeter } from "@/src/components/SignalMeter";
@@ -253,6 +252,13 @@ export default function MatchDetailScreen() {
   }
 
   const match = query.data;
+  const currentDecisionKey =
+    relatedDecisions.find(
+      (log) =>
+        log.selectedOdd === match.selectedOdd &&
+        log.rating === match.rating &&
+        log.elapsed === match.decisionMinute
+    )?.key ?? null;
   const live = match.status === "LIVE" || match.status === "HALF_TIME";
   const insight = insightQuery.data;
   const leagueContext = leagueContextQuery.data;
@@ -306,13 +312,21 @@ export default function MatchDetailScreen() {
       <LiveDetailPanel
         eyebrow="MAÇ AKIŞI"
         id="timeline"
-        title="Goller ve kırmızı kartlar"
+        title="Goller, kartlar ve Super"
       >
         <MatchTimelineCard
           awayTeam={match.awayTeam}
           context={liveContext.data}
+          currentDecisionKey={currentDecisionKey}
+          decisions={relatedDecisions}
           homeTeam={match.homeTeam}
           isLoading={liveContext.isLoading}
+          onDecisionPress={(decision) =>
+            router.push({
+              pathname: "/super/[key]",
+              params: { key: decision.key }
+            } as never)
+          }
         />
         <LiveContextFreshness
           ageSeconds={liveContext.data?.freshness?.ageSeconds}
@@ -483,60 +497,6 @@ export default function MatchDetailScreen() {
             </View>
           ) : null}
         </Pressable>
-      </LiveDetailPanel>
-    );
-  }
-
-  if (relatedDecisions.length) {
-    moduleNodes.relatedSuper = (
-      <LiveDetailPanel
-        eyebrow="KARAR GEÇMİŞİ"
-        id="relatedSuper"
-        title="Maçın Super tercihleri"
-      >
-        <View style={styles.relatedDecisionCard}>
-          <SurfaceMaterial radius={radii.lg} />
-          {relatedDecisions.map((log, index) => {
-            const current =
-              log.selectedOdd === match.selectedOdd &&
-              log.rating === match.rating &&
-              log.elapsed === match.decisionMinute;
-            return (
-              <Pressable
-                accessibilityHint="Tarihsel Super karar detayını açar"
-                accessibilityLabel={`${log.rating} yıldız, ${log.elapsed}. dakika, ${log.selectedOdd}`}
-                accessibilityRole="button"
-                key={log.key}
-                onPress={() =>
-                  router.push({
-                    pathname: "/super/[key]",
-                    params: { key: log.key }
-                  } as never)
-                }
-                style={({ pressed }) => [
-                  styles.relatedDecisionRow,
-                  index > 0 && styles.relatedDecisionDivider,
-                  pressed && styles.relatedDecisionPressed
-                ]}
-              >
-                <RatingStars rating={log.rating} size={iconSizes.micro} />
-                <Text style={styles.relatedDecisionMinute}>
-                  {log.elapsed}&apos;
-                </Text>
-                <Text style={styles.relatedDecisionOdd}>{log.selectedOdd}</Text>
-                {current ? (
-                  <Text style={styles.currentDecision}>Güncel</Text>
-                ) : (
-                  <MaterialCommunityIcons
-                    color={colors.textMuted}
-                    name="chevron-right"
-                    size={iconSizes.inline}
-                  />
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
       </LiveDetailPanel>
     );
   }
@@ -992,43 +952,6 @@ const styles = StyleSheet.create({
   decisionScore: {
     color: colors.textSubtle,
     fontSize: 10
-  },
-  relatedDecisionCard: {
-    borderColor: colors.borderSoft,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    paddingHorizontal: spacing.lg
-  },
-  relatedDecisionRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: spacing.md,
-    minHeight: 52
-  },
-  relatedDecisionDivider: {
-    borderTopColor: colors.borderSoft,
-    borderTopWidth: 1
-  },
-  relatedDecisionPressed: {
-    opacity: 0.7
-  },
-  relatedDecisionMinute: {
-    color: colors.textMuted,
-    fontSize: 11,
-    fontWeight: "800",
-    minWidth: 32
-  },
-  relatedDecisionOdd: {
-    color: colors.text,
-    flex: 1,
-    fontSize: 13,
-    fontWeight: "900"
-  },
-  currentDecision: {
-    color: colors.green,
-    fontSize: 9,
-    fontWeight: "900",
-    textTransform: "uppercase"
   },
   statsCard: {
     borderRadius: radii.lg,
