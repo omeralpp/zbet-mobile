@@ -6,6 +6,29 @@ import {
 
 export type LiveMatchTab = "LIVE" | "FIXTURE" | "STAR";
 
+/**
+ * How long a `NOT_STARTED` match is still trusted as genuinely upcoming after
+ * its scheduled kickoff passes, before the provider/SAP status is treated as
+ * stale rather than as a real delayed start. Bounded rather than open-ended:
+ * a short provider lag should not drop a match, but an indefinitely stale
+ * `NOT_STARTED` must not sit in the fixture list forever either.
+ */
+const FIXTURE_STALE_TOLERANCE_MS = 90 * 60 * 1000;
+
+/**
+ * `matchDate`/`matchTime` carry no offset of their own; the API's kickoff
+ * times are Europe/Istanbul local, the same assumption `formatFixtureDateTime`
+ * already makes for display. No kickoff parses: return null and let the
+ * caller keep its prior behaviour rather than guess a time.
+ */
+function kickoffInstant(matchDate: string, matchTime: string): number | null {
+  if (!matchDate || !matchTime) {
+    return null;
+  }
+  const parsed = new Date(`${matchDate}T${matchTime}:00+03:00`);
+  return Number.isFinite(parsed.getTime()) ? parsed.getTime() : null;
+}
+
 export function resolveLiveMatchTab(
   scope: string,
   legacyFilter: string,
@@ -31,13 +54,22 @@ export function resolveLiveMatchTab(
 export function matchLiveTab(
   match: MatchSummary,
   tab: LiveMatchTab,
-  starFilter: StarDecisionFilter
+  starFilter: StarDecisionFilter,
+  now: number = Date.now()
 ): boolean {
   switch (tab) {
     case "LIVE":
       return match.status === "LIVE" || match.status === "HALF_TIME";
-    case "FIXTURE":
-      return match.status === "NOT_STARTED";
+    case "FIXTURE": {
+      if (match.status !== "NOT_STARTED") {
+        return false;
+      }
+      const kickoff = kickoffInstant(match.matchDate, match.matchTime);
+      if (kickoff === null) {
+        return true;
+      }
+      return now - kickoff < FIXTURE_STALE_TOLERANCE_MS;
+    }
     case "STAR":
       return matchDecisionFilter(match, starFilter);
   }

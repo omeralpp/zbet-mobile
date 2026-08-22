@@ -317,18 +317,22 @@ function TimelineList({
 }
 
 function MatchTimelineCardComponent({
+  awayScore,
   awayTeam,
   context,
   currentDecisionKey,
   decisions = [],
+  homeScore,
   homeTeam,
   isLoading,
   onDecisionPress
 }: {
+  awayScore?: number | null | undefined;
   awayTeam?: string | null | undefined;
   context?: LiveContext | undefined;
   currentDecisionKey?: string | null;
   decisions?: SuperLog[];
+  homeScore?: number | null | undefined;
   homeTeam?: string | null | undefined;
   isLoading?: boolean;
   onDecisionPress?: (decision: SuperLog) => void;
@@ -336,6 +340,19 @@ function MatchTimelineCardComponent({
   const state = resolveTimelineState(context, isLoading);
   const events = visibleEvents(context?.timeline);
   const teams: EventTeams = { home: homeTeam, away: awayTeam };
+  // The scoreboard and the Live Context timeline are independent upstreams
+  // (see NXT-OBS-118/117): the score can advance while the event feed is
+  // genuinely empty. `state === "EMPTY"` already means the timeline was
+  // retrieved and has neither goals nor red cards, so this only decides
+  // which empty-state copy is honest: "no goals" is false once the score
+  // itself proves otherwise.
+  const scoreAdvanced = (homeScore ?? 0) + (awayScore ?? 0) > 0;
+  const emptyStateBody = scoreAdvanced
+    ? "Skor ilerledi ama olay detayı henüz gelmedi."
+    : "Bu maçta henüz gol veya kırmızı kart yok.";
+  const emptyNoticeText = scoreAdvanced
+    ? "Skor ilerledi ama olay detayı henüz gelmedi."
+    : "Henüz gol veya kırmızı kart yok.";
 
   return (
     <>
@@ -360,9 +377,7 @@ function MatchTimelineCardComponent({
               name="timeline-outline"
               size={iconSizes.navigation}
             />
-            <Text style={styles.stateBody}>
-              Bu maçta henüz gol veya kırmızı kart yok.
-            </Text>
+            <Text style={styles.stateBody}>{emptyStateBody}</Text>
           </View>
         ) : (
           <>
@@ -381,9 +396,7 @@ function MatchTimelineCardComponent({
               </View>
             ) : state === "EMPTY" ? (
               <View style={styles.sourceNotice}>
-                <Text style={styles.sourceNoticeText}>
-                  Henüz gol veya kırmızı kart yok.
-                </Text>
+                <Text style={styles.sourceNoticeText}>{emptyNoticeText}</Text>
               </View>
             ) : null}
             <TimelineList

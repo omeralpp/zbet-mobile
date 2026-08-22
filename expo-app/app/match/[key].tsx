@@ -315,8 +315,10 @@ export default function MatchDetailScreen() {
         title="Goller, kartlar ve Super"
       >
         <MatchTimelineCard
+          awayScore={match.awayScore}
           awayTeam={match.awayTeam}
           context={liveContext.data}
+          homeScore={match.homeScore}
           currentDecisionKey={currentDecisionKey}
           decisions={relatedDecisions}
           homeTeam={match.homeTeam}
