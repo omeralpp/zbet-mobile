@@ -6,43 +6,37 @@ Son güncelleme: 2026-08-22
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `OBSERVATION` — 2026-08-22 `btb next cutover start` batch'i kapandı.
-Freeze edilen `NXT-OBS-111`–`116` satırlarında açık `OBSERVED` veya `READY`
-kalmadı; altı madde de yerel kanıtları geçip sahip tarafından kabul edilerek
-`RESOLVED` oldu. Ana sekmeler tam
-genişlikte eş zamanlı kayıyor, Super kararları gol/kart zaman akışına eklendi,
-`Açık` sekmesi bağımsız switch oldu, Canlı'daki `Tümü` yalnız `NOT_STARTED`
-maçları gösteren `Fikstür` oldu, ana Super geçmişi 200'e çıkarıldı ve Jinx'in
-ayrı halo'su kaldırılıp ortak boyutu 58dp'den 68dp'ye büyütüldü.
+Mod: `OBSERVATION` — 2026-08-22 `mobile cutover start` (05) batch'i kapandı.
+Freeze edilen `NXT-OBS-117`–`120` maddesinden ikisi (`118` Mobile UI yarısı,
+`119`) `RESOLVED`; ikisi (`117`, `120`) kök nedeni doğru teşhis edilmiş ama
+kapsamı Mobile-local bir düzeltmeyi aşan, ayrı scoping/onay gerektiren blocker
+olarak `OBSERVED` kaldı. `FIXTURE` sekmesi artık kickoff'tan 90 dakikadan
+fazla geçmiş `NOT_STARTED` maçları listeden düşürüyor (erteleme/iptal
+uydurmadan); skor ilerlediği halde olay akışı gerçekten boşsa `Bu maçta henüz
+gol veya kırmızı kart yok.` yerine `Skor ilerledi ama olay detayı henüz
+gelmedi.` gösteriliyor. `NXT-OBS-117` (current-match/SuperLog atomik olmayan
+anlık görüntüsü) ve `NXT-OBS-120` (ana sekme sürüklemesi hâlâ
+`react-native-gesture-handler`/`reanimated` değil, eski `PanResponder`
+üzerinden — kurulum/altyapı eksik) bu batch'e alınmadı.
 
-Mobile TypeScript/ESLint/414 unit/OpenAPI/brand kapısı ve resmi BFF test +
-production build kapısı geçti. Gerçek 200 satırlık provider fixture'ı sıralama,
-kayıpsız eşleme ve `$top=200` sözleşmesini doğruladı; maç detayının ayrı 50
-sınırı korundu. Preview prebuild ile Android 15 x86_64 debug
-derleme/kurulum/açılış ve hedefli UI smoke geçti; ölümcül Android/React Native
-logu bulunmadı. Yerel APK `95.954.229` bayt ve SHA-256
-`C6EF48FF94F9AB9D757579BCB77A0BD23C51D7ACE1E6B5108EEDFDB4A21130E2`.
-Expo Doctor yalnız dokuz mevcut SDK 57 patch önerisi nedeniyle non-zero;
-bağımsız dependency yükseltmesi yapılmadı. Fiziksel Xiaomi parity'si ve fiziksel
-200 satırlık uzun liste kaydırması yapılmadı; sahip mevcut Android 15 görsel
-kanıtı ile 200 satırlık teknik sözleşme/test kanıtını observation kapanışı için
-kabul etti. Observation kapanışından sonra sahibin paylaşım isteğiyle tek final
-telefon artefaktı üretildi:
-`.codex-artifacts/btb-mobile-next-arm64-cutover-04.apk` (`53.347.881` bayt;
-yalnız `arm64-v8a`; APK Signature Scheme v2; debug/pilot sertifika SHA-256
-`fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c`;
-APK SHA-256
-`5D0ECB8C19514BCCF75EF8CDC574F7F7760EA3018896A989CEE2355265B77217`).
-Paket, ABI, imza ve server-secret taraması geçti. Önceki APK ve geçici ekran
-kanıtları Geri Dönüşüm Kutusu'na taşındı; yalnız bu final artefakt tutuluyor.
-Mobile batch `7585aaa` ile, Super 200 BFF sözleşmesi `0832b16` ile ve önceki
-pasif Live Context telemetry checkpoint'i `19aa8f8` ile commit/push edildi.
-Temiz `zbet-cap` `19aa8f8` kaynağından mevcut yerel pilot runtime bir kez
-yeniden başlatıldı; Cloudflare yapılandırması değiştirilmedi. Yerel ve public
-health yeni `liveContextTelemetry` alanını gösterdi, public
-`/v1/super/logs` pilot read-back'i tam 200 satır döndürdü. Production signing,
-BTP/Cloudflare yapılandırma deploy'u, Firebase/SAP yazısı veya Cordova cutover
-yapılmadı. Ayrıntı:
+Mobile `npm run check`: TypeScript/ESLint/**415** unit/marka kapısı temiz
+geçti. Fiziksel veya emülatör cihaz doğrulaması yapılmadı — batch yalnız
+süzme mantığı ve metin/koşul değişikliği içeriyor, yeni APK üretilmedi;
+`zbet-cap` bu batch'te değiştirilmedi. Sahip commit/push'u sohbette açıkça
+onayladı; beş dosya tek tek adlarıyla stage edilip commit `1fc45ca` ile
+`origin/master`'a push edildi (`d603e1a..1fc45ca`). Deploy, SAP/Firebase/
+Cloudflare değişikliği, release imzalama, APK dağıtımı veya Cordova cutover
+yapılmadı. Ayrıntı: `docs/observation_archive/cutover_2026-08-22-02.md`.
+
+Önceki (04) batch: `NXT-OBS-111`–`116` sınıflandırıldı; altısı da yerel
+kanıtları geçip sahip tarafından kabul edilerek `RESOLVED` oldu (ana sekme
+tam-genişlik eş zamanlı geçiş, Super kararları zaman akışına eklendi, `Açık`
+bağımsız switch, `Tümü`→`Fikstür` yalnız `NOT_STARTED`, Super geçmişi 200,
+Jinx halo kaldırıldı). Mobile+BFF kapıları ve 200-satır provider fixture
+sözleşmesi geçti; fiziksel Xiaomi doğrulaması yapılmadı, sahip mevcut kanıtı
+kabul etti. Kapanış sonrası sahip isteğiyle final ARM64 APK
+(`btb-mobile-next-arm64-cutover-04.apk`, `53.347.881` bayt) üretildi. Commit
+`7585aaa` (+ BFF `0832b16`, telemetry `19aa8f8`). Ayrıntı:
 `docs/observation_archive/cutover_2026-08-22.md`.
 
 Önceki (03) batch: `NXT-OBS-105`–`110` sınıflandırıldı; `105`, `106`, `107`
