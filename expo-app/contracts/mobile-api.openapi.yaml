@@ -515,11 +515,17 @@ components:
     MatchMarketRate:
       type: object
       additionalProperties: false
-      required: [sort, betType, liveRate]
+      required: [sort, betType, liveRate, kickoffRate]
       properties:
         sort: { type: integer, minimum: 0 }
         betType: { type: string, minLength: 1 }
         liveRate:
+          type: [number, "null"]
+          exclusiveMinimum: 1
+        kickoffRate:
+          description: >-
+            Pre-kickoff decimal odd from SAP Match Odds (Odd/type 01). Null when
+            the source does not publish the requested market.
           type: [number, "null"]
           exclusiveMinimum: 1
     ScoreDistribution:

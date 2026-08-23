@@ -11,8 +11,8 @@ import {
   spacing,
   typeScale
 } from "@/src/theme/theme";
-import { formatRate } from "@/src/utils/format";
 import { SurfaceMaterial } from "./SurfaceMaterial";
+import { ratioMarketRateDisplay } from "./ratio-market-rate";
 
 type RatioPhase = NonNullable<MatchDetail["ratioPhase"]>;
 
@@ -109,14 +109,10 @@ export function RatioResultsChart({
                 (rate) =>
                   rate.sort === row.sort && rate.betType === row.betType
               );
-              const rateText = marketRate
-                ? marketRate.liveRate === null
-                  ? "kapalı"
-                  : formatRate(marketRate.liveRate)
-                : "—";
+              const rateDisplay = ratioMarketRateDisplay(marketRate, phase);
               return (
                 <View
-                  accessibilityLabel={`${row.betType} geçmiş sonuç yüzdeleri, canlı oran ${rateText}`}
+                  accessibilityLabel={`${row.betType} geçmiş sonuç yüzdeleri, ${rateDisplay.accessibilityText}`}
                   key={`${row.sort}:${row.betType}`}
                   style={styles.row}
                 >
@@ -125,15 +121,16 @@ export function RatioResultsChart({
                       {row.betType}
                     </Text>
                     <View style={styles.marketRate}>
-                      <Text style={styles.marketRateLabel}>Canlı oran</Text>
+                      <Text style={styles.marketRateLabel}>
+                        {rateDisplay.label}
+                      </Text>
                       <Text
                         style={[
                           styles.marketRateValue,
-                          marketRate?.liveRate === null &&
-                            styles.marketRateClosed
+                          rateDisplay.isClosed && styles.marketRateClosed
                         ]}
                       >
-                        {rateText}
+                        {rateDisplay.text}
                       </Text>
                     </View>
                   </View>

@@ -13,6 +13,19 @@ export const tabSwipe = {
   resistanceRatio: 0.05
 } as const;
 
+export const edgeSwipe = {
+  /** Width of the leading-edge activation zone. */
+  startWidth: 32,
+  /** Horizontal travel before the edge gesture may activate. */
+  activationDx: 8,
+  /** How much more horizontal than vertical the gesture must be. */
+  directionRatio: 1.2,
+  /** Travel that commits the stack back action on release. */
+  commitDx: 76,
+  /** Fling velocity that commits the stack back action. */
+  commitVx: 0.65
+} as const;
+
 export type TabSwipeDirection = "NEXT" | "PREVIOUS";
 
 /**
@@ -36,6 +49,7 @@ export function adjacentLocalTab<T extends string>(
 }
 
 export function shouldActivateTabSwipe(dx: number, dy: number): boolean {
+  "worklet";
   return (
     Math.abs(dx) > tabSwipe.activationDx &&
     Math.abs(dx) > Math.abs(dy) * tabSwipe.directionRatio
@@ -54,6 +68,7 @@ export function tabSwipeTranslation(
   width: number,
   hasTarget: boolean
 ): number {
+  "worklet";
   if (!Number.isFinite(dx) || !Number.isFinite(width) || width <= 0) {
     return 0;
   }
@@ -71,6 +86,7 @@ export function shouldCommitTabSwipe(
   vx: number,
   hasTarget: boolean
 ): boolean {
+  "worklet";
   if (!hasTarget) {
     return false;
   }
@@ -81,4 +97,22 @@ export function shouldCommitTabSwipe(
     (Math.abs(dx) >= tabSwipe.commitDx ||
       Math.abs(vx) >= tabSwipe.commitVx)
   );
+}
+
+export function shouldActivateEdgeSwipe(
+  startX: number,
+  dx: number,
+  dy: number
+): boolean {
+  "worklet";
+  return (
+    startX <= edgeSwipe.startWidth &&
+    dx > edgeSwipe.activationDx &&
+    dx > Math.abs(dy) * edgeSwipe.directionRatio
+  );
+}
+
+export function shouldCommitEdgeSwipe(dx: number, vx: number): boolean {
+  "worklet";
+  return dx > edgeSwipe.commitDx || vx > edgeSwipe.commitVx;
 }

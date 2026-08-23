@@ -3,7 +3,8 @@ import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Appearance } from "react-native";
+import { Appearance, StyleSheet } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAuth } from "@/src/auth/AuthProvider";
 import { AppLaunchScreen } from "@/src/components/AppLaunchScreen";
@@ -97,18 +98,26 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <AppProviders>
-        <MascotActionsProvider>
-          <TutorialProvider>
-            {/* Inside the tutorial so discovery can stand down while a guide
-                step is on screen; the two never compete for Bibi. */}
-            <DiscoveryProvider>
-              <RootNavigator />
-            </DiscoveryProvider>
-          </TutorialProvider>
-        </MascotActionsProvider>
-      </AppProviders>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={styles.root}>
+      <SafeAreaProvider>
+        <AppProviders>
+          <MascotActionsProvider>
+            <TutorialProvider>
+              {/* Inside the tutorial so discovery can stand down while a guide
+                  step is on screen; the two never compete for Bibi. */}
+              <DiscoveryProvider>
+                <RootNavigator />
+              </DiscoveryProvider>
+            </TutorialProvider>
+          </MascotActionsProvider>
+        </AppProviders>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1
+  }
+});

@@ -52,7 +52,8 @@ export const ratioResultSchema = z.strictObject({
 export const matchMarketRateSchema = z.strictObject({
   sort: z.number().int().nonnegative(),
   betType: z.string().min(1),
-  liveRate: finiteNumber.gt(1).nullable()
+  liveRate: finiteNumber.gt(1).nullable(),
+  kickoffRate: finiteNumber.gt(1).nullable()
 });
 
 export const matchInsightSchema = z.strictObject({

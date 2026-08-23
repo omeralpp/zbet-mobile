@@ -317,7 +317,8 @@ export const mockMatchInsights: MatchInsight[] = mockMatches.map(
     marketRates: match.ratioResults.map((row, rowIndex) => ({
       sort: row.sort,
       betType: row.betType,
-      liveRate: rowIndex === 0 ? 1.38 : null
+      liveRate: rowIndex === 0 ? 1.38 : null,
+      kickoffRate: rowIndex === 0 ? 1.52 : 2.04
     }))
   })
 );
