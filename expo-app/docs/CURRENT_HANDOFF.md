@@ -1,12 +1,65 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-08-22
+Son güncelleme: 2026-08-23
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `OBSERVATION` — 2026-08-22 `mobile cutover start` (05) batch'i kapandı.
+Mod: `OBSERVATION` — 2026-08-23 `mobile cutover start` batch'i yerel olarak
+doğrulanmış dirty checkpoint'te kapandı. `NXT-OBS-109` ve `NXT-OBS-120`
+`RESOLVED`; `NXT-OBS-117` ayrı source-of-truth/rating kararı gerektirdiği için
+`OBSERVED` kaldı.
+
+`NXT-OBS-109`: Web `Match Odds > Odd` kaynağı yerel CDS/OData metadata'sında
+`zbet_cds_001x`, `type='01'` olarak doğrulandı. BFF aynı kanonik marketin
+yayınlanan maç önü alanını nullable `kickoffRate` ile taşır. Mobile canlı oranı
+önceliklendirir; Kick-Off aşamasında canlı yoksa `Kick-off oranı`, sonraki
+aşamalarda canlı kapanmışsa `Canlı kapalı · KO` etiketi gösterir. Kaynakta
+olmayan `Ms1X`, `MsX2`, `Ms05u` marketlerine oran türetilmez; yüzde olan
+`zbet_cds_006-kick_off` fiyat gibi kullanılmaz.
+
+`NXT-OBS-120`: ana/yerel sekme ve detay edge-back sürüklemesi
+`PanResponder`/JS thread'den Expo-uyumlu Gesture Handler + Reanimated worklet
+zincirine taşındı. Resmî Mobile type/lint/test, bounded Doctor, Android
+production bundle ve staged `arm64` debug compile geçti. Android 15 `x86_64`
+release smoke'unda `Özet -> Canlı`, yerel `Canlı -> Fikstür`, sınırda
+`-> Super`, ters yön, detay edge-back ve Kick-Off fallback görünümü geçti.
+Resmî BFF test + production build kapısı da geçti.
+
+Sahibin `APK'ya kadar devam et` onayıyla tek final ARM64 pilot artefaktı
+üretildi ve doğrulandı:
+
+```text
+Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-cutover-06.apk
+Package : com.btb.mobile.next
+Version : 0.1.0 (1) · targetSdk 36 · compileSdk 36
+ABI     : arm64-v8a (yalnız)
+Size    : 53.961.661 bytes
+SHA-256 : 839A2408740CE6DC3305EEC93CA78CD8B6A8A5B3D72D5C551A080918A85C2179
+Signing : v2 · fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
+Config  : authMode=pilot · useMocks=false · API=https://api.surklase.com
+Durum   : FINAL_PILOT_ARTIFACT — BFF public read-back geçti
+```
+
+APK içinde `gesture-handler`, `reanimated` ve `worklets` ARM64 native
+kütüphaneleri mevcut; server/private-key/session kalıp taraması temiz. Eski
+ARM64 baseline, debug APK ve geçici Android bundle Geri Dönüşüm Kutusu'na
+taşındı; `.codex-artifacts` altında yalnız bu APK tutuluyor. Üretim imzası veya
+dağıtım yapılmadı. Public BFF temiz pushed `de91b2e` kaynağından bir kez yeniden
+başlatıldı; local/public health `ok`. Aynı maç için iki yüzey de 9 market
+satırının 9'unda `kickoffRate` alanını ve 7 gerçek kickoff fiyatını döndürdü.
+
+Fonksiyonel commit'ler push edildi: `zbet-cap de91b2e` ve
+`zbet-mobile 6ed7b7b`. BFF önce rollout edildi; local/public read-back geçtikten
+sonra final Mobile APK teslim kapısına alındı. Kullanıcıya ait önceden var olan
+untracked `cutover_2026-08-21-02.md` kapsam dışı korunuyor. SAP
+yazısı/aktivasyonu yoktur. ADT MCP portu sonradan açılmış olsa da bu task'ın
+tool listesine `sap-adt` araçları gelmedi; canlı MCP nesne okuması iddia
+edilmez. Ayrıntı:
+`docs/observation_archive/cutover_2026-08-23.md`.
+
+Önceki (05) batch: 2026-08-22 `mobile cutover start`.
 Freeze edilen `NXT-OBS-117`–`120` maddesinden ikisi (`118` Mobile UI yarısı,
 `119`) `RESOLVED`; ikisi (`117`, `120`) kök nedeni doğru teşhis edilmiş ama
 kapsamı Mobile-local bir düzeltmeyi aşan, ayrı scoping/onay gerektiren blocker
