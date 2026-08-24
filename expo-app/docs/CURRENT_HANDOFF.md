@@ -1,15 +1,75 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-08-23
+Son güncelleme: 2026-08-24
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `OBSERVATION` — 2026-08-23 `mobile cutover start` batch'i yerel olarak
-doğrulanmış dirty checkpoint'te kapandı. `NXT-OBS-109` ve `NXT-OBS-120`
-`RESOLVED`; `NXT-OBS-117` ayrı source-of-truth/rating kararı gerektirdiği için
-`OBSERVED` kaldı.
+Mod: `OBSERVATION` — 2026-08-24 `mobile cutover start` batch'i doğrulanmış
+dirty checkpoint'te kapandı. Dondurulan Mobile-local kapsam:
+`NXT-OBS-108`, `120`, `121`, `122`; dördü de uygulandı ve fiziksel
+telefon/sahip kabulini bekleyen `READY` durumuna alındı.
+
+- `NXT-OBS-120`: Beş ana ekran native Expo Router top-tab pager'a taşındı;
+  alt bar sabit ve sahneler eager. Canlı `Canlı/Fikstür/Yıldız`, Super
+  `Tümü/Yıldız` yüzeyleri native yerel pager kullanıyor. Eski ortak main/local
+  pan kaldırıldı; detail edge-back korundu. Reduced-motion'da swipe kapalı,
+  dokunarak seçim anlık.
+- `NXT-OBS-108`: Yalnız `RESULTED` + pozitif güvenilir `theoreticalPrize`
+  programlarında küçük semantik-pozitif `₺` ikonu ve erişilebilirlik metni var.
+- `NXT-OBS-121`: Fiori WebView üstündeki opsiyonel `BTB WEB` kapsülü tamamen
+  kaldırıldı; hata yüzeyi ve güvenlik guard'ları değişmedi.
+- `NXT-OBS-122`: Ayrı güncel-maç açma butonu kaldırıldı; SONUÇ bandının
+  skor/durum hücresi erişilebilir Pressable olarak aynı `/match/[key]` route'una
+  gider.
+
+Doğrulama: `npm run check` temiz (typecheck + ESLint + **413/413** test +
+brand); Expo Android export geçti; ARM64 debug compile geçti; Android 15
+x86_64 debug compile, kurulum ve canlı API smoke geçti. Emülatör kaydında ana
+swipe ara karesi iki komşu sahneyi birlikte gösterirken alt bar sabit kaldı;
+`Canlı -> Fikstür -> Yıldız` ve `Super Tümü -> Yıldız` jestleri yerleşti.
+Gerçek Toto verisinde Program 350/349/348 `₺` ikonları görüldü; Fiori login
+yüzeyinde eski rozet yok; Super SONUÇ alanına dokunma `Maç Detayı`nı açtı.
+Expo Doctor **19/20**; tek kalan uyarı önceden var olan on Expo paketindeki
+patch-sürüm farklarıdır. Yeni pager bağımlılıkları Doctor tarafından kabul
+edildi.
+
+`NXT-OBS-117` M4 rating dondurması korunarak uygulanmadı; BFF/SAP/model/rating
+kaynağına dokunulmadı ve ayrı karar/canlı SAP kanıtı bekliyor. `zbet-cap`, SAP,
+Firebase ve Cloudflare değişmedi. Bu nedenle bu Mobile-only batch için sunucu
+deploy hedefi yoktur.
+
+Final fiziksel-telefon ARM64 pilot adayı üretildi ve doğrulandı:
+
+```text
+Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-cutover-07.apk
+Package : com.btb.mobile.next
+Version : 0.1.0 (1) · minSdk 24 · targetSdk 36 · compileSdk 36
+ABI     : arm64-v8a (yalnız)
+Size    : 54.050.973 bytes
+SHA-256 : 2F3955EF517273E39D2E247DAC87918770CF3AB8D42941C8137C5EE8C591504C
+Signing : v2 · fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
+Config  : authMode=pilot · useMocks=false · API=https://api.surklase.com
+Source  : 428757a
+Durum   : FINAL_PILOT_CANDIDATE — fiziksel Xiaomi kabulü bekliyor
+```
+
+APK içeriğinde legacy FCM server key, PEM/RSA private key, `private_key`,
+`client_secret`, service-account ve `JSESSIONID` eşleşmesi yoktur. Önceki
+`cutover-06` APK'sı ile bu batch'in geçici x86_64 ekran/export kanıtları Geri
+Dönüşüm Kutusu'na taşındı; marka kaynakları korundu. APK henüz dağıtılmadı.
+Fonksiyonel kaynak commit'i `428757a`; kapanış kanıtı takip eden dokümantasyon
+commit'indedir.
+Ayrıntı: `docs/observation_archive/cutover_2026-08-24.md`.
+
+Önceki batch: 2026-08-23 ikinci `mobile cutover start`. `NXT-OBS-094` denetimde
+zaten uygulanmış bulundu; eksik reduced-motion desteği `Screen.tsx`'e eklenip
+otomatik doğrulandı. Yeni APK üretilmedi. Ayrıntı:
+`docs/observation_archive/cutover_2026-08-23-02.md`.
+
+Önceki batch (06): `NXT-OBS-109` ve `NXT-OBS-120` `RESOLVED`; `NXT-OBS-117`
+ayrı source-of-truth/rating kararı gerektirdiği için `OBSERVED` kaldı.
 
 `NXT-OBS-109`: Web `Match Odds > Odd` kaynağı yerel CDS/OData metadata'sında
 `zbet_cds_001x`, `type='01'` olarak doğrulandı. BFF aynı kanonik marketin
