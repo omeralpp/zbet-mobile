@@ -29,9 +29,24 @@ Resmî Mobile kalite kapısı geçti: TypeScript, ESLint, tüm testler, marka ve
 Expo Doctor temiz. Android 15 x86_64 mevcut debug uygulamasında Expo reload ve
 gerçek API smoke; pin/unpin ve doğal sıraya dönüş, 33 saniye Jinx sleep/wake,
 aynı dokunuşla Canlı switch'i, gerçek `EMPTY` mood balonu, mutlak baskı değeri
-ve `76'`/`50'` progress görünümü geçti. Fatal/React hatası yok. Native bağımlılık
-değişmediği için Gradle/ARM64 APK üretilmedi. BFF, SAP, Firebase, Cloudflare,
-runtime ve dış sistem değişmedi. Stage/commit/push yapılmadı. Ayrıntı:
+ve `76'`/`50'` progress görünümü geçti. Fatal/React hatası yok. Kaynak ve cutover
+kayıtları `e4ab0af` olarak `master` dalına commit/push edildi. BFF, SAP,
+Firebase, Cloudflare, runtime ve dış sistem değişmedi; bu yüzden ayrı bir DEV
+runtime deploy hedefi yoktu. Exact kaynak SHA'dan tek final ARM64 pilot APK
+üretildi:
+
+```text
+Artifact : btb-mobile-next-arm64-pilot-e4ab0af.apk
+ABI      : arm64-v8a (yalnız)
+Size     : 54.070.901 bytes
+SHA-256  : 3900A4728D2DE71FFBF01B044DCC66E0666703830876899BDFF23BA796A765CF
+Signing  : v2 · fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
+Config   : authMode=pilot · useMocks=false · API=https://api.surklase.com
+Source   : e4ab0af278d72a48ce1b8b8a35849a0db83a3c07
+Status   : FINAL_PILOT_CANDIDATE — fiziksel Xiaomi kabulü bekliyor
+```
+
+Ayrıntı:
 `docs/observation_archive/cutover_2026-08-24-04.md`.
 
 Önceki 2026-08-24 ikinci batch kod değişikliği olmadan kapandı. Dondurulan
