@@ -180,11 +180,6 @@ export default function FioriScreen() {
             />
           </View>
         ) : null}
-        <View pointerEvents="none" style={styles.optionalBadge}>
-          <Text style={styles.optionalBadgeText}>
-            {error ? "BTB WEB • KULLANILAMIYOR" : "BTB WEB"}
-          </Text>
-        </View>
         <WebView
           allowsBackForwardNavigationGestures
           domStorageEnabled
@@ -297,23 +292,6 @@ const styles = StyleSheet.create({
   progress: {
     height: "100%",
     backgroundColor: semantic.intelligence
-  },
-  optionalBadge: {
-    position: "absolute",
-    top: spacing.md,
-    right: spacing.md,
-    zIndex: 4,
-    elevation: 4,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    borderRadius: radii.round,
-    backgroundColor: colors.surfaceStrong
-  },
-  optionalBadgeText: {
-    color: colors.textMuted,
-    ...typeScale.micro
   },
   webContainer: {
     flex: 1,

@@ -12,7 +12,10 @@ import {
   typeScale
 } from "@/src/theme/theme";
 import { SurfaceMaterial } from "./SurfaceMaterial";
-import { totoProgramTone } from "@/src/utils/toto-status";
+import {
+  hasTheoreticalPrize,
+  totoProgramTone
+} from "@/src/utils/toto-status";
 import {
   formatProgramStatus,
   formatSigned
@@ -37,11 +40,14 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
   // Only a program that can still change earns the accent. A resulted one is
   // history and recedes, exactly as a settled Super row does.
   const inPlay = tone === "LIVE" || tone === "OPEN";
+  const showsTheoreticalPrize = hasTheoreticalPrize(program);
 
   return (
     <Pressable
       accessibilityHint="Toto program detayını açar"
-      accessibilityLabel={`Program ${program.gcNo}, ${program.weekText}`}
+      accessibilityLabel={`Program ${program.gcNo}, ${program.weekText}${
+        showsTheoreticalPrize ? ", teorik ikramiye var" : ""
+      }`}
       accessibilityRole="button"
       onPress={() =>
         router.push({
@@ -71,12 +77,26 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
           <Text style={styles.title}>Program {program.gcNo}</Text>
           <Text style={styles.week}>{program.weekText}</Text>
         </View>
-        <View
-          style={[styles.statusPill, { backgroundColor: `${statusColor}1F` }]}
-        >
-          <Text style={[styles.status, { color: statusColor }]}>
-            {formatProgramStatus(program.status)}
-          </Text>
+        <View style={styles.statusStack}>
+          <View
+            style={[styles.statusPill, { backgroundColor: `${statusColor}1F` }]}
+          >
+            <Text style={[styles.status, { color: statusColor }]}>
+              {formatProgramStatus(program.status)}
+            </Text>
+          </View>
+          {showsTheoreticalPrize ? (
+            <View
+              accessibilityLabel="Teorik ikramiye var"
+              style={styles.theoreticalPrizeBadge}
+            >
+              <MaterialCommunityIcons
+                color={semantic.positive}
+                name="currency-try"
+                size={iconSizes.inline}
+              />
+            </View>
+          ) : null}
         </View>
       </View>
 
@@ -147,6 +167,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 6,
     borderRadius: radii.round
+  },
+  statusStack: {
+    alignItems: "flex-end",
+    flexShrink: 0,
+    gap: spacing.xs
+  },
+  theoreticalPrizeBadge: {
+    alignItems: "center",
+    backgroundColor: semantic.positiveSoft,
+    borderColor: semantic.positive,
+    borderRadius: radii.round,
+    borderWidth: 1,
+    height: 26,
+    justifyContent: "center",
+    width: 26
   },
   status: {
     ...typeScale.micro,

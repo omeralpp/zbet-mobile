@@ -66,7 +66,7 @@ export default function DashboardScreen() {
 
   if (query.isLoading || superKpis.isLoading) {
     return (
-      <Screen eyebrow="BTB Mobile" tabSwipe title="Bugünün merkezi">
+      <Screen eyebrow="BTB Mobile" title="Bugünün merkezi">
         <LoadingState label="Bugünün BTB görünümü hazırlanıyor" />
       </Screen>
     );
@@ -74,7 +74,7 @@ export default function DashboardScreen() {
 
   if (query.isError || superKpis.isError || !query.data || !superKpis.data) {
     return (
-      <Screen eyebrow="BTB Mobile" tabSwipe title="Bugünün merkezi">
+      <Screen eyebrow="BTB Mobile" title="Bugünün merkezi">
         <ErrorState
           message={
             dashboardError instanceof Error
@@ -248,9 +248,6 @@ export default function DashboardScreen() {
     <Screen
       contentStyle={styles.content}
       scrollRef={scrollRef}
-      // The horizontal tab gesture stands down while a section is lifted so a
-      // reorder drag can never turn into a tab change.
-      tabSwipe={!reordering}
       scrollProps={{
         onScroll: handleScroll,
         scrollEnabled: !reordering,

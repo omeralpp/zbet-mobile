@@ -12,6 +12,7 @@ import { matchInsightsQuery, matchesQuery } from "@/src/api/queries";
 import { FilterChip } from "@/src/components/FilterChip";
 import { DecisionFilterChip } from "@/src/components/DecisionFilterChip";
 import { MatchCard } from "@/src/components/MatchCard";
+import { LocalTabPager } from "@/src/components/LocalTabPager";
 import { Screen } from "@/src/components/Screen";
 import { useLiveStarFilter } from "@/src/preferences/LiveStarFilterProvider";
 import {
@@ -36,10 +37,6 @@ import {
 } from "@/src/utils/live-match-tabs";
 import { groupMatchesByKickoff } from "@/src/utils/match-groups";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
-import {
-  adjacentLocalTab,
-  type TabSwipeDirection
-} from "@/src/navigation/tab-swipe";
 
 function firstParam(value: string | string[] | undefined): string {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
@@ -59,7 +56,7 @@ function routeTab(
   );
 }
 
-const localTabs = ["LIVE", "FIXTURE"] as const;
+const localTabs = ["LIVE", "FIXTURE", "STAR"] as const;
 
 export default function LiveScreen() {
   const params = useLocalSearchParams<{
@@ -94,13 +91,6 @@ export default function LiveScreen() {
     tab
   ]);
 
-  const matches = useMemo(
-    () =>
-      (query.data ?? []).filter((match) =>
-        matchLiveTab(match, tab, starFilter)
-      ),
-    [query.data, starFilter, tab]
-  );
   const tabCounts = useMemo(() => {
     const source = query.data ?? [];
     return {
@@ -111,23 +101,21 @@ export default function LiveScreen() {
       STAR: source.filter((match) => matchLiveTab(match, "STAR", starFilter)).length
     };
   }, [query.data, starFilter]);
-  const sections = useMemo(() => groupMatchesByKickoff(matches), [matches]);
-  const localTabSwipe = useMemo(() => {
-    const previous = adjacentLocalTab(tab, localTabs, "PREVIOUS");
-    const next = adjacentLocalTab(tab, localTabs, "NEXT");
-    return {
-      hasNext: next !== null,
-      hasPrevious: previous !== null,
-      onNavigate: (direction: TabSwipeDirection) => {
-        const target = adjacentLocalTab(tab, localTabs, direction);
-        if (!target) {
-          return;
-        }
-        setDecisionOpen(false);
-        router.setParams({ scope: target, filter: undefined });
-      }
-    };
-  }, [router, tab]);
+  const sectionsByTab = useMemo(() => {
+    const source = query.data ?? [];
+    return localTabs.reduce(
+      (result, pageTab) => {
+        result[pageTab] = groupMatchesByKickoff(
+          source.filter((match) => matchLiveTab(match, pageTab, starFilter))
+        );
+        return result;
+      },
+      {} as Record<
+        LiveMatchTab,
+        ReturnType<typeof groupMatchesByKickoff>
+      >
+    );
+  }, [query.data, starFilter]);
   const insightMap = useMemo(
     () =>
       new Map(
@@ -143,9 +131,7 @@ export default function LiveScreen() {
       {...(tabCounts.LIVE > 0 ? { accent: semantic.live } : {})}
       contentStyle={styles.screen}
       eyebrow="BTB"
-      localTabSwipe={localTabSwipe}
       scroll={false}
-      tabSwipe
       title="Canlı maçlar"
     >
       <TutorialTarget
@@ -201,62 +187,80 @@ export default function LiveScreen() {
           onRetry={() => query.refetch()}
         />
       ) : (
-        <FlatList
-          contentContainerStyle={styles.list}
-          data={sections}
-          initialNumToRender={4}
-          keyExtractor={(section) => section.key}
-          ListEmptyComponent={
-            <EmptyState
-              kind="NO_LIVE_MATCH"
-              message={
-                tab === "FIXTURE"
-                  ? "Yakında başlayacak planlı bir maç bulunmuyor."
-                  : "Bu filtreye uyan bir maç bulunmuyor."
-              }
-              title={tab === "FIXTURE" ? "Yaklaşan maç yok" : "Maç yok"}
-            />
-          }
-          maxToRenderPerBatch={4}
-          onScrollBeginDrag={() => setDecisionOpen(false)}
-          onTouchStart={() => {
-            if (decisionOpen) {
-              setDecisionOpen(false);
-            }
+        <LocalTabPager
+          activeKey={tab}
+          onSelect={(nextTab) => {
+            setDecisionOpen(false);
+            router.setParams({
+              scope: nextTab,
+              decision: nextTab === "STAR" ? starFilter : undefined,
+              filter: undefined
+            });
           }}
-          refreshControl={
-            <RefreshControl
-              colors={[semantic.live]}
-              onRefresh={() =>
-                Promise.all([query.refetch(), insightsQuery.refetch()])
+          renderPage={(pageTab) => (
+            <FlatList
+              contentContainerStyle={styles.list}
+              data={sectionsByTab[pageTab]}
+              initialNumToRender={4}
+              keyExtractor={(section) => section.key}
+              ListEmptyComponent={
+                <EmptyState
+                  kind="NO_LIVE_MATCH"
+                  message={
+                    pageTab === "FIXTURE"
+                      ? "Yakında başlayacak planlı bir maç bulunmuyor."
+                      : "Bu filtreye uyan bir maç bulunmuyor."
+                  }
+                  title={
+                    pageTab === "FIXTURE" ? "Yaklaşan maç yok" : "Maç yok"
+                  }
+                />
               }
-              refreshing={query.isRefetching || insightsQuery.isRefetching}
-              tintColor={semantic.live}
-            />
-          }
-          renderItem={({ item: section, index: sectionIndex }) => (
-            <View style={styles.group}>
-              <Text style={styles.sectionTitle}>{section.title}</Text>
-              {section.data.map((match, matchIndex) =>
-                sectionIndex === 0 && matchIndex === 0 ? (
-                  <TutorialTarget id="live-first-card" key={match.key}>
-                    <MatchCard
-                      insight={insightMap.get(match.key)}
-                      match={match}
-                    />
-                  </TutorialTarget>
-                ) : (
-                  <MatchCard
-                    insight={insightMap.get(match.key)}
-                    key={match.key}
-                    match={match}
-                  />
-                )
+              maxToRenderPerBatch={4}
+              onScrollBeginDrag={() => setDecisionOpen(false)}
+              onTouchStart={() => {
+                if (decisionOpen) {
+                  setDecisionOpen(false);
+                }
+              }}
+              refreshControl={
+                <RefreshControl
+                  colors={[semantic.live]}
+                  onRefresh={() =>
+                    Promise.all([query.refetch(), insightsQuery.refetch()])
+                  }
+                  refreshing={query.isRefetching || insightsQuery.isRefetching}
+                  tintColor={semantic.live}
+                />
+              }
+              renderItem={({ item: section, index: sectionIndex }) => (
+                <View style={styles.group}>
+                  <Text style={styles.sectionTitle}>{section.title}</Text>
+                  {section.data.map((match, matchIndex) =>
+                    pageTab === tab &&
+                    sectionIndex === 0 &&
+                    matchIndex === 0 ? (
+                      <TutorialTarget id="live-first-card" key={match.key}>
+                        <MatchCard
+                          insight={insightMap.get(match.key)}
+                          match={match}
+                        />
+                      </TutorialTarget>
+                    ) : (
+                      <MatchCard
+                        insight={insightMap.get(match.key)}
+                        key={match.key}
+                        match={match}
+                      />
+                    )
+                  )}
+                </View>
               )}
-            </View>
+              showsVerticalScrollIndicator={false}
+              windowSize={7}
+            />
           )}
-          showsVerticalScrollIndicator={false}
-          windowSize={7}
+          tabs={localTabs}
         />
       )}
     </Screen>

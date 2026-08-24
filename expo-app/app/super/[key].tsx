@@ -135,6 +135,16 @@ export default function SuperLogDetailScreen() {
     // Poll only while the decision is open; settled history stays inert.
     refetchInterval: query.data?.result === "OPEN" ? 30_000 : false
   });
+  const currentMatchKey = query.data?.matchKey ?? "";
+  const openCurrentMatch = useCallback(() => {
+    if (!currentMatchKey) {
+      return;
+    }
+    router.push({
+      pathname: "/match/[key]",
+      params: { key: currentMatchKey }
+    } as never);
+  }, [currentMatchKey, router]);
 
   if (query.isLoading) {
     return (
@@ -491,10 +501,17 @@ export default function SuperLogDetailScreen() {
               SONUÇ
             </Text>
             <View style={styles.bandRow}>
-              <View
-                accessibilityLabel={outcomeBand.accessibilityLabel}
-                accessible
-                style={[styles.bandCell, styles.bandCellWide]}
+              <Pressable
+                accessibilityHint="Bu karşılaşmanın güncel maç detayını açar"
+                accessibilityLabel={`${outcomeBand.accessibilityLabel}. Güncel maç görünümünü aç`}
+                accessibilityRole="button"
+                onPress={openCurrentMatch}
+                style={({ pressed }) => [
+                  styles.bandCell,
+                  styles.bandCellWide,
+                  styles.outcomeAction,
+                  pressed && styles.outcomeActionPressed
+                ]}
               >
                 <Text
                   style={[
@@ -511,7 +528,7 @@ export default function SuperLogDetailScreen() {
                   {outcomeBand.score}
                 </Text>
                 <Text style={styles.bandLabel}>{outcomeBand.label}</Text>
-              </View>
+              </Pressable>
               <View style={[styles.bandCell, styles.bandCellEnd]}>
                 <Text style={[styles.bandValue, { color: resultColor }]}>
                   {log.profit === null ? "—" : formatSigned(log.profit)}
@@ -557,21 +574,6 @@ export default function SuperLogDetailScreen() {
             style={styles.primaryAction}
           >
             <Text style={styles.primaryActionText}>BTB Web’de aç</Text>
-          </Pressable>
-          <Pressable
-            accessibilityHint="Bu karşılaşmanın güncel maç detayını açar"
-            accessibilityRole="button"
-            onPress={() =>
-              router.push({
-                pathname: "/match/[key]",
-                params: { key: log.matchKey }
-              } as never)
-            }
-            style={styles.secondaryAction}
-          >
-            <Text style={styles.secondaryActionText}>
-              Güncel maç görünümünü aç
-            </Text>
           </Pressable>
         </View>
         <Text style={styles.safetyNote}>
@@ -710,6 +712,19 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0
   },
+  outcomeAction: {
+    borderRadius: radii.md,
+    justifyContent: "center",
+    marginHorizontal: -spacing.sm,
+    marginVertical: -spacing.sm,
+    minHeight: interaction.minTouchTarget,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm
+  },
+  outcomeActionPressed: {
+    backgroundColor: colors.surfaceStrong,
+    opacity: 0.8
+  },
   bandCellEnd: {
     alignItems: "flex-end"
   },
@@ -803,15 +818,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.blue
   },
   primaryActionText: { color: colors.white, fontSize: 14, fontWeight: "900" },
-  secondaryAction: {
-    minHeight: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: radii.round,
-    borderWidth: 1,
-    borderColor: colors.green
-  },
-  secondaryActionText: { color: colors.green, fontSize: 13, fontWeight: "900" },
   safetyNote: {
     color: colors.textSubtle,
     fontSize: 10,

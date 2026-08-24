@@ -5,10 +5,7 @@ import {
   type ReactNode,
   type RefObject
 } from "react";
-import * as Haptics from "expo-haptics";
-import { usePathname, useRouter } from "expo-router";
 import {
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -27,18 +24,19 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { adjacentMainTab, type MainTabRoute } from "@/src/navigation/main-tabs";
 import {
   edgeSwipe,
   shouldActivateEdgeSwipe,
-  shouldActivateTabSwipe,
-  shouldCommitEdgeSwipe,
-  shouldCommitTabSwipe,
-  tabSwipe as tabSwipeConfig,
-  tabSwipeTranslation,
-  type TabSwipeDirection
+  shouldCommitEdgeSwipe
 } from "@/src/navigation/tab-swipe";
-import { colors, interaction, spacing, typeScale } from "@/src/theme/theme";
+import {
+  colors,
+  gestureSpring,
+  interaction,
+  spacing,
+  typeScale
+} from "@/src/theme/theme";
+import { useReducedMotion } from "@/src/theme/use-reduced-motion";
 
 type ScreenProps = PropsWithChildren<{
   title?: string;
@@ -47,14 +45,6 @@ type ScreenProps = PropsWithChildren<{
   scroll?: boolean;
   edgeSwipeBack?: boolean;
   onEdgeSwipeBack?: () => void;
-  /** Enables the horizontal main-tab gesture on primary tab screens. */
-  tabSwipe?: boolean;
-  /** Gives visible page-local tabs first refusal before the main tab changes. */
-  localTabSwipe?: {
-    hasNext: boolean;
-    hasPrevious: boolean;
-    onNavigate: (direction: TabSwipeDirection) => void;
-  };
   /**
    * Semantic colour for the header trace when the screen currently carries that
    * state — `semantic.live` while live matches are on it, for example.
@@ -69,12 +59,6 @@ type ScreenProps = PropsWithChildren<{
   scrollProps?: Omit<ScrollViewProps, "contentContainerStyle">;
 }>;
 
-const springBack = {
-  damping: 20,
-  stiffness: 260,
-  mass: 0.7
-} as const;
-
 export function Screen({
   children,
   title,
@@ -83,86 +67,28 @@ export function Screen({
   scroll = true,
   edgeSwipeBack = false,
   onEdgeSwipeBack,
-  tabSwipe = false,
-  localTabSwipe,
   accent,
   scrollRef,
   contentStyle,
   scrollProps
 }: ScreenProps) {
   const { width } = useWindowDimensions();
-  const router = useRouter();
-  const pathname = usePathname();
+  const reduceMotion = useReducedMotion();
   const swipeX = useSharedValue(0);
   const gestureStartX = useSharedValue(0);
   const gestureStartY = useSharedValue(0);
   const gestureActivated = useSharedValue(false);
 
-  const tabTargetFor = useCallback(
-    (
-      dx: number
-    ):
-      | { kind: "LOCAL"; direction: TabSwipeDirection }
-      | { kind: "MAIN"; route: MainTabRoute }
-      | null => {
-      const direction: TabSwipeDirection = dx < 0 ? "NEXT" : "PREVIOUS";
-      const hasLocalTarget =
-        direction === "NEXT"
-          ? localTabSwipe?.hasNext
-          : localTabSwipe?.hasPrevious;
-      if (hasLocalTarget) {
-        return { kind: "LOCAL", direction };
-      }
-      const route = adjacentMainTab(pathname, direction);
-      return route ? { kind: "MAIN", route } : null;
-    },
-    [localTabSwipe, pathname]
-  );
+  const commitEdgeSwipe = useCallback(() => {
+    onEdgeSwipeBack?.();
+  }, [onEdgeSwipeBack]);
 
-  const commitGesture = useCallback(
-    (dx: number, vx: number) => {
-      if (edgeSwipeBack) {
-        if (shouldCommitEdgeSwipe(dx, vx)) {
-          onEdgeSwipeBack?.();
-        }
-        return;
-      }
-      const target = tabTargetFor(dx);
-      if (!target || !shouldCommitTabSwipe(dx, vx, true)) {
-        return;
-      }
-      if (Platform.OS !== "web") {
-        Haptics.selectionAsync().catch(() => undefined);
-      }
-      if (target.kind === "LOCAL") {
-        localTabSwipe?.onNavigate(target.direction);
-      } else {
-        router.navigate(target.route as never);
-      }
-    },
-    [
-      edgeSwipeBack,
-      localTabSwipe,
-      onEdgeSwipeBack,
-      router,
-      tabTargetFor
-    ]
-  );
-
-  const hasPreviousTarget =
-    Boolean(localTabSwipe?.hasPrevious) ||
-    adjacentMainTab(pathname, "PREVIOUS") !== null;
-  const hasNextTarget =
-    Boolean(localTabSwipe?.hasNext) || adjacentMainTab(pathname, "NEXT") !== null;
-  const hasPreviousLocalTarget = Boolean(localTabSwipe?.hasPrevious);
-  const hasNextLocalTarget = Boolean(localTabSwipe?.hasNext);
-
-  // A screen enables exactly one horizontal gesture: detail screens the edge
-  // back swipe, primary tab screens the tab swipe. The active mode is therefore
-  // a property of the screen rather than gesture state that has to be tracked.
+  // Main and page-local tabs use native pagers. `Screen` owns only the detail
+  // screen's leading-edge back gesture, so no competing pan handler sits above
+  // vertical lists or pager content.
   const panGesture = useMemo(() => {
     return Gesture.Pan()
-      .enabled(edgeSwipeBack || tabSwipe)
+      .enabled(edgeSwipeBack)
       .manualActivation(true)
       .maxPointers(1)
       .onTouchesDown((event) => {
@@ -191,21 +117,19 @@ export function Screen({
         const horizontal = Math.abs(dx);
         const vertical = Math.abs(dy);
 
-        const shouldActivate = edgeSwipeBack
-          ? shouldActivateEdgeSwipe(gestureStartX.get(), dx, dy)
-          : tabSwipe && shouldActivateTabSwipe(dx, dy);
+        const shouldActivate = shouldActivateEdgeSwipe(
+          gestureStartX.get(),
+          dx,
+          dy
+        );
         if (shouldActivate) {
           gestureActivated.set(true);
           stateManager.activate();
           return;
         }
 
-        const directionRatio = edgeSwipeBack
-          ? edgeSwipe.directionRatio
-          : tabSwipeConfig.directionRatio;
-        const activationDistance = edgeSwipeBack
-          ? edgeSwipe.activationDx
-          : tabSwipeConfig.activationDx;
+        const directionRatio = edgeSwipe.directionRatio;
+        const activationDistance = edgeSwipe.activationDx;
         const wrongEdgeDirection = edgeSwipeBack && dx < -activationDistance;
         const verticalWon =
           vertical > activationDistance &&
@@ -227,66 +151,37 @@ export function Screen({
         stateManager.fail();
       })
       .onUpdate((event) => {
-        if (edgeSwipeBack) {
-          swipeX.set(Math.max(0, Math.min(width, event.translationX)));
-          return;
-        }
-        const hasTarget =
-          event.translationX < 0 ? hasNextTarget : hasPreviousTarget;
-        swipeX.set(
-          tabSwipeTranslation(event.translationX, width, hasTarget)
-        );
+        swipeX.set(Math.max(0, Math.min(width, event.translationX)));
       })
       .onEnd((event) => {
-        const hasTarget = edgeSwipeBack
-          ? true
-          : event.translationX < 0
-            ? hasNextTarget
-            : hasPreviousTarget;
-        const shouldCommit = edgeSwipeBack
-          ? shouldCommitEdgeSwipe(event.translationX, event.velocityX)
-          : shouldCommitTabSwipe(
-              event.translationX,
-              event.velocityX,
-              hasTarget
-            );
-        const hasLocalTarget =
-          event.translationX < 0
-            ? hasNextLocalTarget
-            : hasPreviousLocalTarget;
-
-        // Main-tab and stack navigation own their paired transition, so remove
-        // the finger transform before scheduling navigation on the RN runtime.
+        const shouldCommit = shouldCommitEdgeSwipe(
+          event.translationX,
+          event.velocityX
+        );
         swipeX.set(
-          shouldCommit && !hasLocalTarget
-            ? 0
-            : withSpring(0, springBack)
+          shouldCommit || reduceMotion ? 0 : withSpring(0, gestureSpring)
         );
         if (shouldCommit) {
-          scheduleOnRN(commitGesture, event.translationX, event.velocityX);
+          scheduleOnRN(commitEdgeSwipe);
         }
       })
       .onFinalize((_event, success) => {
         gestureActivated.set(false);
         if (!success) {
-          swipeX.set(withSpring(0, springBack));
+          swipeX.set(reduceMotion ? 0 : withSpring(0, gestureSpring));
         }
       });
   }, [
-    commitGesture,
+    commitEdgeSwipe,
     edgeSwipeBack,
     gestureActivated,
     gestureStartX,
     gestureStartY,
-    hasNextLocalTarget,
-    hasNextTarget,
-    hasPreviousLocalTarget,
-    hasPreviousTarget,
+    reduceMotion,
     swipeX,
-    tabSwipe,
     width
   ]);
-  const gestureEnabled = edgeSwipeBack || tabSwipe;
+  const gestureEnabled = edgeSwipeBack;
   const gestureStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: swipeX.get() }]
   }));

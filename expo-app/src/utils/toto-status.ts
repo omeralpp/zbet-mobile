@@ -45,3 +45,14 @@ export function isProgramInPlay(status: TotoProgram["status"]): boolean {
   const tone = totoProgramTone(status);
   return tone === "LIVE" || tone === "OPEN";
 }
+
+/** Whether the resulted program carries a positive theoretical return. */
+export function hasTheoreticalPrize(
+  program: Pick<TotoProgram, "status" | "theoreticalPrize">
+): boolean {
+  return (
+    program.status === "RESULTED" &&
+    program.theoreticalPrize !== null &&
+    program.theoreticalPrize > 0
+  );
+}

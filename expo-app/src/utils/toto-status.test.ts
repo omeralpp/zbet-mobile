@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isProgramInPlay, totoProgramTone } from "./toto-status";
+import {
+  hasTheoreticalPrize,
+  isProgramInPlay,
+  totoProgramTone
+} from "./toto-status";
 
 test("every lifecycle status gets its own tone", () => {
   const tones = (["ACTIVE", "WAITING_RESULT", "RESULTED", "ERROR"] as const).map(
@@ -37,4 +41,19 @@ test("in-play covers exactly the statuses that can still change", () => {
   assert.equal(isProgramInPlay("WAITING_RESULT"), true);
   assert.equal(isProgramInPlay("RESULTED"), false);
   assert.equal(isProgramInPlay("ERROR"), false);
+});
+
+test("theoretical prize icon requires a resulted program and positive source value", () => {
+  assert.equal(
+    hasTheoreticalPrize({ status: "RESULTED", theoreticalPrize: 14580 }),
+    true
+  );
+  assert.equal(
+    hasTheoreticalPrize({ status: "RESULTED", theoreticalPrize: null }),
+    false
+  );
+  assert.equal(
+    hasTheoreticalPrize({ status: "ACTIVE", theoreticalPrize: 14580 }),
+    false
+  );
 });

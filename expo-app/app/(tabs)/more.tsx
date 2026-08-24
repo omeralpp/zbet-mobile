@@ -282,7 +282,7 @@ export default function MoreScreen() {
   };
 
   return (
-    <Screen eyebrow="BTB MOBILE" tabSwipe title="Daha fazla">
+    <Screen eyebrow="BTB MOBILE" title="Daha fazla">
       <View style={styles.modeCard}>
         <SurfaceMaterial
           accent={

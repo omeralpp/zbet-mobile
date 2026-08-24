@@ -21,6 +21,7 @@ import {
   LoadingState
 } from "@/src/components/StateView";
 import { SuperLogCard } from "@/src/components/SuperLogCard";
+import { LocalTabPager } from "@/src/components/LocalTabPager";
 import {
   colors,
   iconSizes,
@@ -54,6 +55,9 @@ import {
 } from "@/src/utils/super-day-scope";
 import type { SuperLog } from "@/src/api/schemas";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
+
+const localTabs = ["ALL", "STAR"] as const;
+
 export default function SuperScreen() {
   const params = useLocalSearchParams<{
     scope?: string | string[];
@@ -74,7 +78,10 @@ export default function SuperScreen() {
   const [decisionOpen, setDecisionOpen] = useState(false);
   const [dayScopeOpen, setDayScopeOpen] = useState(false);
   const [sort, setSort] = useState<SuperStarSort>("DEFAULT");
-  const listRef = useRef<FlatList<SuperLog>>(null);
+  const listRefs = useRef<Record<SuperLogTab, FlatList<SuperLog> | null>>({
+    ALL: null,
+    STAR: null
+  });
   const query = useQuery(superLogsQuery);
   const latestMatchDate = useMemo(
     () =>
@@ -94,29 +101,32 @@ export default function SuperScreen() {
         : query.data ?? [],
     [latestDayOnly, latestMatchDate, query.data]
   );
-  const logs = useMemo(
-    () =>
-      sortSuperLogs(
-        scopedLogs.filter(
-          (log) => matchSuperLogTab(log, tab, starFilter, onlyOpen)
+  const logsByTab = useMemo(
+    () => ({
+      ALL: sortSuperLogs(
+        scopedLogs.filter((log) =>
+          matchSuperLogTab(log, "ALL", starFilter, onlyOpen)
         ),
         sort
       ),
-    [onlyOpen, scopedLogs, sort, starFilter, tab]
+      STAR: sortSuperLogs(
+        scopedLogs.filter((log) =>
+          matchSuperLogTab(log, "STAR", starFilter, onlyOpen)
+        ),
+        sort
+      )
+    }),
+    [onlyOpen, scopedLogs, sort, starFilter]
   );
   useEffect(() => {
-    listRef.current?.scrollToOffset({ animated: true, offset: 0 });
+    listRefs.current[tab]?.scrollToOffset({ animated: true, offset: 0 });
   }, [onlyOpen, sort, tab]);
   const tabCounts = useMemo(
     () => ({
-      ALL: scopedLogs.filter((log) =>
-        matchSuperLogTab(log, "ALL", starFilter, onlyOpen)
-      ).length,
-      STAR: scopedLogs.filter((log) =>
-        matchSuperLogTab(log, "STAR", starFilter, onlyOpen)
-      ).length
+      ALL: logsByTab.ALL.length,
+      STAR: logsByTab.STAR.length
     }),
-    [onlyOpen, scopedLogs, starFilter]
+    [logsByTab]
   );
   const openCount = useMemo(
     () => scopedLogs.filter((log) => log.result === "OPEN").length,
@@ -134,7 +144,6 @@ export default function SuperScreen() {
       contentStyle={styles.screen}
       eyebrow="BTB SUPER"
       scroll={false}
-      tabSwipe
       title="Karar günlüğü"
     >
       <TutorialTarget id="super-filters" style={styles.filterTarget}>
@@ -301,50 +310,63 @@ export default function SuperScreen() {
           onRetry={() => query.refetch()}
         />
       ) : (
-        <FlatList
-          ref={listRef}
-          contentContainerStyle={styles.list}
-          data={logs}
-          initialNumToRender={10}
-          keyExtractor={(item) => item.key}
-          ListEmptyComponent={
-            <EmptyState
-              kind="NO_DECISION"
-              message="Bu görünüm için bir Super kararı bulunmuyor."
-              title="Karar yok"
-            />
-          }
-          refreshControl={
-            <RefreshControl
-              colors={[colors.gold]}
-              onRefresh={() => query.refetch()}
-              refreshing={query.isRefetching}
-              tintColor={colors.gold}
-            />
-          }
-          onScrollBeginDrag={() => {
+        <LocalTabPager
+          activeKey={tab}
+          onSelect={(nextTab) => {
             setDecisionOpen(false);
             setDayScopeOpen(false);
+            setTab(nextTab);
           }}
-          onTouchStart={() => {
-            if (decisionOpen) {
-              setDecisionOpen(false);
-            }
-            if (dayScopeOpen) {
-              setDayScopeOpen(false);
-            }
-          }}
-          renderItem={({ item, index }) =>
-            index === 0 ? (
-              <TutorialTarget id="super-first-card">
-                <SuperLogCard log={item} />
-              </TutorialTarget>
-            ) : (
-              <SuperLogCard log={item} />
-            )
-          }
-          showsVerticalScrollIndicator={false}
-          windowSize={7}
+          renderPage={(pageTab) => (
+            <FlatList
+              ref={(node) => {
+                listRefs.current[pageTab] = node;
+              }}
+              contentContainerStyle={styles.list}
+              data={logsByTab[pageTab]}
+              initialNumToRender={10}
+              keyExtractor={(item) => item.key}
+              ListEmptyComponent={
+                <EmptyState
+                  kind="NO_DECISION"
+                  message="Bu görünüm için bir Super kararı bulunmuyor."
+                  title="Karar yok"
+                />
+              }
+              refreshControl={
+                <RefreshControl
+                  colors={[colors.gold]}
+                  onRefresh={() => query.refetch()}
+                  refreshing={query.isRefetching}
+                  tintColor={colors.gold}
+                />
+              }
+              onScrollBeginDrag={() => {
+                setDecisionOpen(false);
+                setDayScopeOpen(false);
+              }}
+              onTouchStart={() => {
+                if (decisionOpen) {
+                  setDecisionOpen(false);
+                }
+                if (dayScopeOpen) {
+                  setDayScopeOpen(false);
+                }
+              }}
+              renderItem={({ item, index }) =>
+                pageTab === tab && index === 0 ? (
+                  <TutorialTarget id="super-first-card">
+                    <SuperLogCard log={item} />
+                  </TutorialTarget>
+                ) : (
+                  <SuperLogCard log={item} />
+                )
+              }
+              showsVerticalScrollIndicator={false}
+              windowSize={7}
+            />
+          )}
+          tabs={localTabs}
         />
       )}
     </Screen>
