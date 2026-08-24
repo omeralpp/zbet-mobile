@@ -1,15 +1,19 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ComponentProps
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useQuery } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { usePathname, useRouter } from "expo-router";
 import {
+  AppState,
   Animated,
+  Easing,
   Image,
   PanResponder,
   Platform,
@@ -20,14 +24,25 @@ import {
   useWindowDimensions
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, iconSizes, radii, shadows } from "@/src/theme/theme";
+import { superKpisQuery } from "@/src/api/queries";
+import { useSuperStarFilter } from "@/src/preferences/SuperStarFilterProvider";
+import { colors, iconSizes, radii, semantic, shadows } from "@/src/theme/theme";
 import { useTutorial } from "@/src/tutorial/TutorialProvider";
 import {
   bibiIdleDurations,
+  jinxSleepDelayMs,
   nextIdleDelayMs,
   pickIdleBehavior,
+  resolveMascotMotionState,
   type BibiIdleBehavior
 } from "./idle-behavior";
+import {
+  deriveJinxDailyMood,
+  jinxMoodSignature,
+  selectJinxMoodQuip,
+  type JinxMoodQuip
+} from "./jinx-mood";
+import { subscribeMascotInteraction } from "./interaction-activity";
 import {
   allowsAmbientBibi,
   bibiPresence,
@@ -117,9 +132,13 @@ export function BtbMascotOverlay() {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const router = useRouter();
+  const { filter: superStarFilter } = useSuperStarFilter();
+  const superKpis = useQuery(superKpisQuery);
   const { pageActions } = useMascotActions();
   const tutorial = useTutorial();
   const discovery = useDiscovery();
+  const presence = bibiPresence(pathname);
+  const ambient = allowsAmbientBibi(presence);
   // Pulled out so the settle effect depends on the stable callback rather than
   // on the provider value, which changes whenever a hint opens or closes.
   const considerDiscovery = discovery.consider;
@@ -130,11 +149,29 @@ export function BtbMascotOverlay() {
   // be honoured here and quietly ignored elsewhere.
   const reduceMotion = useReducedMotion();
   const [dragging, setDragging] = useState(false);
+  const [sleeping, setSleeping] = useState(false);
+  const sleepingRef = useRef(false);
+  const [activityVersion, setActivityVersion] = useState(0);
+  const [moodBubble, setMoodBubble] = useState<JinxMoodQuip | null>(null);
+  const [moodReacting, setMoodReacting] = useState(false);
+  const [presentedMoodSignature, setPresentedMoodSignature] = useState<
+    string | null
+  >(null);
+  const previousMoodQuip = useRef<number | null>(null);
+  const [appActive, setAppActive] = useState(
+    () => AppState.currentState === "active"
+  );
+  const [breathPhase] = useState(() => new Animated.Value(0));
+  const [sleepPhase] = useState(() => new Animated.Value(0));
   const [idleX] = useState(() => new Animated.Value(0));
   const [idleY] = useState(() => new Animated.Value(0));
   const [idleTilt] = useState(() => new Animated.Value(0));
   const [pressScale] = useState(() => new Animated.Value(1));
   const [openTilt] = useState(() => new Animated.Value(0));
+  const [wakeScale] = useState(() => new Animated.Value(1));
+  const [wakeTilt] = useState(() => new Animated.Value(0));
+  const [wakeY] = useState(() => new Animated.Value(0));
+  const [moodPhase] = useState(() => new Animated.Value(1));
   const [dragTilt] = useState(() => new Animated.Value(0));
   const [dragTranslation] = useState(
     () => new Animated.ValueXY({ x: 0, y: 0 })
@@ -153,6 +190,20 @@ export function BtbMascotOverlay() {
     [insets.left, insets.right, insets.top, width]
   );
   const [position, setPosition] = useState<Position>(defaultPosition);
+  const dailyMood = useMemo(
+    () =>
+      deriveJinxDailyMood({
+        ready: superKpis.isSuccess,
+        metricDate: superKpis.data?.metricDate,
+        filter: superStarFilter,
+        bucket: superKpis.data?.buckets[superStarFilter]
+      }),
+    [superKpis.data, superKpis.isSuccess, superStarFilter]
+  );
+  const dailyMoodSignature = jinxMoodSignature(dailyMood);
+  const moodPending =
+    dailyMoodSignature !== null &&
+    dailyMoodSignature !== presentedMoodSignature;
   const bounds = useMemo(
     () => ({
       width,
@@ -167,6 +218,55 @@ export function BtbMascotOverlay() {
   const visiblePosition = useMemo(
     () => clampPosition(position, bounds),
     [bounds, position]
+  );
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      setAppActive(state === "active");
+    });
+    return () => subscription.remove();
+  }, []);
+  useEffect(() => {
+    sleepingRef.current = sleeping;
+  }, [sleeping]);
+  useEffect(
+    () =>
+      subscribeMascotInteraction(() => {
+        const wasSleeping = sleepingRef.current;
+        sleepingRef.current = false;
+        setSleeping(false);
+        setActivityVersion((current) => current + 1);
+        if (!wasSleeping || reduceMotion) {
+          return;
+        }
+        wakeScale.stopAnimation();
+        wakeTilt.stopAnimation();
+        wakeY.stopAnimation();
+        wakeScale.setValue(0.78);
+        wakeTilt.setValue(-1);
+        wakeY.setValue(4);
+        Animated.parallel([
+          Animated.spring(wakeScale, {
+            toValue: 1,
+            damping: 9,
+            stiffness: 260,
+            mass: 0.65,
+            useNativeDriver: true
+          }),
+          Animated.spring(wakeTilt, {
+            toValue: 0,
+            damping: 8,
+            stiffness: 220,
+            useNativeDriver: true
+          }),
+          Animated.spring(wakeY, {
+            toValue: 0,
+            damping: 9,
+            stiffness: 240,
+            useNativeDriver: true
+          })
+        ]).start();
+      }),
+    [reduceMotion, wakeScale, wakeTilt, wakeY]
   );
   const tutorialPosition = useMemo(() => {
     if (!tutorial.activeTip) {
@@ -204,9 +304,12 @@ export function BtbMascotOverlay() {
   ]);
   // Discovery waits for the user to settle on a surface. A hint that appears in
   // the same frame as the screen reads as something the product pushed rather
-  // than as something Bibi noticed, and it lands while the user is still
+  // than as something Jinx noticed, and it lands while the user is still
   // deciding where to look.
   useEffect(() => {
+    if (moodPending || moodBubble) {
+      return undefined;
+    }
     const timer = setTimeout(
       () =>
         considerDiscovery(pathname, {
@@ -216,14 +319,12 @@ export function BtbMascotOverlay() {
       discoverySettleMs
     );
     return () => clearTimeout(timer);
-  }, [considerDiscovery, pathname, tutorial.activeTip]);
+  }, [considerDiscovery, moodBubble, moodPending, pathname, tutorial.activeTip]);
 
-  // One short motion, once, when a hint arrives — never a loop. `LiveDot` stays
-  // the product's only continuous ambient animation, because a second one would
-  // compete with it for the single meaning ambient motion carries here:
-  // something is happening right now.
+  // One short reaction when a hint arrives. It is separate from Jinx's single
+  // restrained breathing phase and never becomes another repeating loop.
   useEffect(() => {
-    if (!discovery.activeHint || reduceMotion) {
+    if (!discovery.activeHint || reduceMotion || !appActive || !ambient) {
       return undefined;
     }
     const nudge = Animated.sequence([
@@ -245,20 +346,56 @@ export function BtbMascotOverlay() {
       nudge.stop();
       idleY.setValue(0);
     };
-  }, [discovery.activeHint, idleY, reduceMotion]);
+  }, [ambient, appActive, discovery.activeHint, idleY, reduceMotion]);
 
   const displayPosition = tutorial.activeTip
     ? tutorialPosition
     : visiblePosition;
   const open = !tutorial.activeTip && openPath === pathname;
-  // Idle expression is suppressed the moment another interaction owns Bibi, so
+  const guideActive = Boolean(tutorial.activeTip || discovery.activeHint);
+  const motionState = resolveMascotMotionState({
+    active: appActive,
+    ambient,
+    reduceMotion,
+    dragging,
+    menuOpen: open,
+    guideActive,
+    sleeping,
+    reactionActive: moodReacting
+  });
+  // Idle expression is suppressed the moment another interaction owns Jinx, so
   // an interrupted blink can never freeze a half-closed frame on screen.
-  const idleSuppressed =
-    reduceMotion ||
-    open ||
-    dragging ||
-    Boolean(tutorial.activeTip) ||
-    Boolean(discovery.activeHint);
+  const idleSuppressed = motionState !== "AMBIENT";
+
+  useEffect(() => {
+    if (
+      !appActive ||
+      !ambient ||
+      dragging ||
+      open ||
+      guideActive ||
+      moodReacting ||
+      sleeping
+    ) {
+      return undefined;
+    }
+    const timer = setTimeout(() => {
+      sleepingRef.current = true;
+      setSleeping(true);
+      setMoodBubble(null);
+    }, jinxSleepDelayMs);
+    return () => clearTimeout(timer);
+  }, [
+    activityVersion,
+    ambient,
+    appActive,
+    dragging,
+    guideActive,
+    moodReacting,
+    open,
+    pathname,
+    sleeping
+  ]);
 
   useEffect(() => {
     AsyncStorage.getItem(storageKey)
@@ -275,21 +412,165 @@ export function BtbMascotOverlay() {
     return () => clearTimeout(greetingTimer);
   }, []);
 
-  // Bibi is still by default. A short micro-animation plays only after a long
-  // quiet window, never repeats the previous one, and stands down completely
-  // while the menu, the guide, a drag, or reduce-motion is active.
+  // A full mood sketch runs only at a day/filter/sign boundary. Profit changes
+  // inside the same sign update the factual data but do not replay the show.
+  useEffect(() => {
+    if (
+      !dailyMoodSignature ||
+      dailyMoodSignature === presentedMoodSignature ||
+      showGreeting ||
+      sleeping ||
+      dragging ||
+      open ||
+      guideActive ||
+      !appActive ||
+      !ambient
+    ) {
+      return undefined;
+    }
+    const timer = setTimeout(() => {
+      const quip = selectJinxMoodQuip(
+        dailyMood,
+        previousMoodQuip.current
+      );
+      if (!quip) {
+        return;
+      }
+      setPresentedMoodSignature(dailyMoodSignature);
+      previousMoodQuip.current = quip.index;
+      setMoodBubble(quip);
+      setMoodReacting(true);
+      setActivityVersion((current) => current + 1);
+      if (reduceMotion) {
+        setMoodReacting(false);
+        return;
+      }
+      moodPhase.stopAnimation();
+      moodPhase.setValue(0);
+      Animated.sequence([
+        Animated.timing(moodPhase, {
+          toValue: 0.18,
+          duration: 220,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true
+        }),
+        Animated.spring(moodPhase, {
+          toValue: 0.62,
+          damping: 7,
+          stiffness: 240,
+          mass: 0.65,
+          useNativeDriver: true
+        }),
+        Animated.timing(moodPhase, {
+          toValue: 0.82,
+          duration: 620,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true
+        }),
+        Animated.spring(moodPhase, {
+          toValue: 1,
+          damping: 12,
+          stiffness: 170,
+          mass: 0.75,
+          useNativeDriver: true
+        })
+      ]).start(() => setMoodReacting(false));
+    }, 360);
+    return () => clearTimeout(timer);
+  }, [
+    ambient,
+    appActive,
+    dailyMood,
+    dailyMoodSignature,
+    dragging,
+    guideActive,
+    moodPhase,
+    open,
+    presentedMoodSignature,
+    reduceMotion,
+    showGreeting,
+    sleeping
+  ]);
+
+  useEffect(() => {
+    if (!moodBubble) {
+      return undefined;
+    }
+    const timer = setTimeout(() => setMoodBubble(null), 5200);
+    return () => clearTimeout(timer);
+  }, [moodBubble]);
+
+  // Jinx always carries one restrained breath while ambient. The same phase
+  // drives position, scale, weight shift and the teal spark, so several loops
+  // never drift apart or compete for the character.
+  useEffect(() => {
+    breathPhase.stopAnimation();
+    breathPhase.setValue(0);
+    if (motionState !== "AMBIENT") {
+      return undefined;
+    }
+    const breath = Animated.loop(
+      Animated.sequence([
+        Animated.timing(breathPhase, {
+          toValue: 1,
+          duration: 2100,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true
+        }),
+        Animated.timing(breathPhase, {
+          toValue: 0,
+          duration: 2500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true
+        })
+      ])
+    );
+    breath.start();
+    return () => {
+      breath.stop();
+      breathPhase.setValue(0);
+    };
+  }, [breathPhase, motionState]);
+
+  // Sleeping is anchored and quiet. Only a tiny slow scale change remains,
+  // enough to read as breathing without turning sleep into another hover loop.
+  useEffect(() => {
+    sleepPhase.stopAnimation();
+    sleepPhase.setValue(0);
+    if (motionState !== "SLEEPING" || reduceMotion) {
+      return undefined;
+    }
+    const sleepBreath = Animated.loop(
+      Animated.sequence([
+        Animated.timing(sleepPhase, {
+          toValue: 1,
+          duration: 3000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true
+        }),
+        Animated.timing(sleepPhase, {
+          toValue: 0,
+          duration: 3400,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true
+        })
+      ])
+    );
+    sleepBreath.start();
+    return () => {
+      sleepBreath.stop();
+      sleepPhase.setValue(0);
+    };
+  }, [motionState, reduceMotion, sleepPhase]);
+
+  // A short micro-expression rides above the breath after an irregular quiet
+  // window, never repeats the previous one, and yields to every interaction.
   useEffect(() => {
     idleX.setValue(0);
     idleY.setValue(0);
     idleTilt.setValue(0);
-    if (
-      reduceMotion ||
-      open ||
-      dragging ||
-      tutorial.activeTip ||
-      discovery.activeHint
-    ) {
-      return;
+    if (motionState !== "AMBIENT") {
+      return undefined;
     }
     let disposed = false;
     let previous: BibiIdleBehavior | null = null;
@@ -394,14 +675,10 @@ export function BtbMascotOverlay() {
       idleTilt.stopAnimation();
     };
   }, [
-    discovery.activeHint,
-    dragging,
     idleTilt,
     idleX,
     idleY,
-    open,
-    reduceMotion,
-    tutorial.activeTip
+    motionState
   ]);
 
   useEffect(() => {
@@ -453,6 +730,16 @@ export function BtbMascotOverlay() {
         onPanResponderGrant: () => {
           setOpenPath(null);
           setDragging(true);
+          if (!reduceMotion) {
+            pressScale.stopAnimation();
+            Animated.spring(pressScale, {
+              toValue: 1.035,
+              damping: 13,
+              stiffness: 260,
+              mass: 0.65,
+              useNativeDriver: true
+            }).start();
+          }
           if (Platform.OS !== "web") {
             Haptics.selectionAsync().catch(() => undefined);
           }
@@ -493,14 +780,30 @@ export function BtbMascotOverlay() {
             stiffness: 180,
             useNativeDriver: true
           }).start();
+          Animated.spring(pressScale, {
+            toValue: 1,
+            damping: 10,
+            stiffness: 210,
+            mass: 0.65,
+            useNativeDriver: true
+          }).start();
         },
         onPanResponderTerminate: () => {
           setDragging(false);
           dragTranslation.setValue({ x: 0, y: 0 });
           dragTilt.setValue(0);
+          pressScale.setValue(1);
         }
       }),
-    [bounds, dragTilt, dragTranslation, reduceMotion, visiblePosition]
+    [
+      bounds,
+      dragTilt,
+      dragTranslation,
+      pressScale,
+      reduceMotion,
+      setOpenPath,
+      visiblePosition
+    ]
   );
 
   const menuItems = useMemo<MenuItem[]>(() => {
@@ -582,12 +885,104 @@ export function BtbMascotOverlay() {
       }),
     [bubbleFrame, displayPosition.x, displayPosition.y]
   );
+  const moodIcon: IconName | null =
+    dailyMood.kind === "POSITIVE"
+      ? "crown"
+      : dailyMood.kind === "NEGATIVE"
+        ? "wallet-outline"
+        : dailyMood.kind === "EVEN"
+          ? "scale-balance"
+          : dailyMood.kind === "EMPTY"
+            ? "clock-outline"
+            : null;
+  const moodColor =
+    dailyMood.kind === "POSITIVE"
+      ? colors.gold
+      : dailyMood.kind === "NEGATIVE"
+        ? semantic.negative
+        : colors.bronze;
+  const breathTilt = breathPhase.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-0.07, 0.09]
+  });
+  const breathY = breathPhase.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.7, -1.8]
+  });
+  const breathScale = breathPhase.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.995, 1.018]
+  });
+  const sparkleOpacity = breathPhase.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.42, 0.96]
+  });
+  const sparkleScale = breathPhase.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.82, 1.18]
+  });
+  const sleepY = sleepPhase.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 0.35]
+  });
+  const sleepScale = sleepPhase.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.996, 1.006]
+  });
+  const moodY = moodPhase.interpolate({
+    inputRange: [0, 0.18, 0.62, 1],
+    outputRange:
+      dailyMood.kind === "NEGATIVE"
+        ? [0, -1, 3.5, 0]
+        : [0, 2.5, -7, 0]
+  });
+  const moodScale = moodPhase.interpolate({
+    inputRange: [0, 0.18, 0.62, 1],
+    outputRange: [0.86, 0.8, 1.14, 1]
+  });
+  const moodTilt = moodPhase.interpolate({
+    inputRange: [0, 0.18, 0.62, 1],
+    outputRange:
+      dailyMood.kind === "NEGATIVE"
+        ? [0, 0.45, -0.35, -0.12]
+        : [0, -0.45, 0.35, 0]
+  });
+  const moodAccessoryY = moodPhase.interpolate({
+    inputRange: [0, 0.18, 0.62, 1],
+    outputRange: [8, 5, -4, 0]
+  });
+  const moodAccessoryScale = moodPhase.interpolate({
+    inputRange: [0, 0.18, 0.62, 1],
+    outputRange: [0.2, 0.45, 1.24, 1]
+  });
+  const moodCoinX = moodPhase.interpolate({
+    inputRange: [0, 0.18, 0.62, 1],
+    outputRange: [0, -3, 19, 7]
+  });
+  const moodCoinY = moodPhase.interpolate({
+    inputRange: [0, 0.18, 0.62, 1],
+    outputRange:
+      dailyMood.kind === "NEGATIVE"
+        ? [0, -8, 24, 18]
+        : [0, -7, -24, -5]
+  });
+  const moodCoinRotation = moodPhase.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", dailyMood.kind === "NEGATIVE" ? "260deg" : "520deg"]
+  });
+  const activeMoodTilt = motionState === "REACTING" ? moodTilt : 0;
   const rotation = Animated.add(
     Animated.add(
-      openTilt.interpolate({ inputRange: [0, 1], outputRange: [0, 0.7] }),
-      dragTilt
+      Animated.add(
+        Animated.add(
+          openTilt.interpolate({ inputRange: [0, 1], outputRange: [0, 0.7] }),
+          dragTilt
+        ),
+        Animated.add(idleTilt, breathTilt)
+      ),
+      wakeTilt
     ),
-    idleTilt
+    activeMoodTilt
   ).interpolate({ inputRange: [-1, 1], outputRange: ["-8deg", "8deg"] });
 
   const animatePress = (toValue: number) => {
@@ -599,11 +994,9 @@ export function BtbMascotOverlay() {
     }).start();
   };
 
-  // Presence is resolved after every hook so the early return never changes the
-  // hook order. On a dense analytical surface Bibi is absent until the tutorial
+  // Presence is acted on after every hook so the early return never changes the
+  // hook order. On a dense analytical surface Jinx is absent until the tutorial
   // actually needs her, and arrives with the menu and greeting suppressed.
-  const presence = bibiPresence(pathname);
-  const ambient = allowsAmbientBibi(presence);
   if (!shouldRenderBibi(presence, Boolean(tutorial.activeTip))) {
     return null;
   }
@@ -726,6 +1119,32 @@ export function BtbMascotOverlay() {
           </View>
         ) : null}
 
+        {moodBubble &&
+        !discovery.activeHint &&
+        !tutorial.activeTip &&
+        !open &&
+        ambient ? (
+          <View
+            accessibilityLiveRegion="polite"
+            accessibilityRole="summary"
+            pointerEvents="none"
+            style={[
+              styles.tutorialBubble,
+              styles.moodBubble,
+              {
+                borderColor: moodColor,
+                left: discoveryBubblePosition.left,
+                top: discoveryBubblePosition.top,
+                width: tutorialBubbleWidth
+              }
+            ]}
+          >
+            <Text style={[styles.moodEyebrow, { color: moodColor }]}>GÜNLÜK SUPER</Text>
+            <Text style={styles.tutorialTitle}>{moodBubble.title}</Text>
+            <Text style={styles.tutorialBody}>{moodBubble.body}</Text>
+          </View>
+        ) : null}
+
         {open && ambient ? (
           <View
             style={[
@@ -761,7 +1180,11 @@ export function BtbMascotOverlay() {
           </View>
         ) : null}
 
-        {showGreeting && !tutorial.activeTip && !discovery.activeHint && ambient ? (
+        {showGreeting &&
+        !tutorial.activeTip &&
+        !discovery.activeHint &&
+        !moodBubble &&
+        ambient ? (
           <View
             pointerEvents="none"
             style={[
@@ -777,7 +1200,32 @@ export function BtbMascotOverlay() {
           style={{
             transform: [
               { translateX: reduceMotion ? 0 : idleX },
-              { translateY: reduceMotion ? 0 : idleY },
+              {
+                translateY: reduceMotion
+                  ? 0
+                  : motionState === "SLEEPING"
+                    ? sleepY
+                    : Animated.add(
+                        Animated.add(idleY, breathY),
+                        Animated.add(
+                          wakeY,
+                          motionState === "REACTING" ? moodY : 0
+                        )
+                      )
+              },
+              {
+                scale:
+                  reduceMotion
+                    ? 1
+                    : motionState === "SLEEPING"
+                      ? sleepScale
+                      : breathScale
+              },
+              { scale: reduceMotion ? 1 : wakeScale },
+              {
+                scale:
+                  reduceMotion || motionState !== "REACTING" ? 1 : moodScale
+              },
               { scale: pressScale },
               { rotate: reduceMotion ? "0deg" : rotation }
             ]
@@ -785,7 +1233,11 @@ export function BtbMascotOverlay() {
         >
           <Pressable
             accessibilityLabel={
-              tutorial.activeTip ? "Jinx rehber anlatımı" : "Jinx hızlı menü"
+              tutorial.activeTip
+                ? "Jinx rehber anlatımı"
+                : sleeping
+                  ? "Jinx uyuyor; dokununca uyanır ve hızlı menüyü açar"
+                  : `Jinx hızlı menü, günlük Super ruh hâli ${dailyMood.kind.toLocaleLowerCase("tr-TR")}`
             }
             accessibilityRole="button"
             disabled={Boolean(tutorial.activeTip) || !ambient}
@@ -801,10 +1253,100 @@ export function BtbMascotOverlay() {
           >
             <Image
               resizeMode="contain"
-              source={bibiFrames[open ? 2 : idleSuppressed ? 0 : blinkFrame]}
+              source={
+                bibiFrames[
+                  sleeping
+                    ? 2
+                    : open
+                      ? 2
+                      : motionState === "REACTING" && dailyMood.kind === "NEGATIVE"
+                        ? 1
+                        : idleSuppressed
+                          ? 0
+                          : blinkFrame
+                ]
+              }
               style={styles.bibi}
             />
-            <Text style={styles.sparkle}>✦</Text>
+            {moodIcon ? (
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.moodAccessory,
+                  dailyMood.kind === "NEGATIVE" && styles.moodAccessoryLow,
+                  {
+                    opacity: sleeping ? 0 : 1,
+                    transform: [
+                      {
+                        translateY:
+                          reduceMotion || motionState !== "REACTING"
+                            ? 0
+                            : moodAccessoryY
+                      },
+                      {
+                        scale:
+                          reduceMotion || motionState !== "REACTING"
+                            ? 1
+                            : moodAccessoryScale
+                      }
+                    ]
+                  }
+                ]}
+              >
+                <MaterialCommunityIcons
+                  color={moodColor}
+                  name={moodIcon}
+                  size={18}
+                />
+              </Animated.View>
+            ) : null}
+            {motionState === "REACTING" &&
+            (dailyMood.kind === "POSITIVE" || dailyMood.kind === "NEGATIVE") ? (
+              <Animated.Text
+                pointerEvents="none"
+                style={[
+                  styles.moodCoin,
+                  {
+                    color: colors.gold,
+                    transform: [
+                      { translateX: moodCoinX },
+                      { translateY: moodCoinY },
+                      { rotate: moodCoinRotation }
+                    ]
+                  }
+                ]}
+              >
+                ₺
+              </Animated.Text>
+            ) : null}
+            {sleeping ? (
+              <Animated.Text
+                pointerEvents="none"
+                style={[
+                  styles.sleepMark,
+                  { opacity: reduceMotion ? 0.75 : sleepPhase }
+                ]}
+              >
+                zZ
+              </Animated.Text>
+            ) : null}
+            <Animated.Text
+              style={[
+                styles.sparkle,
+                {
+                  opacity: sleeping
+                    ? 0
+                    : reduceMotion
+                      ? dailyMood.kind === "NEGATIVE" ? 0.28 : 0.7
+                      : sparkleOpacity,
+                  transform: [
+                    { scale: reduceMotion ? 1 : sparkleScale }
+                  ]
+                }
+              ]}
+            >
+              ✦
+            </Animated.Text>
           </Pressable>
         </Animated.View>
       </Animated.View>
@@ -835,6 +1377,33 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "900"
   },
+  moodAccessory: {
+    alignItems: "center",
+    justifyContent: "center",
+    position: "absolute",
+    right: -2,
+    top: -7
+  },
+  moodAccessoryLow: {
+    bottom: -2,
+    right: -3,
+    top: undefined
+  },
+  moodCoin: {
+    fontSize: 15,
+    fontWeight: "900",
+    left: 25,
+    position: "absolute",
+    top: 19
+  },
+  sleepMark: {
+    color: colors.blue,
+    fontSize: 12,
+    fontWeight: "900",
+    position: "absolute",
+    right: -5,
+    top: -8
+  },
   greeting: {
     position: "absolute",
     top: 8,
@@ -857,6 +1426,15 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(244, 248, 252, 0.98)",
     padding: 14,
     ...shadows.card
+  },
+  moodBubble: {
+    minHeight: 92
+  },
+  moodEyebrow: {
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 1.1,
+    marginBottom: 4
   },
   discoveryEyebrow: {
     // Names the bubble as something the product volunteered, so it is never

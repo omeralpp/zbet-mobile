@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { mockMatchSummaries } from "@/src/api/mock-data";
-import { matchLiveTab, resolveLiveMatchTab } from "./live-match-tabs";
+import {
+  matchLiveTab,
+  resolveLiveMatchTab
+} from "./live-match-tabs";
 
 test("Canlı Maçlar sabit sekmeleri yıldız seçiminden etkilenmez", () => {
   const base = { ...mockMatchSummaries[0]!, rating: 1, selectedOdd: "Ms1" };

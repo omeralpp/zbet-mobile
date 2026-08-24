@@ -17,11 +17,11 @@ import {
   pressureFooterCaption
 } from "@/src/utils/live-card-indicators";
 import { derivePressureBalance } from "@/src/utils/pressure-balance";
+import { deriveMatchMinuteProgress } from "@/src/utils/match-minute-progress";
 import {
-  formatElapsed,
+  formatAbsolute,
   formatCurrentMarketRate,
   formatFixtureDateTime,
-  formatSigned
 } from "@/src/utils/format";
 import { LiveDot } from "./LiveDot";
 import { ChangeEmphasis } from "./ChangeEmphasis";
@@ -72,14 +72,19 @@ function TeamName({
 
 export function MatchCard({
   insight,
-  match
+  match,
+  onTogglePinned,
+  pinned = false
 }: {
   insight?: MatchInsight | undefined;
   match: MatchSummary;
+  onTogglePinned?: (() => void) | undefined;
+  pinned?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const live = match.status === "LIVE" || match.status === "HALF_TIME";
+  const minuteProgress = deriveMatchMinuteProgress(match.status, match.elapsed);
   const currentMarket = formatCurrentMarketRate(
     match.currentRate,
     match.selectedOdd,
@@ -141,16 +146,64 @@ export function MatchCard({
         <Text numberOfLines={1} style={styles.league}>
           {match.league}
         </Text>
-        <View style={[styles.timePill, live && styles.livePill]}>
-          {live ? <LiveDot /> : null}
-          <Text style={[styles.timeText, live && styles.liveText]}>
-            {formatFixtureDateTime(match.matchDate, match.matchTime)}
-            {live || match.status === "FINISHED"
-              ? ` · ${formatElapsed(match.status, match.elapsed)}`
-              : ""}
-          </Text>
+        <View style={styles.topActions}>
+          <View style={[styles.timePill, live && styles.livePill]}>
+            {live ? <LiveDot /> : null}
+            <Text style={[styles.timeText, live && styles.liveText]}>
+              {formatFixtureDateTime(match.matchDate, match.matchTime)}
+            </Text>
+          </View>
+          {onTogglePinned ? (
+            <Pressable
+              accessibilityLabel={pinned ? "Sabitlemeyi kaldır" : "Maçı sabitle"}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: pinned }}
+              hitSlop={4}
+              onPress={(event) => {
+                event.stopPropagation();
+                onTogglePinned();
+              }}
+              style={({ pressed }) => [
+                styles.pinButton,
+                pinned && styles.pinButtonActive,
+                pressed && styles.pinButtonPressed
+              ]}
+            >
+              <MaterialCommunityIcons
+                color={pinned ? colors.white : semantic.intelligence}
+                name={pinned ? "pin" : "pin-outline"}
+                size={iconSizes.control}
+              />
+            </Pressable>
+          ) : null}
         </View>
       </View>
+
+      {minuteProgress.visible ? (
+        <View
+          accessibilityLabel="Maç süresi"
+          accessibilityRole="progressbar"
+          accessibilityValue={{
+            max: 90,
+            min: 0,
+            now: Math.min(90, minuteProgress.minute),
+            text: minuteProgress.label
+          }}
+          style={styles.minuteProgress}
+        >
+          <View style={styles.minuteProgressTrack}>
+            <View
+              style={[
+                styles.minuteProgressFill,
+                { width: `${minuteProgress.ratio * 100}%` }
+              ]}
+            />
+          </View>
+          <Text style={[styles.minuteProgressValue, live && styles.liveText]}>
+            {minuteProgress.label}
+          </Text>
+        </View>
+      ) : null}
 
       <View style={styles.scoreRow}>
         <View style={styles.teams}>
@@ -233,7 +286,7 @@ export function MatchCard({
             // live card framing that makes the figure's currency obvious.
             accessibilityLabel={
               pressureBalance.hasData
-                ? `Güncel baskı farkı ${formatSigned(match.pressureDiff ?? 0, 1)}, ${
+                ? `Güncel baskı farkı ${formatAbsolute(match.pressureDiff ?? 0, 1)}, ${
                     pressureBalance.direction === "HOME"
                       ? "ev sahibi baskıda"
                       : pressureBalance.direction === "AWAY"
@@ -252,7 +305,7 @@ export function MatchCard({
             <View style={styles.pressureCopy}>
               <Text style={[styles.pressure, { color: pressureColor }]}>
                 {pressureBalance.hasData
-                  ? formatSigned(match.pressureDiff ?? 0, 1)
+                  ? formatAbsolute(match.pressureDiff ?? 0, 1)
                   : "—"}
               </Text>
               {/* Two lines, not one: the waiting caption is the only footer
@@ -297,6 +350,11 @@ const styles = StyleSheet.create({
     ...typeScale.micro,
     textTransform: "uppercase"
   },
+  topActions: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.xs
+  },
   timePill: {
     minHeight: 28,
     borderRadius: radii.round,
@@ -320,6 +378,48 @@ const styles = StyleSheet.create({
   },
   liveText: {
     color: semantic.live
+  },
+  pinButton: {
+    alignItems: "center",
+    backgroundColor: colors.backgroundElevated,
+    borderColor: colors.borderSoft,
+    borderRadius: radii.round,
+    borderWidth: 1,
+    height: 36,
+    justifyContent: "center",
+    width: 36
+  },
+  pinButtonActive: {
+    backgroundColor: semantic.intelligence,
+    borderColor: semantic.intelligence
+  },
+  pinButtonPressed: {
+    opacity: 0.68,
+    transform: [{ scale: 0.94 }]
+  },
+  minuteProgress: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.sm
+  },
+  minuteProgressValue: {
+    color: colors.textMuted,
+    minWidth: 44,
+    textAlign: "right",
+    ...typeScale.micro
+  },
+  minuteProgressTrack: {
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: radii.round,
+    flex: 1,
+    height: 3,
+    overflow: "hidden"
+  },
+  minuteProgressFill: {
+    backgroundColor: semantic.live,
+    borderRadius: radii.round,
+    height: "100%"
   },
   scoreRow: {
     flexDirection: "row",

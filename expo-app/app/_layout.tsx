@@ -9,6 +9,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAuth } from "@/src/auth/AuthProvider";
 import { AppLaunchScreen } from "@/src/components/AppLaunchScreen";
 import { BtbMascotOverlay } from "@/src/mascot/BtbMascotOverlay";
+import { notifyMascotInteraction } from "@/src/mascot/interaction-activity";
 import { DiscoveryProvider } from "@/src/mascot/DiscoveryProvider";
 import { MascotActionsProvider } from "@/src/mascot/MascotActions";
 import { AndroidBackGuard } from "@/src/navigation/AndroidBackGuard";
@@ -98,7 +99,10 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={styles.root}>
+    <GestureHandlerRootView
+      onTouchStart={notifyMascotInteraction}
+      style={styles.root}
+    >
       <SafeAreaProvider>
         <AppProviders>
           <MascotActionsProvider>

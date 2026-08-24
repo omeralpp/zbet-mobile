@@ -34,7 +34,11 @@ export function resolveLiveMatchTab(
   legacyFilter: string,
   hasDecisionFilter: boolean
 ): LiveMatchTab {
-  if (scope === "LIVE" || scope === "FIXTURE" || scope === "STAR") {
+  if (
+    scope === "LIVE" ||
+    scope === "FIXTURE" ||
+    scope === "STAR"
+  ) {
     return scope;
   }
   // Older links called this surface ALL. It now has the narrower, truthful
@@ -55,7 +59,7 @@ export function matchLiveTab(
   match: MatchSummary,
   tab: LiveMatchTab,
   starFilter: StarDecisionFilter,
-  now: number = Date.now()
+  now: number = Date.now(),
 ): boolean {
   switch (tab) {
     case "LIVE":

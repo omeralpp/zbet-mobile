@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import { colors, spacing } from "@/src/theme/theme";
-import { formatSigned } from "@/src/utils/format";
+import { formatAbsolute } from "@/src/utils/format";
 import {
   derivePressureBalance,
   type PressureDirection
@@ -26,7 +26,7 @@ export function PressureBalance({
     AWAY: "Deplasman baskısı",
     BALANCED: "Dengeli"
   };
-  const value = balance.hasData ? formatSigned(pressureDiff ?? 0, 1) : "—";
+  const value = balance.hasData ? formatAbsolute(pressureDiff ?? 0, 1) : "—";
 
   return (
     <View

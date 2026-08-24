@@ -6,9 +6,41 @@ Son güncelleme: 2026-08-24
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `OBSERVATION` — 2026-08-24 `mobile cutover start` batch'i doğrulanmış
-dirty checkpoint'te kapandı. Dondurulan Mobile-local kapsam:
-`NXT-OBS-108`, `120`, `121`, `122`; dördü de uygulandı ve fiziksel
+Mod: `OBSERVATION` — doğrulanmış dirty checkpoint. Dördüncü 2026-08-24
+`mobile cutover start` batch'i kapandı. `NXT-OBS-123`, `125`, `126`, `127` ve
+`128` yerel olarak uygulandı ve fiziksel Xiaomi/sahip kabulini bekleyen `READY`
+durumuna alındı. Önceki `NXT-OBS-124` de `READY` kalıyor.
+
+- Canlı yüzeyinde yalnız `Canlı` switch'i ve bağımsız yıldız filtresi var;
+  Fikstür/Scout segmentleri, Scout sayfası ve dürbünler kaldırıldı. Kart pini
+  maçı `Sabitlenenler` grubuna taşır; geri alınca doğal kickoff grubuna döner.
+- Jinx 30 saniye etkileşimsizlikte kapalı göz ve hafif nefesle uyur. Ekranın
+  ilk dokunuşu onu uyandırırken hedeflenen switch/buton/pager/scroll eylemi aynı
+  anda devam eder.
+- Günlük Jinx mood'u Özet'in aynı gün ve seçili yıldız KPI kovasını paylaşır:
+  artı, eksi, denge, sonuç-bekleme ve veri-yok durumları ayrı; kısa skeç ve
+  öz-mizah gerçek değerlerle, tekrarsız ve yeni polling olmadan çalışır.
+- `baskı farkı` tüm Mobile yüzlerinde mutlak büyüklük olarak gösterilir; yön ev
+  veya uçak ikonu ve açıklamada kalır. Ham veri/model hesabı değişmedi.
+- Canlı maç dakikaları kartta üç piksellik minimal progress çizgisi ve sağdaki
+  dakika etiketiyle gösterilir; 90+ etiketi korunur, başlamamış maçta bar yoktur.
+
+Resmî Mobile kalite kapısı geçti: TypeScript, ESLint, tüm testler, marka ve
+Expo Doctor temiz. Android 15 x86_64 mevcut debug uygulamasında Expo reload ve
+gerçek API smoke; pin/unpin ve doğal sıraya dönüş, 33 saniye Jinx sleep/wake,
+aynı dokunuşla Canlı switch'i, gerçek `EMPTY` mood balonu, mutlak baskı değeri
+ve `76'`/`50'` progress görünümü geçti. Fatal/React hatası yok. Native bağımlılık
+değişmediği için Gradle/ARM64 APK üretilmedi. BFF, SAP, Firebase, Cloudflare,
+runtime ve dış sistem değişmedi. Stage/commit/push yapılmadı. Ayrıntı:
+`docs/observation_archive/cutover_2026-08-24-04.md`.
+
+Önceki 2026-08-24 ikinci batch kod değişikliği olmadan kapandı. Dondurulan
+`NXT-OBS-117`, aktif M4 rating dondurması nedeniyle `DEFERRED` oldu; Mobile,
+BFF, SAP, runtime ve APK değişmedi. Ayrıntı:
+`docs/observation_archive/cutover_2026-08-24-02.md`.
+
+Önceki 2026-08-24 batch'inde dondurulan Mobile-local kapsam
+`NXT-OBS-108`, `120`, `121`, `122` idi; dördü de uygulandı ve fiziksel
 telefon/sahip kabulini bekleyen `READY` durumuna alındı.
 
 - `NXT-OBS-120`: Beş ana ekran native Expo Router top-tab pager'a taşındı;

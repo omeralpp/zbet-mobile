@@ -4,8 +4,10 @@ import {
   bibiIdleBehaviors,
   bibiIdleDurations,
   bibiIdleRest,
+  jinxSleepDelayMs,
   nextIdleDelayMs,
-  pickIdleBehavior
+  pickIdleBehavior,
+  resolveMascotMotionState
 } from "./idle-behavior";
 
 test("rests within the quiet window for every random draw", () => {
@@ -49,4 +51,56 @@ test("stays deterministic and in-vocabulary for degenerate randomness", () => {
   assert.ok(bibiIdleBehaviors.includes(pickIdleBehavior(Number.NaN, null)));
   assert.ok(bibiIdleBehaviors.includes(pickIdleBehavior(5, "bob")));
   assert.ok(bibiIdleBehaviors.includes(pickIdleBehavior(-5, "bob")));
+});
+
+test("motion state gives interaction and accessibility one deterministic owner", () => {
+  const ambient = {
+    active: true,
+    ambient: true,
+    reduceMotion: false,
+    dragging: false,
+    menuOpen: false,
+    guideActive: false,
+    sleeping: false,
+    reactionActive: false
+  };
+
+  assert.equal(resolveMascotMotionState(ambient), "AMBIENT");
+  assert.equal(
+    resolveMascotMotionState({ ...ambient, menuOpen: true }),
+    "MENU"
+  );
+  assert.equal(
+    resolveMascotMotionState({ ...ambient, guideActive: true, menuOpen: true }),
+    "GUIDING"
+  );
+  assert.equal(
+    resolveMascotMotionState({ ...ambient, reactionActive: true }),
+    "REACTING"
+  );
+  assert.equal(
+    resolveMascotMotionState({ ...ambient, sleeping: true }),
+    "SLEEPING"
+  );
+  assert.equal(
+    resolveMascotMotionState({ ...ambient, sleeping: true, reduceMotion: true }),
+    "SLEEPING"
+  );
+  assert.equal(
+    resolveMascotMotionState({ ...ambient, dragging: true, guideActive: true }),
+    "DRAGGING"
+  );
+  assert.equal(
+    resolveMascotMotionState({ ...ambient, reduceMotion: true }),
+    "SUSPENDED"
+  );
+  assert.equal(
+    resolveMascotMotionState({ ...ambient, active: false }),
+    "SUSPENDED"
+  );
+  assert.equal(
+    resolveMascotMotionState({ ...ambient, ambient: false }),
+    "SUSPENDED"
+  );
+  assert.equal(jinxSleepDelayMs, 30_000);
 });

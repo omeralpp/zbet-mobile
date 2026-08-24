@@ -38,6 +38,13 @@ export function formatSigned(value: number, digits = 2): string {
   return value > 0 ? `+${formatted}` : value < 0 ? `-${formatted}` : formatted;
 }
 
+export function formatAbsolute(value: number, digits = 2): string {
+  return new Intl.NumberFormat("tr-TR", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits
+  }).format(Math.abs(value));
+}
+
 export function formatPercentage(value: number): string {
   return new Intl.NumberFormat("tr-TR", {
     style: "percent",

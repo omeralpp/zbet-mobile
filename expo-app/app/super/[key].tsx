@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
   Pressable,
@@ -34,6 +35,7 @@ import type { SuperDetailModuleId } from "@/src/layout/module-registry";
 import {
   colors,
   fontWeights,
+  iconSizes,
   interaction,
   radii,
   semantic,
@@ -43,6 +45,7 @@ import {
 } from "@/src/theme/theme";
 import { teamLogoSizes } from "@/src/utils/team-logo";
 import {
+  formatAbsolute,
   formatFixtureDateTime,
   formatDecisionReason,
   formatPercentage,
@@ -279,7 +282,10 @@ export default function SuperLogDetailScreen() {
         <View style={styles.card}>
           <View style={styles.metricGrid}>
             <Metric label="toplam baskı" value={formatSigned(log.totalPressure)} />
-            <Metric label="baskı farkı" value={formatSigned(log.pressureDiff)} />
+            <Metric
+              label="baskı farkı"
+              value={formatAbsolute(log.pressureDiff)}
+            />
             <Metric label="ev baskısı" value={formatSigned(log.homePressure)} />
             <Metric
               label="deplasman baskısı"
@@ -497,9 +503,20 @@ export default function SuperLogDetailScreen() {
             {/* The seam. Bronze because it is structure, not a verdict: it must
                 not take the colour of the result it introduces. */}
             <SurfaceDivider accent={colors.bronze} style={styles.bandSeam} />
-            <Text style={[styles.bandEyebrow, styles.outcomeEyebrow]}>
-              SONUÇ
-            </Text>
+            <View style={styles.outcomeHeading}>
+              <Text style={[styles.bandEyebrow, styles.outcomeEyebrow]}>
+                SONUÇ
+              </Text>
+              {currentMatchKey ? (
+                <MaterialCommunityIcons
+                  accessibilityElementsHidden
+                  color={colors.textSubtle}
+                  importantForAccessibility="no"
+                  name="chevron-right"
+                  size={iconSizes.inline}
+                />
+              ) : null}
+            </View>
             <View style={styles.bandRow}>
               <Pressable
                 accessibilityHint="Bu karşılaşmanın güncel maç detayını açar"
@@ -698,7 +715,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md
   },
   outcomeEyebrow: {
-    color: colors.textSubtle
+    color: colors.textSubtle,
+    marginBottom: 0
+  },
+  outcomeHeading: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: spacing.md
   },
   bandRow: {
     flexDirection: "row",

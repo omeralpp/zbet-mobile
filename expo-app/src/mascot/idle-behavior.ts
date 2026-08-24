@@ -8,6 +8,15 @@ export const bibiIdleBehaviors = [
 
 export type BibiIdleBehavior = (typeof bibiIdleBehaviors)[number];
 
+export type MascotMotionState =
+  | "AMBIENT"
+  | "SLEEPING"
+  | "REACTING"
+  | "MENU"
+  | "DRAGGING"
+  | "GUIDING"
+  | "SUSPENDED";
+
 /** Total on-screen time of one idle behaviour, in milliseconds. */
 export const bibiIdleDurations: Record<BibiIdleBehavior, number> = {
   blink: 200,
@@ -18,14 +27,64 @@ export const bibiIdleDurations: Record<BibiIdleBehavior, number> = {
 };
 
 export const bibiIdleRest = {
-  minDelayMs: 5200,
-  maxDelayMs: 12400
+  minDelayMs: 3600,
+  maxDelayMs: 8200
 } as const;
 
+/** Long enough to feel intentional, short enough to be seen in a real session. */
+export const jinxSleepDelayMs = 30_000;
+
 /**
- * Picks how long Bibi stays completely still before the next micro-animation.
- * Bibi is at rest most of the time, so the quiet window is long and jittered
- * rather than a fixed metronome.
+ * One explicit owner for Jinx motion. State priority prevents an idle blink,
+ * drag settle and guide reaction from competing for the same transform.
+ */
+export function resolveMascotMotionState({
+  active,
+  ambient,
+  reduceMotion,
+  dragging,
+  menuOpen,
+  guideActive,
+  sleeping,
+  reactionActive
+}: {
+  active: boolean;
+  ambient: boolean;
+  reduceMotion: boolean;
+  dragging: boolean;
+  menuOpen: boolean;
+  guideActive: boolean;
+  sleeping: boolean;
+  reactionActive: boolean;
+}): MascotMotionState {
+  if (!active || !ambient) {
+    return "SUSPENDED";
+  }
+  if (dragging) {
+    return "DRAGGING";
+  }
+  if (guideActive) {
+    return "GUIDING";
+  }
+  if (menuOpen) {
+    return "MENU";
+  }
+  if (reactionActive) {
+    return "REACTING";
+  }
+  if (sleeping) {
+    return "SLEEPING";
+  }
+  if (reduceMotion) {
+    return "SUSPENDED";
+  }
+  return "AMBIENT";
+}
+
+/**
+ * Picks the irregular gap between Jinx micro-expressions. A very small ambient
+ * breathing rhythm continues underneath, so this is a pause in expression,
+ * not a return to a pasted-on still image.
  */
 export function nextIdleDelayMs(random: number): number {
   const bounded = Number.isFinite(random)

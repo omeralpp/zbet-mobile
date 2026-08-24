@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  formatAbsolute,
   formatCurrentMarketRate,
   formatDecisionReason,
   formatFixtureDateTime,
@@ -37,10 +38,7 @@ test("maç tarih ve saatini İstanbul saat diliminde gösterir", () => {
     formatFixtureDateTime("2026-07-29", "21:00"),
     "29 Tem · 21:00"
   );
-  assert.equal(
-    formatFixtureDateTime("", ""),
-    "Tarih ve saat bekleniyor"
-  );
+  assert.equal(formatFixtureDateTime("", ""), "Tarih ve saat bekleniyor");
 });
 
 test("Super maç anahtarından tarih ve gerçek başlangıç saatini çıkarır", () => {
@@ -67,4 +65,10 @@ test("Super kayıtlarının görünür tarih kapsamını açıklar", () => {
     "28 Tem – 29 Tem · en yeni 2 karar"
   );
   assert.equal(formatSuperDateScope([]), "");
+});
+
+test("baskı farkını yön işareti olmadan mutlak değer olarak biçimler", () => {
+  assert.equal(formatAbsolute(8.25, 1), "8,3");
+  assert.equal(formatAbsolute(-8.25, 1), "8,3");
+  assert.equal(formatAbsolute(0, 1), "0,0");
 });

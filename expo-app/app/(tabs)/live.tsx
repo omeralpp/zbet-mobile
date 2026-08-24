@@ -5,16 +5,18 @@ import {
   RefreshControl,
   FlatList,
   StyleSheet,
+  Switch,
   Text,
   View
 } from "react-native";
 import { matchInsightsQuery, matchesQuery } from "@/src/api/queries";
-import { FilterChip } from "@/src/components/FilterChip";
 import { DecisionFilterChip } from "@/src/components/DecisionFilterChip";
 import { MatchCard } from "@/src/components/MatchCard";
 import { LocalTabPager } from "@/src/components/LocalTabPager";
 import { Screen } from "@/src/components/Screen";
 import { useLiveStarFilter } from "@/src/preferences/LiveStarFilterProvider";
+import { usePinnedMatches } from "@/src/preferences/use-pinned-matches";
+import { splitPinnedMatches } from "@/src/preferences/pinned-matches";
 import {
   EmptyState,
   ErrorState,
@@ -22,6 +24,7 @@ import {
 } from "@/src/components/StateView";
 import {
   colors,
+  interaction,
   radii,
   semantic,
   spacing,
@@ -58,6 +61,36 @@ function routeTab(
 
 const localTabs = ["LIVE", "FIXTURE", "STAR"] as const;
 
+function LiveSwitch({
+  active,
+  count,
+  onChange
+}: {
+  active: boolean;
+  count: number;
+  onChange: (active: boolean) => void;
+}) {
+  return (
+    <View style={[styles.liveSwitch, active && styles.liveSwitchActive]}>
+      <View>
+        <Text style={[styles.liveSwitchLabel, active && styles.liveSwitchLabelActive]}>
+          Canlı
+        </Text>
+        <Text style={styles.liveSwitchCount}>{count} maç</Text>
+      </View>
+      <Switch
+        accessibilityLabel={`Yalnız canlı maçlar, ${count} maç`}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: active }}
+        onValueChange={onChange}
+        thumbColor={active ? colors.white : colors.textSubtle}
+        trackColor={{ false: colors.borderSoft, true: semantic.live }}
+        value={active}
+      />
+    </View>
+  );
+}
+
 export default function LiveScreen() {
   const params = useLocalSearchParams<{
     filter?: string | string[];
@@ -75,6 +108,15 @@ export default function LiveScreen() {
   const [decisionOpen, setDecisionOpen] = useState(false);
   const query = useQuery(matchesQuery);
   const insightsQuery = useQuery(matchInsightsQuery);
+  const pinnedEligibleKeys = useMemo(
+    () => (query.data ?? []).map((match) => match.key),
+    [query.data]
+  );
+  const {
+    hydrated: pinnedHydrated,
+    keys: pinnedKeys,
+    toggle: togglePinned
+  } = usePinnedMatches(pinnedEligibleKeys, query.isSuccess);
 
   useEffect(() => {
     if (
@@ -105,9 +147,16 @@ export default function LiveScreen() {
     const source = query.data ?? [];
     return localTabs.reduce(
       (result, pageTab) => {
-        result[pageTab] = groupMatchesByKickoff(
-          source.filter((match) => matchLiveTab(match, pageTab, starFilter))
+        const pageMatches = source.filter((match) =>
+          matchLiveTab(match, pageTab, starFilter)
         );
+        const split = splitPinnedMatches(pageMatches, pinnedKeys);
+        result[pageTab] = [
+          ...(split.pinned.length
+            ? [{ key: `pinned-${pageTab}`, title: "Sabitlenenler", data: split.pinned }]
+            : []),
+          ...groupMatchesByKickoff(split.regular)
+        ];
         return result;
       },
       {} as Record<
@@ -115,7 +164,7 @@ export default function LiveScreen() {
         ReturnType<typeof groupMatchesByKickoff>
       >
     );
-  }, [query.data, starFilter]);
+  }, [pinnedKeys, query.data, starFilter]);
   const insightMap = useMemo(
     () =>
       new Map(
@@ -140,38 +189,32 @@ export default function LiveScreen() {
         style={styles.filterTarget}
       >
         <View style={styles.filters}>
-        <FilterChip
-          count={tabCounts.LIVE}
-          label="Canlı"
-          onPress={() => {
-            setDecisionOpen(false);
-            router.setParams({ scope: "LIVE", filter: undefined });
-          }}
-          selected={tab === "LIVE"}
-        />
-        <FilterChip
-          count={tabCounts.FIXTURE}
-          label="Fikstür"
-          onPress={() => {
-            setDecisionOpen(false);
-            router.setParams({ scope: "FIXTURE", filter: undefined });
-          }}
-          selected={tab === "FIXTURE"}
-        />
-        <DecisionFilterChip
-          active={tab === "STAR"}
-          count={tabCounts.STAR}
-          onActivate={() =>
-            router.setParams({ scope: "STAR", decision: starFilter })
-          }
-          onChange={(value) => {
-            setPersistedStarFilter(value);
-            router.setParams({ scope: "STAR", decision: value });
-          }}
-          onOpenChange={setDecisionOpen}
-          open={decisionOpen}
-          value={starFilter}
-        />
+          <LiveSwitch
+            active={tab === "LIVE"}
+            count={tabCounts.LIVE}
+            onChange={(enabled) => {
+              setDecisionOpen(false);
+              router.setParams({
+                scope: enabled ? "LIVE" : "FIXTURE",
+                decision: undefined,
+                filter: undefined
+              });
+            }}
+          />
+          <DecisionFilterChip
+            active={tab === "STAR"}
+            count={tabCounts.STAR}
+            onActivate={() =>
+              router.setParams({ scope: "STAR", decision: starFilter })
+            }
+            onChange={(value) => {
+              setPersistedStarFilter(value);
+              router.setParams({ scope: "STAR", decision: value });
+            }}
+            onOpenChange={setDecisionOpen}
+            open={decisionOpen}
+            value={starFilter}
+          />
         </View>
       </TutorialTarget>
 
@@ -212,7 +255,9 @@ export default function LiveScreen() {
                       : "Bu filtreye uyan bir maç bulunmuyor."
                   }
                   title={
-                    pageTab === "FIXTURE" ? "Yaklaşan maç yok" : "Maç yok"
+                    pageTab === "FIXTURE"
+                      ? "Yaklaşan maç yok"
+                      : "Maç yok"
                   }
                 />
               }
@@ -244,6 +289,12 @@ export default function LiveScreen() {
                         <MatchCard
                           insight={insightMap.get(match.key)}
                           match={match}
+                          onTogglePinned={
+                            pinnedHydrated
+                              ? () => togglePinned(match.key)
+                              : undefined
+                          }
+                          pinned={pinnedKeys.has(match.key)}
                         />
                       </TutorialTarget>
                     ) : (
@@ -251,6 +302,12 @@ export default function LiveScreen() {
                         insight={insightMap.get(match.key)}
                         key={match.key}
                         match={match}
+                        onTogglePinned={
+                          pinnedHydrated
+                            ? () => togglePinned(match.key)
+                            : undefined
+                        }
+                        pinned={pinnedKeys.has(match.key)}
                       />
                     )
                   )}
@@ -272,9 +329,39 @@ const styles = StyleSheet.create({
     paddingBottom: 0
   },
   filters: {
+    alignItems: "center",
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.sm
+  },
+  liveSwitch: {
+    alignItems: "center",
+    backgroundColor: colors.backgroundElevated,
+    borderColor: colors.borderSoft,
+    borderRadius: radii.round,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing.sm,
+    minHeight: interaction.minTouchTarget,
+    paddingLeft: spacing.md,
+    paddingRight: spacing.sm
+  },
+  liveSwitchActive: {
+    backgroundColor: semantic.liveSoft,
+    borderColor: semantic.live
+  },
+  liveSwitchLabel: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: "800"
+  },
+  liveSwitchLabelActive: {
+    color: semantic.live
+  },
+  liveSwitchCount: {
+    color: colors.textSubtle,
+    fontSize: 10,
+    fontWeight: "900"
   },
   filterTarget: {
     marginBottom: spacing.lg
