@@ -191,9 +191,9 @@ export default function SuperScreen() {
               query.isRefetching && styles.openFilterDisabled
             ]}
           >
-            <Text style={styles.openFilterLabel}>Yalnız açık {openCount}</Text>
+            <Text style={styles.openFilterLabel}>Açık {openCount}</Text>
             <Switch
-              accessibilityLabel="Yalnız açık kararları göster"
+              accessibilityLabel="Açık kararları göster"
               accessibilityRole="switch"
               accessibilityState={{
                 checked: onlyOpen,

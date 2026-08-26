@@ -11,6 +11,7 @@ import {
   matchInsightSchema,
   matchLeagueContextSchema,
   matchListSchema,
+  jinxQuipSchema,
   liveContextSchema,
   periodScoreContextSchema,
   superLogDetailSchema,
@@ -179,6 +180,13 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
         `/v1/toto/programs/${gcNo}/${version}`,
         totoProgramSchema,
         {},
+        signal
+      ),
+    getJinxQuip: (mood, signal) =>
+      request(
+        "/v1/jinx/quip",
+        jinxQuipSchema,
+        { method: "POST", body: JSON.stringify(mood) },
         signal
       ),
     registerDevice: async (token, platform, installationId, signal) => {

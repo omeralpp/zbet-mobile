@@ -285,6 +285,32 @@ export type PeriodScoreContext = z.infer<typeof periodScoreContextSchema>;
 export type SuperLog = z.infer<typeof superLogSchema>;
 export type SuperLogDetail = z.infer<typeof superLogDetailSchema>;
 export type SuperKpis = z.infer<typeof superKpisSchema>;
+
+// The BFF answers with a null body whenever the feature is off, the upstream
+// failed, or the candidate did not pass validation there.
+export const jinxQuipRequestSchema = z.strictObject({
+  kind: z.enum(["POSITIVE", "NEGATIVE", "EVEN", "EMPTY"]),
+  filter: z.enum([
+    "STAR_1_PLUS",
+    "STAR_2_PLUS",
+    "STAR_3_PLUS",
+    "STAR_4_PLUS"
+  ]),
+  metricDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  won: z.number().int().nonnegative(),
+  lost: z.number().int().nonnegative(),
+  profit: z.number()
+});
+
+export type JinxQuipRequest = z.infer<typeof jinxQuipRequestSchema>;
+
+export const jinxQuipSchema = z.strictObject({
+  enabled: z.boolean(),
+  source: z.string(),
+  body: z.string().nullable()
+});
+
+export type JinxQuipResponse = z.infer<typeof jinxQuipSchema>;
 export type TotoProgram = z.infer<typeof totoProgramSchema>;
 export type TotoFixture = z.infer<typeof totoFixtureSchema>;
 export type TotoPrediction = z.infer<typeof totoPredictionSchema>;

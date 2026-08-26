@@ -24,6 +24,7 @@ import {
   useWindowDimensions
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { mobileApi } from "@/src/api";
 import { superKpisQuery } from "@/src/api/queries";
 import { useSuperStarFilter } from "@/src/preferences/SuperStarFilterProvider";
 import { colors, iconSizes, radii, semantic, shadows } from "@/src/theme/theme";
@@ -43,6 +44,7 @@ import {
   type JinxMoodQuip
 } from "./jinx-mood";
 import { subscribeMascotInteraction } from "./interaction-activity";
+import { acceptRemoteQuip, jinxQuipRequest } from "./jinx-quip-remote";
 import {
   allowsAmbientBibi,
   bibiPresence,
@@ -201,6 +203,10 @@ export function BtbMascotOverlay() {
     [superKpis.data, superKpis.isSuccess, superStarFilter]
   );
   const dailyMoodSignature = jinxMoodSignature(dailyMood);
+  // Prefetched wording, keyed by the mood it was generated for. The bubble
+  // never waits on it: if it has not arrived (or was refused) by the time the
+  // bubble fires, the deterministic repertoire is used instead.
+  const remoteQuip = useRef<{ signature: string; body: string } | null>(null);
   const moodPending =
     dailyMoodSignature !== null &&
     dailyMoodSignature !== presentedMoodSignature;
@@ -412,6 +418,40 @@ export function BtbMascotOverlay() {
     return () => clearTimeout(greetingTimer);
   }, []);
 
+  // Wording is fetched once per mood boundary, never per render or refetch, and
+  // never while Jinx is asleep. A failure here is silent by design: the bubble
+  // simply keeps the deterministic line.
+  useEffect(() => {
+    if (!dailyMoodSignature || sleeping || !appActive) {
+      return undefined;
+    }
+    if (remoteQuip.current?.signature === dailyMoodSignature) {
+      return undefined;
+    }
+    const request = jinxQuipRequest(dailyMood);
+    if (!request) {
+      return undefined;
+    }
+    const controller = new AbortController();
+    let cancelled = false;
+    mobileApi
+      .getJinxQuip(request, controller.signal)
+      .then((response) => {
+        if (cancelled || !response.enabled) {
+          return;
+        }
+        const body = acceptRemoteQuip(response.body, dailyMood);
+        if (body) {
+          remoteQuip.current = { signature: dailyMoodSignature, body };
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [appActive, dailyMood, dailyMoodSignature, sleeping]);
+
   // A full mood sketch runs only at a day/filter/sign boundary. Profit changes
   // inside the same sign update the factual data but do not replay the show.
   useEffect(() => {
@@ -436,9 +476,13 @@ export function BtbMascotOverlay() {
       if (!quip) {
         return;
       }
+      const remote =
+        remoteQuip.current?.signature === dailyMoodSignature
+          ? remoteQuip.current.body
+          : null;
       setPresentedMoodSignature(dailyMoodSignature);
       previousMoodQuip.current = quip.index;
-      setMoodBubble(quip);
+      setMoodBubble(remote ? { ...quip, body: remote } : quip);
       setMoodReacting(true);
       setActivityVersion((current) => current + 1);
       if (reduceMotion) {

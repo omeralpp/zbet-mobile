@@ -1,5 +1,7 @@
 import type {
   Dashboard,
+  JinxQuipRequest,
+  JinxQuipResponse,
   LiveContext,
   MatchDetail,
   MatchInsight,
@@ -45,6 +47,10 @@ export interface MobileApi {
     version: number,
     signal?: AbortSignal
   ): Promise<TotoProgram>;
+  getJinxQuip(
+    mood: JinxQuipRequest,
+    signal?: AbortSignal
+  ): Promise<JinxQuipResponse>;
   registerDevice(
     token: string,
     platform: "android" | "ios",

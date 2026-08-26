@@ -229,6 +229,12 @@ export const mockMobileApi: MobileApi = {
     return totoProgramSchema.parse(clone(program));
   },
 
+  async getJinxQuip(_mood, signal) {
+    await mockDelay(signal);
+    // The mock never invents wording; callers keep their deterministic line.
+    return { enabled: false, source: "DISABLED", body: null };
+  },
+
   async registerDevice(_token, _platform, _installationId, signal) {
     await mockDelay(signal);
   },

@@ -63,23 +63,29 @@ const localTabs = ["LIVE", "FIXTURE", "STAR"] as const;
 
 function LiveSwitch({
   active,
-  count,
+  fixtureCount,
+  liveCount,
   onChange
 }: {
   active: boolean;
-  count: number;
+  fixtureCount: number;
+  liveCount: number;
   onChange: (active: boolean) => void;
 }) {
+  // The chip names the scope the list is actually showing, not the control's
+  // on-state: switched off the page is the fixture list, so it says so.
+  const label = active ? "Canlı" : "Fikstür";
+  const count = active ? liveCount : fixtureCount;
   return (
     <View style={[styles.liveSwitch, active && styles.liveSwitchActive]}>
       <View>
         <Text style={[styles.liveSwitchLabel, active && styles.liveSwitchLabelActive]}>
-          Canlı
+          {label}
         </Text>
         <Text style={styles.liveSwitchCount}>{count} maç</Text>
       </View>
       <Switch
-        accessibilityLabel={`Yalnız canlı maçlar, ${count} maç`}
+        accessibilityLabel={`${label}, ${count} maç`}
         accessibilityRole="switch"
         accessibilityState={{ checked: active }}
         onValueChange={onChange}
@@ -191,7 +197,8 @@ export default function LiveScreen() {
         <View style={styles.filters}>
           <LiveSwitch
             active={tab === "LIVE"}
-            count={tabCounts.LIVE}
+            fixtureCount={tabCounts.FIXTURE}
+            liveCount={tabCounts.LIVE}
             onChange={(enabled) => {
               setDecisionOpen(false);
               router.setParams({

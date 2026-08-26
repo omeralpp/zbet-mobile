@@ -721,7 +721,9 @@ const styles = StyleSheet.create({
   outcomeHeading: {
     alignItems: "center",
     flexDirection: "row",
-    justifyContent: "space-between",
+    // The chevron belongs to the score below it, so it sits beside the eyebrow
+    // instead of being pushed to the far edge by space-between.
+    gap: spacing.xs,
     marginBottom: spacing.md
   },
   bandRow: {
