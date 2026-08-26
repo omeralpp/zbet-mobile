@@ -1,52 +1,62 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-08-24
+Son güncelleme: 2026-08-26
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `OBSERVATION` — doğrulanmış dirty checkpoint. Dördüncü 2026-08-24
-`mobile cutover start` batch'i kapandı. `NXT-OBS-123`, `125`, `126`, `127` ve
-`128` yerel olarak uygulandı ve fiziksel Xiaomi/sahip kabulini bekleyen `READY`
-durumuna alındı. Önceki `NXT-OBS-124` de `READY` kalıyor.
+Mod: `OBSERVATION` — beşinci `mobile cutover start` batch'i 2026-08-26'da
+kapandı ve profil observation'a döndü. `NXT-OBS-129`, `130`, `131` ve `132`
+uygulandı ve fiziksel Xiaomi/sahip kabulini bekleyen `READY` durumuna alındı.
+Açık `OBSERVED` satırı kalmadı. Önceki batch'lerin `READY` satırları değişmedi.
 
-- Canlı yüzeyinde yalnız `Canlı` switch'i ve bağımsız yıldız filtresi var;
-  Fikstür/Scout segmentleri, Scout sayfası ve dürbünler kaldırıldı. Kart pini
-  maçı `Sabitlenenler` grubuna taşır; geri alınca doğal kickoff grubuna döner.
-- Jinx 30 saniye etkileşimsizlikte kapalı göz ve hafif nefesle uyur. Ekranın
-  ilk dokunuşu onu uyandırırken hedeflenen switch/buton/pager/scroll eylemi aynı
-  anda devam eder.
-- Günlük Jinx mood'u Özet'in aynı gün ve seçili yıldız KPI kovasını paylaşır:
-  artı, eksi, denge, sonuç-bekleme ve veri-yok durumları ayrı; kısa skeç ve
-  öz-mizah gerçek değerlerle, tekrarsız ve yeni polling olmadan çalışır.
-- `baskı farkı` tüm Mobile yüzlerinde mutlak büyüklük olarak gösterilir; yön ev
-  veya uçak ikonu ve açıklamada kalır. Ham veri/model hesabı değişmedi.
-- Canlı maç dakikaları kartta üç piksellik minimal progress çizgisi ve sağdaki
-  dakika etiketiyle gösterilir; 90+ etiketi korunur, başlamamış maçta bar yoktur.
+- Canlı switch'i kapalıyken chip artık `Fikstür` ve o kapsamın kendi maç
+  sayısını yazar; erişilebilirlik metni de aynı kapsamı söyler. Yeni BFF/SAP
+  alanı, sorgu veya sözleşme değişikliği gerekmedi.
+- Karar günlüğünde açık filtre `Açık` olarak kısaldı; filtre davranışı ve
+  sayım değişmedi.
+- Super karar detayında `SONUÇ` oku, bölüm başlığından çıkarılıp gerçekten
+  dokunulabilir olan skor hücresine taşındı. İlk yerleşim (eyebrow yanı) sahip
+  tarafından reddedildi ve düzeltildi.
+- Jinx balonu, BFF arkasındaki doğrulanmış bir dil modeli yolundan metin
+  alabiliyor. Model karar vermez, yalnız ifade kurar: uzunluk, tek satır,
+  yasaklı tavsiye/tahmin ifadesi, harfle yazılmış sayı ve verilmemiş rakam
+  reddedilir; kural eşleştirmesi diakritikten bağımsızdır. Anahtar yokken
+  özellik kapalıdır ve uygulama deterministik davranışını sürdürür.
 
-Resmî Mobile kalite kapısı geçti: TypeScript, ESLint, tüm testler, marka ve
-Expo Doctor temiz. Android 15 x86_64 mevcut debug uygulamasında Expo reload ve
-gerçek API smoke; pin/unpin ve doğal sıraya dönüş, 33 saniye Jinx sleep/wake,
-aynı dokunuşla Canlı switch'i, gerçek `EMPTY` mood balonu, mutlak baskı değeri
-ve `76'`/`50'` progress görünümü geçti. Fatal/React hatası yok. Kaynak ve cutover
-kayıtları `e4ab0af` olarak `master` dalına commit/push edildi. BFF, SAP,
-Firebase, Cloudflare, runtime ve dış sistem değişmedi; bu yüzden ayrı bir DEV
-runtime deploy hedefi yoktu. Exact kaynak SHA'dan tek final ARM64 pilot APK
-üretildi:
+Resmî Mobile ve Mobile BFF kalite kapıları geçti. Canlı üretim `POSITIVE`,
+`NEGATIVE` ve `EVEN` için doğrulanmış metin döndürdü ve cache'ten tekrarlandı;
+`EMPTY` reddedilip deterministik repertuvara düştü — amaçlanan fallback. BFF,
+logon task'ın kendi argümanlarıyla kontrollü biçimde yeniden başlatıldı; local
+ve public health yeşil, auth modu/port/notification davranışı değişmedi. SAP,
+Firebase, Cloudflare ve dış sistem değişmedi; ayrı bir DEV runtime deploy hedefi
+yoktu.
+
+Commit/push: `zbet-cap` `04d2e26`, `zbet-mobile` `b7c1158` ve `2536efb`,
+`btb-codex` `dcd2a89`.
 
 ```text
-Artifact : btb-mobile-next-arm64-pilot-e4ab0af.apk
+Artifact : btb-mobile-next-arm64-pilot-b7c1158.apk
 ABI      : arm64-v8a (yalnız)
-Size     : 54.070.901 bytes
-SHA-256  : 3900A4728D2DE71FFBF01B044DCC66E0666703830876899BDFF23BA796A765CF
+Size     : 54.074.885 bytes
+SHA-256  : 539200C91C93996BE4375283DD6F7C585ACA3C809BDDD82F6850F5D8ED14E618
 Signing  : v2 · fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
 Config   : authMode=pilot · useMocks=false · API=https://api.surklase.com
-Source   : e4ab0af278d72a48ce1b8b8a35849a0db83a3c07
-Status   : FINAL_PILOT_CANDIDATE — fiziksel Xiaomi kabulü bekliyor
+Source   : b7c1158
+Status   : INSTALLED — master'ın gerisinde, `2536efb` ok düzeltmesi bu APK'da yok
 ```
 
+Bu APK telefonda kurulu ve geri dönüş noktasıdır, fakat `2536efb`'den önce
+üretildi: `NXT-OBS-131` ok düzeltmesi içinde **yoktur**. Sonraki build `2536efb`
+veya sonrasından alınmalıdır. `.codex-artifacts` yalnız bu APK'yı tutar; önceki
+APK'lar ve geçici ekran kanıtları Geri Dönüşüm Kutusu'ndadır.
+
 Ayrıntı:
+`docs/observation_archive/cutover_2026-08-26.md`.
+
+Önceki 2026-08-24 dördüncü batch'i: `NXT-OBS-123`, `125`, `126`, `127` ve `128`
+uygulandı ve `READY` durumuna alındı; `NXT-OBS-124` de `READY` kalıyor. Ayrıntı:
 `docs/observation_archive/cutover_2026-08-24-04.md`.
 
 Önceki 2026-08-24 ikinci batch kod değişikliği olmadan kapandı. Dondurulan
