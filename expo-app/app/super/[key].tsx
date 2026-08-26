@@ -507,15 +507,6 @@ export default function SuperLogDetailScreen() {
               <Text style={[styles.bandEyebrow, styles.outcomeEyebrow]}>
                 SONUÇ
               </Text>
-              {currentMatchKey ? (
-                <MaterialCommunityIcons
-                  accessibilityElementsHidden
-                  color={colors.textSubtle}
-                  importantForAccessibility="no"
-                  name="chevron-right"
-                  size={iconSizes.inline}
-                />
-              ) : null}
             </View>
             <View style={styles.bandRow}>
               <Pressable
@@ -530,20 +521,31 @@ export default function SuperLogDetailScreen() {
                   pressed && styles.outcomeActionPressed
                 ]}
               >
-                <Text
-                  style={[
-                    outcomeBand.kind === "PENDING"
-                      ? styles.pendingScore
-                      : styles.score,
-                    outcomeBand.kind === "SETTLED"
-                      ? { color: resultColor }
-                      : outcomeBand.kind === "LIVE"
-                        ? { color: semantic.live }
-                        : null
-                  ]}
-                >
-                  {outcomeBand.score}
-                </Text>
+                <View style={styles.outcomeScoreRow}>
+                  <Text
+                    style={[
+                      outcomeBand.kind === "PENDING"
+                        ? styles.pendingScore
+                        : styles.score,
+                      outcomeBand.kind === "SETTLED"
+                        ? { color: resultColor }
+                        : outcomeBand.kind === "LIVE"
+                          ? { color: semantic.live }
+                          : null
+                    ]}
+                  >
+                    {outcomeBand.score}
+                  </Text>
+                  {currentMatchKey ? (
+                    <MaterialCommunityIcons
+                      accessibilityElementsHidden
+                      color={colors.textSubtle}
+                      importantForAccessibility="no"
+                      name="chevron-right"
+                      size={iconSizes.control}
+                    />
+                  ) : null}
+                </View>
                 <Text style={styles.bandLabel}>{outcomeBand.label}</Text>
               </Pressable>
               <View style={[styles.bandCell, styles.bandCellEnd]}>
@@ -719,12 +721,14 @@ const styles = StyleSheet.create({
     marginBottom: 0
   },
   outcomeHeading: {
+    marginBottom: spacing.md
+  },
+  // The chevron sits with the score because the score cell is the pressable,
+  // not the heading above it.
+  outcomeScoreRow: {
     alignItems: "center",
     flexDirection: "row",
-    // The chevron belongs to the score below it, so it sits beside the eyebrow
-    // instead of being pushed to the far edge by space-between.
-    gap: spacing.xs,
-    marginBottom: spacing.md
+    gap: spacing.xs
   },
   bandRow: {
     flexDirection: "row",
