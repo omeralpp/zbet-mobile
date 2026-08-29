@@ -1,6 +1,6 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-08-29
+Son güncelleme: 2026-08-30
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
@@ -9,6 +9,17 @@ Aktif task: `BTB Mobile Next - Aktif`
 Mod: `OBSERVATION` — sekizinci `btb next cutover start` batch'i 2026-08-29'da
 commit/push, pilot runtime aktivasyonu ve fiziksel Xiaomi kabulüyle tamamlandı.
 `NXT-OBS-136` `CLOSED`; açık ürün doğrulama kapısı kalmadı.
+
+2026-08-30 olayı (`NXT-OBS-137`): pilot Mobile BFF süreci
+`2026-08-29T19:58:59Z` civarında iz bırakmadan durdu; `cloudflared` ayakta
+kaldığı için tünel `https://api.surklase.com` üzerinden her isteğe **HTTP 502**
+döndürdü. Zamanlanmış görevde tekrar aralığı olmadığından hiçbir şey servisi
+geri getirmiyordu. Servis geri alındı ve göreve kendi başına duran 30 dakikalık
+tekrarlı tetikleyici eklendi (`zbet-cap 203a4c2`); watchdog hem kontrollü
+testte (`00:05:52` durdurma -> `00:10:12` kurtarma) hem de aynı gece istenmeden
+gerçekleşen ikinci bir ölümde (`00:51:08`) servisi kendiliğinden toparladı.
+BFF'in neden durduğu teşhis edilmedi ve `TASK-0032` olarak açık kayıtlıdır.
+Model, Super, Toto, SAP ve Mobile sözleşme davranışı değişmedi.
 
 - Mobile BFF current-match ve insight listelerinin bounded SAP penceresi 50'den
   200'e çıkarıldı. Oran, tek-maç, Super ve Toto limitleri değiştirilmedi.
@@ -64,11 +75,11 @@ Cloudflare yapılandırması değişmedi.
 Checkpoint:
 
 ```text
-zbet-cap    42f4873 · clean pushed source
+zbet-cap    203a4c2 · clean pushed source · BFF davranışı hâlâ 42f4873
 zbet-mobile closing evidence commit · functional/APK source 8be2daf
-runtime     42f4873 · PID 36028 · local/public HTTP 200 · 28-key parity PASS
+runtime     PID 20660 · local/public HTTP 200 · watchdog 30 dk · task result 0
 artifact    btb-mobile-next-arm64-pilot-8be2daf.apk · fiziksel telefona kuruldu
-acceptance  NXT-OBS-136 CLOSED · Xiaomi Canlı 28 / Fikstür 0 parity PASS
+acceptance  NXT-OBS-137 CLOSED · sahip 2026-08-30'da telefonda doğruladı
 ```
 
 Final ARM64 pilot APK temiz pushed `8be2daf` kaynağından üretildi:
