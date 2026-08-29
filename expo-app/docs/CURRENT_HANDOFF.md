@@ -1,12 +1,58 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-08-26
+Son güncelleme: 2026-08-29
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `OBSERVATION` — beşinci `mobile cutover start` batch'i 2026-08-26'da
+Mod: `OBSERVATION` — altıncı `mobile cutover start` batch'i 2026-08-29'da
+temiz pushed checkpoint olarak kapandı. `NXT-OBS-133` uygulandı; pilot runtime
+ve public read-back geçti, yalnız fiziksel Xiaomi kabulünü bekleyen `READY`
+durumunda. Açık `OBSERVED` satırı kalmadı.
+
+- `Canlı maçlar` kartı ve `Canlı Maç Detayı` artık aynı temsilci karar
+  sözleşmesini kullanır: void olmayan Super kararları arasında sayısal
+  `final_score` değeri en yüksek olan satır kazanır. Eşitlikte en yeni
+  `created_at`, sonra dakika/market/rating/reason sırası belirleyicidir.
+- Seçim, rating, karar dakikası, neden, model skoru, güven ve seçim oranı tek
+  Super Log satırından atomik taşınır; güncel oran seçilen marketten okunur.
+  Tarihsel timeline ve model/Super seçim kuralları değişmedi.
+- Değişiklik yalnız `zbet-cap` BFF provider/mapper/test kapsamındadır. Mobile
+  DTO şekli ve UI bileşenleri değişmedi; `zbet-mobile` yalnız observation,
+  archive ve bu handoff belgelerini taşır. SAP/ABAP, Firebase, Cloudflare,
+  Cordova ve APK değişmedi.
+
+Doğrulama: Mobile BFF testleri ve production build geçti; Mobile type/lint/test
+ve Expo Doctor geçti; `git diff --check` temiz. Canlı salt-okunur SAP MCP,
+`ZBET_UI_SUPER_LOG_SB` binding'inin published OData V4 ve servisinin
+`ZBET_UI_SUPER_LOG` v0001 olduğunu doğruladı. MCP ile Super Log satırı veya
+aktif kaynak okunduğu iddia edilmez; alan kanıtı mevcut BFF sözleşmesidir.
+Temiz pushed `zbet-cap adc1822` kaynağından pilot BFF bir kez yeniden
+başlatıldı (`PID 19120 -> 6484`); local/public health HTTP 200 ve stderr boştu.
+Bounded authenticated read-back'te örnek canlı maçın üç skorlu, void olmayan
+kararı arasından `3.89 / Ms25a / 74'` en yüksek karar olarak seçildi; Live kartı
+ile Match Detail'in karar alanları local ve public yüzeylerde atomik eşleşti.
+
+Checkpoint:
+
+```text
+zbet-cap    adc1822 · clean · origin/main ile eşit
+zbet-mobile yalnız kapanış belgeleri · bu turda commit/push edildi
+runtime     adc1822 · local/public HTTP 200 · en-yüksek-skor read-back PASS
+artifact    değişmedi · APK build gerekmedi ve yapılmadı
+```
+
+Sonraki kapı yalnız fiziksel Xiaomi kabulidir: mevcut kurulu APK ile Live kartı
+ve Match Detail'in aynı en-yüksek-skor kararını ve ona ait oran/özeti göstermesi
+doğrulanmalıdır. Mobile kaynak, DTO şekli, JS bundle veya native girdi
+değişmediği için aynı APK'yı yeniden üretmek bu batch'e yeni kanıt katmaz.
+Ayrıntı:
+`docs/observation_archive/cutover_2026-08-29.md`.
+
+## Önceki batch — 2026-08-26
+
+Beşinci `mobile cutover start` batch'i 2026-08-26'da
 kapandı ve profil observation'a döndü. `NXT-OBS-129`, `130`, `131` ve `132`
 uygulandı ve fiziksel Xiaomi/sahip kabulini bekleyen `READY` durumuna alındı.
 Açık `OBSERVED` satırı kalmadı. Önceki batch'lerin `READY` satırları değişmedi.
