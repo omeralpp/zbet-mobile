@@ -7,8 +7,8 @@ Son güncelleme: 2026-08-29
 Aktif task: `BTB Mobile Next - Aktif`
 
 Mod: `OBSERVATION` — sekizinci `btb next cutover start` batch'i 2026-08-29'da
-commit/push ve pilot runtime aktivasyonuyla tamamlandı. `NXT-OBS-136` teknik
-kapsamı `READY`; yalnız fiziksel Xiaomi `Fikstür` kabulü observation'da bekliyor.
+commit/push, pilot runtime aktivasyonu ve fiziksel Xiaomi kabulüyle tamamlandı.
+`NXT-OBS-136` `CLOSED`; açık ürün doğrulama kapısı kalmadı.
 
 - Mobile BFF current-match ve insight listelerinin bounded SAP penceresi 50'den
   200'e çıkarıldı. Oran, tek-maç, Super ve Toto limitleri değiştirilmedi.
@@ -23,6 +23,10 @@ kapsamı `READY`; yalnız fiziksel Xiaomi `Fikstür` kabulü observation'da bekl
   Önceden yaklaşan iki 22:30 fikstürü read-back saatinde başlamış olduğundan
   güncel `NOT_STARTED=0` doğru zaman geçişidir. Pre-kickoff replay ve 51. satır
   regresyonu yaklaşan fikstürün artık pencere dışında kalmadığını kanıtlar.
+- Sahibin fiziksel Xiaomi ekran kanıtında `Canlı 28 maç` kartlarıyla birlikte
+  render edildi; aynı anda `Fikstür 0 maç` / `Yaklaşan maç yok` görünümü API'nin
+  güncel sıfır yaklaşan sonucuyla eşleşti. Sahip ardından uygulamanın artık
+  çalıştığını açıkça doğruladı; P0 akış düzeltmesi fiziksel kabul aldı.
 
 Yedinci batch'te `NXT-OBS-134` ve `NXT-OBS-135` uygulanmış; runtime ve fiziksel
 Xiaomi/sahip kabulü tamamlanarak `CLOSED` olmuştu. `NXT-OBS-133`'ün
@@ -64,6 +68,7 @@ zbet-cap    42f4873 · clean pushed source
 zbet-mobile closing evidence commit · functional/APK source 8be2daf
 runtime     42f4873 · PID 36028 · local/public HTTP 200 · 28-key parity PASS
 artifact    btb-mobile-next-arm64-pilot-8be2daf.apk · fiziksel telefona kuruldu
+acceptance  NXT-OBS-136 CLOSED · Xiaomi Canlı 28 / Fikstür 0 parity PASS
 ```
 
 Final ARM64 pilot APK temiz pushed `8be2daf` kaynağından üretildi:
