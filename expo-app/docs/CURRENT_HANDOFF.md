@@ -6,10 +6,27 @@ Son güncelleme: 2026-08-29
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `OBSERVATION` — yedinci `btb next cutover start` batch'i 2026-08-29'da
-yerel doğrulanmış checkpoint olarak kapandı. `NXT-OBS-134` ve `NXT-OBS-135`
-uygulandı; runtime ve fiziksel Xiaomi/sahip kabulü tamamlanarak `CLOSED` oldu.
-`NXT-OBS-133`'ün en-yüksek-model-skoru kabul hedefi supersede edilmiştir.
+Mod: `OBSERVATION` — sekizinci `btb next cutover start` batch'i 2026-08-29'da
+commit/push ve pilot runtime aktivasyonuyla tamamlandı. `NXT-OBS-136` teknik
+kapsamı `READY`; yalnız fiziksel Xiaomi `Fikstür` kabulü observation'da bekliyor.
+
+- Mobile BFF current-match ve insight listelerinin bounded SAP penceresi 50'den
+  200'e çıkarıldı. Oran, tek-maç, Super ve Toto limitleri değiştirilmedi.
+- Elli parked satırdan sonraki aktif yaklaşan fikstürü koruyan regresyon geçti;
+  resmî BFF test ve production build kapıları yeşil.
+- Değişmiş kaynaktan izole canlı SAP replay'i, başlangıç saatinden önce 29 aktif
+  maç, 22 canlı, 5 devre arası ve 2 yaklaşan fikstür döndürdü. BFF düzeltmesi
+  `zbet-cap 42f4873` olarak push edildi ve pilot runtime `PID 27556 -> 36028`
+  ile bir kez yeniden başlatıldı.
+- Restart sonrası local/public feed birebir aynı 28 aktif maç döndürdü:
+  `22 LIVE`, `6 HALF_TIME`, key farkı `0`; stderr boş ve iki health HTTP 200.
+  Önceden yaklaşan iki 22:30 fikstürü read-back saatinde başlamış olduğundan
+  güncel `NOT_STARTED=0` doğru zaman geçişidir. Pre-kickoff replay ve 51. satır
+  regresyonu yaklaşan fikstürün artık pencere dışında kalmadığını kanıtlar.
+
+Yedinci batch'te `NXT-OBS-134` ve `NXT-OBS-135` uygulanmış; runtime ve fiziksel
+Xiaomi/sahip kabulü tamamlanarak `CLOSED` olmuştu. `NXT-OBS-133`'ün
+en-yüksek-model-skoru kabul hedefi supersede edilmiştir.
 
 - `Canlı maçlar` kartı ve `Canlı Maç Detayı` artık aynı temsilci karar
   sözleşmesini kullanır: void olmayan Super kararları arasında önce daha yüksek
@@ -43,9 +60,9 @@ Cloudflare yapılandırması değişmedi.
 Checkpoint:
 
 ```text
-zbet-cap    108f98a · clean pushed source
-zbet-mobile cd3e686 · clean pushed evidence; APK functional source 8be2daf
-runtime     108f98a · PID 27556 · local/public HTTP 200 · rating-first read-back PASS
+zbet-cap    42f4873 · clean pushed source
+zbet-mobile closing evidence commit · functional/APK source 8be2daf
+runtime     42f4873 · PID 36028 · local/public HTTP 200 · 28-key parity PASS
 artifact    btb-mobile-next-arm64-pilot-8be2daf.apk · fiziksel telefona kuruldu
 ```
 
