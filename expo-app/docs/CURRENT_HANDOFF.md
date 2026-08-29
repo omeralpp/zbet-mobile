@@ -6,49 +6,53 @@ Son güncelleme: 2026-08-29
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-Mod: `OBSERVATION` — altıncı `mobile cutover start` batch'i 2026-08-29'da
-temiz pushed checkpoint olarak kapandı. `NXT-OBS-133` uygulandı; pilot runtime
-ve public read-back geçti, yalnız fiziksel Xiaomi kabulünü bekleyen `READY`
-durumunda. Açık `OBSERVED` satırı kalmadı.
+Mod: `OBSERVATION` — yedinci `btb next cutover start` batch'i 2026-08-29'da
+yerel doğrulanmış checkpoint olarak kapandı. `NXT-OBS-134` ve `NXT-OBS-135`
+uygulandı ve fiziksel Xiaomi/sahip kabulini bekleyen `READY` durumuna alındı.
+`NXT-OBS-133`'ün en-yüksek-model-skoru kabul hedefi supersede edilmiştir.
 
 - `Canlı maçlar` kartı ve `Canlı Maç Detayı` artık aynı temsilci karar
-  sözleşmesini kullanır: void olmayan Super kararları arasında sayısal
-  `final_score` değeri en yüksek olan satır kazanır. Eşitlikte en yeni
-  `created_at`, sonra dakika/market/rating/reason sırası belirleyicidir.
-- Seçim, rating, karar dakikası, neden, model skoru, güven ve seçim oranı tek
-  Super Log satırından atomik taşınır; güncel oran seçilen marketten okunur.
-  Tarihsel timeline ve model/Super seçim kuralları değişmedi.
-- Değişiklik yalnız `zbet-cap` BFF provider/mapper/test kapsamındadır. Mobile
-  DTO şekli ve UI bileşenleri değişmedi; `zbet-mobile` yalnız observation,
-  archive ve bu handoff belgelerini taşır. SAP/ABAP, Firebase, Cloudflare,
-  Cordova ve APK değişmedi.
+  sözleşmesini kullanır: void olmayan Super kararları arasında önce daha yüksek
+  `rating`/BTB yıldızı, yalnız rating eşitse daha yeni `created_at` kazanır.
+  Kalan deterministik sıra dakika, market ve karar nedenidir.
+- Model skoru artık seçim sırası veya uygunluk filtresi değildir. Seçim, rating,
+  karar dakikası, neden, model skoru, güven ve seçim oranı tek Super Log
+  satırından atomik taşınır; güncel oran seçilen marketten okunur.
+- Maç akışındaki soldaki ayrık rating yıldızı kaldırıldı. Merkezdeki konturlu
+  düğüm yatay genişliyor ve kararın 1–5 yıldızının tamamını tek göstergede,
+  `BTB rating n/5` erişilebilirlik anlamıyla gösteriyor. Tarihsel sıra,
+  navigasyon ve model/Super üretim davranışı değişmedi.
 
-Doğrulama: Mobile BFF testleri ve production build geçti; Mobile type/lint/test
-ve Expo Doctor geçti; `git diff --check` temiz. Canlı salt-okunur SAP MCP,
-`ZBET_UI_SUPER_LOG_SB` binding'inin published OData V4 ve servisinin
-`ZBET_UI_SUPER_LOG` v0001 olduğunu doğruladı. MCP ile Super Log satırı veya
-aktif kaynak okunduğu iddia edilmez; alan kanıtı mevcut BFF sözleşmesidir.
-Temiz pushed `zbet-cap adc1822` kaynağından pilot BFF bir kez yeniden
-başlatıldı (`PID 19120 -> 6484`); local/public health HTTP 200 ve stderr boştu.
-Bounded authenticated read-back'te örnek canlı maçın üç skorlu, void olmayan
-kararı arasından `3.89 / Ms25a / 74'` en yüksek karar olarak seçildi; Live kartı
-ile Match Detail'in karar alanları local ve public yüzeylerde atomik eşleşti.
+Doğrulama: Mobile BFF testleri ve production build geçti. Mobile typecheck,
+ESLint ve unit testleri geçti; Expo Doctor'ın yalnız önceden bilinen patch-sürüm
+önerisi izole edildi ve kalan kontroller geçti; Android production JavaScript
+export/bundle geçti. Android 15 x86_64 emülatöründe uygulama Metro üzerinden
+açıldı, pilot canlı liste ve Match Detail timeline render edildi; merkez yıldız
+düğümünün genişlediği ve soldaki ayrık yıldızın kalktığı görsel olarak
+doğrulandı. Emülatördeki mevcut örnek kararlar 1 yıldızlı olduğundan 2–5 yıldız
+sayımı kaynak unit testiyle doğrulandı; fiziksel Xiaomi kabulü bekleniyor.
+
+Pilot BFF runtime hâlâ temiz pushed `zbet-cap adc1822` kaynağındaki eski
+en-yüksek-model-skoru davranışını çalıştırır. Bu batch'te runtime restart,
+commit/push, SAP/Firebase/Cloudflare değişikliği, APK build veya dağıtım
+yapılmadı.
 
 Checkpoint:
 
 ```text
-zbet-cap    adc1822 · clean · origin/main ile eşit
-zbet-mobile yalnız kapanış belgeleri · bu turda commit/push edildi
-runtime     adc1822 · local/public HTTP 200 · en-yüksek-skor read-back PASS
-artifact    değişmedi · APK build gerekmedi ve yapılmadı
+zbet-cap    adc1822 + provider/test dirty · commit/push yok
+zbet-mobile 9b89a66 + timeline/helper/test/docs dirty · commit/push yok
+runtime     adc1822 · eski en-yüksek-model-skoru davranışı · restart yok
+artifact    değişmedi · bu batch'te APK build/dağıtım yok
 ```
 
-Sonraki kapı yalnız fiziksel Xiaomi kabulidir: mevcut kurulu APK ile Live kartı
-ve Match Detail'in aynı en-yüksek-skor kararını ve ona ait oran/özeti göstermesi
-doğrulanmalıdır. Mobile kaynak, DTO şekli, JS bundle veya native girdi
-değişmediği için aynı APK'yı yeniden üretmek bu batch'e yeni kanıt katmaz.
-Ayrıntı:
-`docs/observation_archive/cutover_2026-08-29.md`.
+Sonraki kapılar ayrıdır: önce sahip onayıyla iki repoda ilgili dosyaları
+commit/push; sonra yeni pushed SHA'dan pilot BFF restart ve local/public
+read-back. Mobile JavaScript UI değiştiği için fiziksel Xiaomi'da yeni görünümü
+mevcut kurulu standalone APK ile görmek mümkün değildir; sahip cihaz kabuline
+geçmeden önce ayrıca onaylanan yeni bir APK build gerekir. Bu batch ayrıntısı:
+`docs/observation_archive/cutover_2026-08-29-02.md`. Önceki en-yüksek-skor
+batch'i: `docs/observation_archive/cutover_2026-08-29.md`.
 
 ## Önceki batch — 2026-08-26
 

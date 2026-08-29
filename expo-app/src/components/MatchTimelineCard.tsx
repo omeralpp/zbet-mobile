@@ -13,6 +13,7 @@ import { ChangeEmphasis } from "@/src/components/ChangeEmphasis";
 import { RatingStars } from "@/src/components/RatingStars";
 import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import { buildMatchTimelineFeed } from "@/src/components/match-timeline-feed";
+import { buildSuperRatingMarker } from "@/src/components/super-rating-marker";
 import {
   describeEvent,
   describeEventForAccessibility,
@@ -196,12 +197,14 @@ function SuperDecisionRow({
   onPress: ((decision: SuperLog) => void) | undefined;
   sharesMinute: boolean;
 }) {
+  const ratingMarker = buildSuperRatingMarker(decision.rating);
+
   return (
     <Pressable
       accessibilityHint="Super karar detayını açar"
       accessibilityLabel={[
         `${decision.elapsed}. dakika Super tercihi`,
-        `${decision.rating} yıldız`,
+        ratingMarker.accessibilityLabel,
         decision.selectedOdd,
         isCurrent ? "güncel tercih" : null,
         sharesMinute ? "başka bir olayla aynı dakika; kesin sıralama bilinmiyor" : null
@@ -219,7 +222,6 @@ function SuperDecisionRow({
     >
       <View style={[styles.lane, styles.superMeta]}>
         <Text style={styles.superLabel}>SUPER</Text>
-        <RatingStars rating={decision.rating} size={iconSizes.micro} />
       </View>
       <View style={styles.axis}>
         <View
@@ -236,11 +238,7 @@ function SuperDecisionRow({
           </Text>
         </View>
         <View style={[styles.mark, styles.superMark]}>
-          <MaterialCommunityIcons
-            color={colors.gold}
-            name="star"
-            size={iconSizes.small}
-          />
+          <RatingStars rating={ratingMarker.starCount} size={iconSizes.micro} />
         </View>
       </View>
       <View style={[styles.lane, styles.superSelection]}>
@@ -437,7 +435,7 @@ const styles = StyleSheet.create({
   },
   axis: {
     alignItems: "center",
-    minWidth: 68,
+    minWidth: 92,
     paddingBottom: spacing.sm,
     paddingHorizontal: spacing.xs,
     paddingTop: spacing.sm,
@@ -624,8 +622,7 @@ const styles = StyleSheet.create({
   },
   superLabel: {
     color: colors.gold,
-    ...typeScale.micro,
-    marginBottom: spacing.xs
+    ...typeScale.micro
   },
   superRail: {
     backgroundColor: colors.gold
@@ -637,7 +634,11 @@ const styles = StyleSheet.create({
     color: colors.gold
   },
   superMark: {
-    borderColor: colors.gold
+    borderColor: colors.gold,
+    height: 36,
+    minWidth: 44,
+    paddingHorizontal: spacing.sm,
+    width: "auto"
   },
   superSelection: {
     alignItems: "flex-start",
