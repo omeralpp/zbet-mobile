@@ -32,27 +32,48 @@ düğümünün genişlediği ve soldaki ayrık yıldızın kalktığı görsel o
 doğrulandı. Emülatördeki mevcut örnek kararlar 1 yıldızlı olduğundan 2–5 yıldız
 sayımı kaynak unit testiyle doğrulandı; fiziksel Xiaomi kabulü bekleniyor.
 
-Pilot BFF runtime hâlâ temiz pushed `zbet-cap adc1822` kaynağındaki eski
-en-yüksek-model-skoru davranışını çalıştırır. Bu batch'te runtime restart,
-commit/push, SAP/Firebase/Cloudflare değişikliği, APK build veya dağıtım
-yapılmadı.
+Sahip onayıyla BFF değişikliği `zbet-cap 108f98a`, Mobile işlevsel değişikliği
+`zbet-mobile 8be2daf` olarak commit/push edildi. Pilot BFF runtime hâlâ
+`zbet-cap adc1822` kaynağındaki eski en-yüksek-model-skoru davranışını
+çalıştırır; runtime restart ve local/public yeni-kural read-back'i yapılmadı.
+SAP/Firebase/Cloudflare değişmedi.
 
 Checkpoint:
 
 ```text
-zbet-cap    adc1822 + provider/test dirty · commit/push yok
-zbet-mobile 9b89a66 + timeline/helper/test/docs dirty · commit/push yok
+zbet-cap    108f98a · clean pushed source
+zbet-mobile 8be2daf · clean pushed functional source; kapanış belgeleri takip eder
 runtime     adc1822 · eski en-yüksek-model-skoru davranışı · restart yok
-artifact    değişmedi · bu batch'te APK build/dağıtım yok
+artifact    btb-mobile-next-arm64-pilot-8be2daf.apk · verified · dağıtılmadı
 ```
 
-Sonraki kapılar ayrıdır: önce sahip onayıyla iki repoda ilgili dosyaları
-commit/push; sonra yeni pushed SHA'dan pilot BFF restart ve local/public
-read-back. Mobile JavaScript UI değiştiği için fiziksel Xiaomi'da yeni görünümü
-mevcut kurulu standalone APK ile görmek mümkün değildir; sahip cihaz kabuline
-geçmeden önce ayrıca onaylanan yeni bir APK build gerekir. Bu batch ayrıntısı:
-`docs/observation_archive/cutover_2026-08-29-02.md`. Önceki en-yüksek-skor
-batch'i: `docs/observation_archive/cutover_2026-08-29.md`.
+Final ARM64 pilot APK temiz pushed `8be2daf` kaynağından üretildi:
+
+```text
+Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-pilot-8be2daf.apk
+Package : com.btb.mobile.next
+Version : 0.1.0 (1) · minSdk 24 · targetSdk 36 · compileSdk 36
+ABI     : arm64-v8a (yalnız)
+Size    : 54.075.313 bytes
+SHA-256 : BD41746BDBF7839A8F921D523D04FD6476B9FE2173064F0C588BB9C87E6B9936
+Signing : v2 · fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
+Config  : authMode=pilot · useMocks=false · API=https://api.surklase.com
+Source  : 8be2daf
+Status  : FINAL_PILOT_CANDIDATE · dağıtılmadı · fiziksel Xiaomi kabulü bekliyor
+```
+
+APK'nın 1321 girdilik açılmış secret taramasında private-key/service-account,
+client-secret, SAP session ve BFF Gemini anahtarı/host/model izleri bulunmadı;
+beklenen API hostu ve yeni rating erişilebilirlik metni bulundu. Önceki
+`btb-mobile-next-arm64-pilot-b7c1158.apk` ve geçici `android-export` Geri
+Dönüşüm Kutusu'na taşındı; geri alınabilir. Kaynak, test, belgeler ve brand
+asset'leri korunuyor.
+
+Sonraki kapılar ayrıdır: pilot BFF'i temiz pushed `108f98a` kaynağından bir kez
+yeniden başlatıp local/public yeni-kural read-back yapmak ve APK'yı fiziksel
+Xiaomi'ya dağıtıp görsel kabul almak. İkisi de bu onaya dahil edilmedi. Batch
+ayrıntısı: `docs/observation_archive/cutover_2026-08-29-02.md`. Önceki
+en-yüksek-skor batch'i: `docs/observation_archive/cutover_2026-08-29.md`.
 
 ## Önceki batch — 2026-08-26
 

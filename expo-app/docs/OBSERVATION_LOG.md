@@ -170,6 +170,20 @@ sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
 
 | NXT-OBS-135 | 2026-08-29 | Maç akışında Super yıldız göstergesini tek geniş düğümde birleştirme | Sahibin fiziksel Xiaomi görseli (`Photo 1.jpg`): Super timeline satırlarında rating'i gösteren soldaki ayrık küçük yıldızlar kaldırılmalıdır. Dikey akış eksenindeki mevcut konturlu büyük yıldız düğümü yatay yönde genişletilmeli ve kararın tam `rating` değeri (`1–5` yıldız) bu tek düğümün içinde gösterilmelidir; böylece aynı karar için biri merkezde, biri solda iki ayrı yıldız temsili kalmaz. Düğüm zaman çizgisinin merkezini, dakika kapsülünü, sağdaki market/`GÜNCEL`/şevron hizasını ve soldaki `SUPER` etiketini kaydırmamalı; 1–5 yıldız, dar Xiaomi genişliği, büyük yazı, açık/koyu tema ve reduced-motion durumlarında taşmamalıdır. Görsel yıldız sayısı ile ekran okuyucu `BTB rating n/5` anlamı aynı kaynaktan gelmeli; rating, model skoru, Super seçimi, timeline kronolojisi veya navigasyon davranışı değiştirilmemelidir. Kabul: ayrık küçük yıldızın tamamen yokluğu, geniş merkez düğümünde doğru 1/2/3/4/5 yıldız örnekleri, timeline merkez ve satır hizası, dokunulabilir karar satırı ve fiziksel Xiaomi görsel onayı. **2026-08-29 yerel batch:** soldaki ayrık rating yıldızı kaldırıldı; merkez düğüm yatay genişleyen tek 1–5 yıldız göstergesine dönüştürüldü ve görsel sayı ile `BTB rating n/5` erişilebilirlik metni ortak helper'dan üretildi. Typecheck/lint/unit, Expo Doctor'ın bağımsız patch-sürüm önerisi dışındaki kontroller ve Android production JS bundle geçti. Android 15 x86_64 emülatöründe pilot Match Detail açıldı; ayrık yıldızın kalktığı, merkez düğümün genişlediği ve satır hizasının korunduğu 1 yıldızlı canlı örnekte görsel doğrulandı; 1–5 sayımı unit testte kapsandı. Fiziksel Xiaomi kabulü ve yeni standalone APK ayrı kapıdadır. Ayrıntı: `docs/observation_archive/cutover_2026-08-29-02.md`. | MEDIUM | READY |
 
+### 2026-08-29 approved commit/APK continuation
+
+- `NXT-OBS-134`: rating-first BFF source/test change was committed and pushed as
+  `zbet-cap 108f98a`. Pilot runtime remains `adc1822`; restart and live/public
+  read-back are still separate gates.
+- `NXT-OBS-135`: timeline UI/helper/tests were committed and pushed as
+  `zbet-mobile 8be2daf`. Verified ARM64 candidate
+  `btb-mobile-next-arm64-pilot-8be2daf.apk` was built from that clean pushed
+  source (`SHA-256 BD41746BDBF7839A8F921D523D04FD6476B9FE2173064F0C588BB9C87E6B9936`);
+  it was not distributed and physical Xiaomi acceptance is pending.
+- Artifact cleanup moved the superseded APK and temporary Android export to the
+  Windows Recycle Bin; both are recoverable. Detailed metadata and secret review:
+  `docs/observation_archive/cutover_2026-08-29-02.md`.
+
 ## 2026-08-21 cutover disposition (03)
 
 - Komut: `btb next cutover start`. Freeze listesi `NXT-OBS-105`–`110`
