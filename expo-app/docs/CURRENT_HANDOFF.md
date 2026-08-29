@@ -8,7 +8,7 @@ Aktif task: `BTB Mobile Next - Aktif`
 
 Mod: `OBSERVATION` — yedinci `btb next cutover start` batch'i 2026-08-29'da
 yerel doğrulanmış checkpoint olarak kapandı. `NXT-OBS-134` ve `NXT-OBS-135`
-uygulandı ve fiziksel Xiaomi/sahip kabulini bekleyen `READY` durumuna alındı.
+uygulandı; runtime ve fiziksel Xiaomi/sahip kabulü tamamlanarak `CLOSED` oldu.
 `NXT-OBS-133`'ün en-yüksek-model-skoru kabul hedefi supersede edilmiştir.
 
 - `Canlı maçlar` kartı ve `Canlı Maç Detayı` artık aynı temsilci karar
@@ -33,18 +33,20 @@ doğrulandı. Emülatördeki mevcut örnek kararlar 1 yıldızlı olduğundan 2�
 sayımı kaynak unit testiyle doğrulandı; fiziksel Xiaomi kabulü bekleniyor.
 
 Sahip onayıyla BFF değişikliği `zbet-cap 108f98a`, Mobile işlevsel değişikliği
-`zbet-mobile 8be2daf` olarak commit/push edildi. Pilot BFF runtime hâlâ
-`zbet-cap adc1822` kaynağındaki eski en-yüksek-model-skoru davranışını
-çalıştırır; runtime restart ve local/public yeni-kural read-back'i yapılmadı.
-SAP/Firebase/Cloudflare değişmedi.
+`zbet-mobile 8be2daf` ve kapanış kanıtı `cd3e686` olarak commit/push edildi.
+Sahip final APK'yı fiziksel telefona kurduğunu bildirdi ve pilot BFF mevcut
+`-Port 4004 -AuthMode pilot` yapılandırmasıyla temiz pushed `108f98a`
+kaynağından bir kez yeniden başlatıldı (`PID 6484 -> 27556`). Local/public
+health HTTP 200, stderr boş ve rating-first read-back yeşil. SAP/Firebase/
+Cloudflare yapılandırması değişmedi.
 
 Checkpoint:
 
 ```text
 zbet-cap    108f98a · clean pushed source
-zbet-mobile 8be2daf · clean pushed functional source; kapanış belgeleri takip eder
-runtime     adc1822 · eski en-yüksek-model-skoru davranışı · restart yok
-artifact    btb-mobile-next-arm64-pilot-8be2daf.apk · verified · dağıtılmadı
+zbet-mobile cd3e686 · clean pushed evidence; APK functional source 8be2daf
+runtime     108f98a · PID 27556 · local/public HTTP 200 · rating-first read-back PASS
+artifact    btb-mobile-next-arm64-pilot-8be2daf.apk · fiziksel telefona kuruldu
 ```
 
 Final ARM64 pilot APK temiz pushed `8be2daf` kaynağından üretildi:
@@ -69,11 +71,18 @@ beklenen API hostu ve yeni rating erişilebilirlik metni bulundu. Önceki
 Dönüşüm Kutusu'na taşındı; geri alınabilir. Kaynak, test, belgeler ve brand
 asset'leri korunuyor.
 
-Sonraki kapılar ayrıdır: pilot BFF'i temiz pushed `108f98a` kaynağından bir kez
-yeniden başlatıp local/public yeni-kural read-back yapmak ve APK'yı fiziksel
-Xiaomi'ya dağıtıp görsel kabul almak. İkisi de bu onaya dahil edilmedi. Batch
-ayrıntısı: `docs/observation_archive/cutover_2026-08-29-02.md`. Önceki
-en-yüksek-skor batch'i: `docs/observation_archive/cutover_2026-08-29.md`.
+Canlı read-back'te tarihsel kararı olan yedi maçın tamamında temsilci seçim ile
+Live/Detail alanları rating-first kuralla eşleşti. Bounded local/public örnekler:
+üç adaylı maçta tek en-yüksek rating `2★ Ms1X 68'`; iki eşit-rating adaylı
+maçta en yeni karar `1★ Ms1 75'`. İki örnekte de local/public Live kartı ve
+Match Detail aynı karar/dakika/model skoru alanlarını taşıdı.
+
+Sahip final APK'yı fiziksel cihazda kontrol etti ve uygulamanın bütünüyle doğru
+çalıştığını onayladı. `NXT-OBS-134` ve `NXT-OBS-135` için açık ürün/doğrulama
+kapısı kalmadı. Runtime ve fiziksel kabul kanıtı bu kapanış commit'ine dahildir.
+Batch ayrıntısı:
+`docs/observation_archive/cutover_2026-08-29-02.md`. Önceki en-yüksek-skor
+batch'i: `docs/observation_archive/cutover_2026-08-29.md`.
 
 ## Önceki batch — 2026-08-26
 
