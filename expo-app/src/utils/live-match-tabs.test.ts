@@ -49,3 +49,27 @@ test("eski Tümü bağlantıları Fikstür'e taşınır", () => {
   assert.equal(resolveLiveMatchTab("", "ALL", false), "FIXTURE");
   assert.equal(resolveLiveMatchTab("FIXTURE", "", false), "FIXTURE");
 });
+
+test("TASK-0029: oynanmayan maç Fikstür'de kalır, tolerans onu düşürmez", () => {
+  const postponed = {
+    ...mockMatchSummaries[0]!,
+    status: "NOT_PLAYED" as const
+  };
+  const kickoff = new Date(
+    `${postponed.matchDate}T${postponed.matchTime}:00+03:00`
+  ).getTime();
+
+  // Unlike a stale NOT_STARTED, this is a decided outcome: hours past the
+  // scheduled kickoff it is still true that the match will not be played, so
+  // the staleness tolerance must not drop it.
+  assert.equal(
+    matchLiveTab(postponed, "FIXTURE", "STAR_4_PLUS", kickoff + 30 * 60_000),
+    true
+  );
+  assert.equal(
+    matchLiveTab(postponed, "FIXTURE", "STAR_4_PLUS", kickoff + 6 * 60 * 60_000),
+    true
+  );
+  // It is not in play, so it never belongs to Canlı.
+  assert.equal(matchLiveTab(postponed, "LIVE", "STAR_4_PLUS"), false);
+});

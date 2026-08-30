@@ -3,11 +3,19 @@ import { z } from "zod";
 const isoDateTime = z.string().min(1);
 const finiteNumber = z.number().finite();
 
+/**
+ * `NOT_PLAYED` covers the SAP lifecycles that end a fixture without a played
+ * regulation result: 08 postponed, 09 abandoned/interrupted, 10 cancelled and
+ * 11 awarded/walkover. They are one member rather than four because this app
+ * treats them identically - the match is listed, carries no live minute and
+ * no score to trust. Splitting them would add four labels for one behaviour.
+ */
 export const matchStatusSchema = z.enum([
   "LIVE",
   "HALF_TIME",
   "NOT_STARTED",
-  "FINISHED"
+  "FINISHED",
+  "NOT_PLAYED"
 ]);
 
 export const matchSummarySchema = z.strictObject({

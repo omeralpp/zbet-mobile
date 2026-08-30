@@ -11,7 +11,10 @@ export function deriveMatchMinuteProgress(
   status: MatchStatus,
   elapsed: number
 ): MatchMinuteProgress {
-  if (status === "NOT_STARTED") {
+  // NOT_PLAYED joins NOT_STARTED here: a postponed or cancelled match has no
+  // minute to show, and any elapsed value SAP still carries on the row would
+  // render as a running clock for a game that is not being played.
+  if (status === "NOT_STARTED" || status === "NOT_PLAYED") {
     return { label: "", minute: 0, ratio: 0, visible: false };
   }
 

@@ -28,3 +28,10 @@ test("devre ve maç sonu için anlamlı tamamlama etiketleri üretir", () => {
 test("başlamamış maçta yanıltıcı progress göstermez", () => {
   assert.equal(deriveMatchMinuteProgress("NOT_STARTED", 0).visible, false);
 });
+
+test("TASK-0029: oynanmayan maçta dakika sayacı göstermez", () => {
+  // SAP may still carry an elapsed value on a match abandoned mid-play. Showing
+  // it would render a running clock for a game nobody is playing.
+  assert.equal(deriveMatchMinuteProgress("NOT_PLAYED", 63).visible, false);
+  assert.equal(deriveMatchMinuteProgress("NOT_PLAYED", 63).label, "");
+});

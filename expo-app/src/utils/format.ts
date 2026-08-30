@@ -88,6 +88,12 @@ export function formatElapsed(status: MatchStatus, elapsed: number): string {
   if (status === "FINISHED") {
     return "MS";
   }
+  // Without its own wording a not-played match would read "BAŞLAMADI", which
+  // says the game is still ahead of the user when SAP has already decided it
+  // will not be played.
+  if (status === "NOT_PLAYED") {
+    return "OYNANMADI";
+  }
   return "BAŞLAMADI";
 }
 

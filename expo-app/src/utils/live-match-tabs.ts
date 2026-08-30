@@ -65,6 +65,15 @@ export function matchLiveTab(
     case "LIVE":
       return match.status === "LIVE" || match.status === "HALF_TIME";
     case "FIXTURE": {
+      // A postponed, abandoned, cancelled or awarded match belongs here: it is
+      // the tab a user checks to ask whether a game is on, and the honest
+      // answer is that it is not. It bypasses the staleness tolerance on
+      // purpose - that bound exists because NOT_STARTED can be a stale
+      // provider reading, whereas NOT_PLAYED is a decided outcome that no
+      // amount of elapsed time makes less true.
+      if (match.status === "NOT_PLAYED") {
+        return true;
+      }
       if (match.status !== "NOT_STARTED") {
         return false;
       }
