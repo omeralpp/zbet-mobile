@@ -41,7 +41,29 @@ intersection was unique in every group, the two sides differed, and the row
 team names corroborated the result. Names were read only as a cross-check and
 were never used to derive; no ID is hard-coded.
 
-## The real prerequisite: upstream coverage
+## Correction: the blocker is the wrong key, not coverage
+
+The owner supplied `.../api/mobile/match-card/3094620/statistics`, which
+disproved the coverage diagnosis recorded earlier the same day. `3094620` is
+that match's SAP **`id`**; its `stats_id` is `72343988`. Called with `id` the
+bridge returns 15/15 history rows; called with `stats_id` it returns 0/0.
+
+Comparative check over eight current matches: **populated via SAP `id` 8/8, via
+`stats_id` 0/8.** The Bilyoner match-card statistics endpoint is keyed by the
+Bilyoner match id, and BTB was sending `stats_id`, which is a BetRadar event id.
+The endpoint answers HTTP 200 with empty groups rather than an error, so the
+wrong key looked exactly like "this match has no history".
+
+The own-team-id derivation also holds with the correct key: the intersection was
+unique in all sixteen groups, the two sides differed everywhere, and row names
+corroborated. Names remain a cross-check only.
+
+Remaining work for real Team Form is therefore a Mobile BFF change with no SAP
+write: call the statistics resource with SAP `id`, and let the normalizer use
+the group-derived statistics id instead of the SAP participant id. A populated
+end-to-end smoke becomes possible immediately afterwards.
+
+## Superseded diagnosis: upstream coverage
 
 Every one of the 35 rows in the current fixture list carries an 8-digit
 `stats_id` (34 beginning `7`, one beginning `6`). Of 15 sampled current
@@ -49,14 +71,10 @@ Every one of the 35 rows in the current fixture list carries an 8-digit
 only events carrying history are the 7-digit legacy family, which the current
 fixture list does not contain at all.
 
-So implementing the identity derivation alone would not produce a working
-feature: real Team Form would render `UNAVAILABLE` for every current match, and
-the populated end-to-end smoke this gate requires could not pass. The next
-prerequisite is therefore why team history is unpublished for the current event
-ID family - a provider/SAP-bridge coverage question owned by `BTB - Aktif`, not
-a Mobile mapping fix. The derivation above is recorded so it can be applied
-once coverage exists, and deliberately not implemented before it can be
-validated.
+That reasoning was wrong, and is kept only so the mistake is legible: those
+8-digit values were never in this endpoint's identity space, so their emptiness
+said nothing about coverage. There is no provider coverage problem and nothing
+here belongs to `BTB - Aktif`.
 Any SAP object change belongs to BTB - Aktif and needs its own explicit scope
 and write/activation approval. No SAP or model object changed in this batch.
 

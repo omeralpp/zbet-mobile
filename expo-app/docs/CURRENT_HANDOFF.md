@@ -6,6 +6,56 @@ Son güncelleme: 2026-09-02
 
 Aktif task: `BTB Mobile Next - Aktif`
 
+## 2026-09-02 — Yeni pilot APK üretildi; NXT-OBS-142 engeli düzeltildi
+
+Sahip onayıyla temiz pushed `b9ca7ae` kaynağından tek ARM64 pilot artefaktı
+üretildi ve APK'nın içinden doğrulandı.
+
+```text
+Path    : C:\dev\btb-cdoex\zbet-mobile\expo-app\.codex-artifacts\btb-mobile-next-arm64-pilot-b9ca7ae.apk
+Package : com.btb.mobile.next · 0.1.0 · minSdk 24 · targetSdk 36
+ABI     : arm64-v8a (yalnız)
+Size    : 54.259.057 bytes
+SHA-256 : 058D81FABDA642AEAF869363F0A3E90525F0E1C1FBDB0F67C937D58E146223FE
+Signing : v2 · fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
+Config  : authMode=pilot · useMocks=false · API=https://api.surklase.com
+          mobileIntelligence=SYNTHETIC
+Source  : b9ca7ae
+Status  : FINAL_PILOT_CANDIDATE · fiziksel Xiaomi kabulü bekliyor
+```
+
+İmza sertifikası öncekiyle aynı; telefonda kaldırmadan üzerine kurulabilir.
+Gömülü `app.config` `mobileIntelligence=SYNTHETIC` taşıyor. Hermes bundle'ında
+batch 01 metinleri **ve** batch 02 eklemeleri (`En yeni → eski` başlığı, G/B/M
+erişilebilirlik sözcükleri, üç sözleşme sürümü) UTF-16 aramasıyla doğrulandı;
+12 kontrolün 12'si mevcut. Gizli anahtar taraması temiz — tek `client_secret`
+eşleşmesi Hermes string tablosunda bitişik duran bir tanımlayıcıdır, değer
+değildir. Önceki `1fc47bc` APK'sı Geri Dönüşüm Kutusu'na taşındı (geri
+alınabilir); `.codex-artifacts` yalnız yeni artefaktı tutuyor.
+
+Bu APK'da üç zekâ yüzeyi de **örnek veri** ile çalışır ve rozetle işaretlidir.
+Gerçek olan her şey (canlı maçlar, Super, Toto, maç detayı) pilot BFF'ten
+gelir. Pilot servise dokunulmadı; runtime yeniden başlatılmadı.
+
+### NXT-OBS-142 düzeltmesi — engel yanlış anahtar
+
+Sahibin paylaştığı `match-card/3094620/statistics` bağlantısı aynı gün verilen
+"kapsam engeli" teşhisini çürüttü. `3094620` o maçın SAP **`id`** alanıdır;
+`stats_id` ise `72343988`. Sekiz güncel maçta karşılaştırma: **SAP `id` ile
+8/8 dolu, `stats_id` ile 0/8.** Bilyoner match-card statistics ucu Bilyoner maç
+kimliğiyle anahtarlanıyor; BTB ise BetRadar olay kimliği olan `stats_id`
+gönderiyordu. Uç hata vermeyip HTTP 200 ve boş grup döndürdüğü için bu sessizce
+"geçmiş yok" gibi göründü.
+
+Kimlik türetimi doğru anahtarla sekiz maçın sekizinde, iki tarafta da çalıştı.
+Yani kalan iş bir Mobile BFF değişikliğidir ve SAP yazımı gerektirmez:
+statistics çağrısında `stats_id` yerine SAP `id` kullanmak ve normalizer'ın
+participant kimliği yerine gruptan türetilen statistics kimliğini kullanması.
+Bu turda uygulanmadı; `BTB_MOBILE_TEAM_FORM_ENABLED` kapalı kalıyor.
+
+Daha önce kaydedilen "8 haneli aile için geçmiş yayınlanmıyor" sonucu
+**yanlıştı** ve geri alındı; `BTB - Aktif`'e devredilecek bir iş yoktur.
+
 ## 2026-09-02 — M15 kapatıldı; NXT-OBS-142 engeli yeniden tanımlandı
 
 Mod: `OBSERVATION`. Cutover batch **açılmadı**: bu tur denetim, salt-okunur
@@ -85,10 +135,8 @@ BTB Logs    main   · 3344ebe · dirty (ayna M15 satırı)
 zbet-abap    main   · 48774d6 · temiz, dokunulmadı
 ```
 
-Telefondaki artefakt değişmedi:
-`.codex-artifacts/btb-mobile-next-arm64-pilot-1fc47bc.apk`, SHA-256
-`61B64220B4B3507A2272595FBC98BA01162601697F5C607C4A1A8372E4E470DC`,
-`mobileIntelligence=SYNTHETIC`. Batch 02 ve bu tur bu APK'da yoktur.
+Not: bu bölüm yazıldığında telefondaki artefakt `1fc47bc` idi. Sonrasında
+sahip onayıyla `b9ca7ae` APK'sı üretildi; güncel artefakt yukarıdaki bölümde.
 
 Pilot servis dokunulmadı: `https://api.surklase.com`, PID `25412`. Bu turda
 runtime yeniden başlatılmadı.
