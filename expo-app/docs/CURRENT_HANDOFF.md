@@ -6,6 +6,37 @@ Son güncelleme: 2026-09-02
 
 Aktif task: `BTB Mobile Next - Aktif`
 
+## 2026-09-02 — `NXT-OBS-141`: Super ve Özet sekmelerinde 502, çözüldü
+
+Sahip yeni APK'yı kurduktan sonra `Karar günlüğü` ve `Bugünün merkezi`
+ekranlarında `Mobil servis hatası (502)` bildirdi; `Maç Detayı` ile iki yeni M15
+yüzeyi normal çalışıyordu.
+
+Bu `NXT-OBS-137` süreç ölümü değildi: BFF ayaktaydı, watchdog `18:00:01` sonuç
+`0` ile geçmişti ve `/health` iki uçta da `200` idi. Arıza rota bazlıydı —
+`/v1/super/logs`, `/v1/super/kpis` ve `/v1/dashboard` `502`, matches ve Toto
+`200`. Yerel istek de `502` döndüğü için sorun BFF'in kendisindeydi.
+
+Kök neden: bugün sonuçlanan iki Super kararı `result_text = "Unresolved"`
+taşıyor. `mapSuperResult` bu değeri tanımıyordu ve satırlar liste yanıtı içinde
+map edildiği için iki satır üç rotayı birden düşürdü. SAP alanları durumu
+açıkça tanımlıyor: `settled_text=Settled`, `unres_reason=
+REQUIRED_SCOPE_UNAVAILABLE`, `result_profit=0`, `model_eval=EXCLUDE`. Sahip
+kararıyla bu durum mevcut `VOID` üyesine eşlendi; bilinmeyen yeni değerler hâlâ
+hata fırlatıyor. Hata işleyicisi artık `cause` alanını da yazıyor — alan adı
+daha önce log'da hiç görünmüyordu.
+
+Düzeltme `zbet-cap b92c6c7`. BFF testleri `378/378`, CAP production build geçti.
+Pilot runtime temiz pushed kaynaktan `PID 23320 -> 25412` ile bir kez yeniden
+başlatıldı; altı uç hem local hem public `200`. Public read-back listenin 200
+satırının tamamını döndürdü (`WON 72 · LOST 119 · VOID 7 · OPEN 2`), ham SAP
+sayımıyla birebir eşleşti ve iki `Yunnan` kararı `VOID` olarak geldi.
+
+Yeni APK gerekmez; düzeltme sunucu tarafındadır ve telefondaki mevcut
+`1fc47bc` kurulumu `Tekrar dene` ile düzelir.
+
+Repository checkpoint güncellemesi: `zbet-cap main · b92c6c7 == origin/main`.
+
 ## 2026-09-02 — M15 birinci batch kapandı, observation moduna dönüldü
 
 `btb next cutover start` ile M15 Mobile Intelligence Foundation paralel
@@ -61,7 +92,7 @@ Repository checkpoint:
 
 ```text
 zbet-mobile  master · 1fc47bc == origin/master · clean
-zbet-cap     main   · c63b729 == origin/main   · clean, hiç dokunulmadı
+zbet-cap     main   · b92c6c7 == origin/main   · clean (NXT-OBS-141 düzeltmesi)
 btb-codex   main   · 0c12834 == origin/main   · clean
 BTB Logs    main   · 3344ebe == origin/main   · clean
 ```
