@@ -1,10 +1,46 @@
 # Team Form — local adapter and rollout gate
 
-Status (2026-09-02, after the identity fix): the adapter now produces **real,
-populated Team Form** end to end - 5 of 6 sampled current matches populated on
-both sides, the sixth failing only on the pre-existing MATCH_NOT_FOUND from the
-match route. The switch is still off and nothing is rolled out; what remains is
-an operational decision, not an engineering blocker.
+Latest follow-up (2026-09-02, NXT-OBS-147): owner phone/source comparison exposed
+a score-scope selection bug after the identity fix. The bounded BFF correction is
+committed/pushed at CAP `91cbc25` under the owner's separate approval: differing
+secondary scores are accepted only
+when valid main scores, displayed score and the own-team result agree. Motherwell
+now yields B M M M G / PPG 0.80 / GA 2.20 instead of B M M G B / 1.00 / 2.00;
+Dundee and venue PPG are unchanged. All 51 Team Form tests, full BFF tests/build,
+and real SAP-backed local HTTP -> actual Mobile schema checks pass. Public pilot
+still serves the old values. No new APK is needed; pilot restart and
+physical acceptance remain pending. No Mobile, ABAP or model code changed.
+
+### Earlier APK/runtime checkpoint
+
+Status (2026-09-02 23:02 TRT): the identity fix is committed at CAP `86bf79e`
+and the existing pilot service now serves **real, populated Team Form**. The
+persistent `BTB_MOBILE_TEAM_FORM_ENABLED` flag is true. Public HTTP 200,
+`origin=LIVE`, `availability=OK`, both sides and ordered five-match results passed
+the actual Mobile schema and mixed-origin wrapper checks on three current matches.
+The earlier five-of-six service check remains historical evidence; its sixth
+failure was the pre-existing match-route MATCH_NOT_FOUND, not Team Form.
+
+**Phone acceptance is not complete; the new APK is built.** After the owner's
+"Let's continue" response to the pilot warning gate, Codex recovered the resource-
+limited build with process-local worker/CPU caps. The final candidate is
+`btb-mobile-next-arm64-team-form-live-b75b4cd.apk`, SHA-256
+`53B366747517A8E5B9211AB85EE72D3ABF8D8173E16324736E59BFA9E2D20D99`.
+Its packaged Team Form switch is LIVE; Match Path and Jinx remain SYNTHETIC.
+Package, ARM64 ABI, unchanged pilot certificate, embedded config/UI assets and
+server-secret scan passed. The previous all-synthetic APK is recoverable from
+the Recycle Bin. No claim is made that the owner installed the new candidate.
+
+Doctor remains 19/20 (16 patch mismatches), accepted only as an owner-pilot caveat;
+npm-ci additionally reported 21 audit findings (15 moderate/6 high), not resolved
+here. Production remains blocked. Metro was denied by execution policy. Both the
+new and previous ARM64 APKs install but fail the x86 emulator's SoLoader library
+lookup; the emulator was returned to its existing x86 debug client. This is not
+new physical acceptance or a live UI smoke pass. See CURRENT_HANDOFF for details.
+
+The sections below retain the investigation history. Any "switch off", "not
+deployed", or participant-join UNAVAILABLE statements describe earlier stages,
+not the current pilot service.
 
 ## Verified evidence and missing prerequisite
 
@@ -104,14 +140,22 @@ and write/activation approval. No SAP or model object changed in this batch.
 `GET /v1/btb/matches/{key}/team-form` -> existing SAP-backed `getMatch` ->
 existing bridge `resource=statistics` -> provider-neutral `team-form.v1`.
 
-The current adapter requires a consistent exact team-ID join against the SAP
-participant ID, which is the part the investigation above supersedes. It does not
-invoke the deployed ABAP helper. It mirrors the read-only FORM_CTX_V1 reference
-rules: exclude friendlies, same-day/future/invalid dates and ambiguous overtime
-scores; use the newest five general results and an independent five-match venue
-window. It also rejects identity mismatches, conflicting duplicates and
-ambiguous same-day chronology. These presentation summaries never feed Super,
-rating, Toto or model learning.
+The adapter derives a unique statistics-team ID from each side's own group;
+there is no SAP-participant-ID join. It does not invoke the deployed ABAP helper.
+It retains FORM_CTX_V1 window/date/venue rules: exclude friendlies and same-day,
+future or invalid dates; use the newest five eligible general results and an
+independent five-match venue window. Identity ambiguity, conflicting duplicates
+and ambiguous same-day chronology remain rejected.
+
+For this Mobile display, results and goal averages use valid provider main scores,
+not inferred regulation-only scores. NXT-OBS-147 removes the blanket exclusion for
+different secondary Ot scores only when two fields corroborate the main pair:
+the displayed `score` and the own-team `markedTeamResult`. Missing, malformed or
+contradictory corroboration still rejects such a row; malformed main/secondary
+scores remain invalid. Absent/equal secondary-score behavior is unchanged. This
+does not define the provider's undocumented Ot semantics or change how other
+invalid rows are excluded. These presentation summaries never feed Super, rating,
+Toto or model learning, and ABAP's rules are unchanged.
 
 The DTO alone is cached in bounded process memory for five minutes; concurrent
 requests share a fetch. Failure cooldown prevents repeated upstream calls, with
@@ -119,19 +163,22 @@ a 15-minute floor for access denial/rate limits. Expired data is not relabelled
 as fresh. Raw history, participant IDs, credentials and provider errors are not
 exposed in the DTO or persisted by this adapter.
 
-## Switches — keep disabled until mapping is verified
+## Switches and rollout gates
 
 - BFF: `BTB_MOBILE_TEAM_FORM_ENABLED` defaults off. Off returns authenticated
   `503 TEAM_FORM_NOT_CONFIGURED`; incomplete enabled configuration fails fast.
 - Mobile: `EXPO_PUBLIC_TEAM_FORM_INTELLIGENCE` independently accepts `off`,
   `synthetic`, or `live`; absent inherits `EXPO_PUBLIC_MOBILE_INTELLIGENCE`.
   A live Team Form build requires `EXPO_PUBLIC_USE_MOCKS=false`.
-- Later, verified Team Form may be live while Match Path/Jinx stay explicitly
+- Verified Team Form may be live while Match Path/Jinx stay explicitly
   synthetic or off. A Team Form error never substitutes synthetic data.
 
-No persistent environment setting was changed. The owner's existing APK
-remains synthetic. Commit/push, pilot runtime restart/configuration, final APK
-and distribution remain separate approval gates.
+Current pilot: the BFF flag is already enabled and the retained phone candidate
+packages Team Form LIVE while Match Path/Jinx stay SYNTHETIC. The NXT-OBS-147 local
+correction changes neither setting and needs no new APK. Commit/push is approved
+and CAP `91cbc25` is pushed; pilot runtime restart/read-back still requires separate
+explicit approval. The existing public process does not gain a source correction
+merely because a file was edited or committed.
 
 ## Ordered results and Jinx identity
 

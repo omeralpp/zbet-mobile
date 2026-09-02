@@ -6,6 +6,102 @@ Son güncelleme: 2026-09-02
 
 Aktif task: `BTB Mobile Next - Aktif`
 
+## 2026-09-02 — NXT-OBS-147 committed; pilot rollout and physical acceptance pending
+
+Owner tested the candidate and supplied Motherwell / Dundee Utd. comparisons.
+Sample cards are acceptable; Jinx icon/chips are visible. Real Team Form data
+acceptance is withheld: the running BFF skips Stenhousemuir 1-0 Motherwell on
+16 August because its secondary Ot scores differ, replacing it with an older draw.
+Owner then approved the bounded local correction with "let's do it". The adapter
+now retains a differing-secondary-score row only when the displayed score and
+own-team result corroborate the valid main score. Malformed/contradictory score,
+identity, date and duplicate guards remain. No ABAP/model or Mobile source change.
+
+Verified: the new Motherwell regression failed before the fix, then all 51 Team
+Form tests and the full BFF tests/production build passed. Real SAP match +
+statistics reads through the fixed local HTTP route and actual Mobile schema
+return B M M M G / 1G1B3M / PPG 0.80 / GA 2.20; Dundee and both venue windows
+are unchanged. Direct bridge evidence, not SAP MCP source inspection. The public
+pilot was separately rechecked and still returns old B M M G B / 1.00 / 2.00.
+
+Owner separately approved commit/push. CAP fix/tests are committed and pushed as
+`91cbc259a2ae5d72f0c6a6f1203060560ac71f1e` (`91cbc25`); the four Mobile
+handoff/observation/integration/archive documents accompany this approved checkpoint.
+Next: separate owner-only pilot restart approval for that CAP SHA and public
+read-back; finally owner refresh/reopen and physical data acceptance. No new APK
+is needed. No flags, persistent service, SAP or device data were changed. Remain
+OBSERVATION, no open cutover run; NXT-OBS-147 is READY, not deployed or physically
+accepted. Details: OBSERVATION_LOG.md. Release evidence
+and artifact below remain historical; schema/shape checks alone did not prove selection.
+
+## 2026-09-02 23:17 TRT — LIVE Team Form pilot APK built; physical test pending
+
+This checkpoint supersedes older "flag off / fix uncommitted / APK pending"
+statements below. Owner asked to continue Claude's enable-Team-Form/build-APK
+work, then said "Let's continue" in response to the owner-only pilot dependency
+warning exception. No production release, SAP change or new commit/push approval.
+M15 remains `CLOSED`; Mobile remains `OBSERVATION`, with no open cutover run.
+
+```text
+Artifact : .codex-artifacts/btb-mobile-next-arm64-team-form-live-b75b4cd.apk
+Bytes    : 54,259,061 (51.75 MiB)
+SHA-256  : 53B366747517A8E5B9211AB85EE72D3ABF8D8173E16324736E59BFA9E2D20D99
+Package  : com.btb.mobile.next / 0.1.0 (1) / arm64-v8a only
+Signing  : v2 PASS; existing Android Debug pilot certificate
+Cert SHA : fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
+Config   : API=https://api.surklase.com; authMode=pilot; useMocks=false
+           teamFormIntelligence=LIVE; mobileIntelligence=SYNTHETIC
+Source   : Mobile b75b4cd (application unchanged; only handoff documents dirty)
+Status   : OWNER_ONLY_PILOT_CANDIDATE / PHYSICAL_ACCEPTANCE_PENDING
+```
+
+The exact packaged config, seven UI/contract markers, Jinx artwork resource,
+Work Zone base URL and signature were verified from inside the APK. Known
+server-secret/private-key scan: 1,321 ZIP entries, seven configured secret-value
+variants, zero matches. The established extractable owner pilot key is expected
+client configuration, never a production credential; no secret values were logged.
+
+Real Team Form is already enabled in persistent BFF configuration. CAP `86bf79e`
+runs at `127.0.0.1:4004`, PID `6552`; local/public health returned 200 at 23:17.
+Codex did not restart it or change its flags. Public dashboard/Super/matches also
+passed. Actual Mobile schema + mixed-origin wrapper passed both populated sides
+on Motherwell / Dundee Utd., Dundee / ST Johnstone and Millwall / Wrexham, including
+five-result sequences matching W/D/L totals. Match Path/Jinx remain synthetic.
+This is public BFF evidence, not SAP MCP source inspection.
+
+Build recovered from Claude's Windows JVM quota failure using process-local
+ActiveProcessorCount=2, two Gradle workers, parallel=false and in-process Kotlin.
+Canonical build succeeded in 5m57s (1,077 tasks); its staging directory was cleaned.
+No application/native source, package versions or persistent build settings changed.
+
+**Limits:** Doctor remains 19/20 (16 patch-version mismatches), carried forward
+only for this owner pilot. Automatic npm-ci audit reported 21 findings (15 moderate,
+6 high), not triaged/fixed here. Production gates are NOT all green. Prior 562 Mobile
+tests, BFF 409 tests/build and native UI checks are reused for unchanged source.
+
+Metro preview was blocked by execution policy. Direct APK install succeeded on
+the Android 15 emulator, but launch failed: SoLoader searches `lib/x86_64` in the
+ARM64-only APK. The previous b9ca7ae ARM64 APK reproduces the same failure, and its
+ARM64 libreactnative.so is byte-identical to the new one. This emulator cannot
+provide this candidate's live UI acceptance. The existing x86_64 debug APK was
+restored without uninstall/data clearing, its process started successfully, then
+was stopped and the pre-existing emulator returned home. Physical Xiaomi test
+is still required; do not claim a new device-smoke pass.
+
+Next: owner copies this APK to the phone and installs over the current app (same
+package/certificate). Open a current match: Team Form should use real history,
+without the sample-data badge; G/B/M chips run newest to oldest. Check the Jinx
+heading icon. Match Path/Jinx commentary must still show sample-data labels.
+Unavailable history must remain unavailable, never synthetic fallback. Record
+physical acceptance for NXT-OBS-142/145/146 only after owner confirmation.
+
+Only the final phone APK remains alongside preserved brand-source/reference
+folders. Previous b9ca7ae APK, batch02 temporary evidence and the resume verification
+helpers were moved to the Recycle Bin (recoverable). Source/docs were not recycled.
+Mobile handoff/integration/observation documents and batch-02 archive are locally
+modified, uncommitted. CAP and all other repos remain unchanged. No data/log intake.
+Entry heads: tooling 3025790, Logs 156a7e4, ABAP 48774d6; no fetch was performed.
+
 ## 2026-09-02 — Team Form kimlik düzeltmesi: gerçek veri uçtan uca çalışıyor
 
 Mod: `OBSERVATION`. Sahip "commit the docs and fix the team form id" dedi;

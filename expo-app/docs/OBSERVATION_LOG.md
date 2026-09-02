@@ -1,5 +1,121 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-02 — NXT-OBS-147 correction verified and committed; pilot unchanged
+
+After the read-only diagnosis below, the owner said "let's do it", approving the
+bounded local fix. After verification, the owner separately approved the scoped
+commit/push; CAP `91cbc25` is pushed. No external runtime approval is inferred.
+
+- Mobile's history summary uses the provider-reported main score. When valid
+  secondary Ot scores differ, both the displayed score and the own-team marked
+  result must corroborate the main score. Otherwise the row still fails closed.
+  Missing/malformed main scores cannot be repaired from labels or secondary scores.
+  No claim is made about undocumented Ot semantics. ABAP FORM_CTX_V1/model rules,
+  identity derivation, dates, duplicate checks and independent venue windows stay
+  unchanged. This fixes the confirmed selection error, not every invalid-row gap.
+- Authored minimal synthetic-ID fixture reproduces the owner's dated score window.
+  The regression failed before the change, then passed; all 51 Team Form tests and
+  the full BFF tests/production build passed. Coverage includes both venues and all
+  outcomes, contradictory/malformed corroboration, legacy absent secondary fields,
+  input immutability and the authenticated HTTP response.
+- Actual SAP-backed match/statistics -> fixed ephemeral local BFF HTTP -> actual
+  Mobile schema passed for `2026-09-02:3096760:21:45:00`. Motherwell now returns
+  B M M M G, 1G1B3M, PPG 0.80, GF 1.40, GA 2.20, BTTS/over 2.5 60%, rest 3 days;
+  Dundee is unchanged, and venue PPG remains 1.40 on both sides. Evidence is direct
+  bridge HTTP, not MCP repository source. No raw payload or credential persisted.
+- Public pilot read-back still returns Motherwell B M M G B / PPG 1.00 / GA 2.00.
+  Local test server was closed; the existing pilot process/configuration was not
+  changed. CAP normalizer + fixture + tests are committed/pushed at `91cbc25`;
+  four Mobile documents record this approved checkpoint and prior APK evidence.
+  No new APK, dependency change, SAP/model write or new cutover run.
+
+NXT-OBS-147 is READY for separately approved pilot restart at CAP `91cbc25`,
+public read-back and owner acceptance. Existing LIVE-Team-Form APK is sufficient.
+NXT-OBS-142/145 real-data acceptance remains open. The diagnosis below is historical
+evidence of the earlier read-only step, not the latest implementation status.
+
+## 2026-09-02 — NXT-OBS-147: Motherwell last-five selection mismatch confirmed
+
+Owner supplied five physical-phone/source screenshots, attachment set
+`7143b7f9-af15-4a67-80cf-dd47f80af8f6`, and asked for investigation only. The
+sample-data cards are not disputed. Jinx heading icon and result chips are visible;
+Team Form has no sample badge. These are physical rendering observations, not
+acceptance of the Team Form values or permission to change/deploy code.
+
+Read-only comparison for `2026-09-02:3096760:21:45:00` (Motherwell / Dundee Utd.):
+the existing SAP bridge statistics call for event `3096760` returned HTTP 200;
+the public Team Form response matches the local normalizer and phone screenshot.
+No SAP repository source-read tool is available. MCP readiness found configuration
+and reachable port only; evidence here is direct bridge HTTP, not SAP MCP source.
+
+**Confirmed cause:** `zbet-cap/srv/mobile-bff/team-form-normalize.js` rejects a
+history row whenever the optional Ot score pair differs from the main score pair
+(lines 108–110). The provider supplies Stenhousemuir / Motherwell, 16.08.2026,
+displayed/main score `1 - 0`, `markedTeamResult=LOST`, secondary Ot scores `0 / 0`.
+That row is omitted and the older 09.08.2026 Motherwell / Falkirk `0 - 0` draw
+enters the five-match window. It is not another identity join failure, mock data,
+chip-colour error, stale APK or phone-side arithmetic bug. The precise semantics
+of the differing secondary scores have not been established from provider docs;
+do not claim the provider payload is corrupt or blindly remove all score guards.
+
+For the five displayed source results (newest first), the comparison is:
+
+| Motherwell metric | Current phone/BFF | Provider-displayed five-match calculation |
+| --- | --- | --- |
+| Sequence (G/B/M) | B M M G B | B M M M G |
+| Record | 1G 2B 2M | 1G 1B 3M |
+| Points per match | 1.00 | 0.80 |
+| Goals conceded per match | 2.00 | 2.20 |
+
+Goals scored 1.40, BTTS 60%, over 2.5 60%, rest 3 days remain the same in this
+case. Dundee Utd. matches its source: G M M M B, 1G1B3M, PPG 0.80, GF 1.00,
+GA 2.20, BTTS 20%, over 2.5 60%, rest 4 days. Venue PPG 1.40 on both sides was
+independently checked from each team's five eligible HOME/AWAY appearances; it
+is a separate window, not the venue subset of the general five. Card statistics
+are historical averages, not this live match's statistics.
+
+Diagnostic proof: in memory only, make this one row's secondary scores equal its
+main scores so it passes the existing guard; the unchanged normalizer returns
+Motherwell B M M M G, PPG 0.80 and GA 2.20, with Dundee unchanged. Independent
+arithmetic over the five source rows agrees. No altered/raw payload was persisted,
+no production cache was changed, and no implementation/test source was edited.
+
+Next bounded Mobile cutover: define explicit result/score scope for this display
+(provider-displayed final result vs regulation-only analytics); prevent a silent
+sixth-match substitution from being labelled simply "last five"; add this exact
+regression and retain malformed/contradictory-data guards. Keep this separate from
+ABAP FORM_CTX_V1/model rules. A BFF-only correction can use the existing phone APK;
+Mobile label/scope UI changes would require a new APK. Tests/build, commit/push
+and pilot restart/read-back keep their gates. NXT-OBS-142/145 data acceptance
+remains open; sample acceptance does not close real Match Path/Jinx engine work.
+
+## 2026-09-02 23:17 TRT — LIVE Team Form APK built; phone acceptance open
+
+Latest state for NXT-OBS-142/145/146; supersedes older operational statements in
+the historical rows below without claiming new physical acceptance:
+
+- CAP identity fix `86bf79e` and Mobile documentation `b75b4cd` are committed.
+  `BTB_MOBILE_TEAM_FORM_ENABLED=true` is already persisted; public pilot BFF PID
+  `6552` serves populated `LIVE/OK` Team Form. Codex did not restart the service.
+- Actual Mobile schema + per-feature wrapper passed three current public matches,
+  both sides, five results and W/D/L totals. Match Path and Jinx stay synthetic.
+- New candidate `btb-mobile-next-arm64-team-form-live-b75b4cd.apk` contains LIVE
+  Team Form and NXT-OBS-145/146 visuals. Match Path/Jinx remain synthetic. Hash:
+  `53B366747517A8E5B9211AB85EE72D3ABF8D8173E16324736E59BFA9E2D20D99`.
+  Build, packaged config, same v2 pilot certificate, ARM64 ABI and secret scan pass.
+- The owner replied "Let's continue" to the existing-dependency-warning pilot
+  gate. Doctor is still 19/20 with 16 patch mismatches; npm-ci reports 21 audit
+  findings (15 moderate/6 high). No upgrades, suppressions or production clearance.
+  Process-local build worker limits recovered the earlier JVM quota failure.
+- New LIVE UI acceptance remains open: Metro was execution-policy blocked; the
+  new and old ARM64 packages both fail the x86 emulator's native-library lookup.
+  Its existing x86 debug client was restored with app data preserved. The new
+  phone APK is not assumed installed. Old APK and temporary evidence recycled,
+  recoverable; source and brand reference assets preserved.
+- Keep 142/145/146 `READY`, physical acceptance open; no duplicate observation,
+  new implementation batch, model/SAP change, commit/push or production approval.
+  Resume instructions and artifact hash are in CURRENT_HANDOFF.md.
+
 ## 2026-09-02 — Austria Wien / WSG Tirol screenshot follow-up
 
 Owner supplied three more phone screenshots (attachment set
@@ -92,6 +208,7 @@ sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
 
 | ID | Tarih | Alan | Tespit / beklenen kanıt | Öncelik | Durum |
 | --- | --- | --- | --- | --- | --- |
+| NXT-OBS-147 | 2026-09-02 | Real Team Form last-five score-scope filter | Owner approved the bounded local correction after the Motherwell comparison. Differing secondary scores no longer erase a valid main result when displayed score and own-team result both corroborate it; malformed/contradictory data guards remain. Motherwell regression fails before/pass after; 51 Team Form tests, full BFF tests/build and real SAP-backed local HTTP -> actual Mobile schema pass. Correct B M M M G / 1G1B3M / PPG 0.80 / GA 2.20; Dundee and independent venue windows unchanged. Owner then separately approved commit/push: CAP fix/tests pushed at 91cbc25, Mobile docs record the checkpoint. Public pilot still returns the old values: no restart, flags, SAP/model or Mobile source change. Pilot restart/public read-back and physical acceptance remain gated. Existing APK is sufficient. Details at the top of this log. | HIGH | READY |
 | NXT-OBS-001 | 2026-07-29 | Performans widget | KPI parser ve dashboard fallback düzeltildi. Android 15 emülatöründeki gerçek widget Toto kapsamını ve cihazda seçilen kalıcı `1+ / 2+ / 3+ / 4+` Super eşiğinin günlük profit/kazandı/kaybetti değerini doğru gösterdi. Final arm64 APK’nın fiziksel cihazda gerçek bildirim/uygulama dönüşü sonrasında aynı parity’yi koruduğu doğrulanmalı. | HIGH | READY |
 | NXT-OBS-002 | 2026-07-29 | Notification görünümü | Android notification küçük ikonu ve varsayılan Firebase/Expo ikon metadata’sı APK’da mevcut. Gerçek FCM bildiriminin fiziksel cihazdaki küçük ikon görünümü bekleniyor. | MEDIUM | READY |
 | NXT-OBS-032 | 2026-07-29 | Canlı veri tazeliği | `zbet_t_matches` / canlı ana OData entity’si gerçek kaynak güncelleme zamanı yayınlamıyor. BFF yanıt zamanı SAP veri tazeliği gibi gösterilmedi. Doğru `Son veri ... önce` ve stale uyarısı için kaynakta tutulan timestamp alanı, DDIC/CDS/service aktivasyonu ve ayrı SAP onayı gerekir. | HIGH | DEFERRED |
