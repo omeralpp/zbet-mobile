@@ -1,11 +1,12 @@
 import Constants from "expo-constants";
+import type { MobileIntelligenceMode } from "./mobile-intelligence";
 
 type RuntimeExtra = {
   mobileApiUrl?: string;
   authMode?: "preview" | "pilot" | "oauth";
   pilotAccessKey?: string;
   useMocks?: boolean;
-  mobileIntelligence?: boolean;
+  mobileIntelligence?: MobileIntelligenceMode;
   authClientId?: string;
   authIssuer?: string;
   authAuthorizationEndpoint?: string;
@@ -26,12 +27,14 @@ export const runtimeConfig = {
   pilotAccessKey: String(extra.pilotAccessKey ?? ""),
   useMocks: extra.useMocks !== false,
   /**
-   * Whether the M15 Mobile Intelligence surfaces are mounted.
+   * Where the M15 Mobile Intelligence surfaces get their data.
    *
-   * Off unless the build says otherwise, so a pilot APK keeps exactly the
-   * behaviour it has today and never requests a route the BFF does not serve.
+   * Off unless the build says otherwise, so a build whose BFF does not serve
+   * these routes keeps exactly the behaviour it has today.  serves
+   * them from fixtures under a visible sample-data badge;  requests them
+   * from the BFF.
    */
-  mobileIntelligence: extra.mobileIntelligence === true,
+  mobileIntelligence: extra.mobileIntelligence ?? "OFF",
   auth: {
     clientId: String(extra.authClientId ?? ""),
     issuer: String(extra.authIssuer ?? ""),

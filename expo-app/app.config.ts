@@ -10,6 +10,7 @@ import {
   validateNoPublicOAuthSecrets,
   validateOAuthPublicConfiguration
 } from "./src/config/auth-mode.ts";
+import { resolveMobileIntelligenceMode } from "./src/config/mobile-intelligence.ts";
 
 const previewPackage = "com.btb.mobile.next";
 
@@ -22,15 +23,12 @@ export default function resolveAppConfig({
   const useMocks = process.env.EXPO_PUBLIC_USE_MOCKS !== "false";
   // M15 Mobile Intelligence Foundation surfaces.
   //
-  // The three surfaces are built against contracts the pilot BFF does not serve
-  // yet, so they default to preview builds only. Mounting them in a pilot build
-  // would fire three requests per match open that are known to have no route,
-  // and would show the owner three permanently unavailable cards. Setting the
-  // variable to "true" turns them on once the BFF publishes those routes, with
-  // no code change here.
-  const mobileIntelligence =
-    process.env.EXPO_PUBLIC_MOBILE_INTELLIGENCE === "true" ||
-    (useMocks && process.env.EXPO_PUBLIC_MOBILE_INTELLIGENCE !== "false");
+  // Off, fixture-backed, or BFF-backed. Declared here rather than inferred at
+  // runtime so a build always states where these numbers came from.
+  const mobileIntelligence = resolveMobileIntelligenceMode({
+    useMocks,
+    configured: process.env.EXPO_PUBLIC_MOBILE_INTELLIGENCE
+  });
   const mobileAuthMode = resolveMobileAuthMode({
     useMocks,
     configuredMode: process.env.EXPO_PUBLIC_MOBILE_AUTH_MODE,

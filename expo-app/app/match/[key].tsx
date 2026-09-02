@@ -45,6 +45,7 @@ import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { RatioResultsChart } from "@/src/components/RatioResultsChart";
 import { Screen } from "@/src/components/Screen";
 import { runtimeConfig } from "@/src/config/runtime";
+import { mountsIntelligenceSurfaces } from "@/src/config/mobile-intelligence";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { buildBilyonerMatchUrl } from "@/src/external/bilyoner";
 import { CollapsibleModule } from "@/src/layout/CollapsibleModule";
@@ -236,7 +237,7 @@ export default function MatchDetailScreen() {
   // M15 intelligence surfaces. Mounted only where the build enables them, so a
   // pilot APK never requests a route its BFF does not serve yet. Like live
   // context, none of them is consulted for the screen's loading or error state.
-  const intelligence = runtimeConfig.mobileIntelligence;
+  const intelligence = mountsIntelligenceSurfaces(runtimeConfig.mobileIntelligence);
   const teamForm = useQuery({
     ...matchTeamFormQuery(key),
     enabled: intelligence && Boolean(key)
