@@ -1,10 +1,10 @@
 # Team Form — local adapter and rollout gate
 
-Status (2026-09-02, after the read-only identity investigation): **not ready
-for live rollout**, but the recorded reason has changed. The identity problem
-is solved on paper and needs no crosswalk; the blocking prerequisite is now
-upstream *coverage*. The authenticated route, DTO normalization, per-feature
-switch and failure handling remain implemented locally and undeployed.
+Status (2026-09-02, after the identity fix): the adapter now produces **real,
+populated Team Form** end to end - 5 of 6 sampled current matches populated on
+both sides, the sixth failing only on the pre-existing MATCH_NOT_FOUND from the
+match route. The switch is still off and nothing is rolled out; what remains is
+an operational decision, not an engineering blocker.
 
 ## Verified evidence and missing prerequisite
 
@@ -41,29 +41,49 @@ intersection was unique in every group, the two sides differed, and the row
 team names corroborated the result. Names were read only as a cross-check and
 were never used to derive; no ID is hard-coded.
 
-## Correction: the blocker is the wrong key, not coverage
+## What was actually wrong, and two corrections to the record
 
-The owner supplied `.../api/mobile/match-card/3094620/statistics`, which
-disproved the coverage diagnosis recorded earlier the same day. `3094620` is
-that match's SAP **`id`**; its `stats_id` is `72343988`. Called with `id` the
-bridge returns 15/15 history rows; called with `stats_id` it returns 0/0.
+The original diagnosis was right and two later ones were not. Recorded in full
+because each wrong turn came from a different mistake worth not repeating.
 
-Comparative check over eight current matches: **populated via SAP `id` 8/8, via
-`stats_id` 0/8.** The Bilyoner match-card statistics endpoint is keyed by the
-Bilyoner match id, and BTB was sending `stats_id`, which is a BetRadar event id.
-The endpoint answers HTTP 200 with empty groups rather than an error, so the
-wrong key looked exactly like "this match has no history".
+**The real defect (Codex, correct).** `deriveSide` required the SAP event
+participant id to appear in the history rows. Those rows use statistics team
+ids, so the join failed on every real payload and every match reported
+`UNAVAILABLE`.
 
-The own-team-id derivation also holds with the correct key: the intersection was
-unique in all sixteen groups, the two sides differed everywhere, and row names
-corroborated. Names remain a cross-check only.
+**Wrong turn 1 - "upstream coverage".** A read-only sweep called the bridge
+with `stats_id` and found 15 of 15 current events empty, concluding the
+provider publishes no history for the current id family. That sweep used an
+identifier the adapter never uses: `team-form.js` already calls
+`fetchMatchStatistics(identity.id)`, the SAP `id` from the match key. The
+emptiness was an artefact of the probe, not a property of the provider.
 
-Remaining work for real Team Form is therefore a Mobile BFF change with no SAP
-write: call the statistics resource with SAP `id`, and let the normalizer use
-the group-derived statistics id instead of the SAP participant id. A populated
-end-to-end smoke becomes possible immediately afterwards.
+**Wrong turn 2 - "the adapter sends the wrong key".** Correcting the first
+error over-corrected into claiming the adapter itself passed `stats_id`. It
+does not, and never did. The `id` versus `stats_id` contrast is real - 8/8
+populated via `id`, 0/8 via `stats_id` - but it describes the probe, not the
+product.
 
-## Superseded diagnosis: upstream coverage
+**The fix.** The participant-id join is unnecessary, because the payload
+answers both questions itself: it is pre-split into `homeTeamForms` and
+`awayTeamForms`, so the side is structural, and the team is the single id
+present in every row of its own group - a team plays all of its own matches
+while its opponents vary. Intersecting `{homeTeamId, awayTeamId}` across the
+group leaves exactly that team, and the venue of each row follows from it.
+
+Verified against live data: unique intersection in every group across eight
+matches, the two sides always distinct, row names corroborating. Names are read
+only as a cross-check and never derive anything; no id is hard-coded.
+
+## Known limitation of the derivation
+
+A group holding exactly one row cannot identify itself: one row names two teams
+and nothing distinguishes them. Such a group fails closed to null rather than
+guessing, because picking the wrong id would invert every venue in the window.
+A group the provider returns as explicitly empty keeps its zero-sample meaning
+and does not collapse into "unavailable".
+
+## Superseded probe data: the stats_id sweep
 
 Every one of the 35 rows in the current fixture list carries an 8-digit
 `stats_id` (34 beginning `7`, one beginning `6`). Of 15 sampled current

@@ -6,6 +6,45 @@ Son güncelleme: 2026-09-02
 
 Aktif task: `BTB Mobile Next - Aktif`
 
+## 2026-09-02 — Team Form kimlik düzeltmesi: gerçek veri uçtan uca çalışıyor
+
+Mod: `OBSERVATION`. Sahip "commit the docs and fix the team form id" dedi;
+belgeler commit edildi (`zbet-mobile 08d10e2`) ve kimlik kusuru giderildi.
+
+**Gerçek kusur Codex'in ilk teşhisiydi.** `deriveSide`, SAP event participant
+kimliğinin geçmiş satırlarında bulunmasını şart koşuyordu; o satırlar statistics
+takım kimliği kullandığı için join her gerçek payload'da başarısız oluyor ve her
+maç `UNAVAILABLE` dönüyordu.
+
+**Aynı gün verdiğim iki ara teşhis yanlıştı ve geri alındı.** (1) "Kapsam
+engeli": o tarama bridge'i `stats_id` ile çağırıyordu; `team-form.js` zaten
+`fetchMatchStatistics(identity.id)` kullanıyor, yani boşluk sondanın
+özelliğiydi, sağlayıcının değil. (2) "Adaptör yanlış anahtar gönderiyor":
+adaptör hiçbir zaman `stats_id` göndermedi; `id` 8/8 - `stats_id` 0/8
+karşılaştırması gerçek ama sondayı tarif ediyor, ürünü değil.
+
+**Düzeltme.** Participant join kaldırıldı. Taraf zaten
+`homeTeamForms`/`awayTeamForms` ayrımıyla yapısal olarak belli; grubun takımı
+ise bütün satırlarındaki `{homeTeamId, awayTeamId}` kesişiminden tekil olarak
+türetiliyor ve venue bu kimlikle hesaplanıyor. Tek satırlık grup belirsizdir,
+null'a düşer; açıkça boş grup sıfır-örneklem anlamını korur.
+
+**Canlı doğrulama:** altı güncel maçın beşinde iki taraf da dolu
+(`Baltika - K. Sovetov` ev 2G1B2M `WDLWL`, deplasman 2G1B2M `DWLLW`;
+`Orenburg - R. Kazan` ev 1G4B0M). Altıncı maç yalnız maç rotasındaki önceden
+var olan `MATCH_NOT_FOUND` nedeniyle düştü.
+
+**Kapılar:** BFF testleri **409/409** (team-form süiti 23 -> 30), CAP production
+build geçti. Mobile tarafı değişmedi, bu yüzden Mobile kapıları yeniden
+çalıştırılmadı.
+
+`NXT-OBS-142` artık `READY`. Kalan iş mühendislik değil operasyonel karardır:
+`BTB_MOBILE_TEAM_FORM_ENABLED` hâlâ **kapalı**, rollout ve yeni APK ayrı onaya
+tabidir. Telefondaki `b9ca7ae` APK'sı bu düzeltmeyi içermez ve Takım Formu
+orada hâlâ örnek veridir.
+
+`zbet-cap` değişikliği commit edilmedi; onay bekliyor.
+
 ## 2026-09-02 — Yeni pilot APK üretildi; NXT-OBS-142 engeli düzeltildi
 
 Sahip onayıyla temiz pushed `b9ca7ae` kaynağından tek ARM64 pilot artefaktı
