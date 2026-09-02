@@ -525,6 +525,8 @@ export const teamFormSideSchema = z.object({
   losses: z.number().int().nonnegative(),
   /** Matches the record above was computed over. */
   matchesSampled: z.number().int().nonnegative(),
+  /** Newest first; null/absent means the source did not publish the order. */
+  recentResults: z.array(z.enum(["W", "D", "L"])).max(5).nullable().optional(),
   /** Points per match across the whole sample. */
   formPpg: finiteNumber.min(0).max(3).nullable(),
   /** Points per match at this venue only - home form for the home side. */

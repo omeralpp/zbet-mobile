@@ -21,6 +21,7 @@ type CollapsibleModuleProps = {
   moduleId: string;
   eyebrow: string;
   title: string;
+  leading?: ReactNode;
   children: ReactNode;
 };
 
@@ -47,6 +48,7 @@ export function CollapsibleModule({
   moduleId,
   eyebrow,
   title,
+  leading,
   children
 }: CollapsibleModuleProps) {
   const { collapsed, toggle } = useModuleCollapse(surface);
@@ -113,6 +115,7 @@ export function CollapsibleModule({
         <ModuleHeading
           eyebrow={eyebrow}
           title={title}
+          leading={leading}
           trailing={
             <Animated.View
               style={{

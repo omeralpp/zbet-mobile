@@ -103,6 +103,24 @@ test("the three M15 reads are answered without touching the base API", async () 
   await api.getMatchJinxOutlook(key);
 });
 
+test("live Team Form passes through unchanged while other surfaces stay synthetic", async () => {
+  const base = baseApi();
+  base.getMatchTeamForm = async () => { throw new Error("live route unavailable"); };
+  const api = withSyntheticIntelligence(base, { teamForm: false, matchPath: true, jinxOutlook: true });
+  assert.equal(api.getMatchTeamForm, base.getMatchTeamForm);
+  await assert.rejects(api.getMatchTeamForm(realKeys[0] ?? ""), /live route unavailable/);
+  assert.equal((await api.getMatchPath(realKeys[0] ?? "")).origin, "SYNTHETIC");
+  assert.equal((await api.getMatchJinxOutlook(realKeys[0] ?? "")).origin, "SYNTHETIC");
+});
+
+test("all-live selection replaces none of the API methods", () => {
+  const base = baseApi();
+  const api = withSyntheticIntelligence(base, { teamForm: false, matchPath: false, jinxOutlook: false });
+  assert.equal(api.getMatchTeamForm, base.getMatchTeamForm);
+  assert.equal(api.getMatchPath, base.getMatchPath);
+  assert.equal(api.getMatchJinxOutlook, base.getMatchJinxOutlook);
+});
+
 test("every other route is passed straight through", () => {
   const api = withSyntheticIntelligence(baseApi());
   // Anything the wrapper did not deliberately replace must still be the base

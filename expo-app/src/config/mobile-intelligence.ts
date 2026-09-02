@@ -24,6 +24,25 @@
 
 export type MobileIntelligenceMode = "OFF" | "SYNTHETIC" | "LIVE";
 
+/** Team Form can roll out independently of the two still-synthetic engines. */
+export function resolveTeamFormMode({
+  configured,
+  inherited,
+  useMocks
+}: {
+  configured?: string | undefined;
+  inherited: MobileIntelligenceMode;
+  useMocks: boolean;
+}): MobileIntelligenceMode {
+  const mode = configured?.trim()
+    ? resolveMobileIntelligenceMode({ configured, useMocks })
+    : inherited;
+  if (useMocks && mode === "LIVE") {
+    throw new Error("Live Team Form requires EXPO_PUBLIC_USE_MOCKS=false.");
+  }
+  return mode;
+}
+
 /**
  * Resolves the mode from the build environment.
  *

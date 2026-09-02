@@ -6,6 +6,202 @@ Son güncelleme: 2026-09-02
 
 Aktif task: `BTB Mobile Next - Aktif`
 
+## 2026-09-02 — M15 kapatıldı; NXT-OBS-142 engeli yeniden tanımlandı
+
+Mod: `OBSERVATION`. Cutover batch **açılmadı**: bu tur denetim, salt-okunur
+inceleme ve yol haritası mutabakatından ibaretti; kod değişmedi. Commit/push,
+runtime, APK ve release onayı alınmadı ve varsayılmadı.
+
+### M15 `NOT_STARTED` -> `CLOSED`
+
+Kendi beş tamamlanma kriterine karşı tek tek denetlendi; alt görevlerin `DONE`
+olması kanıt değil, kanıta işaretçi sayıldı. Kriter 4 çalışma ağacında yeniden
+doğrulandı: `npm run check` çıkış 0, **562/562** test. Karar kaydı
+`btb-codex/ROADMAP_AMENDMENT_2026-09-02.md`.
+
+Durum hem otorite (`btb-codex/config/agent-roadmap.config.json`) hem ayna
+(`BTB Logs/BTB_ROADMAP.md`, satır 35 tablo hücresi) üzerinde birlikte
+güncellendi; `btb roadmap` artık `M15 CLOSED / COMPLETE`, sapma yok, ilerleme
+`8/15 (%53,3)` diyor. Ayna prose değil **tablo hücresinden** okunuyor; yalnız
+paragrafı düzeltmek `STATUS_MISMATCH` bırakıyordu.
+
+Kapanış yalnız sentetik temeli kapsar. Gerçek analitik iddia edilmez;
+`NXT-OBS-145`/`146` görselleri teslim edilmedi; `NXT-OBS-142` çözülmedi;
+`TASK-0044`/M9 ve `TASK-0011`/M11 dokunulmadan kalır.
+
+### NXT-OBS-142: kimlik çözüldü, engel kapsama kaydı
+
+Salt-okunur inceleme kayıtlı engeli kısmen çürüttü.
+
+- **Crosswalk gerekmiyor.** Yanıt zaten `homeTeamForms`/`awayTeamForms` olarak
+  ayrık geliyor, yani taraf yapısal olarak belli. Takımın statistics kimliği de
+  grubun bütün satırlarındaki `{homeTeamId, awayTeamId}` kesişiminden tekil
+  olarak türetiliyor. Doğrulandı: `3190638` -> `187`/`273` (kayıtta engel diye
+  geçen kimlikler), `3089897` -> `126`/`2`. İki olayda da iki taraf ayrı çıktı;
+  takım adları yalnız çapraz kontrol için okundu, türetimde kullanılmadı.
+- **Asıl engel kapsam.** Güncel fikstürdeki 35 satırın tamamı 8 haneli
+  `stats_id` taşıyor; örneklenen 15 güncel olayın 15'inde takım geçmişi boş
+  döndü. Geçmiş yayınlanan tek aile 7 haneli eski olaylar. Kimlik türetimi tek
+  başına uygulansa bile gerçek Takım Formu bugünkü maçların hepsinde
+  `UNAVAILABLE` kalır ve zorunlu populated uçtan uca smoke geçemez.
+- Bu yüzden kimlik türetimi **bilerek uygulanmadı**: doğrulanamayacak bir
+  değişiklik yazmak yerine engel doğru tanımlandı. Sıradaki prerequisite,
+  güncel olay kimliği ailesi için sağlayıcıda geçmişin neden yayınlanmadığıdır
+  ve `BTB - Aktif` sahipliğindedir. Gerçek Takım Formu kapalı kalır.
+
+Ayrıntı: `docs/TEAM_FORM_INTEGRATION.md` ve `OBSERVATION_LOG.md` `NXT-OBS-142`.
+
+### Üç sonucun ayrımı
+
+1. **M15 temeli** — tamam, kapandı, fiziksel kabul alınmış sentetik prototip.
+2. **Yeni görseller** (`NXT-OBS-145` G/B/M çipleri, `NXT-OBS-146` Jinx ikonu) —
+   `READY`, telefonda **yok**, yeni APK gerekir. Renk paleti sahip tarafından
+   2026-09-02'de onaylandı: galibiyet yeşil, beraberlik sarı, mağlubiyet
+   kırmızı; kod değişikliği gerekmedi. Açık kalan tek kapı yeni APK üretimi ve
+   fiziksel kabuldür.
+3. **Gerçek veri** — `NXT-OBS-142` kapsam engeli, `TASK-0044`/M9,
+   `TASK-0011`/M11. M15 bunlara bağlı değildir ve bunları kapsamaz.
+
+### Bağımlılık uyarısı — gizlenmiyor
+
+Expo Doctor 16 pakette önceden var olan patch-sürüm sapmasında hâlâ başarısız.
+Hiçbir paket yükseltilmedi, hiçbir uyarı bastırılmadı. M15 kriter 4'ün listesi
+tip/lint/unit/erişilebilirlik/tema/dar ekrandır; Doctor bu listede yok, bu
+yüzden M15'i engellemez. Release kapısını ise engeller ve `ARCHITECTURE.md`
+içindeki `npm audit` transitive `uuid` maddesiyle aynı yerde durur: önerilen
+otomatik düzeltme Expo'yu uyumsuz eski majora düşürdüğü için uygulanmıyor.
+
+### Checkpoint
+
+Kod değişmedi. Bu turda değişen dosyalar yalnız kayıt/yol haritası:
+`btb-codex` otorite + yeni karar kaydı, `BTB Logs` ayna, Mobile
+`OBSERVATION_LOG.md` / `TEAM_FORM_INTEGRATION.md` / bu devir.
+
+```text
+zbet-mobile  master · f794dda · dirty (batch 02 + bu tur belgeleri)
+zbet-cap     main   · b92c6c7 · dirty (Team Form yolu, deploy edilmedi)
+btb-codex   main   · 6611602 · dirty (task kabulü + M15 CLOSED + karar kaydı)
+BTB Logs    main   · 3344ebe · dirty (ayna M15 satırı)
+zbet-abap    main   · 48774d6 · temiz, dokunulmadı
+```
+
+Telefondaki artefakt değişmedi:
+`.codex-artifacts/btb-mobile-next-arm64-pilot-1fc47bc.apk`, SHA-256
+`61B64220B4B3507A2272595FBC98BA01162601697F5C607C4A1A8372E4E470DC`,
+`mobileIntelligence=SYNTHETIC`. Batch 02 ve bu tur bu APK'da yoktur.
+
+Pilot servis dokunulmadı: `https://api.surklase.com`, PID `25412`. Bu turda
+runtime yeniden başlatılmadı.
+
+## 2026-09-02 — Codex closure / continue with Claude
+
+
+Owner asked to finish safely and continue with Claude in the same workspace.
+Mod: `OBSERVATION`; no open cutover run. This is a local, uncommitted handoff,
+not a release, commit/push approval or a newly opened implementation batch.
+
+Start with `AGENTS.md` and this handoff. Then read
+`docs/TEAM_FORM_INTEGRATION.md` and
+`docs/observation_archive/cutover_2026-09-02-02.md`. The latest three Austria
+Wien / WSG Tirol screenshots are recorded at the top of `docs/OBSERVATION_LOG.md`;
+they match partial synthetic fixtures, not acceptance of the unreleased changes.
+Use the canonical `btb` entrypoint and the matching BTB workflow skill.
+
+Recommended next task: investigate NXT-OBS-142 **read-only**. Find an
+authoritative event/participant-to-statistics-team identity link, verify it for
+several matches and both sides, and report the smallest required fix. The
+crosswalk has NOT been found; do not infer it from names or hard-code observed
+IDs. Diagnosis can stay in Mobile; any SAP implementation belongs to BTB - Aktif
+and its separate write/activation gates. Keep real Team Form disabled until a
+populated end-to-end smoke succeeds. The owner's last request was closure;
+no new investigation, code fix or rollout was started during closure.
+
+Closure verification (no fetch; compared to locally recorded upstream refs):
+
+| Repository | Branch / HEAD | Local changes |
+| --- | --- | --- |
+| zbet-mobile | master / f794dda | 21 paths: batch-02 source/tests/contracts and current docs |
+| zbet-cap | main / b92c6c7 | 10 paths: Team Form route/service/normalizer/bridge/tests/startup flag |
+| btb-codex | main / 6611602 | state/task-registry.json only; prior physical acceptance for three prototype tasks |
+| zbet-abap | main / 48774d6 | clean; untouched |
+| BTB Logs | main / 3344ebe | clean; untouched |
+
+All five have zero ahead/behind against those recorded refs. Nothing staged,
+committed or pushed. Preserve all dirty/untracked work; source-file groups and
+completed checks are in the batch archive. Reuse checks for unchanged code.
+No daily exports or Model Lab data were processed in this Mobile work.
+
+At closure: local/public `/health` HTTP 200, BFF PID 25412 unchanged;
+8081/8082 have no listener; no emulator process remains. The verified APK hash
+below is unchanged and does not contain batch 02. No further cleanup, runtime
+restart, environment change, artifact deletion or release was performed.
+
+## 2026-09-02 — Mobile batch 02 local checkpoint
+
+Mod: `OBSERVATION`
+
+The local batch is finished with deferred items, not released. NXT-OBS-145/146
+are READY for a later approved physical test: ordered G/B/M form-header chips
+and the original static Jinx heading icon. Preview colours are green/yellow/red;
+loss-colour clarification is still pending before a new APK.
+
+NXT-OBS-142 is DEFERRED despite the new local route/adapter/switch. Direct
+read-only SAP HTTP/OData revealed different identity namespaces: event 3190638
+uses SAP participant IDs 216/349 but form-history team IDs 187/273. The adapter
+fails closed as LIVE/UNAVAILABLE; it has NOT passed a populated real-data smoke.
+Verify an authoritative crosswalk next; keep the BFF feature flag off. No SAP
+or model object changed. See `docs/TEAM_FORM_INTEGRATION.md`.
+
+Checks: Mobile type/lint/562 tests/brand, full BFF tests/build, Android JS export
+and 360 dp dark/light/130% text smoke pass. Existing Expo Doctor patch-version
+drift remains; the release gate is not all-green. Prior acceptance/task-register
+edits are preserved. NXT-OBS-141 still awaits the explicit owner retry result.
+
+Runtime remains https://api.surklase.com, BFF PID 25412 at b92c6c7, local/public
+health 200. Existing ARM64 APK `btb-mobile-next-arm64-pilot-1fc47bc.apk` is
+unchanged, still synthetic; SHA-256
+`61B64220B4B3507A2272595FBC98BA01162601697F5C607C4A1A8372E4E470DC`.
+Mobile f794dda, CAP b92c6c7 and tooling 6611602 remain the committed baselines.
+This checkpoint is dirty/uncommitted; nothing staged or pushed, no runtime
+restart, new APK or distribution. Separate approvals remain mandatory.
+Full changed-file groups, evidence and deferred work:
+`docs/observation_archive/cutover_2026-09-02-02.md`.
+
+## 2026-09-02 — Fiziksel M15 kabulü ve yeni observation kapsamı
+
+Historical intake below; batch 02 above supersedes its next-step/status notes.
+
+Sahip, fiziksel Xiaomi testinin başarılı olduğunu doğruladı. Böylece sentetik
+M15 prototiplerinin görsel/davranış kabulü tamamlandı: `NXT-OBS-138`–`140`
+kapsamındaki `TASK-0040`, `TASK-0045` ve `TASK-0046` `DONE` durumuna alındı.
+Bu kabul gerçek veri entegrasyonu anlamına gelmez.
+
+Örnek verinin nedeni kesin: pilot APK
+`EXPO_PUBLIC_MOBILE_INTELLIGENCE=SYNTHETIC` ile derlendi ve üç yeni okuma
+yerleşik fixture'lardan geliyor. Bu bir telefon önbelleği veya runtime hatası
+değildir. Bu intake anında `LIVE` modu bütün üç rotayı BFF'e yöneltiyordu ve
+üç runtime endpoint henüz yoktu; batch 02 yerel Team Form rotasını ekledi,
+ancak kimlik eşleme engeli nedeniyle gerçek veri yayını kapalı kaldı.
+
+Yeni observation kayıtları:
+
+- `NXT-OBS-142` (`OBSERVED`): mevcut yerel `FORM_CTX_V1` temelini gerçek Mobile
+  BFF `team-form` rotasına bağlama; canlı SAP MCP kanıtı henüz alınmadı.
+- `NXT-OBS-143` (`DEFERRED`): Match Path gerçek motoru; `TASK-0044` / M9'a
+  bağlı.
+- `NXT-OBS-144` (`DEFERRED`): gerçek Jinx maç analisti; `TASK-0011` / M11'e
+  bağlı.
+- `NXT-OBS-145` (`OBSERVED`): takım başlığında sıralı son beş W/D/L şeridi.
+  Mevcut sözleşme yalnız toplamları taşıdığı için DTO/ABAP türetim uzatması
+  gerekir. Öneri W=yeşil, D=sarı/bronze, L=kırmızı; mağlubiyet rengi owner
+  netleştirmesi bekler.
+- `NXT-OBS-146` (`OBSERVED`): Jinx başlığına mevcut özgün Jinx varlığıyla küçük
+  sabit ikon; ambient/yüzen maskot geri gelmez.
+
+Mod `OBSERVATION` olarak kalır. Bu kayıtlar kod değişikliği, commit/push, yeni
+APK, runtime restart veya deploy başlatmaz. Yerel uygulanabilir kapsam sonraki
+`btb next cutover start` komutunda dondurulacaktır.
+
 ## 2026-09-02 — `NXT-OBS-141`: Super ve Özet sekmelerinde 502, çözüldü
 
 Sahip yeni APK'yı kurduktan sonra `Karar günlüğü` ve `Bugünün merkezi`
@@ -110,7 +306,7 @@ Signing : v2 · fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
 Config  : authMode=pilot · useMocks=false · API=https://api.surklase.com
           mobileIntelligence=SYNTHETIC
 Source  : 1fc47bc
-Status  : FINAL_PILOT_CANDIDATE · dağıtılmadı · fiziksel Xiaomi kabulü bekliyor
+Status  : FINAL_PILOT_CANDIDATE · dağıtılmadı · fiziksel Xiaomi kabul edildi
 ```
 
 İmza sertifikası önceki pilot APK'larla aynı; telefonda kaldırmadan üzerine
@@ -122,7 +318,8 @@ UTF-16 aramasıyla doğrulandı. Gizli anahtar taraması temiz. Önceki
 Pilot route `https://api.surklase.com`; bu batch sırasında runtime restart veya
 canlı health doğrulaması yapılmadı.
 
-Mod: `OBSERVATION`. Açık kalan tek kapı fiziksel Xiaomi kabulüdür.
+Mod: `OBSERVATION`. M15 sentetik yüzeylerinin fiziksel Xiaomi kabulü tamamlandı;
+gerçek veri entegrasyonu ayrı observation kapsamıdır.
 
 ## 2026-09-02 — Mobile Intelligence Foundation paralel şerit devri
 

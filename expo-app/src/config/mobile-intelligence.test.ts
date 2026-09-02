@@ -2,8 +2,26 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   mountsIntelligenceSurfaces,
-  resolveMobileIntelligenceMode
+  resolveMobileIntelligenceMode,
+  resolveTeamFormMode
 } from "./mobile-intelligence";
+
+test("Team Form inherits the existing build unless separately declared", () => {
+  assert.equal(resolveTeamFormMode({ inherited: "SYNTHETIC", useMocks: false }), "SYNTHETIC");
+  assert.equal(resolveTeamFormMode({ inherited: "OFF", useMocks: false, configured: " " }), "OFF");
+});
+
+test("Team Form can be LIVE while the other intelligence remains synthetic or off", () => {
+  for (const inherited of ["SYNTHETIC", "OFF"] as const) {
+    assert.equal(resolveTeamFormMode({ inherited, useMocks: false, configured: "live" }), "LIVE");
+  }
+  assert.equal(resolveTeamFormMode({ inherited: "SYNTHETIC", useMocks: false, configured: "off" }), "OFF");
+});
+
+test("a mock build cannot claim live Team Form and a typo cannot silently change origin", () => {
+  assert.throws(() => resolveTeamFormMode({ inherited: "SYNTHETIC", useMocks: true, configured: "live" }), /USE_MOCKS=false/);
+  assert.throws(() => resolveTeamFormMode({ inherited: "SYNTHETIC", useMocks: false, configured: "liev" }), /off, synthetic, live/);
+});
 
 test("a preview build shows the surfaces from fixtures by default", () => {
   assert.equal(

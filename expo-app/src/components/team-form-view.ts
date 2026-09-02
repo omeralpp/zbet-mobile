@@ -21,6 +21,24 @@ import type {
  */
 
 export type TeamFormState = "LOADING" | "UNAVAILABLE" | "EMPTY" | "READY";
+export type FormResult = "W" | "D" | "L";
+export const formResultLabels = {
+  W: { short: "G", spoken: "galibiyet", tone: "positive" },
+  D: { short: "B", spoken: "beraberlik", tone: "warning" },
+  L: { short: "M", spoken: "mağlubiyet", tone: "negative" }
+} as const;
+
+/** Counts cannot reveal chronology. Inconsistent or absent sequences stay absent. */
+export function orderedFormResults(side: TeamFormSide | null): FormResult[] | null {
+  const results = side?.recentResults;
+  if (!side || !results || results.length !== Math.min(5, side.matchesSampled)) return null;
+  const counts = { W: side.wins, D: side.draws, L: side.losses };
+  for (const result of ["W", "D", "L"] as const) {
+    const count = results.filter((value) => value === result).length;
+    if (side.matchesSampled <= 5 ? count !== counts[result] : count > counts[result]) return null;
+  }
+  return results;
+}
 
 /**
  * `EMPTY` means the payload arrived and neither side has a match in its
@@ -242,6 +260,9 @@ export function describeSideForAccessibility(
     teamName ?? (side.side === "HOME" ? "Ev sahibi" : "Deplasman"),
     `${sampleLabel(side)}`,
     `${side.wins} galibiyet, ${side.draws} beraberlik, ${side.losses} mağlubiyet`,
+    orderedFormResults(side)?.length
+      ? `en yeniden eskiye: ${orderedFormResults(side)?.map((result) => formResultLabels[result].spoken).join(", ")}`
+      : null,
     side.formPpg === null ? null : `maç başına ${side.formPpg.toFixed(2)} puan`
   ]
     .filter(Boolean)

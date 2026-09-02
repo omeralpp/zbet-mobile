@@ -15,6 +15,8 @@ import {
   describeSideForAccessibility,
   formatRowValue,
   formRecord,
+  formResultLabels,
+  orderedFormResults,
   resolveTeamFormState,
   sampleLabel,
   smallSampleNotice,
@@ -108,6 +110,7 @@ function RecordBlock({
   side: TeamFormSide | null;
   team: string;
 }) {
+  const recent = orderedFormResults(side);
   return (
     <View
       accessibilityLabel={describeSideForAccessibility(side, team)}
@@ -117,6 +120,22 @@ function RecordBlock({
       <Text numberOfLines={1} style={styles.recordTeam}>
         {team}
       </Text>
+      {recent?.length ? (
+        <>
+          <View style={styles.resultStrip}>
+            {recent.map((result, index) => {
+              const label = formResultLabels[result];
+              const accent = semantic[label.tone];
+              return (
+                <View key={`${index}-${result}`} style={[styles.resultChip, { borderColor: accent }]}>
+                  <Text style={[styles.resultText, { color: accent }]}>{label.short}</Text>
+                </View>
+              );
+            })}
+          </View>
+          <Text style={styles.recordSample}>En yeni → eski</Text>
+        </>
+      ) : null}
       <Text style={styles.recordValue}>
         {side ? formRecord(side) : "—"}
       </Text>
@@ -181,6 +200,27 @@ const styles = StyleSheet.create({
   recordBlock: {
     flex: 1,
     gap: 2
+  },
+  resultStrip: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 3,
+    marginVertical: spacing.xs,
+    maxWidth: "100%"
+  },
+  resultChip: {
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 5,
+    borderWidth: 1,
+    minWidth: 21,
+    minHeight: 23,
+    paddingHorizontal: 3,
+    paddingVertical: 2
+  },
+  resultText: {
+    fontSize: 11,
+    fontWeight: "900"
   },
   recordTeam: {
     color: colors.textMuted,

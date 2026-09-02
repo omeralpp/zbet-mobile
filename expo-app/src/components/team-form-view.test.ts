@@ -6,6 +6,8 @@ import {
   describeSideForAccessibility,
   formatRowValue,
   formRecord,
+  formResultLabels,
+  orderedFormResults,
   isSmallSample,
   originNotice,
   resolveTeamFormState,
@@ -13,6 +15,29 @@ import {
   smallSampleNotice,
   teamFormRows
 } from "./team-form-view";
+
+test("last-five chronology is never reconstructed from W-D-L totals", () => {
+  assert.equal(orderedFormResults(side()), null);
+  assert.equal(orderedFormResults(side({ recentResults: null })), null);
+  const results = ["L", "W", "D", "W", "W"] as const;
+  assert.deepEqual(orderedFormResults(side({ recentResults: [...results] })), results);
+  assert.equal(orderedFormResults(side({ recentResults: ["W", "W", "W", "W", "W"] })), null);
+  assert.equal(orderedFormResults(side({ recentResults: ["W"] })), null);
+});
+
+test("thin samples show only known results and expose newest-first spoken labels", () => {
+  const value = side({ wins: 1, draws: 1, losses: 0, matchesSampled: 2, recentResults: ["D", "W"] });
+  assert.deepEqual(orderedFormResults(value), ["D", "W"]);
+  assert.match(describeSideForAccessibility(value, "Home"), /en yeniden eskiye: beraberlik, galibiyet/);
+  assert.deepEqual(Object.values(formResultLabels).map((value) => value.short), ["G", "B", "M"]);
+  assert.deepEqual(Object.values(formResultLabels).map((value) => value.tone), ["positive", "warning", "negative"]);
+});
+
+test("the result extension is optional for old v1 payloads and rejects invalid outcomes", () => {
+  assert.doesNotThrow(() => context());
+  assert.throws(() => context({ home: side({ recentResults: ["W", "D", "L", "W", "W", "L"] }) }));
+  assert.throws(() => context({ home: { ...side(), recentResults: ["UNKNOWN"] } }));
+});
 
 function side(overrides: Partial<TeamFormSide> = {}): TeamFormSide {
   return {

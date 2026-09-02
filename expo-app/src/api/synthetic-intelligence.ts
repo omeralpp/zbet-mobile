@@ -75,23 +75,38 @@ export function syntheticStateForKey(key: string): MockIntelligenceState {
  * so a route added to `MobileApi` later cannot accidentally start returning
  * synthetic data by omission.
  */
-export function withSyntheticIntelligence(base: MobileApi): MobileApi {
+export function withSyntheticIntelligence(
+  base: MobileApi,
+  features = { teamForm: true, matchPath: true, jinxOutlook: true }
+): MobileApi {
   return {
     ...base,
-    async getMatchTeamForm(key) {
-      return teamFormContextSchema.parse(
-        mockTeamForm(key, syntheticStateForKey(key))
-      );
-    },
-    async getMatchPath(key) {
-      return matchPathContextSchema.parse(
-        mockMatchPath(key, syntheticStateForKey(key))
-      );
-    },
-    async getMatchJinxOutlook(key) {
-      return jinxMatchOutlookSchema.parse(
-        mockJinxOutlook(key, syntheticStateForKey(key))
-      );
-    }
+    ...(features.teamForm
+      ? {
+          async getMatchTeamForm(key: string) {
+            return teamFormContextSchema.parse(
+              mockTeamForm(key, syntheticStateForKey(key))
+            );
+          }
+        }
+      : {}),
+    ...(features.matchPath
+      ? {
+          async getMatchPath(key: string) {
+            return matchPathContextSchema.parse(
+              mockMatchPath(key, syntheticStateForKey(key))
+            );
+          }
+        }
+      : {}),
+    ...(features.jinxOutlook
+      ? {
+          async getMatchJinxOutlook(key: string) {
+            return jinxMatchOutlookSchema.parse(
+              mockJinxOutlook(key, syntheticStateForKey(key))
+            );
+          }
+        }
+      : {})
   };
 }

@@ -18,17 +18,22 @@ import { colors, spacing, typeScale } from "@/src/theme/theme";
 export function ModuleHeading({
   eyebrow,
   title,
+  leading,
   trailing
 }: {
   eyebrow: string;
   title: string;
+  leading?: ReactNode;
   trailing?: ReactNode;
 }) {
   return (
     <View style={styles.container}>
       <Text style={styles.eyebrow}>{eyebrow}</Text>
       <View style={styles.titleRow}>
-        <Text style={styles.title}>{title}</Text>
+        <View style={styles.titleContent}>
+          {leading ?? null}
+          <Text style={styles.title}>{title}</Text>
+        </View>
         {trailing ?? null}
       </View>
     </View>
@@ -59,5 +64,12 @@ const styles = StyleSheet.create({
     // A long Turkish module title yields to the trailing control instead of
     // pushing it off the row.
     flexShrink: 1
+  },
+  titleContent: {
+    alignItems: "center",
+    flexDirection: "row",
+    flex: 1,
+    gap: spacing.sm,
+    minWidth: 0
   }
 });

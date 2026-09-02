@@ -949,6 +949,11 @@ components:
         draws: { type: integer, minimum: 0 }
         losses: { type: integer, minimum: 0 }
         matchesSampled: { type: integer, minimum: 0 }
+        recentResults:
+          type: [array, "null"]
+          maxItems: 5
+          items: { type: string, enum: [W, D, L] }
+          description: Newest first. Absent or null means chronology is unavailable; never infer it from aggregate counts.
         formPpg: { type: [number, "null"], minimum: 0, maximum: 3 }
         venuePpg: { type: [number, "null"], minimum: 0, maximum: 3 }
         goalsForPerMatch: { type: [number, "null"], minimum: 0 }

@@ -26,6 +26,7 @@ import {
   matchTeamFormQuery
 } from "@/src/api/queries";
 import { AskJinxCard } from "@/src/components/AskJinxCard";
+import { JinxHeadingIcon } from "@/src/components/JinxHeadingIcon";
 import { ChangeEmphasis } from "@/src/components/ChangeEmphasis";
 import { LiveDot } from "@/src/components/LiveDot";
 import { SignalMeter } from "@/src/components/SignalMeter";
@@ -93,11 +94,13 @@ function LiveDetailPanel({
   children,
   eyebrow,
   id,
+  leading,
   title
 }: {
   children: ReactNode;
   eyebrow: string;
   id: LiveDetailModuleId;
+  leading?: ReactNode;
   title: string;
 }) {
   return (
@@ -106,6 +109,7 @@ function LiveDetailPanel({
       moduleId={id}
       surface="liveDetail"
       title={title}
+      leading={leading}
     >
       {children}
     </CollapsibleModule>
@@ -238,9 +242,10 @@ export default function MatchDetailScreen() {
   // pilot APK never requests a route its BFF does not serve yet. Like live
   // context, none of them is consulted for the screen's loading or error state.
   const intelligence = mountsIntelligenceSurfaces(runtimeConfig.mobileIntelligence);
+  const teamFormEnabled = mountsIntelligenceSurfaces(runtimeConfig.teamFormIntelligence);
   const teamForm = useQuery({
     ...matchTeamFormQuery(key),
-    enabled: intelligence && Boolean(key)
+    enabled: teamFormEnabled && Boolean(key)
   });
   const matchPath = useQuery({
     ...matchPathQuery(key),
@@ -491,7 +496,7 @@ export default function MatchDetailScreen() {
       </LiveDetailPanel>
     );
     moduleNodes.askJinx = (
-      <LiveDetailPanel eyebrow="JINX" id="askJinx" title="Jinx okuması">
+      <LiveDetailPanel eyebrow="JINX" id="askJinx" title="Jinx okuması" leading={<JinxHeadingIcon />}>
         <AskJinxCard
           asked={askedJinx}
           isError={jinxOutlook.isError}
@@ -501,6 +506,8 @@ export default function MatchDetailScreen() {
         />
       </LiveDetailPanel>
     );
+  }
+  if (teamFormEnabled) {
     moduleNodes.teamForm = (
       <LiveDetailPanel eyebrow="FORM" id="teamForm" title="Takım formu">
         <TeamFormCard
@@ -636,7 +643,8 @@ export default function MatchDetailScreen() {
                   leagueContextQuery.refetch(),
                   periodScoreQuery.refetch(),
                   superLogs.refetch(),
-                  liveContext.refetch()
+                  liveContext.refetch(),
+                  ...(teamFormEnabled ? [teamForm.refetch()] : [])
                 ])
               }
               refreshing={

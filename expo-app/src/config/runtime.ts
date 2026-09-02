@@ -7,6 +7,7 @@ type RuntimeExtra = {
   pilotAccessKey?: string;
   useMocks?: boolean;
   mobileIntelligence?: MobileIntelligenceMode;
+  teamFormIntelligence?: MobileIntelligenceMode;
   authClientId?: string;
   authIssuer?: string;
   authAuthorizationEndpoint?: string;
@@ -30,11 +31,12 @@ export const runtimeConfig = {
    * Where the M15 Mobile Intelligence surfaces get their data.
    *
    * Off unless the build says otherwise, so a build whose BFF does not serve
-   * these routes keeps exactly the behaviour it has today.  serves
-   * them from fixtures under a visible sample-data badge;  requests them
-   * from the BFF.
+   * these routes keeps exactly the behaviour it has today. SYNTHETIC serves
+   * them from fixtures under a sample-data badge; LIVE requests the BFF.
+   * Team Form may override that choice without enabling the other engines.
    */
   mobileIntelligence: extra.mobileIntelligence ?? "OFF",
+  teamFormIntelligence: extra.teamFormIntelligence ?? extra.mobileIntelligence ?? "OFF",
   auth: {
     clientId: String(extra.authClientId ?? ""),
     issuer: String(extra.authIssuer ?? ""),
