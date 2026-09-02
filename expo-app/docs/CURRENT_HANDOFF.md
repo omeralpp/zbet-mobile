@@ -1,10 +1,56 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-09-02
+Son güncelleme: 2026-09-03
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
+
+## 2026-09-03 — Team Form physically accepted; NXT-OBS-142/145/147 closed
+
+After the approved pilot update and refresh instructions, the owner confirmed:
+"I checked it works fine." This is physical acceptance of the corrected Team
+Form/last-five display, not another automated device test. Close NXT-OBS-147 and
+the linked real Team Form / ordered-results acceptance items NXT-OBS-142/145.
+The verified Motherwell result is B M M M G / 1G1B3M / PPG 0.80 / GA 2.20.
+
+No further APK, code change or restart is needed for this fix. Last verified
+runtime is CAP `91cbc25`, PID 3092, public route `https://api.surklase.com`;
+existing LIVE-Team-Form APK/hash below remains the accepted candidate. No fresh
+runtime check was necessary for this owner-confirmation-only update. Match Path
+and Jinx remain synthetic; their real engines and unrelated observations are not
+accepted by this confirmation. Mobile remains OBSERVATION, no open cutover run.
+Owner subsequently requested "commit and push all"; this documentation checkpoint
+records the approved rollout and physical acceptance. No further code, runtime or
+external-system action is included. Earlier uncommitted/phone-pending statements
+below are historical checkpoints, superseded by this confirmation and commit.
+
+## 2026-09-02 23:55 TRT — NXT-OBS-147 pilot rollout verified; phone confirmation next
+
+Owner explicitly approved restarting the owner-only pilot after commit/push.
+Clean, pushed CAP `91cbc259a2ae5d72f0c6a6f1203060560ac71f1e` was verified before
+the one restart through the canonical runtime gate. PID `6552 -> 3092`, bound to
+`127.0.0.1:4004`; public route remains `https://api.surklase.com`. No flags,
+Cloudflare/Firebase/SAP configuration, scheduled tasks or APK were changed.
+
+Local/public health and real Team Form responses pass the actual Mobile schema.
+Motherwell now returns B M M M G / 1G1B3M / PPG 0.80 / GF 1.40 / GA 2.20;
+Dundee stays G M M M B / PPG 0.80 / GF 1.00 / GA 2.20. Both venue PPG values
+remain 1.40. Public dashboard, match list and Super Log pass their Mobile schemas;
+unauthenticated Team Form is rejected with 401. Runtime logs were read using
+shared access: six configured secret values and private-key markers have zero
+matches; no fatal-process markers. Watchdog remains Ready, last result 0 at
+23:30, next scheduled run 00:00; no schedule mutation or extra restart.
+
+Next: owner pulls down from the top of the match screen to refresh (the handler
+explicitly refetches Team Form despite its five-minute cache), then confirms the
+corrected values. The existing LIVE-Team-Form APK/hash below remains sufficient;
+Match Path/Jinx remain synthetic. NXT-OBS-147 is READY with API rollout complete,
+physical acceptance still pending; do not close NXT-OBS-142/145 data acceptance.
+Mobile remains OBSERVATION with no open cutover run. CAP is clean/pushed at
+`91cbc25`, Mobile's prior documentation commit is `7651aae`; this runtime follow-up
+is a local documentation update, not another commit/push. Earlier "pilot unchanged"
+and restart-pending statements below describe superseded checkpoints.
 
 ## 2026-09-02 — NXT-OBS-147 committed; pilot rollout and physical acceptance pending
 

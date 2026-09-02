@@ -1,5 +1,10 @@
 # Team Form — local adapter and rollout gate
 
+Physical acceptance (2026-09-03): after the pilot update and refresh instructions,
+the owner confirmed "I checked it works fine." NXT-OBS-142/145/147 are CLOSED for
+the tested real Team Form and ordered-results display. No new APK or restart is
+needed. Match Path/Jinx remain synthetic; this does not accept their real engines.
+
 Latest follow-up (2026-09-02, NXT-OBS-147): owner phone/source comparison exposed
 a score-scope selection bug after the identity fix. The bounded BFF correction is
 committed/pushed at CAP `91cbc25` under the owner's separate approval: differing
@@ -7,9 +12,13 @@ secondary scores are accepted only
 when valid main scores, displayed score and the own-team result agree. Motherwell
 now yields B M M M G / PPG 0.80 / GA 2.20 instead of B M M G B / 1.00 / 2.00;
 Dundee and venue PPG are unchanged. All 51 Team Form tests, full BFF tests/build,
-and real SAP-backed local HTTP -> actual Mobile schema checks pass. Public pilot
-still serves the old values. No new APK is needed; pilot restart and
-physical acceptance remain pending. No Mobile, ABAP or model code changed.
+and real SAP-backed local HTTP -> actual Mobile schema checks pass. At 23:55 TRT,
+the owner separately approved the canonical pilot restart at that exact clean,
+pushed SHA (PID 6552 -> 3092). Local/public health and Team Form now pass with the
+corrected values through the actual Mobile schema; dashboard/matches/Super Log
+also pass, and unauthenticated Team Form returns 401. No new APK is needed;
+owner physical acceptance was subsequently confirmed on 2026-09-03. Pull-to-refresh on Match Detail
+explicitly refetches Team Form. No Mobile, ABAP or model code changed.
 
 ### Earlier APK/runtime checkpoint
 
@@ -175,10 +184,12 @@ exposed in the DTO or persisted by this adapter.
 
 Current pilot: the BFF flag is already enabled and the retained phone candidate
 packages Team Form LIVE while Match Path/Jinx stay SYNTHETIC. The NXT-OBS-147 local
-correction changes neither setting and needs no new APK. Commit/push is approved
-and CAP `91cbc25` is pushed; pilot runtime restart/read-back still requires separate
-explicit approval. The existing public process does not gain a source correction
-merely because a file was edited or committed.
+correction changes neither setting and needs no new APK. Commit/push and the
+subsequent pilot runtime restart were separately approved; CAP `91cbc25` is
+pushed and last verified running as PID 3092, with corrected public read-back
+verified. Owner phone confirmation on 2026-09-03 closes this acceptance gate.
+Future runtime changes still need
+their own approval; editing or committing a file alone does not update the process.
 
 ## Ordered results and Jinx identity
 
