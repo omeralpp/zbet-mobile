@@ -5,6 +5,7 @@ type RuntimeExtra = {
   authMode?: "preview" | "pilot" | "oauth";
   pilotAccessKey?: string;
   useMocks?: boolean;
+  mobileIntelligence?: boolean;
   authClientId?: string;
   authIssuer?: string;
   authAuthorizationEndpoint?: string;
@@ -24,6 +25,13 @@ export const runtimeConfig = {
   authMode: extra.authMode ?? (extra.useMocks === false ? "oauth" : "preview"),
   pilotAccessKey: String(extra.pilotAccessKey ?? ""),
   useMocks: extra.useMocks !== false,
+  /**
+   * Whether the M15 Mobile Intelligence surfaces are mounted.
+   *
+   * Off unless the build says otherwise, so a pilot APK keeps exactly the
+   * behaviour it has today and never requests a route the BFF does not serve.
+   */
+  mobileIntelligence: extra.mobileIntelligence === true,
   auth: {
     clientId: String(extra.authClientId ?? ""),
     issuer: String(extra.authIssuer ?? ""),

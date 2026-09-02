@@ -12,6 +12,10 @@ export const queryKeys = {
   matchPeriodScore: (key: string) => ["matches", key, "periodScore"] as const,
   matchSuperLogs: (key: string) => ["matches", key, "superLogs"] as const,
   matchLiveContext: (key: string) => ["matches", key, "liveContext"] as const,
+  matchTeamForm: (key: string) => ["matches", key, "teamForm"] as const,
+  matchPath: (key: string) => ["matches", key, "matchPath"] as const,
+  matchJinxOutlook: (key: string) =>
+    ["matches", key, "jinxOutlook"] as const,
   superLogs: ["superLogs"] as const,
   superKpis: ["superKpis"] as const,
   superLog: (key: string) => ["superLogs", key] as const,
@@ -102,6 +106,50 @@ export function matchLiveContextQuery(key: string) {
     queryFn: ({ signal }) => mobileApi.getMatchLiveContext(key, signal),
     staleTime: 30_000,
     enabled: Boolean(key),
+    retry: false
+  });
+}
+
+/**
+ * Team form and match path are supplementary, exactly as live context is: a
+ * failure in either must leave Match Detail standing. Form changes between
+ * matches rather than within one, so it is cached far longer than the path.
+ */
+export function matchTeamFormQuery(key: string) {
+  return queryOptions({
+    queryKey: queryKeys.matchTeamForm(key),
+    queryFn: ({ signal }) => mobileApi.getMatchTeamForm(key, signal),
+    staleTime: 300_000,
+    enabled: Boolean(key),
+    retry: 1
+  });
+}
+
+export function matchPathQuery(key: string) {
+  return queryOptions({
+    queryKey: queryKeys.matchPath(key),
+    queryFn: ({ signal }) => mobileApi.getMatchPath(key, signal),
+    staleTime: 30_000,
+    enabled: Boolean(key),
+    retry: 1
+  });
+}
+
+/**
+ * The Jinx outlook is asked for, never ambient.
+ *
+ * `enabled` is driven by the caller's own asked-state rather than by the key
+ * alone, so opening Match Detail costs nothing until the user requests a
+ * reading. It is not retried: a reading that could not be produced is an
+ * answer, and silently trying again would make the surface feel like it is
+ * thinking when it is not.
+ */
+export function matchJinxOutlookQuery(key: string, asked: boolean) {
+  return queryOptions({
+    queryKey: queryKeys.matchJinxOutlook(key),
+    queryFn: ({ signal }) => mobileApi.getMatchJinxOutlook(key, signal),
+    staleTime: 60_000,
+    enabled: Boolean(key) && asked,
     retry: false
   });
 }

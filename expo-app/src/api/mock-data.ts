@@ -658,3 +658,388 @@ export function mockLiveContext(key: string, state: MockLiveContextState) {
     freshness: { stale: true, refreshFailed: true }
   };
 }
+
+/* ------------------------------------------------------------------ *
+ * Mobile Intelligence Foundation fixtures (M15)
+ *
+ * Synthetic by construction and synthetic by declaration: every payload below
+ * carries `origin: "SYNTHETIC"`, and the surfaces that render them are required
+ * to say so. These exist so the three M15 surfaces can be built and verified
+ * against the shape the real engines will serve - TASK-0044 under M9 for the
+ * match path, TASK-0011 under M11 for the Jinx reading - without waiting for
+ * either engine and without ever showing an invented number as evidence.
+ *
+ * As with live context, state is chosen by match id so one preview session
+ * covers the whole matrix rather than needing a reconfigured build per state.
+ * ------------------------------------------------------------------ */
+
+export type MockIntelligenceState =
+  | "POPULATED"
+  | "LOW_SAMPLE"
+  | "PARTIAL"
+  | "EMPTY"
+  | "UNAVAILABLE";
+
+export function mockIntelligenceState(key: string): MockIntelligenceState {
+  if (key.includes("472910")) return "POPULATED";
+  if (key.includes("472924")) return "LOW_SAMPLE";
+  if (key.includes("472938")) return "PARTIAL";
+  if (key.includes("472950")) return "EMPTY";
+  return "UNAVAILABLE";
+}
+
+function formSide(side: "HOME" | "AWAY", overrides: Record<string, unknown> = {}) {
+  return {
+    side,
+    wins: 3,
+    draws: 1,
+    losses: 1,
+    matchesSampled: 5,
+    formPpg: 2,
+    venuePpg: 2.2,
+    goalsForPerMatch: 1.8,
+    goalsAgainstPerMatch: 0.8,
+    bttsPercent: 40,
+    over25Percent: 60,
+    restDays: 4,
+    ...overrides
+  };
+}
+
+export function mockTeamForm(key: string, state: MockIntelligenceState) {
+  const base = {
+    matchKey: key,
+    contractVersion: "team-form.v1" as const,
+    origin: "SYNTHETIC" as const,
+    minimumReliableSample: 5,
+    capturedAt: "2026-09-02T09:00:00.000Z"
+  };
+
+  if (state === "POPULATED") {
+    return {
+      ...base,
+      availability: "OK",
+      home: formSide("HOME"),
+      away: formSide("AWAY", {
+        wins: 1,
+        draws: 2,
+        losses: 2,
+        formPpg: 1,
+        venuePpg: 0.8,
+        goalsForPerMatch: 0.9,
+        goalsAgainstPerMatch: 1.6,
+        bttsPercent: 60,
+        over25Percent: 40,
+        restDays: 6
+      })
+    };
+  }
+
+  if (state === "LOW_SAMPLE") {
+    // Real, computable, and too thin to read as characteristic. The surface
+    // must say the sample is small rather than quietly presenting two matches
+    // as form.
+    return {
+      ...base,
+      availability: "LOW_SAMPLE",
+      home: formSide("HOME", {
+        wins: 2,
+        draws: 0,
+        losses: 0,
+        matchesSampled: 2,
+        formPpg: 3,
+        venuePpg: 3,
+        goalsForPerMatch: 2.5,
+        goalsAgainstPerMatch: 0.5,
+        bttsPercent: 50,
+        over25Percent: 100,
+        restDays: 3
+      }),
+      away: formSide("AWAY", {
+        wins: 0,
+        draws: 1,
+        losses: 1,
+        matchesSampled: 2,
+        formPpg: 0.5,
+        venuePpg: 0.5,
+        goalsForPerMatch: 0.5,
+        goalsAgainstPerMatch: 1.5,
+        bttsPercent: 50,
+        over25Percent: 50,
+        restDays: 9
+      })
+    };
+  }
+
+  if (state === "PARTIAL") {
+    // A source that established the record but not the derived rates. Each
+    // missing value stays null so the card can leave that row out instead of
+    // printing a zero it was never given.
+    return {
+      ...base,
+      availability: "OK",
+      home: formSide("HOME", {
+        venuePpg: null,
+        bttsPercent: null,
+        over25Percent: null,
+        restDays: null
+      }),
+      away: null
+    };
+  }
+
+  if (state === "EMPTY") {
+    return {
+      ...base,
+      availability: "OK",
+      home: formSide("HOME", {
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        matchesSampled: 0,
+        formPpg: null,
+        venuePpg: null,
+        goalsForPerMatch: null,
+        goalsAgainstPerMatch: null,
+        bttsPercent: null,
+        over25Percent: null,
+        restDays: null
+      }),
+      away: null
+    };
+  }
+
+  return { ...base, availability: "UNAVAILABLE", home: null, away: null };
+}
+
+/**
+ * The owner's own worked example: a cohort of 200 at kick-off, 100 by
+ * half-time, and 30 after an away goal on 60 minutes.
+ *
+ * Note what the numbers do and do not say. The cohort falls at every step,
+ * including the ordinary ones, which is exactly why shrinkage is not the
+ * surprise signal: the half-time point halves the cohort while reporting low
+ * surprise, and the away goal is surprising because `eventSurprise` says so.
+ */
+const previewMatchPath = [
+  {
+    pointKey: "kickoff",
+    label: "Başlangıç",
+    kind: "KICK_OFF",
+    minute: 0,
+    cohortSize: 200,
+    eventSurprise: null,
+    stateNormality: 0.86,
+    confidence: 0.82
+  },
+  {
+    pointKey: "ht",
+    label: "Devre arası",
+    kind: "HALF_TIME",
+    minute: 45,
+    cohortSize: 100,
+    eventSurprise: 0.18,
+    stateNormality: 0.74,
+    confidence: 0.7
+  },
+  {
+    pointKey: "away-goal-60",
+    label: "Deplasman golü",
+    kind: "GOAL",
+    minute: 60,
+    cohortSize: 30,
+    eventSurprise: 0.79,
+    stateNormality: 0.31,
+    confidence: 0.44
+  },
+  {
+    pointKey: "state-75",
+    label: "Maç durumu",
+    kind: "STATE",
+    minute: 75,
+    cohortSize: 24,
+    eventSurprise: null,
+    stateNormality: 0.35,
+    confidence: 0.38
+  }
+];
+
+export function mockMatchPath(key: string, state: MockIntelligenceState) {
+  const base = {
+    matchKey: key,
+    contractVersion: "match-path.v1" as const,
+    origin: "SYNTHETIC" as const,
+    minimumReliableCohort: 30,
+    capturedAt: "2026-09-02T09:00:00.000Z"
+  };
+
+  if (state === "POPULATED") {
+    return {
+      ...base,
+      availability: "OK",
+      minimumReliableCohort: 30,
+      initialCohortSize: 200,
+      points: previewMatchPath
+    };
+  }
+
+  if (state === "LOW_SAMPLE") {
+    // A cohort that was thin before the match even started. Every signal it
+    // carries is honest and none of it is characteristic.
+    return {
+      ...base,
+      availability: "LOW_SAMPLE",
+      initialCohortSize: 18,
+      points: [
+        {
+          pointKey: "kickoff",
+          label: "Başlangıç",
+          kind: "KICK_OFF",
+          minute: 0,
+          cohortSize: 18,
+          eventSurprise: null,
+          stateNormality: 0.55,
+          confidence: 0.21
+        },
+        {
+          pointKey: "home-goal-31",
+          label: "Ev sahibi golü",
+          kind: "GOAL",
+          minute: 31,
+          cohortSize: 6,
+          eventSurprise: 0.62,
+          stateNormality: 0.4,
+          confidence: 0.15
+        }
+      ]
+    };
+  }
+
+  if (state === "PARTIAL") {
+    // Retrieved, with points that carry one signal but not the other.
+    return {
+      ...base,
+      availability: "OK",
+      initialCohortSize: 140,
+      points: [
+        {
+          pointKey: "kickoff",
+          label: "Başlangıç",
+          kind: "KICK_OFF",
+          minute: 0,
+          cohortSize: 140,
+          eventSurprise: null,
+          stateNormality: 0.8,
+          confidence: 0.66
+        },
+        {
+          pointKey: "red-38",
+          label: "Kırmızı kart",
+          kind: "RED_CARD",
+          minute: 38,
+          cohortSize: 41,
+          eventSurprise: 0.88,
+          stateNormality: null,
+          confidence: null
+        }
+      ]
+    };
+  }
+
+  if (state === "EMPTY") {
+    // Retrieved, and the match genuinely has no path yet. Never null.
+    return { ...base, availability: "OK", initialCohortSize: 96, points: [] };
+  }
+
+  // Not retrieved. null, never [].
+  return {
+    ...base,
+    availability: "UNAVAILABLE",
+    initialCohortSize: 0,
+    points: null
+  };
+}
+
+export function mockJinxOutlook(key: string, state: MockIntelligenceState) {
+  const base = {
+    matchKey: key,
+    contractVersion: "jinx-match-outlook.v1" as const,
+    origin: "SYNTHETIC" as const
+  };
+
+  if (state === "POPULATED") {
+    return {
+      ...base,
+      availability: "OK",
+      headline: "Ev sahibi baskısı sürüyor, maç dengesini henüz kaybetmedi.",
+      body:
+        "Ev sahibi topu daha çok elinde tutuyor ve ceza sahasına daha sık " +
+        "giriyor. Deplasman ise kontratakta net iki pozisyon buldu, yani " +
+        "üstünlük sahada göründüğü kadar tek yönlü değil.",
+      confidence: 0.58,
+      uncertaintyNote:
+        "Bu okuma yalnız maç içi göstergelere bakar; kadro, sakatlık ve " +
+        "hakem kararları görünmüyor.",
+      signals: [
+        {
+          signalKey: "possession",
+          label: "Ev sahibi topa daha çok sahip",
+          direction: "SUPPORTING",
+          strength: "MODERATE"
+        },
+        {
+          signalKey: "counter",
+          label: "Deplasman kontratakta etkili",
+          direction: "OPPOSING",
+          strength: "MODERATE"
+        },
+        {
+          signalKey: "cards",
+          label: "Kart tablosu dengeli",
+          direction: "NEUTRAL",
+          strength: "WEAK"
+        }
+      ],
+      freshness: {
+        capturedAt: "2026-09-02T09:00:00.000Z",
+        ageSeconds: 35,
+        stale: false
+      }
+    };
+  }
+
+  if (state === "LOW_SAMPLE" || state === "PARTIAL") {
+    // An outlook produced from partial material, saying so. Different from
+    // having no outlook at all.
+    return {
+      ...base,
+      availability: "DEGRADED",
+      headline: "Maçın yalnız bir bölümünü görebiliyorum.",
+      body: null,
+      confidence: 0.22,
+      uncertaintyNote:
+        "Elimdeki veri eksik; bu satır bir okuma değil, yalnız görebildiğim " +
+        "kadarının özeti.",
+      signals: [
+        {
+          signalKey: "tempo",
+          label: "Tempo düşük",
+          direction: "NEUTRAL",
+          strength: "WEAK"
+        }
+      ],
+      freshness: { ageSeconds: 900, stale: true }
+    };
+  }
+
+  return {
+    ...base,
+    availability: "UNAVAILABLE",
+    headline: null,
+    body: null,
+    confidence: null,
+    uncertaintyNote: null,
+    signals: null,
+    freshness: { stale: true }
+  };
+}

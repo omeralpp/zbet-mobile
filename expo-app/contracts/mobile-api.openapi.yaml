@@ -96,6 +96,60 @@ paths:
                   $ref: "#/components/schemas/SuperLog"
         default:
           $ref: "#/components/responses/Error"
+  /v1/btb/matches/{key}/team-form:
+    get:
+      operationId: getMatchTeamForm
+      description: >-
+        Derived, provider-neutral recent form for both sides. Read-only. The
+        raw provider payload is terminated server-side and never published.
+      parameters:
+        - $ref: "#/components/parameters/Key"
+      responses:
+        "200":
+          description: Summarised team form with sample size and origin.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamFormContext"
+        default:
+          $ref: "#/components/responses/Error"
+  /v1/btb/matches/{key}/match-path:
+    get:
+      operationId: getMatchPath
+      description: >-
+        Similar-match cohort trajectory carrying separate Event Surprise and
+        Current-State Normality signals. A shrinking cohort is not a surprise
+        signal. Real computation is TASK-0044 under M9; the v1 payload is
+        synthetic and declares that through origin.
+      parameters:
+        - $ref: "#/components/parameters/Key"
+      responses:
+        "200":
+          description: Cohort path points with sample size and confidence.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchPathContext"
+        default:
+          $ref: "#/components/responses/Error"
+  /v1/btb/matches/{key}/jinx-outlook:
+    get:
+      operationId: getMatchJinxOutlook
+      description: >-
+        Informative-only Jinx reading of one match. Carries no recommendation,
+        no forecast and no model, Super or rating decision. Real centralized
+        analysis is TASK-0011 under M11.
+      parameters:
+        - $ref: "#/components/parameters/Key"
+      responses:
+        "200":
+          description: Informative match outlook with uncertainty and freshness.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JinxMatchOutlook"
+        default:
+          $ref: "#/components/responses/Error"
   /v1/btb/match-insights:
     get:
       operationId: getMatchInsights
@@ -856,3 +910,171 @@ components:
             STAR_2_PLUS: { $ref: "#/components/schemas/SuperKpiBucket" }
             STAR_3_PLUS: { $ref: "#/components/schemas/SuperKpiBucket" }
             STAR_4_PLUS: { $ref: "#/components/schemas/SuperKpiBucket" }
+
+    # ---------------------------------------------------------------- #
+    # Mobile Intelligence Foundation (M15)
+    #
+    # origin says whether the payload carries measured values or synthetic
+    # ones. A client that cannot parse it must treat the payload as SYNTHETIC:
+    # an unknown origin may never claim to be evidence.
+    # ---------------------------------------------------------------- #
+    IntelligenceOrigin:
+      type: string
+      enum: [LIVE, SYNTHETIC]
+    IntelligenceAvailability:
+      type: string
+      description: >-
+        LOW_SAMPLE means the values are real but rest on too little evidence to
+        be characteristic. It is neither OK nor UNAVAILABLE.
+      enum: [OK, LOW_SAMPLE, UNAVAILABLE]
+    TeamFormSide:
+      type: object
+      additionalProperties: false
+      required:
+        - side
+        - wins
+        - draws
+        - losses
+        - matchesSampled
+        - formPpg
+        - venuePpg
+        - goalsForPerMatch
+        - goalsAgainstPerMatch
+        - bttsPercent
+        - over25Percent
+        - restDays
+      properties:
+        side: { type: string, enum: [HOME, AWAY] }
+        wins: { type: integer, minimum: 0 }
+        draws: { type: integer, minimum: 0 }
+        losses: { type: integer, minimum: 0 }
+        matchesSampled: { type: integer, minimum: 0 }
+        formPpg: { type: [number, "null"], minimum: 0, maximum: 3 }
+        venuePpg: { type: [number, "null"], minimum: 0, maximum: 3 }
+        goalsForPerMatch: { type: [number, "null"], minimum: 0 }
+        goalsAgainstPerMatch: { type: [number, "null"], minimum: 0 }
+        bttsPercent: { type: [number, "null"], minimum: 0, maximum: 100 }
+        over25Percent: { type: [number, "null"], minimum: 0, maximum: 100 }
+        restDays: { type: [integer, "null"], minimum: 0 }
+    TeamFormContext:
+      type: object
+      required:
+        - contractVersion
+        - origin
+        - availability
+        - minimumReliableSample
+        - home
+        - away
+      properties:
+        matchKey: { type: [string, "null"] }
+        contractVersion: { type: string, const: team-form.v1 }
+        origin: { $ref: "#/components/schemas/IntelligenceOrigin" }
+        availability: { $ref: "#/components/schemas/IntelligenceAvailability" }
+        minimumReliableSample: { type: integer, minimum: 1 }
+        home:
+          oneOf:
+            - $ref: "#/components/schemas/TeamFormSide"
+            - type: "null"
+        away:
+          oneOf:
+            - $ref: "#/components/schemas/TeamFormSide"
+            - type: "null"
+        capturedAt: { type: [string, "null"], format: date-time }
+    MatchPathPoint:
+      type: object
+      required:
+        - pointKey
+        - label
+        - kind
+        - minute
+        - cohortSize
+        - eventSurprise
+        - stateNormality
+        - confidence
+      properties:
+        pointKey: { type: string, minLength: 1 }
+        label: { type: string, minLength: 1 }
+        kind:
+          type: string
+          enum: [KICK_OFF, GOAL, RED_CARD, HALF_TIME, STATE, FULL_TIME, UNKNOWN]
+        minute: { type: [integer, "null"] }
+        cohortSize: { type: integer, minimum: 0 }
+        eventSurprise:
+          description: >-
+            How unusual the event itself was. Never derived from cohortSize;
+            null where it was not computed.
+          type: [number, "null"]
+          minimum: 0
+          maximum: 1
+        stateNormality:
+          description: How ordinary the resulting match state is.
+          type: [number, "null"]
+          minimum: 0
+          maximum: 1
+        confidence: { type: [number, "null"], minimum: 0, maximum: 1 }
+    MatchPathContext:
+      type: object
+      required:
+        - contractVersion
+        - origin
+        - availability
+        - minimumReliableCohort
+        - initialCohortSize
+        - points
+      properties:
+        matchKey: { type: [string, "null"] }
+        contractVersion: { type: string, const: match-path.v1 }
+        origin: { $ref: "#/components/schemas/IntelligenceOrigin" }
+        availability: { $ref: "#/components/schemas/IntelligenceAvailability" }
+        minimumReliableCohort: { type: integer, minimum: 1 }
+        initialCohortSize: { type: integer, minimum: 0 }
+        points:
+          description: >-
+            null means not retrieved. An empty array means retrieved, and the
+            match has no path yet. The two are never conflated.
+          type: [array, "null"]
+          maxItems: 40
+          items: { $ref: "#/components/schemas/MatchPathPoint" }
+        capturedAt: { type: [string, "null"], format: date-time }
+    JinxOutlookSignal:
+      type: object
+      required: [signalKey, label, direction, strength]
+      properties:
+        signalKey: { type: string, minLength: 1 }
+        label: { type: string, minLength: 1 }
+        direction: { type: string, enum: [SUPPORTING, OPPOSING, NEUTRAL] }
+        strength: { type: string, enum: [WEAK, MODERATE, STRONG] }
+    JinxMatchOutlook:
+      type: object
+      description: >-
+        Informative only. Must carry no recommendation, no certainty about the
+        future, and no model, Super or rating vocabulary; the client refuses
+        such wording again before rendering.
+      required:
+        - contractVersion
+        - origin
+        - availability
+        - headline
+        - body
+        - confidence
+        - uncertaintyNote
+        - signals
+      properties:
+        matchKey: { type: [string, "null"] }
+        contractVersion: { type: string, const: jinx-match-outlook.v1 }
+        origin: { $ref: "#/components/schemas/IntelligenceOrigin" }
+        availability: { type: string, enum: [OK, DEGRADED, UNAVAILABLE] }
+        headline: { type: [string, "null"] }
+        body: { type: [string, "null"] }
+        confidence: { type: [number, "null"], minimum: 0, maximum: 1 }
+        uncertaintyNote: { type: [string, "null"] }
+        signals:
+          type: [array, "null"]
+          maxItems: 8
+          items: { $ref: "#/components/schemas/JinxOutlookSignal" }
+        freshness:
+          type: object
+          properties:
+            capturedAt: { type: [string, "null"], format: date-time }
+            ageSeconds: { type: [number, "null"] }
+            stale: { type: boolean }

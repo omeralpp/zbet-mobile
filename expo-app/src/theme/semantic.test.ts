@@ -26,6 +26,7 @@ const palette: SemanticPalette = {
   redSoft: "#reds",
   teal: "#teal",
   tealSoft: "#teals",
+  violet: "#violet",
   orange: "#orange"
 };
 
@@ -44,6 +45,17 @@ test("a decision and a match state stay distinguishable from each other", () => 
   assert.notEqual(semantic.positive, semantic.negative);
   assert.notEqual(semantic.intelligence, semantic.positive);
   assert.notEqual(semantic.warning, semantic.positive);
+});
+
+test("surprise survives the light palette, where amber and bronze converge", () => {
+  // The light palette resolves gold to #8A6410 and bronze to #8A5F2B, so a
+  // surprise signal spelled in warning amber would be indistinguishable from
+  // the structural bar it sits next to. It gets its own hue for that reason.
+  const semantic = resolveSemanticColors(palette);
+  assert.equal(semantic.surprise, palette.violet);
+  assert.notEqual(semantic.surprise, semantic.warning);
+  assert.notEqual(semantic.surprise, semantic.stale);
+  assert.notEqual(semantic.surprise, semantic.intelligence);
 });
 
 test("every recorded collision is real", () => {

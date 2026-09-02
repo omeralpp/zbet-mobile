@@ -6,10 +6,13 @@ import {
   matchInsightSchema,
   matchLeagueContextSchema,
   matchListSchema,
+  jinxMatchOutlookSchema,
+  matchPathContextSchema,
   periodScoreContextSchema,
   superLogDetailSchema,
   superLogListSchema,
   superKpisSchema,
+  teamFormContextSchema,
   totoProgramListSchema,
   totoProgramSchema
 } from "./schemas";
@@ -22,7 +25,11 @@ import {
   mockSuperLogs,
   mockTotoPrograms,
   mockLiveContext,
-  mockLiveContextState
+  mockLiveContextState,
+  mockIntelligenceState,
+  mockJinxOutlook,
+  mockMatchPath,
+  mockTeamForm
 } from "./mock-data";
 import { MobileApiError, type MobileApi } from "./mobile-api";
 
@@ -126,6 +133,30 @@ export const mockMobileApi: MobileApi = {
       halfTimeScore:
         match.elapsed >= 45 ? { homeScore: 1, awayScore: 0 } : null
     });
+  },
+
+  // The M15 intelligence fixtures are synthetic and declare it in the payload.
+  // As with live context, the state is chosen by match id so one preview
+  // session covers populated, low-sample, partial, empty and unavailable.
+  async getMatchTeamForm(key, signal) {
+    await mockDelay(signal);
+    return teamFormContextSchema.parse(
+      mockTeamForm(key, mockIntelligenceState(key))
+    );
+  },
+
+  async getMatchPath(key, signal) {
+    await mockDelay(signal);
+    return matchPathContextSchema.parse(
+      mockMatchPath(key, mockIntelligenceState(key))
+    );
+  },
+
+  async getMatchJinxOutlook(key, signal) {
+    await mockDelay(signal);
+    return jinxMatchOutlookSchema.parse(
+      mockJinxOutlook(key, mockIntelligenceState(key))
+    );
   },
 
   async getMatchSuperLogs(key, signal) {

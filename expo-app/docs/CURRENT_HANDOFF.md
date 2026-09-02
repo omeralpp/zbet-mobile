@@ -1,10 +1,131 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-08-30
+Son güncelleme: 2026-09-02
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
+
+## 2026-09-02 — M15 birinci yerel batch tamamlandı
+
+`btb next cutover start` ile M15 Mobile Intelligence Foundation paralel
+şeridinin ilk batch'i çalıştırıldı ve doğrulandı. Dondurulan üç madde
+(`NXT-OBS-138`, `139`, `140`) uygulandı ve `OBSERVED` -> `READY` durumuna
+alındı. Açık `OBSERVED` satırı kalmadı.
+
+Kapsam yalnız `zbet-mobile/expo-app` oldu; `zbet-cap` bu batch'te hiç
+değiştirilmedi.
+
+- Üç sağlayıcı-bağımsız sözleşme eklendi: `team-form.v1`, `match-path.v1`,
+  `jinx-match-outlook.v1`. Üçü de `origin: LIVE | SYNTHETIC` taşır ve `.catch`
+  düşüşü `SYNTHETIC`'tir — ayrıştırılamayan köken kanıt iddia edemez. Kartlar
+  sentetik veriyi görünür `Örnek veri · gerçek maç bilgisi değil` rozetiyle
+  söyler.
+- Üç yüzey `EXPO_PUBLIC_MOBILE_INTELLIGENCE` bayrağına bağlandı; varsayılan
+  olarak yalnız preview/mock derlemelerinde açık. Pilot APK davranışı
+  değişmedi ve rotaları sunmayan BFF'e istek atılmıyor. Preview ve pilot
+  Android production bundle'ları aynı hash'i üretti, yani bayrak manifest'te.
+- `NXT-OBS-139` grafiği sahibin isteğiyle Codex tasarım oturumundaki mockup ile
+  karşılaştırıldı ve o yapıya göre yeniden yazıldı: `stateNormality` sürekli
+  çizgi, `eventSurprise` bu çizgi üzerinde ayrık işaret, kohort ise eksen
+  altında ikincil sayı satırı. Gerekçe ve Codex'ten alınmayan tek şey (kırmızı
+  renk; bu uygulamada kırmızı kaybeden karar demek) arşivde kayıtlı. Grafik
+  sahibin örneğini birebir gösteriyor: kohort `200 -> 100 -> 30 -> 24`, devre
+  noktası kohortu yarıya indirirken sürpriz `0.18`de kalıyor, 60' deplasman
+  golünde `0.79`a çıkıyor, 75'te çizgi yeniden yükseliyor. Kohort daralması
+  hiçbir yerde sürprize dönüştürülmüyor.
+- `NXT-OBS-140` yüzeyi sorulmadan hiçbir istek üretmiyor; istemci tarafı dil
+  kapısı tavsiye, kesinlik ve model/Super/rating sözlüğünü reddediyor.
+  Reddedilen belirsizlik notu kaybolmuyor, sabit bilgilendirme uyarısına
+  düşüyor.
+
+Açık temada bulunan gerçek bir kusur düzeltildi: sürpriz metresi
+`semantic.warning` kullanıyordu, fakat açık palette gold `#8A6410` ile bronze
+`#8A5F2B` neredeyse aynı — sinyal, yanındaki kohort barından ayırt
+edilemiyordu. Anlam katmanına `semantic.surprise` rolü eklendi ve palette'in
+bilinçli olarak boş bırakılmış `violet` tonuna bağlandı.
+
+Doğrulama: `npm run check` temiz (typecheck + ESLint + **537/537** test +
+marka kapısı); Android production bundle hem preview hem pilot profilinde
+geçti; Expo Doctor'ın tek başarısız kontrolü önceden bilinen patch-sürüm
+sapmasıdır. Android 15 `x86_64` emülatöründe üç yüzey de populated ve
+unavailable durumlarında, koyu ve açık temada render edildi; erişilebilirlik
+etiketleri UI hiyerarşisi dökümünden doğrulandı.
+
+Ortam notu: kabukta `EXPO_PUBLIC_MOBILE_PILOT_KEY` tanımlı ama
+`EXPO_PUBLIC_MOBILE_AUTH_MODE` tanımsız olduğu için `auth-mode.ts:69` muhafızı
+config çözümlemesini reddediyor. Önceden var olan ortam durumu; kapılar açık
+profil değişkeniyle çalıştırıldı.
+
+Yapılmayanlar: commit/push, BFF runtime rollout, runtime restart, APK,
+deployment, release, SAP/kalıcılık ve model/Super/rating etkisi yok. Gerçek
+Similar Match hesabı `TASK-0044` / M9, gerçek merkezi Jinx analisti
+`TASK-0011` / M11 altında bloklu kalır.
+
+Çalışma doğrulanmış dirty checkpoint olarak bırakıldı. Ayrıntı:
+`docs/observation_archive/cutover_2026-09-02.md`.
+
+Repository durumu (bu batch sonunda):
+
+```text
+zbet-mobile  master · b97a81e == origin/master · M15 kaynak, test, sözleşme,
+             handoff ve OBSERVATION_LOG.md değişiklikleri dirty
+zbet-cap     main   · c63b729 == origin/main   · clean, dokunulmadı
+btb-codex   main   · cdfc29d == origin/main   · M15 roadmap/test/task kayıtları
+             dirty (önceki devirden), agent-runs.json bu batch'te güncellendi
+BTB Logs    main   · e41d2c1 == origin/main   · BTB_ROADMAP.md dirty
+```
+
+Yeni APK üretilmedi. Fiziksel-pilot geri dönüş artefaktı değişmeden
+`btb-mobile-next-arm64-pilot-8be2daf.apk`, SHA-256
+`BD41746BDBF7839A8F921D523D04FD6476B9FE2173064F0C588BB9C87E6B9936` olarak
+kalır. Pilot route `https://api.surklase.com`; bu batch sırasında runtime
+restart veya canlı health doğrulaması yapılmadı.
+
+Mod: batch kapandığında `OBSERVATION`.
+
+## 2026-09-02 — Mobile Intelligence Foundation paralel şerit devri
+
+
+Sahip, M7 kritik yolu sürerken Mobile intelligence hazırlığını erkene almak için
+`M15 — Mobile Intelligence Foundation` paralel şeridini onayladı. M15 henüz
+başlatılmadı; yeni Mobile thread'i `btb next cutover start` komutuyla yalnız
+yerel batch'i açacaktır.
+
+Dondurulacak observation kapsamı:
+
+- `NXT-OBS-138` / `TASK-0040`: statistics API takım-formu karşılaştırma kartı.
+- `NXT-OBS-139` / `TASK-0045`: sentetik sözleşmeyle Match Path normality grafiği.
+- `NXT-OBS-140` / `TASK-0046`: sentetik sözleşmeyle yalnız bilgilendirici
+  `Ask Jinx` maç görünümü.
+
+Üst bağımlılıklar ayrı kalır: gerçek Similar Match Journey hesaplaması
+`TASK-0044` / M9, gerçek merkezi Jinx maç analisti `TASK-0011` / M11 altındadır.
+Bu şerit yalnız sağlayıcı-bağımsız DTO, sentetik fixture, yerel Mobile UI ve
+orantılı testleri kapsar. SAP/kalıcılık, model/Super/rating kullanımı, gerçek
+Jinx analizi, BFF runtime rollout, commit/push, APK, deploy ve release ayrıca
+onaylanmadı. Sentetik değerler gerçek veri gibi gösterilmez.
+
+Yeni thread ilk olarak bu dosya, `AGENTS.md`, `docs/NEXT_CUTOVER_PROCEDURE.md`
+ve `docs/OBSERVATION_LOG.md` içindeki `NXT-OBS-138`–`140` satırlarını okur.
+Mevcut kod/runtime/APK bu devir sırasında değiştirilmedi.
+
+Devir anındaki repository checkpoint'i:
+
+```text
+zbet-mobile  master · b97a81e == origin/master · yalnız bu handoff ve
+             OBSERVATION_LOG.md değişikliği dirty
+zbet-cap     main   · c63b729 == origin/main   · clean
+btb-codex   main   · cdfc29d == origin/main   · M15 roadmap/test/task kayıtları dirty
+BTB Logs    main   · e41d2c1 == origin/main   · BTB_ROADMAP.md dirty;
+             önceden var olan M6 kapanış düzenlemesi korundu, M15 üstüne eklendi
+```
+
+Yeni APK üretilmedi. Mevcut fiziksel-pilot geri dönüş artefaktı önceki
+checkpoint'teki `btb-mobile-next-arm64-pilot-8be2daf.apk`, SHA-256
+`BD41746BDBF7839A8F921D523D04FD6476B9FE2173064F0C588BB9C87E6B9936` olarak
+değişmeden kalır. Pilot route `https://api.surklase.com`; bu devir sırasında
+runtime restart veya yeniden canlı health doğrulaması yapılmadı.
 
 Mod: `OBSERVATION` — sekizinci `btb next cutover start` batch'i 2026-08-29'da
 commit/push, pilot runtime aktivasyonu ve fiziksel Xiaomi kabulüyle tamamlandı.

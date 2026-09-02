@@ -11,12 +11,15 @@ import {
   matchInsightSchema,
   matchLeagueContextSchema,
   matchListSchema,
+  jinxMatchOutlookSchema,
   jinxQuipSchema,
   liveContextSchema,
+  matchPathContextSchema,
   periodScoreContextSchema,
   superLogDetailSchema,
   superLogListSchema,
   superKpisSchema,
+  teamFormContextSchema,
   totoProgramListSchema,
   totoProgramSchema
 } from "./schemas";
@@ -145,6 +148,27 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
       request(
         `/v1/btb/matches/${encodeURIComponent(key)}/live-context`,
         liveContextSchema,
+        {},
+        signal
+      ),
+    getMatchTeamForm: (key, signal) =>
+      request(
+        `/v1/btb/matches/${encodeURIComponent(key)}/team-form`,
+        teamFormContextSchema,
+        {},
+        signal
+      ),
+    getMatchPath: (key, signal) =>
+      request(
+        `/v1/btb/matches/${encodeURIComponent(key)}/match-path`,
+        matchPathContextSchema,
+        {},
+        signal
+      ),
+    getMatchJinxOutlook: (key, signal) =>
+      request(
+        `/v1/btb/matches/${encodeURIComponent(key)}/jinx-outlook`,
+        jinxMatchOutlookSchema,
         {},
         signal
       ),

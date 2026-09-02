@@ -1,4 +1,5 @@
 import type { JinxQuipRequest } from "@/src/api/schemas";
+import { foldDiacritics } from "./jinx-language";
 import type { JinxDailyMood } from "./jinx-mood";
 
 /**
@@ -18,23 +19,6 @@ const maxQuipLength = 120;
 // without Turkish characters cannot slip through.
 const spelledNumberPattern =
   /\b(sifir|virgul|yirmi|otuz|kirk|elli|altmis|yetmis|seksen|doksan|yuz|bin)\w*/;
-
-const diacriticFolds: [RegExp, string][] = [
-  [/[ıİ]/g, "i"],
-  [/ş/g, "s"],
-  [/ğ/g, "g"],
-  [/ü/g, "u"],
-  [/ö/g, "o"],
-  [/ç/g, "c"],
-  [/â/g, "a"]
-];
-
-function foldDiacritics(text: string): string {
-  return diacriticFolds.reduce(
-    (folded, [pattern, replacement]) => folded.replace(pattern, replacement),
-    text.toLowerCase()
-  );
-}
 
 export function jinxQuipRequest(mood: JinxDailyMood): JinxQuipRequest | null {
   if (mood.kind === "UNKNOWN" || !mood.metricDate) {

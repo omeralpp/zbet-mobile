@@ -18,7 +18,10 @@ export const overviewModules = [
 export const liveDetailModules = [
   "decision",
   "gamePulse",
+  "matchPath",
   "timeline",
+  "askJinx",
+  "teamForm",
   "standings",
   "odds",
   "statistics",
@@ -60,6 +63,9 @@ export const moduleLayoutLabels: Record<ModuleLayoutSurface, string> = {
  * appended below the score distribution instead of sitting with the other
  * live-context material.
  *
+ * `matchPath`, `askJinx` and `teamForm` arrived with the M15 Mobile
+ * Intelligence Foundation lane and are anchored the same way.
+ *
  * `lineups` and, later, `relatedSuper` were retired. Super decisions now live
  * inside `timeline`; reconciliation drops both old ids from persisted layouts.
  */
@@ -68,6 +74,16 @@ export const moduleLayoutAnchors: Record<
   readonly ModuleAnchor[]
 > = {
   overview: [],
-  liveDetail: [{ id: "timeline", after: "gamePulse" }],
+  liveDetail: [
+    { id: "matchPath", after: "gamePulse" },
+    // Re-anchored from `gamePulse` onto `matchPath`, which is the only way to
+    // express "before the timeline" with an after-anchor. TASK-0045 places the
+    // path chart ahead of the Super timeline, and anchoring both onto
+    // `gamePulse` would have inserted the timeline between them for the small
+    // number of installs whose stored layout predates both.
+    { id: "timeline", after: "matchPath" },
+    { id: "askJinx", after: "timeline" },
+    { id: "teamForm", after: "askJinx" }
+  ],
   superDetail: []
 };

@@ -39,6 +39,7 @@ export interface SemanticPalette {
   redSoft: string;
   teal: string;
   tealSoft: string;
+  violet: string;
   orange: string;
 }
 
@@ -67,6 +68,19 @@ export interface SemanticColors {
   /** Not retrievable right now. Distinct from empty and from failed. */
   unavailable: string;
   unavailableSoft: string;
+  /**
+   * An event that departed from what its cohort would have predicted.
+   *
+   * Deliberately not the warning amber. Warning means something needs
+   * attention; surprise means the match did something unusual, which is
+   * information rather than a problem. It spends the palette's reserved violet
+   * because the two roles that were near it - the structural bronze a cohort
+   * bar uses and the warning amber - are separated from each other by
+   * saturation alone, and in the light palette that separation collapses:
+   * gold resolves to #8A6410 and bronze to #8A5F2B. A surprise signal drawn
+   * next to a cohort bar has to survive that, so it gets its own hue.
+   */
+  surprise: string;
   /** No signal either way. The absence of an opinion, not a weak one. */
   neutral: string;
 }
@@ -89,6 +103,7 @@ export function resolveSemanticColors(
     staleSoft: palette.goldSoft,
     unavailable: palette.textSubtle,
     unavailableSoft: palette.surfaceStrong,
+    surprise: palette.violet,
     neutral: palette.textSubtle
   };
 }

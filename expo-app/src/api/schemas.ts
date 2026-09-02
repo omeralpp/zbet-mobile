@@ -459,3 +459,218 @@ export type LiveContext = z.infer<typeof liveContextSchema>;
 export type LiveMatchEvent = z.infer<typeof liveMatchEventSchema>;
 export type LiveRedCardType = z.infer<typeof redCardTypeSchema>;
 export type LiveContextAvailability = z.infer<typeof liveContextAvailabilitySchema>;
+
+/* ------------------------------------------------------------------ *
+ * Mobile Intelligence Foundation (M15)
+ *
+ * Three provider-neutral, read-only contracts that let Mobile build its
+ * intelligence surfaces before the engines behind them exist. Real similar-
+ * match computation stays TASK-0044 under M9 and real centralized Jinx match
+ * analysis stays TASK-0011 under M11; nothing below reads a model, a Super
+ * decision, a rating or a threshold, and nothing below is a model input.
+ *
+ * `origin` is the load-bearing field. It is what stops a synthetic fixture from
+ * ever being read as real match knowledge, so every one of these contracts
+ * carries it and every surface that renders one has to say so. Its `.catch`
+ * lands on SYNTHETIC rather than LIVE deliberately: an unparseable origin is an
+ * unknown origin, and the only safe thing an unknown origin may claim is that
+ * it is not evidence.
+ * ------------------------------------------------------------------ */
+
+/**
+ * Where the values in one of these payloads came from.
+ *
+ * Never inferred from the transport. A payload served by the real BFF is only
+ * LIVE because it said so, which keeps the synthetic lane and the eventual real
+ * lane distinguishable at the point of rendering rather than by deployment
+ * folklore.
+ */
+export const intelligenceOriginSchema = z
+  .enum(["LIVE", "SYNTHETIC"])
+  .catch("SYNTHETIC");
+
+export type IntelligenceOrigin = z.infer<typeof intelligenceOriginSchema>;
+
+/**
+ * `LOW_SAMPLE` is a separate answer from `OK` and from `UNAVAILABLE`.
+ *
+ * It means the values are real and computable but rest on too little evidence
+ * to be read as characteristic. Collapsing it into OK would present a two-match
+ * sample as a form judgement; collapsing it into UNAVAILABLE would throw away
+ * information the user can legitimately weigh for themselves.
+ */
+export const intelligenceAvailabilitySchema = z
+  .enum(["OK", "LOW_SAMPLE", "UNAVAILABLE"])
+  .catch("UNAVAILABLE");
+
+export type IntelligenceAvailability = z.infer<
+  typeof intelligenceAvailabilitySchema
+>;
+
+/* ---------------------------- Team form ---------------------------- */
+
+/**
+ * One side's recent form, already derived.
+ *
+ * Every field is a summary a reader can act on directly. No provider row, no
+ * fixture list, no opponent identity and no technical id reaches this contract:
+ * the adapter terminates all of that server-side, exactly as the live-context
+ * contract does. A value the source could not establish is `null` rather than
+ * zero, because "no goals conceded" and "we do not know" are different claims.
+ */
+export const teamFormSideSchema = z.object({
+  side: z.enum(["HOME", "AWAY"]),
+  wins: z.number().int().nonnegative(),
+  draws: z.number().int().nonnegative(),
+  losses: z.number().int().nonnegative(),
+  /** Matches the record above was computed over. */
+  matchesSampled: z.number().int().nonnegative(),
+  /** Points per match across the whole sample. */
+  formPpg: finiteNumber.min(0).max(3).nullable(),
+  /** Points per match at this venue only - home form for the home side. */
+  venuePpg: finiteNumber.min(0).max(3).nullable(),
+  goalsForPerMatch: finiteNumber.nonnegative().nullable(),
+  goalsAgainstPerMatch: finiteNumber.nonnegative().nullable(),
+  bttsPercent: finiteNumber.min(0).max(100).nullable(),
+  over25Percent: finiteNumber.min(0).max(100).nullable(),
+  /** Days since this side last played. Fatigue context, never a prediction. */
+  restDays: z.number().int().nonnegative().nullable()
+});
+
+export const teamFormContextSchema = z.object({
+  matchKey: z.string().nullable().optional(),
+  contractVersion: z.literal("team-form.v1"),
+  origin: intelligenceOriginSchema,
+  availability: intelligenceAvailabilitySchema,
+  /**
+   * The sample size at or above which this payload considers the summary
+   * characteristic. Published rather than hard-coded in the app so the
+   * threshold and the values it judges can never drift apart.
+   */
+  minimumReliableSample: z.number().int().positive(),
+  home: teamFormSideSchema.nullable(),
+  away: teamFormSideSchema.nullable(),
+  capturedAt: isoDateTime.nullable().optional()
+});
+
+export type TeamFormSide = z.infer<typeof teamFormSideSchema>;
+export type TeamFormContext = z.infer<typeof teamFormContextSchema>;
+
+/* --------------------------- Match path ---------------------------- */
+
+/**
+ * What narrowed the cohort at this point.
+ *
+ * `STATE` covers a point taken without a discrete event - a periodic sample of
+ * where the match currently sits. `UNKNOWN` is the landing value for a kind
+ * this build has not seen; such a point still carries honest numbers, so it is
+ * drawn with a neutral marker rather than dropped.
+ */
+export const matchPathPointKindSchema = z
+  .enum([
+    "KICK_OFF",
+    "GOAL",
+    "RED_CARD",
+    "HALF_TIME",
+    "STATE",
+    "FULL_TIME",
+    "UNKNOWN"
+  ])
+  .catch("UNKNOWN");
+
+/**
+ * One step along the match's path through its similar-match cohort.
+ *
+ * The two signals are deliberately separate and neither is derived from
+ * `cohortSize`. A cohort shrinking is what always happens as a match acquires
+ * events - reading that shrinkage as surprise would label every goal in every
+ * match surprising. `eventSurprise` answers "was this event unusual for this
+ * cohort"; `stateNormality` answers "is where the match now sits an ordinary
+ * place to be". A point may carry one, both or neither.
+ */
+export const matchPathPointSchema = z.object({
+  pointKey: z.string().min(1),
+  /** Reader-facing description of the step. Never a provider string. */
+  label: z.string().min(1),
+  kind: matchPathPointKindSchema,
+  minute: z.number().int().nullable(),
+  /** Similar matches still matching the path at this point. */
+  cohortSize: z.number().int().nonnegative(),
+  /** How unusual the event itself was. `null` where it was not computed. */
+  eventSurprise: finiteNumber.min(0).max(1).nullable(),
+  /** How ordinary the resulting match state is. `null` where not computed. */
+  stateNormality: finiteNumber.min(0).max(1).nullable(),
+  /** Confidence in this point's own two signals, not in the match. */
+  confidence: finiteNumber.min(0).max(1).nullable()
+});
+
+export const matchPathContextSchema = z.object({
+  matchKey: z.string().nullable().optional(),
+  contractVersion: z.literal("match-path.v1"),
+  origin: intelligenceOriginSchema,
+  availability: intelligenceAvailabilitySchema,
+  /** Cohort size at or above which a point's signals are characteristic. */
+  minimumReliableCohort: z.number().int().positive(),
+  /** Cohort size before any event narrowed it. */
+  initialCohortSize: z.number().int().nonnegative(),
+  /**
+   * `null` = not retrieved. `[]` = retrieved, and the match genuinely has no
+   * path yet. Never conflated, for the same reason the live timeline is not.
+   */
+  points: z.array(matchPathPointSchema).max(40).nullable(),
+  capturedAt: isoDateTime.nullable().optional()
+});
+
+export type MatchPathPoint = z.infer<typeof matchPathPointSchema>;
+export type MatchPathPointKind = z.infer<typeof matchPathPointKindSchema>;
+export type MatchPathContext = z.infer<typeof matchPathContextSchema>;
+
+/* ------------------------- Jinx match outlook ---------------------- */
+
+/**
+ * One named reason the outlook leans the way it does.
+ *
+ * `direction` is relative to the outlook's own reading, not to a bet, a market
+ * or a Super selection. A signal is a statement about the match, and the app
+ * has no vocabulary here for what anyone should do about it.
+ */
+export const jinxOutlookSignalSchema = z.object({
+  signalKey: z.string().min(1),
+  label: z.string().min(1),
+  direction: z.enum(["SUPPORTING", "OPPOSING", "NEUTRAL"]).catch("NEUTRAL"),
+  strength: z.enum(["WEAK", "MODERATE", "STRONG"]).catch("WEAK")
+});
+
+/**
+ * An informative reading of one match, in the Jinx voice.
+ *
+ * Jinx is presentation. This contract carries no recommendation, no forecast
+ * and no decision, and the client re-checks the wording for both before it
+ * reaches a bubble. `DEGRADED` means an outlook was produced from partial
+ * material and says so, which is a different statement from having none.
+ */
+export const jinxMatchOutlookSchema = z.object({
+  matchKey: z.string().nullable().optional(),
+  contractVersion: z.literal("jinx-match-outlook.v1"),
+  origin: intelligenceOriginSchema,
+  availability: z.enum(["OK", "DEGRADED", "UNAVAILABLE"]).catch("UNAVAILABLE"),
+  /** One-line reading. `null` when there is nothing honest to say. */
+  headline: z.string().nullable(),
+  /** Supporting paragraph. Optional even when a headline exists. */
+  body: z.string().nullable(),
+  confidence: finiteNumber.min(0).max(1).nullable(),
+  /** What this reading cannot see. Rendered, never summarised away. */
+  uncertaintyNote: z.string().nullable(),
+  signals: z.array(jinxOutlookSignalSchema).max(8).nullable(),
+  freshness: z
+    .object({
+      capturedAt: isoDateTime.nullable().optional(),
+      ageSeconds: z.number().nullable().optional(),
+      stale: z.boolean().optional()
+    })
+    .partial()
+    .optional()
+});
+
+export type JinxOutlookSignal = z.infer<typeof jinxOutlookSignalSchema>;
+export type JinxMatchOutlook = z.infer<typeof jinxMatchOutlookSchema>;

@@ -20,6 +20,17 @@ export default function resolveAppConfig({
   const pilotAccessKey =
     process.env.EXPO_PUBLIC_MOBILE_PILOT_KEY?.trim() ?? "";
   const useMocks = process.env.EXPO_PUBLIC_USE_MOCKS !== "false";
+  // M15 Mobile Intelligence Foundation surfaces.
+  //
+  // The three surfaces are built against contracts the pilot BFF does not serve
+  // yet, so they default to preview builds only. Mounting them in a pilot build
+  // would fire three requests per match open that are known to have no route,
+  // and would show the owner three permanently unavailable cards. Setting the
+  // variable to "true" turns them on once the BFF publishes those routes, with
+  // no code change here.
+  const mobileIntelligence =
+    process.env.EXPO_PUBLIC_MOBILE_INTELLIGENCE === "true" ||
+    (useMocks && process.env.EXPO_PUBLIC_MOBILE_INTELLIGENCE !== "false");
   const mobileAuthMode = resolveMobileAuthMode({
     useMocks,
     configuredMode: process.env.EXPO_PUBLIC_MOBILE_AUTH_MODE,
@@ -133,6 +144,7 @@ export default function resolveAppConfig({
     authMode: mobileAuthMode,
     pilotAccessKey: usesPilotAccess ? pilotAccessKey : "",
     useMocks,
+    mobileIntelligence,
     authClientId: usesOAuth ? oauthPublicConfiguration.clientId : "",
     authIssuer: usesOAuth ? oauthPublicConfiguration.issuer : "",
     authAuthorizationEndpoint:

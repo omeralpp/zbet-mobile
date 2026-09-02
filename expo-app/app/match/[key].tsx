@@ -16,12 +16,16 @@ import {
 } from "react-native";
 import {
   matchInsightQuery,
+  matchJinxOutlookQuery,
   matchLeagueContextQuery,
   matchLiveContextQuery,
+  matchPathQuery,
   matchPeriodScoreQuery,
   matchQuery,
-  matchSuperLogsQuery
+  matchSuperLogsQuery,
+  matchTeamFormQuery
 } from "@/src/api/queries";
+import { AskJinxCard } from "@/src/components/AskJinxCard";
 import { ChangeEmphasis } from "@/src/components/ChangeEmphasis";
 import { LiveDot } from "@/src/components/LiveDot";
 import { SignalMeter } from "@/src/components/SignalMeter";
@@ -31,13 +35,16 @@ import {
 } from "@/src/components/SurfaceMaterial";
 import { TeamLogo } from "@/src/components/TeamLogo";
 import { GamePulseCard } from "@/src/components/GamePulseCard";
+import { MatchPathChart } from "@/src/components/MatchPathChart";
 import { MatchTimelineCard } from "@/src/components/MatchTimelineCard";
+import { TeamFormCard } from "@/src/components/TeamFormCard";
 import { LiveContextFreshness } from "@/src/components/LiveContextNotice";
 import { StandingsModule } from "@/src/components/StandingsModule";
 import { PressureBalance } from "@/src/components/PressureBalance";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { RatioResultsChart } from "@/src/components/RatioResultsChart";
 import { Screen } from "@/src/components/Screen";
+import { runtimeConfig } from "@/src/config/runtime";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { buildBilyonerMatchUrl } from "@/src/external/bilyoner";
 import { CollapsibleModule } from "@/src/layout/CollapsibleModule";
@@ -202,6 +209,9 @@ export default function MatchDetailScreen() {
     }
   };
   const [showDecision, setShowDecision] = useState(false);
+  // Jinx is asked, never volunteered. Until this flips, its query stays
+  // disabled and the surface costs nothing but its own entry point.
+  const [askedJinx, setAskedJinx] = useState(false);
   const [compactHeader, setCompactHeader] = useState(false);
   const [reordering, setReordering] = useState(false);
   const scrollRef = useRef<ScrollView | null>(null);
@@ -223,6 +233,22 @@ export default function MatchDetailScreen() {
   // Supplementary context. Its failure must never take Match Detail down, so it
   // is never consulted for the screen's loading or error state.
   const liveContext = useQuery(matchLiveContextQuery(key));
+  // M15 intelligence surfaces. Mounted only where the build enables them, so a
+  // pilot APK never requests a route its BFF does not serve yet. Like live
+  // context, none of them is consulted for the screen's loading or error state.
+  const intelligence = runtimeConfig.mobileIntelligence;
+  const teamForm = useQuery({
+    ...matchTeamFormQuery(key),
+    enabled: intelligence && Boolean(key)
+  });
+  const matchPath = useQuery({
+    ...matchPathQuery(key),
+    enabled: intelligence && Boolean(key)
+  });
+  const jinxOutlook = useQuery({
+    ...matchJinxOutlookQuery(key, askedJinx),
+    enabled: intelligence && Boolean(key) && askedJinx
+  });
   const relatedDecisions = useMemo(
     () => relatedSuperDecisions(superLogs.data ?? [], key),
     [key, superLogs.data]
@@ -446,6 +472,45 @@ export default function MatchDetailScreen() {
       </LiveDetailPanel>
     )
   };
+
+  // Mounted as a group or not at all. A build whose BFF does not serve these
+  // routes shows no slot for them rather than three cards that can only ever
+  // report being unavailable.
+  if (intelligence) {
+    moduleNodes.matchPath = (
+      <LiveDetailPanel
+        eyebrow="BENZER MAÇLAR"
+        id="matchPath"
+        title="Maç yolu ve normallik"
+      >
+        <MatchPathChart
+          context={matchPath.data}
+          isLoading={matchPath.isLoading}
+        />
+      </LiveDetailPanel>
+    );
+    moduleNodes.askJinx = (
+      <LiveDetailPanel eyebrow="JINX" id="askJinx" title="Jinx okuması">
+        <AskJinxCard
+          asked={askedJinx}
+          isError={jinxOutlook.isError}
+          isLoading={jinxOutlook.isLoading}
+          onAsk={() => setAskedJinx(true)}
+          outlook={jinxOutlook.data}
+        />
+      </LiveDetailPanel>
+    );
+    moduleNodes.teamForm = (
+      <LiveDetailPanel eyebrow="FORM" id="teamForm" title="Takım formu">
+        <TeamFormCard
+          awayTeam={match.awayTeam}
+          context={teamForm.data}
+          homeTeam={match.homeTeam}
+          isLoading={teamForm.isLoading}
+        />
+      </LiveDetailPanel>
+    );
+  }
 
   if (match.selectedOdd && match.rating > 0) {
     moduleNodes.decision = (
