@@ -112,25 +112,50 @@ misread as a code defect.
 
 ## E. Results
 
-Fill in as you go. An entry left blank reads as untested, which is correct and
-better than an assumed pass.
+Owner ran the full checklist on the phone on **2026-09-06** and reported that
+every item passed. Recorded exactly as reported, and no wider.
 
-| Phone / Android | Item | Result | Notes |
-| --- | --- | --- | --- |
-|  | A1 enable flow |  |  |
-|  | A2 OS permission |  |  |
-|  | A3 rating filter both ways |  |  |
-|  | A4 preference survives restart |  |  |
-|  | B1 foreground |  |  |
-|  | B2 background |  |  |
-|  | B3 killed / restart |  |  |
-|  | B4 after reboot |  |  |
-|  | C1 Super tap |  |  |
-|  | C2 Match tap |  |  |
-|  | C3 Toto tap |  |  |
-|  | C4 tap from killed |  |  |
-|  | C5 back behaviour |  |  |
-|  | D battery / OEM restrictions |  |  |
+| Item | Result | Notes |
+| --- | --- | --- |
+| A1 enable flow | PASS | Owner-reported 2026-09-06 |
+| A2 OS permission | PASS | Owner-reported 2026-09-06 |
+| A3 rating filter both ways | PASS | Owner-reported 2026-09-06 |
+| A4 preference survives restart | PASS | Owner-reported 2026-09-06 |
+| B1 foreground | PASS | No self-navigation observed |
+| B2 background | PASS | Owner-reported 2026-09-06 |
+| B3 killed / restart | PASS | Cold-start path reached the right screen |
+| B4 after reboot | PASS | No OEM suppression reported |
+| C1 Super tap | PASS | Owner-reported 2026-09-06 |
+| C2 Match tap | PASS | Correct match reached |
+| C3 Toto tap | PASS | Correct program and version reached |
+| C4 tap from killed | PASS | Matches the running-app destination |
+| C5 back behaviour | PASS | Owner-reported 2026-09-06 |
+
+### Device and section D values
+
+| Field | Value |
+| --- | --- |
+| Phone model | Xiaomi Mi 11 Lite |
+| Android version | 14, build `UKQ1.240624.001` |
+| OS build | Xiaomi HyperOS `2.0.5.0.UKOTRXM` |
+| Android security patch | 2025-08-01 |
+| Battery optimisation for the app | **Optimised** (not unrestricted) |
+| OEM autostart / background permission | Not separately stated |
+| Observed delivery latency | None reported as notable |
+
+This strengthens the result rather than qualifying it. Xiaomi's MIUI/HyperOS is
+among the most aggressive Android skins for background suppression, and the
+tests were run with battery optimisation **applied**, not waived. B4 — a
+notification delivered after a reboot without opening the app first — is the row
+most likely to fail under exactly this configuration, and it passed. The same
+pass on a stock device set to unrestricted would have been much weaker evidence.
+
+Two limits kept explicit rather than inferred. The OEM autostart permission was
+not separately reported, so it is recorded as unstated; delivery working after
+reboot does not by itself prove which mechanism allowed it, since push arrives
+through Play Services rather than app autostart. And this is one device on one
+OS build: it is the intended owner phone, which is all criterion 3 requires, but
+it is not a claim about Android behaviour generally.
 
 ## What this does not establish
 

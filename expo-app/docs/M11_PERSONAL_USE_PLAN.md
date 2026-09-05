@@ -1,7 +1,8 @@
 # M11 — Personal Mobile reliability and daily workflow
 
-Owner decision: 2026-09-06. Status: `ACTIVE / OWNER_ONLY_PREPARATION`.
-This replaces the external-user pilot/retention objective; it does not close M11.
+Owner decision: 2026-09-06. Status: `ALL FOUR CRITERIA MET 2026-09-06`.
+This replaced the external-user pilot/retention objective. The scope change alone
+did not close M11; the evidence recorded below does.
 Decision: [roadmap amendment](../../../btb-codex/ROADMAP_AMENDMENT_2026-09-06.md).
 
 ## Purpose
@@ -77,7 +78,7 @@ The accepted owner-phone APK is unchanged and still carries none of this work.
 | --- | --- | --- |
 | Scope and optional features | Owner-only direction approved; retention cleanup applied 2026-09-06 and verified at 562/562 | Record any actual personal-use issues found on the phone |
 | Core journeys | Candidate `4518BD58...8E79` installed on the owner phone 2026-09-06 and reported working properly | Met. Reopen only if a later candidate changes the touched inputs |
-| Notifications and return to app | Existing behavior, not revalidated by retention tests | On intended phone: owner preferences, foreground/background/restart and tap-through; record device restrictions and observed failures |
+| Notifications and return to app | All 13 items passed 2026-09-06 on Xiaomi Mi 11 Lite, Android 14 `UKQ1.240624.001`, HyperOS `2.0.5.0.UKOTRXM`, with battery optimisation applied; evidence in `M11_NOTIFICATION_ACCEPTANCE.md` | Met. Post-reboot delivery passed under an aggressive OEM skin with optimisation on, which is the hard case rather than the easy one |
 | Maintenance/security | TASK-0058 baseline passed; TASK-0060 disposition recorded 2026-09-06 — 14 moderate accepted with rationale, 0 high/critical, reachability measured against the shipped bundle | Re-check on any Expo Router/query-string fix, any severity change, and mandatorily before distribution beyond the owner device |
 | Final owner acceptance | Accepted artifact recorded: `btb-mobile-next-arm64-m11-deps-0037328.apk`, SHA-256 `4518BD58...8E79`, same pilot certificate as the prior build | Met for this candidate. Any later build needs its own hash and confirmation; distribution beyond the owner device stays separately approved |
 
@@ -85,11 +86,16 @@ The checklist does not invent a new notification feature, a known failure, a
 required model change, or a mandatory external account. Reuse acceptance for
 unchanged behavior; validate touched inputs before declaring them ready.
 
-Next bounded action: the criterion 3 notification matrix on the accepted candidate
-— owner preferences, foreground, background, restart and tap-through, with device
-restrictions recorded. Core journeys, the retention cleanup and the TASK-0060
-disposition are complete. No new retention implementation, user recruitment or
-longitudinal analytics work is due.
+All four criteria are met as of 2026-09-06: the scope and retention disposition
+are recorded, the core journeys were accepted on the candidate, the notification
+matrix passed on the owner phone with its device limitations stated, and the
+quality, security and artifact-identity evidence is recorded with TASK-0060
+dispositioned. No new retention implementation, user recruitment or longitudinal
+analytics work is due.
+
+Closure changes nothing operationally. The app stays owner-only, distribution
+beyond that device stays separately approved, the accepted `decode-uri-component`
+advisory stands unchanged, and model quality remains M14 and M9/M10 work.
 
 ## Boundaries and checkpoint
 
