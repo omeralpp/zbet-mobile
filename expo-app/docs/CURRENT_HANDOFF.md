@@ -1,10 +1,140 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-09-03
+Son güncelleme: 2026-09-06
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
+
+## 2026-09-06 — Codex closing checkpoint; continuation in Claude
+
+Owner requested safe closure to continue in Claude. Compact entry point:
+[CLAUDE_HANDOFF_2026-09-06.md](CLAUDE_HANDOFF_2026-09-06.md).
+All local changes are preserved, including untracked files; nothing is committed
+or pushed. M11 remains ACTIVE and runtime OBSERVATION, no open cutover. No
+retention source removal occurred. Temporary test services are stopped; the
+accepted phone APK and owner runtime were not changed by closure. Continue with
+the personal-use plan and reviewed cleanup, not the superseded external pilot.
+
+## 2026-09-06 — M11 refocused on personal Mobile use
+
+Owner does not plan to invite users and approved refocusing M11 on personal-use
+quality. M11 is now **Personal Mobile Reliability / Daily Workflow**,
+`ACTIVE / OWNER_ONLY_PREPARATION`. The authority and roadmap mirror now use
+owner-phone workflow, notification/return behavior, quality/security and owner
+acceptance criteria; no user-growth, retention or monetization target remains.
+Active plan: [M11_PERSONAL_USE_PLAN.md](M11_PERSONAL_USE_PLAN.md).
+
+Keep TASK-0058's compatible dependency updates, reproducible Doctor and Android
+validation tooling. TASK-0057's audience planning and TASK-0059's retention
+feature are historical work, not reasons to continue external-pilot development.
+The exact retention cleanup candidates are reviewed in the active plan; **no
+source has been removed**. Retention remains off by default and only exists in
+the uncommitted local candidate, not the accepted owner-phone APK. Next: resolve
+that bounded cleanup while preserving maintenance, then address TASK-0060's
+owner-relevant dependency advisories. No new analytics work is due.
+
+TASK-0057/0058/0059 remain DONE as historical implementation records; M11 itself
+is not complete. Core owner-phone/notification acceptance of the eventual
+changed candidate is still pending. Model/Super/Toto work and BTB-owned
+TASK-0011 retain their separate ownership and gates.
+
+This turn changed only scope/docs/M11 records. Mobile runtime stays OBSERVATION,
+no open cutover, last verified CAP `91cbc25` at `https://api.surklase.com`.
+Accepted owner APK SHA-256 remains
+`53B366747517A8E5B9211AB85EE72D3ABF8D8173E16324736E59BFA9E2D20D99`.
+No new build, runtime/device recheck, source deletion, external configuration,
+commit/push or deployment. Earlier external-pilot next steps below are superseded.
+
+## 2026-09-05 — M11 opt-in local retention rehearsal verified
+
+`TASK-0059` is `DONE`. **Daha Fazla → Yerel kullanım ölçümü** now offers
+explicit consent, stop/retain, inspect a local JSON export and confirmed
+deletion. Strict event fields, foreground/focused real-data eligibility,
+session deduplication and an offline roster-based D1/D7 report are implemented.
+Preview and owner journals cannot enter invited-pilot totals; no collector,
+automatic upload, new users or real retention results were introduced.
+Evidence/usage: [M11_RETENTION_REHEARSAL.md](M11_RETENTION_REHEARSAL.md).
+
+Final checks: 581/581 Mobile tests (19 new retention cases), 7/7 tooling tests,
+type/lint/brand, Doctor and Android production JS export pass. Android 15 x86_64
+preview controls, sample exclusion, export timestamps, stop/restart and deletion
+pass on the reused debug shell. App logs contain zero fatal/JS errors or matches
+for the 12 sensitive environment values checked. Temporary test journals were
+deleted; Metro and the read-only emulator were stopped. No new native/phone APK.
+
+Coverage is deliberately conservative: restarts stop collection and long gaps
+invalidate evidence. This is NOT a complete longitudinal real-user collector.
+External pilot review still needs cohort identity/auth, exact build metadata,
+longitudinal coverage handling, phone validation and separate release approvals.
+Next bounded local task: `TASK-0060`, remaining dependency advisories before
+distribution (14 moderate, zero high/critical at TASK-0058; no new dependency delta).
+
+M11 remains `ACTIVE / LOCAL_PREPARATION`; runtime remains owner-only `OBSERVATION`
+with no open cutover. Last verified CAP `91cbc25`, `https://api.surklase.com`,
+and owner APK SHA-256
+`53B366747517A8E5B9211AB85EE72D3ABF8D8173E16324736E59BFA9E2D20D99`
+are unchanged. All M11 changes remain local/uncommitted in Mobile plus bounded
+Tooling/Logs records. CAP is untouched; no external configuration, deployment,
+distribution, commit or push occurred. Older checkpoints below are historical.
+
+## 2026-09-05 — M11 local dependency baseline verified
+
+`TASK-0058` is `DONE`: compatible SDK 57 patches, reproducible explicit-profile
+Doctor and an x86_64 option in the canonical Mobile build adapter are verified.
+Type/lint/tests/brand, seven Doctor-wrapper regressions, preview Doctor,
+configured-pilot Doctor (20/20), Android JS export, clean staged install and
+x86_64 native compilation pass. Android 15 emulator launch/navigation passes
+in mock preview mode, with no fatal/JavaScript errors in the app log. The
+temporary preview server and read-only emulator were stopped after testing.
+Evidence and artifact hashes: [M11_DEPENDENCY_BASELINE.md](M11_DEPENDENCY_BASELINE.md).
+
+Audit is now 14 moderate / 0 high / 0 critical (still exit 1); `TASK-0060` is
+`OPEN` for the remaining URL-parser/tooling advisory review and remediation
+before external distribution. This is a local baseline, not release acceptance.
+Next: `TASK-0059` / `OPEN`, opt-in local retention measurement and rehearsal.
+No real users or retention results exist yet; the cohort remains provisional.
+
+M11 remains `ACTIVE / LOCAL_PREPARATION`; the owner runtime remains `OBSERVATION`
+with no open cutover. Last verified runtime is still CAP `91cbc25` at
+`https://api.surklase.com`. The accepted owner APK remains
+`btb-mobile-next-arm64-team-form-live-b75b4cd.apk`, SHA-256
+`53B366747517A8E5B9211AB85EE72D3ABF8D8173E16324736E59BFA9E2D20D99`.
+The separate x86_64 debug artifact does not replace it. No physical-phone or
+live BFF/SAP/auth/push revalidation, owner-pilot restart, external-system change,
+release distribution, commit or push occurred. Changes remain local in Mobile
+and the bounded Mobile adapter/M11 records in Tooling and Logs; CAP is untouched.
+Entry commits are recorded in [M11_PILOT_PLAN.md](M11_PILOT_PLAN.md).
+
+## 2026-09-05 — M11 preparation entry (superseded by the dependency checkpoint above)
+
+Owner started M11 after the proposal to define pilot scope, assess build
+readiness and specify retention measurement. M11 is `ACTIVE / LOCAL_PREPARATION`;
+the existing owner-only runtime remains `OBSERVATION`, with no open cutover run.
+Preparation task: `TASK-0057` is `DONE`; `TASK-0058` (dependency readiness) and
+`TASK-0059` (local retention rehearsal) are `OPEN`. Canonical plan and next steps:
+[M11_PILOT_PLAN.md](M11_PILOT_PLAN.md). This section supersedes older statements
+that there is no Mobile roadmap work; it does not reopen resolved observations.
+
+Fresh local evidence: existing accepted APK hash and 54,259,061-byte size match;
+Expo Doctor completes at 19/20 with 16 package mismatches under explicit temporary
+preview settings; npm audit reports 21 affected package entries (15 moderate,
+6 high). An initial Doctor config error returned a misleading wrapper exit 0
+and was not treated as a pass. Shared pilot auth identifies every request as
+one subject; no retention instrumentation was found in the targeted source review.
+
+The initial cohort proposal is 3–5 invited testers, pending owner choice; real
+enrollment and retention measurement have not started. Next: dependency readiness
+and a local opt-in retention rehearsal. Real-user distribution, external auth,
+signing and deployment keep their separate approvals. Model output must not be
+presented as calibrated while M14 is open; Jinx/Match Path remain synthetic.
+
+Last verified runtime remains CAP `91cbc25` at `https://api.surklase.com`.
+APK remains `btb-mobile-next-arm64-team-form-live-b75b4cd.apk`, SHA-256
+`53B366747517A8E5B9211AB85EE72D3ABF8D8173E16324736E59BFA9E2D20D99`.
+No fresh runtime/SAP/device check, code/package edit, build, restart, external
+configuration, distribution, commit or push occurred. Only Mobile planning/docs
+and the bounded M11 roadmap/task records are updated locally.
 
 ## 2026-09-03 — Team Form physically accepted; NXT-OBS-142/145/147 closed
 

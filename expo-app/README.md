@@ -150,6 +150,24 @@ npm run check
 npm run doctor
 ```
 
+`npm run doctor` checks an explicit preview profile in a child process; it
+does not inherit the owner pilot key or reload local dotenv files. The command
+first validates Expo config without printing it, then requires a complete
+Doctor success summary as well as exit code zero. A config error cannot be
+counted as a pass.
+
+For an actual pilot/OAuth profile, set the intended process environment and run
+`npm run doctor:configured`. It preserves that profile and fails if auth mode is
+implicit or configuration is invalid. A preview check is not release acceptance.
+`npm run check` also runs the Doctor-wrapper regression tests (`test:tooling`).
+
+M11 now targets [personal Mobile use](docs/M11_PERSONAL_USE_PLAN.md), by owner
+decision on 2026-09-06. The optional retention rehearsal was removed from the
+candidate under that decision. It was never committed, was never in the accepted
+owner-phone APK, and is not needed for M11. Its
+[historical report](docs/M11_RETENTION_REHEARSAL.md) is kept as evidence of the
+prior experiment, not as a current user-growth workstream.
+
 BTB Codex ortak kalite kapısı:
 
 ```powershell
@@ -162,6 +180,11 @@ için `-Install` kullanılabilir. `-NativeBuild`, Windows yol sınırını aşma
 kısa ömürlü bir build staging klasörü kullanarak arm64 debug APK smoke build'i
 üretir ve sonucu `.codex-artifacts` altına kopyalar. Bu kontroller commit, push
 veya deploy yapmaz.
+
+For emulator verification, the same gate accepts `-NativeBuild -Architecture
+x86_64` and writes `btb-mobile-next-x86_64-debug.apk`; the default remains
+ARM64. Bundle/native checks use the caller's build environment, so select an
+explicit preview, pilot or OAuth environment before invoking those options.
 
 Standalone pilot APK betiği varsayılan olarak ARM64 üretir. Android Studio
 emülatör doğrulaması için aynı kaynak ve public runtime ayarlarıyla ayrı bir
