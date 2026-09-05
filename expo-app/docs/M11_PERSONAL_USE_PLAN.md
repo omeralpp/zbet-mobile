@@ -76,19 +76,20 @@ The accepted owner-phone APK is unchanged and still carries none of this work.
 | Area | Current evidence | Still needed for M11 closure |
 | --- | --- | --- |
 | Scope and optional features | Owner-only direction approved; retention cleanup applied 2026-09-06 and verified at 562/562 | Record any actual personal-use issues found on the phone |
-| Core journeys | Prior owner acceptance includes corrected Team Form/last-five results; preview navigation passed | Intended owner-phone candidate: Dashboard, match details, Super, Toto and real Team Form; verify freshness, navigation and unavailable states |
+| Core journeys | Candidate `4518BD58...8E79` installed on the owner phone 2026-09-06 and reported working properly | Met. Reopen only if a later candidate changes the touched inputs |
 | Notifications and return to app | Existing behavior, not revalidated by retention tests | On intended phone: owner preferences, foreground/background/restart and tap-through; record device restrictions and observed failures |
 | Maintenance/security | TASK-0058 baseline passed; TASK-0060 disposition recorded 2026-09-06 — 14 moderate accepted with rationale, 0 high/critical, reachability measured against the shipped bundle | Re-check on any Expo Router/query-string fix, any severity change, and mandatorily before distribution beyond the owner device |
-| Final owner acceptance | Accepted phone APK unchanged | Exact chosen artifact/hash plus owner confirmation, under separate build/signing/distribution approvals where applicable |
+| Final owner acceptance | Accepted artifact recorded: `btb-mobile-next-arm64-m11-deps-0037328.apk`, SHA-256 `4518BD58...8E79`, same pilot certificate as the prior build | Met for this candidate. Any later build needs its own hash and confirmation; distribution beyond the owner device stays separately approved |
 
 The checklist does not invent a new notification feature, a known failure, a
 required model change, or a mandatory external account. Reuse acceptance for
 unchanged behavior; validate touched inputs before declaring them ready.
 
-Next bounded action: the owner-phone workflow and notification acceptance checks
-on the intended candidate. The retention cleanup and the TASK-0060 advisory
-disposition are both complete. No new retention implementation, user
-recruitment or longitudinal analytics work is due.
+Next bounded action: the criterion 3 notification matrix on the accepted candidate
+— owner preferences, foreground, background, restart and tap-through, with device
+restrictions recorded. Core journeys, the retention cleanup and the TASK-0060
+disposition are complete. No new retention implementation, user recruitment or
+longitudinal analytics work is due.
 
 ## Boundaries and checkpoint
 

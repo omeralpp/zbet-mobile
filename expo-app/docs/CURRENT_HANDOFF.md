@@ -6,6 +6,51 @@ Son güncelleme: 2026-09-06
 
 Aktif task: `BTB Mobile Next - Aktif`
 
+## 2026-09-06 — M11 dependency candidate APK built and accepted on the phone
+
+Owner approved commit/push, then a new APK if needed. The three repos are
+pushed (`zbet-mobile 0037328`, `btb-codex 36e0d34`, `BTB Logs 321d890`), and a
+new arm64 candidate carries the TASK-0058 dependency updates to the phone for
+the first time. No feature change: the retention rehearsal was removed before
+this build and was never in the accepted APK either.
+
+```text
+Artifact : .codex-artifacts/btb-mobile-next-arm64-m11-deps-0037328.apk
+Bytes    : 54,303,169 (51.79 MiB)
+SHA-256  : 4518BD58CD29FB82F643B7229BC6605C055866D2ABDAE5D996BA01E7954E8E79
+Package  : com.btb.mobile.next / 0.1.0 (1) / arm64-v8a only
+Signing  : v2 PASS; same Android Debug pilot certificate as the accepted APK
+Cert SHA : fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
+Config   : API=https://api.surklase.com; authMode=pilot; useMocks=false
+           teamFormIntelligence=LIVE; mobileIntelligence=SYNTHETIC
+Source   : Mobile 0037328 (clean tree; android/ is gitignored prebuild output)
+Status   : OWNER_ACCEPTED 2026-09-06; installed and confirmed working on the phone
+```
+
+The difference from the accepted `b75b4cd` build is the 15 runtime package
+updates only, notably expo-notifications 57.0.9 -> 57.0.17 and expo-router
+57.0.11 -> 57.0.19, plus expo 57.0.20 and react-native 0.86.3. Those two are
+exactly the areas the M11 checklist still needs verified on the phone. The
+`decode-uri-component` advisory is NOT fixed by this build: expo-router 57.0.19
+still pins query-string 7.1.3, which is why TASK-0060 stands as accepted with
+rationale rather than remediated.
+
+The certificate is unchanged, so this installs over the current app without an
+uninstall and without data loss. Nothing was installed or distributed by the
+build, and acceptance stays with the owner. `android/gradle.properties`
+metaspace was raised locally from 512m to 2048m because the release variant
+runs R8 and the previous limit failed the build with an OutOfMemoryError; that
+file is gitignored prebuild output, so it is a local build-tuning change only.
+
+Owner acceptance, 2026-09-06: the candidate was installed on the owner phone and
+reported working properly. That confirms criterion 2 of the amended M11, the core
+journeys on the intended candidate, against SHA-256 `4518BD58...8E79` rather than
+against an unnamed build. Recorded as stated and no wider: the owner did not
+separately report the criterion 3 notification matrix, foreground, background,
+restart and tap-through with device restrictions, so that criterion stays open and
+M11 is not closed by this acceptance. The TASK-0058 dependency updates are now on
+the phone for the first time and are no longer unverified work.
+
 ## 2026-09-06 — Codex closing checkpoint; continuation in Claude
 
 Owner requested safe closure to continue in Claude. Compact entry point:
