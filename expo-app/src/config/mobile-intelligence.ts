@@ -24,7 +24,7 @@
 
 export type MobileIntelligenceMode = "OFF" | "SYNTHETIC" | "LIVE";
 
-/** Team Form can roll out independently of the two still-synthetic engines. */
+/** Team Form can roll out independently of the other engines. */
 export function resolveTeamFormMode({
   configured,
   inherited,
@@ -39,6 +39,25 @@ export function resolveTeamFormMode({
     : inherited;
   if (useMocks && mode === "LIVE") {
     throw new Error("Live Team Form requires EXPO_PUBLIC_USE_MOCKS=false.");
+  }
+  return mode;
+}
+
+/** Match Journey can use real data without enabling the Jinx engine. */
+export function resolveMatchPathMode({
+  configured,
+  inherited,
+  useMocks
+}: {
+  configured?: string | undefined;
+  inherited: MobileIntelligenceMode;
+  useMocks: boolean;
+}): MobileIntelligenceMode {
+  const mode = configured?.trim()
+    ? resolveMobileIntelligenceMode({ configured, useMocks })
+    : inherited;
+  if (useMocks && mode === "LIVE") {
+    throw new Error("Live Match Journey requires EXPO_PUBLIC_USE_MOCKS=false.");
   }
   return mode;
 }

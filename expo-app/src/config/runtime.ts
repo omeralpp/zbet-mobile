@@ -8,6 +8,7 @@ type RuntimeExtra = {
   useMocks?: boolean;
   mobileIntelligence?: MobileIntelligenceMode;
   teamFormIntelligence?: MobileIntelligenceMode;
+  matchPathIntelligence?: MobileIntelligenceMode;
   authClientId?: string;
   authIssuer?: string;
   authAuthorizationEndpoint?: string;
@@ -33,10 +34,11 @@ export const runtimeConfig = {
    * Off unless the build says otherwise, so a build whose BFF does not serve
    * these routes keeps exactly the behaviour it has today. SYNTHETIC serves
    * them from fixtures under a sample-data badge; LIVE requests the BFF.
-   * Team Form may override that choice without enabling the other engines.
+   * Team Form and Match Journey may each override it independently of Jinx.
    */
   mobileIntelligence: extra.mobileIntelligence ?? "OFF",
   teamFormIntelligence: extra.teamFormIntelligence ?? extra.mobileIntelligence ?? "OFF",
+  matchPathIntelligence: extra.matchPathIntelligence ?? extra.mobileIntelligence ?? "OFF",
   auth: {
     clientId: String(extra.authClientId ?? ""),
     issuer: String(extra.authIssuer ?? ""),

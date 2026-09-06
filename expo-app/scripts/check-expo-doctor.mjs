@@ -22,7 +22,8 @@ export function doctorEnvironment(profile, source) {
       EXPO_PUBLIC_USE_MOCKS: "true",
       EXPO_PUBLIC_MOBILE_AUTH_MODE: "preview",
       EXPO_PUBLIC_MOBILE_INTELLIGENCE: "synthetic",
-      EXPO_PUBLIC_TEAM_FORM_INTELLIGENCE: "synthetic"
+      EXPO_PUBLIC_TEAM_FORM_INTELLIGENCE: "synthetic",
+      EXPO_PUBLIC_MATCH_PATH_INTELLIGENCE: "synthetic"
     });
   } else if (!["pilot", "oauth"].includes(env.EXPO_PUBLIC_MOBILE_AUTH_MODE)) {
     throw new Error("Configured checks require an explicit pilot or oauth auth mode in the process environment.");

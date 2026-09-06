@@ -1,5 +1,26 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-06 — Match Journey still displays sample data on the owner APK
+
+Owner reports the installed Mobile version still shows example matches/journeys.
+Confirmed from the accepted `0037328` build record in `CURRENT_HANDOFF.md`:
+`mobileIntelligence=SYNTHETIC`, while Team Form is independently `LIVE`.
+`src/api/index.ts` and `synthetic-intelligence.ts` replace `getMatchPath` with
+bundled fixtures in that mode; this is a build setting, not an HTTP-error fallback.
+A BFF restart alone cannot switch this installed APK to real journey data.
+
+TASK-0044's earlier "no APK change needed" handoff was incorrect: the existing
+schema/chart can render the real payload, but the installed data-source mode
+still needs a Mobile update. Match Journey and Jinx currently share the mode;
+prepare an independent Match Journey rollout without enabling Jinx by accident.
+Backend checkpoint: dedicated SAP binding published (MCP evidence), two direct
+read-only OData data reads passed; current BFF output remains provisional and
+has not been verified through the public route/phone. See
+`zbet-abap/m9-match-journey/VALIDATION_CHECKPOINT_2026-09-06.md`.
+
+Status: OBSERVED, Mobile rollout preparation required. No application code,
+build setting, runtime, SAP data, APK, commit or push changed in this diagnosis.
+
 ## 2026-09-03 — Owner confirms corrected Team Form on the physical device
 
 Owner: "I checked it works fine." This follows the approved CAP `91cbc25`

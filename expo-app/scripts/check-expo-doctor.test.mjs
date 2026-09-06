@@ -5,10 +5,12 @@ import { doctorEnvironment, doctorPassed, redactDoctorOutput, runDoctor } from "
 const success = { status: 0, stdout: "Running 20 checks on your project...\n20/20 checks passed.", stderr: "" };
 
 test("preview isolates inherited pilot settings without mutating the caller", () => {
-  const source = { EXPO_PUBLIC_MOBILE_PILOT_KEY: "test-key", EXPO_PUBLIC_MOBILE_AUTH_MODE: "pilot", EXPO_PUBLIC_USE_MOCKS: "false", EXPO_PUBLIC_AUTH_CLIENT_SECRET: "test-secret" };
+  const source = { EXPO_PUBLIC_MOBILE_PILOT_KEY: "test-key", EXPO_PUBLIC_MOBILE_AUTH_MODE: "pilot", EXPO_PUBLIC_USE_MOCKS: "false", EXPO_PUBLIC_AUTH_CLIENT_SECRET: "test-secret", EXPO_PUBLIC_MATCH_PATH_INTELLIGENCE: "live" };
   const env = doctorEnvironment("preview", source);
   assert.equal(env.EXPO_PUBLIC_MOBILE_AUTH_MODE, "preview");
   assert.equal(env.EXPO_PUBLIC_USE_MOCKS, "true");
+  assert.equal(env.EXPO_PUBLIC_MATCH_PATH_INTELLIGENCE, "synthetic");
+  assert.equal(source.EXPO_PUBLIC_MATCH_PATH_INTELLIGENCE, "live");
   assert.equal(env.EXPO_NO_DOTENV, "1");
   assert.equal(env.EXPO_PUBLIC_MOBILE_PILOT_KEY, undefined);
   assert.equal(env.EXPO_PUBLIC_AUTH_CLIENT_SECRET, undefined);

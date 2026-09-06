@@ -243,13 +243,14 @@ export default function MatchDetailScreen() {
   // context, none of them is consulted for the screen's loading or error state.
   const intelligence = mountsIntelligenceSurfaces(runtimeConfig.mobileIntelligence);
   const teamFormEnabled = mountsIntelligenceSurfaces(runtimeConfig.teamFormIntelligence);
+  const matchPathEnabled = mountsIntelligenceSurfaces(runtimeConfig.matchPathIntelligence);
   const teamForm = useQuery({
     ...matchTeamFormQuery(key),
     enabled: teamFormEnabled && Boolean(key)
   });
   const matchPath = useQuery({
     ...matchPathQuery(key),
-    enabled: intelligence && Boolean(key)
+    enabled: matchPathEnabled && Boolean(key)
   });
   const jinxOutlook = useQuery({
     ...matchJinxOutlookQuery(key, askedJinx),
@@ -479,10 +480,8 @@ export default function MatchDetailScreen() {
     )
   };
 
-  // Mounted as a group or not at all. A build whose BFF does not serve these
-  // routes shows no slot for them rather than three cards that can only ever
-  // report being unavailable.
-  if (intelligence) {
+  // Each engine mounts only when its own build setting enables it.
+  if (matchPathEnabled) {
     moduleNodes.matchPath = (
       <LiveDetailPanel
         eyebrow="BENZER MAÇLAR"
@@ -495,6 +494,8 @@ export default function MatchDetailScreen() {
         />
       </LiveDetailPanel>
     );
+  }
+  if (intelligence) {
     moduleNodes.askJinx = (
       <LiveDetailPanel eyebrow="JINX" id="askJinx" title="Jinx okuması" leading={<JinxHeadingIcon />}>
         <AskJinxCard
@@ -644,7 +645,8 @@ export default function MatchDetailScreen() {
                   periodScoreQuery.refetch(),
                   superLogs.refetch(),
                   liveContext.refetch(),
-                  ...(teamFormEnabled ? [teamForm.refetch()] : [])
+                  ...(teamFormEnabled ? [teamForm.refetch()] : []),
+                  ...(matchPathEnabled ? [matchPath.refetch()] : [])
                 ])
               }
               refreshing={
@@ -652,7 +654,8 @@ export default function MatchDetailScreen() {
                 insightQuery.isRefetching ||
                 leagueContextQuery.isRefetching ||
                 periodScoreQuery.isRefetching ||
-                superLogs.isRefetching
+                superLogs.isRefetching ||
+                (matchPathEnabled && matchPath.isRefetching)
               }
             tintColor={semantic.live}
           />

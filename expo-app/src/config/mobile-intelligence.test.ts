@@ -3,8 +3,20 @@ import test from "node:test";
 import {
   mountsIntelligenceSurfaces,
   resolveMobileIntelligenceMode,
-  resolveTeamFormMode
+  resolveTeamFormMode,
+  resolveMatchPathMode
 } from "./mobile-intelligence";
+
+test("Match Journey rolls out independently and older builds keep their inherited mode", () => {
+  for (const inherited of ["OFF", "SYNTHETIC", "LIVE"] as const) {
+    assert.equal(resolveMatchPathMode({ inherited, useMocks: false }), inherited);
+    assert.equal(resolveMatchPathMode({ inherited, useMocks: false, configured: " " }), inherited);
+    assert.equal(resolveMatchPathMode({ inherited, useMocks: false, configured: "live" }), "LIVE");
+    assert.equal(resolveMatchPathMode({ inherited, useMocks: false, configured: "off" }), "OFF");
+  }
+  assert.throws(() => resolveMatchPathMode({ inherited: "SYNTHETIC", useMocks: true, configured: "live" }), /USE_MOCKS=false/);
+  assert.throws(() => resolveMatchPathMode({ inherited: "SYNTHETIC", useMocks: false, configured: "liev" }), /off, synthetic, live/);
+});
 
 test("Team Form inherits the existing build unless separately declared", () => {
   assert.equal(resolveTeamFormMode({ inherited: "SYNTHETIC", useMocks: false }), "SYNTHETIC");

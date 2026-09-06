@@ -10,7 +10,7 @@ import {
   validateNoPublicOAuthSecrets,
   validateOAuthPublicConfiguration
 } from "./src/config/auth-mode.ts";
-import { resolveMobileIntelligenceMode, resolveTeamFormMode } from "./src/config/mobile-intelligence.ts";
+import { resolveMobileIntelligenceMode, resolveTeamFormMode, resolveMatchPathMode } from "./src/config/mobile-intelligence.ts";
 
 const previewPackage = "com.btb.mobile.next";
 
@@ -33,6 +33,11 @@ export default function resolveAppConfig({
     useMocks,
     inherited: mobileIntelligence,
     configured: process.env.EXPO_PUBLIC_TEAM_FORM_INTELLIGENCE
+  });
+  const matchPathIntelligence = resolveMatchPathMode({
+    useMocks,
+    inherited: mobileIntelligence,
+    configured: process.env.EXPO_PUBLIC_MATCH_PATH_INTELLIGENCE
   });
   const mobileAuthMode = resolveMobileAuthMode({
     useMocks,
@@ -149,6 +154,7 @@ export default function resolveAppConfig({
     useMocks,
     mobileIntelligence,
     teamFormIntelligence,
+    matchPathIntelligence,
     authClientId: usesOAuth ? oauthPublicConfiguration.clientId : "",
     authIssuer: usesOAuth ? oauthPublicConfiguration.issuer : "",
     authAuthorizationEndpoint:

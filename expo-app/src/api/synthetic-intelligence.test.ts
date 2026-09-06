@@ -121,6 +121,21 @@ test("all-live selection replaces none of the API methods", () => {
   assert.equal(api.getMatchJinxOutlook, base.getMatchJinxOutlook);
 });
 
+test("real Match Journey reaches the base API and never falls back to samples on failure", async () => {
+  const base = baseApi();
+  let requestedKey = "";
+  base.getMatchPath = async (key) => {
+    requestedKey = key;
+    throw new Error("journey service unavailable");
+  };
+  const api = withSyntheticIntelligence(base, { teamForm: false, matchPath: false, jinxOutlook: true });
+  const key = realKeys[0] ?? "";
+  assert.equal(api.getMatchPath, base.getMatchPath);
+  await assert.rejects(api.getMatchPath(key), /journey service unavailable/);
+  assert.equal(requestedKey, key);
+  assert.equal((await api.getMatchJinxOutlook(key)).origin, "SYNTHETIC");
+});
+
 test("every other route is passed straight through", () => {
   const api = withSyntheticIntelligence(baseApi());
   // Anything the wrapper did not deliberately replace must still be the base
