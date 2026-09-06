@@ -6,6 +6,45 @@ Son güncelleme: 2026-09-06
 
 Aktif task: `BTB Mobile Next - Aktif`
 
+## 2026-09-06 — Match Journey live APK built
+
+The accepted `0037328` build showed sample journeys because it was built with
+`mobileIntelligence=SYNTHETIC`, and `src/api/index.ts` keyed Match Journey off
+that shared setting, so it wrapped `getMatchPath` in local fixtures and never
+called the BFF route. The renderer and schema were already correct; only the
+data source was fixed at build time. An earlier claim that no APK change was
+needed was wrong for that build.
+
+Match Journey now resolves its own build mode the way Team Form already does,
+so it goes live while Jinx stays synthetic. The BFF route it calls is served
+and verified: an authenticated GET through `https://api.surklase.com` returns
+`HTTP 200`, `origin: LIVE`, cohort 356 with half-time 51 and full-time 13.
+
+```text
+Artifact : .codex-artifacts/btb-mobile-next-arm64-match-path-live-aeaf8e0.apk
+Bytes    : 54,306,045 (51.79 MiB)
+SHA-256  : 8D5312068B3B906F33642B955B2F1E836A1040B873C8C91154AE4E272E6A92EC
+Package  : com.btb.mobile.next / arm64-v8a only
+Signing  : v2 PASS; same Android Debug pilot certificate as the accepted APK
+Cert SHA : fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
+Config   : API=https://api.surklase.com; authMode=pilot; useMocks=false
+           matchPathIntelligence=LIVE; teamFormIntelligence=LIVE;
+           mobileIntelligence=SYNTHETIC
+Verified : config read back out of assets/app.config inside the built APK
+Source   : Mobile aeaf8e0 (clean tree; android/ is gitignored prebuild output)
+Status   : BUILT, not yet installed or confirmed on the phone
+```
+
+The certificate matches the accepted build, so it installs over it without an
+uninstall. What it changes is one surface: Benzer Maçlar now requests real data
+instead of rendering fixtures. Jinx is untouched and stays synthetic.
+
+**The journey's numbers remain provisional.** `k = 12` and
+`minimumReliableCohort = 30` are borrowed from a different estimator and an
+unrelated floor, and the priors are uniform over the states observed inside the
+frame. The shape is right; the values are not fitted. Safe to look at, not safe
+to calibrate anything against.
+
 ## 2026-09-06 — M11 dependency candidate APK built and accepted on the phone
 
 Owner approved commit/push, then a new APK if needed. The three repos are
