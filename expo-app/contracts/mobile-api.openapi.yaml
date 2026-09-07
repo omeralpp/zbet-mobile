@@ -42,6 +42,11 @@ paths:
       operationId: getMatch
       parameters:
         - $ref: "#/components/parameters/Key"
+        - in: header
+          name: X-BTB-Journey-Display
+          required: false
+          description: Version 2 opts into original score ranks for the display. Without it, legacy strict score rows remain unchanged.
+          schema: { type: string, enum: ["2"] }
       responses:
         "200":
           description: Current match detail.
@@ -588,6 +593,10 @@ components:
       required: [score, probability]
       properties:
         score: { type: string, minLength: 1 }
+        rank:
+          type: integer
+          minimum: 1
+          description: Original distribution rank, returned only with X-BTB-Journey-Display=2. Hidden rows may leave gaps. Never derive a cohort count from this visible slice.
         probability:
           type: number
           minimum: 0

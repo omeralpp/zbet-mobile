@@ -15,19 +15,14 @@ import { SystemState } from "./StateView";
 import {
   cohortNarrowingSummary,
   describeNodeForAccessibility,
-  isNotableSurprise,
   lowCohortNotice,
   matchPathNodes,
   normalAxisLabel,
   normalityLabel,
   normalityRuns,
-  pathVerdict,
   resolveMatchPathState,
   surpriseEvents,
-  surpriseHeadline,
-  surpriseLabel,
   unusualAxisLabel,
-  verdictLabels,
   type MatchPathNode
 } from "./match-path-chart";
 
@@ -95,8 +90,6 @@ export function MatchPathChart({
   }
 
   const nodes = matchPathNodes(context);
-  const verdict = verdictLabels[pathVerdict(nodes)];
-  const headline = surpriseHeadline(context);
   // The plot is as wide as its label columns so the axis and the rows beneath
   // it stay aligned when a long path scrolls sideways.
   const trackWidth = Math.max(plotWidth, nodes.length * columnWidth);
@@ -107,18 +100,13 @@ export function MatchPathChart({
 
       <View style={styles.header}>
         <Text style={styles.summary}>{cohortNarrowingSummary(context)}</Text>
-        {verdict ? (
-          <View style={styles.verdictPill}>
-            <Text style={styles.verdictText}>{verdict}</Text>
-          </View>
-        ) : null}
       </View>
 
       <OriginBadge origin={context?.origin} />
 
       <View style={styles.legend}>
         <LegendItem color={semantic.intelligence} label={normalityLabel} shape="LINE" />
-        <LegendItem color={semantic.surprise} label={surpriseLabel} shape="DOT" />
+        <LegendItem color={semantic.surprise} label="Dönem noktası (yükseklik: normallik)" shape="DOT" />
       </View>
 
       <ScrollView
@@ -162,13 +150,7 @@ export function MatchPathChart({
         </View>
       </ScrollView>
 
-      {headline ? (
-        <View style={styles.alert}>
-          <View style={styles.alertMark} />
-          <Text style={styles.alertText}>{headline}</Text>
-        </View>
-      ) : null}
-
+      <CaveatLine text="Dönem oranları geçicidir: k=12, öncüller ve 30 maç eşiği henüz uyarlanmadı. Yeterlilik, gösterilen kalan maç sayısının 30'a oranıdır; doğruluk olasılığı değildir." />
       <CaveatLine text={lowCohortNotice(context)} />
     </View>
   );
@@ -235,7 +217,7 @@ function PathPlot({
       {events.map((node) => (
         <Line
           key={`marker-${node.pointKey}`}
-          stroke={isNotableSurprise(node) ? semantic.surprise : colors.border}
+          stroke={colors.border}
           strokeDasharray="2 4"
           strokeWidth={1}
           x1={toX(node.x)}
@@ -272,20 +254,17 @@ function PathPlot({
           return null;
         }
         const scored = node.eventSurprise !== null;
-        const notable = isNotableSurprise(node);
         return (
           <Circle
             key={`node-${node.pointKey}`}
             cx={toX(node.x)}
             cy={toY(node.y)}
             fill={
-              notable
-                ? semantic.surprise
-                : scored
+              scored
                   ? colors.backgroundElevated
                   : semantic.intelligence
             }
-            r={notable ? 6 : 4}
+            r={4}
             stroke={scored ? semantic.surprise : semantic.intelligence}
             strokeWidth={2}
           />
@@ -304,14 +283,14 @@ function NodeLabel({ node }: { node: MatchPathNode }) {
     >
       <Text
         numberOfLines={3}
-        style={[styles.label, isNotableSurprise(node) && styles.labelNotable]}
+        style={styles.label}
       >
         {[node.minuteLabel, node.label].filter(Boolean).join(" ")}
       </Text>
       <Text style={styles.confidence}>
         {node.confidence === null
-          ? "güven yok"
-          : `%${Math.round(node.confidence * 100)} güven`}
+          ? "yeterlilik ölçülmedi"
+          : `%${Math.round(node.confidence * 100)} örneklem yeterliliği`}
       </Text>
     </View>
   );

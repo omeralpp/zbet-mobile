@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import {
   Alert,
   Linking,
@@ -19,7 +19,6 @@ import {
   matchJinxOutlookQuery,
   matchLeagueContextQuery,
   matchLiveContextQuery,
-  matchPathQuery,
   matchPeriodScoreQuery,
   matchQuery,
   matchSuperLogsQuery,
@@ -36,7 +35,7 @@ import {
 } from "@/src/components/SurfaceMaterial";
 import { TeamLogo } from "@/src/components/TeamLogo";
 import { GamePulseCard } from "@/src/components/GamePulseCard";
-import { MatchPathChart } from "@/src/components/MatchPathChart";
+import { MatchJourneyV2, useJourneyObservations } from "@/src/components/MatchJourneyV2";
 import { MatchTimelineCard } from "@/src/components/MatchTimelineCard";
 import { TeamFormCard } from "@/src/components/TeamFormCard";
 import { LiveContextFreshness } from "@/src/components/LiveContextNotice";
@@ -230,28 +229,33 @@ export default function MatchDetailScreen() {
     },
     []
   );
-  const query = useQuery(matchQuery(key));
+  const [isFocused, setIsFocused] = useState(false);
+  const matchPathEnabled = mountsIntelligenceSurfaces(runtimeConfig.matchPathIntelligence);
+  useFocusEffect(useCallback(() => {
+    setIsFocused(true);
+    return () => setIsFocused(false);
+  }, []));
+  const query = useQuery({ ...matchQuery(key), refetchInterval: (state) =>
+    matchPathEnabled && isFocused && (state.state.data?.status === "LIVE" || state.state.data?.status === "HALF_TIME") ? 30_000 : false });
   const insightQuery = useQuery(matchInsightQuery(key));
   const leagueContextQuery = useQuery(matchLeagueContextQuery(key));
   const periodScoreQuery = useQuery(matchPeriodScoreQuery(key));
-  const superLogs = useQuery(matchSuperLogsQuery(key));
+  const journeyPolling = matchPathEnabled && isFocused && (query.data?.status === "LIVE" || query.data?.status === "HALF_TIME") ? 30_000 : false;
+  const superLogs = useQuery({ ...matchSuperLogsQuery(key), refetchInterval: journeyPolling });
   // Supplementary context. Its failure must never take Match Detail down, so it
   // is never consulted for the screen's loading or error state.
-  const liveContext = useQuery(matchLiveContextQuery(key));
+  const liveContext = useQuery({ ...matchLiveContextQuery(key), refetchInterval: journeyPolling });
   // M15 intelligence surfaces. Mounted only where the build enables them, so a
   // pilot APK never requests a route its BFF does not serve yet. Like live
   // context, none of them is consulted for the screen's loading or error state.
   const intelligence = mountsIntelligenceSurfaces(runtimeConfig.mobileIntelligence);
   const teamFormEnabled = mountsIntelligenceSurfaces(runtimeConfig.teamFormIntelligence);
-  const matchPathEnabled = mountsIntelligenceSurfaces(runtimeConfig.matchPathIntelligence);
   const teamForm = useQuery({
     ...matchTeamFormQuery(key),
     enabled: teamFormEnabled && Boolean(key)
   });
-  const matchPath = useQuery({
-    ...matchPathQuery(key),
-    enabled: matchPathEnabled && Boolean(key)
-  });
+  const journeySamples = useJourneyObservations(query.data, insightQuery.data, query.dataUpdatedAt,
+    matchPathEnabled && isFocused && !query.isError && !query.isStale);
   const jinxOutlook = useQuery({
     ...matchJinxOutlookQuery(key, askedJinx),
     enabled: intelligence && Boolean(key) && askedJinx
@@ -482,15 +486,23 @@ export default function MatchDetailScreen() {
 
   // Each engine mounts only when its own build setting enables it.
   if (matchPathEnabled) {
-    moduleNodes.matchPath = (
+    moduleNodes.timeline = (
       <LiveDetailPanel
-        eyebrow="BENZER MAÇLAR"
-        id="matchPath"
-        title="Maç yolu ve normallik"
+        eyebrow="MAÇ AKIŞI"
+        id="timeline"
+        title="Maçın yolu, goller ve Super"
       >
-        <MatchPathChart
-          context={matchPath.data}
-          isLoading={matchPath.isLoading}
+        <MatchJourneyV2
+          key={key}
+          match={match}
+          logs={superLogs.data ?? []}
+          liveContext={liveContext.data}
+          samples={journeySamples}
+          synthetic={runtimeConfig.useMocks}
+          currentDecisionKey={currentDecisionKey}
+          onDecisionPress={(decision) => router.push({
+            pathname: "/super/[key]", params: { key: decision.key }
+          } as never)}
         />
       </LiveDetailPanel>
     );
@@ -645,8 +657,7 @@ export default function MatchDetailScreen() {
                   periodScoreQuery.refetch(),
                   superLogs.refetch(),
                   liveContext.refetch(),
-                  ...(teamFormEnabled ? [teamForm.refetch()] : []),
-                  ...(matchPathEnabled ? [matchPath.refetch()] : [])
+                  ...(teamFormEnabled ? [teamForm.refetch()] : [])
                 ])
               }
               refreshing={
@@ -655,7 +666,7 @@ export default function MatchDetailScreen() {
                 leagueContextQuery.isRefetching ||
                 periodScoreQuery.isRefetching ||
                 superLogs.isRefetching ||
-                (matchPathEnabled && matchPath.isRefetching)
+                liveContext.isRefetching
               }
             tintColor={semantic.live}
           />

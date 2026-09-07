@@ -1,5 +1,49 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-07 — Owner rejects duplicate journey charts; requires one advancing line
+
+Three physical-phone screenshots of Portland Hearts of Pine–Westchester SC
+show V2 as a single point, V1 as a separate period graph, and a third vertical
+event/Super timeline elsewhere. Owner explicitly restated: one match-flow line
+advancing with the minute and containing the distribution/pressure/event/Super
+rules. This confirms installation of the previous arm64 APK, but rejects its
+visual acceptance. The earlier empty-state emulator smoke was insufficient.
+
+Public authenticated BFF detail for `2026-09-07:3107882:01:00:00` independently
+confirms FINISHED, 2–1, elapsed 0, rank 1 at 18.33%; the legacy zero/cleared clock
+was accepted as a kick-off observation. No SAP MCP read is claimed. Read-back:
+workspace-root `.codex-artifacts/mj-v2/owner-feedback-match-20260907.json`.
+
+The ongoing display correction now puts one journey component in the existing
+timeline module, removes the V1 graph from Match Detail, and replaces the
+separate vertical timeline when journey display is enabled. Minute markers and
+decision navigation remain in that one card. Invalid/cleared completed clocks
+are not plotted; observations live at detail-screen level so collapsing a panel
+cannot erase the developing curve. Reading rules are expandable.
+
+Validation: 570 Mobile tests, type/lint and Doctor 20/20 passed. Native visual
+acceptance is pending: emulator-5554 reports unauthorized and the owner was
+asked to accept its debugging prompt. No BFF/SAP change or restart needed for
+this correction. Source remains uncommitted; no new phone APK has been issued.
+The x86_64 emulator candidate build passed (1,077 tasks, 2m46s), and signature/
+pilot configuration were verified. Artifact/hash are in CURRENT_HANDOFF.md.
+
+Continuation: a normal ADB reconnect restored the authorized connection without
+changing trust settings or clearing app data. Installation, Portland's one-chart
+finished-match state, absence of the false minute-zero point, expandable rules,
+72-minute Ms25a navigation and return passed on the emulator. No fatal or
+ReactNativeJS error appeared in the inspected app PID log. Current feed has 27
+NOT_STARTED fixtures, so live curve growth remains unobserved on a device.
+The authorized arm64 replacement build passed (1,077 tasks, 2m39s). Its embedded
+JavaScript exactly matches the emulator build, and signature/pilot configuration
+were verified. Artifact/hash are in CURRENT_HANDOFF.md. Physical installation
+and live-match observation remain pending; BFF is unchanged.
+
+Unresolved requirement boundary: a full journey on a later/reopened/finished
+match needs earlier observations. The originally explicit no-persistence rule
+still applies; this correction does not backfill a curve from the final score
+distribution and does not add durable decision-state capture.
+
 ## 2026-09-06 — Match Journey still displays sample data on the owner APK
 
 Owner reports the installed Mobile version still shows example matches/journeys.

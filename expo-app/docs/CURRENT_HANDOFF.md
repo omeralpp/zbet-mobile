@@ -1,10 +1,134 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-09-06
+Son güncelleme: 2026-09-07
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
+
+## 2026-09-07 — single match-flow APK built; live observation pending
+
+The owner installed the arm64 V2 APK and rejected the duplicate graphs and
+single-point journey. The display correction now uses one journey in the
+timeline module, removes V1 from Match Detail, overlays events/Super on one
+minute axis, and keeps the explanatory rules expandable. Samples belong to the
+detail screen so panel collapse/reordering cannot erase them. Super detail
+navigation is retained. Finished/cleared clock 0 is rejected as a kick-off point.
+Portland read-back confirms FINISHED/2–1/elapsed 0/rank 1 at 18.33%.
+
+570 Mobile tests, type/lint and Doctor 20/20 passed. The revised x86_64 build
+passed (1,077 tasks, 2m46s). On continuation, a normal ADB reconnect recovered
+emulator-5554's authorized connection. The candidate installed over the existing
+app and passed the Portland finished-match layout, single journey panel,
+expandable rules and 72-minute Ms25a decision-navigation checks. The inspected
+app PID log had no fatal/ReactNativeJS error. The current 27 fixtures are all
+NOT_STARTED: populated live growth remains an observation gate, not a native
+pass claimed from the finished-match smoke. The phone build passed (1,077 tasks,
+2m39s) and its app bundle exactly matches the emulator-tested build.
+BFF is unchanged and needs no restart. No commit/push or SAP write. Full details:
+`docs/OBSERVATION_LOG.md`, 2026-09-07 single-line entry.
+
+Emulator-only artifact:
+`.codex-artifacts/btb-mobile-next-x86_64-single-flow-20260907.apk`;
+54,892,960 bytes; SHA-256
+`2CA481A4E636CF68BC182EDE7947106C76E95024A090FECDB76C8A63A87F1B28`.
+APK-v2 signature verified, certificate unchanged. Embedded public pilot route,
+LIVE journey, mocks=false and configured key equality verified without exposing
+the key; build log did not contain it. Installed and smoke-checked on emulator.
+Screenshot: workspace-root `.codex-artifacts/mj-v2/single-flow-emulator-screen.png`. Source
+manifest and build evidence: workspace-root `.codex-artifacts/mj-v2/single-flow-*`.
+
+Do not claim a complete historical curve: the original request deferred
+persistence. Existing screen observations cannot reconstruct earlier minute
+states after a match ends. This remains a display candidate, not capture.
+
+Current phone artifact:
+`.codex-artifacts/btb-mobile-next-arm64-single-flow-20260907.apk`;
+54,316,813 bytes; SHA-256
+`B2E2122238C54653F03AFB1DA9ACE21426C398A32176C54CD6F73F45F64B581B`.
+APK-v2 signature verified, certificate unchanged. arm64-v8a only, public pilot
+BFF, LIVE match journey, mocks disabled, configured-key equality verified.
+Phone/emulator JS bundle SHA-256:
+`324C64110603BB58116B8E3F8A16F03B02079B3469BE4B7FABAAD9558D1E5BFD`.
+Source manifest remained unchanged; build staging was cleaned. Build log did
+not contain the pilot key. This is the replacement for the earlier V2 phone
+artifact below; physical installation and owner live-match acceptance remain
+pending. No new BFF restart, commit/push, SAP write or durable capture occurred.
+
+## 2026-09-07 — Match Journey V2 BFF restarted; arm64 APK built
+
+Owner approved the BFF update/restart and new APK. The existing BFF listener
+was verified as this workspace's standalone server, stopped and restarted with
+the canonical pilot runtime helper. Local/public health passed; public
+unauthenticated match access returned 401, authenticated match access returned
+30 fixtures. Detail (legacy and rank-opt-in), Super logs and match-path routes
+passed for three exact fixture keys. All were NOT_STARTED with empty score
+pools/logs, so live rank-row content and the evolving curve await a played match.
+Runtime PID at read-back: 28648; started 2026-09-07 00:54:33 +03:00.
+
+```text
+Artifact : .codex-artifacts/btb-mobile-next-arm64-match-journey-v2-20260907.apk
+Bytes    : 54,320,953
+SHA-256  : EF58386DA15DCBB09948CAFBB267FA6C32759D3110F5481A44400D04CA5C63A4
+Package  : com.btb.mobile.next / 0.1.0 (1) / arm64-v8a only
+Signing  : APK v2 verified; certificate matches previous live-journey APK
+Cert SHA : fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
+Config   : API=https://api.surklase.com; authMode=pilot; useMocks=false
+           matchPathIntelligence=LIVE; teamFormIntelligence=LIVE;
+           mobileIntelligence=SYNTHETIC
+Status   : BUILT; not installed or accepted on the owner's phone
+```
+
+Embedded config and configured pilot-key equality were verified from the APK
+without exposing the key. Native build passed (1,077 tasks, 2m52s); the guarded
+temporary build stage was removed by the build adapter. Six staged source/input
+files matched the working candidate, and the 19-file release source manifest
+had no drift after build. Build log matched none of four configured secrets.
+The owner subsequently connected emulator-5554. Native x86_64 smoke passed:
+pilot entry, authenticated match detail, scrolling and the new journey panel's
+empty-pool/empty-Super states were visually checked on Android 15. The app
+remained running, with no fatal/ReactNativeJS error in the inspected PID log.
+An initial arm64 install failed in the emulator's native-library translation;
+the x86_64 build replaced it successfully without clearing app data. The phone
+APK itself was not changed. Physical-phone installation remains pending.
+
+Emulator artifact: `.codex-artifacts/btb-mobile-next-x86_64-match-journey-v2-smoke.apk`
+(54,897,100 bytes; SHA-256
+`7B40F2260859F1951CC23394900011A624B0B9EA1DDCFB7F9D3FD979AA8B9451`).
+Its APK-v2 signature uses the same certificate. Both APKs contain byte-identical
+JavaScript bundles (SHA-256
+`6EC035F31D95464489B53BD338FDA12566EAE9C328D2595287B738360F4C8F4D`).
+Both use the public pilot BFF with LIVE match journey and mocks disabled.
+Screenshot: workspace-root `.codex-artifacts/mj-v2/emulator-journey-screen.png`.
+Populated curves, event direction and Super-marker interaction still require
+appropriate match data; the empty-state smoke is not their live acceptance.
+
+The earlier automated checks remain applicable: 568 Mobile tests, seven tooling
+tests, type/lint/brand, Doctor 20/20, Android JS export, 454 BFF tests. Source is
+still the uncommitted candidate on Mobile `9fbab59` and CAP `efb6fd0`; no stage,
+commit, push or SAP write was performed. BFF is running that working candidate.
+This builds the display, **not durable decision-state capture**. Install the
+APK over the previous app and observe a match once its score pool exists.
+Detailed read-back and source manifest are under workspace-root
+`.codex-artifacts/mj-v2/*20260907*`.
+
+## 2026-09-06 — TASK-0044 Match Journey V2 local display candidate
+
+New curve and minute-positioned Super markers are implemented locally. The
+owner chose the existing score pool with gaps: it shares the NOM archive/rate
+frame but is narrowed by half-time score (NOM_2H). This is display only, with
+ephemeral observations; **decision-state capture is not built**. V1 remains as
+the separate period comparison. No model/Super selection changes.
+
+Checkpoint: [V2 display evidence](../../../zbet-abap/m9-match-journey/MATCH_JOURNEY_V2_DISPLAY_CHECKPOINT_2026-09-06.md).
+Type/lint, 568 Mobile tests, 7 tooling tests, brand checks, Doctor 20/20 and
+Android JS export pass; BFF 454 tests pass. Visual QA remains unverified because
+automatic review blocked the preview server and browser policy blocked the
+static file preview. Local static fixture: `.codex-artifacts/mj-v2/preview.html`
+at workspace root. No APK, runtime restart, SAP write, commit or push occurred.
+Next: visual acceptance, then separately approved release steps. Runtime and
+installed phone build are unchanged. Task source baselines: Mobile `9fbab59`,
+CAP `efb6fd0`, ABAP `5fd6c3c`; all new work is uncommitted.
 
 ## 2026-09-06 — Match Journey live APK built
 

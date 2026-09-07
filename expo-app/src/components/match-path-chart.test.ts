@@ -5,17 +5,11 @@ import {
   clampUnit,
   cohortNarrowingSummary,
   describeNodeForAccessibility,
-  isNotableSurprise,
   lowCohortNotice,
   matchPathNodes,
-  mostSurprisingEvent,
   normalityRuns,
-  notableSurpriseThreshold,
-  pathVerdict,
   resolveMatchPathState,
   surpriseEvents,
-  surpriseHeadline,
-  verdictLabels,
   type MatchPathNode
 } from "./match-path-chart";
 
@@ -165,13 +159,11 @@ test("the half-time cohort halves while its surprise stays low", () => {
   const nodes = matchPathNodes(workedExample());
   assert.equal(at(nodes, 1).cohortSize, 100);
   assert.equal(at(nodes, 1).eventSurprise, 0.18);
-  assert.equal(isNotableSurprise(at(nodes, 1)), false);
 });
 
 test("the away goal is the surprising step, and it is the goal that says so", () => {
   const nodes = matchPathNodes(workedExample());
   assert.equal(at(nodes, 2).eventSurprise, 0.79);
-  assert.equal(isNotableSurprise(at(nodes, 2)), true);
 });
 
 test("the low-cohort caveat says shrinkage alone is not a surprise", () => {
@@ -182,13 +174,6 @@ test("the low-cohort caveat says shrinkage alone is not a surprise", () => {
   assert.match(notice, /sürpriz anlamına gelmez/);
 });
 
-test("the surprise headline reports the cohort without blaming the event for it", () => {
-  const headline = surpriseHeadline(workedExample());
-  assert.ok(headline);
-  assert.match(headline, /Deplasman golü/);
-  assert.match(headline, /200 benzer maçtan 30/);
-  assert.doesNotMatch(headline, /çünkü|nedeniyle|yüzünden/);
-});
 
 /* ---------------------------------------------------------------- *
  * State is a line, surprise is a marker
@@ -262,63 +247,13 @@ test("a single point is centred rather than pinned to the left edge", () => {
  * The verdict
  * ---------------------------------------------------------------- */
 
-test("a path with a notable event reads as a surprise", () => {
-  assert.equal(pathVerdict(matchPathNodes(workedExample())), "SURPRISE");
-});
 
-test("a path scored throughout with low surprise reads as typical", () => {
-  const nodes = matchPathNodes(
-    context({ points: [point({ eventSurprise: 0.2 })] })
-  );
-  assert.equal(pathVerdict(nodes), "TYPICAL");
-});
 
-test("a path nobody scored is unmeasured, never quietly called typical", () => {
-  const nodes = matchPathNodes(
-    context({ points: [point({ eventSurprise: null })] })
-  );
-  assert.equal(pathVerdict(nodes), "UNMEASURED");
-  assert.notEqual(pathVerdict(nodes), "TYPICAL");
-});
 
-test("an unmeasured path carries no reassuring badge", () => {
-  assert.equal(verdictLabels.UNMEASURED, null);
-  assert.ok(verdictLabels.SURPRISE);
-  assert.ok(verdictLabels.TYPICAL);
-});
 
-test("the notable threshold is inclusive at its boundary", () => {
-  const nodes = matchPathNodes(
-    context({ points: [point({ eventSurprise: notableSurpriseThreshold })] })
-  );
-  assert.equal(isNotableSurprise(at(nodes, 0)), true);
-});
 
-test("an unscored node is never notable", () => {
-  const nodes = matchPathNodes(
-    context({ points: [point({ eventSurprise: null })] })
-  );
-  assert.equal(isNotableSurprise(at(nodes, 0)), false);
-});
 
-test("the most surprising event wins, and a tie resolves to the later one", () => {
-  const nodes = matchPathNodes(
-    context({
-      points: [
-        point({ pointKey: "a", eventSurprise: 0.7 }),
-        point({ pointKey: "b", eventSurprise: 0.7 })
-      ]
-    })
-  );
-  assert.equal(mostSurprisingEvent(nodes)?.pointKey, "b");
-});
 
-test("no headline is produced when nothing crossed the threshold", () => {
-  assert.equal(
-    surpriseHeadline(context({ points: [point({ eventSurprise: 0.2 })] })),
-    null
-  );
-});
 
 /* ---------------------------------------------------------------- *
  * Cohort presentation
@@ -329,6 +264,12 @@ test("points under the published threshold are marked, not hidden", () => {
   assert.equal(at(nodes, 0).belowReliableCohort, false);
   assert.equal(at(nodes, 3).belowReliableCohort, true);
   assert.equal(at(nodes, 3).cohortSize, 24);
+});
+
+test("an older 100-percent confidence payload with eight survivors shows eight-of-thirty sufficiency", () => {
+  const nodes = matchPathNodes(context({ minimumReliableCohort: 30, points: [point({ cohortSize: 8, confidence: 1 })] }));
+  assert.equal(at(nodes, 0).confidence, 8 / 30);
+  assert.equal(at(nodes, 0).belowReliableCohort, true);
 });
 
 test("the summary describes the narrowing without judging it", () => {
@@ -374,7 +315,7 @@ test("the accessible label carries both signals and the cohort", () => {
   assert.match(label, /30 benzer maç/);
   assert.match(label, /Olay sürprizi 79%/);
   assert.match(label, /Durum normalliği 31%/);
-  assert.match(label, /güven 44%/);
+  assert.match(label, /örneklem yeterliliği 100%/);
 });
 
 test("an unscored node mentions no surprise at all", () => {

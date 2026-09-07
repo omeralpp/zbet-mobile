@@ -55,16 +55,6 @@ export function resolveMatchPathState(
   return points.length === 0 ? "EMPTY" : "READY";
 }
 
-/**
- * The surprise level at which an event is called out rather than merely drawn.
- *
- * A presentation threshold, not a model one. It changes only what gets
- * emphasised - the badge, the bold marker, the alert sentence. Every value the
- * contract carries stays on the chart at every level, so this can never hide a
- * number or invent one.
- */
-export const notableSurpriseThreshold = 0.6;
-
 export interface MatchPathNode {
   pointKey: string;
   label: string;
@@ -118,7 +108,9 @@ export function matchPathNodes(
     kind: point.kind,
     cohortSize: point.cohortSize,
     belowReliableCohort: point.cohortSize < context.minimumReliableCohort,
-    confidence: point.confidence,
+    // Surviving count is the explicit display denominator, including when an
+    // older BFF still sends confidence based on the larger pre-event count.
+    confidence: point.confidence === null ? null : Math.min(1, point.cohortSize / context.minimumReliableCohort),
     stateNormality: point.stateNormality,
     eventSurprise: point.eventSurprise,
     x: lastIndex === 0 ? 0.5 : index / lastIndex,
@@ -171,55 +163,6 @@ export function surpriseEvents(nodes: MatchPathNode[]): MatchPathNode[] {
   return nodes.filter((node) => node.eventSurprise !== null);
 }
 
-export function isNotableSurprise(node: MatchPathNode): boolean {
-  return (
-    node.eventSurprise !== null &&
-    node.eventSurprise >= notableSurpriseThreshold
-  );
-}
-
-/**
- * The single most surprising event on the path, if any was measured.
- *
- * Ties resolve to the later event, because the more recent reading is the one
- * a reader watching a live match is asking about.
- */
-export function mostSurprisingEvent(
-  nodes: MatchPathNode[]
-): MatchPathNode | null {
-  return surpriseEvents(nodes).reduce<MatchPathNode | null>(
-    (best, node) =>
-      best === null || (node.eventSurprise ?? 0) >= (best.eventSurprise ?? 0)
-        ? node
-        : best,
-    null
-  );
-}
-
-export type PathVerdict = "SURPRISE" | "TYPICAL" | "UNMEASURED";
-
-/**
- * The headline read, in three states.
- *
- * `UNMEASURED` is its own answer rather than being folded into `TYPICAL`: a
- * path nobody scored for surprise is not the same as a path that was scored
- * and came back ordinary, and calling the first one typical would be this
- * module inventing a finding.
- */
-export function pathVerdict(nodes: MatchPathNode[]): PathVerdict {
-  const events = surpriseEvents(nodes);
-  if (events.length === 0) {
-    return "UNMEASURED";
-  }
-  return events.some(isNotableSurprise) ? "SURPRISE" : "TYPICAL";
-}
-
-export const verdictLabels: Record<PathVerdict, string | null> = {
-  SURPRISE: "SÜRPRİZ OLAY",
-  TYPICAL: "OLAĞAN SEYİR",
-  // No badge at all rather than a reassuring one nothing supports.
-  UNMEASURED: null
-};
 
 /**
  * The narrowing, stated in words above the chart.
@@ -241,31 +184,6 @@ export function cohortNarrowingSummary(
 }
 
 /**
- * The sentence naming the surprising event, when there is one.
- *
- * Reports the event and the cohort that survived it as two separate facts in
- * one sentence. It deliberately does not say the cohort shrank *because* the
- * event was surprising - the contract does not claim that, and the shrinkage
- * would have happened either way.
- */
-export function surpriseHeadline(
-  context: MatchPathContext | undefined
-): string | null {
-  const nodes = matchPathNodes(context);
-  const event = mostSurprisingEvent(nodes);
-  if (!context || !event || !isNotableSurprise(event)) {
-    return null;
-  }
-  const opening = nodes[0];
-  const first = context.initialCohortSize || opening?.cohortSize || 0;
-  const name = [event.minuteLabel, event.label].filter(Boolean).join(" ");
-  return (
-    `${name} bu maç yolu için sıra dışıydı. ` +
-    `Başlangıçtaki ${first} benzer maçtan ${event.cohortSize} tanesi bu diziyi izledi.`
-  );
-}
-
-/**
  * Caveat shown when the cohort is too small to be characteristic.
  *
  * Raised by either ground: the payload said `LOW_SAMPLE`, or the final cohort
@@ -284,8 +202,8 @@ export function lowCohortNotice(
     return null;
   }
   return (
-    `Kalan kohort ${last.cohortSize} maç; güvenilir okuma için ` +
-    `${context.minimumReliableCohort} maç gerekir. Kohortun daralması ` +
+    `Kalan kohort ${last.cohortSize} maç; geçici yeterlilik eşiği ` +
+    `${context.minimumReliableCohort} maç. Kohortun daralması ` +
     `tek başına sürpriz anlamına gelmez.`
   );
 }
@@ -308,7 +226,7 @@ export function describeNodeForAccessibility(node: MatchPathNode): string {
       : `${normalityLabel} ${Math.round(node.stateNormality * 100)}%`,
     node.confidence === null
       ? null
-      : `güven ${Math.round(node.confidence * 100)}%`
+      : `örneklem yeterliliği ${Math.round(node.confidence * 100)}%`
   ]
     .filter(Boolean)
     .join(", ");

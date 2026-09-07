@@ -46,7 +46,9 @@ export const matchSummarySchema = z.strictObject({
 
 export const scoreDistributionSchema = z.strictObject({
   score: z.string().min(1),
-  probability: finiteNumber.min(0).max(1)
+  probability: finiteNumber.min(0).max(1),
+  /** Original SAP SORT; hidden rows can leave gaps. Never re-rank the slice. */
+  rank: z.number().int().positive().optional()
 });
 
 export const ratioResultSchema = z.strictObject({

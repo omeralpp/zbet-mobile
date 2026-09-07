@@ -134,7 +134,7 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
       request(
         `/v1/btb/matches/${encodeURIComponent(key)}`,
         matchDetailSchema,
-        {},
+        { headers: { "X-BTB-Journey-Display": "2" } },
         signal
       ),
     getMatchPeriodScore: (key, signal) =>
