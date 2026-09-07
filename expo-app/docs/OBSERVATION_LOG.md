@@ -1,5 +1,19 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-07 — Session close-out: display candidate committed, observation unchanged
+
+The building session ended on its usage limit; the owner asked for the
+close-out. Checks were re-run from disk rather than quoted, then Mobile
+`ec9f2b1`, CAP `17dab5a` and ABAP `d93608e` were pushed. Every earlier
+"uncommitted" line in this log is historical.
+
+The push settles source state only. It observes nothing: the rejection of the
+duplicate charts stands as the last owner verdict, and the correction that
+answers it has still only been seen on an emulator against finished and
+not-started fixtures. The open observation is unchanged — install the arm64
+single-flow APK on the phone and watch one match with a populated score pool,
+so the line is seen growing rather than inferred from a final distribution.
+
 ## 2026-09-07 — Owner rejects duplicate journey charts; requires one advancing line
 
 Three physical-phone screenshots of Portland Hearts of Pine–Westchester SC

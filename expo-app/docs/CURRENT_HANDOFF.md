@@ -6,6 +6,36 @@ Son güncelleme: 2026-09-07
 
 Aktif task: `BTB Mobile Next - Aktif`
 
+## 2026-09-07 — Codex session closed; candidate committed and pushed
+
+The Codex session that built this candidate ended on its usage limit while it
+was writing this handoff, so the entries below stop at "uncommitted". The owner
+asked for that close-out here. The work was re-verified from disk and pushed:
+
+```text
+Mobile  9fbab59 -> ec9f2b1  Replace the duplicate journey charts with one advancing match flow
+CAP     efb6fd0 -> 17dab5a  Share one elapsed-minute parser across journey and Super decisions
+ABAP    5fd6c3c -> d93608e  Record the Match Journey V2 display checkpoint
+```
+
+Re-run before pushing, not quoted from the session: Mobile typecheck, lint,
+570 tests, 7 tooling tests and brand checks passed as one chain; Expo Doctor
+20/20 passed on the preview profile; BFF 454/454 passed. Diffs were whitespace
+clean, carried no secret-shaped value, and `.codex-artifacts/` stayed ignored,
+so no APK entered a commit. All six workspace repositories are now clean and
+level with origin.
+
+**Read every "uncommitted", "no commit/push" and "source baseline" statement in
+the entries below as historical.** They were true when written. The three SHAs
+above are the current baseline.
+
+Nothing else changed. No APK was rebuilt, no BFF restarted, no SAP object
+written, and no durable decision-state capture was added. What still stands
+open is unchanged by the push: physical-phone installation of
+`.codex-artifacts/btb-mobile-next-arm64-single-flow-20260907.apk`, and a live
+match with a populated score pool to observe the curve actually growing.
+TASK-0044 stays IN_PROGRESS and is not declared validated.
+
 ## 2026-09-07 — single match-flow APK built; live observation pending
 
 The owner installed the arm64 V2 APK and rejected the duplicate graphs and
