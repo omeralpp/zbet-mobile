@@ -15,6 +15,7 @@ import {
   jinxQuipSchema,
   liveContextSchema,
   matchPathContextSchema,
+  matchJourneySchema,
   periodScoreContextSchema,
   superLogDetailSchema,
   superLogListSchema,
@@ -165,6 +166,8 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
         {},
         signal
       ),
+    getMatchJourney: (key, signal) =>
+      request(`/v1/btb/matches/${encodeURIComponent(key)}/match-journey`, matchJourneySchema, {}, signal),
     getMatchJinxOutlook: (key, signal) =>
       request(
         `/v1/btb/matches/${encodeURIComponent(key)}/jinx-outlook`,

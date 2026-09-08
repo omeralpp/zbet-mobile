@@ -1,5 +1,25 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-08 — Owner accepts retained journey design; local implementation verified
+
+Physical screenshots showed no line for a completed match and loss of the
+original vertical score/Super timeline. The owner explicitly requested that
+timeline back, plus a line starting ordinary at kickoff, extending on every job,
+moving gently with pressure and more strongly with goals relative to the
+first-half/actual-HT-conditioned second-half score pools. The owner accepted the
+two-scenario mockup and requested all necessary changes in order.
+
+Implemented locally under TASK-0044: persistent SAP job samples and a frozen full
+pool, versioned BFF computation, retained Mobile curve and restored original
+timeline. BFF 470 tests, Mobile 574 tests/type/lint, 7 tooling tests, brand/Doctor,
+ABAP local checks/50 regressions and Android JS export pass. Browser checks use
+the actual chart/timeline and synthetic data; the graph and Super navigation are
+visually verified at 360/736px. Phone and real job acceptance remain OPEN.
+
+No SAP/BFF rollout or APK distribution happened. Next: separate `PREFLIGHT-PUSH`
+approval, DDIC-first activation/readback, approved BFF rollout, then native/live
+capture smoke and final APK. [Exact checkpoint](../../../zbet-abap/m9-match-journey/MATCH_JOURNEY_V3_CHECKPOINT_2026-09-08.md).
+
 ## 2026-09-07 — Session close-out: display candidate committed, observation unchanged
 
 The building session ended on its usage limit; the owner asked for the

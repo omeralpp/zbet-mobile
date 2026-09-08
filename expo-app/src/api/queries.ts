@@ -14,6 +14,7 @@ export const queryKeys = {
   matchLiveContext: (key: string) => ["matches", key, "liveContext"] as const,
   matchTeamForm: (key: string) => ["matches", key, "teamForm"] as const,
   matchPath: (key: string) => ["matches", key, "matchPath"] as const,
+  matchJourney: (key: string) => ["matches", key, "matchJourney"] as const,
   matchJinxOutlook: (key: string) =>
     ["matches", key, "jinxOutlook"] as const,
   superLogs: ["superLogs"] as const,
@@ -132,6 +133,14 @@ export function matchPathQuery(key: string) {
     staleTime: 30_000,
     enabled: Boolean(key),
     retry: 1
+  });
+}
+
+export function matchJourneyQuery(key: string) {
+  return queryOptions({
+    queryKey: queryKeys.matchJourney(key),
+    queryFn: ({ signal }) => mobileApi.getMatchJourney(key, signal),
+    staleTime: 15_000, enabled: Boolean(key), retry: 1
   });
 }
 

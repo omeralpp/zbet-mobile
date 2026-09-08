@@ -1,10 +1,48 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-09-07
+Son güncelleme: 2026-09-08
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
+
+## 2026-09-08 — TASK-0044 approved preflight failed; SAP recovery pending
+
+Owner approved PREFLIGHT-PUSH. The full SAP candidate failed activation on
+the two new CDS sources; dependency-only preflight passed but subsequent
+readback is insufficient (capture class skeleton, CDS source 404). Active
+ZBET_CL_MAIN still matches the original baseline, so capture is not running.
+Missing CDS baseinfo files and XML serialization conventions were corrected;
+they did not resolve the full import failure. Five canonical attempts/evidence,
+last candidate `34b184d6294f9e6e1bd2ccc39372f951fcb5f618`, are recorded in
+`zbet-abap/m9-match-journey/MATCH_JOURNEY_V3_CHECKPOINT_2026-09-08.md`.
+Next: bounded SAP recovery; direct ADT mutation requires the separate runbook
+approval. No BFF/native rollout or regular commit/push is approved.
+
+### Local implementation evidence before preflight
+
+The owner accepted the continuous kickoff/pressure/goal/halftime design and
+requested implementation, including restoration of the old score/Super timeline.
+Local ABAP now journals every successful match refresh and freezes the full
+HT/FT pool. The BFF serves `match-journey.v3`; Mobile's new `MatchJourneyChart`
+uses retained points and places the original `MatchTimelineCard` below it.
+The earlier screen-only/no-capture limitation is superseded for this change.
+
+Local ABAP checks and 50 regressions, 470 BFF tests, Mobile type/lint/574 tests,
+7 tooling tests, brand and preview Doctor pass. The actual components were
+visually checked at 360/736px with synthetic data; a blank SVG stacking defect
+was fixed and the line and decision navigation verified. Android JS export passes
+in isolated preview mode; bundle SHA-256
+`E446441448505EB4C10BA19C7ED518FBB57AB68283A8DB487988DD53DC230B42`.
+
+All new source remains **uncommitted** on the working branches. SAP import was
+attempted as recorded above; no BFF restart, APK, device installation or
+distribution occurred. Installed phone/runtime are not
+claimed to contain this candidate. TASK-0044 is IN_PROGRESS until the SAP,
+runtime and native/live-capture gates pass. The initial next step was the separately approved
+`PREFLIGHT-PUSH` for seven exact SAP objects, DDIC first. Details and the full
+activation order: [V3 checkpoint](../../../zbet-abap/m9-match-journey/MATCH_JOURNEY_V3_CHECKPOINT_2026-09-08.md).
+Workspace evidence: `.codex-artifacts/mj-v3/`; actual UI `actual-ui-360.png`.
 
 ## 2026-09-07 — Codex session closed; candidate committed and pushed
 

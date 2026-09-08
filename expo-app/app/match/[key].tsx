@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import {
   matchInsightQuery,
+  matchJourneyQuery,
   matchJinxOutlookQuery,
   matchLeagueContextQuery,
   matchLiveContextQuery,
@@ -35,7 +36,7 @@ import {
 } from "@/src/components/SurfaceMaterial";
 import { TeamLogo } from "@/src/components/TeamLogo";
 import { GamePulseCard } from "@/src/components/GamePulseCard";
-import { MatchJourneyV2, useJourneyObservations } from "@/src/components/MatchJourneyV2";
+import { MatchJourneyChart } from "@/src/components/MatchJourneyChart";
 import { MatchTimelineCard } from "@/src/components/MatchTimelineCard";
 import { TeamFormCard } from "@/src/components/TeamFormCard";
 import { LiveContextFreshness } from "@/src/components/LiveContextNotice";
@@ -254,8 +255,8 @@ export default function MatchDetailScreen() {
     ...matchTeamFormQuery(key),
     enabled: teamFormEnabled && Boolean(key)
   });
-  const journeySamples = useJourneyObservations(query.data, insightQuery.data, query.dataUpdatedAt,
-    matchPathEnabled && isFocused && !query.isError && !query.isStale);
+  const journey = useQuery({ ...matchJourneyQuery(key),
+    enabled: matchPathEnabled && Boolean(key), refetchInterval: journeyPolling });
   const jinxOutlook = useQuery({
     ...matchJinxOutlookQuery(key, askedJinx),
     enabled: intelligence && Boolean(key) && askedJinx
@@ -492,14 +493,26 @@ export default function MatchDetailScreen() {
         id="timeline"
         title="Maçın yolu, goller ve Super"
       >
-        <MatchJourneyV2
+        <MatchJourneyChart
           key={key}
           match={match}
           logs={superLogs.data ?? []}
-          liveContext={liveContext.data}
-          samples={journeySamples}
-          synthetic={runtimeConfig.useMocks}
+          journey={journey.data}
+          isError={journey.isError}
+          isLoading={journey.isLoading}
+          onDecisionPress={(decision) => router.push({
+            pathname: "/super/[key]", params: { key: decision.key }
+          } as never)}
+        />
+        <MatchTimelineCard
+          awayScore={match.awayScore}
+          awayTeam={match.awayTeam}
+          context={liveContext.data}
+          homeScore={match.homeScore}
           currentDecisionKey={currentDecisionKey}
+          decisions={relatedDecisions}
+          homeTeam={match.homeTeam}
+          isLoading={liveContext.isLoading}
           onDecisionPress={(decision) => router.push({
             pathname: "/super/[key]", params: { key: decision.key }
           } as never)}
@@ -657,6 +670,7 @@ export default function MatchDetailScreen() {
                   periodScoreQuery.refetch(),
                   superLogs.refetch(),
                   liveContext.refetch(),
+                  ...(matchPathEnabled ? [journey.refetch()] : []),
                   ...(teamFormEnabled ? [teamForm.refetch()] : [])
                 ])
               }

@@ -137,6 +137,25 @@ paths:
                 $ref: "#/components/schemas/MatchPathContext"
         default:
           $ref: "#/components/responses/Error"
+  /v1/btb/matches/{key}/match-journey:
+    get:
+      operationId: getMatchJourney
+      description: >-
+        Persistent job observations against a frozen full score pool. First-half
+        scores and actual-half-time-conditioned full-time scores drive separate
+        phases. Display-only ordinal level; goal elimination uses the compatible
+        pre-event denominator. No reconstructed historical samples or Super writes.
+      parameters:
+        - $ref: "#/components/parameters/MatchKey"
+      responses:
+        "200":
+          description: Retained journey; an empty point list means no recorded updates.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchJourney"
+        default:
+          $ref: "#/components/responses/Error"
   /v1/btb/matches/{key}/jinx-outlook:
     get:
       operationId: getMatchJinxOutlook
@@ -994,6 +1013,63 @@ components:
             - $ref: "#/components/schemas/TeamFormSide"
             - type: "null"
         capturedAt: { type: [string, "null"], format: date-time }
+    MatchJourneyPoint:
+      type: object
+      required: [key, capturedAt, minute, plotMinute, elapsed, phase, status, home, away, kind, reason, level, connects, referenceChange, poolKey, compatibleCount, beforeCount, eliminatedCount, eliminatedRatio, pressureAlignment]
+      properties:
+        key: { type: string, minLength: 1 }
+        capturedAt: { type: [string, "null"], format: date-time }
+        minute: { type: [integer, "null"], minimum: 0, maximum: 150 }
+        plotMinute: { type: [number, "null"], minimum: 0, maximum: 150 }
+        elapsed: { type: string }
+        phase: { type: [integer, "null"], enum: [1, 2, null] }
+        status: { type: string }
+        home: { type: [integer, "null"], minimum: 0 }
+        away: { type: [integer, "null"], minimum: 0 }
+        kind: { type: string, enum: [STATE, GAP, KICK_OFF, GOAL, HALF_TIME, FULL_TIME, CORRECTION, POOL_CHANGE] }
+        reason: { type: string }
+        level: { type: [number, "null"], minimum: 0, maximum: 1, description: Uncalibrated ordinal display index. }
+        connects: { type: boolean }
+        referenceChange: { type: boolean }
+        poolKey: { type: [string, "null"] }
+        compatibleCount: { type: [integer, "null"], minimum: 0 }
+        beforeCount: { type: [integer, "null"], minimum: 0 }
+        eliminatedCount: { type: [integer, "null"], minimum: 0 }
+        eliminatedRatio: { type: [number, "null"], minimum: 0, maximum: 1 }
+        pressureAlignment: { type: [number, "null"], minimum: -1, maximum: 1 }
+    MatchJourneyPool:
+      type: object
+      required: [key, phase, capturedAt, halfTimeScore, count, modes, rows]
+      properties:
+        key: { type: string }
+        phase: { type: integer, enum: [1, 2] }
+        capturedAt: { type: string, format: date-time }
+        halfTimeScore: { type: [string, "null"] }
+        count: { type: integer, minimum: 1 }
+        modes: { type: array, minItems: 1, items: { type: string } }
+        rows:
+          type: array
+          minItems: 1
+          maxItems: 5000
+          items:
+            type: object
+            required: [score, count]
+            properties:
+              score: { type: string }
+              count: { type: integer, minimum: 1 }
+    MatchJourney:
+      type: object
+      required: [matchKey, contractVersion, origin, availability, capturedAt, missingReason, scale, points, pools]
+      properties:
+        matchKey: { type: string }
+        contractVersion: { type: string, const: match-journey.v3 }
+        origin: { type: string, enum: [LIVE, SYNTHETIC] }
+        availability: { type: string, enum: [OK, UNAVAILABLE] }
+        capturedAt: { type: [string, "null"], format: date-time }
+        missingReason: { type: [string, "null"] }
+        scale: { type: string, const: ORDINAL_UNCALIBRATED }
+        points: { type: array, maxItems: 5000, items: { $ref: "#/components/schemas/MatchJourneyPoint" } }
+        pools: { type: array, maxItems: 5000, items: { $ref: "#/components/schemas/MatchJourneyPool" } }
     MatchPathPoint:
       type: object
       required:

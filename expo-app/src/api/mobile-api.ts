@@ -5,6 +5,7 @@ import type {
   JinxQuipResponse,
   LiveContext,
   MatchPathContext,
+  MatchJourney,
   MatchDetail,
   MatchInsight,
   MatchLeagueContext,
@@ -51,6 +52,7 @@ export interface MobileApi {
    * verified against the shape that engine will eventually serve.
    */
   getMatchPath(key: string, signal?: AbortSignal): Promise<MatchPathContext>;
+  getMatchJourney(key: string, signal?: AbortSignal): Promise<MatchJourney>;
   /**
    * Informative Jinx reading of one match (M15 / TASK-0046).
    *

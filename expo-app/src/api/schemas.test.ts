@@ -227,6 +227,7 @@ test("keeps the checked-in OpenAPI document parseable and route-complete", async
       "/v1/btb/matches/{key}/jinx-outlook",
       "/v1/btb/matches/{key}/league-context",
       "/v1/btb/matches/{key}/match-path",
+      "/v1/btb/matches/{key}/match-journey",
       "/v1/btb/matches/{key}/period-score",
       "/v1/btb/matches/{key}/super-logs",
       "/v1/btb/matches/{key}/team-form",

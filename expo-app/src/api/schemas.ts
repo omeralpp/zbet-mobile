@@ -629,6 +629,39 @@ export type MatchPathPoint = z.infer<typeof matchPathPointSchema>;
 export type MatchPathPointKind = z.infer<typeof matchPathPointKindSchema>;
 export type MatchPathContext = z.infer<typeof matchPathContextSchema>;
 
+/** TASK-0044: retained job observations. Level is an ordinal display index,
+ * never a prediction probability; event elimination has its own denominator. */
+export const matchJourneyPointSchema = z.object({
+  key: z.string().min(1), capturedAt: isoDateTime.nullable(),
+  minute: z.number().int().min(0).max(150).nullable(),
+  plotMinute: finiteNumber.min(0).max(150).nullable(), elapsed: z.string(),
+  phase: z.union([z.literal(1), z.literal(2)]).nullable(), status: z.string(),
+  home: z.number().int().nonnegative().nullable(), away: z.number().int().nonnegative().nullable(),
+  kind: z.enum(["STATE", "GAP", "KICK_OFF", "GOAL", "HALF_TIME", "FULL_TIME", "CORRECTION", "POOL_CHANGE"]),
+  reason: z.string(), level: finiteNumber.min(0).max(1).nullable(),
+  connects: z.boolean(), referenceChange: z.boolean(), poolKey: z.string().nullable(),
+  compatibleCount: z.number().int().nonnegative().nullable(),
+  beforeCount: z.number().int().nonnegative().nullable(),
+  eliminatedCount: z.number().int().nonnegative().nullable(),
+  eliminatedRatio: finiteNumber.min(0).max(1).nullable(),
+  pressureAlignment: finiteNumber.min(-1).max(1).nullable()
+});
+export const matchJourneySchema = z.object({
+  matchKey: z.string(), contractVersion: z.literal("match-journey.v3"),
+  origin: intelligenceOriginSchema, availability: z.enum(["OK", "UNAVAILABLE"]),
+  capturedAt: isoDateTime.nullable(), missingReason: z.string().nullable(),
+  scale: z.literal("ORDINAL_UNCALIBRATED"),
+  points: z.array(matchJourneyPointSchema).max(5000),
+  pools: z.array(z.object({
+    key: z.string(), phase: z.union([z.literal(1), z.literal(2)]),
+    capturedAt: isoDateTime, halfTimeScore: z.string().nullable(),
+    count: z.number().int().positive(), modes: z.array(z.string()).min(1),
+    rows: z.array(z.object({score: z.string(), count: z.number().int().positive()})).min(1).max(5000)
+  })).max(5000)
+});
+export type MatchJourneyPoint = z.infer<typeof matchJourneyPointSchema>;
+export type MatchJourney = z.infer<typeof matchJourneySchema>;
+
 /* ------------------------- Jinx match outlook ---------------------- */
 
 /**

@@ -1,4 +1,5 @@
 import {
+  matchJourneySchema,
   matchSummarySchema,
   type Dashboard,
   type MatchDetail,
@@ -7,6 +8,11 @@ import {
   type SuperKpis,
   type TotoProgram
 } from "./schemas";
+import journeyFixture from "./fixtures/match-journey-v3.json";
+
+export function mockRetainedJourney(key: string) {
+  return matchJourneySchema.parse({ ...journeyFixture, matchKey: key, origin: "SYNTHETIC" });
+}
 
 const now = "2026-07-28T21:15:00+03:00";
 

@@ -18,6 +18,7 @@ import {
 } from "./schemas";
 import {
   mockDashboard,
+  mockRetainedJourney,
   mockMatchInsights,
   mockMatchSummaries,
   mockMatches,
@@ -145,6 +146,9 @@ export const mockMobileApi: MobileApi = {
     );
   },
 
+  async getMatchJourney(key) {
+    return mockRetainedJourney(key);
+  },
   async getMatchPath(key, signal) {
     await mockDelay(signal);
     return matchPathContextSchema.parse(

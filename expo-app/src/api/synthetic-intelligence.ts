@@ -6,6 +6,7 @@ import {
 import {
   mockJinxOutlook,
   mockMatchPath,
+  mockRetainedJourney,
   mockTeamForm,
   type MockIntelligenceState
 } from "./mock-data";
@@ -92,6 +93,9 @@ export function withSyntheticIntelligence(
       : {}),
     ...(features.matchPath
       ? {
+          async getMatchJourney(key: string) {
+            return mockRetainedJourney(key);
+          },
           async getMatchPath(key: string) {
             return matchPathContextSchema.parse(
               mockMatchPath(key, syntheticStateForKey(key))
