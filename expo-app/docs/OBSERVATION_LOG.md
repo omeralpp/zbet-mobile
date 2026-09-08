@@ -1,5 +1,58 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-08 — Retained journey live on the phone; the chain is proven end to end
+
+The owner installed the pilot APK and reported the curve present. The BFF log
+confirms it from the server side: `/btb/matches/:key/match-journey` was called
+four times, all 200, the first at 1,203 ms and the rest at ~30 ms, so the
+30-second live/half-time refresh works and SAP reads get cheap after the cold
+call. The chain runs end to end: the `ZBET_CL_MAIN` hook, `ZBET_CL_MJ_CAPTURE`,
+the two journals, the two read CDS views, `ZBET_UI_MJ`, the `match-journey.v3`
+BFF route and the chart.
+
+SAP delivery took five preflight attempts. The root cause was not packaging: SAP
+mass activation orders a not-yet-existing DDLS ahead of its base table, so its
+source cannot be read. abapGit updates an existing DDLS correctly but cannot
+bootstrap a new one on this system. The fix was to pre-create `ZBET_C_MJ_SNAP`
+through the guarded ADT lane in package ZP1067 without activation, then let
+abapGit own source and activation. The DEV gate then passed with 0 Code Inspector
+warnings, all seven objects active and byte-identical to local, and SAP was
+realigned to the final pushed `ba31e27`.
+
+Two claims carried in from the previous checkpoint were wrong and are retracted.
+`ZBET_CL_MJ_CAPTURE` was never a generated skeleton, and its testclasses include
+is present. Both were artefacts of how the checks were called: the same checkrun
+shape reports "source code of this class is incomplete" for `ZBET_CL_MAIN` and
+`ZBET_CL_CODEX_PREFLIGHT` too, and the include probe had a malformed URL.
+Controls against known-healthy objects disproved both.
+
+The ADT repair writer left an orphaned enqueue on each of its two writes; the
+owner had to clear both in SM12 before abapGit could proceed. Its traces log
+`ctx=ANON` throughout, so the session never becomes stateful and an UNLOCK that
+returns 200 does not release the lock; it also unlocks before activating, against
+its own docstring. Recorded as TASK-0065.
+
+Two build-time flags are deliberately absent from the persistent environment and
+each cost a cycle. The running BFF had taken `pilot` from a command-line argument
+rather than from `BTB_MOBILE_AUTH_MODE`, so restarting it without that argument
+would have taken the service down instead of restarting it. The first pilot APK
+then shipped with the journey surface off, because
+`EXPO_PUBLIC_MATCH_PATH_INTELLIGENCE` is not in the build script's required list
+and defaults to `OFF`; the app rendered the fallback timeline panel and never
+requested the route at all. Reading `assets/app.config` out of both APKs showed
+`OFF` in the first and `LIVE` in the rebuild. Verify the flag inside the artifact,
+not the build exit code.
+
+One earlier inference is also corrected: an unauthenticated 401 on the journey
+route proved nothing about the route existing, because the auth guard runs before
+routing and bogus paths return 401 as well.
+
+OPEN, all observation: two job updates at an unchanged score, close and reopen for
+retained history, a goal, and the half-time transition. This match's curve starts
+around 17:16 local because capture only went active then, so a clean reading needs
+a match watched from kickoff.
+
+
 ## 2026-09-08 — Owner accepts retained journey design; local implementation verified
 
 Physical screenshots showed no line for a completed match and loss of the
