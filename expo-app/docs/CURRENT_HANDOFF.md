@@ -6,7 +6,7 @@ Son güncelleme: 2026-09-09
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-## 2026-09-10 — TASK-0080 local pilot-mode guard implemented; build pending
+## 2026-09-10 — TASK-0080 closed; pilot feature modes are guarded and verified
 
 The owner continued with the next recommended Mobile task. The canonical pilot
 builder now requires explicit values for Match Journey
@@ -17,18 +17,52 @@ is validated independently as `off`, `synthetic`, or `live`; omitted and invalid
 values stop before staging. Live Jinx is additionally refused because that
 engine remains deferred and separately gated.
 
-After a future approved build, the builder will read `assets/app.config` from
-the compiled APK before publishing it. API, auth, mock state and all three
-effective modes must equal the requested pilot settings. Only after that match
-does it copy the APK and write `<artifact>.apk.config.json` with filename, byte
-size, SHA-256, architecture and allowlisted public settings. The pilot key and
-all other embedded values are excluded from that evidence. Six focused tests
-cover missing/invalid values, independent modes, deferred live Jinx, secret-free
-evidence and per-surface artifact mismatches.
+The builder reads `assets/app.config` back out of the compiled APK before
+publishing it. API, auth, mock state and all three effective modes must equal
+the requested pilot settings. Only after that match does it copy the APK and
+write `<artifact>.apk.config.json` with filename, byte size, SHA-256,
+architecture and allowlisted public settings. The pilot key and all other
+embedded values are excluded from that evidence. Six focused tests cover
+missing/invalid values, independent modes, deferred live Jinx, secret-free
+evidence and per-surface artifact mismatches; all six pass.
 
-No APK was built in this local phase. TASK-0080 remains `IN_PROGRESS` until the
-next separately approved pilot build exercises artifact readback. No signing,
-installation, distribution, runtime rollout, commit or push is approved here.
+The owner then approved one pilot build so the readback could actually run, and
+it did. Before that build the environment held the exact defect the guard was
+written for: `EXPO_PUBLIC_MATCH_PATH_INTELLIGENCE`,
+`EXPO_PUBLIC_TEAM_FORM_INTELLIGENCE` and `EXPO_PUBLIC_MOBILE_INTELLIGENCE` were
+all absent from both Process and User scope while `EXPO_PUBLIC_USE_MOCKS` was
+`false` — the combination that used to resolve silently to OFF and produced the
+OFF-journey APK recorded on 2026-09-08. `EXPO_PUBLIC_MOBILE_AUTH_MODE` was
+absent too and was supplied to the build process only, never persisted.
+
+The `arm64-v8a` build from clean pushed source `4094b87` requested Match Journey
+`live`, Team Form `live` and Jinx `synthetic`; live Jinx was not requested
+because that engine stays deferred. Gradle `assembleRelease` succeeded and the
+embedded configuration matched the request on every field, so the artifact was
+published:
+
+```text
+btb-mobile-next-arm64-pilot-4094b87.apk
+54,320,005 bytes
+sha256 CEBB11E6042C8F6FC4A4F03CF5539F9E52085506FE4D92EC20CA8A021A3C351A
+arm64-v8a
+matchJourney=LIVE  teamForm=LIVE  jinx=SYNTHETIC
+authMode=pilot  useMocks=false  mobileApiUrl=https://api.surklase.com
+```
+
+The evidence file `btb-mobile-next-arm64-pilot-4094b87.apk.config.json` carries
+those fields and no others; `pilotAccessKey` is absent from it. Staging under
+`C:tb-mobile-pilot-<pid>` was removed and both source repositories stayed
+clean and level with their remotes. The previous phone APK
+`btb-mobile-next-arm64-match-journey-live-6d3fa37.apk` is retained as the
+rollback point.
+
+TASK-0080 is `DONE`: a fresh shell can no longer silently omit an approved
+surface, the three modes are independently validated, and artifact readback is
+proven against a real APK rather than asserted. Not approved and not done here:
+signing beyond the standard release keystore, installation on the phone,
+distribution, runtime rollout, commit or push. The new APK has not been
+installed, so its LIVE Team Form surface is unverified on the device.
 
 ## Current checkpoint — retained Match Journey is live; observation continues
 
