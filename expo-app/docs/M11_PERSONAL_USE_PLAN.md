@@ -19,7 +19,9 @@ milestone: verify what exists, then fix demonstrated personal-use friction.
 - Keep explicit-profile Doctor and its seven regressions, the canonical
   quality gate and the optional x86_64 emulator build path.
 - Reuse the recorded checks, accepted phone baseline and unchanged runtime
-  evidence within their actual scope. Nothing new is on the owner's phone yet.
+  evidence within their actual scope. At the initial cleanup checkpoint nothing
+  from that cleanup was on the owner's phone; the later accepted M11 candidate
+  and TASK-0044 Match Journey installation supersede that timing statement.
 - Retain historical planning/rehearsal reports for traceability, not as new
   mandatory personal-use functionality or proof of real-user retention.
 
@@ -70,8 +72,11 @@ is not reused. `app/(tabs)/index.tsx`, `live.tsx`, `super.tsx` and
 `TeamFormCard.tsx` returned to their exact committed content, which is the
 independent check that the removal was surgical.
 
-Nothing was staged, committed, pushed, deployed or installed by this cleanup.
-The accepted owner-phone APK is unchanged and still carries none of this work.
+At the cleanup checkpoint, nothing had yet been staged, committed, pushed,
+deployed or installed by that cleanup. The then-current owner-phone APK was
+unchanged. These are historical execution facts, not the present repository or
+device checkpoint; the later accepted M11 candidate below supersedes them.
+
 ## Owner acceptance checklist
 
 | Area | Current evidence | Still needed for M11 closure |
@@ -99,14 +104,18 @@ advisory stands unchanged, and model quality remains M14 and M9/M10 work.
 
 ## Boundaries and checkpoint
 
-Owner runtime stays `OBSERVATION`, with no open cutover. Last verified CAP
-`91cbc25`, route `https://api.surklase.com`. Accepted APK:
-`btb-mobile-next-arm64-team-form-live-b75b4cd.apk`, SHA-256
-`53B366747517A8E5B9211AB85EE72D3ABF8D8173E16324736E59BFA9E2D20D99`.
-No runtime/device read or new build was needed for this documentation decision.
+At the M11 closure checkpoint, owner runtime stayed `OBSERVATION`, with no open
+cutover, and the last verified CAP was `91cbc25` at
+`https://api.surklase.com`. The final accepted M11 artifact was
+`btb-mobile-next-arm64-m11-deps-0037328.apk`, SHA-256
+`4518BD58CD29FB82F643B7229BC6605C055866D2ABDAE5D996BA01E7954E8E79`.
+It superseded the earlier Team Form phone baseline for M11 acceptance. No new
+runtime/device read or build was needed merely to record the closure decision.
 
-Mobile, Tooling and Logs contain local uncommitted M11 work; CAP is untouched.
-No source was deleted, and no commit/push, external configuration, deployment
-or distribution occurred. Model quality, Super/Toto behavior and BTB-owned
-TASK-0011 keep their existing ownership and approval gates. No closure credit
-is earned merely by replacing the old criterion with a new one.
+The earlier statement that Mobile, Tooling and Logs contained local uncommitted
+M11 work described the cleanup checkpoint only. Later approved commits and the
+accepted M11 artifact superseded that source/device state. The still later
+TASK-0044 Match Journey APK is a separate observation artifact and does not
+reopen M11 or replace its accepted artifact identity. Model quality, Super/Toto
+behavior and BTB-owned tasks keep their existing ownership and approval gates;
+distribution beyond the owner device remains separately approved.

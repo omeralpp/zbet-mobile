@@ -1,12 +1,72 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-09-08
+Son güncelleme: 2026-09-09
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-## 2026-09-08 — TASK-0044 approved preflight failed; SAP recovery pending
+## 2026-09-10 — TASK-0080 local pilot-mode guard implemented; build pending
+
+The owner continued with the next recommended Mobile task. The canonical pilot
+builder now requires explicit values for Match Journey
+(`EXPO_PUBLIC_MATCH_PATH_INTELLIGENCE`), Team Form
+(`EXPO_PUBLIC_TEAM_FORM_INTELLIGENCE`) and Jinx
+(`EXPO_PUBLIC_MOBILE_INTELLIGENCE`) after its Process/User lookup. Each setting
+is validated independently as `off`, `synthetic`, or `live`; omitted and invalid
+values stop before staging. Live Jinx is additionally refused because that
+engine remains deferred and separately gated.
+
+After a future approved build, the builder will read `assets/app.config` from
+the compiled APK before publishing it. API, auth, mock state and all three
+effective modes must equal the requested pilot settings. Only after that match
+does it copy the APK and write `<artifact>.apk.config.json` with filename, byte
+size, SHA-256, architecture and allowlisted public settings. The pilot key and
+all other embedded values are excluded from that evidence. Six focused tests
+cover missing/invalid values, independent modes, deferred live Jinx, secret-free
+evidence and per-surface artifact mismatches.
+
+No APK was built in this local phase. TASK-0080 remains `IN_PROGRESS` until the
+next separately approved pilot build exercises artifact readback. No signing,
+installation, distribution, runtime rollout, commit or push is approved here.
+
+## Current checkpoint — retained Match Journey is live; observation continues
+
+TASK-0044 remains BTB-owned and `IN_PROGRESS`, but its delivery chain is now
+proven end to end. SAP capture is active; TASK-0066's decimal-range correction
+passed DEV runtime acceptance. The active SAP Match Journey source was aligned
+to `a155ac9` (the line-ending-only successor to `ba31e27`). Mobile source commit
+`6d3fa37` renders the retained curve, CAP commit `4162df3` serves
+`match-journey.v3`, and Mobile documentation HEAD `67c6823` records the owner's
+phone acceptance. All three source repositories are clean and level with their
+remotes at this checkpoint.
+
+The owner installed `btb-mobile-next-arm64-match-journey-live-6d3fa37.apk` and
+reported the curve present. The BFF log recorded four authenticated
+`/btb/matches/:key/match-journey` calls, all HTTP 200; the cold call took
+1,203 ms and the remaining calls took about 30 ms. This proves the current
+`ZBET_CL_MAIN` hook -> capture/journal/CDS/service -> `match-journey.v3` -> phone
+chart path. The installed APK's filename is recorded, but its byte size and
+SHA-256 are not present in the available evidence. Do not substitute the
+`6d3fa37` source SHA, Android bundle hash, or an older V2/M11 APK hash for that
+missing artifact identity.
+
+The next action is observation, not SAP recovery: record two job updates at an
+unchanged score, close and reopen the match to confirm retained history, then
+observe a goal and the half-time transition. The current curve began only when
+capture became active, so a clean full-path reading needs a match watched from
+kickoff. BFF rollout beyond the verified local restart remains separately gated.
+No commit/push, deployment, SAP write, build, or distribution is approved by
+this handoff refresh.
+
+Current evidence: [observation log](OBSERVATION_LOG.md),
+[V3 checkpoint](../../../zbet-abap/m9-match-journey/MATCH_JOURNEY_V3_CHECKPOINT_2026-09-08.md),
+and [TASK-0066 range fix](../../../zbet-abap/m9-match-journey/TASK_0066_RANGE_FIX_2026-09-08.md).
+
+## Historical 2026-09-08 — initial TASK-0044 preflight failure (superseded)
+
+This section preserves the failed attempts as evidence. Its recovery steps and
+uncommitted-state claims are historical, not the current status or next action.
 
 Owner approved PREFLIGHT-PUSH. The full SAP candidate failed activation on
 the two new CDS sources; dependency-only preflight passed but subsequent

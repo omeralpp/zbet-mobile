@@ -26,8 +26,13 @@ function Invoke-Checked {
 }
 
 $appRoot = Split-Path -Parent $PSScriptRoot
+$pilotFeatureConfigScript = Join-Path $PSScriptRoot 'pilot-feature-config.mjs'
 $stageRoot = "C:\btb-mobile-pilot-$PID"
 $resolvedStageRoot = [IO.Path]::GetFullPath($stageRoot)
+
+if (-not (Test-Path -LiteralPath $pilotFeatureConfigScript -PathType Leaf)) {
+  throw "Pilot feature configuration verifier not found: $pilotFeatureConfigScript"
+}
 
 if ($resolvedStageRoot -notmatch '^C:\\btb-mobile-pilot-\d+$') {
   throw "Unsafe pilot build staging path: $resolvedStageRoot"
@@ -41,7 +46,10 @@ $requiredEnvironment = @(
   'EXPO_PUBLIC_MOBILE_API_URL',
   'EXPO_PUBLIC_MOBILE_AUTH_MODE',
   'EXPO_PUBLIC_MOBILE_PILOT_KEY',
-  'EXPO_PUBLIC_USE_MOCKS'
+  'EXPO_PUBLIC_USE_MOCKS',
+  'EXPO_PUBLIC_MATCH_PATH_INTELLIGENCE',
+  'EXPO_PUBLIC_TEAM_FORM_INTELLIGENCE',
+  'EXPO_PUBLIC_MOBILE_INTELLIGENCE'
 )
 foreach ($name in $requiredEnvironment) {
   $currentValue = [Environment]::GetEnvironmentVariable($name, 'Process')
@@ -76,6 +84,21 @@ if (
   $env:EXPO_PUBLIC_MOBILE_PILOT_KEY -match '[\r\n]'
 ) {
   throw 'Pilot APK access key is invalid.'
+}
+
+# These three settings are intentionally independent. The shared Mobile setting
+# is the Jinx outlook mode; Match Journey and Team Form each have their own
+# override. A pilot build must name all three so a fresh shell cannot silently
+# inherit OFF when .env is excluded from staging.
+$featureModeOutput = & node.exe $pilotFeatureConfigScript 'validate-env'
+if ($LASTEXITCODE -ne 0) {
+  throw 'Pilot APK feature-mode validation failed.'
+}
+try {
+  $featureModes = ($featureModeOutput -join [Environment]::NewLine) |
+    ConvertFrom-Json
+} catch {
+  throw 'Pilot APK feature-mode verifier returned invalid JSON.'
 }
 
 # EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL is public runtime config (the Work Zone
@@ -171,8 +194,79 @@ try {
     $artifactRoot = Join-Path $appRoot '.codex-artifacts'
     New-Item -ItemType Directory -Force -Path $artifactRoot | Out-Null
     $artifactPath = Join-Path $artifactRoot $ArtifactName
+
+    # Verify the effective configuration from the artifact itself. The embedded
+    # config also contains the pilot access key, so it is read locally and only
+    # the allowlisted, public settings below are written to evidence.
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $archive = [IO.Compression.ZipFile]::OpenRead($apkPath)
+    $embeddedConfigPath = Join-Path $resolvedStageRoot 'embedded-app.config.json'
+    try {
+      $configEntry = @(
+        $archive.Entries | Where-Object {
+          ($_.FullName -replace '\\', '/') -eq 'assets/app.config'
+        }
+      ) | Select-Object -First 1
+      if ($null -eq $configEntry) {
+        throw 'Pilot APK does not contain assets/app.config.'
+      }
+      $stream = $configEntry.Open()
+      $reader = [IO.StreamReader]::new($stream)
+      try {
+        $embeddedConfig = $reader.ReadToEnd()
+      } finally {
+        $reader.Dispose()
+        $stream.Dispose()
+      }
+      [IO.File]::WriteAllText(
+        $embeddedConfigPath,
+        $embeddedConfig,
+        [Text.UTF8Encoding]::new($false)
+      )
+    } finally {
+      $archive.Dispose()
+    }
+
+    $artifactConfigOutput = & node.exe `
+      $pilotFeatureConfigScript `
+      'verify-config' `
+      $embeddedConfigPath
+    if ($LASTEXITCODE -ne 0) {
+      throw 'Pilot APK embedded feature-mode verification failed.'
+    }
+    try {
+      $artifactConfig = ($artifactConfigOutput -join [Environment]::NewLine) |
+        ConvertFrom-Json
+    } catch {
+      throw 'Pilot APK embedded feature-mode verifier returned invalid JSON.'
+    }
+
+    # Publish the artifact only after its embedded settings match the requested
+    # modes, so a failed readback cannot overwrite a previously valid APK.
     Copy-Item -Force -LiteralPath $apkPath -Destination $artifactPath
+    $artifactItem = Get-Item -LiteralPath $artifactPath
+    $artifactEvidence = [ordered]@{
+      schemaVersion = 1
+      artifact = $artifactItem.Name
+      bytes = $artifactItem.Length
+      sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $artifactPath).Hash
+      architecture = $Architecture
+      effectiveSettings = $artifactConfig.effectiveSettings
+    }
+    $evidencePath = "$artifactPath.config.json"
+    [IO.File]::WriteAllText(
+      $evidencePath,
+      ($artifactEvidence | ConvertTo-Json -Depth 5),
+      [Text.UTF8Encoding]::new($false)
+    )
     Write-Host "Pilot APK: $artifactPath"
+    Write-Host "Pilot APK config evidence: $evidencePath"
+    Write-Host (
+      'Pilot feature modes: Match Journey={0}; Team Form={1}; Jinx={2}' -f
+        $featureModes.matchJourney,
+        $featureModes.teamForm,
+        $featureModes.jinx
+    )
   } finally {
     Pop-Location
   }
