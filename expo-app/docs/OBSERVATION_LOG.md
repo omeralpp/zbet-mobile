@@ -1,5 +1,40 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-10 — Retained journey accepted on the phone; TASK-0044 closed
+
+The owner made all four required device observations across a live match and
+reported no problems in any of them:
+
+- two job updates at an **unchanged score**, with the curve advancing correctly
+  rather than repeating a point or flattening;
+- **close and reopen**, with the curve returning carrying its retained history
+  instead of restarting;
+- a **goal**, reflected correctly by the curve;
+- the **half-time transition**, passing without breaking curve or refresh
+  behaviour.
+
+Each was confirmed individually rather than taken from a general all-clear. That
+mattered: two of the four only exist as evidence if the match actually did those
+things, and "no problems" cannot distinguish *nothing looked broken* from *I
+watched a goal land on the curve*.
+
+This is the acceptance `TASK-0044` was held open for since 2026-09-02, and it
+closes the task. It also satisfies the fifth item, BFF rollout beyond the local
+restart, from the same evidence: the observations were made against the public
+origin across a full match, so `match-journey.v3` is being served by the running
+BFF rather than by a hand-restarted process that would not have survived the
+window. Supervision and recovery were already closed under `TASK-0031` and
+`TASK-0032`.
+
+**What this acceptance is, stated so its weight is not overread.** The owner's
+direct observation, on one device, across one match, itemised per event, with no
+BFF log, timing or payload capture taken alongside. That is exactly what the
+task asked for — these are behavioural observations only a person watching a
+live match can make — but it is testimony rather than instrumented capture.
+
+`TASK-0083` unblocks on this, and its consumer inventory is already recorded, so
+its remaining work is one keep/archive/remove decision per renderer group.
+
 ## 2026-09-10 — Guarded pilot APK installed; all three surfaces render
 
 The owner installed `btb-mobile-next-arm64-pilot-4094b87.apk` — the first build
