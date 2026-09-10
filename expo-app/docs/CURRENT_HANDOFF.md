@@ -6,6 +6,39 @@ Son güncelleme: 2026-09-10
 
 Aktif task: `BTB Mobile Next - Aktif`
 
+## 2026-09-10 — TASK-0087 closed; the superseded MatchJourneyV2 island is removed
+
+The renderer island that `6d3fa37` superseded on 2026-09-08 is gone:
+`src/components/MatchJourneyV2.tsx`, `src/components/match-journey-v2.ts` and
+`src/components/match-journey-v2.test.ts`. It was a genuine island — no BFF
+route, DTO, client method or query hook behind it — so removing it could not
+strand a served endpoint, and its live replacement `MatchJourneyChart.tsx` over
+`match-journey.ts` carries its own tests. Closure was re-checked against the
+current tree before deleting anything rather than trusted from the TASK-0083
+inventory: a repository grep for live importers, excluding the island itself,
+returned nothing.
+
+**A stale acceptance criterion, worth remembering.** The task expected the
+Mobile suite to move 574 → 560. That number was written during the TASK-0083
+inventory and TASK-0088 has landed since, so the real baseline was 577 and the
+real target 563. The suite measured 577 before and 563 after — a drop of exactly
+the 14 tests this island owned, and no other count moved. A hardcoded post-state
+count silently goes wrong the moment anything lands between writing it and
+executing it; a delta against a baseline measured at execution time would not
+have. Worth applying to future hygiene tasks.
+
+`npm run check` passed end to end: typecheck, full lint, 563/563 Mobile tests,
+13/13 tooling tests, brand-asset contract. The post-removal grep returns only
+protected historical evidence and documentation — the `.codex-artifacts/mj-v2`
+bundle, the 2026-09-09 audit artifacts, the task register, the ABAP
+`MATCH_JOURNEY_V2_DISPLAY_CHECKPOINT_2026-09-06.md` and this handoff — never a
+live import. None of those were touched, and `MatchPathChart` stays, since
+TASK-0083 dispositioned that group KEEP.
+
+Recovery point for the deleted island is `ec9f2b1`, on master and reachable from
+HEAD. Mode stays `OBSERVATION` with no open cutover run; no build, deployment or
+external change was involved.
+
 ## 2026-09-10 — TASK-0088 closed; Match Path is delivered again and accepted on device
 
 The owner tested the preview APK and reported that it works properly, which
