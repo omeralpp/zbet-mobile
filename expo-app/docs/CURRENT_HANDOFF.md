@@ -59,10 +59,18 @@ rollback point.
 
 TASK-0080 is `DONE`: a fresh shell can no longer silently omit an approved
 surface, the three modes are independently validated, and artifact readback is
-proven against a real APK rather than asserted. Not approved and not done here:
-signing beyond the standard release keystore, installation on the phone,
-distribution, runtime rollout, commit or push. The new APK has not been
-installed, so its LIVE Team Form surface is unverified on the device.
+proven against a real APK rather than asserted. Not approved and not done in
+that phase: signing beyond the standard release keystore, distribution, runtime
+rollout, commit or push.
+
+**Device confirmation, 2026-09-10.** The remaining caveat is closed. The owner
+installed `btb-mobile-next-arm64-pilot-4094b87.apk` and confirmed the Match
+Journey curve, the Team Form card and the Jinx bubble all render, so the `LIVE`
+Team Form surface that artifact readback could only prove was *embedded* is now
+also proven to *display*. Recorded in `OBSERVATION_LOG.md` with its limits: one
+device, one moment, no timing, payload or BFF-log evidence gathered alongside,
+and it is not `TASK-0044` acceptance — that still needs the two-job-update,
+close-and-reopen, goal and half-time observations.
 
 ## Current checkpoint — retained Match Journey is live; observation continues
 

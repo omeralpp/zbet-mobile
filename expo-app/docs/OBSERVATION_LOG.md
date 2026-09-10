@@ -1,5 +1,31 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-10 — Guarded pilot APK installed; all three surfaces render
+
+The owner installed `btb-mobile-next-arm64-pilot-4094b87.apk` — the first build
+produced by the guarded builder, requesting Match Journey `LIVE`, Team Form
+`LIVE` and Jinx `SYNTHETIC`, with those three modes read back out of the
+compiled artifact before it was published — and reported no problems. Asked
+which surfaces were actually seen, the owner confirmed the Match Journey curve,
+the Team Form card and the Jinx bubble.
+
+**This closes the one item `TASK-0080` left open.** That task was closed on the
+strength of artifact readback alone, with the explicit caveat that the APK had
+never been installed and its `LIVE` Team Form surface was therefore unverified
+on the device. It is verified now: the mode the builder proved was embedded is
+the mode that renders.
+
+**It is not `TASK-0044` acceptance, and must not be recorded as such.** That
+task needs four structured observations — two job updates at an unchanged
+score, close and reopen for retained history, a goal, and the half-time
+transition. A rendering check says the surfaces draw; it says nothing about how
+the curve behaves across those four events. `TASK-0044` stays `IN_PROGRESS` and
+`TASK-0083` stays `BLOCKED` behind it.
+
+Scope of the claim, stated so a later reader does not widen it: the owner saw
+the three surfaces present, at one moment, on one device. No timing, payload,
+BFF log or match-state evidence was collected alongside it.
+
 ## 2026-09-08 — Retained journey live on the phone; the chain is proven end to end
 
 The owner installed the pilot APK and reported the curve present. The BFF log
