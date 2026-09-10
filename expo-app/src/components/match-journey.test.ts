@@ -27,11 +27,17 @@ test("contract refuses an invented probability scale and out-of-range event rati
   assert.throws(()=>matchJourneySchema.parse({...fixture,scale:'WIN_PROBABILITY'}));
   assert.throws(()=>matchJourneySchema.parse({...fixture,points:[{...fixture.points[0],eliminatedRatio:1.01}]}));
 });
-test("match detail mounts retained journey and the original score/Super timeline",async()=>{
+test("match detail combines Match Path with the retained journey and keeps score/Super separate",async()=>{
   const source=await readFile(new URL('../../app/match/[key].tsx',import.meta.url),'utf8');
-  const module=source.slice(source.indexOf('if (matchPathEnabled)'));
-  assert.ok(module.indexOf('<MatchJourneyChart')<module.indexOf('<MatchTimelineCard'));
+  const analysisModule=source.slice(source.indexOf('moduleNodes.matchPath ='));
+  const timelineModule=source.slice(source.indexOf('timeline: ('),source.indexOf('scoreDistribution: ('));
+  assert.ok(source.includes('matchPathQuery(key)'));
+  assert.ok(analysisModule.includes('<MatchJourneyChart'));
+  assert.ok(analysisModule.includes('path={matchPath.data}'));
+  assert.ok(timelineModule.includes('<MatchTimelineCard'));
+  assert.ok(timelineModule.includes('includeRedCards={!matchPathEnabled}'));
   assert.ok(!source.includes('useJourneyObservations'));
-  assert.ok(module.includes('decisions={relatedDecisions}'));
+  assert.ok(timelineModule.includes('decisions={relatedDecisions}'));
   assert.ok(source.includes('journey.refetch()'));
+  assert.ok(source.includes('matchPath.refetch()'));
 });

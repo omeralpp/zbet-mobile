@@ -322,6 +322,7 @@ function MatchTimelineCardComponent({
   decisions = [],
   homeScore,
   homeTeam,
+  includeRedCards = true,
   isLoading,
   onDecisionPress
 }: {
@@ -332,11 +333,16 @@ function MatchTimelineCardComponent({
   decisions?: SuperLog[];
   homeScore?: number | null | undefined;
   homeTeam?: string | null | undefined;
+  includeRedCards?: boolean;
   isLoading?: boolean;
   onDecisionPress?: (decision: SuperLog) => void;
 }) {
-  const state = resolveTimelineState(context, isLoading);
-  const events = visibleEvents(context?.timeline);
+  const sourceState = resolveTimelineState(context, isLoading);
+  const events = visibleEvents(context?.timeline).filter(
+    (event) => includeRedCards || event.kind !== "RED_CARD"
+  );
+  const state =
+    sourceState === "EVENTS" && events.length === 0 ? "EMPTY" : sourceState;
   const teams: EventTeams = { home: homeTeam, away: awayTeam };
   // The scoreboard and the Live Context timeline are independent upstreams
   // (see NXT-OBS-118/117): the score can advance while the event feed is
@@ -346,11 +352,15 @@ function MatchTimelineCardComponent({
   // itself proves otherwise.
   const scoreAdvanced = (homeScore ?? 0) + (awayScore ?? 0) > 0;
   const emptyStateBody = scoreAdvanced
-    ? "Skor ilerledi ama olay detayı henüz gelmedi."
-    : "Bu maçta henüz gol veya kırmızı kart yok.";
+    ? "Skor ilerledi ama gol detayı henüz gelmedi."
+    : includeRedCards
+      ? "Bu maçta henüz gol veya kırmızı kart yok."
+      : "Bu maçta henüz gol veya Super tercihi yok.";
   const emptyNoticeText = scoreAdvanced
-    ? "Skor ilerledi ama olay detayı henüz gelmedi."
-    : "Henüz gol veya kırmızı kart yok.";
+    ? "Skor ilerledi ama gol detayı henüz gelmedi."
+    : includeRedCards
+      ? "Henüz gol veya kırmızı kart yok."
+      : "Henüz gol yok; Super tercihleri gösteriliyor.";
 
   return (
     <>

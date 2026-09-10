@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import {
   matchInsightQuery,
+  matchPathQuery,
   matchJourneyQuery,
   matchJinxOutlookQuery,
   matchLeagueContextQuery,
@@ -257,6 +258,14 @@ export default function MatchDetailScreen() {
   });
   const journey = useQuery({ ...matchJourneyQuery(key),
     enabled: matchPathEnabled && Boolean(key), refetchInterval: journeyPolling });
+  // The existing pilot flag deliberately gates the combined analytical panel:
+  // retained Match Journey plus restored Match Path. Keeping one explicit
+  // switch avoids renaming the verified APK configuration for a UI-only merge.
+  const matchPath = useQuery({
+    ...matchPathQuery(key),
+    enabled: matchPathEnabled && Boolean(key),
+    refetchInterval: journeyPolling
+  });
   const jinxOutlook = useQuery({
     ...matchJinxOutlookQuery(key, askedJinx),
     enabled: intelligence && Boolean(key) && askedJinx
@@ -348,9 +357,9 @@ export default function MatchDetailScreen() {
     ),
     timeline: (
       <LiveDetailPanel
-        eyebrow="MAÇ AKIŞI"
+        eyebrow="SKOR & SUPER"
         id="timeline"
-        title="Goller, kartlar ve Super"
+        title="Skor ve yıldız akışı"
       >
         <MatchTimelineCard
           awayScore={match.awayScore}
@@ -361,6 +370,7 @@ export default function MatchDetailScreen() {
           decisions={relatedDecisions}
           homeTeam={match.homeTeam}
           isLoading={liveContext.isLoading}
+          includeRedCards={!matchPathEnabled}
           onDecisionPress={(decision) =>
             router.push({
               pathname: "/super/[key]",
@@ -487,35 +497,21 @@ export default function MatchDetailScreen() {
 
   // Each engine mounts only when its own build setting enables it.
   if (matchPathEnabled) {
-    moduleNodes.timeline = (
+    moduleNodes.matchPath = (
       <LiveDetailPanel
-        eyebrow="MAÇ AKIŞI"
-        id="timeline"
-        title="Maçın yolu, goller ve Super"
+        eyebrow="MAÇ ANALİZİ"
+        id="matchPath"
+        title="Maçın yolu ve sürpriz olaylar"
       >
         <MatchJourneyChart
+          context={liveContext.data}
           key={key}
           match={match}
-          logs={superLogs.data ?? []}
           journey={journey.data}
+          path={matchPath.data}
           isError={journey.isError}
           isLoading={journey.isLoading}
-          onDecisionPress={(decision) => router.push({
-            pathname: "/super/[key]", params: { key: decision.key }
-          } as never)}
-        />
-        <MatchTimelineCard
-          awayScore={match.awayScore}
-          awayTeam={match.awayTeam}
-          context={liveContext.data}
-          homeScore={match.homeScore}
-          currentDecisionKey={currentDecisionKey}
-          decisions={relatedDecisions}
-          homeTeam={match.homeTeam}
-          isLoading={liveContext.isLoading}
-          onDecisionPress={(decision) => router.push({
-            pathname: "/super/[key]", params: { key: decision.key }
-          } as never)}
+          pathIsLoading={matchPath.isLoading}
         />
       </LiveDetailPanel>
     );
@@ -670,7 +666,7 @@ export default function MatchDetailScreen() {
                   periodScoreQuery.refetch(),
                   superLogs.refetch(),
                   liveContext.refetch(),
-                  ...(matchPathEnabled ? [journey.refetch()] : []),
+                  ...(matchPathEnabled ? [journey.refetch(), matchPath.refetch()] : []),
                   ...(teamFormEnabled ? [teamForm.refetch()] : [])
                 ])
               }
@@ -680,7 +676,9 @@ export default function MatchDetailScreen() {
                 leagueContextQuery.isRefetching ||
                 periodScoreQuery.isRefetching ||
                 superLogs.isRefetching ||
-                liveContext.isRefetching
+                liveContext.isRefetching ||
+                journey.isRefetching ||
+                matchPath.isRefetching
               }
             tintColor={semantic.live}
           />
