@@ -1,10 +1,56 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-09-09
+Son güncelleme: 2026-09-10
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
+
+## 2026-09-10 — TASK-0088 closed; Match Path is delivered again and accepted on device
+
+The owner tested the preview APK and reported that it works properly, which
+closes the manual physical-device gate that was the only reason TASK-0088 stayed
+`IN_PROGRESS`. Everything below the screen had stayed intact throughout, so the
+work was a UI restoration — mount the surface and issue the query — not a
+rebuild.
+
+The artifact identity was re-verified at acceptance time rather than assumed.
+`btb-mobile-next-arm64-task0088-preview.apk` hashes to
+`47B5DD85B432294DD5ACF9E2B5654213B14F6BDACAB4E6DE833242EA1B9202BE` at
+54,331,833 bytes, byte-for-byte the build recorded when it was produced, and it
+is the newest APK in the workspace — the next newest is the TASK-0080 pilot
+`btb-mobile-next-arm64-pilot-4094b87.apk`. The acceptance is therefore pinned to
+that exact artifact and not to a later unrecorded rebuild. This is the evidence
+the `6d3fa37` install lacked and it should not be treated as optional again.
+
+What is accepted is the combined analytical panel shipped in Mobile commit
+`143c065`: the retained blue Match Journey curve together with current
+normality, cohort size and confidence, plus one red-card/surprise event rail,
+with a card present in both Live Context and Match Path merged by minute and an
+unscored live card left visible as explicitly unmeasured. Synthetic origin,
+unavailable/empty behaviour and the low-cohort caveat are preserved, so the
+surface does not present synthetic values as real. The capability that quietly
+stopped being delivered at `ec9f2b1` on 2026-09-07 — Event Surprise,
+Current-State Normality, cohort size and confidence — is on screen again.
+
+**Flag decision, recorded.** The existing `EXPO_PUBLIC_MATCH_PATH_INTELLIGENCE` /
+`matchPathIntelligence` switch was kept and now gates the combined Match Journey
++ Match Path analysis. No rename, and therefore no change to
+`scripts/build-pilot-apk.ps1` or `pilot-feature-config.mjs`, which validate that
+flag by name. The earlier naming trap — the flag gating the Journey curve rather
+than a Match Path surface — is resolved by making one surface out of both rather
+than by splitting the switch.
+
+Acceptance is visual and functional only. Not approved and not performed:
+signing beyond the standard release keystore, distribution, installation on any
+other device, release promotion, BTP or Cloudflare publication, SAP or Firebase
+external change, and Cordova cutover. Each remains its own separate approval and
+none is inferred from this one.
+
+Mode stays `OBSERVATION` with no open cutover run. The Mobile profile reports no
+required action; the next recommended task is TASK-0087, removing the superseded
+`MatchJourneyV2` renderer island, which is the natural follow-on now that the
+combined panel is the accepted delivered surface.
 
 ## 2026-09-10 — TASK-0080 closed; pilot feature modes are guarded and verified
 
