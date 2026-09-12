@@ -1,5 +1,356 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-12 — One timeline for goals, pool and pressure; and a preview that shipped without its own fix
+
+The card is rebuilt around a single minute axis. Goals, red cards, the
+second-half pool change and score corrections are numbered marks in an event
+lane under the curve; the curve itself stays selectable; a pressure-history
+strip sits below it; and the selected capture's reference pool contributes its
+three leading scores. The half-time step is drawn at the recorded pool-change
+minute rather than at a fixed 45. The joining logic moved out of the renderer
+into `journey-story.ts`, so moments, vertices, pool leaders and the pressure
+reading are testable without React.
+
+**A goal now links only to its own recorded score transition.** The interaction
+pass found the misleading case: selecting a goal with no matching capture left
+an unrelated point highlighted on the curve, so a nearby pressure sample read as
+that goal's effect. A provider goal is matched to a capture only when the score
+after the event equals the capture's score and the two are within two minutes,
+and the capture is then claimed, so a delayed capture of the same goal cannot
+appear twice. When nothing qualifies, nothing is highlighted, the pool box is
+withheld unless the selected capture belongs to that pool, and the text states
+that this event's pool effect was not measured rather than borrowing a number
+from the neighbour. Coincident events share one grouped marker (`n+k`) to keep
+the lane readable but each stays separately selectable in the horizontal rail,
+so the marker is never the only way to reach an event. Both guarded by test.
+
+**The ARM64 preview produced in this batch did not contain that fix.** Recorded
+because the artifact looked finished and was not. `btb-mobile-next-arm64-match-story-preview.apk`
+(14:58) was staged before the 14:56–14:57 interaction edits, and the rebuild
+that was meant to replace it failed at 15:05 — `:react-native-gesture-handler:compileReleaseJavaWithJavac`,
+`Failed to run Gradle Worker Daemon`, exit 1 after 3m 57s, while an x86 build ran
+concurrently. A resource failure, not a code failure: the same tree built clean
+on its own. Only `btb-mobile-next-x86-match-story-smoke.apk` (15:07) carried the
+final bundle, and that architecture cannot be installed on the owner's phone.
+
+The replacement `btb-mobile-next-arm64-match-story-preview-v2.apk` was built
+serially and hashes to
+`7FF9DA32E628BCA8BDAA75C321E14CB52084256E579085BF3B704872D3617A10` at
+54,350,649 bytes, `arm64-v8a`, Match Journey `LIVE`, Team Form `LIVE`, Jinx
+`SYNTHETIC`, pilot auth against `https://api.surklase.com` with mocks off. Its
+`assets/index.android.bundle` is byte-identical to the x86 smoke build's bundle
+and differs from the 14:58 preview's, which is what proves the fix is inside it.
+
+**Rule worth keeping: an artifact is identified by its bundle, not by its
+clock.** A build staged while an edit is in flight carries the older source and
+still lands with a newer timestamp, so a build that finishes after an edit is
+not evidence that it contains it. Comparing the embedded bundle across the two
+architectures settled it in seconds, and it also showed the comparison is sound:
+two builds of one tree produced the same bundle on different architectures, so a
+bundle difference is a source difference. This is the delivery-side twin of the
+TASK-0088 rule that artifact identity is re-verified at acceptance rather than
+assumed.
+
+Gates: typecheck clean, ESLint clean, 579/579 Mobile unit tests, tooling 13/13,
+brand contract met, on a tree whose five touched sources hash equal to the
+in-batch source pin. Expo Doctor was not re-run; no dependency file is touched
+in this batch, so the pre-existing 16 out-of-date Expo SDK 57 packages stand
+unchanged.
+
+**Accepted on the phone.** The owner installed the v2 APK and reviewed it on
+Guangxi Hengchen – Yanbian Longding: the 15′ and 42′ goals numbered in the lane,
+the 46′ reference change drawn as a vertical step at the `Yeni havuz` rule, the
+full-time pool after the `1-1` half-time score shown over 17 matches with its
+low-cohort caveat intact, the pressure strip populated across the match, and the
+66′ capture read back as `Skor değişmedi · akış devam ediyor`. Design accepted
+with no further change requested, which closes the device gate this batch was
+built for.
+
+**One legibility follow-up, recorded rather than fixed — TASK-0103.** Markers `2` (42′ goal)
+and `3` (46′ reference change) overlap in the event lane. Grouping keys on exact
+minute equality, so two events a few minutes apart each keep a full-width chip:
+at the phone's plot width four minutes is roughly ten pixels while a chip is
+twenty, so they collide by geometry rather than by accident. What the grouping
+was built to guarantee still holds — both stay separately reachable from the
+horizontal rail, and the owner read both without difficulty — so this is
+cosmetic, not a misread risk. Proximity-based grouping instead of
+equality-based is the obvious fix and belongs in its own batch with its own
+build and device pass.
+
+**Explicitly NOT done:** no contract, BFF, SAP or dependency change, and no
+model, star or Toto behaviour is touched. No deployment target exists for this
+batch — every changed file is Expo client source, whose delivery route is the
+APK already accepted on the device. The 14:58 pre-fix preview is deliberately
+kept beside the v2 artifact so the two remain distinguishable.
+
+## 2026-09-11 — Half-time is not an event, and the second half is not a fresh start
+
+Second device pass on the redesign (Eindhoven–Dordrecht, Union Berlin–Schalke).
+Two findings, one root cause each, and the first one is upstream.
+
+**The rail was calling the whistle a surprise.** The owner states the intended
+meaning plainly: a surprise event is one that goes against the most likely
+score. Read directly from `zbet-cap/srv/mobile-bff/match-path.js` lines 212–250,
+the contract emits exactly three points — `KICK_OFF`, `HALF_TIME` if half time is
+reached, `FULL_TIME` if the match is finished. There are no goal points, no
+red-card points, no per-minute state points. `eventSurprise` is set on exactly
+two of them, as `1 - pHalfTime` and `1 - pFullTime`. **It is the improbability of
+the period scoreline, not a measure of an occurrence.** Eindhoven–Dordrecht
+contained goals at 15', 44' and 60' and the Match Path payload carried none of
+them; the only available row was `İlk yarı 1-1` at %89, which is the half-time
+scoreline being graded.
+
+Mobile's part of that was the labelling, and it is fixed: period scorelines now
+have their own heading (`DEVRE VE MAÇ SONU SKOR DEĞERLENDİRMESİ`), their own
+diamond marker, and the wording `devre skoru sürprizi` / `maç sonu skoru
+sürprizi`. The ring vocabulary stays reserved for things that happened, and when
+the event heading is empty it now says outright that the contract supplies no
+event-level surprise rather than implying nothing notable occurred. A labelling
+fix only: no number changed and nothing was synthesised in the client, which
+`match-path-chart.ts` forbids. Recorded upstream as **TASK-0102** (owner `btb`,
+M9, P1, BLOCKED); **TASK-0101** is noted as one instance of it rather than a
+separate lane, because the red card is not a missing value on an existing event
+point — the event point does not exist.
+
+**The second half looked like the match started over.** `match-journey.js`
+recomputes `baseline = initialLevel(rows, home, away)` against the SECOND-HALF
+pool at the phase change, so the new run opens near the top on almost every
+match. The owner read that exactly right: "it puts it back at the same point as
+the start." The line now continues from where the first half ended, but the join
+is a **vertical step at the rule** rather than a slope across it. A slope claims
+the match travelled that distance over those minutes; it did not, the yardstick
+was rebased at one instant. The reading rules say so in words now too.
+
+**Follow-up the same session — the line is now one unbroken series.** The
+dashed rebase still read as broken, and the owner said so a third time: the
+chart is not to be disconnected. The run splitting is removed entirely. The
+journey is a single solid polyline through every point the contract gave a
+level, with one extra vertex inserted at each reference change so the rebase is
+a vertical step at the boundary rather than a slope across the following
+minutes.
+
+What the breaks used to carry is not lost, it moved onto a mark. A join that
+spans a capture gap or a score correction now draws a hollow dot at that point,
+with a legend entry (`Ara veya düzeltme`) and a sentence in the reading rules
+saying the minutes in between were never measured and the line across them is an
+assumption. A point the contract left without a level is still skipped rather
+than interpolated into, so the chart continues to state nothing that was never
+reported — the change is that absence is no longer the way it says so.
+
+Recorded because it reverses a decision made earlier the same day: the previous
+entry said a gap or correction is "NOT bridged" and a test asserted it. Both are
+now updated. The only owner-facing behaviour lost is the visual break itself;
+every distinction it encoded is still on screen, in a form that does not make a
+continuous match look like a rendering fault.
+
+**Explicitly NOT done:** the second-half series is not re-based onto the
+first-half ending level. That would be a transformation of an
+`ORDINAL_UNCALIBRATED` series to make it look continuous, and it would state a
+normality the contract never reported. If a genuinely continuous normality is
+wanted it has to come from the contract, as its own series, decided upstream.
+
+Gates: typecheck clean, ESLint clean, 573/573 unit tests, tooling 13/13,
+brand contract met. Expo Doctor unchanged: same pre-existing 16
+out-of-date Expo SDK 57 packages, no dependency file touched.
+
+## 2026-09-11 — Owner device pass on the redesign; four follow-ups in the same batch
+
+Owner installed the redesign APK and reviewed it on the Xiaomi across Empoli–Arezzo,
+Barakaldo–Extremadura and Al Wahda–Sharjah. Four findings, all handled in the
+same open batch.
+
+1. **No break at the end of the first half.** `retainedJourneyRuns` starts a new
+   run at `referenceChange`, and the bridge only drew when `boundary.connects`,
+   so on most matches the line simply stopped and restarted somewhere else. In
+   Empoli–Arezzo the second-half run was a single point, which a polyline
+   renders as nothing at all — the owner saw a detached white dot. The
+   reference change is now always bridged, dashed at 0.8 opacity, because the
+   two sides are measured against different references and a solid join would
+   claim the match moved when only the yardstick did. The break caps added
+   earlier the same day are removed. A break from a capture gap or a score
+   correction is still NOT bridged: there the contract has nothing, and the
+   reading rules say the line breaks. Guarded by test.
+
+2. **Surprise events never reached the chart.** Confirmed defect, not styling.
+   `minuteLabel(point)` returns `""` when `point.minute === null`, so
+   `matchAnalysisEvents` set `minute: null`, and the chart filtered on
+   `event.minute!==null`. HALF_TIME and FULL_TIME pool events routinely carry no
+   minute, so every one of them was dropped before reaching the renderer — in
+   Empoli–Arezzo the rail listed `İlk yarı 0-0` at %68 while the chart showed no
+   ring whatsoever. `pathKind` is now carried unnarrowed onto
+   `MatchAnalysisEvent` and position is derived from the contract's own kind:
+   HALF_TIME to the reference minute, FULL_TIME to the axis maximum, anything
+   else stays unplaced rather than being put where it did not happen. Label text
+   is never parsed. Guarded by test.
+
+3. **Unmeasured events sat on the floor of the plot.** A red card with no
+   `stateNormality` was drawn at the bottom edge below the Sürpriz band, where
+   it reads as a value that fell off the chart rather than an event. They now
+   ride a ruled and named `Ölçülmedi` lane under the plot, at their own minute,
+   with the reference rule extended through it.
+
+4. **Home form strip reversed.** `Empoli` now reads oldest to newest, caption
+   `Eski → en yeni`; the away side keeps `En yeni → eski`. Both strips are
+   drawn mirrored around the card centre, so reading each one outward from the
+   middle now lands on the most recent match. `formResultsInReadingOrder` copies
+   before reversing so the contract array is never mutated, and
+   `describeSideForAccessibility` takes the order so the spoken sequence follows
+   the drawn one. Guarded by two tests.
+
+**Reported, not applied — red-card event surprise.** The owner asked that a red
+card's event surprise be computed from its effect on the most likely score at
+that moment. That is a Match Path contract computation and it is not Mobile's to
+make: `match-path-chart.ts` states that nothing there derives, infers or
+backfills a signal, and synthesising a surprise value in the client is exactly
+what the module forbids. The presentation is already ready for it — a RED_CARD
+event carrying `eventSurprise` renders through the same headline and the same
+ring treatment as any other event, and drops out of the `Ölçülmedi` lane onto
+the band as soon as `stateNormality` arrives. No Mobile change is needed when
+the contract starts supplying it. Routed to the owning operational task; needs
+BFF/SAP scoping and its own approval.
+
+Gates: typecheck clean, ESLint clean, 570/570 unit tests (four new), tooling
+13/13, brand contract met. Expo Doctor still fails on the same pre-existing 16
+out-of-date Expo SDK 57 packages; no dependency file is touched by this batch.
+
+**Pilot artifact, second build.** `arm64-v8a`, Gradle `assembleRelease`
+successful in 4m 32s.
+
+```text
+btb-mobile-next-arm64-journey-redesign-v2.apk
+54,338,729 bytes
+sha256 64CC856BAAE48F468BE503E12C36360819165B0E9321EEC01AFC1A908BE083E6
+signer sha256 fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
+arm64-v8a
+```
+
+The builder read `assets/app.config` back out of the compiled APK and every
+field matched the request: api `https://api.surklase.com`, auth `pilot`, mocks
+`false`, Match Journey `LIVE`, Team Form `LIVE`, Jinx `SYNTHETIC`. Signing
+certificate identical to `4094b87` and to the first redesign build, so it
+installs over the existing app without uninstalling. The four flags were again
+supplied to the build process only and never persisted.
+
+Red-card event surprise is recorded as TASK-0101, owner `btb`, milestone M9,
+risk MODEL_LOGIC, BLOCKED on the M9 gate. Mobile needs no change when the
+contract supplies the field.
+
+Cleanup still deferred: `btb-mobile-next-arm64-pilot-4094b87.apk` is kept as the
+rollback path until a build is accepted on the device. Nothing committed.
+
+## 2026-09-11 — Journey card design batch; eight presentation defects fixed
+
+Owner reviewed the Match Journey card on the physical Xiaomi across two matches
+(Al Najma – East Riffa, K. Sovetov – Rodina Moskova) and judged the design
+insufficient. `btb next cutover start` batch, Mobile-local only. No BFF, schema,
+contract, SAP or model change; no metric is recomputed and no displayed number
+changed its value.
+
+Two defects were not opinion. The module that owns this surface states its own
+doctrine in `match-path-chart.ts`: drawing `eventSurprise` and `stateNormality`
+as parallel meters "made them look like the same kind of measurement, which is
+exactly the confusion this feature exists to prevent". The event rail had
+reintroduced precisely that — two bare percentages stacked in one right-aligned
+column. The owner's screenshots show the harm directly: `%71 SÜRPRİZ` beside
+`%29 normal` sums to 100 and teaches the reader a rule, then `%91 SÜRPRİZ`
+beside `%12 normal` and `%97` beside `%4` break it. They are different
+measurements and were formatted identically. And `schemas.ts:633` declares the
+journey `scale` as `ORDINAL_UNCALIBRATED` with `level` "an ordinal display
+index, never a prediction probability", while Match Path `stateNormality` is a
+proportion — the chart mapped both through one `y()` and said nothing.
+
+Applied, all presentation only:
+
+1. **Surprise and normality no longer read as complements.** Each now carries
+   its contract name (`surpriseLabel`, `normalityLabel`). Surprise is the event
+   headline; normality moved into a named provenance sentence, which cannot be
+   read as a meter. No value changed.
+2. **Emphasis follows sufficiency.** `belowReliableCohort` is carried onto
+   `MatchAnalysisEvent` from the node the contract already computes — no
+   threshold is invented in the view. Under-threshold events render muted with
+   a `YETERSİZ ÖRNEKLEM` chip attached to the figure instead of a grey caveat
+   200px below it. Previously a 97% surprise on a 6-match cohort at 20%
+   sufficiency was styled identically to 71% on 151 matches at 100%.
+3. **Marker size no longer encodes surprise.** `r={5+eventSurprise*2}` drew the
+   largest ring for the least supported reading. Radius is now constant and an
+   under-threshold event gets a dashed ring.
+4. **Axis labels cannot be overdrawn.** They were at x=20 inside the plot and
+   emitted before the series, so the journey line painted over its own axis
+   whenever the match sat at that level. They now live in a left gutter outside
+   the plot. Fixed structurally, not by reordering draw calls.
+5. **Axis anchoring is consistent.** `Olağan` was pinned to y=20 while the other
+   two were gridline-relative, leaving it 45px from the line it named and the
+   top gridline unlabelled. The three values .85/.5/.15 were never ticks, they
+   were band centres, so the scale is now drawn as three named bands with the
+   labels at those centres and real boundaries at .7/.3.
+6. **The reference rule is drawn where the contract put it.** It was hardcoded
+   at `x(45)` while the reference change is a point carrying `referenceChange`.
+   On any match whose pool changed elsewhere the chart annotated a minute where
+   nothing happened. Its annotation moved from below the tick row up onto the
+   rule, and it is no longer drawn at all on a chart with no line.
+7. **Run breaks read as deliberate.** A pool change starts a new run, and with
+   no connector the line appeared broken. Both sides of a break now carry a cap.
+8. **Events are selectable.** The transparent plot rect was the last child and
+   swallowed every tap, so the densest marks on the chart could not be selected.
+   Events now have their own hit targets and highlight their rail row.
+
+Also: the card bypassed the type scale entirely — hand-placed 9pt and 10pt
+against the published 11pt floor, and `800` weights that Android resolves to
+another face. `typography.ts` says this scale exists because seventeen
+hand-placed sizes had already collapsed hierarchy once. The card now uses
+`typeScale` roles, and three regression tests guard the floor, the renderable
+weight set, the contract-anchored reference rule and the named-measurement rule.
+
+Reported, not applied:
+
+- **The two-series y-axis is a data-semantics question, not a presentation one.**
+  The journey line plots an `ORDINAL_UNCALIBRATED` index and the event rings plot
+  a normality proportion, on one axis. The card now discloses the scale in words,
+  but making the two commensurable — or separating them — is a contract decision
+  that needs its own scoping. Not assumed. `OBSERVED`.
+- **Sub-floor typography is not local to this card.** `StandingsModule`,
+  `PressureBalance`, `GamePulseCard`, `DecisionFilterChip` and
+  `BtbMascotOverlay` also hand-place 8–10pt. Out of this batch's bounded scope.
+- **`src/components/MatchPathChart.tsx` has no importers** anywhere in the app
+  — a second superseded renderer island of the kind `245b82f` removed. Cleanup,
+  separately scoped.
+
+Gates: Mobile typecheck clean, ESLint clean, 566/566 unit tests pass (three new).
+Expo Doctor fails on 16 out-of-date Expo SDK 57 packages — pre-existing
+dependency drift, unrelated to this batch, which touches no dependency file.
+Upgrading them changes the runtime and is scope expansion requiring its own
+approval and a fresh device verification; recorded as a blocker rather than
+taken.
+
+**Pilot artifact.** `arm64-v8a` release build from the verified working tree,
+Gradle `assembleRelease` successful in 5m 1s.
+
+```text
+btb-mobile-next-arm64-journey-redesign.apk
+54,337,105 bytes
+sha256 44B4D13F3CA457C1D5491FE69C56620CC36E72E74776F6E674AC1A2616E3C781
+signer sha256 fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
+arm64-v8a
+```
+
+The TASK-0080 guard read `assets/app.config` back out of the compiled APK and
+every field matched the request: api `https://api.surklase.com`, auth `pilot`,
+mocks `false`, Match Journey `LIVE`, Team Form `LIVE`, Jinx `SYNTHETIC`. Live
+Jinx was not requested; that engine stays deferred. `EXPO_PUBLIC_MOBILE_AUTH_MODE`
+and the three mode flags were absent from Process and User scope again and were
+supplied to the build process only, never persisted.
+
+The signing certificate is identical to `btb-mobile-next-arm64-pilot-4094b87.apk`,
+so it installs over the existing app without uninstalling and without losing
+data. Secret and log review proportionate to the batch: the diff introduces no
+`console`, no `process.env`, no network call and no `EXPO_PUBLIC` read, so the
+secret surface is unchanged from `4094b87`.
+
+Procedure step 8 cleanup deliberately NOT performed. The new APK has no physical
+device verification yet, so `btb-mobile-next-arm64-pilot-4094b87.apk` is kept as
+the rollback path. Nothing committed; this is a verified dirty checkpoint. Batch
+stays open pending the owner's device acceptance.
+
 ## 2026-09-10 — Retained journey accepted on the phone; TASK-0044 closed
 
 The owner made all four required device observations across a live match and

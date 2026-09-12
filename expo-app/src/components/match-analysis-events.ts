@@ -1,10 +1,35 @@
-import type { LiveContext, MatchPathContext } from "@/src/api/schemas";
+import type {
+  LiveContext,
+  MatchPathContext,
+  MatchPathPointKind
+} from "@/src/api/schemas";
 import { visibleEvents } from "./live-context-view";
 import { matchPathNodes } from "./match-path-chart";
 
 export interface MatchAnalysisEvent {
   key: string;
   kind: "RED_CARD" | "SURPRISE";
+  /**
+   * The contract's own kind, kept unnarrowed.
+   *
+   * `minute` is nullable and a HALF_TIME or FULL_TIME point routinely has none,
+   * so a minute axis has nowhere to put it. Before this was carried, the chart
+   * filtered every such event out and the pool events the card exists to show
+   * never appeared on it at all. The renderer derives their position from this
+   * rather than from parsing the label.
+   */
+  pathKind: MatchPathPointKind | null;
+  /**
+   * Whether this row is a thing that happened, or a scoreline assessed at the
+   * end of a period.
+   *
+   * A HALF_TIME or FULL_TIME point carries `eventSurprise = 1 - p(score)`: the
+   * improbability of the scoreline itself within the cohort. That is not an
+   * event going against the expected score, it is the expected score being
+   * graded, and presenting the two under one heading told the reader the whistle
+   * was a surprising occurrence.
+   */
+  group: "EVENT" | "PERIOD";
   label: string;
   minute: number | null;
   minuteLabel: string;
@@ -14,6 +39,12 @@ export interface MatchAnalysisEvent {
   stateNormality: number | null;
   cohortSize: number | null;
   confidence: number | null;
+  /**
+   * True where this event's own cohort is under the contract's published
+   * threshold. Carried from `MatchPathNode` rather than recomputed, so the
+   * view never invents a threshold of its own.
+   */
+  belowReliableCohort: boolean;
 }
 
 /**
@@ -51,6 +82,8 @@ export function matchAnalysisEvents(
       return {
         key: `path:${node.pointKey}`,
         kind: node.kind === "RED_CARD" ? "RED_CARD" : "SURPRISE",
+        pathKind: node.kind,
+        group: node.kind === "HALF_TIME" || node.kind === "FULL_TIME" ? "PERIOD" : "EVENT",
         label: node.label,
         minute: node.minuteLabel ? Number.parseInt(node.minuteLabel, 10) : null,
         minuteLabel: node.minuteLabel,
@@ -59,7 +92,8 @@ export function matchAnalysisEvents(
         eventSurprise: node.eventSurprise,
         stateNormality: node.stateNormality,
         cohortSize: node.cohortSize,
-        confidence: node.confidence
+        confidence: node.confidence,
+        belowReliableCohort: node.belowReliableCohort
       };
     });
 
@@ -69,6 +103,8 @@ export function matchAnalysisEvents(
       (event): MatchAnalysisEvent => ({
         key: `live:${event.eventKey}`,
         kind: "RED_CARD",
+        pathKind: null,
+        group: "EVENT",
         label:
           event.redCardType === "SECOND_YELLOW_RED"
             ? "İkinci sarıdan kırmızı"
@@ -84,7 +120,8 @@ export function matchAnalysisEvents(
         eventSurprise: null,
         stateNormality: null,
         cohortSize: null,
-        confidence: null
+        confidence: null,
+        belowReliableCohort: false
       })
     );
 

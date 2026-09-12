@@ -73,3 +73,34 @@ test("the latest measured Match Path point supplies the current normality summar
   assert.equal(signal?.stateNormality, 0.27);
   assert.equal(signal?.cohortSize, 41);
 });
+
+test("a period scoreline is not classified as an event", () => {
+  // match-path.js emits exactly three points - KICK_OFF, HALF_TIME, FULL_TIME -
+  // and sets eventSurprise only on the last two, as 1 - p(score). That is the
+  // improbability of the scoreline, not an occurrence that went against the
+  // expected score, so it must never be listed under the event heading.
+  const events = matchAnalysisEvents(
+    {
+      matchKey: "m",
+      contractVersion: "match-path.v1",
+      origin: "SYNTHETIC",
+      availability: "OK",
+      initialCohortSize: 200,
+      minimumReliableCohort: 30,
+      points: [
+        { pointKey: "m:ko", label: "Başlangıç 0-0", kind: "KICK_OFF", minute: null, cohortSize: 200, eventSurprise: null, stateNormality: null, confidence: null },
+        { pointKey: "m:ht", label: "İlk yarı 1-1", kind: "HALF_TIME", minute: null, cohortSize: 39, eventSurprise: 0.89, stateNormality: 0.11, confidence: 1 },
+        { pointKey: "m:rc", label: "Kırmızı kart", kind: "RED_CARD", minute: 45, cohortSize: 39, eventSurprise: 0.5, stateNormality: 0.4, confidence: 1 }
+      ]
+    } as never,
+    undefined
+  );
+  const halfTime = events.find((event) => event.pathKind === "HALF_TIME");
+  const redCard = events.find((event) => event.pathKind === "RED_CARD");
+  assert.equal(halfTime?.group, "PERIOD");
+  assert.equal(redCard?.group, "EVENT");
+  // The contract leaves period points without a minute, so the renderer needs
+  // the kind to place them; it must never fall back to parsing the label.
+  assert.equal(halfTime?.minute, null);
+  assert.equal(halfTime?.pathKind, "HALF_TIME");
+});

@@ -249,9 +249,35 @@ export function formatRowValue(
 }
 
 /** Spoken summary for one side, used only as the accessibility label. */
+/**
+ * Reading direction for a side's result strip.
+ *
+ * The home side is drawn oldest-first so that both strips put the most recent
+ * match nearest the centre of the card; the away side keeps newest-first. The
+ * spoken order must follow the drawn order or the two disagree.
+ */
+export type FormReadingOrder = "NEWEST_FIRST" | "OLDEST_FIRST";
+
+export function formResultsInReadingOrder(
+  side: TeamFormSide | null,
+  order: FormReadingOrder
+): FormResult[] | null {
+  const results = orderedFormResults(side);
+  if (!results) {
+    return null;
+  }
+  return order === "OLDEST_FIRST" ? [...results].reverse() : results;
+}
+
+export const formReadingOrderCaption: Record<FormReadingOrder, string> = {
+  NEWEST_FIRST: "En yeni → eski",
+  OLDEST_FIRST: "Eski → en yeni"
+};
+
 export function describeSideForAccessibility(
   side: TeamFormSide | null,
-  teamName: string | null | undefined
+  teamName: string | null | undefined,
+  order: FormReadingOrder = "NEWEST_FIRST"
 ): string {
   if (!side) {
     return `${teamName ?? "Takım"}, form bilgisi yok`;
@@ -260,8 +286,8 @@ export function describeSideForAccessibility(
     teamName ?? (side.side === "HOME" ? "Ev sahibi" : "Deplasman"),
     `${sampleLabel(side)}`,
     `${side.wins} galibiyet, ${side.draws} beraberlik, ${side.losses} mağlubiyet`,
-    orderedFormResults(side)?.length
-      ? `en yeniden eskiye: ${orderedFormResults(side)?.map((result) => formResultLabels[result].spoken).join(", ")}`
+    formResultsInReadingOrder(side, order)?.length
+      ? `${order === "OLDEST_FIRST" ? "eskiden en yeniye" : "en yeniden eskiye"}: ${formResultsInReadingOrder(side, order)?.map((result) => formResultLabels[result].spoken).join(", ")}`
       : null,
     side.formPpg === null ? null : `maç başına ${side.formPpg.toFixed(2)} puan`
   ]

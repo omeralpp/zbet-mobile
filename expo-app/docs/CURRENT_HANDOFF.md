@@ -1,10 +1,55 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-09-10
+Son güncelleme: 2026-09-12
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
+
+## 2026-09-12 — Match Journey rebuilt as one timeline; accepted on device
+
+The card is now a single minute axis carrying the score events, the pool
+reference and the pressure history together. Goals, red cards, the second-half
+pool change and score corrections are numbered marks in an event lane under the
+curve, the curve stays selectable, and the selected capture's reference pool
+contributes its three leading scores. The joining logic moved out of the
+renderer into `src/components/journey-story.ts`, so moments, vertices, pool
+leaders and the pressure reading are testable without React. A goal links only
+to its own recorded score transition — equal score after the event, within two
+minutes, capture claimed so a delayed capture cannot appear twice — and when
+nothing qualifies the card withholds the highlight and the pool box and says the
+pool effect was not measured rather than borrowing a neighbour's number. Full
+reasoning is in the `2026-09-12` entry of `docs/OBSERVATION_LOG.md`.
+
+**Accepted artifact, pinned.** `btb-mobile-next-arm64-match-story-preview-v2.apk`,
+sha256 `7FF9DA32E628BCA8BDAA75C321E14CB52084256E579085BF3B704872D3617A10`,
+54,350,649 bytes, `arm64-v8a`, Match Journey `LIVE`, Team Form `LIVE`, Jinx
+`SYNTHETIC`, pilot auth against `https://api.surklase.com` with mocks off. The
+owner reviewed it on Guangxi Hengchen – Yanbian Longding and accepted the
+design.
+
+**The earlier ARM64 preview from the same batch is pre-fix; do not reuse it.**
+`btb-mobile-next-arm64-match-story-preview.apk` (14:58) was staged before the
+interaction fixes landed, and the rebuild meant to replace it failed on a Gradle
+worker daemon while an x86 build ran concurrently, so only the x86 smoke package
+carried the final bundle until the serial v2 rebuild. Identity was settled by
+comparing the embedded `assets/index.android.bundle`: v2 is byte-identical to
+the x86 build and differs from the 14:58 preview. An artifact is identified by
+its bundle, not by its timestamp — a build staged while an edit is in flight
+carries older source and still lands with a newer clock.
+
+Gates at commit: typecheck clean, ESLint clean, 579/579 Mobile unit tests,
+tooling 13/13, brand contract met, `git diff --check` clean, no secret in the
+diff. No dependency file was touched, so the pre-existing 16 out-of-date Expo
+SDK 57 packages stand unchanged and Expo Doctor was not re-run.
+
+Scope stayed inside `zbet-mobile`: no BFF, CAP, ABAP, SAP, model, star or Toto
+change, and no deployment target exists for a client-only batch whose delivery
+route is the accepted APK. One cosmetic follow-up is recorded in the observation
+log: event markers a few minutes apart overlap because grouping keys on exact
+minute equality; both events stay separately reachable from the rail, and the
+proximity-based fix belongs in its own batch. Mode returns to `OBSERVATION`
+with no open cutover run.
 
 ## 2026-09-10 — TASK-0087 closed; the superseded MatchJourneyV2 island is removed
 

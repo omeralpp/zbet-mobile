@@ -16,7 +16,9 @@ import {
   formatRowValue,
   formRecord,
   formResultLabels,
-  orderedFormResults,
+  formReadingOrderCaption,
+  formResultsInReadingOrder,
+  type FormReadingOrder,
   resolveTeamFormState,
   sampleLabel,
   smallSampleNotice,
@@ -82,11 +84,13 @@ export function TeamFormCard({
       <View style={styles.records}>
         <RecordBlock
           align="flex-start"
+          order="OLDEST_FIRST"
           side={context?.home ?? null}
           team={homeTeam}
         />
         <RecordBlock
           align="flex-end"
+          order="NEWEST_FIRST"
           side={context?.away ?? null}
           team={awayTeam}
         />
@@ -103,17 +107,19 @@ export function TeamFormCard({
 
 function RecordBlock({
   align,
+  order,
   side,
   team
 }: {
   align: "flex-start" | "flex-end";
+  order: FormReadingOrder;
   side: TeamFormSide | null;
   team: string;
 }) {
-  const recent = orderedFormResults(side);
+  const recent = formResultsInReadingOrder(side, order);
   return (
     <View
-      accessibilityLabel={describeSideForAccessibility(side, team)}
+      accessibilityLabel={describeSideForAccessibility(side, team, order)}
       accessible
       style={[styles.recordBlock, { alignItems: align }]}
     >
@@ -133,7 +139,7 @@ function RecordBlock({
               );
             })}
           </View>
-          <Text style={styles.recordSample}>En yeni → eski</Text>
+          <Text style={styles.recordSample}>{formReadingOrderCaption[order]}</Text>
         </>
       ) : null}
       <Text style={styles.recordValue}>

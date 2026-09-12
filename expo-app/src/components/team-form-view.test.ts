@@ -7,6 +7,8 @@ import {
   formatRowValue,
   formRecord,
   formResultLabels,
+  formReadingOrderCaption,
+  formResultsInReadingOrder,
   orderedFormResults,
   isSmallSample,
   originNotice,
@@ -37,6 +39,26 @@ test("the result extension is optional for old v1 payloads and rejects invalid o
   assert.doesNotThrow(() => context());
   assert.throws(() => context({ home: side({ recentResults: ["W", "D", "L", "W", "W", "L"] }) }));
   assert.throws(() => context({ home: { ...side(), recentResults: ["UNKNOWN"] } }));
+});
+
+test("the home strip reads oldest to newest and the away strip keeps newest first", () => {
+  // Both sides are drawn mirrored around the card's centre, so reading each
+  // strip outward from the middle has to land on the most recent match. That is
+  // only true if the two sides run in opposite directions.
+  const value = side({ recentResults: ["L", "W", "D", "W", "W"] });
+  assert.deepEqual(formResultsInReadingOrder(value, "NEWEST_FIRST"), ["L", "W", "D", "W", "W"]);
+  assert.deepEqual(formResultsInReadingOrder(value, "OLDEST_FIRST"), ["W", "W", "D", "W", "L"]);
+  // Reversing must not mutate the contract's own array.
+  assert.deepEqual(orderedFormResults(value), ["L", "W", "D", "W", "W"]);
+  assert.equal(formResultsInReadingOrder(side({ recentResults: null }), "OLDEST_FIRST"), null);
+  assert.equal(formReadingOrderCaption.OLDEST_FIRST, "Eski → en yeni");
+  assert.equal(formReadingOrderCaption.NEWEST_FIRST, "En yeni → eski");
+});
+
+test("the spoken order follows the drawn order rather than the payload order", () => {
+  const value = side({ wins: 1, draws: 1, losses: 0, matchesSampled: 2, recentResults: ["D", "W"] });
+  assert.match(describeSideForAccessibility(value, "Home", "OLDEST_FIRST"), /eskiden en yeniye: galibiyet, beraberlik/);
+  assert.match(describeSideForAccessibility(value, "Away", "NEWEST_FIRST"), /en yeniden eskiye: beraberlik, galibiyet/);
 });
 
 function side(overrides: Partial<TeamFormSide> = {}): TeamFormSide {
