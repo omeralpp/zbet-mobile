@@ -97,7 +97,11 @@ test("events the contract left without a minute still reach the chart",async()=>
   // Position is derived from the contract's kind, never from the label text.
   assert.ok(source.includes("event.pathKind==='HALF_TIME'"));
   assert.ok(source.includes("event.pathKind==='FULL_TIME'"));
-  assert.ok(source.includes('plottableEvents'));
+  // The marker builder is handed the unfiltered moment list and decides for
+  // itself which events carry a mark; the rail renders every one of them, so an
+  // event without a minute is unplaced rather than dropped.
+  assert.ok(source.includes('markerGroups(moments,markerX,MARKER_GAP)'));
+  assert.ok(source.includes('moments.map('));
   assert.ok(!source.includes('analysisEvents.filter(event=>event.minute!==null)'));
   // An unmeasured event has no height on this scale and rides a named lane
   // instead of being dropped on the floor of the plot.

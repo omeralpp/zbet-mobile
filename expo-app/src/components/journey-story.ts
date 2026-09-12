@@ -65,3 +65,20 @@ export function pressureReading(point: MatchJourneyPoint | undefined) {
   if (value === 0) return 'Baskı dengede';
   return value > 0 ? 'Baskı havuz beklentisini destekliyor' : 'Baskı havuz beklentisine karşı';
 }
+
+/** Marks are drawn at a fixed pixel width, so two events a few minutes apart can
+ *  still collide on a phone-width axis while two far apart never do. Group by
+ *  rendered distance from each group's own anchor — not by equal minute, and not
+ *  by chaining from the previous member, so a run of near-neighbours cannot
+ *  swallow a span wider than one mark. Expects the minute-sorted output of
+ *  `journeyMoments`; unplaced events carry no mark and are skipped here. */
+export function markerGroups(moments: JourneyMoment[], position: (minute: number) => number, gap: number) {
+  const groups: JourneyMoment[][] = [];
+  for (const moment of moments) {
+    if (moment.minute === null) continue;
+    const anchor = groups.at(-1)?.[0];
+    if (anchor?.minute != null && position(moment.minute) - position(anchor.minute) < gap) groups.at(-1)!.push(moment);
+    else groups.push([moment]);
+  }
+  return groups;
+}

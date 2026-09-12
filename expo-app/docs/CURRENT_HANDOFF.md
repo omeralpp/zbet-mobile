@@ -6,6 +6,27 @@ Son güncelleme: 2026-09-12
 
 Aktif task: `BTB Mobile Next - Aktif`
 
+## 2026-09-12 — TASK-0103 closed; event marks group by rendered distance
+
+Match Journey event marks no longer merge only on an equal minute. `markerGroups`
+in `src/components/journey-story.ts` groups by rendered distance from each
+group's own anchor, using the renderer's own `markerX`, so near-neighbours merge
+on a phone axis and stay apart on a wide one, and a run of them cannot chain into
+one oversized mark. Each member keeps its own leader line to its true minute and
+the mark's number still matches the numbered rail. Detail in the matching
+`2026-09-12` entry of `docs/OBSERVATION_LOG.md`.
+
+Accepted on the phone on Hvidovre IF – Aalborg BK, where 25′/27′ and 45′/47′
+each collapsed to one mark. Current artifact:
+`btb-mobile-next-arm64-task0103-preview.apk`, sha256
+`BD88A23DEE2B800304AC2C69023F9A36BDE24BF90C1751CB97323D0382D5E434`, 54,350,513
+bytes, `arm64-v8a`. It supersedes the v3 preview for device work.
+
+Carried forward on the closed task, not in the queue: `MARKER_GAP` is sized for
+a single 20-wide mark, while a grouped mark is 32 wide, so two adjacent groups
+could still touch in a denser match. The owner chose to revisit it only if a real
+match shows it. Mode stays `OBSERVATION` with no open cutover run.
+
 ## 2026-09-12 — Standalone pressure panel removed; current artifact is v3
 
 `BASKI / Güncel baskı dengesi` is gone from the match detail screen. It

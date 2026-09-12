@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { mockRetainedJourney } from '../api/mock-data';
 import type { LiveContext } from '../api/schemas';
-import { journeyMoments, journeyVertices, poolLeaders, pressureReading } from './journey-story';
+import { journeyMoments, journeyVertices, markerGroups, poolLeaders, pressureReading } from './journey-story';
 
 const fixture=mockRetainedJourney('story');
 test('pool rebase stays at the reference minute and retains the previous level until then',()=>{
@@ -43,4 +43,22 @@ test('pressure absence is distinct from balance, and alignment is never a team a
   assert.equal(pressureReading({...p,pressureAlignment:0}),'Baskı dengede');
   assert.match(pressureReading({...p,pressureAlignment:-.3}),/beklentisine karşı/);
   assert.match(pressureReading({...p,pressureAlignment:.3}),/beklentisini destekliyor/);
+});
+const lane=(minutes:(number|null)[])=>journeyMoments([],{availability:'OK',timeline:minutes.map((minute,index)=>({eventKey:`e${index}`,kind:'GOAL' as const,minute}))});
+const phone=(minute:number)=>58+minute/90*224;
+const wide=(minute:number)=>58+minute/90*900;
+test('marks that would overlap are grouped, and the same pair on a wider axis is not',()=>{
+  assert.deepEqual(markerGroups(lane([42,46]),phone,26).map(g=>g.map(e=>e.key)),[['e0','e1']]);
+  assert.deepEqual(markerGroups(lane([42,46]),wide,26).map(g=>g.map(e=>e.key)),[['e0'],['e1']]);
+});
+test('grouping never chains, so a run of near neighbours cannot outgrow one mark',()=>{
+  assert.deepEqual(markerGroups(lane([10,18,26]),phone,26).map(g=>g.map(e=>e.key)),[['e0','e1'],['e2']]);
+});
+test('coincident events still share one mark at any scale, and unplaced events carry none',()=>{
+  assert.deepEqual(markerGroups(lane([90,90]),wide,26).map(g=>g.length),[2]);
+  assert.deepEqual(markerGroups(lane([null,null]),phone,26),[]);
+});
+test('every placed event appears exactly once, in minute order',()=>{
+  const moments=lane([5,7,40,null,88]);
+  assert.deepEqual(markerGroups(moments,phone,26).flat().map(e=>e.key),['e0','e1','e2','e4']);
 });

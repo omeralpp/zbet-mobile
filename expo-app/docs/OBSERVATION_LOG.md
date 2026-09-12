@@ -1,5 +1,65 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-12 — Event marks group by rendered distance, not by equal minute; TASK-0103 closed
+
+The lane merged marks only when two events shared the exact same minute, so
+events a few minutes apart each kept a full-width mark and the marks collided.
+The unit is wrong: a mark is 20 pixels and a minute is not, so whether two marks
+overlap depends on the rendered axis, never on the minute difference alone. On
+Guangxi Hengchen – Yanbian Longding four minutes was about ten pixels and the
+42′ goal sat on top of the 46′ reference change.
+
+`markerGroups` is now a pure function in `journey-story.ts`, handed the
+minute-sorted moments and the same `markerX` the renderer uses, so the grouping
+decision is made in the coordinate space it is about. Two properties are
+deliberate. It measures from each group's own **anchor**, never from the
+previous member, so a run of near-neighbours cannot chain into one mark spanning
+half a match — guarded by a test where 10′, 18′ and 26′ resolve to `[10,18]` and
+`[26]` rather than one group. And because the axis is an argument, the same pair
+groups on a phone and stays apart on a wide axis, which is also a test rather
+than a claim.
+
+Each member keeps its own leader line down to its true minute, so a shared mark
+never asserts that its events happened at one moment, and the mark's number
+still leads with the group's first event so it matches the numbered rail.
+
+**Accepted on the phone**, on a denser match than the one that produced the
+finding. Hvidovre IF – Aalborg BK carries six events in two tight clusters: the
+25′ red card with the 27′ goal became one `2+1` mark, inked red because a red
+card is in the group, and the 45′ goal with the 47′ second-half pool change
+became one `4+1`, inked bronze for the pool change. The 3′ and 74′ goals stayed
+single. Four marks where the old rule would have drawn six, two of them stacked.
+Selecting 01, 02 and 06 from the rail each lit the right mark, so grouping cost
+no precision.
+
+**One existing test was changed, which is worth stating plainly.**
+`match-journey.test.ts` asserted the literal string `plottableEvents` in the
+chart source, a name this change removes. That guard exists to stop the chart
+pre-filtering events by minute — the old defect where minute-less pool events
+never reached the renderer. It now asserts `markerGroups(moments,markerX,MARKER_GAP)`
+and the rail's `moments.map(`: the unfiltered list reaches the marker builder,
+and every event still gets a rail target. Same guarantee, read off what the code
+now says; the negative assertion against the old filter is untouched.
+
+**Residual, accepted rather than fixed.** `MARKER_GAP` is 26, derived from a
+single 20-wide mark, but a grouped mark is 32 wide and two adjacent groups need
+roughly 36 pixels between centres. In this match they land about 36 apart and
+read cleanly. A width-aware merge across adjacent groups is the exact fix; the
+owner chose to leave it until a real match shows the collision rather than spend
+another build-and-check cycle on a case neither of us has seen on screen. Noted
+on the closed task so it is findable without sitting in the recommendation
+queue.
+
+Artifact: `btb-mobile-next-arm64-task0103-preview.apk`, sha256
+`BD88A23DEE2B800304AC2C69023F9A36BDE24BF90C1751CB97323D0382D5E434`, 54,350,513
+bytes, `arm64-v8a`, Match Journey `LIVE`, Team Form `LIVE`, Jinx `SYNTHETIC`,
+pilot auth against `https://api.surklase.com` with mocks off.
+
+Gates: typecheck clean, ESLint clean, 583/583 Mobile unit tests (579 plus four
+for the new grouping), tooling 13/13, brand contract met. No contract, BFF, SAP
+or dependency change, and no deployment target — the change is Expo client
+source whose delivery route is the APK above.
+
 ## 2026-09-12 — The standalone pressure panel is removed; Maçın Yolu carries it
 
 The match detail screen showed current pressure twice. `BASKI / Güncel baskı

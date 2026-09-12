@@ -8,11 +8,13 @@ import { CaveatLine, OriginBadge } from './IntelligenceNotice';
 import { journeyPointLabel } from './match-journey';
 import { latestMatchPathSignal, matchAnalysisEvents, type MatchAnalysisEvent } from './match-analysis-events';
 import { lowCohortNotice, normalityLabel, resolveMatchPathState, surpriseLabel } from './match-path-chart';
-import { journeyMoments, journeyVertices, poolLeaders, pressureReading } from './journey-story';
+import { journeyMoments, journeyVertices, markerGroups, poolLeaders, pressureReading } from './journey-story';
 import { derivePressureBalance } from '@/src/utils/pressure-balance';
 
 const TOP=32, HEIGHT=150, BOTTOM=TOP+HEIGHT, LEFT=58, RIGHT=18;
 const LANE_Y=214, PRESSURE_Y=279, CHART_HEIGHT=328;
+// A single mark is 20 wide, so centres closer than this touch on the axis.
+const MARKER_GAP=26;
 const svgLabel={fontSize:11,fontWeight:'500',fontFamily:'sans-serif'} as const;
 const bands=[{label:'Olağan',level:.85},{label:'Sıra dışı',level:.5},{label:'Sürpriz',level:.15}];
 
@@ -66,11 +68,11 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
     const nearest=minute===null?undefined:drawn.reduce<MatchJourneyPoint|undefined>((best,p)=>!best||Math.abs(p.plotMinute!-minute)<Math.abs(best.plotMinute!-minute)?p:best,undefined);
     if(nearest) setSelectedKey(nearest.key);
   };
-  // Every event keeps a touch target in the horizontal rail; coincident SVG marks
-  // are numbered and never become the only way to select an event.
-  const plottableEvents=moments.filter(e=>e.minute!==null);
-  const markerGroups=plottableEvents.filter((e,i,all)=>all.findIndex(other=>other.minute===e.minute)===i);
+  // Every event keeps a touch target in the horizontal rail; marks that would
+  // overlap are grouped and numbered, and never become the only way to select an
+  // event.
   const markerX=(minute:number)=>Math.max(LEFT+14,Math.min(width-RIGHT-14,x(minute)));
+  const groups=markerGroups(moments,markerX,MARKER_GAP);
   const capturedPressure=drawn.filter(p=>p.pressureAlignment!==null);
   const selectedIndex=selected?drawn.indexOf(selected):-1;
   return <View style={story.card} onLayout={event=>setWidth(Math.max(180,event.nativeEvent.layout.width-32))}>
@@ -100,13 +102,14 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
       {highlight?.level!=null && highlight.plotMinute!==null?<G><Line x1={x(highlight.plotMinute)} x2={x(highlight.plotMinute)} y1={TOP} y2={BOTTOM} stroke={colors.textMuted} strokeOpacity={.4}/><Circle cx={x(highlight.plotMinute)} cy={y(highlight.level)} r={9} fill={colors.blue} opacity={.2}/><Circle cx={x(highlight.plotMinute)} cy={y(highlight.level)} r={5} fill={colors.backgroundElevated} stroke={colors.text} strokeWidth={2}/></G>:null}
       <SvgText x={LEFT-8} y={LANE_Y+4} textAnchor="end" fill={colors.textMuted} {...svgLabel}>Olaylar</SvgText>
       <Line x1={LEFT} x2={width-RIGHT} y1={LANE_Y} y2={LANE_Y} stroke={colors.border}/>
-      {markerGroups.map(event=>{
-        const members=plottableEvents.filter(other=>other.minute===event.minute);
-        const index=moments.indexOf(event)+1;
+      {groups.map(members=>{
+        const lead=members[0]!;
+        const cx=markerX(lead.minute!);
+        const index=moments.indexOf(lead)+1;
         const markerLabel=members.length===1?String(index):`${index}+${members.length-1}`;
-        const ink=members.some(member=>member.kind==='RED_CARD')?colors.red:event.kind==='POOL_CHANGE'?colors.bronze:event.side==='AWAY'?colors.bronze:colors.blue;
+        const ink=members.some(member=>member.kind==='RED_CARD')?colors.red:lead.kind==='POOL_CHANGE'?colors.bronze:lead.side==='AWAY'?colors.bronze:colors.blue;
         const active=members.some(member=>member.key===activeEventKey);
-        return <G key={event.key}><Line x1={x(event.minute!)} x2={markerX(event.minute!)} y1={BOTTOM+4} y2={LANE_Y-10} stroke={ink} opacity={.5}/><Rect x={markerX(event.minute!)-(members.length>1?16:10)} y={LANE_Y-10} width={members.length>1?32:20} height={20} rx={10} fill={active?ink:colors.backgroundElevated} stroke={ink} strokeWidth={1.5}/><SvgText x={markerX(event.minute!)} y={LANE_Y+4} textAnchor="middle" fill={active?colors.background:colors.text} {...svgLabel}>{markerLabel}</SvgText></G>;
+        return <G key={lead.key}>{members.map(member=><Line key={`lead:${member.key}`} x1={x(member.minute!)} x2={cx} y1={BOTTOM+4} y2={LANE_Y-10} stroke={ink} opacity={.5}/>)}<Rect x={cx-(members.length>1?16:10)} y={LANE_Y-10} width={members.length>1?32:20} height={20} rx={10} fill={active?ink:colors.backgroundElevated} stroke={ink} strokeWidth={1.5}/><SvgText x={cx} y={LANE_Y+4} textAnchor="middle" fill={active?colors.background:colors.text} {...svgLabel}>{markerLabel}</SvgText></G>;
       })}
       <SvgText x={LEFT} y={263} fill={colors.textMuted} {...svgLabel}>Baskı → havuz beklentisi</SvgText>
       <Line x1={LEFT} x2={width-RIGHT} y1={PRESSURE_Y} y2={PRESSURE_Y} stroke={colors.border}/>
@@ -117,7 +120,7 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
         const nearest=drawn.reduce<MatchJourneyPoint|undefined>((best,p)=>!best||Math.abs(x(p.plotMinute!)-px)<Math.abs(x(best.plotMinute!)-px)?p:best,undefined);
         if(nearest) pickPoint(nearest);
       }}/>
-      {markerGroups.map(event=><Circle key={`hit:${event.key}`} cx={markerX(event.minute!)} cy={LANE_Y} r={20} fill="transparent" onPress={()=>pickMoment(event.key)}/>)}
+      {groups.map(members=><Circle key={`hit:${members[0]!.key}`} cx={markerX(members[0]!.minute!)} cy={LANE_Y} r={20} fill="transparent" onPress={()=>pickMoment(members[0]!.key)}/>)}
     </Svg>
     </View>
     <Text style={story.hint}>Çizgi: havuz uyumu, kazanma olasılığı değil. Bir ana dokun.</Text>
