@@ -45,6 +45,46 @@ these bounded changes; deployment remains a later, separately authorized task.
 
 `btb next cutover start sonlandı`
 
+## 2026-09-12 — Pilot BFF restarted on the pushed Jinx code; public route live
+
+Completing the rollout the previous session started and could not finish. The
+owner had approved the controlled pilot restart explicitly, production excluded.
+
+**The BFF was down when this began.** The previous listener, PID `23048`, had
+already been stopped, and nothing replaced it: no process held `127.0.0.1:4004`
+and no `node` process was running at all. The pilot backend was therefore fully
+offline, not merely missing Jinx.
+
+Restarted through the existing `zbet-cap/scripts/start-mobile-bff.ps1 -AuthMode
+pilot`, from the pushed tree. **PID `23048` -> `2416`.** `BTB_MOBILE_AUTH_MODE` is
+not set at User scope, so the script's own `-AuthMode` parameter supplies it; the
+pilot key hash and `BTB_JINX_LLM_API_KEY` were already present at User scope and
+were not created, changed or read into any log.
+
+| Check | Result |
+| --- | --- |
+| `zbet-cap` at restart | `3070cc1`, clean, equal to `origin/main` |
+| Local `/health` | `200` |
+| Public `/health` via Cloudflare | `200` |
+| Live provider smoke | route `200`, upstream `200`, `DEGRADED`, confidence `0.5` |
+| Public `jinx-outlook` | `401` — identical to the working `team-form` route |
+
+The last row is the one that answers the reported fault. Before the restart the
+public host had no such route; `401` rather than `404` means the endpoint is now
+served and only wants the credential the device already holds.
+
+Smoke detail, match `2026-09-12:3125444:19:30:00`: superLogs `OK` with 4
+decisions and `post_score_pool` 11; matchPath `OK`, cohort 258 against a minimum
+of 30, 3 points, **no capture time**; teamForm `OK` at 5/5 against a minimum of 5.
+`DEGRADED` at `0.5` is the correct reading rather than a fault: the missing path
+timestamp is explicitly uncertain and the pool publishes no reliable floor, so
+`HIGH` is withheld by design.
+
+**Still pending: physical phone acceptance.** The route is live and the analyst
+answers, but the reading has not been seen on the device. Nothing here records
+device acceptance, and the Expo Doctor 19/20 failure from the batch stands
+unchanged.
+
 ## 2026-09-12 — Observation queue cleared to zero; Jinx prepared to its gate
 
 **Read this first if you are picking the thread up cold.** Nothing here is
