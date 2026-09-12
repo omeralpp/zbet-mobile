@@ -55,6 +55,27 @@ flipped off `SYNTHETIC`.
    this is a one-file change.
 4. Rollout and deployment: separate approval. Never inferred from a pilot.
 
+## The one guard worth building in from the start
+
+The surface already refuses to show a raw percentage: `confidenceBand` collapses
+confidence to `LOW` / `MEDIUM` / `HIGH` precisely because "a percentage on an
+informative reading invites arithmetic the reading cannot support", and
+`uncertaintyNote` is rendered and never summarised away. That absorbs most of the
+known calibration error, since the `>= 0.65` boundary sits near a region that
+realises about `0.60`.
+
+One case is not absorbed. `base_prob` can reach `100.0` from a single supporting
+row, and the exactly-`100` bin realises **`40.62%`** on the forward evidence. Fed
+straight through, that reading renders as `Yüksek güven` on something right about
+two times in five — the worst possible pairing of tone and truth.
+
+The fix does not wait on `M14`, because the cause is not calibration but sample
+size. **Do not let a small `post_score_pool` reach the `HIGH` band.** Gate it on
+pool size in the route, or hand the band a confidence already damped by pool, and
+say so in `uncertaintyNote` when it fires. One condition, written once, at the
+point the route is first built — far cheaper than retrofitting it after the
+readings have been trusted.
+
 ## Do not
 
 - Do not surface an outlook that appeared without the user asking.
