@@ -1,5 +1,31 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-12 — Owner device observation session: no defects found
+
+The owner observed the application on the physical device and reported that
+the device observations are all fine and that no problem is visible at present.
+
+This is recorded as a **negative result, which is a result**: a sweep that finds
+nothing is evidence about the build's health, and the lane has no new `OBSERVED`
+row as a consequence. `BTB Mobile Next` therefore stays in observation with `0`
+actionable rows — the correct outcome, not a stalled one.
+
+**What this does not do, stated so the record is not overread.** It is a
+session-level report, not per-row acceptance. Several rows still carrying
+`READY` are waiting on evidence a normal session does not produce: `NXT-OBS-001`
+needs a real notification to arrive and the widget to survive the app round
+trip, `NXT-OBS-087` needs a Super notification below and above the chosen star
+threshold, and `NXT-OBS-088` needs both widgets redrawn on the launcher after a
+theme switch. Those are triggered conditions, not things a general look
+confirms. No row status was changed on the strength of this entry; converting a
+`READY` row to accepted remains a per-row decision with its own evidence, the
+way `NXT-OBS-147` was accepted on `2026-09-03`.
+
+The APK in use is `btb-mobile-next-arm64-task0103-preview.apk`, built
+`2026-09-12 16:32`, kept deliberately through that day's artifact cleanup.
+
+No code was changed, no status was advanced, and this entry approves nothing.
+
 ## 2026-09-12 — Event marks group by rendered distance, not by equal minute; TASK-0103 closed
 
 The lane merged marks only when two events shared the exact same minute, so
