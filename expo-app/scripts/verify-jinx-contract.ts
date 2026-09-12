@@ -38,7 +38,7 @@ async function main() {
       data.matchPath.initialCohortSize = 0; data.matchPath.points = null;
     }
     const assessment = assessSources(matchKey, data, Date.parse(capturedAt));
-    assert.ok(assessment.uncertaintyNote.length <= 400, `${variant}: caveat exceeds reader limit`);
+    assert.ok(assessment.uncertaintyNote.length <= 1200, `${variant}: caveat exceeds reader limit`);
     const dto = verify(await service().analyze(matchKey, data));
     assert.equal(dto.availability, "DEGRADED", variant);
     checked++;
@@ -48,6 +48,6 @@ async function main() {
     assert.notEqual(live.availability, "UNAVAILABLE", "real provider must return a visible, validated reading");
     checked++;
   }
-  process.stdout.write(`PASS: ${checked} Jinx payloads consumed by unchanged Mobile schema and presentation guards; idle remains idle.\n`);
+  process.stdout.write(`PASS: ${checked} Jinx payloads consumed by the existing Mobile schema and current presentation guards; idle remains idle.\n`);
 }
 main().catch((error: unknown) => { console.error(error); process.exitCode = 1; });

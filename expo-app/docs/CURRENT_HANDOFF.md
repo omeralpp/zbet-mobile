@@ -1,10 +1,31 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-09-12
+Son güncelleme: 2026-09-13
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
+
+## 2026-09-13 — TASK-0011 round 2 validated; pilot restart and APK next
+
+The owner authorized the continued M10 exception, all three repo commits/pushes,
+controlled restart of the existing pilot BFF, public checks and one final ARM64
+APK. Production is excluded. Seven existing sources now feed concrete Turkish
+football commentary; source-specific caveats, no-advice/no-prediction rules,
+numeric validation and the small-pool confidence guard remain in force.
+
+Pre-restart checks passed: Mobile type/lint/583 tests/13 tooling/brand, BFF
+tests/build, 21 focused analyst tests and seven fixture/real contract checks.
+**Doctor remains FAILED at 19/20**, the known 16 Expo patch mismatches.
+Form strips were confirmed intentionally mirrored and retained under the owner's
+conditional instruction. The owner reports that the first reading was seen on
+the phone; this does not constitute acceptance of the new round 2 APK.
+
+Record: [JINX_ANALYST_ROUND2_2026-09-13.md](JINX_ANALYST_ROUND2_2026-09-13.md).
+Next: commit/push the batch, restart from the exact pushed BFF SHA using
+`start-mobile-bff.ps1 -AuthMode pilot` (User-scope auth mode is absent), verify
+local/public health and public Jinx, record PID change, then build/deliver the
+ARM64 APK and commit the final rollout evidence. All these steps are authorized.
 
 ## 2026-09-12 — TASK-0011 local analyst implemented; commit/push pending
 

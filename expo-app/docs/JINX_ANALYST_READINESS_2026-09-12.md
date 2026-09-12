@@ -1,5 +1,10 @@
 # Jinx Analyst — Readiness at the M10 Gate
 
+**Round 2 authorized on 2026-09-13:** the owner extended the exception to seven
+existing sources, football commentary, all commits/pushes, controlled pilot
+restart and final ARM64 delivery. Gemini is unchanged; production remains excluded.
+Current record: [round 2](JINX_ANALYST_ROUND2_2026-09-13.md).
+
 **Superseded for the local TASK-0011 batch on 2026-09-12:** the owner explicitly
 widened M10 to implement the three-reader consistency analyst, select the
 provider/model/env key and build one ARM64 pilot APK. Deployment and rollout

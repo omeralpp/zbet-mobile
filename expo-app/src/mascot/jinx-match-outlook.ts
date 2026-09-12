@@ -78,7 +78,8 @@ export function acceptBody(candidate: string | null | undefined) {
 export function acceptUncertaintyNote(
   candidate: string | null | undefined
 ): string {
-  return acceptOutlookText(candidate, maxBodyLength) ?? informativeOnlyNotice;
+  // Seven independent evidence sources can each need a named caveat.
+  return acceptOutlookText(candidate, 1200) ?? informativeOnlyNotice;
 }
 
 /**
