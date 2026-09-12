@@ -6,6 +6,75 @@ Son güncelleme: 2026-09-12
 
 Aktif task: `BTB Mobile Next - Aktif`
 
+## 2026-09-12 — Observation queue cleared to zero; Jinx prepared to its gate
+
+**Read this first if you are picking the thread up cold.** Nothing here is
+approval. `TASK-0011` is still `BLOCKED` at `M10` with risk `DEPLOYMENT`.
+
+### Where Jinx actually stops
+
+The boundary is one route, not a project. Mobile is finished and already calls
+`GET /v1/btb/matches/{key}/jinx-outlook` (`src/api/http-mobile-api.ts:171`)
+against `jinxMatchOutlookSchema` (`src/api/schemas.ts:713`), rendered by
+`src/components/AskJinxCard.tsx`, with validators, confidence bands, freshness
+and uncertainty states in `src/mascot/jinx-match-outlook.ts`, and the
+synthetic/real switch `runtimeConfig.mobileIntelligence` defaulting to `OFF`.
+
+**That route exists nowhere in `zbet-cap`.** The string `jinx-outlook` does not
+appear in the repository. Mobile calls an endpoint that was never implemented and
+runs the synthetic branch today. So the first step at the gate is one Mobile BFF
+route satisfying the existing schema, fixture-backed first; Mobile needs no
+change to consume it. Full inventory, work order and the standing prohibitions
+are in `docs/JINX_ANALYST_READINESS_2026-09-12.md`.
+
+### Why the gate is still shut
+
+`M10` waits on `M9`, which waits on `M14`. `M14` criterion 2 held `n = 32` of the
+required `96` on `2026-09-12` and accrues about two rows a day, so mid-October is
+the planning figure. The floor is pre-registered in
+`zbet-abap/m14-calibration/CRITERION_2_STOPPING_RULE_2026-09-10.md` and may not be
+lowered after the fact. `M9` must precede the analyst because `base_prob` feeds
+every rating: an analyst built on an uncalibrated probability inherits the defect
+and sounds confident about it.
+
+### Observation state
+
+The queue is `0 READY`. 45 rows were accepted on the owner's long-running clean
+device evidence, and the last two closed on evidence rather than observation:
+
+- `NXT-OBS-087` asked for proof the legacy `BTB` FCM topic cannot bypass the user
+  star threshold. Proof produced: FCM publishing exists in exactly two places,
+  `zbet-cap/srv/fcm-service.js` (topic) and `srv/notifications/firebase-provider.js`
+  (device token), both through `buildFcmMessage`, which assigns no FCM
+  `notification` block on any branch. Every producer is data-only, so the app
+  always runs and the threshold always applies. **Do not remove the subscription**
+  — `fcm-service.js` publishes to that topic, so it is the live delivery path.
+- `NXT-OBS-090` closed in two halves. `updatedAt` is implemented at
+  `app/toto/[gcNo]/[version].tsx:183`. The prize half was verified read-only:
+  `theo_prize` and the per-tier `*_win_prize` fields exist but are `STRING` with
+  no currency anywhere, so the typed nullable amount plus currency the row
+  specified cannot be built from this source. Hiding the section is correct and is
+  current behaviour. The contract question is Toto-owned and is `TASK-0106`.
+
+10 rows stay `DEFERRED` on external gates: SAP DDIC/CDS activation, an OIDC
+provider, the Android App Link cutover, and the missing participant-ID chain.
+
+### Repositories, all clean and in sync at handoff
+
+`zbet-mobile` `master`, `btb-codex` / `BTB Logs` / `zbet-abap` / `zbet-cap` /
+`btb-assets` / `zbet-ui` on `main`. Nothing uncommitted, nothing unpushed.
+
+Current artifact: `btb-mobile-next-arm64-task0103-preview.apk`, built
+`2026-09-12 16:32`. An x86 emulator build is kept alongside it; the other nine
+historical APKs were deleted in that day's cleanup.
+
+### Elsewhere, so it is not rediscovered
+
+The `zbet-abap` `TASK-0099` patch is **withdrawn from the working tree** and
+parked at `.codex-artifacts/task-0099/direction-a-get-odds-probs.patch`, outside
+version control. `BTB Logs/toto_model_lab/GC357_V2_REPLAY_RUNBOOK_2026-09-12.md`
+carries the `2026-09-15` Toto session, which is independent of everything above.
+
 ## 2026-09-12 — TASK-0103 closed; event marks group by rendered distance
 
 Match Journey event marks no longer merge only on an equal minute. `markerGroups`
