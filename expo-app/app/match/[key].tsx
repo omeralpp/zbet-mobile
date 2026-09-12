@@ -42,7 +42,6 @@ import { MatchTimelineCard } from "@/src/components/MatchTimelineCard";
 import { TeamFormCard } from "@/src/components/TeamFormCard";
 import { LiveContextFreshness } from "@/src/components/LiveContextNotice";
 import { StandingsModule } from "@/src/components/StandingsModule";
-import { PressureBalance } from "@/src/components/PressureBalance";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { RatioResultsChart } from "@/src/components/RatioResultsChart";
 import { Screen } from "@/src/components/Screen";
@@ -434,30 +433,6 @@ export default function MatchDetailScreen() {
             away={match.awayRedCards}
             home={match.homeRedCards}
             label="Kırmızı kart"
-          />
-        </View>
-      </LiveDetailPanel>
-    ),
-    pressure: (
-      <LiveDetailPanel
-        eyebrow="BASKI"
-        id="pressure"
-        title="Güncel baskı dengesi"
-      >
-        <View style={styles.statsCard}>
-          <SurfaceMaterial radius={radii.lg} />
-          <PressureBalance
-            label="Güncel maç verisi"
-            pressureDiff={
-              match.pressureSource === "CURRENT_MATCH"
-                ? match.pressureDiff
-                : null
-            }
-            totalPressure={
-              match.pressureSource === "CURRENT_MATCH"
-                ? match.totalPressure
-                : null
-            }
           />
         </View>
       </LiveDetailPanel>

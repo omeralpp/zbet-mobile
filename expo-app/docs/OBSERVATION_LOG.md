@@ -1,5 +1,49 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-12 — The standalone pressure panel is removed; Maçın Yolu carries it
+
+The match detail screen showed current pressure twice. `BASKI / Güncel baskı
+dengesi` rendered `PressureBalance` over `match.totalPressure` and
+`match.pressureDiff`, and the Maçın Yolu card's own `GÜNCEL BASKI` block derives
+the same balance from the same two fields, beside a pressure-history strip that
+gives it a time axis the panel never had. The owner called it redundant and it
+was: one measurement, two cards, nothing to tell them apart.
+
+Removed: the panel in `app/match/[key].tsx`, and the `pressure` id from
+`liveDetailModules` in `src/layout/module-registry.ts` so the slot does not
+linger as a dead entry in the canonical order. No migration is needed — layout
+reconciliation already discards stored ids that are no longer canonical, which
+is what returns anyone who had reordered or collapsed that module to a
+consistent list. `PressureBalance` itself stays: the Super decision screen still
+renders it as `Karar anı baskı dengesi`.
+
+**What this costs, stated now rather than discovered later.** Maçın Yolu mounts
+only when the build's `MATCH_PATH_INTELLIGENCE` setting is on, while the removed
+panel was unconditional. In a build with that engine `OFF` the match detail
+screen now carries no current-pressure reading at all. The pilot APK is `LIVE`,
+so nothing is lost on the owner's device; if an `OFF` build ever has to ship,
+the fallback must be added deliberately.
+
+Verified in the artifact, not only in source. Probing the embedded bundle of the
+previous build against this one, `Güncel baskı dengesi` and `Güncel maç verisi`
+drop from one occurrence to zero while `GÜNCEL BASKI` and `Baskı → havuz
+beklentisi` stay at one each: the separate panel is gone and the journey's own
+pressure is untouched. That distinction is the whole point of the change, so it
+was worth proving rather than assuming.
+
+Artifact: `btb-mobile-next-arm64-match-story-preview-v3.apk`, sha256
+`8E7D81BFD51E9F4FF7290765A92C80B09DF386D3698CCD735907A2413E0AC6EB`, 54,350,121
+bytes, `arm64-v8a`, Match Journey `LIVE`, Team Form `LIVE`, Jinx `SYNTHETIC`,
+pilot auth against `https://api.surklase.com` with mocks off.
+
+Accepted on the phone: the owner installed v3 and reported no problem, which
+closes the device gate for this removal.
+
+Gates: typecheck clean, ESLint clean, 579/579 Mobile unit tests, tooling 13/13,
+brand contract met; no test depended on the removed panel. No contract, BFF, SAP
+or dependency change, and no deployment target — the changed files are Expo
+client source whose delivery route is the APK above.
+
 ## 2026-09-12 — One timeline for goals, pool and pressure; and a preview that shipped without its own fix
 
 The card is rebuilt around a single minute axis. Goals, red cards, the

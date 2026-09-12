@@ -6,6 +6,25 @@ Son güncelleme: 2026-09-12
 
 Aktif task: `BTB Mobile Next - Aktif`
 
+## 2026-09-12 — Standalone pressure panel removed; current artifact is v3
+
+`BASKI / Güncel baskı dengesi` is gone from the match detail screen. It
+duplicated the `GÜNCEL BASKI` block inside Maçın Yolu, which derives the same
+balance from the same `match.totalPressure` and `match.pressureDiff` fields and
+adds the pressure-history strip. The `pressure` id is also removed from
+`liveDetailModules`; layout reconciliation drops it from stored preferences, so
+no migration is involved. `PressureBalance` remains in use on the Super decision
+screen. Detail in the matching `2026-09-12` entry of `docs/OBSERVATION_LOG.md`.
+
+Current artifact: `btb-mobile-next-arm64-match-story-preview-v3.apk`, sha256
+`8E7D81BFD51E9F4FF7290765A92C80B09DF386D3698CCD735907A2413E0AC6EB`, 54,350,121
+bytes, `arm64-v8a`. It supersedes the v2 preview for device work; v2 stays the
+artifact the journey redesign itself was accepted from.
+
+Carried forward: Maçın Yolu mounts only when `MATCH_PATH_INTELLIGENCE` is on, so
+a build with that engine `OFF` now has no current-pressure reading on match
+detail. Mode stays `OBSERVATION` with no open cutover run.
+
 ## 2026-09-12 — Match Journey rebuilt as one timeline; accepted on device
 
 The card is now a single minute axis carrying the score events, the pool

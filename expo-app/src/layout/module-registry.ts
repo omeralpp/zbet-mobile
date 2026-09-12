@@ -25,7 +25,6 @@ export const liveDetailModules = [
   "standings",
   "odds",
   "statistics",
-  "pressure",
   "scoreDistribution"
 ] as const;
 
