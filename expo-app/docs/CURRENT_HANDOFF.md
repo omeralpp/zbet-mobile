@@ -6,6 +6,45 @@ Son güncelleme: 2026-09-12
 
 Aktif task: `BTB Mobile Next - Aktif`
 
+## 2026-09-12 — TASK-0011 local analyst implemented; commit/push pending
+
+Mode: **OBSERVATION**. Empty observation backlog; the owner explicitly supplied
+TASK-0011 and widened M10 for this local batch. That authorization supersedes the
+readiness gate below for this scope only. M9/M14 and TASK-0101/0102 are unchanged.
+Full details: [JINX_ANALYST_BATCH_2026-09-12.md](JINX_ANALYST_BATCH_2026-09-12.md).
+
+- The missing Jinx route now composes the three existing BFF readers. Public
+  contracts and Mobile runtime/UI code are unchanged. Provider: Gemini
+  `gemini-3.5-flash-lite`; server-only environment key; no persistent environment
+  or runtime change. Wording observes consistency, not correctness or advice.
+- Confidence derives from source availability, age and each published sample
+  threshold, never base probability. Both form sides are checked independently.
+  Null/empty paths differ. Match Path lacks a capture timestamp and the decision
+  source lacks a published post-score-pool reliability floor: the note names
+  both and HIGH is withheld. Tiny/missing pools cannot exceed LOW. Only period
+  context is available; no event-surprise claim is allowed.
+- Fixture and real direct-OData/provider local HTTP checks passed through the
+  unchanged Mobile guards. Mobile check, BFF tests/build/syntax/lint, Android
+  bundle and ARM64 build passed. **Doctor remains failed: 19/20, the same 16 Expo
+  patch mismatches already known.** No connected phone; device acceptance pending.
+
+Final artifact: `.codex-artifacts/btb-mobile-next-arm64-jinx-task0011.apk`,
+54,350,505 bytes, `arm64-v8a`, SHA-256
+`76AC6965A58C20AF5CAE0A575B129580C5E23F59629A4137801936CFDB99E854`.
+Android v2 pilot signature verified; all 1,321 entries scanned with no server
+secrets or provider config. Journey/Form/Jinx are LIVE, mocks off, pilot auth,
+`https://api.surklase.com`. **No rollout occurred: that public host still lacks
+the new route, so the APK alone does not enable real Jinx there.**
+
+Dirty checkpoint: `zbet-cap` main `1ea2d79` (route, analyst, internal evidence,
+tests, smoke runner); `zbet-mobile` master `9c83708` (build-mode guard, contract
+verifier, readiness/batch/handoff/archive docs); `btb-codex` main `95eaf95`
+(TASK-0011 and cutover-run records). Nothing staged, committed or pushed.
+TASK-0011 stays IN_PROGRESS. Next step: separate owner commit/push approval for
+these bounded changes; deployment remains a later, separately authorized task.
+
+`btb next cutover start sonlandı`
+
 ## 2026-09-12 — Observation queue cleared to zero; Jinx prepared to its gate
 
 **Read this first if you are picking the thread up cold.** Nothing here is

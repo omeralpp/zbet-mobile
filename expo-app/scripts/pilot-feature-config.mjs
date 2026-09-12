@@ -34,11 +34,8 @@ export function resolvePilotFeatureModes(environment) {
     jinx: requireMode(environment, "jinx")
   };
 
-  if (modes.jinx === "LIVE") {
-    throw new Error(
-      "Live Jinx intelligence is deferred and is not approved for the owner pilot APK."
-    );
-  }
+  // TASK-0011 scoped owner authorization: LIVE may be built for the physical
+  // pilot. This selects the existing pull-only client, never deploys its BFF.
 
   return modes;
 }

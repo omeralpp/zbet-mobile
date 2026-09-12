@@ -55,14 +55,13 @@ test("Match Journey, Team Form and Jinx keep independent modes", () => {
   );
 });
 
-test("the deferred live Jinx engine cannot enter an owner pilot APK", () => {
-  assert.throws(
-    () =>
+test("the authorized read-only Jinx engine can enter an owner pilot APK", () => {
+  assert.equal(
       resolvePilotFeatureModes({
         ...configuredEnvironment,
         EXPO_PUBLIC_MOBILE_INTELLIGENCE: "live"
-      }),
-    /Live Jinx intelligence is deferred/
+      }).jinx,
+    "LIVE"
   );
 });
 

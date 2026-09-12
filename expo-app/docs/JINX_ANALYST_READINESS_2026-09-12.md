@@ -1,5 +1,13 @@
 # Jinx Analyst — Readiness at the M10 Gate
 
+**Superseded for the local TASK-0011 batch on 2026-09-12:** the owner explicitly
+widened M10 to implement the three-reader consistency analyst, select the
+provider/model/env key and build one ARM64 pilot APK. Deployment and rollout
+remain excluded; commit/push requires separate approval. Current implementation,
+source limits and validation: [batch record](JINX_ANALYST_BATCH_2026-09-12.md).
+The original readiness record below is retained as history, not as a blocker
+against the owner's scoped authorization.
+
 Prepared `2026-09-12`. This states exactly where the centralized read-only Jinx
 match analyst (`TASK-0011`) stops today and what the first step is when its gate
 opens, so that day is implementation rather than rediscovery.
