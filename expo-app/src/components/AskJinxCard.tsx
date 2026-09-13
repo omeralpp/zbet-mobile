@@ -29,9 +29,8 @@ import { SystemState } from "./StateView";
 /**
  * Informative Ask Jinx match surface (M15 / TASK-0046).
  *
- * Jinx reads the match out loud. She does not decide anything, does not know
- * what anyone should do about it, and is not connected to the model, a Super
- * decision or a rating — the real centralized analyst is TASK-0011 under M11.
+ * Jinx observes the displayed selection against live match facts. She never
+ * selects or scores a market, and her commentary has no feedback path.
  *
  * Two properties are structural rather than editorial. First, nothing is
  * fetched until the user asks: an outlook that appeared on its own would read
@@ -41,12 +40,16 @@ import { SystemState } from "./StateView";
  * component authoring a reading of its own.
  */
 export function AskJinxCard({
+  live,
+  selectionKey,
   asked,
   isError,
   isLoading,
   onAsk,
   outlook
 }: {
+  live: boolean;
+  selectionKey: string;
   asked: boolean;
   isError?: boolean;
   isLoading?: boolean;
@@ -54,6 +57,18 @@ export function AskJinxCard({
   outlook: JinxMatchOutlook | undefined;
 }) {
   const state = resolveOutlookState(outlook, { asked, isLoading, isError });
+
+  if (!live || (asked && outlook?.reasonCode === "MATCH_NOT_LIVE")) {
+    return <SystemState kind="UNAVAILABLE" title="Maç canlı değil." message="Jinx yalnız devam eden maçların yıldız seçimini yorumlar." />;
+  }
+  if (!selectionKey || (asked && outlook?.reasonCode === "NO_SELECTION")) {
+    return <SystemState kind="UNAVAILABLE" title="Yorumlanacak yıldız seçimi yok." />;
+  }
+  if (asked && outlook?.selectionKey && outlook.selectionKey !== selectionKey) {
+    return <Pressable accessibilityRole="button" onPress={onAsk} style={styles.entry}>
+      <Text style={styles.entryBody}>Seçim değişti. Jinx&apos;e yeniden sor.</Text>
+    </Pressable>;
+  }
 
   if (state === "IDLE") {
     return (
@@ -72,7 +87,7 @@ export function AskJinxCard({
         <View style={styles.entryCopy}>
           <Text style={styles.entryTitle}>Jinx&apos;e sor</Text>
           <Text style={styles.entryBody}>
-            Bu maç için kısa, bilgilendirici bir okuma al.
+            Ekrandaki en yüksek yıldızlı seçimin verilerle tutarlılığını sor.
           </Text>
         </View>
       </Pressable>

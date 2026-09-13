@@ -6,6 +6,21 @@ Son güncelleme: 2026-09-13
 
 Aktif task: `BTB Mobile Next - Aktif`
 
+## 2026-09-13 — TASK-0011 live-only, displayed-selection commentary
+
+Owner continuation implements the requested Jinx behavior. LIVE/HALF_TIME only;
+otherwise `Maç canlı değil.`. BFF verifies a current match record before Gemini.
+Commentary is bound to the already displayed highest-star selection, with its
+matching log/pool; changed selections require another explicit ask. No model
+selection or scoring changes. Detail: JINX_LIVE_SELECTION_2026-09-13.md.
+
+Local Mobile type/lint/585 tests, 13 tooling tests, six fixture contracts and
+BFF test/build PASS. Doctor **FAILED 19/20** (16 Expo mismatches). New uncached
+live series **20/20 visible**, no refusals/timeouts; provider min/median/p90/p99
+1149/1238/1514/1555ms. Three-repo push, pilot restart and new ARM64 APK pending
+at this implementation checkpoint. Prior APK reuse guidance below is superseded:
+this continuation changes Mobile application source and requires a new APK.
+
 ## 2026-09-13 — NXT-OBS-148 measured correction deployed to pilot; observation
 
 Owner authorized the continued M10 exception, three-repo commit/push and pilot

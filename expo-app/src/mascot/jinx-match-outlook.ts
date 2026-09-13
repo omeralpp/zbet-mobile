@@ -8,9 +8,8 @@ import { foldDiacritics } from "./jinx-language";
  * Guard and presentation rules for the informative Ask Jinx match surface
  * (M15 / TASK-0046).
  *
- * Jinx is a presentation persona and this surface is informative only. The real
- * centralized match analyst is TASK-0011 under M11; nothing here reads a model,
- * a Super decision, a rating or a threshold, and nothing here influences one.
+ * Jinx observes an existing selection. This presentation layer never selects,
+ * scores or influences a decision; wording guards also run on the server.
  *
  * The contract already constrains the shape, but wording is the part that can
  * quietly turn a description into a recommendation, so the same refusal runs

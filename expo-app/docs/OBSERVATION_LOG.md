@@ -1,5 +1,15 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-13 — NXT-OBS-149 live-only Jinx / displayed star selection
+
+Owner phone observation (Elfsborg–Kalmar) requests Jinx only on ongoing matches,
+with `Maç canlı değil.` elsewhere, and commentary on the already displayed
+highest-star selection's consistency with the available data. Owner clarified
+this is implementation, not a prompt draft. TASK-0011 reopened under the existing
+M10 exception and authorized pilot cutover. Local checks passed and 20/20 uncached
+live readings succeeded; rollout/device evidence remains in CURRENT_HANDOFF.md.
+Status: IMPLEMENTED_LOCAL pending pilot rollout and new APK.
+
 ## 2026-09-13 — Jinx unavailable on Gimcheon S. – Gangwon (NXT-OBS-148)
 
 **Pilot correction verified later the same day:** owner-authorized cutover

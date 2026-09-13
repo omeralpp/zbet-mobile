@@ -153,9 +153,9 @@ export function matchJourneyQuery(key: string) {
  * answer, and silently trying again would make the surface feel like it is
  * thinking when it is not.
  */
-export function matchJinxOutlookQuery(key: string, asked: boolean) {
+export function matchJinxOutlookQuery(key: string, asked: boolean, selectionKey = "") {
   return queryOptions({
-    queryKey: queryKeys.matchJinxOutlook(key),
+    queryKey: [...queryKeys.matchJinxOutlook(key), selectionKey],
     queryFn: ({ signal }) => mobileApi.getMatchJinxOutlook(key, signal),
     staleTime: 60_000,
     enabled: Boolean(key) && asked,

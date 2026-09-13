@@ -689,6 +689,8 @@ export const jinxOutlookSignalSchema = z.object({
 export const jinxMatchOutlookSchema = z.object({
   matchKey: z.string().nullable().optional(),
   contractVersion: z.literal("jinx-match-outlook.v1"),
+  reasonCode: z.enum(["MATCH_NOT_LIVE", "LIVE_NOT_VERIFIED", "NO_SELECTION"]).optional(),
+  selectionKey: z.string().optional(),
   origin: intelligenceOriginSchema,
   availability: z.enum(["OK", "DEGRADED", "UNAVAILABLE"]).catch("UNAVAILABLE"),
   /** One-line reading. `null` when there is nothing honest to say. */

@@ -27,6 +27,7 @@ import {
   matchTeamFormQuery
 } from "@/src/api/queries";
 import { AskJinxCard } from "@/src/components/AskJinxCard";
+import { jinxIsLive, jinxSelectionKey } from "@/src/mascot/jinx-eligibility";
 import { JinxHeadingIcon } from "@/src/components/JinxHeadingIcon";
 import { ChangeEmphasis } from "@/src/components/ChangeEmphasis";
 import { LiveDot } from "@/src/components/LiveDot";
@@ -216,7 +217,7 @@ export default function MatchDetailScreen() {
   const [showDecision, setShowDecision] = useState(false);
   // Jinx is asked, never volunteered. Until this flips, its query stays
   // disabled and the surface costs nothing but its own entry point.
-  const [askedJinx, setAskedJinx] = useState(false);
+  const [askedJinxSelection, setAskedJinxSelection] = useState("");
   const [compactHeader, setCompactHeader] = useState(false);
   const [reordering, setReordering] = useState(false);
   const scrollRef = useRef<ScrollView | null>(null);
@@ -265,9 +266,11 @@ export default function MatchDetailScreen() {
     enabled: matchPathEnabled && Boolean(key),
     refetchInterval: journeyPolling
   });
+  const jinxSelection = jinxSelectionKey(query.data);
+  const askedJinx = Boolean(jinxSelection) && askedJinxSelection === jinxSelection;
   const jinxOutlook = useQuery({
-    ...matchJinxOutlookQuery(key, askedJinx),
-    enabled: intelligence && Boolean(key) && askedJinx
+    ...matchJinxOutlookQuery(key, askedJinx, jinxSelection),
+    enabled: intelligence && Boolean(key) && askedJinx && jinxIsLive(query.data?.status)
   });
   const relatedDecisions = useMemo(
     () => relatedSuperDecisions(superLogs.data ?? [], key),
@@ -495,10 +498,12 @@ export default function MatchDetailScreen() {
     moduleNodes.askJinx = (
       <LiveDetailPanel eyebrow="JINX" id="askJinx" title="Jinx okuması" leading={<JinxHeadingIcon />}>
         <AskJinxCard
+          live={jinxIsLive(match.status)}
+          selectionKey={jinxSelection}
           asked={askedJinx}
           isError={jinxOutlook.isError}
           isLoading={jinxOutlook.isLoading}
-          onAsk={() => setAskedJinx(true)}
+          onAsk={() => { setAskedJinxSelection(jinxSelection); if (askedJinx) void jinxOutlook.refetch(); }}
           outlook={jinxOutlook.data}
         />
       </LiveDetailPanel>
