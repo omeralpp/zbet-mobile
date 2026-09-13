@@ -94,3 +94,11 @@ grouping, navigation uses 48-unit targets, and event tiles have bounded width.
 Jinx leads with selection/data consistency. Data-support labels replace generic
 confidence labels; all named gaps remain accessible in a 44-unit disclosure.
 The `Kısmi veri` flag is not changed into a verdict or hidden by inflating quality.
+
+Evening public readback after compilation returned 20/20 visible, **8 Gemini +
+12 factual summaries**, with no client timeout. The separate concurrent-build
+series had 14/20 visible and six client timeouts; it remains failed evidence.
+A minimal direct provider request later timed out after 15,007ms despite healthy
+BFF endpoints. The delivered APK and code do not close analyst reliability:
+TASK-0011 remains IN_PROGRESS and NXT-OBS-148 OPEN. See CURRENT_HANDOFF for all
+latencies, PID, source SHAs, signature and artifact hash.

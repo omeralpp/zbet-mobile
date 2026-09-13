@@ -13,8 +13,58 @@ strip direction, selection-consistency heading and expandable coverage details.
 Final uncached trial with explicit fallback: **20/20 visible = 16 Gemini readings
 + 4 DETERMINISTIC summaries**. This is **80% LLM success**, not 100%. Provider
 min/median/p90/p99 1109/2470.5/2680/2813ms; total 1210/2600/2827/3008ms.
-The earlier no-fallback decision below is superseded. Final pilot rollout and
-new APK remain pending until the evidence paragraph is added here.
+The earlier no-fallback decision below is superseded.
+
+Final implementation pushed: BFF `6950713`, Mobile `e8c8972`, tooling checkpoint
+`b030b05`. Pilot restart verified at 21:35:32 TRT: **PID 10520 -> 9336**,
+`127.0.0.1:4004`, runtime SHA `69507136abf9abda30a88b44116e4c455f186fb1`.
+Existing Windows task invokes ensure-mobile-bff then start-mobile-bff.ps1 with
+explicit `-AuthMode pilot`; task result 0. Local/public `/health` 200 and public
+unauthenticated Jinx 401. Authenticated finished-match smoke returns
+`UNAVAILABLE / MATCH_NOT_LIVE / Maç canlı değil.`. Production not targeted.
+Final Mobile type/lint/585 tests, 13 tooling tests, brand and BFF tests/build
+PASS; seven fixtures plus a real deterministic DTO pass the Mobile contract and
+presentation guards. Doctor remains freshly recorded **FAILED 19/20** (16 patch
+mismatches); no dependency change or false pass. No ADB device is connected,
+so new phone installation/visual acceptance remains the owner's observation.
+Final single retained APK (Mobile source `e8c8972`):
+`zbet-mobile/expo-app/.codex-artifacts/btb-mobile-next-arm64-jinx-live.apk`
+— 54,352,593 bytes, only `arm64-v8a`; package `com.btb.mobile.next`, version 0.1.0
+(code 1), min SDK 24 / target 36. Build SUCCESSFUL in 4m38s; embedded bundle
+SHA256 `AD0DDBC4D4F216111168C642C164638E267CA4ED8B82FDACB88861342DF0D79B`.
+APK SHA256 `6250DDEE70BC53B2BDA5200ABAB7C4597F02EAB90A97DD8F8797A0B60EA7DD63`.
+V2 pilot signature verified; certificate SHA256
+`FAC61745DC0903786FB9EDE62A962B399F7348F0BB6F899B8332667591033B9C`.
+All 1,321 ZIP entries scanned as UTF-8/UTF-16: zero configured server-secret or
+Gemini/provider-config matches. Effective config: api.surklase.com, pilot auth,
+mocks off, Journey/Form/Jinx LIVE. Previous round-2 APK/config recycled after
+verification; exactly one APK remains. Install this build for the new origin
+enum, live gate, form direction and phone layout; older clients fail closed on
+the new deterministic origin rather than presenting it as an LLM reading.
+
+Keep the failed build-time public series: **14/20 visible, six 15s timeouts**.
+Local health also briefly timed out and later recovered; runtime logged request
+durations up to 37,249ms. This coincided with Android compilation, but causal
+attribution is not proven. It is not a passed smoke or erased by the later run.
+Evidence: `public-live-release`; a separate `public-after-build` series follows.
+
+Final post-compilation public series, 21:41:49–21:44:19 TRT: **20/20 visible,
+8 LIVE/Gemini + 12 DETERMINISTIC summaries**, no client timeouts, no UNAVAILABLE,
+no HIGH; min/median/p90/p99 **228/7688.5/7876/8425ms**. Normal cache enabled:
+this is not 20 independent LLM successes. All 20 DTOs pass Mobile schema and
+headline/body/caveat guards. A subsequent minimal direct Gemini request (without
+the football prompt) also timed out after **15,007ms** while local/public BFF
+health both returned 200. This does not prove a global Gemini outage or a root
+cause, but the residual failure is not resolved by the compact chart or a badge.
+
+**TASK-0011 remains IN_PROGRESS.** Live-only gating, selection binding, guarded
+consistency prompt, explicit fallback and the phone layout are delivered; reliable
+LLM interpretation is not accepted as complete. NXT-OBS-148 remains OPEN for this
+residual provider/latency issue. Next step: isolate Gemini connection/provider
+latency with bounded probes; preserve the 15s Mobile budget, honest origins and
+refusal rules. No provider switch or production rollout was made. NXT-OBS-149/150
+are READY for owner phone observation of the delivered APK. The local cutover
+batch closes with the broader analyst reliability task still open.
 
 Owner continuation implements the requested Jinx behavior. LIVE/HALF_TIME only;
 otherwise `Maç canlı değil.`. BFF verifies a current match record before Gemini.
