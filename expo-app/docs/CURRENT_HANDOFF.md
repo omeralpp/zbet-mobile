@@ -6,7 +6,7 @@ Son güncelleme: 2026-09-13
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-## 2026-09-13 — NXT-OBS-148 measured correction validated; pilot rollout next
+## 2026-09-13 — NXT-OBS-148 measured correction deployed to pilot; observation
 
 Owner authorized the continued M10 exception, three-repo commit/push and pilot
 restart. Baseline: 20 sequential uncached calls, 12/20 visible; provider p90
@@ -20,10 +20,49 @@ Mobile 15000ms. The provider budget derives from the earlier 6000ms censored
 timeout plus the measured 1449ms p90, rounded to 10ms. No deterministic fallback
 or Mobile application source change; reuse the existing round-2 ARM64 APK.
 Mobile check/BFF test/build passed; Doctor rerun **FAILED 19/20** (16 mismatches).
-Next: push all three repos, mandatory pilot restart with `-AuthMode pilot`, then
-20 public readbacks and the final rollout evidence commit. All are authorized.
+The three implementation repos were pushed before restart: BFF `8fab1a5`, Mobile
+docs `fee903d`, tooling checkpoint `970f134`. Final BFF runtime SHA:
+`8fab1a5a832db65427216a0bb5b33b4c8789c86e`, clean and equal to origin/main.
+Mandatory restart at 14:09:13 TRT: **PID 28044 -> 26096**, `127.0.0.1:4004`.
+The existing Windows task invokes `ensure-mobile-bff.ps1`, then
+`start-mobile-bff.ps1 -AuthMode pilot`; User-scope auth mode is still absent.
+Task result 0; no persistent task/env/Cloudflare/SAP/Firebase change.
+Local `/health` **200**, public `/health` **200**, public unauthenticated
+`jinx-outlook` **401**. Production was not targeted.
+
+Post-restart public series, 14:09:33–14:11:47 TRT: **20/20 visible validated
+readings (100%)**, alternating the reported match and the prior smoke match.
+All HTTP 200 / DEGRADED, confidence 0.5; **0 UNAVAILABLE, 0 timeouts, 0 HIGH**.
+Public latency min/median/p90/p99: **164 / 279.5 / 1384 / 1960ms**. Normal BFF
+cache was enabled; these are 20 public requests, not 20 new LLM invocations.
+The separate candidate series contains 20 uncached analyses (21 invocations,
+one recovered refusal). Candidate provider phase min/median/p90/p99:
+**973 / 1142 / 1298 / 2359ms**; source phase **95 / 105 / 113 / 398ms**.
+Baseline provider min/median/p90/p99: **1194 / 1325.5 / 1449 / 1484ms**;
+baseline timeouts **0/20**, visible readings **12/20**. The earlier 6s abort was
+not reproduced in this measurement window; prompt-size causation is not proven.
+
+All 20 public DTOs passed the unchanged Mobile schema, headline/body/caveat
+guards and unasked-IDLE check. Mobile check, full BFF tests/build and 30 focused
+analyst tests passed. Secret/log review found zero configured server secrets or
+private keys in changed sources, measurements, documentation or runtime logs.
+**Doctor freshly rerun: FAILED 19/20, 16 Expo patch mismatches.**
+
+No Mobile app/dependency/native source changed, so no new APK was produced.
+Reuse `.codex-artifacts/btb-mobile-next-arm64-jinx-round2.apk`, SHA-256
+`67325109CF9C864A34E4EB6CBC1A5C3677DDF49A2E102A4A824E42D7352BD6F7`;
+hash rechecked, same previously verified ARM64/v2 pilot artifact. To recheck on
+the phone, leave/reopen the match and ask Jinx again; the current screen's
+pull-to-refresh does not refetch Jinx. Owner physical re-observation is pending.
+
+Mode **OBSERVATION**. TASK-0011 implementation/rollout is complete; NXT-OBS-148
+is READY for owner phone re-observation. No deterministic fallback: LIVE versus
+SYNTHETIC cannot honestly label that distinction in this unchanged contract.
+The final evidence and run/task closure are committed and pushed after rollout.
 Detailed measurements and ten rejected examples:
 [JINX_RELIABILITY_NXT_OBS_148_2026-09-13.md](JINX_RELIABILITY_NXT_OBS_148_2026-09-13.md).
+
+`btb next cutover start sonlandı`
 
 ## 2026-09-13 — Device failure: TASK-0011 reopened in observation
 

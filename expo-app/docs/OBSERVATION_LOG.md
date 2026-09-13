@@ -2,6 +2,17 @@
 
 ## 2026-09-13 — Jinx unavailable on Gimcheon S. – Gangwon (NXT-OBS-148)
 
+**Pilot correction verified later the same day:** owner-authorized cutover
+pushed BFF `8fab1a5`, restarted PID 28044 -> 26096 with explicit pilot auth.
+Parallel reads were already correct; measured prompt/wording correction and one
+shared-budget fresh generation improved uncached visibility from 12/20 to 20/20.
+Ten actual rejected texts were reviewed; the validator was not relaxed. Final
+public series 20/20 visible, all 20 Mobile-guard checks passed, no HIGH band.
+Local/public health 200, unauthenticated Jinx 401. Mobile source unchanged;
+existing APK reused. Doctor remains FAILED 19/20. Status READY for owner phone
+re-observation; diagnosis below is the original failure, not the current rollout
+state. Full measured evidence: JINX_RELIABILITY_NXT_OBS_148_2026-09-13.md.
+
 Owner phone screenshots at 11:46 show the Jinx unavailable card while Match
 Journey displays 55 minutes, 2-0 and decision Ms25u. Match key:
 `2026-09-13:3125516:10:30:00`. This is a new failed device observation after
@@ -980,7 +991,7 @@ sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
 
 | ID | Tarih | Alan | Tespit / beklenen kanıt | Öncelik | Durum |
 | --- | --- | --- | --- | --- | --- |
-| NXT-OBS-148 | 2026-09-13 | Jinx analyst availability / TASK-0011 | Phone shows unavailable for Gimcheon S. – Gangwon at 55 minutes, 2-0. Exact-match public and local reproduction fail during generation; Gemini fetch aborts at the 6-second deadline despite seven available source reads. Recent banned-phrase refusals need separate diagnosis. Next cutover must verify latency/rejection handling and repeat live readings without weakening safety or small-pool guards. See dated entry above. | HIGH | OBSERVED |
+| NXT-OBS-148 | 2026-09-13 | Jinx analyst availability / TASK-0011 | Original 6s provider abort and wording refusals investigated. Paced baseline 12/20 visible; ten real rejected texts reviewed. Validator unchanged, compact prompt and shared 7450ms provider budget with one fresh generation: candidate 20/20 uncached readings, final public 20/20 with all Mobile guards passing. BFF 8fab1a5 pushed and pilot restarted PID 28044 -> 26096. Existing APK reused; Doctor FAILED 19/20. Owner phone re-observation pending. See dated entry and measured report. | HIGH | READY |
 | NXT-OBS-147 | 2026-09-02 | Real Team Form last-five score-scope filter | Owner approved the bounded local correction after the Motherwell comparison. Differing secondary scores no longer erase a valid main result when displayed score and own-team result both corroborate it; malformed/contradictory data guards remain. Motherwell regression fails before/pass after; 51 Team Form tests and full BFF tests/build pass. CAP fix/tests pushed at 91cbc25 under separate approval. At 23:55 owner-approved pilot restart changed PID 6552 to 3092. Local/public health and real Team Form -> actual Mobile schema now pass with B M M M G / 1G1B3M / PPG 0.80 / GA 2.20; Dundee and independent venue windows unchanged. Public dashboard/matches/Super Log and unauthenticated 401 checks pass. No flags, SAP/model or Mobile source change. API rollout complete; pull-to-refresh and owner physical acceptance remain. Existing APK is sufficient. Details at the top of this log. **2026-09-03 physical acceptance:** after the approved CAP 91cbc25 pilot update and refresh instructions, the owner confirmed "I checked it works fine." Corrected Team Form and newest-first results accepted on the device; no new APK needed. This supersedes earlier rollout/phone-pending statements in this row. | HIGH | CLOSED |
 | NXT-OBS-001 | 2026-07-29 | Performans widget | KPI parser ve dashboard fallback düzeltildi. Android 15 emülatöründeki gerçek widget Toto kapsamını ve cihazda seçilen kalıcı `1+ / 2+ / 3+ / 4+` Super eşiğinin günlük profit/kazandı/kaybetti değerini doğru gösterdi. Final arm64 APK’nın fiziksel cihazda gerçek bildirim/uygulama dönüşü sonrasında aynı parity’yi koruduğu doğrulanmalı. **2026-09-12 fiziksel kabul:** sahibi uzun sureli cihaz takibinde bu davranista sorun gormedigini bildirdi. Bozuk olsa fark edilecek gorunur bir davranis oldugu icin kabul edildi; ayri bir tetikleme kanidi aranmadi.| HIGH | CLOSED |
 | NXT-OBS-002 | 2026-07-29 | Notification görünümü | Android notification küçük ikonu ve varsayılan Firebase/Expo ikon metadata’sı APK’da mevcut. Gerçek FCM bildiriminin fiziksel cihazdaki küçük ikon görünümü bekleniyor. **2026-09-12 fiziksel kabul:** sahibi uzun sureli cihaz takibinde bu davranista sorun gormedigini bildirdi. Bozuk olsa fark edilecek gorunur bir davranis oldugu icin kabul edildi; ayri bir tetikleme kanidi aranmadi.| MEDIUM | CLOSED |

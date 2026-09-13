@@ -138,3 +138,26 @@ statements endorsed by Jinx. Runtime logs still contain only refusal codes.
 | 20 | Ev sahibi ekip ilk yarıyı 2-0 önde kapatsa da, deplasman takımı 14 şut çekerek maç sonunda skoru 2-2'ye getirdi. Ev sahibi 10 şutta kaleyi 5 kez bulurken, deplasman ekibi 4 isabetli şutla beraberliği yakaladı. | certainty: isabetli; factual shot wording, not a correctness verdict |
 | 21 | İlk yarıyı 2-0 önde kapatan ev sahibi takım, deplasman ekibinin 14 şut ve 4 isabetli şutluk baskısına karşı skoru koruyamadı. Maç 2-2 bitti. | certainty: isabetli; factual shot wording, not a correctness verdict |
 | 26 | İlk yarıyı 2-0 önde kapatan ev sahibi, 14 şut atan rakibinin ikinci yarıdaki gollerine engel olamadı ve mücadele 2-2 bitti. Deplasman ekibi 48 topla oynama oranıyla skoru eşitledi. | forbidden: oyna prefix; factual football wording, not playing advice |
+
+## Final pilot rollout and public series
+
+BFF `8fab1a5a832db65427216a0bb5b33b4c8789c86e` was clean/pushed before the
+mandatory pilot restart at 2026-09-13 14:09:13 TRT. PID **28044 -> 26096**,
+127.0.0.1:4004, existing scheduled task invoking the canonical start script with
+explicit `-AuthMode pilot`. Task result 0. Local/public health 200, unauthenticated
+public Jinx 401. No production or external configuration change.
+
+Twenty sequential public requests at 14:09:33–14:11:47 TRT, alternating the
+reported match and `2026-09-12:3213471:00:00:00`: **20/20 visible**, all HTTP 200,
+DEGRADED and confidence 0.5. No UNAVAILABLE, transport timeout or HIGH result.
+Public end-to-end latency min/median/p90/p99: **164 / 279.5 / 1384 / 1960ms**.
+Normal BFF cache was enabled: these are 20 actual public HTTP requests, not 20
+new provider invocations. The separate candidate trial above supplies the
+20 fresh-analysis evidence. All 20 public DTOs passed the unchanged Mobile
+schema, full text/caveat guards and unasked-IDLE behavior.
+
+Secret/log scan covered changed source/docs/state, diagnostic JSON and current
+runtime logs with zero configured server-secret or private-key matches. Existing
+APK hash was rechecked unchanged. Mobile Doctor remains FAILED 19/20.
+TASK-0011 is complete for implementation/rollout; NXT-OBS-148 is READY pending
+owner phone re-observation. Leave/reopen the match and ask Jinx again to recheck.
