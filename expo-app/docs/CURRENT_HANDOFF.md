@@ -6,7 +6,7 @@ Son güncelleme: 2026-09-13
 
 Aktif task: `BTB Mobile Next - Aktif`
 
-## 2026-09-13 — TASK-0011 round 2 validated; pilot restart and APK next
+## 2026-09-13 — TASK-0011 round 2 delivered; pilot rollout verified
 
 The owner authorized the continued M10 exception, all three repo commits/pushes,
 controlled restart of the existing pilot BFF, public checks and one final ARM64
@@ -14,20 +14,67 @@ APK. Production is excluded. Seven existing sources now feed concrete Turkish
 football commentary; source-specific caveats, no-advice/no-prediction rules,
 numeric validation and the small-pool confidence guard remain in force.
 
-Pre-restart checks passed: Mobile type/lint/583 tests/13 tooling/brand, BFF
-tests/build, 21 focused analyst tests and seven fixture/real contract checks.
+Mode: **OBSERVATION**. TASK-0011 round 2 is complete under the owner's explicit
+M10 exception. M9/M14, TASK-0101/0102 and model decisions remain unchanged.
+Checks passed: Mobile type/lint/583 tests/13 tooling/brand, BFF tests/build,
+23 focused analyst tests and seven fixture/public-response contract checks.
 **Doctor remains FAILED at 19/20**, the known 16 Expo patch mismatches.
 Form strips were confirmed intentionally mirrored and retained under the owner's
 conditional instruction. The owner reports that the first reading was seen on
 the phone; this does not constitute acceptance of the new round 2 APK.
 
+Pilot BFF runs the clean, pushed `zbet-cap` SHA
+`0e21d1b9c7852b04221d6568d268ee25d9d16980` on `127.0.0.1:4004`.
+Initial PID `2416` -> final PID `28044`; final restart 2026-09-13 02:19:53 TRT.
+The existing Windows `BTB Mobile BFF` task invokes `ensure-mobile-bff.ps1`, which
+invokes `start-mobile-bff.ps1 -AuthMode pilot`. User-scope auth mode is absent;
+the explicit parameter is required. Task result `0`; no task configuration,
+Cloudflare, SAP, Firebase, production or persistent credential changes.
+
+At 02:20:36 TRT: local `/health` **200**, public `/health` **200**, public
+unauthenticated Jinx **401**. Authenticated public Jinx at 02:20:10 TRT: **200**,
+`DEGRADED`, confidence **0.5**, body 196 characters, named caveat 349 characters.
+The response passed the Mobile schema and presentation guards. It compared home
+3 shots/2 goals with away 8 shots/7 corners and the completed 2-1 score.
+Source gaps were explicit: unavailable Match Path/league context, unknown detail/
+period measurement time, zero-xG coverage, stale decision and pool 25 without a
+published reliability floor. No HIGH confidence or event-surprise claim.
+
+Restart recovery is not hidden: the direct launch PID `34396` initially answered
+health then exited. Scheduled-task PID `31516` survived; score validation was
+then corrected (`2-1` must not invent negative `-1`), requiring PID `13032`, and
+safe refusal diagnostics required the final PID `28044`. Diagnostics contain only
+validation reason codes, never commentary/source data/secrets or decision-log
+feedback. Invalid generated readings were withheld before the final public pass.
+
+Final artifact: `.codex-artifacts/btb-mobile-next-arm64-jinx-round2.apk`,
+**54,350,505 bytes**, only `arm64-v8a`; SHA-256
+`67325109CF9C864A34E4EB6CBC1A5C3677DDF49A2E102A4A824E42D7352BD6F7`.
+Embedded bundle SHA-256
+`A5A0C28ACAE8A743091DB63ACBD2018D4DD7BF1F62A03E3830BB7045CF57F35C`.
+Android v2 pilot/debug signature verified; certificate SHA-256
+`FAC61745DC0903786FB9EDE62A962B399F7348F0BB6F899B8332667591033B9C`.
+All 1,321 APK entries scanned: zero server secrets/provider config. Gemini and its
+key stay server-side. Mocks off, pilot auth, Journey/Form/Jinx LIVE, API
+`https://api.surklase.com`. Build source: Mobile `49b578f`; later Mobile changes
+are rollout documentation only. No ADB device was connected: new-APK physical
+acceptance remains an owner observation, not a claimed pass.
+
+Three-repo implementation pushes: Mobile `49b578f`, tooling `68f9fea`, BFF
+`5f6325f` followed by score fix `910c33b` and final diagnostics `0e21d1b`.
+This handoff/archive and the task/run closure are included in the final evidence
+commits. The earlier APK and temporary build/check logs were recycled after
+verification; only this final phone APK is retained.
+
 Record: [JINX_ANALYST_ROUND2_2026-09-13.md](JINX_ANALYST_ROUND2_2026-09-13.md).
-Next: commit/push the batch, restart from the exact pushed BFF SHA using
-`start-mobile-bff.ps1 -AuthMode pilot` (User-scope auth mode is absent), verify
-local/public health and public Jinx, record PID change, then build/deliver the
-ARM64 APK and commit the final rollout evidence. All these steps are authorized.
+Next: owner observation of the delivered APK. No pending batch approval or rollout.
+
+`btb next cutover start sonlandı`
 
 ## 2026-09-12 — TASK-0011 local analyst implemented; commit/push pending
+
+Historical local checkpoint, superseded by the completed rollouts above/below.
+Its pending-commit/runtime statements and previous APK are no longer current.
 
 Mode: **OBSERVATION**. Empty observation backlog; the owner explicitly supplied
 TASK-0011 and widened M10 for this local batch. That authorization supersedes the

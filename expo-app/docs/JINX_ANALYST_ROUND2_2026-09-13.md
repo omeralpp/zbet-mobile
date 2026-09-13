@@ -52,7 +52,7 @@ if the reversal was not intentional, no form order or caption was changed.
 ## Pre-restart validation
 
 - Mobile type/lint/brand passed; 583 Mobile and 13 tooling tests passed.
-- BFF full tests and production build passed; 21 focused Jinx tests and syntax/
+- BFF full tests and production build passed; 23 focused Jinx tests and syntax/
   ESLint correctness checks passed.
 - Six fixture variants plus a real response passed the Mobile schema and current
   wording/caveat guards. Null, empty, absent, stale, tiny-pool and source-specific
@@ -67,3 +67,19 @@ if the reversal was not intentional, no form order or caption was changed.
 
 Final pushed SHA, process identity, public readback and APK verification are
 recorded in CURRENT_HANDOFF.md after the mandatory restart and artifact build.
+
+## Rollout findings
+
+Live validation exposed a numeric-parser bug: the score `2-1` was read as `2`
+and negative `-1`. Analyst score separators now preserve both positive score
+components while standalone signed statistics and quip profit parsing retain
+their signs. Regression tests reject invented scores and unsupported negative
+values. Runtime refusal diagnostics contain only bounded validation reason codes;
+a test proves commentary, source data and credentials do not enter them. Rejected
+model output still fails closed; no automatic advice or prediction fallback.
+
+Final authenticated public response at 2026-09-13 02:20:10 TRT passed, after the
+final pushed BFF restart: HTTP 200, DEGRADED, confidence 0.5. The reading compares
+home 3 shots/2 goals with away 8 shots/7 corners and the completed 2-1 score, then
+closes with partial data support and named source gaps. Detailed rollout recovery,
+PID chain, final SHA and APK hashes are recorded in CURRENT_HANDOFF.md.
