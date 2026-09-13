@@ -43,6 +43,12 @@ async function main() {
     assert.equal(dto.availability, "DEGRADED", variant);
     checked++;
   }
+  const fallbackService = createJinxOutlookService({ factualFallback: true,
+    generate: async () => { throw new Error("test provider failure"); }, now: () => Date.parse(capturedAt) });
+  const fallback = verify(await fallbackService.analyze(matchKey, sources()));
+  assert.equal(fallback.origin, "DETERMINISTIC");
+  assert.equal(fallback.availability, "DEGRADED");
+  checked++;
   if (process.argv[2]) {
     const live = verify(JSON.parse(readFileSync(process.argv[2], "utf8")));
     assert.notEqual(live.availability, "UNAVAILABLE", "real provider must return a visible, validated reading");

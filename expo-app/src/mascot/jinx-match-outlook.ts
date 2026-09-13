@@ -141,9 +141,9 @@ export function confidenceBand(
 }
 
 export const confidenceLabels: Record<ConfidenceBand, string> = {
-  LOW: "Düşük güven",
-  MEDIUM: "Orta güven",
-  HIGH: "Yüksek güven"
+  LOW: "Veri desteği sınırlı",
+  MEDIUM: "Veri desteği kısmi",
+  HIGH: "Veri desteği güçlü"
 };
 
 export const directionLabels: Record<JinxOutlookSignal["direction"], string> = {

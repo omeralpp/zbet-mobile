@@ -11,10 +11,10 @@ import { lowCohortNotice, normalityLabel, resolveMatchPathState, surpriseLabel }
 import { journeyMoments, journeyVertices, markerGroups, poolLeaders, pressureReading } from './journey-story';
 import { derivePressureBalance } from '@/src/utils/pressure-balance';
 
-const TOP=32, HEIGHT=150, BOTTOM=TOP+HEIGHT, LEFT=58, RIGHT=18;
-const LANE_Y=214, PRESSURE_Y=279, CHART_HEIGHT=328;
+const TOP=26, HEIGHT=124, BOTTOM=TOP+HEIGHT, LEFT=58, RIGHT=22;
+const LANE_Y=178, PRESSURE_Y=238, CHART_HEIGHT=280;
 // A single mark is 20 wide, so centres closer than this touch on the axis.
-const MARKER_GAP=26;
+const MARKER_GAP=44;
 const svgLabel={fontSize:11,fontWeight:'500',fontFamily:'sans-serif'} as const;
 const bands=[{label:'Olağan',level:.85},{label:'Sıra dışı',level:.5},{label:'Sürpriz',level:.15}];
 
@@ -80,7 +80,6 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
     <View style={story.topline}><Text style={story.eyebrow}>MAÇIN YOLU</Text><Text style={story.liveTag}>{match.status==='FINISHED'?'MAÇ TAMAMLANDI':match.status==='HALF_TIME'?'DEVRE ARASI':'MAÇ AKIŞI'}</Text></View>
     {retained?<OriginBadge origin={retained.origin}/>:null}
     <Text style={story.headline}>{currentTitle}</Text>
-    <Text style={story.subtitle}>Skorun, havuzun ve baskının aynı zaman çizgisindeki hikâyesi.</Text>
     <View style={story.scoreRow}>
       <View style={story.team}><View style={[story.dot,{backgroundColor:colors.blue}]}/><Text numberOfLines={2} style={story.teamName}>{match.homeTeam}</Text></View>
       <View style={story.scorePill}><Text style={story.score}>{match.homeScore}–{match.awayScore}</Text><Text style={story.micro}>GÜNCEL SKOR</Text></View>
@@ -91,7 +90,7 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
       <Defs><LinearGradient id="journeyFill" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor={colors.blue} stopOpacity={.28}/><Stop offset="1" stopColor={colors.blue} stopOpacity={.02}/></LinearGradient></Defs>
       <Rect x={LEFT} y={y(.3)} width={plotWidth} height={HEIGHT*.3} fill={semantic.surprise} opacity={.07} rx={4}/>
       {bands.map(b=><G key={b.label}><Line x1={LEFT} x2={width-RIGHT} y1={y(b.level)} y2={y(b.level)} stroke={colors.borderSoft} strokeDasharray="2 5"/><SvgText x={LEFT-8} y={y(b.level)+4} textAnchor="end" fill={colors.textMuted} {...svgLabel}>{b.label}</SvgText></G>)}
-      {[0,30,60,maxMinute].map(m=><G key={m}><Line x1={x(m)} x2={x(m)} y1={TOP} y2={BOTTOM} stroke={colors.borderSoft} opacity={.45}/><SvgText x={x(m)} y={240} textAnchor={m===0?'start':m===maxMinute?'end':'middle'} fill={colors.textMuted} {...svgLabel}>{Math.round(m)}′</SvgText></G>)}
+      {[0,30,60,maxMinute].map(m=><G key={m}><Line x1={x(m)} x2={x(m)} y1={TOP} y2={BOTTOM} stroke={colors.borderSoft} opacity={.45}/><SvgText x={x(m)} y={204} textAnchor={m===0?'start':m===maxMinute?'end':'middle'} fill={colors.textMuted} {...svgLabel}>{Math.round(m)}′</SvgText></G>)}
       {linePoints.length>1?<>
         <Path d={`M ${linePoints.join(' L ')} L ${x(latest!.plotMinute!)} ${BOTTOM} L ${x(drawn[0]!.plotMinute!)} ${BOTTOM} Z`} fill="url(#journeyFill)"/>
         <Polyline points={linePoints.join(' ')} fill="none" stroke={colors.blue} strokeWidth={9} strokeOpacity={.08} strokeLinejoin="round"/>
@@ -111,22 +110,22 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
         const active=members.some(member=>member.key===activeEventKey);
         return <G key={lead.key}>{members.map(member=><Line key={`lead:${member.key}`} x1={x(member.minute!)} x2={cx} y1={BOTTOM+4} y2={LANE_Y-10} stroke={ink} opacity={.5}/>)}<Rect x={cx-(members.length>1?16:10)} y={LANE_Y-10} width={members.length>1?32:20} height={20} rx={10} fill={active?ink:colors.backgroundElevated} stroke={ink} strokeWidth={1.5}/><SvgText x={cx} y={LANE_Y+4} textAnchor="middle" fill={active?colors.background:colors.text} {...svgLabel}>{markerLabel}</SvgText></G>;
       })}
-      <SvgText x={LEFT} y={263} fill={colors.textMuted} {...svgLabel}>Baskı → havuz beklentisi</SvgText>
+      <SvgText x={LEFT} y={224} fill={colors.textMuted} {...svgLabel}>Baskı → havuz beklentisi</SvgText>
       <Line x1={LEFT} x2={width-RIGHT} y1={PRESSURE_Y} y2={PRESSURE_Y} stroke={colors.border}/>
       {capturedPressure.map(p=><Line key={`pressure:${p.key}`} x1={x(p.plotMinute!)} x2={x(p.plotMinute!)} y1={PRESSURE_Y} y2={PRESSURE_Y-p.pressureAlignment!*14} stroke={p.pressureAlignment!>=0?colors.teal:colors.orange} strokeWidth={Math.max(2,Math.min(5,plotWidth/Math.max(1,capturedPressure.length)))} strokeLinecap="round"/>)}
-      {!capturedPressure.length?<SvgText x={LEFT} y={298} fill={colors.textMuted} {...svgLabel}>Baskı geçmişi bekleniyor</SvgText>:<><SvgText x={LEFT} y={313} fill={colors.teal} {...svgLabel}>↑ Destekliyor</SvgText><SvgText x={width-RIGHT} y={313} textAnchor="end" fill={colors.orange} {...svgLabel}>↓ Karşı</SvgText></>}
+      {!capturedPressure.length?<SvgText x={LEFT} y={264} fill={colors.textMuted} {...svgLabel}>Baskı geçmişi bekleniyor</SvgText>:<><SvgText x={LEFT} y={264} fill={colors.teal} {...svgLabel}>↑ Destekliyor</SvgText><SvgText x={width-RIGHT} y={264} textAnchor="end" fill={colors.orange} {...svgLabel}>↓ Karşı</SvgText></>}
       <Rect x={LEFT} y={TOP} width={plotWidth} height={HEIGHT} fill="transparent" onPress={event=>{
         const px=event.nativeEvent.locationX;
         const nearest=drawn.reduce<MatchJourneyPoint|undefined>((best,p)=>!best||Math.abs(x(p.plotMinute!)-px)<Math.abs(x(best.plotMinute!)-px)?p:best,undefined);
         if(nearest) pickPoint(nearest);
       }}/>
-      {groups.map(members=><Circle key={`hit:${members[0]!.key}`} cx={markerX(members[0]!.minute!)} cy={LANE_Y} r={20} fill="transparent" onPress={()=>pickMoment(members[0]!.key)}/>)}
+      {groups.map(members=><Circle key={`hit:${members[0]!.key}`} cx={markerX(members[0]!.minute!)} cy={LANE_Y} r={22} fill="transparent" onPress={()=>pickMoment(members[0]!.key)}/>)}
     </Svg>
     </View>
     <Text style={story.hint}>Çizgi: havuz uyumu, kazanma olasılığı değil. Bir ana dokun.</Text>
-    {moments.length?<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={story.moments}>
+    {moments.length?<ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={story.moments}>
       {moments.map((event,index)=><Pressable key={event.key} accessibilityRole="button" accessibilityState={{selected:activeEventKey===event.key}} accessibilityLabel={`${event.label}, ${event.title}, ${event.score??''}`} onPress={()=>pickMoment(event.key)} style={[story.moment,activeEventKey===event.key?story.momentActive:null]}>
-        <Text style={[story.momentNumber,{color:event.kind==='RED_CARD'?colors.red:colors.bronze}]}>{String(index+1).padStart(2,'0')}</Text><View><Text style={story.momentTitle}>{event.label} · {event.title}</Text><Text style={story.momentScore}>{event.score??'—'}</Text></View>
+        <Text style={[story.momentNumber,{color:event.kind==='RED_CARD'?colors.red:colors.bronze}]}>{String(index+1).padStart(2,'0')}</Text><View style={{flex:1}}><Text numberOfLines={2} style={story.momentTitle}>{event.label} · {event.title}</Text><Text style={story.momentScore}>{event.score??'—'}</Text></View>
       </Pressable>)}
     </ScrollView>:<Text style={story.hint}>{live?.timeline==null?'Gol ve kart akışı bekleniyor.':'Henüz gol, kart veya havuz geçişi yok.'}</Text>}
     {activeMoment?<View style={story.focus} accessibilityLiveRegion="polite">
@@ -173,13 +172,13 @@ const story=StyleSheet.create({
   card:{padding:16,borderRadius:radii.lg,gap:12,overflow:'hidden'},
   topline:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:8,flexWrap:'wrap'},
   eyebrow:{...typeScale.eyebrow,color:colors.bronze},liveTag:{...typeScale.micro,color:colors.teal},micro:{...typeScale.micro,color:colors.textMuted},
-  headline:{...typeScale.moduleTitle,fontSize:25,lineHeight:31,color:colors.text},subtitle:{...typeScale.label,color:colors.textMuted,lineHeight:19},
-  scoreRow:{flexDirection:'row',alignItems:'center',gap:10,paddingVertical:10},team:{flex:1,flexDirection:'row',alignItems:'center',gap:7},teamName:{...typeScale.label,color:colors.text,flexShrink:1,fontWeight:'700'},dot:{width:5,height:20,borderRadius:3},
+  headline:{...typeScale.moduleTitle,fontSize:20,lineHeight:26,color:colors.text},subtitle:{...typeScale.label,color:colors.textMuted,lineHeight:19},
+  scoreRow:{flexDirection:'row',alignItems:'center',gap:10,paddingVertical:6},team:{flex:1,flexDirection:'row',alignItems:'center',gap:7},teamName:{...typeScale.label,color:colors.text,flexShrink:1,fontWeight:'700'},dot:{width:5,height:20,borderRadius:3},
   scorePill:{alignItems:'center',gap:3},score:{fontSize:28,fontWeight:'700',color:colors.text,fontVariant:['tabular-nums']},
   plotSurface:{backgroundColor:colors.backgroundElevated,borderRadius:16,marginHorizontal:-4,overflow:'hidden'},
-  hint:{...typeScale.label,fontSize:11,color:colors.textMuted,lineHeight:16},moments:{gap:8,paddingVertical:3},moment:{minHeight:60,flexDirection:'row',gap:10,alignItems:'center',backgroundColor:colors.backgroundElevated,borderWidth:1,borderColor:colors.borderSoft,borderRadius:12,padding:12},momentActive:{borderColor:colors.blue},momentNumber:{fontSize:20,fontWeight:'700'},momentTitle:{...typeScale.label,color:colors.textMuted},momentScore:{...typeScale.bodyCompact,color:colors.text,fontWeight:'700'},
+  hint:{...typeScale.label,fontSize:11,color:colors.textMuted,lineHeight:16},moments:{gap:8,paddingVertical:3},moment:{width:156,minHeight:64,flexDirection:'row',gap:10,alignItems:'center',backgroundColor:colors.backgroundElevated,borderWidth:1,borderColor:colors.borderSoft,borderRadius:12,padding:12},momentActive:{borderColor:colors.blue},momentNumber:{fontSize:16,fontWeight:'700'},momentTitle:{...typeScale.label,color:colors.textMuted},momentScore:{...typeScale.bodyCompact,color:colors.text,fontWeight:'700'},
   focus:{backgroundColor:colors.backgroundElevated,borderLeftWidth:3,borderLeftColor:colors.blue,borderRadius:12,padding:14,gap:7},focusTitle:{...typeScale.bodyCompact,color:colors.text,fontWeight:'700',lineHeight:22},
-  controls:{flexDirection:'row',justifyContent:'space-between',gap:4},control:{minHeight:44,justifyContent:'center',paddingHorizontal:6},controlText:{...typeScale.label,color:colors.blue,fontWeight:'700'},disabled:{opacity:.3},
+  controls:{flexDirection:'row',justifyContent:'space-between',gap:4},control:{flex:1,minHeight:48,alignItems:'center',justifyContent:'center',paddingHorizontal:6},controlText:{...typeScale.label,color:colors.blue,fontWeight:'700'},disabled:{opacity:.3},
   poolBox:{borderWidth:1,borderColor:colors.border,borderRadius:16,padding:12,gap:10},leaders:{flexDirection:'row',gap:12},leader:{flex:1,gap:6},poolScore:{fontSize:21,fontWeight:'700',color:colors.text},track:{height:4,borderRadius:2,backgroundColor:colors.borderSoft,overflow:'hidden'},fill:{height:4,backgroundColor:colors.bronze,borderRadius:2},
   pressureBox:{gap:10,paddingVertical:8},pressureTrack:{flexDirection:'row',alignItems:'center',gap:3},pressureHalf:{flex:1,height:5,backgroundColor:colors.borderSoft,overflow:'hidden',borderRadius:3},pressureZero:{width:2,height:11,backgroundColor:colors.textMuted},
   disclosure:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',gap:10,minHeight:48,borderTopWidth:1,borderTopColor:colors.borderSoft,paddingTop:10}

@@ -90,7 +90,7 @@ export function TeamFormCard({
         />
         <RecordBlock
           align="flex-end"
-          order="NEWEST_FIRST"
+          order="OLDEST_FIRST"
           side={context?.away ?? null}
           team={awayTeam}
         />

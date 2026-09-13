@@ -8,6 +8,14 @@ Aktif task: `BTB Mobile Next - Aktif`
 
 ## 2026-09-13 — TASK-0011 live-only, displayed-selection commentary
 
+Latest continuation includes NXT-OBS-149/150: compact mobile chart, matching form
+strip direction, selection-consistency heading and expandable coverage details.
+Final uncached trial with explicit fallback: **20/20 visible = 16 Gemini readings
++ 4 DETERMINISTIC summaries**. This is **80% LLM success**, not 100%. Provider
+min/median/p90/p99 1109/2470.5/2680/2813ms; total 1210/2600/2827/3008ms.
+The earlier no-fallback decision below is superseded. Final pilot rollout and
+new APK remain pending until the evidence paragraph is added here.
+
 Owner continuation implements the requested Jinx behavior. LIVE/HALF_TIME only;
 otherwise `Maç canlı değil.`. BFF verifies a current match record before Gemini.
 Commentary is bound to the already displayed highest-star selection, with its

@@ -1,4 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { JinxMatchOutlook, JinxOutlookSignal } from "@/src/api/schemas";
 import {
@@ -56,6 +57,7 @@ export function AskJinxCard({
   onAsk: () => void;
   outlook: JinxMatchOutlook | undefined;
 }) {
+  const [showEvidence, setShowEvidence] = useState(false);
   const state = resolveOutlookState(outlook, { asked, isLoading, isError });
 
   if (!live || (asked && outlook?.reasonCode === "MATCH_NOT_LIVE")) {
@@ -117,12 +119,10 @@ export function AskJinxCard({
     <View style={styles.card}>
       <SurfaceMaterial accent={semantic.intelligence} radius={radii.lg} />
       <View style={styles.header}>
-        <OriginBadge origin={outlook?.origin} />
-        {state === "DEGRADED" ? (
-          <View style={styles.degradedPill}>
-            <Text style={styles.degradedText}>Kısmi veri</Text>
-          </View>
-        ) : null}
+        {outlook?.origin === "DETERMINISTIC" ? (
+          <Text style={styles.entryBody}>Veri özeti · Jinx yorumu alınamadı</Text>
+        ) : <OriginBadge origin={outlook?.origin} />}
+        {outlook?.origin !== "DETERMINISTIC" ? <Text style={styles.confidence}>SEÇİMİN VERİLERLE TUTARLILIĞI</Text> : null}
       </View>
 
       <Text style={styles.headline}>{headline}</Text>
@@ -142,8 +142,10 @@ export function AskJinxCard({
         ) : null}
         {freshness ? <Text style={styles.freshness}>{freshness}</Text> : null}
       </View>
-
-      <CaveatLine text={acceptUncertaintyNote(outlook?.uncertaintyNote)} />
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: showEvidence }} onPress={() => setShowEvidence(!showEvidence)} style={styles.evidenceToggle}>
+        <Text style={styles.degradedText}>{state === "DEGRADED" ? "Veri kapsamı kısmi" : "Veri kapsamı"} · {showEvidence ? "Ayrıntıları gizle −" : "Eksikleri göster +"}</Text>
+      </Pressable>
+      {showEvidence ? <CaveatLine text={acceptUncertaintyNote(outlook?.uncertaintyNote)} /> : null}
       <CaveatLine text={informativeOnlyNotice} />
     </View>
   );
@@ -214,6 +216,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: spacing.sm
   },
+  evidenceToggle: { minHeight: 44, justifyContent: "center" },
   degradedPill: {
     backgroundColor: semantic.staleSoft,
     borderRadius: radii.round,

@@ -1,5 +1,16 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-13 — NXT-OBS-150 compact chart / consistency-first Jinx
+
+Owner's Neom SC–Al Fateh and Amed Sportif–Başakşehir phone screenshots request a
+more compact mobile chart while retaining interactivity, and clarify that Jinx
+must explain the displayed selection's relationship to data. The old pilot
+reading still listed statistics beneath a prominent partial-data badge.
+Included in the ongoing authorized TASK-0011 continuation: compact chart/touch
+targets, selection-consistency heading, secondary expandable source gaps, and
+honest deterministic fallback. No data threshold or model selection change.
+Status: IMPLEMENTED_LOCAL; final pilot/APK evidence follows in CURRENT_HANDOFF.md.
+
 ## 2026-09-13 — NXT-OBS-149 live-only Jinx / displayed star selection
 
 Owner phone observation (Elfsborg–Kalmar) requests Jinx only on ongoing matches,

@@ -44,4 +44,53 @@ Keep the previously measured shared budget: parallel sources 5000 + provider
 7450 + allowance 2550 = 15000ms. The new p90 fits; no deadline increase needed.
 Evidence: cap `.codex-artifacts/jinx-reliability-2026-09-13/live-selection`.
 
-Rollout and final APK evidence will be recorded in CURRENT_HANDOFF.md.
+Review of the actual first public texts found fact lists without a relationship
+to the selection, and a later candidate described a live score as finished.
+The final prompt requires the relationship explicitly. Additional refusal codes
+cover missing consistency observation and live-match-presented-as-finished;
+existing protections remain intact. These checks reject observed bad examples,
+but are not a proof that every semantic claim is correct.
+
+The same Gemini 3.5 Flash-Lite model now uses LOW thinking and a 1536-token
+ceiling (including thinking) within the unchanged shared deadline. Supported
+thinking levels were checked in Google's official documentation:
+https://ai.google.dev/gemini-api/docs/thinking . A larger Flash experiment hit
+the existing deadline and was stopped; it was not selected for rollout.
+Intermediate trials are retained, not counted as final acceptance. One stricter
+MINIMAL trial returned 16/20 readings, including three wording failures and one
+HTTP 429. A concurrent LOW trial stopped on HTTP 429 after 9/10 visible readings.
+Final measurement must run without overlapping provider trials at a slower pace.
+
+The previously reported mirrored form strips still existed in Mobile source;
+both now use OLDEST_FIRST and the existing `Eski → en yeni` label. This is a
+display-only correction using the existing result-order helper.
+
+Rollout, final measurement and final APK evidence are in CURRENT_HANDOFF.md.
+
+## Final fallback and phone presentation
+
+The final uncached trial before fallback produced only 15/20 valid LLM readings
+(75%): the remaining five failed wording/content guards, not transport. This
+supersedes the early 20/20 result as evidence of model-only reliability.
+Because Mobile already changes, the earlier decision against a contract change
+no longer applies: provider/refusal/rate-limit failures now return an explicitly
+`origin=DETERMINISTIC`, `availability=DEGRADED` factual summary. Mobile labels it
+`Veri özeti · Jinx yorumu alınamadı`. It is never reported as an LLM observation.
+It uses selected market/current score/form/historical pool facts, runs the same
+wording/number safety guard, and preserves named caveats and data confidence.
+The live-match and selection gates run before this fallback as well.
+
+Final 20 sequential uncached calls (10s spacing, no concurrent trial): **20/20
+visible: 16 Gemini readings + 4 deterministic summaries**. 32 provider invocations,
+zero timeouts; provider phase min/median/p90/p99 **1109/2470.5/2680/2813ms**;
+sources **100/110/204/381ms**; total **1210/2600/2827/3008ms**. Model-only success
+is 80%, not 100%. Evidence folder: `live-selection-delivery`.
+
+Owner's later Neom/Amed phone screenshots add a compact-chart request and clarify
+that data coverage is secondary to selection consistency. The chart retains tap,
+event rail and previous/next navigation; height falls from 328 to 280 layout
+units, title/score spacing shrinks, markers use 44-unit touch targets with wider
+grouping, navigation uses 48-unit targets, and event tiles have bounded width.
+Jinx leads with selection/data consistency. Data-support labels replace generic
+confidence labels; all named gaps remain accessible in a 44-unit disclosure.
+The `Kısmi veri` flag is not changed into a verdict or hidden by inflating quality.
