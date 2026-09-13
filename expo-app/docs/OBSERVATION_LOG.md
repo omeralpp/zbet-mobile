@@ -1,5 +1,34 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-13 — Jinx unavailable on Gimcheon S. – Gangwon (NXT-OBS-148)
+
+Owner phone screenshots at 11:46 show the Jinx unavailable card while Match
+Journey displays 55 minutes, 2-0 and decision Ms25u. Match key:
+`2026-09-13:3125516:10:30:00`. This is a new failed device observation after
+TASK-0011 round 2; the earlier successful single-match smoke is not general
+availability evidence.
+
+Read-only diagnosis at 11:48–11:49 TRT: pilot PID 28044 remains listening;
+local health and match-list reads return 200. The exact public Jinx route returns
+HTTP 200 with `availability: UNAVAILABLE` and `Jinx: yorum servisine erişilemedi.`
+A targeted local reproduction using the same seven readers confirms Gemini fetch
+`AbortError`: the adapter aborts after its hard-coded 6-second deadline. All seven
+source reads returned available in that reproduction (form 5/5, initial cohort
+269 against minimum 30, decision pool 10). This failure is at commentary
+generation, not evidence that the match's football data is wholly missing.
+
+Recent runtime diagnostics also contain `body: banned-phrase` refusals. These
+are a separate observed failure mode; the logs do not identify the refused text
+or prove those entries correspond to the screenshot request. No validator rule
+has been relaxed, and no claim is made that increasing the timeout alone fixes
+the issue. Review provider latency/failure handling within the Mobile request
+budget and collect bounded rejection evidence before choosing a correction.
+
+Source screenshots: the three owner attachments in this task, attachment group
+`f50098be-f656-4e32-a345-573f6df07cb0`. Safe local diagnostic summary:
+`zbet-cap/.codex-artifacts/jinx-observation-2026-09-13/smoke.json`.
+No code, configuration, restart, commit/push or APK change in observation mode.
+
 ## 2026-09-12 — Owner device observation session: no defects found
 
 The owner observed the application on the physical device and reported that
@@ -951,6 +980,7 @@ sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
 
 | ID | Tarih | Alan | Tespit / beklenen kanıt | Öncelik | Durum |
 | --- | --- | --- | --- | --- | --- |
+| NXT-OBS-148 | 2026-09-13 | Jinx analyst availability / TASK-0011 | Phone shows unavailable for Gimcheon S. – Gangwon at 55 minutes, 2-0. Exact-match public and local reproduction fail during generation; Gemini fetch aborts at the 6-second deadline despite seven available source reads. Recent banned-phrase refusals need separate diagnosis. Next cutover must verify latency/rejection handling and repeat live readings without weakening safety or small-pool guards. See dated entry above. | HIGH | OBSERVED |
 | NXT-OBS-147 | 2026-09-02 | Real Team Form last-five score-scope filter | Owner approved the bounded local correction after the Motherwell comparison. Differing secondary scores no longer erase a valid main result when displayed score and own-team result both corroborate it; malformed/contradictory data guards remain. Motherwell regression fails before/pass after; 51 Team Form tests and full BFF tests/build pass. CAP fix/tests pushed at 91cbc25 under separate approval. At 23:55 owner-approved pilot restart changed PID 6552 to 3092. Local/public health and real Team Form -> actual Mobile schema now pass with B M M M G / 1G1B3M / PPG 0.80 / GA 2.20; Dundee and independent venue windows unchanged. Public dashboard/matches/Super Log and unauthenticated 401 checks pass. No flags, SAP/model or Mobile source change. API rollout complete; pull-to-refresh and owner physical acceptance remain. Existing APK is sufficient. Details at the top of this log. **2026-09-03 physical acceptance:** after the approved CAP 91cbc25 pilot update and refresh instructions, the owner confirmed "I checked it works fine." Corrected Team Form and newest-first results accepted on the device; no new APK needed. This supersedes earlier rollout/phone-pending statements in this row. | HIGH | CLOSED |
 | NXT-OBS-001 | 2026-07-29 | Performans widget | KPI parser ve dashboard fallback düzeltildi. Android 15 emülatöründeki gerçek widget Toto kapsamını ve cihazda seçilen kalıcı `1+ / 2+ / 3+ / 4+` Super eşiğinin günlük profit/kazandı/kaybetti değerini doğru gösterdi. Final arm64 APK’nın fiziksel cihazda gerçek bildirim/uygulama dönüşü sonrasında aynı parity’yi koruduğu doğrulanmalı. **2026-09-12 fiziksel kabul:** sahibi uzun sureli cihaz takibinde bu davranista sorun gormedigini bildirdi. Bozuk olsa fark edilecek gorunur bir davranis oldugu icin kabul edildi; ayri bir tetikleme kanidi aranmadi.| HIGH | CLOSED |
 | NXT-OBS-002 | 2026-07-29 | Notification görünümü | Android notification küçük ikonu ve varsayılan Firebase/Expo ikon metadata’sı APK’da mevcut. Gerçek FCM bildiriminin fiziksel cihazdaki küçük ikon görünümü bekleniyor. **2026-09-12 fiziksel kabul:** sahibi uzun sureli cihaz takibinde bu davranista sorun gormedigini bildirdi. Bozuk olsa fark edilecek gorunur bir davranis oldugu icin kabul edildi; ayri bir tetikleme kanidi aranmadi.| MEDIUM | CLOSED |

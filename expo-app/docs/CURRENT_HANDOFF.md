@@ -6,6 +6,36 @@ Son güncelleme: 2026-09-13
 
 Aktif task: `BTB Mobile Next - Aktif`
 
+## 2026-09-13 — NXT-OBS-148 measured correction validated; pilot rollout next
+
+Owner authorized the continued M10 exception, three-repo commit/push and pilot
+restart. Baseline: 20 sequential uncached calls, 12/20 visible; provider p90
+1449ms, p99 1484ms, no timeout in this window. Ten actual rejected texts were
+collected in 26 calls. The validator remains unchanged; prompt compaction and
+safe wording instructions plus one bounded fresh generation produced **20/20**
+visible readings from 21 provider invocations in the candidate series.
+
+Budget: parallel sources 5000ms + shared provider 7450ms + allowance 2550ms =
+Mobile 15000ms. The provider budget derives from the earlier 6000ms censored
+timeout plus the measured 1449ms p90, rounded to 10ms. No deterministic fallback
+or Mobile application source change; reuse the existing round-2 ARM64 APK.
+Mobile check/BFF test/build passed; Doctor rerun **FAILED 19/20** (16 mismatches).
+Next: push all three repos, mandatory pilot restart with `-AuthMode pilot`, then
+20 public readbacks and the final rollout evidence commit. All are authorized.
+Detailed measurements and ten rejected examples:
+[JINX_RELIABILITY_NXT_OBS_148_2026-09-13.md](JINX_RELIABILITY_NXT_OBS_148_2026-09-13.md).
+
+## 2026-09-13 — Device failure: TASK-0011 reopened in observation
+
+NXT-OBS-148: owner reports Jinx unavailable for Gimcheon S. – Gangwon, 55 minutes,
+2-0. Exact-match read-only reproduction confirms the Gemini fetch aborts at its
+6-second deadline despite seven available source reads. Pilot PID 28044 and
+health remain up. Recent banned-phrase refusals are a separate failure mode,
+not proven to belong to the screenshot request. TASK-0011 is OPEN again; the
+successful rollout smoke below does not prove reliable analyst availability.
+No implementation or restart in this observation session. Details and next
+cutover evidence gate: [OBSERVATION_LOG.md](OBSERVATION_LOG.md), NXT-OBS-148.
+
 ## 2026-09-13 — TASK-0011 round 2 delivered; pilot rollout verified
 
 The owner authorized the continued M10 exception, all three repo commits/pushes,
