@@ -1,5 +1,30 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-16 night — Finished-match detail failed 502 after a voided last decision (NXT-OBS-157)
+
+Found in the pilot stderr log during the owner-authorized night run, not on the
+phone: after the 23:27 restart, match detail and team-form returned `502
+INVALID_SAP_RESPONSE` "Invalid SAP field: Status" repeatedly. Reproduced
+read-only on the previous day's matches: Rakow C. – Zaglebie Lubin (`3182799`,
+the match of the 20:10/20:28 Jinx screenshots) failed both routes, eleven others
+returned 200.
+
+Cause, read from live SAP: once a match leaves `zbet_cds_005`, detail falls back to
+`SuperLog` and mapped the newest row. For Rakow that was a voided 60' `Ms25u`
+decision with its decision-time score 2-0 and `final_status "0"`, while the earlier
+46' `Ms15a` decision had settled the match 2-3 with `final_status 5`. `"0"` is the
+initial value until settlement writes it, but `final_status || match_status`
+treated it as a code and mapped it to `00`. On 2026-09-15, 5 of 58 SuperLog rows
+carried it, affecting matches `3182799` and `3132433`.
+
+Fix, BFF `16ec122`, pilot PID 28832 since 01:45 TRT: the historical path orders
+rows like the live representative decision and skips voided and unresolved ones,
+and an unsettled `"0"` yields to the decision-time `match_status`. After restart
+Rakow reads FINISHED 2-3 with `Ms15a` at 46' on detail and team-form, the eleven
+other matches are unchanged, and `3132433`, whose decisions are all still
+unsettled, reads LIVE from its decision-time status instead of failing. BFF tests
+526/526, production build PASS. Mobile source and APK unchanged.
+
 ## 2026-09-15 night — Computed Jinx verdict delivered; model kept (NXT-OBS-151, NXT-OBS-152)
 
 Owner-approved option A, BFF `d2a707e`, pilot PID 29892 since 23:27 TRT. Root
@@ -1248,6 +1273,7 @@ sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
 | NXT-OBS-154 | 2026-09-15 | Raw identifiers in Jinx coverage details | User-facing Turkish details show `matchDetail`, `periodScore`, `matchPath`, `post_score_pool` verbatim. | MEDIUM | OBSERVED |
 | NXT-OBS-155 | 2026-09-15 | Displayed decision reported stale after 300 s | Rakow 20:28 showed "seçili karar eski/zaman uyumsuz" for the 46' decision still on screen, because the `superLogs` freshness budget is 300 s. Decide whether a displayed decision's age should read as staleness at all. | MEDIUM | OBSERVED |
 | NXT-OBS-156 | 2026-09-15 | Jinx global one-second spacing turns close asks into factual summaries | 5 of the owner's 12 phone asks between 20:32 and 21:43 TRT fell back to "Veri özeti": 4 `LOCAL_SPACING` (Al Ain ×2, match 3132155 ×2), 1 `VALIDATION_REJECTED` (Rakow, both attempts). The spacing is global across matches, so a request arriving within a second of another generation is refused without calling the provider. Likely trigger (unproven): asked match screens refetching together on app focus once their 60 s stale time passes. Outcome records have no timestamp. Expected evidence after a fix: close asks on different matches all reach the provider or wait, and timestamps show the burst. **2026-09-15 fix:** BFF `42d5fbc` waits up to one second for the next slot, charged to the provider budget, and timestamps outcome and provider records; tests 516/516, pilot PID 24124. Live: the second of two concurrent asks waited 998 ms and started its provider call 1,007 ms after the first. Owner phone observation of close asks pending. | HIGH | READY |
+| NXT-OBS-157 | 2026-09-16 | Finished-match detail 502 after a voided last decision | Pilot log: detail and team-form `502 INVALID_SAP_RESPONSE` "Status" for Rakow C. – Zaglebie Lubin. Historical fallback mapped the newest SuperLog row, a voided decision with unsettled `final_status "0"`, treated as status `00`. Fixed in BFF `16ec122`: representative order with voided rows skipped, `"0"` yields to `match_status`. Live: FINISHED 2-3, `Ms15a` 46'; 11 other matches unchanged; all-unsettled `3132433` reads LIVE instead of 502. Owner phone check of a finished match pending. | HIGH | READY |
 | NXT-OBS-147 | 2026-09-02 | Real Team Form last-five score-scope filter | Owner approved the bounded local correction after the Motherwell comparison. Differing secondary scores no longer erase a valid main result when displayed score and own-team result both corroborate it; malformed/contradictory data guards remain. Motherwell regression fails before/pass after; 51 Team Form tests and full BFF tests/build pass. CAP fix/tests pushed at 91cbc25 under separate approval. At 23:55 owner-approved pilot restart changed PID 6552 to 3092. Local/public health and real Team Form -> actual Mobile schema now pass with B M M M G / 1G1B3M / PPG 0.80 / GA 2.20; Dundee and independent venue windows unchanged. Public dashboard/matches/Super Log and unauthenticated 401 checks pass. No flags, SAP/model or Mobile source change. API rollout complete; pull-to-refresh and owner physical acceptance remain. Existing APK is sufficient. Details at the top of this log. **2026-09-03 physical acceptance:** after the approved CAP 91cbc25 pilot update and refresh instructions, the owner confirmed "I checked it works fine." Corrected Team Form and newest-first results accepted on the device; no new APK needed. This supersedes earlier rollout/phone-pending statements in this row. | HIGH | CLOSED |
 | NXT-OBS-001 | 2026-07-29 | Performans widget | KPI parser ve dashboard fallback düzeltildi. Android 15 emülatöründeki gerçek widget Toto kapsamını ve cihazda seçilen kalıcı `1+ / 2+ / 3+ / 4+` Super eşiğinin günlük profit/kazandı/kaybetti değerini doğru gösterdi. Final arm64 APK’nın fiziksel cihazda gerçek bildirim/uygulama dönüşü sonrasında aynı parity’yi koruduğu doğrulanmalı. **2026-09-12 fiziksel kabul:** sahibi uzun sureli cihaz takibinde bu davranista sorun gormedigini bildirdi. Bozuk olsa fark edilecek gorunur bir davranis oldugu icin kabul edildi; ayri bir tetikleme kanidi aranmadi.| HIGH | CLOSED |
 | NXT-OBS-002 | 2026-07-29 | Notification görünümü | Android notification küçük ikonu ve varsayılan Firebase/Expo ikon metadata’sı APK’da mevcut. Gerçek FCM bildiriminin fiziksel cihazdaki küçük ikon görünümü bekleniyor. **2026-09-12 fiziksel kabul:** sahibi uzun sureli cihaz takibinde bu davranista sorun gormedigini bildirdi. Bozuk olsa fark edilecek gorunur bir davranis oldugu icin kabul edildi; ayri bir tetikleme kanidi aranmadi.| MEDIUM | CLOSED |
