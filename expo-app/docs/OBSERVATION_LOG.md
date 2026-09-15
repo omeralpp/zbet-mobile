@@ -1,5 +1,61 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-15 — Owner phone Jinx readings: available, but the reading is not yet trustworthy (NXT-OBS-151–155)
+
+Owner checked Jinx on the physical device and shared five screenshots (phone clock
+20:10 and 20:28 TRT). They hold three distinct readings; the other two are the same
+readings with coverage details expanded or collapsed:
+
+| Match | Displayed selection | Reading | Pilot log (BFF `73f44af`, PID 8668) |
+| --- | --- | --- | --- |
+| Rakow C. – Zaglebie Lubin, 1-0 | `Ms15a` (toplam gol 1.5 alt), 46' karar, "Maç durumu değişti" | 20:10 | 1 attempt, provider 1,348 ms, Google 1,251 ms, `LIVE` |
+| Rakow C. – Zaglebie Lubin, 1-0 | same 46' decision | 20:28 | 1 attempt, 1,241 ms, Google 1,145 ms, `LIVE` |
+| Al Ain – Al Nassr, 1-0 | `Ms15a`, 59' karar, "Oran değişti", rating 1/5 | 20:28 | attempt 1 refused `unverified-number`, attempt 2 accepted; 3,018 ms, `LIVE` |
+
+Health counters at 20:32: 3 requests, 3 Gemini readings, 4 provider calls all
+`OK`, 0 factual summaries, 0 timeouts, 0 limiter hits. The live-only ask, the
+"Seçimin verilerle tutarlılığı" heading and the expandable coverage details from
+NXT-OBS-149/150 render on the phone; the owner has not stated acceptance of those
+rows, so their status is unchanged.
+
+Availability was good in this sample. Reading quality was not:
+
+- **NXT-OBS-151 — confirmed.** The same Rakow `Ms15a` decision received opposite
+  consistency verdicts 18 minutes apart. 20:10: "ev sahibi takımın %57 topa sahip
+  olma oranı ve 3 isabet şut verisiyle aynı hizada görünmüyor". 20:28: "ev
+  sahibinin %66 topa sahip olma oranı ve 8 toplam şut verisiyle örtüşüyor". Home
+  dominance grew between the two, yet the verdict reversed. Both passed the
+  validator, which checks numbers, banned phrasing and that a consistency word is
+  present, but not the direction of the claim. Likely cause (not verified): the
+  support/tension direction for a market is left entirely to the model.
+- **NXT-OBS-152 — likely.** "46 dakikada toplam 7 şut ve 12.15 basınca rağmen
+  %19.12 oran sınırı farklı bir tablo sunuyor" (20:10). `%19.12` is most likely
+  the selected market's `ratioResults` pool percentage, which the prompt carries;
+  the model called it an odds limit ("oran sınırı"), hiding that it is a low pool
+  probability for the selection. "12.15 basınç" has no scale or side. The evidence
+  sent to Gemini is deliberately not logged, so the source of both numbers cannot
+  be proven from this session. To verify with it: "46 dakikada" may use the
+  decision minute where the current minute belongs.
+- **NXT-OBS-153 — confirmed.** "Bu okuma güncel olmayabilir" shows on all three
+  readings, including Al Ain three match minutes after its decision. `matchDetail`
+  and `periodScore` carry no capture time; `jinx-outlook.js` then reports
+  `freshness.stale = true` with `ageSeconds = null`, and that exact pair is the
+  only case in which `outlookFreshnessNotice` (`src/mascot/jinx-match-outlook.ts`)
+  prints this text. The badge therefore cannot distinguish an old reading from a
+  fresh one.
+- **NXT-OBS-154 — confirmed.** Coverage details show raw source identifiers to the
+  user: `matchDetail`, `periodScore`, `matchPath`, `post_score_pool`, e.g.
+  "matchDetail: ölçüm zamanı yok, xG sıfır; kapsam belirsiz; periodScore: ölçüm
+  zamanı yok; matchPath: zaman bilinmiyor".
+- **NXT-OBS-155 — confirmed.** At 20:28 Rakow showed "karar özeti: seçili karar
+  eski/zaman uyumsuz" because the 46' decision was older than the 300 s
+  `superLogs` freshness budget, although it is still the selection displayed on
+  the screen. Al Ain (decision three match minutes old) did not show it.
+
+Observation only: no code, prompt, validator, threshold or APK change was made.
+Reliability measurement for NXT-OBS-148 continues in the 21:43 and 22:53 TRT
+evening windows.
+
 ## 2026-09-13 — NXT-OBS-150 compact chart / consistency-first Jinx
 
 Owner's Neom SC–Al Fateh and Amed Sportif–Başakşehir phone screenshots request a
@@ -1024,9 +1080,14 @@ sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
 
 | ID | Tarih | Alan | Tespit / beklenen kanıt | Öncelik | Durum |
 | --- | --- | --- | --- | --- | --- |
-| NXT-OBS-148 | 2026-09-13 | Jinx analyst availability / TASK-0011 | Original 6s provider abort and wording refusals investigated. Paced baseline 12/20 visible; ten real rejected texts reviewed. Validator unchanged, compact prompt and shared 7450ms provider budget with one fresh generation: candidate 20/20 uncached readings, final public 20/20 with all Mobile guards passing. BFF 8fab1a5 pushed and pilot restarted PID 28044 -> 26096. Existing APK reused; Doctor FAILED 19/20. Owner phone re-observation pending. See dated entry and measured report. | HIGH | OPEN |
+| NXT-OBS-148 | 2026-09-13 | Jinx analyst availability / TASK-0011 | Original 6s provider abort and wording refusals investigated. Paced baseline 12/20 visible; ten real rejected texts reviewed. Validator unchanged, compact prompt and shared 7450ms provider budget with one fresh generation: candidate 20/20 uncached readings, final public 20/20 with all Mobile guards passing. BFF 8fab1a5 pushed and pilot restarted PID 28044 -> 26096. Existing APK reused; Doctor FAILED 19/20. Owner phone re-observation pending. See dated entry and measured report. **2026-09-15:** provider-outcome telemetry live (BFF `ac52f42`/`73f44af`). Owner phone sample 3/3 Gemini readings at 1.2–3.0 s with one validation retry recovered; 19:52 TRT direct probe 0/6 failures, generate median 671 ms. Peak-hour windows still pending, so the residual is not closed. | HIGH | OPEN |
 | NXT-OBS-149 | 2026-09-13 | Live-only Jinx / displayed selection | Pilot BFF 6950713 and Mobile e8c8972 bind an explicit ask to the displayed highest-star selection; closed matches cannot invoke Gemini. ARM64 jinx-live APK delivered. Analyst/provider reliability remains open in TASK-0011 / NXT-OBS-148. Phone acceptance pending. | HIGH | READY |
 | NXT-OBS-150 | 2026-09-13 | Compact mobile chart / consistency-first presentation | Compact interactive chart, 44/48-unit touch targets, same-direction form strips, secondary expandable data gaps and an explicit factual-fallback label are in the final jinx-live APK. Phone acceptance pending. | HIGH | READY |
+| NXT-OBS-151 | 2026-09-15 | Jinx consistency verdict unstable | Same Rakow `Ms15a` 46' decision: 20:10 "aynı hizada görünmüyor" (57% possession, 3 on target), 20:28 "örtüşüyor" (66% possession, 8 shots). Evidence moved one way, verdict reversed; both passed the validator, which does not check claim direction. Needs a design decision on how support/tension is grounded per market, not a wording tweak. Expected evidence: repeated asks on one decision give a stable direction unless the relevant facts change direction. | HIGH | OBSERVED |
+| NXT-OBS-152 | 2026-09-15 | Jinx numbers unexplained or mislabelled | 20:10 Rakow: "12.15 basınca rağmen %19.12 oran sınırı". `%19.12` is likely the selected market's `ratioResults` pool percentage labelled as an odds limit; pressure has no scale or side. Prompt evidence is not logged, so the source is unproven. Also verify whether "46 dakikada" uses the decision minute for the current minute. | HIGH | OBSERVED |
+| NXT-OBS-153 | 2026-09-15 | Permanent "Bu okuma güncel olmayabilir" badge | Shown on all three readings, including a decision three match minutes old. `matchDetail`/`periodScore` have no capture time, so the server sends `stale: true` with `ageSeconds: null`, the only input for which Mobile prints this text; the badge carries no information. | MEDIUM | OBSERVED |
+| NXT-OBS-154 | 2026-09-15 | Raw identifiers in Jinx coverage details | User-facing Turkish details show `matchDetail`, `periodScore`, `matchPath`, `post_score_pool` verbatim. | MEDIUM | OBSERVED |
+| NXT-OBS-155 | 2026-09-15 | Displayed decision reported stale after 300 s | Rakow 20:28 showed "seçili karar eski/zaman uyumsuz" for the 46' decision still on screen, because the `superLogs` freshness budget is 300 s. Decide whether a displayed decision's age should read as staleness at all. | MEDIUM | OBSERVED |
 | NXT-OBS-147 | 2026-09-02 | Real Team Form last-five score-scope filter | Owner approved the bounded local correction after the Motherwell comparison. Differing secondary scores no longer erase a valid main result when displayed score and own-team result both corroborate it; malformed/contradictory data guards remain. Motherwell regression fails before/pass after; 51 Team Form tests and full BFF tests/build pass. CAP fix/tests pushed at 91cbc25 under separate approval. At 23:55 owner-approved pilot restart changed PID 6552 to 3092. Local/public health and real Team Form -> actual Mobile schema now pass with B M M M G / 1G1B3M / PPG 0.80 / GA 2.20; Dundee and independent venue windows unchanged. Public dashboard/matches/Super Log and unauthenticated 401 checks pass. No flags, SAP/model or Mobile source change. API rollout complete; pull-to-refresh and owner physical acceptance remain. Existing APK is sufficient. Details at the top of this log. **2026-09-03 physical acceptance:** after the approved CAP 91cbc25 pilot update and refresh instructions, the owner confirmed "I checked it works fine." Corrected Team Form and newest-first results accepted on the device; no new APK needed. This supersedes earlier rollout/phone-pending statements in this row. | HIGH | CLOSED |
 | NXT-OBS-001 | 2026-07-29 | Performans widget | KPI parser ve dashboard fallback düzeltildi. Android 15 emülatöründeki gerçek widget Toto kapsamını ve cihazda seçilen kalıcı `1+ / 2+ / 3+ / 4+` Super eşiğinin günlük profit/kazandı/kaybetti değerini doğru gösterdi. Final arm64 APK’nın fiziksel cihazda gerçek bildirim/uygulama dönüşü sonrasında aynı parity’yi koruduğu doğrulanmalı. **2026-09-12 fiziksel kabul:** sahibi uzun sureli cihaz takibinde bu davranista sorun gormedigini bildirdi. Bozuk olsa fark edilecek gorunur bir davranis oldugu icin kabul edildi; ayri bir tetikleme kanidi aranmadi.| HIGH | CLOSED |
 | NXT-OBS-002 | 2026-07-29 | Notification görünümü | Android notification küçük ikonu ve varsayılan Firebase/Expo ikon metadata’sı APK’da mevcut. Gerçek FCM bildiriminin fiziksel cihazdaki küçük ikon görünümü bekleniyor. **2026-09-12 fiziksel kabul:** sahibi uzun sureli cihaz takibinde bu davranista sorun gormedigini bildirdi. Bozuk olsa fark edilecek gorunur bir davranis oldugu icin kabul edildi; ayri bir tetikleme kanidi aranmadi.| MEDIUM | CLOSED |
