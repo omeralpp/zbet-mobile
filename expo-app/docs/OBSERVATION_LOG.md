@@ -1,5 +1,59 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-15 late evening — Spacing wait proven live; a six-minute Gemini outage observed end to end (NXT-OBS-156, NXT-OBS-148)
+
+Owner-approved NXT-OBS-156 change, BFF `42d5fbc`: an ask inside the one-second
+spacing reserves the next slot and waits for it, up to one second, instead of
+falling back; the wait is charged to the 7,450 ms provider budget, so the Mobile
+15,000 ms arithmetic holds. Outcome records gain `observedAt`, `spacingWaitMs`
+and `durationMs`, provider records `startedAt`, and `/health` counts
+`spacingWaits`. BFF tests 516/516 and production build PASS. Pilot restarted
+22:49:07 TRT through the existing task, PID 8668 -> 24124; local and public
+health 200, unauthenticated Jinx 401. Mobile source and APK unchanged.
+
+**Live proof of the wait (confirmed).** Two concurrent authenticated asks on
+different matches arrived at 22:50:10.091 and .092 TRT (Worthing – Hornchurch,
+Sutton United – Eastleigh). The second recorded `spacingWaitMs: 998`, started its
+provider call 1,007 ms after the first, and ran with a 6,444 ms budget. Before
+this change it would have fallen back at once. Just before, at 22:49:34–22:49:48,
+Motherwell – Aberdeen and Bristol City – Lincoln produced Gemini readings, each
+after one `banned-phrase` refusal recovered on the second attempt. The
+22:49:34 Motherwell ask came from a client other than the measurement scripts.
+
+**The provider outage (confirmed).** Both calls of that concurrent pair then
+timed out, and the failure was reproduced without the BFF:
+
+| TRT | Source | Result |
+| --- | --- | --- |
+| 22:49:48 | BFF, Bristol attempt 2 | last success before, 1,078 ms |
+| 22:50:10 | BFF, concurrent pair | 2 × `TIMEOUT` (7,451 and 6,446 ms) |
+| 22:50:52 | direct minimal generate | 20 s hang |
+| 22:51:18, 22:51:30 | direct minimal generate | `503 UNAVAILABLE` after 5,063 and 695 ms |
+| 22:52:09 | BFF, owner's phone, match `3226957` | `HTTP 503 UNAVAILABLE`, 1,775 ms -> factual summary |
+| 22:52:15 – 22:54:15 | recovery watch, one call per minute | 3 × `503 UNAVAILABLE` |
+| 22:55:15 | recovery watch | 20 s hang |
+| 22:56:15 – 22:58:15 | recovery watch | OK 3,189 -> 565 -> 1,723 ms; recovered |
+
+Generation was down for about six minutes, 22:50:10 to 22:56:15, beginning
+between 22:49:48 and 22:50:10. Metadata requests on the same connections answered
+200 in 191–207 ms throughout, so the network and the API front end were up; only
+generation failed. It was not quota exhaustion: every failure was `503
+UNAVAILABLE` or a hang, never `429 RESOURCE_EXHAUSTED`, and service returned
+within minutes. Counters after the restart: 6 requests, 3 Gemini readings, 3
+factual summaries all with cause `PROVIDER_FAILURE`, 0 unavailable; 7 provider
+calls, 4 `OK`, 2 timeouts, 1 HTTP 503.
+
+**Meaning.** The NXT-OBS-148 residual is a short, intermittent provider-side
+outage that can arrive in the evening, not a steady evening slowdown: the 21:43
+and 22:30 windows were clean. During it the BFF behaved as designed, returning
+honest factual summaries and never `UNAVAILABLE`. Likely, not provable because it
+predates the telemetry: 2026-09-13, when a direct request also timed out, was the
+same kind of outage.
+
+**Not changed, open for the owner.** No budget, model, validator or prompt change.
+Whether a factual summary during a provider outage is sufficient, or a fallback
+generation model is wanted, is a separate design decision.
+
 ## 2026-09-15 evening — Jinx reliability measured: provider healthy; the BFF's own spacing caused the real fallbacks (NXT-OBS-148, NXT-OBS-156)
 
 Owner-approved TASK-0011 step 1, read-only, on pilot BFF `73f44af` (PID 8668,
@@ -1142,7 +1196,7 @@ sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
 
 | ID | Tarih | Alan | Tespit / beklenen kanıt | Öncelik | Durum |
 | --- | --- | --- | --- | --- | --- |
-| NXT-OBS-148 | 2026-09-13 | Jinx analyst availability / TASK-0011 | Original 6s provider abort and wording refusals investigated. Paced baseline 12/20 visible; ten real rejected texts reviewed. Validator unchanged, compact prompt and shared 7450ms provider budget with one fresh generation: candidate 20/20 uncached readings, final public 20/20 with all Mobile guards passing. BFF 8fab1a5 pushed and pilot restarted PID 28044 -> 26096. Existing APK reused; Doctor FAILED 19/20. Owner phone re-observation pending. See dated entry and measured report. **2026-09-15:** provider-outcome telemetry live (BFF `ac52f42`/`73f44af`). Owner phone sample 3/3 Gemini readings at 1.2–3.0 s with one validation retry recovered; 19:52 TRT direct probe 0/6 failures, generate median 671 ms. Peak-hour windows still pending, so the residual is not closed. **2026-09-15 evening measurement:** provider residual not reproduced — 24 direct and 14 BFF provider calls, 0 failures, slowest 1,899 ms of a 7,449 ms budget, no evening slowdown; w2 at 21:43 returned 20/20 Gemini readings. The owner's real phone fallbacks that night were 4 × BFF `LOCAL_SPACING` and 1 × validation refusal, tracked as NXT-OBS-156. Stays OPEN until the owner decides the next step. | HIGH | OPEN |
+| NXT-OBS-148 | 2026-09-13 | Jinx analyst availability / TASK-0011 | Original 6s provider abort and wording refusals investigated. Paced baseline 12/20 visible; ten real rejected texts reviewed. Validator unchanged, compact prompt and shared 7450ms provider budget with one fresh generation: candidate 20/20 uncached readings, final public 20/20 with all Mobile guards passing. BFF 8fab1a5 pushed and pilot restarted PID 28044 -> 26096. Existing APK reused; Doctor FAILED 19/20. Owner phone re-observation pending. See dated entry and measured report. **2026-09-15:** provider-outcome telemetry live (BFF `ac52f42`/`73f44af`). Owner phone sample 3/3 Gemini readings at 1.2–3.0 s with one validation retry recovered; 19:52 TRT direct probe 0/6 failures, generate median 671 ms. Peak-hour windows still pending, so the residual is not closed. **2026-09-15 evening measurement:** provider residual not reproduced — 24 direct and 14 BFF provider calls, 0 failures, slowest 1,899 ms of a 7,449 ms budget, no evening slowdown; w2 at 21:43 returned 20/20 Gemini readings. The owner's real phone fallbacks that night were 4 × BFF `LOCAL_SPACING` and 1 × validation refusal, tracked as NXT-OBS-156. Stays OPEN until the owner decides the next step. **2026-09-15 22:50–22:56 TRT:** residual reproduced live and explained — a six-minute Gemini generation outage (BFF timeouts, direct 20 s hang and `503 UNAVAILABLE`, never 429; metadata 200 throughout), recovered and confirmed at 22:58. Pilot served factual summaries with `PROVIDER_FAILURE`, 0 unavailable. Stays OPEN for the owner's decision on whether that behaviour is sufficient or a fallback model is wanted. | HIGH | OPEN |
 | NXT-OBS-149 | 2026-09-13 | Live-only Jinx / displayed selection | Pilot BFF 6950713 and Mobile e8c8972 bind an explicit ask to the displayed highest-star selection; closed matches cannot invoke Gemini. ARM64 jinx-live APK delivered. Analyst/provider reliability remains open in TASK-0011 / NXT-OBS-148. Phone acceptance pending. | HIGH | READY |
 | NXT-OBS-150 | 2026-09-13 | Compact mobile chart / consistency-first presentation | Compact interactive chart, 44/48-unit touch targets, same-direction form strips, secondary expandable data gaps and an explicit factual-fallback label are in the final jinx-live APK. Phone acceptance pending. | HIGH | READY |
 | NXT-OBS-151 | 2026-09-15 | Jinx consistency verdict unstable | Same Rakow `Ms15a` 46' decision: 20:10 "aynı hizada görünmüyor" (57% possession, 3 on target), 20:28 "örtüşüyor" (66% possession, 8 shots). Evidence moved one way, verdict reversed; both passed the validator, which does not check claim direction. Needs a design decision on how support/tension is grounded per market, not a wording tweak. Expected evidence: repeated asks on one decision give a stable direction unless the relevant facts change direction. | HIGH | OBSERVED |
@@ -1150,7 +1204,7 @@ sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
 | NXT-OBS-153 | 2026-09-15 | Permanent "Bu okuma güncel olmayabilir" badge | Shown on all three readings, including a decision three match minutes old. `matchDetail`/`periodScore` have no capture time, so the server sends `stale: true` with `ageSeconds: null`, the only input for which Mobile prints this text; the badge carries no information. | MEDIUM | OBSERVED |
 | NXT-OBS-154 | 2026-09-15 | Raw identifiers in Jinx coverage details | User-facing Turkish details show `matchDetail`, `periodScore`, `matchPath`, `post_score_pool` verbatim. | MEDIUM | OBSERVED |
 | NXT-OBS-155 | 2026-09-15 | Displayed decision reported stale after 300 s | Rakow 20:28 showed "seçili karar eski/zaman uyumsuz" for the 46' decision still on screen, because the `superLogs` freshness budget is 300 s. Decide whether a displayed decision's age should read as staleness at all. | MEDIUM | OBSERVED |
-| NXT-OBS-156 | 2026-09-15 | Jinx global one-second spacing turns close asks into factual summaries | 5 of the owner's 12 phone asks between 20:32 and 21:43 TRT fell back to "Veri özeti": 4 `LOCAL_SPACING` (Al Ain ×2, match 3132155 ×2), 1 `VALIDATION_REJECTED` (Rakow, both attempts). The spacing is global across matches, so a request arriving within a second of another generation is refused without calling the provider. Likely trigger (unproven): asked match screens refetching together on app focus once their 60 s stale time passes. Outcome records have no timestamp. Expected evidence after a fix: close asks on different matches all reach the provider or wait, and timestamps show the burst. | HIGH | OBSERVED |
+| NXT-OBS-156 | 2026-09-15 | Jinx global one-second spacing turns close asks into factual summaries | 5 of the owner's 12 phone asks between 20:32 and 21:43 TRT fell back to "Veri özeti": 4 `LOCAL_SPACING` (Al Ain ×2, match 3132155 ×2), 1 `VALIDATION_REJECTED` (Rakow, both attempts). The spacing is global across matches, so a request arriving within a second of another generation is refused without calling the provider. Likely trigger (unproven): asked match screens refetching together on app focus once their 60 s stale time passes. Outcome records have no timestamp. Expected evidence after a fix: close asks on different matches all reach the provider or wait, and timestamps show the burst. **2026-09-15 fix:** BFF `42d5fbc` waits up to one second for the next slot, charged to the provider budget, and timestamps outcome and provider records; tests 516/516, pilot PID 24124. Live: the second of two concurrent asks waited 998 ms and started its provider call 1,007 ms after the first. Owner phone observation of close asks pending. | HIGH | READY |
 | NXT-OBS-147 | 2026-09-02 | Real Team Form last-five score-scope filter | Owner approved the bounded local correction after the Motherwell comparison. Differing secondary scores no longer erase a valid main result when displayed score and own-team result both corroborate it; malformed/contradictory data guards remain. Motherwell regression fails before/pass after; 51 Team Form tests and full BFF tests/build pass. CAP fix/tests pushed at 91cbc25 under separate approval. At 23:55 owner-approved pilot restart changed PID 6552 to 3092. Local/public health and real Team Form -> actual Mobile schema now pass with B M M M G / 1G1B3M / PPG 0.80 / GA 2.20; Dundee and independent venue windows unchanged. Public dashboard/matches/Super Log and unauthenticated 401 checks pass. No flags, SAP/model or Mobile source change. API rollout complete; pull-to-refresh and owner physical acceptance remain. Existing APK is sufficient. Details at the top of this log. **2026-09-03 physical acceptance:** after the approved CAP 91cbc25 pilot update and refresh instructions, the owner confirmed "I checked it works fine." Corrected Team Form and newest-first results accepted on the device; no new APK needed. This supersedes earlier rollout/phone-pending statements in this row. | HIGH | CLOSED |
 | NXT-OBS-001 | 2026-07-29 | Performans widget | KPI parser ve dashboard fallback düzeltildi. Android 15 emülatöründeki gerçek widget Toto kapsamını ve cihazda seçilen kalıcı `1+ / 2+ / 3+ / 4+` Super eşiğinin günlük profit/kazandı/kaybetti değerini doğru gösterdi. Final arm64 APK’nın fiziksel cihazda gerçek bildirim/uygulama dönüşü sonrasında aynı parity’yi koruduğu doğrulanmalı. **2026-09-12 fiziksel kabul:** sahibi uzun sureli cihaz takibinde bu davranista sorun gormedigini bildirdi. Bozuk olsa fark edilecek gorunur bir davranis oldugu icin kabul edildi; ayri bir tetikleme kanidi aranmadi.| HIGH | CLOSED |
 | NXT-OBS-002 | 2026-07-29 | Notification görünümü | Android notification küçük ikonu ve varsayılan Firebase/Expo ikon metadata’sı APK’da mevcut. Gerçek FCM bildiriminin fiziksel cihazdaki küçük ikon görünümü bekleniyor. **2026-09-12 fiziksel kabul:** sahibi uzun sureli cihaz takibinde bu davranista sorun gormedigini bildirdi. Bozuk olsa fark edilecek gorunur bir davranis oldugu icin kabul edildi; ayri bir tetikleme kanidi aranmadi.| MEDIUM | CLOSED |
