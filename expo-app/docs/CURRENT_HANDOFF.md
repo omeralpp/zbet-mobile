@@ -1,10 +1,47 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-09-15
+Son güncelleme: 2026-09-16
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
+
+## 2026-09-16 — Night run: TASK-0109 staged, finished-match 502 fixed, Jinx labels
+
+Owner away with a standing instruction to continue through recommended actions.
+Deploy, SAP writes, model logic and APK distribution stayed gated.
+
+**Runtime now (supersedes the 2026-09-15 line below).** Pilot BFF `zbet-cap`
+`4de265d` (clean, pushed), PID 14088 on `127.0.0.1:4004`, restarted 01:49 TRT
+through the existing task. Local and public health 200, unauthenticated 401.
+Installed APK on the phone is still the `jinx-live` build.
+
+**Delivered and pushed.**
+- `zbet-cap` `16ec122` (NXT-OBS-157): a finished match's detail and team-form no
+  longer fail 502 when its newest SuperLog decision was voided; the historical path
+  uses the non-voided representative decision and treats an unsettled
+  `final_status "0"` as absent. Rakow C. – Zaglebie Lubin reads FINISHED 2-3.
+- `zbet-cap` `4de265d` (NXT-OBS-154): Jinx coverage gaps are named in Turkish,
+  never by DTO keys.
+- `zbet-mobile` `c8090ac` (TASK-0109, Mobile half): the Toto program schema accepts
+  an optional `theoreticalPrizeCurrency`; the prize is formatted in its carried
+  unit; the NXT-OBS-090 closure records are corrected.
+
+**Staged, deliberately not live (TASK-0109 BFF half).** Branch
+`task-0109-prize-currency` (`bf73609`, pushed, merges cleanly onto `main`) selects
+`Programs.currency_code` and emits it beside `theoreticalPrize`; verified read-only
+against live SAP (354:3, 350:1, 349:2, 348:1 carry TRY). It must not reach the
+pilot before the phone runs a build whose strict program schema accepts the field.
+APK ready: `.codex-artifacts/btb-mobile-next-arm64-task0109.apk`, SHA-256
+`208E50D7…0371DB`, pilot certificate `fac61745…033b9c`, settings identical to
+`jinx-live`, secret scan clean. Order: install APK → confirm Toto list opens →
+merge branch → restart pilot → check 354:3 shows the TRY amount.
+
+**Waiting on the owner.** Decisions for NXT-OBS-153 (freshness badge) and 155
+(displayed decision stale after 300 s), options written in their rows; phone checks
+of NXT-OBS-151, 152, 154, 156 and 157; APK installation for TASK-0109. TASK-0011
+and TASK-0109 are recorded as blocked on exactly these. TASK-0108 re-gated to
+2026-09-17.
 
 ## 2026-09-15 — TASK-0011 Jinx: telemetry, spacing wait, computed verdict
 
