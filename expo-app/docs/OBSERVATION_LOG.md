@@ -1,5 +1,45 @@
 # BTB Mobile Next — Observation Log
 
+## 2026-09-15 night — Computed Jinx verdict delivered; model kept (NXT-OBS-151, NXT-OBS-152)
+
+Owner-approved option A, BFF `d2a707e`, pilot PID 29892 since 23:27 TRT. Root
+cause first, measured before any change: with identical Rakow-like evidence the
+provider's first-sentence verdict split 5/1/1/1 and 3/1/1/3 across eight runs
+each; the prompt asked for both "supported and tense sides" with no rule for
+which leads, and no computed market mechanism was sent. Only 1 of 16 replies knew
+that one more goal breaks an under-1.5 market at 1-0.
+
+The change: `srv/mobile-bff/jinx-market-state.js` computes, for all 16 labelled
+markets, whether the displayed selection holds now and how many goals from which
+side would change that. Headline and first body sentence come from that state;
+the provider writes one or two Turkish sentences of commentary from an English
+prompt with explicitly named facts, and the validator refuses commentary with its
+own verdict or a field name. A factual summary leads with the same verdict.
+
+| Same two evidence sets, 8 runs each | Before | After |
+| --- | --- | --- |
+| Identical verdict | split | 16/16 |
+| Correct market mechanism | 1/16 | 16/16 |
+| Total shots called "isabet" / selection minute as score minute | 4 / 4 | 0 / 0 |
+| Pool share as probability / field names | 2 / 5 | 0 / 0 |
+| Gemini readings | — | 15/16 (1 provider timeout, verdict kept) |
+
+Live on the pilot at 23:27: Motherwell – Aberdeen "Ms1X (ev sahibi veya
+beraberlik) şu an tutmuyor: skor 0-3; ev sahibinin 3 golü gerekir." and Aldershot
+– Yeovil "Ms1 (ev sahibi) şu an tutmuyor: skor 1-1; ev sahibinin 1 golü gerekir.",
+each followed by correctly labelled shots and shots on target. BFF tests 524/524,
+production build PASS; Mobile contract, source and APK unchanged.
+
+Model: `gemini-3.5-flash-lite` kept on the owner's instruction to use the best fit
+for the account. The free tier gives it 15 RPM and 500 requests per day (89 used on
+2026-09-15 by 23:21); every Flash model is capped at 20 per day, fewer than one
+measurement series, and Gemma 4 allows only 16K tokens per minute. A computed
+verdict leaves the model only fact description, which suits a Lite model.
+
+Open: owner phone observation of the new reading; commentary is accurate but plain
+and sometimes says "… ile oynuyor". NXT-OBS-153, 154 and 155 are not covered by
+this change.
+
 ## 2026-09-15 late evening — Spacing wait proven live; a six-minute Gemini outage observed end to end (NXT-OBS-156, NXT-OBS-148)
 
 Owner-approved NXT-OBS-156 change, BFF `42d5fbc`: an ask inside the one-second
@@ -1202,8 +1242,8 @@ sırasında kod değiştirilmez. Yeni değişiklik batch’i yalnız kullanıcı
 | NXT-OBS-148 | 2026-09-13 | Jinx analyst availability / TASK-0011 | Original 6s provider abort and wording refusals investigated. Paced baseline 12/20 visible; ten real rejected texts reviewed. Validator unchanged, compact prompt and shared 7450ms provider budget with one fresh generation: candidate 20/20 uncached readings, final public 20/20 with all Mobile guards passing. BFF 8fab1a5 pushed and pilot restarted PID 28044 -> 26096. Existing APK reused; Doctor FAILED 19/20. Owner phone re-observation pending. See dated entry and measured report. **2026-09-15:** provider-outcome telemetry live (BFF `ac52f42`/`73f44af`). Owner phone sample 3/3 Gemini readings at 1.2–3.0 s with one validation retry recovered; 19:52 TRT direct probe 0/6 failures, generate median 671 ms. Peak-hour windows still pending, so the residual is not closed. **2026-09-15 evening measurement:** provider residual not reproduced — 24 direct and 14 BFF provider calls, 0 failures, slowest 1,899 ms of a 7,449 ms budget, no evening slowdown; w2 at 21:43 returned 20/20 Gemini readings. The owner's real phone fallbacks that night were 4 × BFF `LOCAL_SPACING` and 1 × validation refusal, tracked as NXT-OBS-156. Stays OPEN until the owner decides the next step. **2026-09-15 22:50–22:56 TRT:** residual reproduced live and explained — a six-minute Gemini generation outage (BFF timeouts, direct 20 s hang and `503 UNAVAILABLE`, never 429; metadata 200 throughout), recovered and confirmed at 22:58. Pilot served factual summaries with `PROVIDER_FAILURE`, 0 unavailable. Stays OPEN for the owner's decision on whether that behaviour is sufficient or a fallback model is wanted. **2026-09-15 owner decision:** the factual summary during a provider outage is sufficient; no fallback generation model. Closed. | HIGH | CLOSED |
 | NXT-OBS-149 | 2026-09-13 | Live-only Jinx / displayed selection | Pilot BFF 6950713 and Mobile e8c8972 bind an explicit ask to the displayed highest-star selection; closed matches cannot invoke Gemini. ARM64 jinx-live APK delivered. Analyst/provider reliability remains open in TASK-0011 / NXT-OBS-148. Phone acceptance pending. | HIGH | READY |
 | NXT-OBS-150 | 2026-09-13 | Compact mobile chart / consistency-first presentation | Compact interactive chart, 44/48-unit touch targets, same-direction form strips, secondary expandable data gaps and an explicit factual-fallback label are in the final jinx-live APK. Phone acceptance pending. | HIGH | READY |
-| NXT-OBS-151 | 2026-09-15 | Jinx consistency verdict unstable | Same Rakow `Ms15a` 46' decision: 20:10 "aynı hizada görünmüyor" (57% possession, 3 on target), 20:28 "örtüşüyor" (66% possession, 8 shots). Evidence moved one way, verdict reversed; both passed the validator, which does not check claim direction. Needs a design decision on how support/tension is grounded per market, not a wording tweak. Expected evidence: repeated asks on one decision give a stable direction unless the relevant facts change direction. | HIGH | OBSERVED |
-| NXT-OBS-152 | 2026-09-15 | Jinx numbers unexplained or mislabelled | 20:10 Rakow: "12.15 basınca rağmen %19.12 oran sınırı". `%19.12` is likely the selected market's `ratioResults` pool percentage labelled as an odds limit; pressure has no scale or side. Prompt evidence is not logged, so the source is unproven. Also verify whether "46 dakikada" uses the decision minute for the current minute. | HIGH | OBSERVED |
+| NXT-OBS-151 | 2026-09-15 | Jinx consistency verdict unstable | Same Rakow `Ms15a` 46' decision: 20:10 "aynı hizada görünmüyor" (57% possession, 3 on target), 20:28 "örtüşüyor" (66% possession, 8 shots). Evidence moved one way, verdict reversed; both passed the validator, which does not check claim direction. Needs a design decision on how support/tension is grounded per market, not a wording tweak. Expected evidence: repeated asks on one decision give a stable direction unless the relevant facts change direction. **2026-09-15 fix (owner option A):** BFF `d2a707e` computes the verdict from the live score for all 16 labelled markets and lets the provider write commentary only; identical verdict 16/16 and correct market mechanism 16/16 against a split verdict and 1/16 before. Pilot PID 29892. Owner phone observation pending. | HIGH | READY |
+| NXT-OBS-152 | 2026-09-15 | Jinx numbers unexplained or mislabelled | 20:10 Rakow: "12.15 basınca rağmen %19.12 oran sınırı". `%19.12` is likely the selected market's `ratioResults` pool percentage labelled as an odds limit; pressure has no scale or side. Prompt evidence is not logged, so the source is unproven. Also verify whether "46 dakikada" uses the decision minute for the current minute. **2026-09-15:** both confirmed by the pre-change experiment (`ratioResults` read as "%19 1-0 olasılığı", decision minute attached to the score) and fixed in BFF `d2a707e`: facts now carry explicit names (`currentMinute`, `selectedAtMinute`, `shotsTotalIncludingOnTarget`, pressure leader, uncalibrated pool share) and model-internal adjustments are no longer sent; after-measurement 0 misread shots, minutes or pool shares in 15 readings. Owner phone observation pending. | HIGH | READY |
 | NXT-OBS-153 | 2026-09-15 | Permanent "Bu okuma güncel olmayabilir" badge | Shown on all three readings, including a decision three match minutes old. `matchDetail`/`periodScore` have no capture time, so the server sends `stale: true` with `ageSeconds: null`, the only input for which Mobile prints this text; the badge carries no information. | MEDIUM | OBSERVED |
 | NXT-OBS-154 | 2026-09-15 | Raw identifiers in Jinx coverage details | User-facing Turkish details show `matchDetail`, `periodScore`, `matchPath`, `post_score_pool` verbatim. | MEDIUM | OBSERVED |
 | NXT-OBS-155 | 2026-09-15 | Displayed decision reported stale after 300 s | Rakow 20:28 showed "seçili karar eski/zaman uyumsuz" for the 46' decision still on screen, because the `superLogs` freshness budget is 300 s. Decide whether a displayed decision's age should read as staleness at all. | MEDIUM | OBSERVED |

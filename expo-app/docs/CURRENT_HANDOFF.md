@@ -1,10 +1,49 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-09-13
+Son güncelleme: 2026-09-15
 
 Çalışma alanı: `C:\dev\btb-cdoex`
 
 Aktif task: `BTB Mobile Next - Aktif`
+
+## 2026-09-15 — TASK-0011 Jinx: telemetry, spacing wait, computed verdict
+
+**Runtime now.** Pilot BFF `d2a707e` (clean, pushed), PID 29892 on
+`127.0.0.1:4004`, restarted 23:27 TRT through the existing `BTB Mobile BFF` task
+with `-AuthMode pilot`. Local and public `/health` 200, unauthenticated Jinx 401.
+Mobile source unchanged since `e8c8972`; the delivered `jinx-live` APK (SHA-256
+`6250DDEE…7DD63`) is still current, so no new APK and no Doctor rerun.
+
+**Delivered today (BFF, all pushed).**
+- `ac52f42` provider-outcome telemetry (`/health` `jinxOutlookTelemetry`, per-call
+  and per-request log records, never text or credentials) and pilot log archiving
+  under `%LOCALAPPDATA%\BTB Mobile Next\runtime\archive` (30 per stream).
+- `73f44af` prospective capture outage markers (`CAPTURE_FAILED` /
+  `CAPTURE_RECOVERED`); TASK-0108 waits for a natural outage, next check 09-16.
+- `42d5fbc` generations spaced one second apart now wait up to one second for the
+  next slot instead of falling back (NXT-OBS-156); outcome and provider records
+  are timestamped.
+- `d2a707e` computed verdict (NXT-OBS-151/152): `jinx-market-state.js` derives the
+  headline and first sentence from the live score for all 16 labelled markets;
+  the provider writes commentary only, from an English prompt with explicitly
+  named facts. 16/16 identical verdicts on identical evidence, against a split
+  verdict before.
+
+**Decisions by the owner.** A factual summary during a provider outage is
+sufficient; no fallback model (NXT-OBS-148 closed). Keep `gemini-3.5-flash-lite`:
+on the free tier it has 15 RPM and 500 requests per day, while every Flash model
+is capped at 20 per day.
+
+**Evidence recorded.** The provider residual was a six-minute Gemini generation
+outage, 22:50–22:56 TRT (`503 UNAVAILABLE` and hangs, never 429). Evening windows
+at 19:52, 21:43 and 22:30 were clean. Details and tables: `OBSERVATION_LOG.md`
+2026-09-15 entries.
+
+**Open, in order.** Owner phone observation of NXT-OBS-151, 152 and 156 (READY).
+NXT-OBS-153 (permanent "may not be current" badge), 154 (raw source identifiers in
+coverage details) and 155 (displayed decision stale after 300 s) remain OBSERVED.
+Commentary style is plain and sometimes says "… ile oynuyor". BTP deploy was not
+targeted; production is not in scope.
 
 ## 2026-09-13 — TASK-0011 live-only, displayed-selection commentary
 
