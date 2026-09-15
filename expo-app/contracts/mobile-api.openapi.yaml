@@ -843,6 +843,14 @@ components:
         theoreticalPrize:
           type: [number, "null"]
           exclusiveMinimum: 0
+        theoreticalPrizeCurrency:
+          type: [string, "null"]
+          pattern: "^[A-Z]{3}$"
+          description: >-
+            ISO 4217 unit of theoreticalPrize from SAP Programs.currency_code;
+            null whenever theoreticalPrize is null. Optional: responses from BFF
+            versions before TASK-0109 omit it and served only TRY. Clients must
+            accept it before a BFF emits it.
         payoutDescription:
           type: [string, "null"]
           minLength: 1

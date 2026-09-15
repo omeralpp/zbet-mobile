@@ -383,6 +383,13 @@ device evidence, and the last two closed on evidence rather than observation:
   no currency anywhere, so the typed nullable amount plus currency the row
   specified cannot be built from this source. Hiding the section is correct and is
   current behaviour. The contract question is Toto-owned and is `TASK-0106`.
+  **Corrected 2026-09-16 (`TASK-0106` evidence, `TASK-0109`):** all three claims
+  in this paragraph are wrong and are kept only for the record. `theo_prize` is
+  `Edm.Decimal(15,2)` in the published `ZBET_UI_TOTO` service; the `STRING`
+  `*_win_prize` fields are only the Sportoto response parse structure. A currency
+  exists, `Programs.currency_code` (`WAERS`, TRY). Mobile does not hide the
+  section: it shows "Teorik ikramiye" whenever a `RESULTED` program has a positive
+  `theoreticalPrize`, and the card carries the TRY badge (`NXT-OBS-108`).
 
 10 rows stay `DEFERRED` on external gates: SAP DDIC/CDS activation, an OIDC
 provider, the Android App Link cutover, and the missing participant-ID chain.

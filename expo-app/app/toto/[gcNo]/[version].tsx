@@ -31,8 +31,8 @@ import {
   formatFixtureDateTime,
   formatPercentage,
   formatProgramStatus,
-  formatTimestamp,
-  formatTryCurrency
+  formatCurrencyAmount,
+  formatTimestamp
 } from "@/src/utils/format";
 import { summarizeTotoResults } from "@/src/utils/toto-results";
 import { totoProgramTone } from "@/src/utils/toto-status";
@@ -281,7 +281,7 @@ export default function TotoProgramDetailScreen() {
                 ) : null}
               </View>
               <Text style={styles.prizeValue}>
-                {formatTryCurrency(program.theoreticalPrize)}
+                {formatCurrencyAmount(program.theoreticalPrize, program.theoreticalPrizeCurrency)}
               </Text>
             </View>
           ) : null}

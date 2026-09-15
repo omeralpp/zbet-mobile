@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   formatAbsolute,
+  formatCurrencyAmount,
   formatCurrentMarketRate,
   formatDecisionReason,
   formatFixtureDateTime,
@@ -9,6 +10,15 @@ import {
   formatSuperDateScope,
   matchDateFromKey
 } from "./format";
+
+test("tutarı kaynağın taşıdığı para birimiyle biçimler; birim yoksa TRY kalır", () => {
+  const tryAmount = formatCurrencyAmount(125000.5, "TRY");
+  assert.match(tryAmount, /125\.000,50/);
+  assert.match(tryAmount, /₺|TRY/);
+  assert.equal(formatCurrencyAmount(125000.5, null), tryAmount);
+  assert.match(formatCurrencyAmount(10, "EUR"), /€|EUR/);
+  assert.doesNotMatch(formatCurrencyAmount(10, "EUR"), /₺/);
+});
 
 test("güncel market oranını seçim oranından ayrı tutar", () => {
   assert.deepEqual(formatCurrentMarketRate(1.38, "Ms1X", "canlı oran"), {

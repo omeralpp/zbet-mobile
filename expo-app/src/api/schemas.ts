@@ -243,6 +243,13 @@ export const totoProgramSchema = z.strictObject({
   mainHits: z.number().int().nonnegative().nullable(),
   coverageHits: z.number().int().nonnegative().nullable(),
   theoreticalPrize: finiteNumber.positive().nullable().default(null),
+  /**
+   * ISO 4217 unit of theoreticalPrize, from SAP Programs.currency_code
+   * (TASK-0109). Accepted before any BFF sends it, because this object is
+   * strict: a client must tolerate the field before the server may emit it.
+   * Absent means an older BFF, which only ever served TRY.
+   */
+  theoreticalPrizeCurrency: z.string().regex(/^[A-Z]{3}$/).nullable().default(null),
   payoutDescription: z.string().min(1).nullable().default(null),
   fixtures: z.array(totoFixtureSchema),
   predictions: z.array(totoPredictionSchema),

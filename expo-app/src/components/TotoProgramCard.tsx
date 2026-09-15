@@ -92,7 +92,11 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
             >
               <MaterialCommunityIcons
                 color={semantic.positive}
-                name="currency-try"
+                name={
+                  (program.theoreticalPrizeCurrency ?? "TRY") === "TRY"
+                    ? "currency-try"
+                    : "cash"
+                }
                 size={iconSizes.inline}
               />
             </View>

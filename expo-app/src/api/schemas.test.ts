@@ -35,6 +35,20 @@ test("validates every native preview fixture against the runtime contract", () =
   assert.doesNotThrow(() => totoProgramListSchema.parse(mockTotoPrograms));
 });
 
+test("accepts the carried prize currency before any BFF emits it, and tolerates its absence", () => {
+  // TASK-0109: the program object is strict, so the client must accept the
+  // field first; an installed build rejecting it would fail the whole list.
+  const [program] = totoProgramListSchema.parse(mockTotoPrograms);
+  assert.ok(program);
+  const { theoreticalPrizeCurrency: _currency, ...older } = program;
+  assert.equal(totoProgramListSchema.parse([older])[0]?.theoreticalPrizeCurrency, null);
+  assert.equal(totoProgramListSchema.parse([{ ...older, theoreticalPrizeCurrency: "TRY" }])[0]?.theoreticalPrizeCurrency, "TRY");
+  assert.equal(totoProgramListSchema.parse([{ ...older, theoreticalPrizeCurrency: null }])[0]?.theoreticalPrizeCurrency, null);
+  for (const invalid of ["try", "TL", "TRYY", ""]) {
+    assert.throws(() => totoProgramListSchema.parse([{ ...older, theoreticalPrizeCurrency: invalid }]), invalid);
+  }
+});
+
 test("serves list summaries without leaking match-detail fields", async () => {
   const matches = await mockMobileApi.getMatches();
 

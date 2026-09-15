@@ -137,10 +137,14 @@ export function formatTimestamp(value: string): string {
     .replace(",", " ·");
 }
 
-export function formatTryCurrency(value: number): string {
+/**
+ * An amount in the unit its source carried. A missing unit falls back to TRY
+ * only because every BFF that predates the carried currency served TRY.
+ */
+export function formatCurrencyAmount(value: number, currencyCode: string | null): string {
   return new Intl.NumberFormat("tr-TR", {
     style: "currency",
-    currency: "TRY",
+    currency: currencyCode ?? "TRY",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(value);

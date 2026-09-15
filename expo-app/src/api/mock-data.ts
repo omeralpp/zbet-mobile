@@ -408,6 +408,7 @@ export const mockTotoPrograms: TotoProgram[] = [
     mainHits: 8,
     coverageHits: 10,
     theoreticalPrize: 125000.5,
+    theoreticalPrizeCurrency: "TRY",
     payoutDescription: "15 bilen kolonlar için teorik toplam",
     updatedAt: now,
     fixtures: [
