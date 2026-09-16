@@ -14,7 +14,8 @@ opens, so branch `task-0109-prize-currency` was merged into `zbet-cap` `main` as
 26756; local and public health 200, unauthenticated 401. Public route: 354:3,
 350:1, 349:2 and 348:1 carry their prize with `TRY`, every other program null;
 dashboard parses. **Runtime now: `zbet-cap` `5300b89`, PID 26756; the phone runs
-the task0109 APK.** Open: owner confirms program 354:3 shows ₺1.438,60.
+the task0109 APK.** The owner opened program 354 on the phone and confirmed
+the prize shows ₺1.438,60; TASK-0109 is closed.
 
 Host note: the machine rebooted twice at 03:29–03:30 and was shut down 09:38–17:32,
 so the pilot BFF was down from about 03:29 until 17:33. SAP (`a4h`) started at
