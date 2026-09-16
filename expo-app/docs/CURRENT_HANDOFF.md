@@ -6,6 +6,21 @@ Son güncelleme: 2026-09-16
 
 Aktif task: `BTB Mobile Next - Aktif`
 
+## 2026-09-16 17:38 — TASK-0109 prize currency live
+
+The owner installed `btb-mobile-next-arm64-task0109.apk` and confirmed the app
+opens, so branch `task-0109-prize-currency` was merged into `zbet-cap` `main` as
+`5300b89` (BFF 529/529, production build PASS). Pilot restarted, PID 19900 ->
+26756; local and public health 200, unauthenticated 401. Public route: 354:3,
+350:1, 349:2 and 348:1 carry their prize with `TRY`, every other program null;
+dashboard parses. **Runtime now: `zbet-cap` `5300b89`, PID 26756; the phone runs
+the task0109 APK.** Open: owner confirms program 354:3 shows ₺1.438,60.
+
+Host note: the machine rebooted twice at 03:29–03:30 and was shut down 09:38–17:32,
+so the pilot BFF was down from about 03:29 until 17:33. SAP (`a4h`) started at
+17:33:00, before the collector's first cycle, so TASK-0108 still has no outage
+evidence.
+
 ## 2026-09-16 — Night run: TASK-0109 staged, finished-match 502 fixed, Jinx labels
 
 Owner away with a standing instruction to continue through recommended actions.
