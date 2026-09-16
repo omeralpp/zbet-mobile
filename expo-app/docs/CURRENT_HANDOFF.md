@@ -16,8 +16,8 @@ writes pressure every 180 s and Jinx allowed 120 s. The owner chose option (a) f
 NXT-OBS-159 and Jinx now allows 240 s (BFF 533/533). At 20:02 a Rodina Moskova –
 R. Kazan reading 1,544 s after its decision closed NXT-OBS-158. At 20:11 the owner
 accepted NXT-OBS-156, 157 and 159 on the phone, so every TASK-0011 observation row
-is CLOSED. Still READY from 2026-09-13: NXT-OBS-149 (a "Seçim değişti" prompt when a
-decision changes) and 150 (the owner's judgement of chart, form strips and details).
+is CLOSED and TASK-0011 is DONE (`btb-codex` `ab9b7c8`). At 20:25 the owner also
+accepted NXT-OBS-149 and 150, so the observation log has no READY or OBSERVED rows.
 
 ## 2026-09-16 17:38 — TASK-0109 prize currency live
 
