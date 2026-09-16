@@ -13,13 +13,13 @@ opens, so branch `task-0109-prize-currency` was merged into `zbet-cap` `main` as
 `5300b89` (BFF 529/529, production build PASS). Pilot restarted, PID 19900 ->
 26756; local and public health 200, unauthenticated 401. Public route: 354:3,
 350:1, 349:2 and 348:1 carry their prize with `TRY`, every other program null;
-dashboard parses. **Runtime now (updated 17:49): `zbet-cap` `742b54f`, PID 18496;
+dashboard parses. **Runtime now (updated 17:55): `zbet-cap` `16f6888`, PID 12784;
 the phone runs the task0109 APK.** Since the merge the owner chose option (a) for
-NXT-OBS-153 (`c34eae5`, freshness badge only from fetch-timed sources) and for
+NXT-OBS-153 (`c34eae5`, freshness badge only from fetch-timed sources), for
 NXT-OBS-155 (`742b54f`, the displayed decision shows its minute instead of
-reading stale); both READY for the phone. NXT-OBS-158 (league-context age) is
-OBSERVED and needs an owner choice. The owner opened program 354 on the phone and confirmed
-the prize shows ₺1.438,60; TASK-0109 is closed.
+reading stale) and for NXT-OBS-158 (`16f6888`, the league standing snapshot has
+no age budget); all three READY for the phone. The owner opened program 354 on
+the phone and confirmed the prize shows ₺1.438,60; TASK-0109 is closed.
 
 Host note: the machine rebooted twice at 03:29–03:30 and was shut down 09:38–17:32,
 so the pilot BFF was down from about 03:29 until 17:33. SAP (`a4h`) started at
