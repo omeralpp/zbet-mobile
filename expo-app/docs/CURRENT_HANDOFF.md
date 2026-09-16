@@ -14,9 +14,10 @@ APK.** Owner screenshots of El Gouna – Petrojet (18:12, 18:14) closed NXT-OBS-
 attempt. They also showed "baskı eski" on pressure from SAP's latest cycle: SAP
 writes pressure every 180 s and Jinx allowed 120 s. The owner chose option (a) for
 NXT-OBS-159 and Jinx now allows 240 s (BFF 533/533). At 20:02 a Rodina Moskova –
-R. Kazan reading 1,544 s after its decision closed NXT-OBS-158. Still READY for the
-phone: NXT-OBS-156 (close asks), 157 (finished match) and 159 (no "baskı eski" on
-a reading in the last minute of a SAP pressure cycle).
+R. Kazan reading 1,544 s after its decision closed NXT-OBS-158. At 20:11 the owner
+accepted NXT-OBS-156, 157 and 159 on the phone, so every TASK-0011 observation row
+is CLOSED. Still READY from 2026-09-13: NXT-OBS-149 (a "Seçim değişti" prompt when a
+decision changes) and 150 (the owner's judgement of chart, form strips and details).
 
 ## 2026-09-16 17:38 — TASK-0109 prize currency live
 
