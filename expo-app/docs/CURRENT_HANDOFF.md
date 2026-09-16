@@ -13,9 +13,10 @@ APK.** Owner screenshots of El Gouna – Petrojet (18:12, 18:14) closed NXT-OBS-
 152, 153, 154 and 155; all three asks that evening were `LIVE` on the first
 attempt. They also showed "baskı eski" on pressure from SAP's latest cycle: SAP
 writes pressure every 180 s and Jinx allowed 120 s. The owner chose option (a) for
-NXT-OBS-159 and Jinx now allows 240 s (BFF 533/533). Still READY for the phone:
-NXT-OBS-156 (close asks), 157 (finished match), 158 (a reading at least 10 minutes
-after the decision) and 159 (no "baskı eski" on normal data).
+NXT-OBS-159 and Jinx now allows 240 s (BFF 533/533). At 20:02 a Rodina Moskova –
+R. Kazan reading 1,544 s after its decision closed NXT-OBS-158. Still READY for the
+phone: NXT-OBS-156 (close asks), 157 (finished match) and 159 (no "baskı eski" on
+a reading in the last minute of a SAP pressure cycle).
 
 ## 2026-09-16 17:38 — TASK-0109 prize currency live
 
