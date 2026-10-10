@@ -78,6 +78,28 @@ kapanışı ilan etmez.
 
 ## Kapanış
 
+### APK delivery preference (owner instruction, 2026-10-10)
+
+After each owner-authorized pilot APK build, upload the final verified phone APK
+to the owner's connected Google Drive and return its download link in the chat.
+This instruction is standing approval for that private pilot upload; do not ask
+again for the same delivery step. It does not approve a new build, production
+distribution, public sharing, other recipients or changes to existing access.
+
+Use the owner's designated APK folder; when no folder is designated, create a
+private `BTB Mobile Next APK` folder in the connected owner's Drive. Preserve
+existing files. Before upload, verify the final artifact's signature, ABI,
+size and SHA-256 against its build receipt. After upload, read back the Drive
+file metadata and size, verify the uploaded bytes against SHA-256 when the
+tools allow, and record the observed file ID, URL, source commit and hash in
+the delivery checkpoint. Do not claim delivery until readback succeeds.
+Keep APK bytes and credentials out of Git; share only the private owner link.
+
+If the connection or upload capability is unavailable, retain the verified
+local APK, report the specific delivery limitation and preserve a dated review
+gate through the canonical task writer. A plugin installation alone does not
+prove that this session can upload a file.
+
 Tamamlanan maddeler
 `docs/observation_archive/cutover_YYYY-MM-DD.md` dosyasına taşınır. Handoff,
 artifact/checkpoint, repo commit/push SHA’ları ve açık kapılar güncellenir. Akış

@@ -71,6 +71,14 @@ physical-phone installation and screen acceptance remain pending.
 - The TASK-0109 client keeps requesting V3 against the new BFF. A BFF rollback
   to `6c3fce1` also supplies V3 to the new client, leaving goal effect unmeasured.
   ADB had no connected device; the new APK is not claimed installed or accepted.
+- **Delivery preference (owner, 2026-10-10).** Upload each final verified,
+  owner-authorized pilot APK privately to the owner's connected Google Drive,
+  then return its download link. Standing upload approval and readback rules
+  are in `NEXT_CUTOVER_PROCEDURE.md` (APK delivery preference).
+  TASK-0102 upload is still pending: Google Drive installation is confirmed,
+  but no Drive upload tool is exposed in this session; browser/desktop fallback
+  initialization also failed. No Drive file or download link is claimed.
+  Resolve delivery alongside the existing TASK-0102 review on 2026-10-12.
 
 ## Repo durumu
 
