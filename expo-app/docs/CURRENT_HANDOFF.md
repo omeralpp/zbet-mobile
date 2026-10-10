@@ -15,10 +15,14 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
-2026-10-10: owner reports TASK-0102 installed; Docker/SAP runtime recovered after
-the phone's 502 error. Authenticated public reads and Mobile schema parsing pass;
-phone acceptance after refresh remains pending. Generated-file cleanup freed
-9.08 GiB (18.35 GiB free on C:).
+2026-10-10: owner authorized safe thread closure. Delivered code is pushed and
+the existing pilot runtime/APK delivery is verified; no release is queued for
+these delivered changes. Fresh authenticated local/public reads and exact Mobile
+schemas pass (59 matches / 12 Toto programs); all three Docker containers run.
+Phone acceptance after refresh remains pending for 2026-10-12.
+BTB generated cleanup freed 9.08 GiB; general temporary-file cleanup subsequently
+freed 36.81 GiB, leaving approximately 55.16 GiB free on C:.
+Closing checkpoint: `btb-codex/docs/THREAD_CLOSE_2026-10-10.md`.
 
 - **Mode.** Observation; no open `btb next cutover start` run.
 - **Work.** BTB-owned TASK-0102 has an approved BFF/Mobile implementation:
