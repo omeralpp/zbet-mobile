@@ -15,7 +15,7 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
-2026-10-10: TASK-0102 pilot BFF deployed and signed arm64 APK ready;
+2026-10-10: TASK-0102 pilot BFF deployed and signed arm64 APK delivered privately in Drive;
 physical-phone installation and screen acceptance remain pending.
 
 - **Mode.** Observation; no open `btb next cutover start` run.
@@ -75,10 +75,15 @@ physical-phone installation and screen acceptance remain pending.
   owner-authorized pilot APK privately to the owner's connected Google Drive,
   then return its download link. Standing upload approval and readback rules
   are in `NEXT_CUTOVER_PROCEDURE.md` (APK delivery preference).
-  TASK-0102 upload is still pending: Google Drive installation is confirmed,
-  but no Drive upload tool is exposed in this session; browser/desktop fallback
-  initialization also failed. No Drive file or download link is claimed.
-  Resolve delivery alongside the existing TASK-0102 review on 2026-10-12.
+  TASK-0102 upload completed on 2026-10-10 after Drive tools became available.
+  APK: [private owner download](https://drive.google.com/file/d/12xEGoUhYMpBXc1PIXbkotg0ueIhFQai4/view?usp=drivesdk),
+  file ID `12xEGoUhYMpBXc1PIXbkotg0ueIhFQai4`, in the private
+  [BTB Mobile Next APK folder](https://drive.google.com/drive/folders/18poabE-hnuRNKTEYSR3knALfU9t_otqE).
+  Metadata confirmed 54,355,121 bytes, the expected folder and owner-only
+  permissions (`shared=false`). Authenticated download readback matched the
+  SHA-256 above exactly. No public sharing was enabled. Reuse this folder for
+  future approved pilot APK deliveries. Phone acceptance remains due for review
+  on 2026-10-12; upload does not prove installation.
 
 ## Repo durumu
 

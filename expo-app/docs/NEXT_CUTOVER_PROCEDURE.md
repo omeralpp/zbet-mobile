@@ -88,7 +88,11 @@ distribution, public sharing, other recipients or changes to existing access.
 
 Use the owner's designated APK folder; when no folder is designated, create a
 private `BTB Mobile Next APK` folder in the connected owner's Drive. Preserve
-existing files. Before upload, verify the final artifact's signature, ABI,
+existing files. The verified owner-only folder created on 2026-10-10 is
+`18poabE-hnuRNKTEYSR3knALfU9t_otqE`
+([Drive folder](https://drive.google.com/drive/folders/18poabE-hnuRNKTEYSR3knALfU9t_otqE));
+reuse it after metadata verification instead of creating another folder.
+Before upload, verify the final artifact's signature, ABI,
 size and SHA-256 against its build receipt. After upload, read back the Drive
 file metadata and size, verify the uploaded bytes against SHA-256 when the
 tools allow, and record the observed file ID, URL, source commit and hash in
