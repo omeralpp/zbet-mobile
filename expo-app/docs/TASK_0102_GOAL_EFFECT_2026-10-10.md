@@ -48,13 +48,41 @@ labelled two-snapshot, nine-row conditional excerpt, not the full SAP body.
   selected pilot retry passed. No native dependency or native code changed, so
   no Gradle build is part of this local batch. Device smoke remains pending.
 
-## Delivery and rollback
+## Pilot delivery and rollback
 
-This checkpoint is local implementation, not phone acceptance. Pilot BFF
-restart and APK signing/distribution have separate owner gates. Use the exact
-pushed CAP/Mobile commits for that delivery; verify BFF V3/V4 responses, the
-embedded pilot configuration and one real goal on the phone. The installed
-TASK-0109 APK/runtime receipt remains in CURRENT_HANDOFF until reverified.
+The owner approved signed pilot APK preparation and the existing BFF update
+with "Devam et o zaman" after those steps were explicitly identified. The BFF
+was restarted once through `BTB Mobile BFF` on CAP `626ef1d`, PID 22656 to 20716.
+Local and public health returned 200, anonymous protected requests 401 and
+unsupported negotiated versions 400. Authenticated public V3/V4 both returned
+63 points for the real fixture above. Both parsed in the Mobile schema, and
+the V4 projection exactly matched V3. The goal effect was measured zero, with
+both tied leaders retained and event probability null.
+
+The arm64 pilot build uses Mobile `cd29701`. The first native build failed
+when parallel JVM workers could not commit memory. Retry uses two workers,
+parallel Gradle work disabled, a 2 GiB daemon heap / 768 MiB metaspace and two
+native build slots, confined to that build process. No dependency/source or
+persistent machine setting changed. Retry passed `assembleRelease` in 8m 37s.
+Both temporary staging folders were removed after the build attempts.
+
+Verified final artifact: `.codex-artifacts/btb-mobile-next-arm64-task0102.apk`,
+54,355,121 bytes, SHA-256
+`FD60A83A7B3249DD623BB50D131D3D12B4F6DC7F3156DFA45700881FE64886EE`.
+APK Signature V2 passed with the same certificate as TASK-0109:
+`fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c`.
+Package `com.btb.mobile.next`, versionCode 1 / versionName 0.1.0; arm64-v8a only.
+The artifact itself contains the V4 negotiation/goal-effect consumer and matches
+the pilot credential locally without exposing it. Public settings: API
+`https://api.surklase.com`, pilot auth, mocks false, all intelligence modes LIVE.
+
+No phone was connected over ADB. Install/update and real goal-detail acceptance
+remain pending; the next read-only evidence review is 2026-10-12. On the phone,
+select a retained goal and check all tied before/after leaders, blocked leader
+count, and explicit unmeasured text where evidence is missing. Full event
+probability and card measurement remain unmeasured. TASK-0101 review stays
+2026-10-15. Existing dependency warnings remain: Expo Doctor's 16-package
+mismatch and npm ci's 34 audit alerts under the unchanged lockfile.
 
 Old clients continue using V3. Rolling the BFF back lets the new client receive
 V3 and show the goal effect as unmeasured. Rolling back the client also uses

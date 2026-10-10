@@ -15,15 +15,16 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
-2026-10-10: TASK-0102 approved local implementation; deployed runtime and APK
-details below remain the last verified 2026-09-16 delivery checkpoint.
+2026-10-10: TASK-0102 pilot BFF deployed and signed arm64 APK ready;
+physical-phone installation and screen acceptance remain pending.
 
 - **Mode.** Observation; no open `btb next cutover start` run.
 - **Work.** BTB-owned TASK-0102 has an approved BFF/Mobile implementation:
   opt-in `match-journey.v4` shows a goal's effect on all tied leading scorelines.
   Local delivery evidence and remaining gates are in
   [TASK_0102_GOAL_EFFECT_2026-10-10.md](TASK_0102_GOAL_EFFECT_2026-10-10.md).
-  Runtime restart, pilot APK signing/distribution and phone acceptance are pending.
+  Runtime update and signed local APK are verified. Phone acceptance remains
+  pending, with the next evidence review on 2026-10-12.
   TASK-0011 (Jinx match analyst) is DONE
   (`btb-codex` `ab9b7c8`) and TASK-0109 (Toto prize currency) is DONE. Mobile
   milestones M1, M2, M11 and M15 are closed. Legacy Cordova was retired on
@@ -32,8 +33,9 @@ details below remain the last verified 2026-09-16 delivery checkpoint.
   `zbet-cap/standalone-server.js` on `127.0.0.1:4004`, auth mode `pilot`, run
   from the `zbet-cap` main checkout by the Windows task `BTB Mobile BFF`
   (`ensure-mobile-bff.ps1` → `start-mobile-bff.ps1 -AuthMode pilot`). Running
-  `zbet-cap` `6c3fce1`, PID 14216 since 19:58 TRT; `/health` 200, unauthenticated
-  `/v1/btb/matches` 401.
+  `zbet-cap` `626ef1d`, PID 20716 after the approved restart (previous PID 22656).
+  Local/public `/health` 200, unauthenticated `/v1/btb/matches` 401; authenticated
+  V3/V4 real-fixture reads and exact V3 projection parity verified.
 - **Restart.** Stop the node PID listening on 4004, wait for its parent launcher
   to exit, then `Start-ScheduledTask 'BTB Mobile BFF'`. Logs are under
   `%LOCALAPPDATA%\BTB Mobile Next\runtime`; each start archives the previous
@@ -52,29 +54,37 @@ details below remain the last verified 2026-09-16 delivery checkpoint.
 
 ## Final yerel pilot APK
 
-- **Installed.** `btb-mobile-next-arm64-task0109.apk`, 54,351,369 bytes, SHA-256
+- **Ready to install.** `btb-mobile-next-arm64-task0102.apk`, 54,355,121 bytes,
+  SHA-256 `FD60A83A7B3249DD623BB50D131D3D12B4F6DC7F3156DFA45700881FE64886EE`,
+  built from Mobile code `cd29701`, arm64-v8a. Signature V2 verified, same pilot
+  certificate `fac61745…033b9c` and package `com.btb.mobile.next` as the installed
+  baseline, versionCode 1 / versionName 0.1.0. API `https://api.surklase.com`,
+  auth `pilot`, mocks off; Match Journey, Team Form and Jinx `LIVE`. V4 consumer
+  code and pilot credential readback verified inside the APK. File and public
+  config receipt are under `.codex-artifacts/` in the Expo app.
+- **Installed / rollback baseline.** `btb-mobile-next-arm64-task0109.apk`, 54,351,369 bytes, SHA-256
   `208E50D792D822FD0832C8B7571F404C892E09A9B02F321C91CAF625120371DB`, arm64-v8a,
   pilot certificate `fac61745…033b9c`. Effective settings: API
   `https://api.surklase.com`, auth `pilot`, mocks off, Match Journey `LIVE`,
   Team Form `LIVE`, Jinx `LIVE`. Evidence file:
   `.codex-artifacts/btb-mobile-next-arm64-task0109.apk.config.json`.
-- **Rollback.** `btb-mobile-next-arm64-jinx-live.apk`, 54,352,593 bytes, SHA-256
-  `6250DDEE70BC53B2BDA5200ABAB7C4597F02EAB90A97DD8F8797A0B60EA7DD63`. It predates
-  the optional `theoreticalPrizeCurrency` field, so rolling the phone back also
-  needs a BFF that does not emit it.
+- The TASK-0109 client keeps requesting V3 against the new BFF. A BFF rollback
+  to `6c3fce1` also supplies V3 to the new client, leaving goal effect unmeasured.
+  ADB had no connected device; the new APK is not claimed installed or accepted.
 
 ## Repo durumu
 
-At the previous delivery checkpoint every repository was clean and level with its remote:
-`zbet-cap` `6c3fce1` (`main`), `zbet-mobile` (`master`), `btb-codex` (`main`).
+Delivered code: `zbet-cap` `626ef1d` (`main`), Mobile `cd29701` (`master`).
+The delivery notes and task evidence are committed separately after verification.
 Run `btb status` for the live SHAs instead of trusting this line later.
 
 ## Doğrulama
 
 - Mobile gate: `btb-codex/scripts/invoke-mobile-check.ps1` (Expo Doctor carries a
   known 16-package version mismatch). BFF gate:
-  `btb-codex/scripts/invoke-mobile-bff-check.ps1 -ProductionBuild`; last run
-  533/533 tests and production build PASS on `6c3fce1`.
+  `btb-codex/scripts/invoke-mobile-bff-check.ps1 -ProductionBuild`; full tests
+  and production build PASS on `626ef1d`. Mobile core gate passed on `cd29701`;
+  the native arm64 release build passed after bounded memory/worker retry.
 - Pilot APK: `zbet-mobile/expo-app/scripts/build-pilot-apk.ps1` needs explicit
   `EXPO_PUBLIC_MATCH_PATH_INTELLIGENCE`, `EXPO_PUBLIC_TEAM_FORM_INTELLIGENCE` and
   `EXPO_PUBLIC_MOBILE_INTELLIGENCE` (`off`/`synthetic`/`live`) plus
@@ -93,13 +103,15 @@ Run `btb status` for the live SHAs instead of trusting this line later.
 - `OBSERVATION_LOG.md` holds no OBSERVED or READY rows; 10 rows are DEFERRED
   behind external gates. Nothing waits on the owner.
 - BTB-owned TASK-0102 remains IN_PROGRESS; event probability is unmeasured.
+  Phone install and real goal-detail acceptance evidence are reviewed next on
+  2026-10-12; if missing, record the finding and a new date.
   TASK-0101 red-card measurement requires new capture/population evidence;
   its read-only review is scheduled for 2026-10-15.
 
 ## Exact next steps
 
-1. Complete TASK-0102's separate pilot runtime/APK delivery gates, then verify
-   one real goal detail on the phone before claiming it is visible there.
+1. Install TASK-0102's verified APK as an update and verify one real goal detail
+   on the phone before claiming screen acceptance. Keep the TASK-0109 rollback.
 2. Keep observing on the phone; record each new finding as a row in
    `OBSERVATION_LOG.md` without code changes.
 3. Start `btb next cutover start` only when the owner says so and OBSERVED rows
