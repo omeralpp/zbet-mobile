@@ -638,6 +638,43 @@ export type MatchPathContext = z.infer<typeof matchPathContextSchema>;
 
 /** TASK-0044: retained job observations. Level is an ordinal display index,
  * never a prediction probability; event elimination has its own denominator. */
+const modeCountSchema = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
+export const goalModeEffectSchema = z.object({
+  measurementStatus: z.enum(["MEASURED", "UNMEASURED"]),
+  missingReason: z.enum(["CAPTURE_ORDER_UNPROVEN", "REFERENCE_CHANGED", "NON_GOAL_BOUNDARY",
+    "INVALID_POOL", "EMPTY_PRE_EVENT_POOL", "EMPTY_POST_EVENT_POOL", "CONFLICTING_SAMPLE",
+    "REPEATED_SCORE_TRANSITION"]).nullable(),
+  beforeSampleKey: z.string().min(1), afterSampleKey: z.string().min(1),
+  observedFrom: isoDateTime.nullable(), observedTo: isoDateTime.nullable(),
+  poolKey: z.string().nullable(), phase: z.union([z.literal(1), z.literal(2)]).nullable(),
+  beforeScore: z.string().regex(/^\d+-\d+$/), afterScore: z.string().regex(/^\d+-\d+$/),
+  preModes: z.array(z.string().regex(/^\d+-\d+$/)).max(5000),
+  postModes: z.array(z.string().regex(/^\d+-\d+$/)).max(5000),
+  beforeCount: modeCountSchema.nullable(), afterCount: modeCountSchema.nullable(),
+  blockedModeCount: modeCountSchema.nullable(), preModeCount: modeCountSchema.nullable(),
+  blockedModeShare: finiteNumber.min(0).max(1).nullable(), eventSurprise: z.null(),
+  scale: z.literal("MODAL_DISRUPTION_UNCALIBRATED")
+}).superRefine((effect, ctx) => {
+  const fail = () => ctx.addIssue({ code: "custom", message: "Invalid goal mode-effect measurement" });
+  if (effect.measurementStatus === "UNMEASURED") {
+    if (effect.missingReason === null || effect.preModes.length || effect.postModes.length ||
+      [effect.beforeCount, effect.afterCount, effect.blockedModeCount, effect.preModeCount,
+        effect.blockedModeShare].some(value => value !== null)) fail();
+    return;
+  }
+  if (effect.missingReason !== null || !effect.poolKey || !effect.phase ||
+    !effect.observedFrom || !effect.observedTo || effect.observedFrom >= effect.observedTo ||
+    !effect.preModes.length || !effect.postModes.length ||
+    effect.beforeCount === null || effect.afterCount === null || effect.blockedModeCount === null ||
+    effect.preModeCount === null || effect.blockedModeShare === null || effect.preModeCount <= 0 ||
+    effect.afterCount <= 0 || effect.afterCount > effect.beforeCount ||
+    effect.preModeCount > effect.beforeCount || effect.blockedModeCount > effect.preModeCount ||
+    Math.abs(effect.blockedModeShare - effect.blockedModeCount / effect.preModeCount) > 1e-9 ||
+    new Set(effect.preModes).size !== effect.preModes.length ||
+    new Set(effect.postModes).size !== effect.postModes.length) fail();
+});
+export type GoalModeEffect = z.infer<typeof goalModeEffectSchema>;
+
 export const matchJourneyPointSchema = z.object({
   key: z.string().min(1), capturedAt: isoDateTime.nullable(),
   minute: z.number().int().min(0).max(150).nullable(),
@@ -651,10 +688,11 @@ export const matchJourneyPointSchema = z.object({
   beforeCount: z.number().int().nonnegative().nullable(),
   eliminatedCount: z.number().int().nonnegative().nullable(),
   eliminatedRatio: finiteNumber.min(0).max(1).nullable(),
-  pressureAlignment: finiteNumber.min(-1).max(1).nullable()
+  pressureAlignment: finiteNumber.min(-1).max(1).nullable(),
+  eventEffect: goalModeEffectSchema.nullable().optional()
 });
 export const matchJourneySchema = z.object({
-  matchKey: z.string(), contractVersion: z.literal("match-journey.v3"),
+  matchKey: z.string(), contractVersion: z.enum(["match-journey.v3", "match-journey.v4"]),
   origin: intelligenceOriginSchema, availability: z.enum(["OK", "UNAVAILABLE"]),
   capturedAt: isoDateTime.nullable(), missingReason: z.string().nullable(),
   scale: z.literal("ORDINAL_UNCALIBRATED"),
@@ -665,6 +703,29 @@ export const matchJourneySchema = z.object({
     count: z.number().int().positive(), modes: z.array(z.string()).min(1),
     rows: z.array(z.object({score: z.string(), count: z.number().int().positive()})).min(1).max(5000)
   })).max(5000)
+}).superRefine((journey, ctx) => {
+  journey.points.forEach((point, index) => {
+    const fail = () => ctx.addIssue({ code: "custom", path: ["points", index, "eventEffect"],
+      message: "Goal effect does not match the retained capture contract" });
+    if (journey.contractVersion === "match-journey.v3") {
+      if (point.eventEffect !== undefined) fail();
+      return;
+    }
+    if (point.eventEffect === undefined || (point.kind === "GOAL") !== (point.eventEffect !== null)) {
+      fail(); return;
+    }
+    const effect = point.eventEffect;
+    if (!effect) return;
+    const before = journey.points[index - 1];
+    if (!before || effect.beforeSampleKey !== before.key || effect.afterSampleKey !== point.key ||
+      effect.observedFrom !== before.capturedAt || effect.observedTo !== point.capturedAt ||
+      effect.poolKey !== point.poolKey || effect.phase !== point.phase ||
+      effect.beforeScore !== `${before.home}-${before.away}` || effect.afterScore !== `${point.home}-${point.away}` ||
+      (effect.measurementStatus === "MEASURED" && (!point.connects || before.poolKey !== point.poolKey ||
+        before.phase !== point.phase || point.home === null || point.away === null ||
+        before.home === null || before.away === null || point.home < before.home || point.away < before.away ||
+        point.home - before.home + point.away - before.away !== 1))) fail();
+  });
 });
 export type MatchJourneyPoint = z.infer<typeof matchJourneyPointSchema>;
 export type MatchJourney = z.infer<typeof matchJourneySchema>;

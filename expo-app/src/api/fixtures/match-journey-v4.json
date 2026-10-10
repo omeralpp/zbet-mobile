@@ -1,0 +1,134 @@
+{
+  "matchKey": "2026-10-10:3193938:14:00:00",
+  "contractVersion": "match-journey.v4",
+  "origin": "LIVE",
+  "availability": "OK",
+  "capturedAt": "2026-10-10T12:39:36.2972930Z",
+  "points": [
+    {
+      "key": "F2E282A780091FD1B194F05F1532A72B",
+      "capturedAt": "2026-10-10T12:38:36.6950160Z",
+      "minute": 84,
+      "plotMinute": 84,
+      "elapsed": "84",
+      "phase": 2,
+      "status": "04",
+      "home": 2,
+      "away": 1,
+      "kind": "STATE",
+      "reason": "CAPTURE_STARTED",
+      "level": 0.78,
+      "connects": false,
+      "referenceChange": false,
+      "poolKey": "2026-10-10T12:18:36.5664690Z:2:2-1",
+      "compatibleCount": 11,
+      "beforeCount": null,
+      "eliminatedCount": null,
+      "eliminatedRatio": null,
+      "pressureAlignment": null,
+      "eventEffect": null
+    },
+    {
+      "key": "F2E282A780091FD1B194F4DB0A7A472D",
+      "capturedAt": "2026-10-10T12:39:36.2972930Z",
+      "minute": 85,
+      "plotMinute": 85,
+      "elapsed": "85",
+      "phase": 2,
+      "status": "04",
+      "home": 3,
+      "away": 1,
+      "kind": "GOAL",
+      "reason": "OUTCOMES_ELIMINATED",
+      "level": 0.575,
+      "connects": true,
+      "referenceChange": false,
+      "poolKey": "2026-10-10T12:18:36.5664690Z:2:2-1",
+      "compatibleCount": 8,
+      "beforeCount": 11,
+      "eliminatedCount": 3,
+      "eliminatedRatio": 0.273,
+      "pressureAlignment": null,
+      "eventEffect": {
+        "measurementStatus": "MEASURED",
+        "missingReason": null,
+        "beforeSampleKey": "F2E282A780091FD1B194F05F1532A72B",
+        "afterSampleKey": "F2E282A780091FD1B194F4DB0A7A472D",
+        "observedFrom": "2026-10-10T12:38:36.6950160Z",
+        "observedTo": "2026-10-10T12:39:36.2972930Z",
+        "poolKey": "2026-10-10T12:18:36.5664690Z:2:2-1",
+        "phase": 2,
+        "beforeScore": "2-1",
+        "afterScore": "3-1",
+        "preModes": [
+          "3-2",
+          "4-1"
+        ],
+        "postModes": [
+          "3-2",
+          "4-1"
+        ],
+        "beforeCount": 11,
+        "afterCount": 8,
+        "blockedModeCount": 0,
+        "preModeCount": 4,
+        "blockedModeShare": 0,
+        "eventSurprise": null,
+        "scale": "MODAL_DISRUPTION_UNCALIBRATED"
+      }
+    }
+  ],
+  "pools": [
+    {
+      "key": "2026-10-10T12:18:36.5664690Z:2:2-1",
+      "phase": 2,
+      "capturedAt": "2026-10-10T12:18:36.5664690Z",
+      "halfTimeScore": "2-1",
+      "count": 11,
+      "modes": [
+        "3-2",
+        "4-1"
+      ],
+      "rows": [
+        {
+          "score": "3-2",
+          "count": 2
+        },
+        {
+          "score": "4-1",
+          "count": 2
+        },
+        {
+          "score": "2-1",
+          "count": 1
+        },
+        {
+          "score": "2-2",
+          "count": 1
+        },
+        {
+          "score": "2-3",
+          "count": 1
+        },
+        {
+          "score": "3-1",
+          "count": 1
+        },
+        {
+          "score": "3-3",
+          "count": 1
+        },
+        {
+          "score": "4-2",
+          "count": 1
+        },
+        {
+          "score": "5-1",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "missingReason": null,
+  "scale": "ORDINAL_UNCALIBRATED"
+}

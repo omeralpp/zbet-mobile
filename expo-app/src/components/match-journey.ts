@@ -35,3 +35,13 @@ export function journeyPointLabel(point: MatchJourneyPoint) {
   };
   return reason[point.reason] ?? "Maç güncellemesi";
 }
+
+/** Render only the upstream arithmetic; never derive a signal from pool size. */
+export function goalModeEffectText(point: MatchJourneyPoint | undefined) {
+  const effect = point?.eventEffect;
+  if (!effect || effect.measurementStatus !== "MEASURED") return "Bu golün lider skorlara etkisi ölçülmedi.";
+  const before = effect.preModes.join(" / "), after = effect.postModes.join(" / ");
+  return `Gol öncesi lider skorlar: ${before}. Gol sonrası: ${after}. ` +
+    `${effect.preModeCount} lider skor örneğinden ${effect.blockedModeCount} elendi. ` +
+    "Bu, skor geçişinin etkisidir; olay sürprizi veya gol olasılığı değildir.";
+}

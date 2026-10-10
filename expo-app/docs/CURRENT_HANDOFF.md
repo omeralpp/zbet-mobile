@@ -1,6 +1,6 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-09-16
+Son güncelleme: 2026-10-10
 
 Mod: `OBSERVATION`
 
@@ -15,10 +15,16 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
-2026-09-16 20:30 TRT.
+2026-10-10: TASK-0102 approved local implementation; deployed runtime and APK
+details below remain the last verified 2026-09-16 delivery checkpoint.
 
 - **Mode.** Observation; no open `btb next cutover start` run.
-- **Work.** No open Mobile task. TASK-0011 (Jinx match analyst) is DONE
+- **Work.** BTB-owned TASK-0102 has an approved BFF/Mobile implementation:
+  opt-in `match-journey.v4` shows a goal's effect on all tied leading scorelines.
+  Local delivery evidence and remaining gates are in
+  [TASK_0102_GOAL_EFFECT_2026-10-10.md](TASK_0102_GOAL_EFFECT_2026-10-10.md).
+  Runtime restart, pilot APK signing/distribution and phone acceptance are pending.
+  TASK-0011 (Jinx match analyst) is DONE
   (`btb-codex` `ab9b7c8`) and TASK-0109 (Toto prize currency) is DONE. Mobile
   milestones M1, M2, M11 and M15 are closed. Legacy Cordova was retired on
   2026-08-16.
@@ -59,7 +65,7 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Repo durumu
 
-At this checkpoint every repository was clean and level with its remote:
+At the previous delivery checkpoint every repository was clean and level with its remote:
 `zbet-cap` `6c3fce1` (`main`), `zbet-mobile` (`master`), `btb-codex` (`main`).
 Run `btb status` for the live SHAs instead of trusting this line later.
 
@@ -75,7 +81,10 @@ Run `btb status` for the live SHAs instead of trusting this line later.
   `EXPO_PUBLIC_MOBILE_AUTH_MODE=pilot`; it reads the embedded config back and
   writes a secret-free evidence file. Run it outside `2>&1` redirection.
 - Client schemas are strict (`z.strictObject`): an unknown BFF field breaks
-  parsing, so a new field ships in an installed APK before the BFF emits it.
+  parsing. TASK-0102 explicitly negotiates V4 with
+  `X-BTB-Match-Journey-Version`; omitted headers retain V3. The updated client
+  also accepts V3, allowing either deployment order without exposing V4 fields
+  to old clients. Keep new schemas versioned rather than silently adding fields.
 - Commit/push, BTP deploy, Cloudflare publication, SAP or Firebase changes and
   APK distribution each need their own owner approval (`AGENTS.md`).
 
@@ -83,14 +92,17 @@ Run `btb status` for the live SHAs instead of trusting this line later.
 
 - `OBSERVATION_LOG.md` holds no OBSERVED or READY rows; 10 rows are DEFERRED
   behind external gates. Nothing waits on the owner.
-- Not Mobile-owned but running on this pilot: TASK-0108 (prospective capture
-  outage markers, BTB) has its next check on 2026-09-17.
+- BTB-owned TASK-0102 remains IN_PROGRESS; event probability is unmeasured.
+  TASK-0101 red-card measurement requires new capture/population evidence;
+  its read-only review is scheduled for 2026-10-15.
 
 ## Exact next steps
 
-1. Keep observing on the phone; record each new finding as a row in
+1. Complete TASK-0102's separate pilot runtime/APK delivery gates, then verify
+   one real goal detail on the phone before claiming it is visible there.
+2. Keep observing on the phone; record each new finding as a row in
    `OBSERVATION_LOG.md` without code changes.
-2. Start `btb next cutover start` only when the owner says so and OBSERVED rows
+3. Start `btb next cutover start` only when the owner says so and OBSERVED rows
    exist; follow `NEXT_CUTOVER_PROCEDURE.md`.
 
 ## Documents

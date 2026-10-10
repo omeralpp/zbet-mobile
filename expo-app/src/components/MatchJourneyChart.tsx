@@ -5,7 +5,7 @@ import type { LiveContext, MatchDetail, MatchJourney, MatchJourneyPoint, MatchPa
 import { colors, radii, semantic, spacing, typeScale } from '@/src/theme/theme';
 import { SurfaceMaterial } from './SurfaceMaterial';
 import { CaveatLine, OriginBadge } from './IntelligenceNotice';
-import { journeyPointLabel } from './match-journey';
+import { goalModeEffectText, journeyPointLabel } from './match-journey';
 import { latestMatchPathSignal, matchAnalysisEvents, type MatchAnalysisEvent } from './match-analysis-events';
 import { lowCohortNotice, normalityLabel, resolveMatchPathState, surpriseLabel } from './match-path-chart';
 import { journeyMoments, journeyVertices, markerGroups, poolLeaders, pressureReading } from './journey-story';
@@ -133,10 +133,12 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
       <Text style={story.focusTitle}>{[activeMoment.side==='HOME'?match.homeTeam:activeMoment.side==='AWAY'?match.awayTeam:null,activeMoment.score].filter(Boolean).join(' · ')||activeMoment.title}</Text>
       {activeMoment.player?<Text style={story.subtitle}>{activeMoment.player}</Text>:null}
       <Text style={story.subtitle}>{activeMoment.kind==='POOL_CHANGE'?'Devre skoruna göre yeni bir havuz seçildi. Çizgideki basamak, referansın değişmesidir.':activeMoment.point?.eliminatedRatio!=null?`${activeMoment.point.beforeCount} uyumlu sonuçtan ${activeMoment.point.eliminatedCount} elendi; ${activeMoment.point.compatibleCount} kaldı. Bu, golün havuz etkisi; olay sürprizi yüzdesi değil.`:'Olayın zamanı kayıtlı. Bu olaya ait havuz etkisi ölçülmedi.'}</Text>
+      {activeMoment.kind==='GOAL'?<Text style={story.subtitle}>{goalModeEffectText(activeMoment.point)}</Text>:null}
     </View>:selected?<View style={story.focus} accessibilityLiveRegion="polite">
       <View style={story.topline}><Text style={story.eyebrow}>{selected.elapsed||selected.plotMinute}′ · {selected.home??'—'}–{selected.away??'—'}</Text><Text style={story.micro}>{selected===latest?'SON KAYIT':'SEÇİLİ AN'}</Text></View>
       <Text style={story.focusTitle}>{journeyPointLabel(selected)}</Text><Text style={story.subtitle}>{pressureReading(selected)}</Text>
       {selected.eliminatedRatio!==null?<Text style={story.subtitle}>{selected.beforeCount} sonuçtan {selected.eliminatedCount} elendi · {selected.compatibleCount} uyumlu sonuç kaldı</Text>:null}
+      {selected.kind==='GOAL'?<Text style={story.subtitle}>{goalModeEffectText(selected)}</Text>:null}
     </View>:<View style={story.focus}><Text style={story.subtitle}>{isLoading?'Maçın yolu yükleniyor…':match.status==='NOT_STARTED'?'Başlama düdüğünden sonra ilk kayıtla başlayacak.':'Bu maç için kullanılabilir geçmiş yok. Geçmişe ait çizgi üretilmedi.'}</Text></View>}
     {selected?<View style={story.controls}>
       <Pressable accessibilityRole="button" accessibilityLabel="Önceki kayıt" disabled={selectedIndex<=0} style={[story.control,selectedIndex<=0?story.disabled:null]} onPress={()=>pickPoint(drawn[selectedIndex-1]!)}><Text style={story.controlText}>← Önceki</Text></Pressable>

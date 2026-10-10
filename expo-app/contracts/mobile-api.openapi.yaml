@@ -145,8 +145,14 @@ paths:
         scores and actual-half-time-conditioned full-time scores drive separate
         phases. Display-only ordinal level; goal elimination uses the compatible
         pre-event denominator. No reconstructed historical samples or Super writes.
+        V4 adds the descriptive effect on all tied leading scorelines; it is
+        not an event probability. V3 remains the default for existing clients.
       parameters:
         - $ref: "#/components/parameters/MatchKey"
+        - name: X-BTB-Match-Journey-Version
+          in: header
+          required: false
+          schema: { type: string, enum: [match-journey.v3, match-journey.v4], default: match-journey.v3 }
       responses:
         "200":
           description: Retained journey; an empty point list means no recorded updates.
@@ -1066,11 +1072,75 @@ components:
               score: { type: string }
               count: { type: integer, minimum: 1 }
     MatchJourney:
+      oneOf:
+        - $ref: "#/components/schemas/MatchJourneyV3"
+        - $ref: "#/components/schemas/MatchJourneyV4"
+    MatchJourneyV3:
+      allOf:
+        - $ref: "#/components/schemas/MatchJourneyBase"
+        - type: object
+          properties:
+            contractVersion: { const: match-journey.v3 }
+            points:
+              type: array
+              items: { not: { required: [eventEffect] } }
+    MatchJourneyV4:
+      allOf:
+        - $ref: "#/components/schemas/MatchJourneyBase"
+        - type: object
+          properties:
+            contractVersion: { const: match-journey.v4 }
+            points:
+              type: array
+              items:
+                type: object
+                required: [eventEffect]
+                properties:
+                  eventEffect:
+                    oneOf:
+                      - $ref: "#/components/schemas/GoalModeEffect"
+                      - type: "null"
+    GoalModeEffect:
+      type: object
+      description: >-
+        Descriptive arithmetic on one frozen score-transition boundary, not
+        event probability or causal card attribution. MEASURED requires nonempty
+        tied mode sets, ordered captures and consistent positive denominators;
+        UNMEASURED carries a reason and null arithmetic. Runtime validation
+        also binds identities, counts and share to the retained point.
+      required: [measurementStatus, missingReason, beforeSampleKey, afterSampleKey,
+        observedFrom, observedTo, poolKey, phase, beforeScore, afterScore, preModes,
+        postModes, beforeCount, afterCount, blockedModeCount, preModeCount,
+        blockedModeShare, eventSurprise, scale]
+      properties:
+        measurementStatus: { type: string, enum: [MEASURED, UNMEASURED] }
+        missingReason:
+          type: [string, "null"]
+          enum: [CAPTURE_ORDER_UNPROVEN, REFERENCE_CHANGED, NON_GOAL_BOUNDARY, INVALID_POOL,
+            EMPTY_PRE_EVENT_POOL, EMPTY_POST_EVENT_POOL, CONFLICTING_SAMPLE, REPEATED_SCORE_TRANSITION, null]
+        beforeSampleKey: { type: string, minLength: 1 }
+        afterSampleKey: { type: string, minLength: 1 }
+        observedFrom: { type: [string, "null"], format: date-time }
+        observedTo: { type: [string, "null"], format: date-time }
+        poolKey: { type: [string, "null"] }
+        phase: { type: [integer, "null"], enum: [1, 2, null] }
+        beforeScore: { type: string, pattern: '^\d+-\d+$' }
+        afterScore: { type: string, pattern: '^\d+-\d+$' }
+        preModes: { type: array, maxItems: 5000, items: { type: string, pattern: '^\d+-\d+$' } }
+        postModes: { type: array, maxItems: 5000, items: { type: string, pattern: '^\d+-\d+$' } }
+        beforeCount: { type: [integer, "null"], minimum: 0, maximum: 9007199254740991 }
+        afterCount: { type: [integer, "null"], minimum: 0, maximum: 9007199254740991 }
+        blockedModeCount: { type: [integer, "null"], minimum: 0, maximum: 9007199254740991 }
+        preModeCount: { type: [integer, "null"], minimum: 0, maximum: 9007199254740991 }
+        blockedModeShare: { type: [number, "null"], minimum: 0, maximum: 1 }
+        eventSurprise: { type: "null" }
+        scale: { type: string, const: MODAL_DISRUPTION_UNCALIBRATED }
+    MatchJourneyBase:
       type: object
       required: [matchKey, contractVersion, origin, availability, capturedAt, missingReason, scale, points, pools]
       properties:
         matchKey: { type: string }
-        contractVersion: { type: string, const: match-journey.v3 }
+        contractVersion: { type: string, enum: [match-journey.v3, match-journey.v4] }
         origin: { type: string, enum: [LIVE, SYNTHETIC] }
         availability: { type: string, enum: [OK, UNAVAILABLE] }
         capturedAt: { type: [string, "null"], format: date-time }
