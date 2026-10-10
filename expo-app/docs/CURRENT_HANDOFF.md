@@ -15,16 +15,18 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
-2026-10-10: TASK-0102 pilot BFF deployed and signed arm64 APK delivered privately in Drive;
-physical-phone installation and screen acceptance remain pending.
+2026-10-10: TASK-0102 APK delivered privately in Drive and owner reports phone
+installation; data acceptance is blocked by a confirmed BFF-to-SAP HTTP failure.
 
 - **Mode.** Observation; no open `btb next cutover start` run.
 - **Work.** BTB-owned TASK-0102 has an approved BFF/Mobile implementation:
   opt-in `match-journey.v4` shows a goal's effect on all tied leading scorelines.
   Local delivery evidence and remaining gates are in
   [TASK_0102_GOAL_EFFECT_2026-10-10.md](TASK_0102_GOAL_EFFECT_2026-10-10.md).
-  Runtime update and signed local APK are verified. Phone acceptance remains
-  pending, with the next evidence review on 2026-10-12.
+  Runtime update and signed local APK are verified. Owner reports installation,
+  but the phone receives no data. Read-only diagnosis confirms authenticated
+  BFF reads fail with `502 / SAP_UPSTREAM_ERROR`; see `NXT-OBS-BFF-20261010`.
+  Phone acceptance remains pending, with the next evidence review on 2026-10-12.
   TASK-0011 (Jinx match analyst) is DONE
   (`btb-codex` `ab9b7c8`) and TASK-0109 (Toto prize currency) is DONE. Mobile
   milestones M1, M2, M11 and M15 are closed. Legacy Cordova was retired on
@@ -54,7 +56,7 @@ physical-phone installation and screen acceptance remain pending.
 
 ## Final yerel pilot APK
 
-- **Ready to install.** `btb-mobile-next-arm64-task0102.apk`, 54,355,121 bytes,
+- **Owner reports installed; data acceptance pending.** `btb-mobile-next-arm64-task0102.apk`, 54,355,121 bytes,
   SHA-256 `FD60A83A7B3249DD623BB50D131D3D12B4F6DC7F3156DFA45700881FE64886EE`,
   built from Mobile code `cd29701`, arm64-v8a. Signature V2 verified, same pilot
   certificate `fac61745…033b9c` and package `com.btb.mobile.next` as the installed
@@ -62,7 +64,7 @@ physical-phone installation and screen acceptance remain pending.
   auth `pilot`, mocks off; Match Journey, Team Form and Jinx `LIVE`. V4 consumer
   code and pilot credential readback verified inside the APK. File and public
   config receipt are under `.codex-artifacts/` in the Expo app.
-- **Installed / rollback baseline.** `btb-mobile-next-arm64-task0109.apk`, 54,351,369 bytes, SHA-256
+- **Previous / rollback baseline.** `btb-mobile-next-arm64-task0109.apk`, 54,351,369 bytes, SHA-256
   `208E50D792D822FD0832C8B7571F404C892E09A9B02F321C91CAF625120371DB`, arm64-v8a,
   pilot certificate `fac61745…033b9c`. Effective settings: API
   `https://api.surklase.com`, auth `pilot`, mocks off, Match Journey `LIVE`,
@@ -70,7 +72,8 @@ physical-phone installation and screen acceptance remain pending.
   `.codex-artifacts/btb-mobile-next-arm64-task0109.apk.config.json`.
 - The TASK-0109 client keeps requesting V3 against the new BFF. A BFF rollback
   to `6c3fce1` also supplies V3 to the new client, leaving goal effect unmeasured.
-  ADB had no connected device; the new APK is not claimed installed or accepted.
+  No ADB installation evidence exists; TASK-0102 installation is owner-reported,
+  and phone screen acceptance is not claimed.
 - **Delivery preference (owner, 2026-10-10).** Upload each final verified,
   owner-authorized pilot APK privately to the owner's connected Google Drive,
   then return its download link. Standing upload approval and readback rules
@@ -83,7 +86,7 @@ physical-phone installation and screen acceptance remain pending.
   permissions (`shared=false`). Authenticated download readback matched the
   SHA-256 above exactly. No public sharing was enabled. Reuse this folder for
   future approved pilot APK deliveries. Phone acceptance remains due for review
-  on 2026-10-12; upload does not prove installation.
+  on 2026-10-12; owner-reported installation does not prove screen acceptance.
 
 ## Repo durumu
 
@@ -113,8 +116,13 @@ Run `btb status` for the live SHAs instead of trusting this line later.
 
 ## Açık observation / blokajlar
 
-- `OBSERVATION_LOG.md` holds no OBSERVED or READY rows; 10 rows are DEFERRED
-  behind external gates. Nothing waits on the owner.
+- `OBSERVATION_LOG.md` holds one OBSERVED runtime incident and 10 DEFERRED rows.
+  On 2026-10-10 the actual APK key passed authentication, health returned 200,
+  and four authenticated local/public data surfaces returned 502. Configured
+  SAP HTTP `127.0.0.1:50000` failed a ping read; HTTPS 50001 timed out. Docker
+  CLI hung and its UI was blank. Shared Docker recovery is a proposed next step,
+  not an executed fix. MCP readiness passed, but destinations were empty; no
+  live SAP object state was verified. Diagnosis uses local transport/BFF evidence.
 - BTB-owned TASK-0102 remains IN_PROGRESS; event probability is unmeasured.
   Phone install and real goal-detail acceptance evidence are reviewed next on
   2026-10-12; if missing, record the finding and a new date.
@@ -123,8 +131,12 @@ Run `btb status` for the live SHAs instead of trusting this line later.
 
 ## Exact next steps
 
-1. Install TASK-0102's verified APK as an update and verify one real goal detail
-   on the phone before claiming screen acceptance. Keep the TASK-0109 rollback.
+1. Resolve the BFF-to-SAP HTTP incident under an approved, bounded runtime
+   recovery plan; shared Docker restart may interrupt other containers. Verify
+   authenticated public data reads, then verify a real goal detail on the phone.
+  Owner reports TASK-0102 installed; retain the TASK-0109 rollback.
+   Owner's phone error text is also `502 mobile servis hatasi`, matching the
+   authenticated BFF diagnosis. Shared Docker recovery approval is pending.
 2. Keep observing on the phone; record each new finding as a row in
    `OBSERVATION_LOG.md` without code changes.
 3. Start `btb next cutover start` only when the owner says so and OBSERVED rows
