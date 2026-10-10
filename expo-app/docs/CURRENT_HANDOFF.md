@@ -15,8 +15,10 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
-2026-10-10: TASK-0102 APK delivered privately in Drive and owner reports phone
-installation; data acceptance is blocked by a confirmed BFF-to-SAP HTTP failure.
+2026-10-10: owner reports TASK-0102 installed; Docker/SAP runtime recovered after
+the phone's 502 error. Authenticated public reads and Mobile schema parsing pass;
+phone acceptance after refresh remains pending. Generated-file cleanup freed
+9.08 GiB (18.35 GiB free on C:).
 
 - **Mode.** Observation; no open `btb next cutover start` run.
 - **Work.** BTB-owned TASK-0102 has an approved BFF/Mobile implementation:
@@ -24,9 +26,12 @@ installation; data acceptance is blocked by a confirmed BFF-to-SAP HTTP failure.
   Local delivery evidence and remaining gates are in
   [TASK_0102_GOAL_EFFECT_2026-10-10.md](TASK_0102_GOAL_EFFECT_2026-10-10.md).
   Runtime update and signed local APK are verified. Owner reports installation,
-  but the phone receives no data. Read-only diagnosis confirms authenticated
-  BFF reads fail with `502 / SAP_UPSTREAM_ERROR`; see `NXT-OBS-BFF-20261010`.
-  Phone acceptance remains pending, with the next evidence review on 2026-10-12.
+  followed by a 502 dashboard error. The owner-approved Docker restart restored
+  SAP data reads; dashboard, matches, Super KPI and Toto programs now return 200
+  and parse through Mobile schemas (75 matches / 12 programs). Incident
+  `NXT-OBS-BFF-20261010` is closed in
+  [runtime_recovery_2026-10-10.md](observation_archive/runtime_recovery_2026-10-10.md).
+  Phone acceptance after refresh remains pending for 2026-10-12 review.
   TASK-0011 (Jinx match analyst) is DONE
   (`btb-codex` `ab9b7c8`) and TASK-0109 (Toto prize currency) is DONE. Mobile
   milestones M1, M2, M11 and M15 are closed. Legacy Cordova was retired on
@@ -116,13 +121,12 @@ Run `btb status` for the live SHAs instead of trusting this line later.
 
 ## Açık observation / blokajlar
 
-- `OBSERVATION_LOG.md` holds one OBSERVED runtime incident and 10 DEFERRED rows.
-  On 2026-10-10 the actual APK key passed authentication, health returned 200,
-  and four authenticated local/public data surfaces returned 502. Configured
-  SAP HTTP `127.0.0.1:50000` failed a ping read; HTTPS 50001 timed out. Docker
-  CLI hung and its UI was blank. Shared Docker recovery is a proposed next step,
-  not an executed fix. MCP readiness passed, but destinations were empty; no
-  live SAP object state was verified. Diagnosis uses local transport/BFF evidence.
+- `OBSERVATION_LOG.md` again holds no OBSERVED/READY rows and 10 DEFERRED rows.
+  The Docker/SAP runtime incident is resolved and archived. All three existing
+  containers are running; the BFF remained on PID 20716. Recovery proof is
+  local Docker/transport and authenticated BFF data, not a SAP MCP object read.
+  Cleanup preserved sources, data, signing/configuration, Docker volumes/SAP
+  backup and both current/rollback APKs; only generated paths/caches were removed.
 - BTB-owned TASK-0102 remains IN_PROGRESS; event probability is unmeasured.
   Phone install and real goal-detail acceptance evidence are reviewed next on
   2026-10-12; if missing, record the finding and a new date.
@@ -131,12 +135,9 @@ Run `btb status` for the live SHAs instead of trusting this line later.
 
 ## Exact next steps
 
-1. Resolve the BFF-to-SAP HTTP incident under an approved, bounded runtime
-   recovery plan; shared Docker restart may interrupt other containers. Verify
-   authenticated public data reads, then verify a real goal detail on the phone.
-  Owner reports TASK-0102 installed; retain the TASK-0109 rollback.
-   Owner's phone error text is also `502 mobile servis hatasi`, matching the
-   authenticated BFF diagnosis. Shared Docker recovery approval is pending.
+1. Tap retry on the phone after verified runtime recovery, then verify a real
+   goal detail before claiming screen acceptance. Owner reports TASK-0102
+   installed; retain the TASK-0109 rollback. Review missing evidence on 2026-10-12.
 2. Keep observing on the phone; record each new finding as a row in
    `OBSERVATION_LOG.md` without code changes.
 3. Start `btb next cutover start` only when the owner says so and OBSERVED rows
