@@ -6,8 +6,9 @@ existing-certificate pilot APK preparation. Owner subsequently explicitly
 approved scoped commit/push in CAP, Mobile and Codex and the existing pilot BFF
 update; that runtime update is now verified. Standing private Drive delivery applies
 after artifact verification. The ARM64 APK is built and privately delivered,
-with matching authenticated download readback. Physical phone acceptance remains
-pending; TASK-0121 stays IN_PROGRESS.
+with matching authenticated download readback. Owner explicitly accepted the
+phone presentation and commentary on 2026-10-11: “Kabul ediyorum kapatalım”.
+TASK-0121 is DONE; its dated acceptance gate is cleared.
 
 ## What changed
 
@@ -53,7 +54,8 @@ presented as calibrated match-outcome probabilities.
 - Final authentic V2 output passed the actual Mobile schema and paragraph guards.
 - Scoped source and all 1,321 packaged-entry secret-value scans found zero
   registered server-secret matches. No ADB phone is connected;
-  physical layout/installation acceptance remains pending.
+  physical presentation was subsequently evidenced by screenshots and accepted
+  by the owner; no ADB installation evidence is claimed.
 - Expo Doctor still fails on the pre-existing 16-package version mismatch.
   Dependency manifests are unchanged. Native staging reports the existing
   lockfile audit alerts; neither is presented as a passing check.
@@ -100,7 +102,8 @@ reads are not an atomic SAP snapshot.
 The matching pilot BFF is active and serves V2 to the TASK-0121 APK while
 preserving V1 for installed older clients. Owner phone screenshots subsequently
 showed all three V2 blocks on Hartberg–Lustenau at 83′, 3–2. Physical V2
-presentation is evidenced; explicit quality acceptance remains pending.
+presentation is evidenced and the owner explicitly accepted its commentary
+quality on 2026-10-11. No further phone acceptance review is scheduled.
 [Phone evidence and separate Match Path timing observation](observation_archive/task0121_phone_evidence_2026-10-11.md).
 No connected ADB device was available.
 Keep TASK-0102 APK as the current rollback; no older artifact was deleted.

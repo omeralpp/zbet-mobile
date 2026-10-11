@@ -25,7 +25,8 @@ Owner subsequently approved scoped commit/push and updating the existing pilot
 BFF. CAP `18709ae` is pushed and active, PID 30048. Public LIVE-origin V2,
 V1 compatibility, 97-match Mobile schema and V2 paragraph guards pass.
 Owner Hartberg–Lustenau phone screenshots show all three V2 blocks; physical
-presentation is evidenced, explicit quality acceptance remains pending. Details:
+presentation is evidenced. Owner explicitly accepted the commentary and requested
+closure on 2026-10-11; TASK-0121 is DONE and its review gate is cleared. Details:
 [phone evidence](observation_archive/task0121_phone_evidence_2026-10-11.md).
 No SAP, scorer, provider, Cloudflare or Firebase behavior changed.
 
@@ -36,9 +37,8 @@ Event probability remains unmeasured. Docker/SAP incident is resolved; checkpoin
 `btb-codex/docs/THREAD_CLOSE_2026-10-10.md` remains valid for that delivery.
 
 - **Mode.** Observation; no open `btb next cutover start` run. Explicit TASK-0121
-  batch and pilot runtime are delivered; V2 phone presentation evidenced,
-  explicit owner quality acceptance pending.
-- **Work.** TASK-0121 IN_PROGRESS; TASK-0102, TASK-0011 and TASK-0109 DONE.
+  batch and pilot runtime are delivered; V2 phone presentation/commentary accepted.
+- **Work.** TASK-0121, TASK-0102, TASK-0011 and TASK-0109 DONE.
   Mobile milestones M1, M2, M11 and M15 are closed. Legacy Cordova retired
   2026-08-16. Retain TASK-0102 as the installed rollback baseline.
 - **Runtime route.** Phone → `https://api.surklase.com` (Cloudflare) → pilot BFF
@@ -67,7 +67,7 @@ Event probability remains unmeasured. Docker/SAP incident is resolved; checkpoin
 
 ## Final yerel pilot APK
 
-- **TASK-0121 privately delivered; V2 phone presentation evidenced, quality acceptance pending.**
+- **TASK-0121 current accepted pilot APK; owner phone acceptance October 11.**
   `btb-mobile-next-arm64-task0121.apk`, 54,356,433 bytes, SHA-256
   `2CF051C696A08DD5794B46C8D24E944D0A093F83DD5B4D0C2D2C2184A855F4B2`.
   Mobile implementation based on `3f41b47`, recorded with this handoff; per-file manifest is
@@ -77,7 +77,7 @@ Event probability remains unmeasured. Docker/SAP incident is resolved; checkpoin
   [owner download](https://drive.google.com/file/d/1UFEvhszZLgfZgyz3jcBiNsMqBu1fLLDS/view?usp=drivesdk)
   has owner-only permissions; authenticated download checksum matches exactly.
   Matching BFF `18709ae` is active and serves V2; older clients retain V1.
-- **Installed rollback; main phone smoke accepted October 11.** `btb-mobile-next-arm64-task0102.apk`, 54,355,121 bytes,
+- **Previous accepted / rollback; main phone smoke accepted October 11.** `btb-mobile-next-arm64-task0102.apk`, 54,355,121 bytes,
   SHA-256 `FD60A83A7B3249DD623BB50D131D3D12B4F6DC7F3156DFA45700881FE64886EE`,
   built from Mobile code `cd29701`, arm64-v8a. Signature V2 verified, same pilot
   certificate `fac61745…033b9c` and package `com.btb.mobile.next` as the installed
@@ -114,7 +114,7 @@ Event probability remains unmeasured. Docker/SAP incident is resolved; checkpoin
 
 CAP `18709ae` (`main`) is pushed and active. TASK-0121 Mobile implementation,
 contract and verified delivery notes are recorded together on `master`, based on
-`3f41b47`; Codex registry records the approved delivery and remaining phone gate.
+`3f41b47`; Codex registry records the approved delivery and closed phone gate.
 Run `btb status` for the live SHAs instead of trusting this line later.
 
 ## Doğrulama
@@ -140,11 +140,10 @@ Run `btb status` for the live SHAs instead of trusting this line later.
 
 ## Açık observation / blokajlar
 
-- `OBSERVATION_LOG.md` holds no OBSERVED/READY rows and 11 DEFERRED rows.
-  New Jinx commentary-quality feedback is routed to BTB-owned TASK-0121.
-  Its authorized local batch/APK checkpoint is in
-  `TASK_0121_JINX_READING_2026-10-11.md`. Approved runtime update is verified;
-  V2 phone acceptance is scheduled for read-only review on 2026-10-12.
+- `OBSERVATION_LOG.md` holds no OBSERVED/READY rows and 10 DEFERRED rows.
+  Jinx commentary-quality observation is closed with TASK-0121; accepted delivery
+  is recorded in `TASK_0121_JINX_READING_2026-10-11.md` and its phone evidence.
+  Runtime and phone acceptance are verified; no October 12 review remains.
   The Docker/SAP runtime incident is resolved and archived. All three existing
   containers are running; the BFF is now on PID 30048. Recovery proof is
   local Docker/transport and authenticated BFF data, not a SAP MCP object read.
@@ -159,11 +158,10 @@ Run `btb status` for the live SHAs instead of trusting this line later.
 
 ## Exact next steps
 
-1. Matching BFF `18709ae` is active; owner screenshots show physical V2 presentation.
-2. Confirm that TASK-0121 commentary quality is satisfactory. Keep TASK-0102
-   as rollback. Review the
-   evidence gate on 2026-10-12; the date grants no approval or acceptance.
-3. Keep observing; new findings become observation rows or separately owned tasks.
+1. Keep observing with the accepted TASK-0121 APK and active matching BFF;
+   no further targeted phone checks are due for this delivery.
+2. Retain TASK-0102 as rollback. New findings become observation rows or
+   separately owned tasks; closure requests no further code/runtime changes.
 
 ## Documents
 
