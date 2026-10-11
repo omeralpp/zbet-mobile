@@ -5,6 +5,7 @@ import type { JinxMatchOutlook, JinxOutlookSignal } from "@/src/api/schemas";
 import {
   acceptBody,
   acceptHeadline,
+  acceptOutlookText,
   acceptUncertaintyNote,
   confidenceBand,
   confidenceLabels,
@@ -114,6 +115,8 @@ export function AskJinxCard({
   const band = confidenceBand(outlook?.confidence);
   const signals = outlookSignals(outlook);
   const freshness = outlookFreshnessNotice(outlook);
+  const sections = outlook?.contractVersion === "jinx-match-outlook.v2" ? outlook.sections : [];
+  const sectionLabels = { SUPPORTING: "Öne çıkan veriler", LIMITING: "Karşı bulgular ve sınırlar", WATCH: "Ne değişirse?" };
 
   return (
     <View style={styles.card}>
@@ -122,11 +125,17 @@ export function AskJinxCard({
         {outlook?.origin === "DETERMINISTIC" ? (
           <Text style={styles.entryBody}>Veri özeti · Jinx yorumu alınamadı</Text>
         ) : <OriginBadge origin={outlook?.origin} />}
-        {outlook?.origin !== "DETERMINISTIC" ? <Text style={styles.confidence}>SEÇİMİN VERİLERLE TUTARLILIĞI</Text> : null}
+        {outlook?.origin !== "DETERMINISTIC" ? <Text style={styles.confidence}>{sections.length ? "MAÇIN VERİLERLE OKUMASI" : "SEÇİMİN VERİLERLE TUTARLILIĞI"}</Text> : null}
       </View>
 
       <Text style={styles.headline}>{headline}</Text>
       {body ? <Text style={styles.body}>{body}</Text> : null}
+      {sections.map((section) => (
+        <View key={section.kind} style={styles.evidenceSection}>
+          <Text style={styles.confidence}>{sectionLabels[section.kind]}</Text>
+          <Text style={styles.body}>{acceptOutlookText(section.body, 2500) ?? "Bu bölümün açıklaması doğrulanamadı."}</Text>
+        </View>
+      ))}
 
       {signals.length ? (
         <View style={styles.signals}>
@@ -242,6 +251,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.sm
+  },
+  evidenceSection: {
+    gap: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.textSubtle
   },
   chip: {
     alignItems: "center",

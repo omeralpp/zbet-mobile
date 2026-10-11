@@ -167,10 +167,17 @@ paths:
       operationId: getMatchJinxOutlook
       description: >-
         Informative-only Jinx reading of one match. Carries no recommendation,
-        no forecast and no model, Super or rating decision. Real centralized
-        analysis is TASK-0011 under M11.
+        no forecast and no model, Super or rating decision. Default V1 is kept
+        for installed clients; V2 adds grounded evidence, counterevidence and
+        score-change sections under TASK-0121.
       parameters:
         - $ref: "#/components/parameters/Key"
+        - in: header
+          name: X-BTB-Jinx-Version
+          required: false
+          schema:
+            type: string
+            enum: [jinx-match-outlook.v1, jinx-match-outlook.v2]
       responses:
         "200":
           description: Informative match outlook with uncertainty and freshness.
@@ -1213,6 +1220,35 @@ components:
         direction: { type: string, enum: [SUPPORTING, OPPOSING, NEUTRAL] }
         strength: { type: string, enum: [WEAK, MODERATE, STRONG] }
     JinxMatchOutlook:
+      oneOf:
+        - $ref: "#/components/schemas/JinxMatchOutlookV1"
+        - $ref: "#/components/schemas/JinxMatchOutlookV2"
+    JinxMatchOutlookV2:
+      allOf:
+        - $ref: "#/components/schemas/JinxMatchOutlookBase"
+        - type: object
+          required: [sections]
+          properties:
+            contractVersion: { const: jinx-match-outlook.v2 }
+            body: { type: "null" }
+            sections:
+              type: array
+              maxItems: 3
+              description: Empty when unavailable; otherwise SUPPORTING, LIMITING, WATCH in that order.
+              items:
+                type: object
+                additionalProperties: false
+                required: [kind, body]
+                properties:
+                  kind: { type: string, enum: [SUPPORTING, LIMITING, WATCH] }
+                  body: { type: string, minLength: 1, maxLength: 2500 }
+    JinxMatchOutlookV1:
+      allOf:
+        - $ref: "#/components/schemas/JinxMatchOutlookBase"
+        - type: object
+          properties:
+            contractVersion: { const: jinx-match-outlook.v1 }
+    JinxMatchOutlookBase:
       type: object
       description: >-
         Informative only. Must carry no recommendation, no certainty about the
@@ -1229,7 +1265,7 @@ components:
         - signals
       properties:
         matchKey: { type: [string, "null"] }
-        contractVersion: { type: string, const: jinx-match-outlook.v1 }
+        contractVersion: { type: string, enum: [jinx-match-outlook.v1, jinx-match-outlook.v2] }
         origin: { $ref: "#/components/schemas/IntelligenceOrigin" }
         availability: { type: string, enum: [OK, DEGRADED, UNAVAILABLE] }
         headline: { type: [string, "null"] }

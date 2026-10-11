@@ -754,7 +754,7 @@ export const jinxOutlookSignalSchema = z.object({
  * reaches a bubble. `DEGRADED` means an outlook was produced from partial
  * material and says so, which is a different statement from having none.
  */
-export const jinxMatchOutlookSchema = z.object({
+const jinxMatchOutlookBaseSchema = z.object({
   matchKey: z.string().nullable().optional(),
   contractVersion: z.literal("jinx-match-outlook.v1"),
   reasonCode: z.enum(["MATCH_NOT_LIVE", "LIVE_NOT_VERIFIED", "NO_SELECTION"]).optional(),
@@ -779,6 +779,23 @@ export const jinxMatchOutlookSchema = z.object({
     .partial()
     .optional()
 });
+
+export const jinxMatchOutlookSchema = z.union([
+  jinxMatchOutlookBaseSchema,
+  jinxMatchOutlookBaseSchema.extend({
+    contractVersion: z.literal("jinx-match-outlook.v2"),
+    body: z.null(),
+    sections: z.array(z.strictObject({
+      kind: z.enum(["SUPPORTING", "LIMITING", "WATCH"]),
+      body: z.string().min(1).max(2500)
+    })).max(3)
+  }).superRefine((outlook, ctx) => {
+    const expected = outlook.availability === "UNAVAILABLE" ? [] : ["SUPPORTING", "LIMITING", "WATCH"];
+    if (outlook.sections.length !== expected.length || outlook.sections.some((section, index) => section.kind !== expected[index])) {
+      ctx.addIssue({ code: "custom", path: ["sections"], message: "Invalid grounded reading sections" });
+    }
+  })
+]);
 
 export type JinxOutlookSignal = z.infer<typeof jinxOutlookSignalSchema>;
 export type JinxMatchOutlook = z.infer<typeof jinxMatchOutlookSchema>;

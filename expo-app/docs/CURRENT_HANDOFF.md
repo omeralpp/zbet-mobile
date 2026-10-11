@@ -15,56 +15,47 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
-2026-10-11: owner supplied real-phone Match Path screenshots and confirmed it
-works. Main data/chart/90′ goal-detail smoke is accepted; evidence is in
-[task0102_phone_acceptance_2026-10-11.md](observation_archive/task0102_phone_acceptance_2026-10-11.md).
-Owner subsequently closed the remaining tied-leader, measured-zero and
-unavailable phone checks. TASK-0102 is DONE for the accepted descriptive
-goal-effect delivery; those physical edge cases were waived, not measured.
-The prior October 10 closure checkpoint remains valid. Delivered code is pushed and
-the existing pilot runtime/APK delivery is verified; no release is queued for
-these delivered changes. Fresh authenticated local/public reads and exact Mobile
-schemas pass (59 matches / 12 Toto programs); all three Docker containers run.
-No TASK-0102 phone review remains scheduled; new owner-reported defects become
-new tasks. Event probability remains unmeasured.
-BTB generated cleanup freed 9.08 GiB; general temporary-file cleanup subsequently
-freed 36.81 GiB, leaving approximately 55.16 GiB free on C:.
-Closing checkpoint: `btb-codex/docs/THREAD_CLOSE_2026-10-10.md`.
+2026-10-11: owner approved BTB-owned TASK-0121 through APK creation. Grounded
+Jinx V2 reading is implemented locally with supporting, limiting and watch
+sections, version negotiation and V1 compatibility. Full BFF tests/production
+build, Mobile core checks and authentic V2 contract smoke pass. Signed ARM64 APK
+is privately delivered with matching download SHA-256. Details:
+[TASK_0121_JINX_READING_2026-10-11.md](TASK_0121_JINX_READING_2026-10-11.md).
+Owner subsequently approved scoped commit/push and updating the existing pilot
+BFF. CAP `18709ae` is pushed and active, PID 30048. Public LIVE-origin V2,
+V1 compatibility, 97-match Mobile schema and V2 paragraph guards pass.
+Richer V2 phone installation/acceptance remains pending.
+No SAP, scorer, provider, Cloudflare or Firebase behavior changed.
 
-- **Mode.** Observation; no open `btb next cutover start` run.
-- **Work.** BTB-owned TASK-0102 has an approved BFF/Mobile implementation:
-  opt-in `match-journey.v4` shows a goal's effect on all tied leading scorelines.
-  Local delivery evidence is in
-  [TASK_0102_GOAL_EFFECT_2026-10-10.md](TASK_0102_GOAL_EFFECT_2026-10-10.md).
-  Runtime update and signed local APK are verified. Owner reports installation,
-  followed by a 502 dashboard error. The owner-approved Docker restart restored
-  SAP data reads; dashboard, matches, Super KPI and Toto programs now return 200
-  and parse through Mobile schemas (75 matches / 12 programs). Incident
-  `NXT-OBS-BFF-20261010` is closed in
-  [runtime_recovery_2026-10-10.md](observation_archive/runtime_recovery_2026-10-10.md).
-  Main phone smoke was accepted on October 11; the owner closed the remaining
-  physical edge checks and accepted the bounded delivery. TASK-0102 is DONE.
-  TASK-0011 (Jinx match analyst) is DONE
-  (`btb-codex` `ab9b7c8`) and TASK-0109 (Toto prize currency) is DONE. Mobile
-  milestones M1, M2, M11 and M15 are closed. Legacy Cordova was retired on
-  2026-08-16.
+TASK-0102 is DONE: owner confirmed the main Match Path phone smoke and closed
+remaining physical edge checks; they were waived, not measured. Evidence:
+[task0102_phone_acceptance_2026-10-11.md](observation_archive/task0102_phone_acceptance_2026-10-11.md).
+Event probability remains unmeasured. Docker/SAP incident is resolved; checkpoint
+`btb-codex/docs/THREAD_CLOSE_2026-10-10.md` remains valid for that delivery.
+
+- **Mode.** Observation; no open `btb next cutover start` run. Explicit TASK-0121
+  batch and pilot runtime are delivered; physical phone acceptance pending.
+- **Work.** TASK-0121 IN_PROGRESS; TASK-0102, TASK-0011 and TASK-0109 DONE.
+  Mobile milestones M1, M2, M11 and M15 are closed. Legacy Cordova retired
+  2026-08-16. Retain TASK-0102 as the installed rollback baseline.
 - **Runtime route.** Phone → `https://api.surklase.com` (Cloudflare) → pilot BFF
   `zbet-cap/standalone-server.js` on `127.0.0.1:4004`, auth mode `pilot`, run
   from the `zbet-cap` main checkout by the Windows task `BTB Mobile BFF`
   (`ensure-mobile-bff.ps1` → `start-mobile-bff.ps1 -AuthMode pilot`). Running
-  `zbet-cap` `626ef1d`, PID 20716 after the approved restart (previous PID 22656).
+  `zbet-cap` `18709ae`, PID 30048 after TASK-0121 approved restart (prior PID 20716).
   Local/public `/health` 200, unauthenticated `/v1/btb/matches` 401; authenticated
   V3/V4 real-fixture reads and exact V3 projection parity verified.
 - **Restart.** Stop the node PID listening on 4004, wait for its parent launcher
   to exit, then `Start-ScheduledTask 'BTB Mobile BFF'`. Logs are under
   `%LOCALAPPDATA%\BTB Mobile Next\runtime`; each start archives the previous
   pair to `runtime\archive` (30 per stream).
-- **Jinx as delivered.** Provider `gemini-3.5-flash-lite` (free tier 15 RPM, 500
-  requests per day), key only in `BTB_JINX_LLM_API_KEY`, never printed; owner
+- **Jinx currently running (V1/V2).** Same provider `gemini-3.5-flash-lite`,
+  key only in `BTB_JINX_LLM_API_KEY`, never printed; owner
   decisions: keep this model, and a factual summary during a provider outage is
   enough. The BFF computes the verdict and headline for 16 markets from the live
-  score; the provider writes Turkish commentary only, and validation rejects
-  judgment words and field names. Generations are spaced one second apart with a
+  score. V1 retains its validated short commentary. V2 provider orders complete
+  source-bound fact IDs; BFF renders supporting/limiting/watch sentences without
+  allowing new statistics or omitted counterevidence. Generations are spaced one second apart with a
   bounded one-second wait; telemetry is on `/health` (`jinxOutlookTelemetry`).
   Freshness: the "may not be current" badge follows only fetch-timed sources, the
   displayed decision shows its minute, league standings have no age budget, and
@@ -73,7 +64,17 @@ Closing checkpoint: `btb-codex/docs/THREAD_CLOSE_2026-10-10.md`.
 
 ## Final yerel pilot APK
 
-- **Owner reports installed; main phone smoke accepted October 11.** `btb-mobile-next-arm64-task0102.apk`, 54,355,121 bytes,
+- **TASK-0121 candidate, privately delivered; phone acceptance pending.**
+  `btb-mobile-next-arm64-task0121.apk`, 54,356,433 bytes, SHA-256
+  `2CF051C696A08DD5794B46C8D24E944D0A093F83DD5B4D0C2D2C2184A855F4B2`.
+  Mobile implementation based on `3f41b47`, recorded with this handoff; per-file manifest is
+  under CAP `.codex-artifacts/task0121-source-manifest.json`. ARM64, verified V2
+  signature, existing pilot certificate/package/version, API, auth and all three
+  LIVE flags. Packaged V2 consumer/header and secret scan passed. Private Drive
+  [owner download](https://drive.google.com/file/d/1UFEvhszZLgfZgyz3jcBiNsMqBu1fLLDS/view?usp=drivesdk)
+  has owner-only permissions; authenticated download checksum matches exactly.
+  Matching BFF `18709ae` is active and serves V2; older clients retain V1.
+- **Installed rollback; main phone smoke accepted October 11.** `btb-mobile-next-arm64-task0102.apk`, 54,355,121 bytes,
   SHA-256 `FD60A83A7B3249DD623BB50D131D3D12B4F6DC7F3156DFA45700881FE64886EE`,
   built from Mobile code `cd29701`, arm64-v8a. Signature V2 verified, same pilot
   certificate `fac61745…033b9c` and package `com.btb.mobile.next` as the installed
@@ -108,8 +109,9 @@ Closing checkpoint: `btb-codex/docs/THREAD_CLOSE_2026-10-10.md`.
 
 ## Repo durumu
 
-Delivered code: `zbet-cap` `626ef1d` (`main`), Mobile `cd29701` (`master`).
-The delivery notes and task evidence are committed separately after verification.
+CAP `18709ae` (`main`) is pushed and active. TASK-0121 Mobile implementation,
+contract and verified delivery notes are recorded together on `master`, based on
+`3f41b47`; Codex registry records the approved delivery and remaining phone gate.
 Run `btb status` for the live SHAs instead of trusting this line later.
 
 ## Doğrulama
@@ -117,8 +119,9 @@ Run `btb status` for the live SHAs instead of trusting this line later.
 - Mobile gate: `btb-codex/scripts/invoke-mobile-check.ps1` (Expo Doctor carries a
   known 16-package version mismatch). BFF gate:
   `btb-codex/scripts/invoke-mobile-bff-check.ps1 -ProductionBuild`; full tests
-  and production build PASS on `626ef1d`. Mobile core gate passed on `cd29701`;
-  the native arm64 release build passed after bounded memory/worker retry.
+  and production build PASS for the unchanged validated TASK-0121 sources in
+  `18709ae`. Mobile core, native ARM64 build and actual public V1/V2 schema/
+  paragraph smoke pass. Source hashes match the delivered APK's build inputs.
 - Pilot APK: `zbet-mobile/expo-app/scripts/build-pilot-apk.ps1` needs explicit
   `EXPO_PUBLIC_MATCH_PATH_INTELLIGENCE`, `EXPO_PUBLIC_TEAM_FORM_INTELLIGENCE` and
   `EXPO_PUBLIC_MOBILE_INTELLIGENCE` (`off`/`synthetic`/`live`) plus
@@ -134,9 +137,13 @@ Run `btb status` for the live SHAs instead of trusting this line later.
 
 ## Açık observation / blokajlar
 
-- `OBSERVATION_LOG.md` again holds no OBSERVED/READY rows and 10 DEFERRED rows.
+- `OBSERVATION_LOG.md` holds no OBSERVED/READY rows and 11 DEFERRED rows.
+  New Jinx commentary-quality feedback is routed to BTB-owned TASK-0121.
+  Its authorized local batch/APK checkpoint is in
+  `TASK_0121_JINX_READING_2026-10-11.md`. Approved runtime update is verified;
+  V2 phone acceptance is scheduled for read-only review on 2026-10-12.
   The Docker/SAP runtime incident is resolved and archived. All three existing
-  containers are running; the BFF remained on PID 20716. Recovery proof is
+  containers are running; the BFF is now on PID 30048. Recovery proof is
   local Docker/transport and authenticated BFF data, not a SAP MCP object read.
   Cleanup preserved sources, data, signing/configuration, Docker volumes/SAP
   backup and both current/rollback APKs; only generated paths/caches were removed.
@@ -149,12 +156,11 @@ Run `btb status` for the live SHAs instead of trusting this line later.
 
 ## Exact next steps
 
-1. TASK-0102 phone acceptance is closed. Retain TASK-0109 rollback; record a new
-   task if the owner reports a defect. No further targeted phone checks are due.
-2. Keep observing on the phone; record each new finding as a row in
-   `OBSERVATION_LOG.md` without code changes.
-3. Start `btb next cutover start` only when the owner says so and OBSERVED rows
-   exist; follow `NEXT_CUTOVER_PROCEDURE.md`.
+1. Install the privately delivered TASK-0121 APK; matching BFF `18709ae` is active.
+2. Confirm the three
+   commentary blocks on the phone. Keep TASK-0102 as rollback. Review the
+   evidence gate on 2026-10-12; the date grants no approval or acceptance.
+3. Keep observing; new findings become observation rows or separately owned tasks.
 
 ## Documents
 

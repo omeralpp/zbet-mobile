@@ -28,6 +28,17 @@ function outlook(overrides: Record<string, unknown> = {}) {
   });
 }
 
+test("grounded V2 accepts full sections, refuses reordered or missing limitations, and V1 stays supported", () => {
+  const base = outlook();
+  const sections = ["SUPPORTING", "LIMITING", "WATCH"].map((kind) => ({ kind, body: "Kaynak verisi." }));
+  assert.equal(jinxMatchOutlookSchema.parse({ ...base, contractVersion: "jinx-match-outlook.v2", sections }).contractVersion, "jinx-match-outlook.v2");
+  for (const invalid of [sections.slice(0, 1), sections.slice().reverse(), [{ kind: "SUPPORTING", body: "x".repeat(2501) }, ...sections.slice(1)]]) {
+    assert.equal(jinxMatchOutlookSchema.safeParse({ ...base, contractVersion: "jinx-match-outlook.v2", sections: invalid }).success, false);
+  }
+  assert.equal(jinxMatchOutlookSchema.parse({ ...base, contractVersion: "jinx-match-outlook.v2", availability: "UNAVAILABLE", sections: [] }).availability, "UNAVAILABLE");
+  assert.equal(base.contractVersion, "jinx-match-outlook.v1");
+});
+
 /* ---------------------------------------------------------------- *
  * Nothing is volunteered
  * ---------------------------------------------------------------- */

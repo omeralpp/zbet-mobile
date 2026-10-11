@@ -173,7 +173,7 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
       request(
         `/v1/btb/matches/${encodeURIComponent(key)}/jinx-outlook`,
         jinxMatchOutlookSchema,
-        {},
+        { headers: { "X-BTB-Jinx-Version": "jinx-match-outlook.v2" } },
         signal
       ),
     getMatchSuperLogs: (key, signal) =>
