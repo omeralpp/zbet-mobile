@@ -24,7 +24,9 @@ is privately delivered with matching download SHA-256. Details:
 Owner subsequently approved scoped commit/push and updating the existing pilot
 BFF. CAP `18709ae` is pushed and active, PID 30048. Public LIVE-origin V2,
 V1 compatibility, 97-match Mobile schema and V2 paragraph guards pass.
-Richer V2 phone installation/acceptance remains pending.
+Owner Hartberg–Lustenau phone screenshots show all three V2 blocks; physical
+presentation is evidenced, explicit quality acceptance remains pending. Details:
+[phone evidence](observation_archive/task0121_phone_evidence_2026-10-11.md).
 No SAP, scorer, provider, Cloudflare or Firebase behavior changed.
 
 TASK-0102 is DONE: owner confirmed the main Match Path phone smoke and closed
@@ -34,7 +36,8 @@ Event probability remains unmeasured. Docker/SAP incident is resolved; checkpoin
 `btb-codex/docs/THREAD_CLOSE_2026-10-10.md` remains valid for that delivery.
 
 - **Mode.** Observation; no open `btb next cutover start` run. Explicit TASK-0121
-  batch and pilot runtime are delivered; physical phone acceptance pending.
+  batch and pilot runtime are delivered; V2 phone presentation evidenced,
+  explicit owner quality acceptance pending.
 - **Work.** TASK-0121 IN_PROGRESS; TASK-0102, TASK-0011 and TASK-0109 DONE.
   Mobile milestones M1, M2, M11 and M15 are closed. Legacy Cordova retired
   2026-08-16. Retain TASK-0102 as the installed rollback baseline.
@@ -64,7 +67,7 @@ Event probability remains unmeasured. Docker/SAP incident is resolved; checkpoin
 
 ## Final yerel pilot APK
 
-- **TASK-0121 candidate, privately delivered; phone acceptance pending.**
+- **TASK-0121 privately delivered; V2 phone presentation evidenced, quality acceptance pending.**
   `btb-mobile-next-arm64-task0121.apk`, 54,356,433 bytes, SHA-256
   `2CF051C696A08DD5794B46C8D24E944D0A093F83DD5B4D0C2D2C2184A855F4B2`.
   Mobile implementation based on `3f41b47`, recorded with this handoff; per-file manifest is
@@ -156,9 +159,9 @@ Run `btb status` for the live SHAs instead of trusting this line later.
 
 ## Exact next steps
 
-1. Install the privately delivered TASK-0121 APK; matching BFF `18709ae` is active.
-2. Confirm the three
-   commentary blocks on the phone. Keep TASK-0102 as rollback. Review the
+1. Matching BFF `18709ae` is active; owner screenshots show physical V2 presentation.
+2. Confirm that TASK-0121 commentary quality is satisfactory. Keep TASK-0102
+   as rollback. Review the
    evidence gate on 2026-10-12; the date grants no approval or acceptance.
 3. Keep observing; new findings become observation rows or separately owned tasks.
 

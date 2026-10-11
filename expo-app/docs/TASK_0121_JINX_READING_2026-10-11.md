@@ -98,6 +98,9 @@ reader/direct transport evidence, not SAP MCP object evidence, and seven source
 reads are not an atomic SAP snapshot.
 
 The matching pilot BFF is active and serves V2 to the TASK-0121 APK while
-preserving V1 for installed older clients. Owner phone installation and acceptance
-of richer V2 remain pending; no connected ADB device was available.
+preserving V1 for installed older clients. Owner phone screenshots subsequently
+showed all three V2 blocks on Hartberg–Lustenau at 83′, 3–2. Physical V2
+presentation is evidenced; explicit quality acceptance remains pending.
+[Phone evidence and separate Match Path timing observation](observation_archive/task0121_phone_evidence_2026-10-11.md).
+No connected ADB device was available.
 Keep TASK-0102 APK as the current rollback; no older artifact was deleted.
