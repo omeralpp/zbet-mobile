@@ -1,5 +1,14 @@
 # TASK-0102 goal-mode effect: local delivery checkpoint
 
+Current closure (2026-10-11): owner supplied real-phone screenshots, confirmed
+the feature works and explicitly closed the remaining physical edge checks.
+TASK-0102 is DONE for the accepted descriptive goal-effect delivery, with the
+unexercised phone edge cases waived rather than passed. No phone evidence review
+remains scheduled. Event probability is still unmeasured; TASK-0101 is unchanged.
+Evidence: [phone acceptance and closure](observation_archive/task0102_phone_acceptance_2026-10-11.md).
+The October 10 delivery record below retains its original pending status as
+historical evidence, superseded by this closure.
+
 The owner approved the bounded implementation on 2026-10-10. The BFF computes
 the score transition's arithmetic effect on every tied leading scoreline in
 one unchanged frozen phase pool. Mobile displays the supplied result at an

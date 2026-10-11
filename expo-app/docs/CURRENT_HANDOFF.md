@@ -1,6 +1,6 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-10-10
+Son güncelleme: 2026-10-11
 
 Mod: `OBSERVATION`
 
@@ -15,11 +15,18 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
-2026-10-10: owner authorized safe thread closure. Delivered code is pushed and
+2026-10-11: owner supplied real-phone Match Path screenshots and confirmed it
+works. Main data/chart/90′ goal-detail smoke is accepted; evidence is in
+[task0102_phone_acceptance_2026-10-11.md](observation_archive/task0102_phone_acceptance_2026-10-11.md).
+Owner subsequently closed the remaining tied-leader, measured-zero and
+unavailable phone checks. TASK-0102 is DONE for the accepted descriptive
+goal-effect delivery; those physical edge cases were waived, not measured.
+The prior October 10 closure checkpoint remains valid. Delivered code is pushed and
 the existing pilot runtime/APK delivery is verified; no release is queued for
 these delivered changes. Fresh authenticated local/public reads and exact Mobile
 schemas pass (59 matches / 12 Toto programs); all three Docker containers run.
-Phone acceptance after refresh remains pending for 2026-10-12.
+No TASK-0102 phone review remains scheduled; new owner-reported defects become
+new tasks. Event probability remains unmeasured.
 BTB generated cleanup freed 9.08 GiB; general temporary-file cleanup subsequently
 freed 36.81 GiB, leaving approximately 55.16 GiB free on C:.
 Closing checkpoint: `btb-codex/docs/THREAD_CLOSE_2026-10-10.md`.
@@ -27,7 +34,7 @@ Closing checkpoint: `btb-codex/docs/THREAD_CLOSE_2026-10-10.md`.
 - **Mode.** Observation; no open `btb next cutover start` run.
 - **Work.** BTB-owned TASK-0102 has an approved BFF/Mobile implementation:
   opt-in `match-journey.v4` shows a goal's effect on all tied leading scorelines.
-  Local delivery evidence and remaining gates are in
+  Local delivery evidence is in
   [TASK_0102_GOAL_EFFECT_2026-10-10.md](TASK_0102_GOAL_EFFECT_2026-10-10.md).
   Runtime update and signed local APK are verified. Owner reports installation,
   followed by a 502 dashboard error. The owner-approved Docker restart restored
@@ -35,7 +42,8 @@ Closing checkpoint: `btb-codex/docs/THREAD_CLOSE_2026-10-10.md`.
   and parse through Mobile schemas (75 matches / 12 programs). Incident
   `NXT-OBS-BFF-20261010` is closed in
   [runtime_recovery_2026-10-10.md](observation_archive/runtime_recovery_2026-10-10.md).
-  Phone acceptance after refresh remains pending for 2026-10-12 review.
+  Main phone smoke was accepted on October 11; the owner closed the remaining
+  physical edge checks and accepted the bounded delivery. TASK-0102 is DONE.
   TASK-0011 (Jinx match analyst) is DONE
   (`btb-codex` `ab9b7c8`) and TASK-0109 (Toto prize currency) is DONE. Mobile
   milestones M1, M2, M11 and M15 are closed. Legacy Cordova was retired on
@@ -65,7 +73,7 @@ Closing checkpoint: `btb-codex/docs/THREAD_CLOSE_2026-10-10.md`.
 
 ## Final yerel pilot APK
 
-- **Owner reports installed; data acceptance pending.** `btb-mobile-next-arm64-task0102.apk`, 54,355,121 bytes,
+- **Owner reports installed; main phone smoke accepted October 11.** `btb-mobile-next-arm64-task0102.apk`, 54,355,121 bytes,
   SHA-256 `FD60A83A7B3249DD623BB50D131D3D12B4F6DC7F3156DFA45700881FE64886EE`,
   built from Mobile code `cd29701`, arm64-v8a. Signature V2 verified, same pilot
   certificate `fac61745…033b9c` and package `com.btb.mobile.next` as the installed
@@ -82,7 +90,8 @@ Closing checkpoint: `btb-codex/docs/THREAD_CLOSE_2026-10-10.md`.
 - The TASK-0109 client keeps requesting V3 against the new BFF. A BFF rollback
   to `6c3fce1` also supplies V3 to the new client, leaving goal effect unmeasured.
   No ADB installation evidence exists; TASK-0102 installation is owner-reported,
-  and phone screen acceptance is not claimed.
+  and main screen acceptance is owner-confirmed with screenshots. Physical edge
+  checks were closed by owner decision; limits are in the October 11 evidence note.
 - **Delivery preference (owner, 2026-10-10).** Upload each final verified,
   owner-authorized pilot APK privately to the owner's connected Google Drive,
   then return its download link. Standing upload approval and readback rules
@@ -94,8 +103,8 @@ Closing checkpoint: `btb-codex/docs/THREAD_CLOSE_2026-10-10.md`.
   Metadata confirmed 54,355,121 bytes, the expected folder and owner-only
   permissions (`shared=false`). Authenticated download readback matched the
   SHA-256 above exactly. No public sharing was enabled. Reuse this folder for
-  future approved pilot APK deliveries. Phone acceptance remains due for review
-  on 2026-10-12; owner-reported installation does not prove screen acceptance.
+  future approved pilot APK deliveries. Main phone smoke is accepted; the owner
+  closed the remaining phone checks, with no October 12 review pending.
 
 ## Repo durumu
 
@@ -131,17 +140,17 @@ Run `btb status` for the live SHAs instead of trusting this line later.
   local Docker/transport and authenticated BFF data, not a SAP MCP object read.
   Cleanup preserved sources, data, signing/configuration, Docker volumes/SAP
   backup and both current/rollback APKs; only generated paths/caches were removed.
-- BTB-owned TASK-0102 remains IN_PROGRESS; event probability is unmeasured.
-  Phone install and real goal-detail acceptance evidence are reviewed next on
-  2026-10-12; if missing, record the finding and a new date.
+- BTB-owned TASK-0102 is DONE for accepted descriptive goal-effect delivery;
+  event probability remains unmeasured and is outside this closure. Main phone
+  smoke and one real nonzero goal detail were accepted October 11. Owner closed
+  remaining physical edge checks and will report any new defect for a new task.
   TASK-0101 red-card measurement requires new capture/population evidence;
   its read-only review is scheduled for 2026-10-15.
 
 ## Exact next steps
 
-1. Tap retry on the phone after verified runtime recovery, then verify a real
-   goal detail before claiming screen acceptance. Owner reports TASK-0102
-   installed; retain the TASK-0109 rollback. Review missing evidence on 2026-10-12.
+1. TASK-0102 phone acceptance is closed. Retain TASK-0109 rollback; record a new
+   task if the owner reports a defect. No further targeted phone checks are due.
 2. Keep observing on the phone; record each new finding as a row in
    `OBSERVATION_LOG.md` without code changes.
 3. Start `btb next cutover start` only when the owner says so and OBSERVED rows
