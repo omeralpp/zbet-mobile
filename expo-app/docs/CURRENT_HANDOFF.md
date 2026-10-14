@@ -15,6 +15,17 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
+14 Ekim TASK-0009:4,5 Alt/Üst doğrudan mevcut A3 DEV seçimine alındı; ek FT45
+gölge aşaması yok. Model/kol/ağırlık/eşik aynı;19 piyasalı kaynak
+`42D739234585064BC727211709535A12997FED1A289238776DDB103D45B7C699`, gerçek
+sınır `2026-10-14T20:37:35.072560Z`.57 harmless native Unit/sıfır syntax/yeni P1;
+20 kaynak/53 native dosya iki okumada aynı.8 gözlem/4 karar/296 birebir dal,
+iki yeni piyasa SCORED ve2 temiz çevrim; bu kontrolde yeni pozitif A3 interval/
+kazanan iddiası yok.584 BFF/build ve9 gerçek dış API Mobile şema okuması geçti.
+Önceki A3 geçmiş baskısı ayrı mühürle korunur. Mobil kaynak/APK değişmedi.
+FT45 gelecek performansı TASK-0127/M10; önceki17 piyasa ayrı kaynak kohortudur.
+
+Önceki17 piyasalı A3 kabul checkpoint'i:
 14 Ekim: sahibi tarafından onaylanan A3 seçim/baskı DEV pilotu tamamlandı.
 Model `BTB_PPV1_20261014`, kol3; Alt/KG Yok son baskı ağırlığı +0,85; diğer
 ağırlıklar ve 34/23/17/10 eşikleri aynı. SAP A4H_001/ZP1067/A4HK900110 üzerinde
@@ -38,10 +49,10 @@ Fiziksel telefon sürekli sürükleme/TalkBack kabulü hâlâ ayrı ve ölçülm
 
 **Rota:** telefon → `https://api.surklase.com` → mevcut pilot BFF
 `zbet-cap/standalone-server.js`,127.0.0.1:4004,pilot auth. Son onaylı restart
-PID20712 (canlı PID'yi gerektiğinde listener'dan yeniden oku). Windows görevi
+PID10040 (canlı PID'yi gerektiğinde listener'dan yeniden oku). Windows görevi
 `BTB Mobile BFF`,ensure/start launcher korunur. Manifest
-`zbet-abap/score-pressure-v2/PRESSURE_PATH_REGIME.json`, ham SHA-256
-`52208004EBECCCF285F7479B42045A9C9F70A44CA4D55B44956445663817C758`.
+`zbet-abap/score-pressure-v2/PRESSURE_PATH_FT45_REGIME.json`, ham SHA-256
+`E768BEF23AA9552E90AEF4004DA82D4981131DD8A9EBF1DD69BB47AABEA2BCFB`.
 Sealed-runtime-activation.json kaynak/ayar kanıtıdır; dosya değişirse eski mühür
 sessizce kullanılamaz. Yerel/dış sağlık geçti. Cloudflare/Firebase yayını yok.
 
@@ -66,11 +77,15 @@ Yeni exact APK fiziksel telefon kabulü verilmiş sayılmaz.
 
 ## Repo durumu
 
-Sahip beş repodaki incelenmiş primary stage/commit/push kapsamını açıkça onayladı.
-Çalışan pilotun doğrulanmış kodu değişmedi. Güncel SHA için `btb status`;
-yerel exact yayın makbuzu `.codex-artifacts/pressure-selection-2026-10-14/publication.json`.
-İlgisiz 234 ABAP dosyası final kapsamının dışında korunur.
-Backend exact native snapshot `685534c1ba659b2529931b5a12e1d8739eecb119`.
+Önceki A3 primary yayını tamamlandı; makbuz
+`.codex-artifacts/pressure-selection-2026-10-14/publication.json`.
+TASK-0009 backend main `e6cd1cfd8bb022a80ab19df71589c2fb503d25b0`, BFF main
+`70cb5c4a740676549b108b9cde479e3dc2201837` push edildi. SAP exact-main DEV
+import/aktivasyon,57 native Unit/zero syntax/yeni P1 ve bağımsız branch/kaynak
+geri okuması geçti. Preflight snapshot `e00253a6a603dd59b16e4647b7a67ebe76902550`
+aynı kaynağı taşır. Deploy sonrası9 dış API şema okuması ve yerel/dış sağlık temiz.
+Runtime/yayın/deploy makbuzları `.codex-artifacts/task0009-live-readiness-2026-10-14/`
+altında; kalıcı özet `btb-codex/docs/evidence/task0009-main-deployment-2026-10-14.json`.
 
 ## Doğrulama
 
@@ -103,8 +118,9 @@ legacy blank tag yeni modele yükseltilmez. Tarihsel karar kendi capture'ını o
 1. Sahibin yeni APK için fiziksel kurulum/sürekli sürükleme/olay/TalkBack kanıtı.
 2.15 Ekim salt-okunur yeni cutover incelemesi; etiket/kimlik ve gerçek sınırla
    ayır. Kontrolleri geçmiş sonuç olarak geri doldurma; ekonomik örneklem bekle.
-3. Onaylı primary Git yayınının makbuzunu koru. M3 resmen CLOSED;
-   M10 ve fiziksel telefon veri kapıları açık kalır.
+3. TASK-0009 yayını ve exact-main DEV hizalaması tamamlandı; aynı kaynak için
+   tekrar deploy gerekmez. M3 CLOSED; M10/FT45 ve fiziksel telefon veri kapıları
+   açık kalır. Yeni/önceki A3 verisini exact SHA ve gerçek sınırla ayır.
 
 ## Documents
 
