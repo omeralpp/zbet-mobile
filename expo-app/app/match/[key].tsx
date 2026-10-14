@@ -74,6 +74,7 @@ import {
 } from "@/src/utils/format";
 import { relatedSuperDecisions } from "@/src/utils/related-super-decisions";
 import { deriveLiveRateTrend } from "@/src/utils/live-card-indicators";
+import { decisionModel, decisionModelLabel, recordedSelection } from "@/src/utils/decision-model";
 
 function firstParam(value: string | string[] | undefined): string {
   const raw = Array.isArray(value) ? value[0] ?? "" : value ?? "";
@@ -165,40 +166,43 @@ function ComparisonRow({
   home,
   away,
   suffix = "",
-  formatter
+  formatter,
+  note
 }: {
   label: string;
-  home: number;
-  away: number;
+  home: number | null;
+  away: number | null;
   suffix?: string;
   formatter?: (value: number) => string;
+  note?: string;
 }) {
-  const total = Math.max(1, home + away);
-  const homeWidth: `${number}%` = `${Math.max(4, (home / total) * 100)}%`;
-  const awayWidth: `${number}%` = `${Math.max(4, (away / total) * 100)}%`;
+  const total = Math.max(1, (home ?? 0) + (away ?? 0));
+  const homeWidth: `${number}%` = `${Math.max(4, ((home ?? 0) / total) * 100)}%`;
+  const awayWidth: `${number}%` = `${Math.max(4, ((away ?? 0) / total) * 100)}%`;
   const formatValue = formatter ?? String;
 
   return (
     <View style={styles.comparison}>
       <View style={styles.comparisonLabels}>
         <Text style={styles.statValue}>
-          {formatValue(home)}
+          {home === null ? "—" : formatValue(home)}
           {suffix}
         </Text>
         <Text style={styles.statLabel}>{label}</Text>
         <Text style={styles.statValue}>
-          {formatValue(away)}
+          {away === null ? "—" : formatValue(away)}
           {suffix}
         </Text>
       </View>
-      <View style={styles.dualBar}>
+      {home !== null && away !== null ? <View style={styles.dualBar}>
         <View style={styles.homeTrack}>
           <View style={[styles.homeBar, { width: homeWidth }]} />
         </View>
         <View style={styles.awayTrack}>
           <View style={[styles.awayBar, { width: awayWidth }]} />
         </View>
-      </View>
+      </View> : null}
+      {note ? <Text style={styles.statNote}>{note}</Text> : null}
     </View>
   );
 }
@@ -417,10 +421,13 @@ export default function MatchDetailScreen() {
             label="İsabetli şut"
           />
           <ComparisonRow
-            away={match.awayXg}
+            away={match.homeXg === 0 && match.awayXg === 0 ? null : match.awayXg}
             formatter={formatRate}
-            home={match.homeXg}
+            home={match.homeXg === 0 && match.awayXg === 0 ? null : match.homeXg}
             label="xG"
+            note={match.homeXg === 0 && match.awayXg === 0
+              ? "xG kapsamı doğrulanmadı · ölçülmüş sıfır kabul edilmez"
+              : "Bildirilen xG · kaynak kapsamı ve ölçüm zamanı doğrulanmadı"}
           />
           <ComparisonRow
             away={match.awayCorners}
@@ -731,7 +738,11 @@ export default function MatchDetailScreen() {
           {...(live ? { accent: semantic.live } : {})}
           style={styles.heroDivider}
         />
-        <Text style={styles.verdictEyebrow}>BTB SEÇİMİ</Text>
+        <Text style={styles.verdictEyebrow}>
+          {recordedSelection(match.selectedOdd, match.currentRate, match.decisionContext) ? "KAYITLI BTB SEÇİMİ" : "BTB SEÇİMİ"}
+        </Text>
+        {match.selectedOdd && decisionModel(match.decisionContext) &&
+          <Text style={styles.verdictLabel}>{decisionModelLabel(match.decisionContext)}</Text>}
         <View style={styles.verdictRow}>
           <View style={[styles.verdictCell, styles.verdictCellWide]}>
             <Text numberOfLines={1} style={styles.selection}>
@@ -976,6 +987,12 @@ const styles = StyleSheet.create({
   verdictLabel: {
     color: colors.textSubtle,
     ...typeScale.label
+  },
+  statNote: {
+    color: colors.textMuted,
+    ...typeScale.label,
+    marginTop: spacing.xs,
+    textAlign: "center"
   },
   selection: {
     color: colors.text,

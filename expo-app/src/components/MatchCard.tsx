@@ -17,6 +17,8 @@ import {
   pressureFooterCaption
 } from "@/src/utils/live-card-indicators";
 import { derivePressureBalance } from "@/src/utils/pressure-balance";
+import { currentIntervalPressure } from "@/src/utils/recent-pressure";
+import { decisionModel, decisionModelLabel, recordedSelection } from "@/src/utils/decision-model";
 import { deriveMatchMinuteProgress } from "@/src/utils/match-minute-progress";
 import {
   formatAbsolute,
@@ -103,9 +105,11 @@ export function MatchCard({
       : rateTrend === "DOWN"
         ? semantic.negative
         : colors.textSubtle;
+  const intervalPressure = currentIntervalPressure(match.decisionContext);
   const pressureBalance = derivePressureBalance(
-    match.pressureSource === "CURRENT_MATCH" ? match.totalPressure : null,
-    match.pressureSource === "CURRENT_MATCH" ? match.pressureDiff : null
+    match.decisionContext ? intervalPressure.total : match.pressureSource === "CURRENT_MATCH" ? match.totalPressure : null,
+    match.decisionContext ? intervalPressure.difference : match.pressureSource === "CURRENT_MATCH" ? match.pressureDiff : null,
+    intervalPressure.measured
   );
   const pressureIcon =
     pressureBalance.direction === "HOME"
@@ -237,7 +241,9 @@ export function MatchCard({
 
       <View style={styles.bottomRow}>
         <View style={styles.decisionBlock}>
-          <Text style={styles.decisionEyebrow}>BTB SEÇİMİ</Text>
+          <Text style={styles.decisionEyebrow}>
+            {recordedSelection(match.selectedOdd, match.currentRate, match.decisionContext) ? "KAYITLI SEÇİM" : "BTB SEÇİMİ"}
+          </Text>
           <Text numberOfLines={1} style={styles.odd}>
             {match.selectedOdd || "Aday bekleniyor"}
           </Text>
@@ -249,15 +255,17 @@ export function MatchCard({
                 : "BTB rating"}
             </Text>
           </View>
+          {match.selectedOdd && decisionModel(match.decisionContext) &&
+            <Text style={styles.ratingLabel}>{decisionModelLabel(match.decisionContext)}</Text>}
         </View>
         {footer.showsRate ? (
           <View
-            accessibilityLabel={`Canlı oran ${currentMarket.value}, ${
+            accessibilityLabel={`${currentMarket.label} ${currentMarket.value}, ${
               rateTrend === "UP"
                 ? "seçim oranından yüksek"
                 : rateTrend === "DOWN"
                   ? "seçim oranından düşük"
-                  : "değişim yok veya oran kapalı"
+                  : "değişim yok veya güncel oran bulunamadı"
             }`}
             style={styles.rateBlock}
           >
@@ -286,7 +294,7 @@ export function MatchCard({
             // live card framing that makes the figure's currency obvious.
             accessibilityLabel={
               pressureBalance.hasData
-                ? `Güncel baskı farkı ${formatAbsolute(match.pressureDiff ?? 0, 1)}, ${
+                ? `${match.decisionContext?.recentPressure.estimated ? "Tahmini yakın aralık" : "Güncel"} baskı farkı ${formatAbsolute((match.decisionContext ? intervalPressure.difference : match.pressureDiff) ?? 0, 1)}, ${
                     pressureBalance.direction === "HOME"
                       ? "ev sahibi baskıda"
                       : pressureBalance.direction === "AWAY"
@@ -305,14 +313,16 @@ export function MatchCard({
             <View style={styles.pressureCopy}>
               <Text style={[styles.pressure, { color: pressureColor }]}>
                 {pressureBalance.hasData
-                  ? formatAbsolute(match.pressureDiff ?? 0, 1)
+                  ? formatAbsolute((match.decisionContext ? intervalPressure.difference : match.pressureDiff) ?? 0, 1)
                   : "—"}
               </Text>
               {/* Two lines, not one: the waiting caption is the only footer
                   caption wider than the row's proven ceiling, and it earns the
                   wrap rather than being truncated into a different claim. */}
               <Text numberOfLines={2} style={styles.pressureLabel}>
-                {pressureFooterCaption(pressureBalance.hasData)}
+                {pressureBalance.hasData && match.decisionContext?.recentPressure.estimated
+                  ? "Tahmini baskı"
+                  : pressureFooterCaption(pressureBalance.hasData)}
               </Text>
             </View>
           </View>

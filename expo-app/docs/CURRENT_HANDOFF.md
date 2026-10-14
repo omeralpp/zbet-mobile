@@ -1,6 +1,6 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-10-11
+Son güncelleme: 2026-10-14
 
 Mod: `OBSERVATION`
 
@@ -15,156 +15,101 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
-2026-10-11: owner approved BTB-owned TASK-0121 through APK creation. Grounded
-Jinx V2 reading is implemented locally with supporting, limiting and watch
-sections, version negotiation and V1 compatibility. Full BFF tests/production
-build, Mobile core checks and authentic V2 contract smoke pass. Signed ARM64 APK
-is privately delivered with matching download SHA-256. Details:
-[TASK_0121_JINX_READING_2026-10-11.md](TASK_0121_JINX_READING_2026-10-11.md).
-Owner subsequently approved scoped commit/push and updating the existing pilot
-BFF. CAP `18709ae` is pushed and active, PID 30048. Public LIVE-origin V2,
-V1 compatibility, 97-match Mobile schema and V2 paragraph guards pass.
-Owner Hartberg–Lustenau phone screenshots show all three V2 blocks; physical
-presentation is evidenced. Owner explicitly accepted the commentary and requested
-closure on 2026-10-11; TASK-0121 is DONE and its review gate is cleared. Details:
-[phone evidence](observation_archive/task0121_phone_evidence_2026-10-11.md).
-No SAP, scorer, provider, Cloudflare or Firebase behavior changed.
+14 Ekim: sahibi tarafından onaylanan A3 seçim/baskı DEV pilotu tamamlandı.
+Model `BTB_PPV1_20261014`, kol3; Alt/KG Yok son baskı ağırlığı +0,85; diğer
+ağırlıklar ve 34/23/17/10 eşikleri aynı. SAP A4H_001/ZP1067/A4HK900110 üzerinde
+DDIC önce, bağımlılar sonra etkinleştirildi. Yeni kayıtlar model kimliğiyle eski
+boş etiketli geçmişten ayrılır. Gerçek toplama sınırı
+`2026-10-14T14:43:17.997132Z`; öncesi mühendislik kontrolüdür.
 
-TASK-0102 is DONE: owner confirmed the main Match Path phone smoke and closed
-remaining physical edge checks; they were waived, not measured. Evidence:
-[task0102_phone_acceptance_2026-10-11.md](observation_archive/task0102_phone_acceptance_2026-10-11.md).
-Event probability remains unmeasured. Docker/SAP incident is resolved; checkpoint
-`btb-codex/docs/THREAD_CLOSE_2026-10-10.md` remains valid for that delivery.
+Native/full-capture observed DEV kabulü kaydedildi. 77 değişen model testi,
+on şema nesnesinin tam doğrulaması/sıfır yeni P1, 58 gözlem/12 baskı,10 karar/
+680 tam eşleşen dal, üç pozitif A3 kazanan ve14 temiz çevrim. Ayrı native reader
+12 Unit/108 araç kontrolü geçti; TASK-0126 DONE. Doğrudan ADT/OData kaynak
+okumaları MCP değildir. Eski strict/observed manifestler tarihsel olarak korunur.
 
-- **Mode.** Observation; no open `btb next cutover start` run. Explicit TASK-0121
-  batch and pilot runtime are delivered; V2 phone presentation/commentary accepted.
-- **Work.** TASK-0121, TASK-0102, TASK-0011 and TASK-0109 DONE.
-  Mobile milestones M1, M2, M11 and M15 are closed. Legacy Cordova retired
-  2026-08-16. Retain TASK-0102 as the installed rollback baseline.
-- **Runtime route.** Phone → `https://api.surklase.com` (Cloudflare) → pilot BFF
-  `zbet-cap/standalone-server.js` on `127.0.0.1:4004`, auth mode `pilot`, run
-  from the `zbet-cap` main checkout by the Windows task `BTB Mobile BFF`
-  (`ensure-mobile-bff.ps1` → `start-mobile-bff.ps1 -AuthMode pilot`). Running
-  `zbet-cap` `18709ae`, PID 30048 after TASK-0121 approved restart (prior PID 20716).
-  Local/public `/health` 200, unauthenticated `/v1/btb/matches` 401; authenticated
-  V3/V4 real-fixture reads and exact V3 projection parity verified.
-- **Restart.** Stop the node PID listening on 4004, wait for its parent launcher
-  to exit, then `Start-ScheduledTask 'BTB Mobile BFF'`. Logs are under
-  `%LOCALAPPDATA%\BTB Mobile Next\runtime`; each start archives the previous
-  pair to `runtime\archive` (30 per stream).
-- **Jinx currently running (V1/V2).** Same provider `gemini-3.5-flash-lite`,
-  key only in `BTB_JINX_LLM_API_KEY`, never printed; owner
-  decisions: keep this model, and a factual summary during a provider outage is
-  enough. The BFF computes the verdict and headline for 16 markets from the live
-  score. V1 retains its validated short commentary. V2 provider orders complete
-  source-bound fact IDs; BFF renders supporting/limiting/watch sentences without
-  allowing new statistics or omitted counterevidence. Generations are spaced one second apart with a
-  bounded one-second wait; telemetry is on `/health` (`jinxOutlookTelemetry`).
-  Freshness: the "may not be current" badge follows only fetch-timed sources, the
-  displayed decision shows its minute, league standings have no age budget, and
-  pressure is current for 240 s against SAP's 180 s write cycle. Only live
-  matches with a displayed star selection can ask.
+V3 mobil/BFF tüketicileri aynı mühürlü üreticiyi kullanır. Kayıtlı/güncel seçim
+ayrımı, yeni cutover etiketi ve lider skor baskı yönleri aktiftir. Dashboard eski
+toplam baskıyı kullanmaz.612 Mobile+13 araç/type/lint/brand;581 BFF/build geçti.
+Dokuz gerçek dış API şema okuması yeni/legacy Super ve mevcut baskıyı doğrular.
+Android API35 önizlemesinde gerçek seçim/etiket ve sekiz baskı işareti görüldü.
+Değişmeyen jestlerin önceki sekiz native kontrolü ve Doctor20/20 kullanıldı.
+Fiziksel telefon sürekli sürükleme/TalkBack kabulü hâlâ ayrı ve ölçülmedi.
+
+**Rota:** telefon → `https://api.surklase.com` → mevcut pilot BFF
+`zbet-cap/standalone-server.js`,127.0.0.1:4004,pilot auth. Son onaylı restart
+PID20712 (canlı PID'yi gerektiğinde listener'dan yeniden oku). Windows görevi
+`BTB Mobile BFF`,ensure/start launcher korunur. Manifest
+`zbet-abap/score-pressure-v2/PRESSURE_PATH_REGIME.json`, ham SHA-256
+`52208004EBECCCF285F7479B42045A9C9F70A44CA4D55B44956445663817C758`.
+Sealed-runtime-activation.json kaynak/ayar kanıtıdır; dosya değişirse eski mühür
+sessizce kullanılamaz. Yerel/dış sağlık geçti. Cloudflare/Firebase yayını yok.
+
+Jinx'in mevcut sağlayıcısı ve açıklama davranışı korunur. İstatistik kapsamı
+bilinmeyen xG sıfır gösterilmez; kaynak zamanı ve oran-skor ilişkisi ispatlı
+sayılmaz. Yeni baskı tahmindir; oran/gol ihtimali veya kârlılık değildir.
 
 ## Final yerel pilot APK
 
-- **TASK-0121 current accepted pilot APK; owner phone acceptance October 11.**
-  `btb-mobile-next-arm64-task0121.apk`, 54,356,433 bytes, SHA-256
-  `2CF051C696A08DD5794B46C8D24E944D0A093F83DD5B4D0C2D2C2184A855F4B2`.
-  Mobile implementation based on `3f41b47`, recorded with this handoff; per-file manifest is
-  under CAP `.codex-artifacts/task0121-source-manifest.json`. ARM64, verified V2
-  signature, existing pilot certificate/package/version, API, auth and all three
-  LIVE flags. Packaged V2 consumer/header and secret scan passed. Private Drive
-  [owner download](https://drive.google.com/file/d/1UFEvhszZLgfZgyz3jcBiNsMqBu1fLLDS/view?usp=drivesdk)
-  has owner-only permissions; authenticated download checksum matches exactly.
-  Matching BFF `18709ae` is active and serves V2; older clients retain V1.
-- **Previous accepted / rollback; main phone smoke accepted October 11.** `btb-mobile-next-arm64-task0102.apk`, 54,355,121 bytes,
-  SHA-256 `FD60A83A7B3249DD623BB50D131D3D12B4F6DC7F3156DFA45700881FE64886EE`,
-  built from Mobile code `cd29701`, arm64-v8a. Signature V2 verified, same pilot
-  certificate `fac61745…033b9c` and package `com.btb.mobile.next` as the installed
-  baseline, versionCode 1 / versionName 0.1.0. API `https://api.surklase.com`,
-  auth `pilot`, mocks off; Match Journey, Team Form and Jinx `LIVE`. V4 consumer
-  code and pilot credential readback verified inside the APK. File and public
-  config receipt are under `.codex-artifacts/` in the Expo app.
-- **Previous / rollback baseline.** `btb-mobile-next-arm64-task0109.apk`, 54,351,369 bytes, SHA-256
-  `208E50D792D822FD0832C8B7571F404C892E09A9B02F321C91CAF625120371DB`, arm64-v8a,
-  pilot certificate `fac61745…033b9c`. Effective settings: API
-  `https://api.surklase.com`, auth `pilot`, mocks off, Match Journey `LIVE`,
-  Team Form `LIVE`, Jinx `LIVE`. Evidence file:
-  `.codex-artifacts/btb-mobile-next-arm64-task0109.apk.config.json`.
-- The TASK-0109 client keeps requesting V3 against the new BFF. A BFF rollback
-  to `6c3fce1` also supplies V3 to the new client, leaving goal effect unmeasured.
-  No ADB installation evidence exists; TASK-0102 installation is owner-reported,
-  and main screen acceptance is owner-confirmed with screenshots. Physical edge
-  checks were closed by owner decision; limits are in the October 11 evidence note.
-- **Delivery preference (owner, 2026-10-10).** Upload each final verified,
-  owner-authorized pilot APK privately to the owner's connected Google Drive,
-  then return its download link. Standing upload approval and readback rules
-  are in `NEXT_CUTOVER_PROCEDURE.md` (APK delivery preference).
-  TASK-0102 upload completed on 2026-10-10 after Drive tools became available.
-  APK: [private owner download](https://drive.google.com/file/d/12xEGoUhYMpBXc1PIXbkotg0ueIhFQai4/view?usp=drivesdk),
-  file ID `12xEGoUhYMpBXc1PIXbkotg0ueIhFQai4`, in the private
-  [BTB Mobile Next APK folder](https://drive.google.com/drive/folders/18poabE-hnuRNKTEYSR3knALfU9t_otqE).
-  Metadata confirmed 54,355,121 bytes, the expected folder and owner-only
-  permissions (`shared=false`). Authenticated download readback matched the
-  SHA-256 above exactly. No public sharing was enabled. Reuse this folder for
-  future approved pilot APK deliveries. Main phone smoke is accepted; the owner
-  closed the remaining phone checks, with no October 12 review pending.
+[Yeni A3 özel Drive APK](https://drive.google.com/file/d/1Y_zmtI3AyXHhHc7s4vI8o6uJrvt7pn8S/view?usp=drivesdk)
+
+`btb-mobile-next-arm64-pressure-path-a3.apk`,54.424.765 bayt; SHA-256
+`1168EA805A14870AC707204A63F4F1B38316D0CFE038C879D739266E9F828117`.
+Yalnız ARM64, mevcut pilot sertifikası/APK V2 imzası, paket/config/LIVE ayarları
+ve sunucu sırrı taraması doğrulandı. Özel klasör/sadece sahibi erişimi ve kimlik
+doğrulamalı indirme SHA/boyut birebir aynı. [Ayrıntılı teslimat](PRESSURE_PATH_A3_DELIVERY_2026_10_14.md).
+
+Önceki TASK-0124 closeout SHA `7D209632…3605B6` ve sahibi tarafından kabul edilen
+TASK-0121 SHA `2CF051…55F4B2` tutulur. Önceki teslimat kanıtları
+`TASK_0124_PLAN_CLOSEOUT_2026_10_14.md`/`TASK_0121_JINX_READING_2026-10-11.md`.
+Yeni exact APK fiziksel telefon kabulü verilmiş sayılmaz.
 
 ## Repo durumu
 
-CAP `18709ae` (`main`) is pushed and active. TASK-0121 Mobile implementation,
-contract and verified delivery notes are recorded together on `master`, based on
-`3f41b47`; Codex registry records the approved delivery and closed phone gate.
-Run `btb status` for the live SHAs instead of trusting this line later.
+Sahip beş repodaki incelenmiş primary stage/commit/push kapsamını açıkça onayladı.
+Çalışan pilotun doğrulanmış kodu değişmedi. Güncel SHA için `btb status`;
+yerel exact yayın makbuzu `.codex-artifacts/pressure-selection-2026-10-14/publication.json`.
+İlgisiz 234 ABAP dosyası final kapsamının dışında korunur.
+Backend exact native snapshot `685534c1ba659b2529931b5a12e1d8739eecb119`.
 
 ## Doğrulama
 
-- Mobile gate: `btb-codex/scripts/invoke-mobile-check.ps1` (Expo Doctor carries a
-  known 16-package version mismatch). BFF gate:
-  `btb-codex/scripts/invoke-mobile-bff-check.ps1 -ProductionBuild`; full tests
-  and production build PASS for the unchanged validated TASK-0121 sources in
-  `18709ae`. Mobile core, native ARM64 build and actual public V1/V2 schema/
-  paragraph smoke pass. Source hashes match the delivered APK's build inputs.
-- Pilot APK: `zbet-mobile/expo-app/scripts/build-pilot-apk.ps1` needs explicit
-  `EXPO_PUBLIC_MATCH_PATH_INTELLIGENCE`, `EXPO_PUBLIC_TEAM_FORM_INTELLIGENCE` and
-  `EXPO_PUBLIC_MOBILE_INTELLIGENCE` (`off`/`synthetic`/`live`) plus
-  `EXPO_PUBLIC_MOBILE_AUTH_MODE=pilot`; it reads the embedded config back and
-  writes a secret-free evidence file. Run it outside `2>&1` redirection.
-- Client schemas are strict (`z.strictObject`): an unknown BFF field breaks
-  parsing. TASK-0102 explicitly negotiates V4 with
-  `X-BTB-Match-Journey-Version`; omitted headers retain V3. The updated client
-  also accepts V3, allowing either deployment order without exposing V4 fields
-  to old clients. Keep new schemas versioned rather than silently adding fields.
-- Commit/push, BTP deploy, Cloudflare publication, SAP or Firebase changes and
-  APK distribution each need their own owner approval (`AGENTS.md`).
+Son kaynak değişikliği sonrası Mobile612+13/type/lint/brand ve BFF581/CAP build
+tam geçti. Yeni kaynak/native kabul receipt'leri backend `score-pressure-v2/`
+altında. Yerel ayrıntılar `.codex-artifacts/pressure-selection-2026-10-14/`:
+`sealed-public-smoke.json`,`apk-verification.json`,`apk-signature.txt`,
+`drive-delivery.json`,`frozen-mobile-inputs.json`,`sealed-runtime-activation.json`.
+355 frozen APK girdisi derleme sonunda aynı; sonradan yalnız güncel devir/plan
+dokümanları değişti. Yeni paket kodunu değiştiren bir düzenleme yapılmadı.
+
+V1/V2 korunur; V3 ACK/şema eşleşmesi zorunlu. V2 geri dönüş yalnız belirli
+sürüm-hatasında yapılır. Yeni opaque Super anahtarı model bileşeni içerir;
+legacy blank tag yeni modele yükseltilmez. Tarihsel karar kendi capture'ını okur.
 
 ## Açık observation / blokajlar
 
-- `OBSERVATION_LOG.md` holds no OBSERVED/READY rows and 10 DEFERRED rows.
-  Jinx commentary-quality observation is closed with TASK-0121; accepted delivery
-  is recorded in `TASK_0121_JINX_READING_2026-10-11.md` and its phone evidence.
-  Runtime and phone acceptance are verified; no October 12 review remains.
-  The Docker/SAP runtime incident is resolved and archived. All three existing
-  containers are running; the BFF is now on PID 30048. Recovery proof is
-  local Docker/transport and authenticated BFF data, not a SAP MCP object read.
-  Cleanup preserved sources, data, signing/configuration, Docker volumes/SAP
-  backup and both current/rollback APKs; only generated paths/caches were removed.
-- BTB-owned TASK-0102 is DONE for accepted descriptive goal-effect delivery;
-  event probability remains unmeasured and is outside this closure. Main phone
-  smoke and one real nonzero goal detail were accepted October 11. Owner closed
-  remaining physical edge checks and will report any new defect for a new task.
-  TASK-0101 red-card measurement requires new capture/population evidence;
-  its read-only review is scheduled for 2026-10-15.
+- TASK-0124 fiziksel kurulum/sürekli sürükleme/olay/TalkBack kabulü bekliyor;
+  sonraki veri incelemesi15 Ekim. APK geliştirme/özel teslimat tamamlandı.
+- TASK-0123/M10 iki tam hafta/200 uygun sonuç/30 aile ve ekonomik kalite kapıları
+  bekliyor; ilk mümkün tam-hafta incelemesi2 Kasım. M3 teknik kabulü tamam;
+  milestone CLOSED, sahibin açık kapanış kararı kaydedildi.
+- TASK-0101 kırmızı kart ölçümü için koşullandırılmış veri/tasarım gerekli.
+  Giugliano önceki çerçeve gözlemi aynı-an kanıt olmadan açıklanamaz.
+- OBSERVATION_LOG'daki ayrı ertelenmiş işler bu A3 teslimatıyla onaylanmaz.
+  TASK-0102/TASK-0121 kapalı kabul edilmiş teslimat/rollback kalır.
 
 ## Exact next steps
 
-1. Keep observing with the accepted TASK-0121 APK and active matching BFF;
-   no further targeted phone checks are due for this delivery.
-2. Retain TASK-0102 as rollback. New findings become observation rows or
-   separately owned tasks; closure requests no further code/runtime changes.
+1. Sahibin yeni APK için fiziksel kurulum/sürekli sürükleme/olay/TalkBack kanıtı.
+2.15 Ekim salt-okunur yeni cutover incelemesi; etiket/kimlik ve gerçek sınırla
+   ayır. Kontrolleri geçmiş sonuç olarak geri doldurma; ekonomik örneklem bekle.
+3. Onaylı primary Git yayınının makbuzunu koru. M3 resmen CLOSED;
+   M10 ve fiziksel telefon veri kapıları açık kalır.
 
 ## Documents
 
-`OBSERVATION_LOG.md` (open rows), `NEXT_CUTOVER_PROCEDURE.md`, `ARCHITECTURE.md`,
-`contracts/mobile-api.openapi.yaml`, `zbet-cap/docs/mobile-bff-sap-mapping.md`,
-`zbet-cap/docs/prospective-evidence.md`.
+`PRESSURE_PATH_A3_DELIVERY_2026_10_14.md`,`SCORE_PRESSURE_V2_LOCAL.md`,
+`OBSERVATION_LOG.md`,`NEXT_CUTOVER_PROCEDURE.md`,`ARCHITECTURE.md`,
+`contracts/mobile-api.openapi.yaml`,`zbet-cap/docs/decision-context-v3.md`;
+backend `score-pressure-v2/PRESSURE_PATH_DEV_PLAN_2026_10_14.md` ve
+`PLAN_CLOSEOUT_2026_10_14.md`.

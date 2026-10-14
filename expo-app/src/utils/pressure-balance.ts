@@ -8,12 +8,14 @@ export type PressureBalance = {
 
 export function derivePressureBalance(
   totalPressure: number | null,
-  pressureDiff: number | null
+  pressureDiff: number | null,
+  measuredInterval = false
 ): PressureBalance {
   const safeTotal = Math.max(0, totalPressure ?? 0);
   const safeDiff = pressureDiff ?? 0;
   const denominator = Math.max(safeTotal, Math.abs(safeDiff));
-  const hasData = totalPressure !== null && pressureDiff !== null && denominator > 0;
+  const hasData = totalPressure !== null && pressureDiff !== null &&
+    (denominator > 0 || measuredInterval);
 
   return {
     direction:
@@ -22,7 +24,7 @@ export function derivePressureBalance(
         : safeDiff < 0
           ? "AWAY"
           : "BALANCED",
-    magnitudeRatio: hasData
+    magnitudeRatio: hasData && denominator > 0
       ? Math.min(1, Math.abs(safeDiff) / denominator)
       : 0,
     hasData

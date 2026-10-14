@@ -4,6 +4,7 @@ import { getValidAccessToken } from "@/src/auth/token-manager";
 import { runtimeConfig } from "@/src/config/runtime";
 import { getApiAuthHeaders } from "./api-auth-headers";
 import { buildDeviceRegistrationPayload } from "./device-registration";
+import { assertDecisionContextResponse } from "./decision-context-http";
 import {
   dashboardSchema,
   matchDetailSchema,
@@ -27,6 +28,7 @@ import {
 import { MobileApiError, type MobileApi } from "./mobile-api";
 
 const requestTimeoutMs = 15_000;
+const decisionContextHeaders = { "X-BTB-Decision-Context": "decision-context.v3" };
 
 export function createHttpMobileApi(baseUrl: string): MobileApi {
   async function request<T>(
@@ -58,7 +60,7 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
           Accept: "application/json",
           "Content-Type": "application/json",
           ...getApiAuthHeaders(runtimeConfig.pilotAccessKey, token),
-          ...init.headers
+          ...Object.fromEntries(new Headers(init.headers).entries())
         },
         signal: controller.signal
       });
@@ -76,6 +78,12 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
         } catch {
           // A non-JSON error body must not hide the HTTP status.
         }
+        if (response.status === 400 && code === "INVALID_DECISION_CONTEXT_VERSION" &&
+            new Headers(init.headers).get("X-BTB-Decision-Context") === "decision-context.v3") {
+          const headers = new Headers(init.headers);
+          headers.set("X-BTB-Decision-Context", "decision-context.v2");
+          return await request(path, schema, { ...init, headers }, controller.signal);
+        }
         if (response.status === 401 && runtimeConfig.authMode === "oauth") {
           await clearSession();
         }
@@ -84,6 +92,8 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
 
       const data: unknown =
         response.status === 204 ? undefined : await response.json();
+      const requestedContext = new Headers(init.headers).get("X-BTB-Decision-Context");
+      assertDecisionContextResponse(path, data, requestedContext, response.headers.get("X-BTB-Decision-Context"));
       return schema.parse(data);
     } catch (error) {
       if (error instanceof MobileApiError) {
@@ -107,9 +117,9 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
 
   return {
     getDashboard: (signal) =>
-      request("/v1/dashboard", dashboardSchema, {}, signal),
+      request("/v1/dashboard", dashboardSchema, { headers: decisionContextHeaders }, signal),
     getMatches: (signal) =>
-      request("/v1/btb/matches", matchListSchema, {}, signal),
+      request("/v1/btb/matches", matchListSchema, { headers: decisionContextHeaders }, signal),
     getMatchInsights: (signal) =>
       request(
         "/v1/btb/match-insights",
@@ -135,7 +145,7 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
       request(
         `/v1/btb/matches/${encodeURIComponent(key)}`,
         matchDetailSchema,
-        { headers: { "X-BTB-Journey-Display": "2" } },
+        { headers: { ...decisionContextHeaders, "X-BTB-Journey-Display": "2" } },
         signal
       ),
     getMatchPeriodScore: (key, signal) =>
@@ -168,12 +178,12 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
       ),
     getMatchJourney: (key, signal) =>
       request(`/v1/btb/matches/${encodeURIComponent(key)}/match-journey`, matchJourneySchema,
-        { headers: { "X-BTB-Match-Journey-Version": "match-journey.v4" } }, signal),
+        { headers: { ...decisionContextHeaders, "X-BTB-Match-Journey-Version": "match-journey.v4" } }, signal),
     getMatchJinxOutlook: (key, signal) =>
       request(
         `/v1/btb/matches/${encodeURIComponent(key)}/jinx-outlook`,
         jinxMatchOutlookSchema,
-        { headers: { "X-BTB-Jinx-Version": "jinx-match-outlook.v2" } },
+        { headers: { ...decisionContextHeaders, "X-BTB-Jinx-Version": "jinx-match-outlook.v2" } },
         signal
       ),
     getMatchSuperLogs: (key, signal) =>
@@ -191,7 +201,7 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
       request(
         `/v1/super/logs/${encodeURIComponent(key)}`,
         superLogDetailSchema,
-        {},
+        { headers: decisionContextHeaders },
         signal
       ),
     getSuperLogPeriodScore: (key, signal) =>

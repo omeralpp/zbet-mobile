@@ -3,6 +3,101 @@ import { z } from "zod";
 const isoDateTime = z.string().min(1);
 const finiteNumber = z.number().finite();
 
+const decisionContextV2Schema = z.strictObject({
+  contractVersion: z.literal("decision-context.v2"),
+  recentPressure: z.strictObject({
+    availability: z.enum(["AVAILABLE", "UNAVAILABLE"]),
+    reason: z.string().nullable(),
+    units: z.enum(["WEIGHTED_ACTIVITY_PER_MINUTE", "EST_SAMPLED_ACTIVITY_PER_MIN"]),
+    policyId: z.enum(["MEASUREMENT_V1", "OBSERVED_PILOT_V1"]).default("MEASUREMENT_V1"),
+    estimated: z.boolean().default(false),
+    observedEpoch: z.string().min(1).nullable().default(null),
+    home: finiteNumber.nonnegative().nullable(),
+    away: finiteNumber.nonnegative().nullable(),
+    total: finiteNumber.nonnegative().nullable(),
+    difference: finiteNumber.nullable(),
+    intervalSeconds: finiteNumber.positive().max(240).nullable(),
+    observedAt: isoDateTime.nullable(),
+    sourceTimingKnown: z.boolean(),
+    xgCovered: z.boolean(),
+    stateRevision: z.string().min(1).nullable()
+  }).superRefine((value, context) => {
+    const fields = [value.home, value.away, value.total, value.difference,
+      value.intervalSeconds, value.observedAt];
+    if (value.availability === "UNAVAILABLE") {
+      if (!value.reason || [...fields, value.stateRevision, value.observedEpoch].some((field) => field !== null))
+        context.addIssue({ code: "custom", message: "Unavailable pressure must carry no measurements." });
+    } else if (value.reason !== null || fields.some((field) => field === null) ||
+      Math.abs((value.home ?? 0) + (value.away ?? 0) - (value.total ?? 0)) > 1e-9 ||
+      Math.abs((value.home ?? 0) - (value.away ?? 0) - (value.difference ?? 0)) > 1e-9) {
+      context.addIssue({ code: "custom", message: "Incomplete interval pressure context." });
+    }
+    if (value.availability === "AVAILABLE" && (value.policyId === "OBSERVED_PILOT_V1"
+      ? !value.estimated || value.sourceTimingKnown || value.stateRevision !== null || !value.observedEpoch || value.units !== "EST_SAMPLED_ACTIVITY_PER_MIN"
+      : value.estimated || value.observedEpoch !== null || !value.stateRevision || value.units !== "WEIGHTED_ACTIVITY_PER_MINUTE")) {
+      context.addIssue({ code: "custom", message: "Pressure policy and evidence identities conflict." });
+    }
+  }),
+  decisionCoherence: z.strictObject({
+    availability: z.enum(["AVAILABLE", "UNAVAILABLE"]),
+    reason: z.string().nullable(),
+    stateRevision: z.string().min(1).nullable(),
+    quoteRevision: z.string().min(1).nullable()
+  }).superRefine((value, context) => {
+    if (value.availability === "AVAILABLE") {
+      if (value.reason !== null || !value.stateRevision || !value.quoteRevision)
+        context.addIssue({ code: "custom", message: "Available coherence requires both revisions." });
+    } else if (!value.reason) {
+      context.addIssue({ code: "custom", message: "Unavailable coherence requires a reason." });
+    }
+  })
+});
+
+const nullableSha = z.string().regex(/^[0-9A-F]{64}$/).nullable();
+export const decisionModelSchema = z.strictObject({
+  kind: z.enum(["UNKNOWN", "LEGACY", "PRESSURE_PATH_PILOT"]),
+  regimeId: z.string().regex(/^BTB_PPV1_\d{8}$/).nullable(),
+  cutoverId: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  arm: z.union([z.literal(0), z.literal(3)]).nullable(),
+  scorerSha: nullableSha,
+  baseParameterSha: nullableSha,
+  decisionRecordSha: nullableSha,
+  pressureUnits: z.literal("EST_SAMPLED_ACTIVITY_PER_MIN").nullable(),
+  recommendation: z.enum(["CURRENT", "RECORDED", "NONE"])
+}).superRefine((value, context) => {
+  const identity = [value.regimeId, value.cutoverId, value.arm, value.scorerSha,
+    value.baseParameterSha, value.decisionRecordSha, value.pressureUnits];
+  if (value.kind === "PRESSURE_PATH_PILOT" ? identity.some(field => field === null) || value.arm !== 3 ||
+      value.cutoverId?.replaceAll("-", "") !== value.regimeId?.slice(-8)
+    : identity.some(field => field !== null) || value.recommendation === "CURRENT") {
+    context.addIssue({ code: "custom", message: "Model identity and recommendation conflict." });
+  }
+});
+export const expectedScorePressureSchema = z.strictObject({
+  state: z.enum(["TOWARD", "AGAINST", "PRESERVATION", "MIXED", "UNAVAILABLE"]),
+  reason: z.string().nullable(),
+  alignment: finiteNumber.min(-1).max(1).nullable(),
+  leaders: z.array(z.strictObject({ score: z.string().regex(/^\d+-\d+$/),
+    homeRemaining: z.number().int().nonnegative(), awayRemaining: z.number().int().nonnegative() }))
+}).superRefine((value, context) => {
+  if (value.state === "UNAVAILABLE" ? value.alignment !== null || !value.reason || value.leaders.length !== 0
+    : value.state === "MIXED" ? value.alignment !== null || value.leaders.length < 2
+    : value.alignment === null || value.leaders.length === 0 ||
+      (value.state === "TOWARD" ? value.alignment <= 0 : value.alignment > 0)) {
+    context.addIssue({ code: "custom", message: "Score path and pressure direction conflict." });
+  }
+});
+const decisionContextV3Schema = decisionContextV2Schema.extend({
+  contractVersion: z.literal("decision-context.v3"),
+  model: decisionModelSchema,
+  expectedScorePressure: expectedScorePressureSchema
+}).superRefine((value, context) => {
+  if (value.model.recommendation === "CURRENT" && (value.recentPressure.availability !== "AVAILABLE" ||
+      value.recentPressure.policyId !== "OBSERVED_PILOT_V1"))
+    context.addIssue({ code: "custom", message: "Current pilot recommendation requires recent estimated pressure." });
+});
+export const decisionContextSchema = z.union([decisionContextV2Schema, decisionContextV3Schema]);
+
 /**
  * `NOT_PLAYED` covers the SAP lifecycles that end a fixture without a played
  * regulation result: 08 postponed, 09 abandoned/interrupted, 10 cancelled and
@@ -41,6 +136,7 @@ export const matchSummarySchema = z.strictObject({
   pressureSource: z.literal("CURRENT_MATCH").nullable().default(null),
   pressureProvider: z.string().min(1).nullable().optional(),
   pressureSnapshotAt: isoDateTime.nullable().optional(),
+  decisionContext: decisionContextSchema.optional(),
   lastUpdatedAt: isoDateTime
 });
 
@@ -156,6 +252,7 @@ export const superLogSchema = z.strictObject({
 });
 
 export const superLogDetailSchema = superLogSchema.extend({
+  decisionContext: decisionContextSchema.optional(),
   matchDate: z.string().min(1),
   matchTime: z.string(),
   matchId: z.number().int().positive(),
@@ -689,6 +786,7 @@ export const matchJourneyPointSchema = z.object({
   eliminatedCount: z.number().int().nonnegative().nullable(),
   eliminatedRatio: finiteNumber.min(0).max(1).nullable(),
   pressureAlignment: finiteNumber.min(-1).max(1).nullable(),
+  decisionContext: decisionContextSchema.optional(),
   eventEffect: goalModeEffectSchema.nullable().optional()
 });
 export const matchJourneySchema = z.object({

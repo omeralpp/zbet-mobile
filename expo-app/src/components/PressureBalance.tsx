@@ -9,13 +9,15 @@ import {
 export function PressureBalance({
   totalPressure,
   pressureDiff,
-  label = "Karar anı baskı dengesi"
+  label = "Karar anı baskı dengesi",
+  measuredInterval = false
 }: {
   totalPressure: number | null;
   pressureDiff: number | null;
   label?: string;
+  measuredInterval?: boolean;
 }) {
-  const balance = derivePressureBalance(totalPressure, pressureDiff);
+  const balance = derivePressureBalance(totalPressure, pressureDiff, measuredInterval);
   const fillWidth: `${number}%` = `${balance.magnitudeRatio * 100}%`;
   const homeWidth: `${number}%` =
     balance.direction === "HOME" ? fillWidth : "0%";

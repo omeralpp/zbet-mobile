@@ -14,6 +14,7 @@ export function retainedJourneyRuns(points: MatchJourneyPoint[]) {
 }
 
 export function journeyPointLabel(point: MatchJourneyPoint) {
+  if (point.kind === 'FULL_TIME') return 'Maç tamamlandı · son kayıt';
   const reason: Record<string, string> = {
     KICK_OFF: "Başlama düdüğü · olağan başlangıç",
     KICK_OFF_BASELINE: "Başlangıç referansı · ilk golsüz güncelleme 1–2. dakikada",

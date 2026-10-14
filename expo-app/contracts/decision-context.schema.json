@@ -1,0 +1,640 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string",
+          "const": "decision-context.v2"
+        },
+        "recentPressure": {
+          "type": "object",
+          "properties": {
+            "availability": {
+              "type": "string",
+              "enum": [
+                "AVAILABLE",
+                "UNAVAILABLE"
+              ]
+            },
+            "reason": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "units": {
+              "type": "string",
+              "enum": [
+                "WEIGHTED_ACTIVITY_PER_MINUTE",
+                "EST_SAMPLED_ACTIVITY_PER_MIN"
+              ]
+            },
+            "policyId": {
+              "default": "MEASUREMENT_V1",
+              "type": "string",
+              "enum": [
+                "MEASUREMENT_V1",
+                "OBSERVED_PILOT_V1"
+              ]
+            },
+            "estimated": {
+              "default": false,
+              "type": "boolean"
+            },
+            "observedEpoch": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "home": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "away": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "total": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "difference": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "intervalSeconds": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "maximum": 240
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "observedAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sourceTimingKnown": {
+              "type": "boolean"
+            },
+            "xgCovered": {
+              "type": "boolean"
+            },
+            "stateRevision": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "availability",
+            "reason",
+            "units",
+            "policyId",
+            "estimated",
+            "observedEpoch",
+            "home",
+            "away",
+            "total",
+            "difference",
+            "intervalSeconds",
+            "observedAt",
+            "sourceTimingKnown",
+            "xgCovered",
+            "stateRevision"
+          ],
+          "additionalProperties": false
+        },
+        "decisionCoherence": {
+          "type": "object",
+          "properties": {
+            "availability": {
+              "type": "string",
+              "enum": [
+                "AVAILABLE",
+                "UNAVAILABLE"
+              ]
+            },
+            "reason": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "stateRevision": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "quoteRevision": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "availability",
+            "reason",
+            "stateRevision",
+            "quoteRevision"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contractVersion",
+        "recentPressure",
+        "decisionCoherence"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string",
+          "const": "decision-context.v3"
+        },
+        "recentPressure": {
+          "type": "object",
+          "properties": {
+            "availability": {
+              "type": "string",
+              "enum": [
+                "AVAILABLE",
+                "UNAVAILABLE"
+              ]
+            },
+            "reason": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "units": {
+              "type": "string",
+              "enum": [
+                "WEIGHTED_ACTIVITY_PER_MINUTE",
+                "EST_SAMPLED_ACTIVITY_PER_MIN"
+              ]
+            },
+            "policyId": {
+              "default": "MEASUREMENT_V1",
+              "type": "string",
+              "enum": [
+                "MEASUREMENT_V1",
+                "OBSERVED_PILOT_V1"
+              ]
+            },
+            "estimated": {
+              "default": false,
+              "type": "boolean"
+            },
+            "observedEpoch": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "home": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "away": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "total": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "difference": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "intervalSeconds": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "maximum": 240
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "observedAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sourceTimingKnown": {
+              "type": "boolean"
+            },
+            "xgCovered": {
+              "type": "boolean"
+            },
+            "stateRevision": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "availability",
+            "reason",
+            "units",
+            "policyId",
+            "estimated",
+            "observedEpoch",
+            "home",
+            "away",
+            "total",
+            "difference",
+            "intervalSeconds",
+            "observedAt",
+            "sourceTimingKnown",
+            "xgCovered",
+            "stateRevision"
+          ],
+          "additionalProperties": false
+        },
+        "decisionCoherence": {
+          "type": "object",
+          "properties": {
+            "availability": {
+              "type": "string",
+              "enum": [
+                "AVAILABLE",
+                "UNAVAILABLE"
+              ]
+            },
+            "reason": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "stateRevision": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "quoteRevision": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "availability",
+            "reason",
+            "stateRevision",
+            "quoteRevision"
+          ],
+          "additionalProperties": false
+        },
+        "model": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "UNKNOWN",
+                "LEGACY",
+                "PRESSURE_PATH_PILOT"
+              ]
+            },
+            "regimeId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^BTB_PPV1_\\d{8}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cutoverId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "arm": {
+              "anyOf": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 0
+                    },
+                    {
+                      "type": "number",
+                      "const": 3
+                    }
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "scorerSha": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "baseParameterSha": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "decisionRecordSha": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9A-F]{64}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "pressureUnits": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "const": "EST_SAMPLED_ACTIVITY_PER_MIN"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "recommendation": {
+              "type": "string",
+              "enum": [
+                "CURRENT",
+                "RECORDED",
+                "NONE"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "regimeId",
+            "cutoverId",
+            "arm",
+            "scorerSha",
+            "baseParameterSha",
+            "decisionRecordSha",
+            "pressureUnits",
+            "recommendation"
+          ],
+          "additionalProperties": false
+        },
+        "expectedScorePressure": {
+          "type": "object",
+          "properties": {
+            "state": {
+              "type": "string",
+              "enum": [
+                "TOWARD",
+                "AGAINST",
+                "PRESERVATION",
+                "MIXED",
+                "UNAVAILABLE"
+              ]
+            },
+            "reason": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "alignment": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": -1,
+                  "maximum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "leaders": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "score": {
+                    "type": "string",
+                    "pattern": "^\\d+-\\d+$"
+                  },
+                  "homeRemaining": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "awayRemaining": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "score",
+                  "homeRemaining",
+                  "awayRemaining"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "state",
+            "reason",
+            "alignment",
+            "leaders"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contractVersion",
+        "recentPressure",
+        "decisionCoherence",
+        "model",
+        "expectedScorePressure"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "title": "Opt-in BTB decision context V2/V3",
+  "description": "V3 adds immutable model identity and descriptive pressure direction for tied leading scores. Estimated activity is not provider-proven coherence or a goal probability.",
+  "x-validation-source": "../src/api/schemas.ts"
+}

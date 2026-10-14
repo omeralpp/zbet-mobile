@@ -26,6 +26,8 @@ paths:
   /v1/btb/matches:
     get:
       operationId: getMatches
+      parameters:
+        - $ref: "#/components/parameters/DecisionContextVersion"
       responses:
         "200":
           description: Current BTB match state.
@@ -42,6 +44,7 @@ paths:
       operationId: getMatch
       parameters:
         - $ref: "#/components/parameters/Key"
+        - $ref: "#/components/parameters/DecisionContextVersion"
         - in: header
           name: X-BTB-Journey-Display
           required: false
@@ -148,7 +151,8 @@ paths:
         V4 adds the descriptive effect on all tied leading scorelines; it is
         not an event probability. V3 remains the default for existing clients.
       parameters:
-        - $ref: "#/components/parameters/MatchKey"
+        - $ref: "#/components/parameters/Key"
+        - $ref: "#/components/parameters/DecisionContextVersion"
         - name: X-BTB-Match-Journey-Version
           in: header
           required: false
@@ -172,6 +176,7 @@ paths:
         score-change sections under TASK-0121.
       parameters:
         - $ref: "#/components/parameters/Key"
+        - $ref: "#/components/parameters/DecisionContextVersion"
         - in: header
           name: X-BTB-Jinx-Version
           required: false
@@ -247,6 +252,7 @@ paths:
       operationId: getSuperLog
       parameters:
         - $ref: "#/components/parameters/Key"
+        - $ref: "#/components/parameters/DecisionContextVersion"
       responses:
         "200":
           description: Exact historical Super decision snapshot.
@@ -383,6 +389,15 @@ components:
         Rotatable direct-open key accepted only by the explicit pilot profile;
         never a production identity or SAP credential.
   parameters:
+    DecisionContextVersion:
+      name: X-BTB-Decision-Context
+      in: header
+      required: false
+      description: >-
+        Opt into an acknowledged no-store V2/V3 decision context. V3 adds model
+        identity and leading-score pressure direction. The response header echoes
+        the requested version; absence retains the legacy body.
+      schema: { type: string, enum: [decision-context.v2, decision-context.v3] }
     Key:
       name: key
       in: path
@@ -398,6 +413,8 @@ components:
           schema:
             $ref: "#/components/schemas/ApiError"
   schemas:
+    DecisionContext:
+      $ref: "./decision-context.schema.json"
     ApiError:
       type: object
       additionalProperties: false
@@ -464,6 +481,7 @@ components:
         pressureProvider: { type: [string, "null"], minLength: 1 }
         pressureSnapshotAt: { type: [string, "null"], format: date-time }
         lastUpdatedAt: { type: string, format: date-time }
+        decisionContext: { $ref: "#/components/schemas/DecisionContext" }
     MatchDetail:
       allOf:
         - $ref: "#/components/schemas/MatchSummary"
@@ -687,6 +705,7 @@ components:
         finalScore: { type: string }
         pressureAdjustment: { type: number }
         stateAdjustment: { type: number }
+        decisionContext: { $ref: "#/components/schemas/DecisionContext" }
     SuperLogDetail:
       allOf:
         - $ref: "#/components/schemas/SuperLog"
@@ -1038,6 +1057,7 @@ components:
       type: object
       required: [key, capturedAt, minute, plotMinute, elapsed, phase, status, home, away, kind, reason, level, connects, referenceChange, poolKey, compatibleCount, beforeCount, eliminatedCount, eliminatedRatio, pressureAlignment]
       properties:
+        decisionContext: { $ref: "#/components/schemas/DecisionContext" }
         key: { type: string, minLength: 1 }
         capturedAt: { type: [string, "null"], format: date-time }
         minute: { type: [integer, "null"], minimum: 0, maximum: 150 }

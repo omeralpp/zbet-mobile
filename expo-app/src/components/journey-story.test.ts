@@ -2,9 +2,17 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { mockRetainedJourney } from '../api/mock-data';
 import type { LiveContext } from '../api/schemas';
-import { journeyMoments, journeyVertices, markerGroups, poolLeaders, pressureReading } from './journey-story';
+import { journeyMomentEffect, journeyMoments, journeyVertices, markerGroups, poolLeaders, pressureReading } from './journey-story';
 
 const fixture=mockRetainedJourney('story');
+test('unknown event minutes cannot be presented as recorded time; minute zero remains known',()=>{
+  const moments=journeyMoments([],{availability:'OK',timeline:[
+    {eventKey:'unknown',kind:'RED_CARD',minute:null},
+    {eventKey:'zero',kind:'RED_CARD',minute:0}
+  ]});
+  assert.equal(journeyMomentEffect(moments.find(event=>event.key==='unknown')!), 'Bu olayın dakikası bilinmiyor. Havuz etkisi ölçülmedi.');
+  assert.equal(journeyMomentEffect(moments.find(event=>event.key==='zero')!), 'Olayın dakikası kayıtlı. Bu olaya ait havuz etkisi ölçülmedi.');
+});
 test('pool rebase stays at the reference minute and retains the previous level until then',()=>{
   const a={...fixture.points[0]!,plotMinute:44,level:.2};
   const b={...a,key:'second',plotMinute:46,level:.9,referenceChange:true};

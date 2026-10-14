@@ -27,7 +27,7 @@ test("güncel market oranını seçim oranından ayrı tutar", () => {
   });
   assert.deepEqual(formatCurrentMarketRate(null, "Ms1X", "canlı oran"), {
     value: "—",
-    label: "market kapalı"
+    label: "oran yok"
   });
   assert.deepEqual(formatCurrentMarketRate(null, "", "güncel oran"), {
     value: "—",

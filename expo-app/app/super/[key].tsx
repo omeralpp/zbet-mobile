@@ -54,6 +54,7 @@ import {
   formatSuperResult
 } from "@/src/utils/format";
 import { deriveSuperOutcomeBand } from "@/src/utils/super-outcome-band";
+import { decisionModelLabel } from "@/src/utils/decision-model";
 
 function firstParam(value: string | string[] | undefined): string {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
@@ -301,10 +302,17 @@ export default function SuperLogDetailScreen() {
             />
           </View>
           <View style={styles.cardDivider} />
+          <Text style={styles.metricLabel}>{decisionModelLabel(log.decisionContext)}</Text>
           <PressureBalance
-            pressureDiff={log.pressureDiff}
-            totalPressure={log.totalPressure}
+            pressureDiff={log.decisionContext ? log.decisionContext.recentPressure.difference : log.pressureDiff}
+            totalPressure={log.decisionContext ? log.decisionContext.recentPressure.total : log.totalPressure}
+            measuredInterval={log.decisionContext?.recentPressure.availability === "AVAILABLE"}
+            label={log.decisionContext ? "Karar aralığı baskı dengesi" : "Eski kararın toplam baskısı"}
           />
+          {log.decisionContext?.recentPressure.availability === "UNAVAILABLE" &&
+            <Text style={styles.metricLabel}>Bu kararda ölçüm aralığı kaydı yok.</Text>}
+          {log.decisionContext?.decisionCoherence.availability === "UNAVAILABLE" &&
+            <Text style={styles.metricLabel}>Bu kararın skor–oran bağı henüz doğrulanmadı.</Text>}
         </View>
       </SuperDetailPanel>
     ),

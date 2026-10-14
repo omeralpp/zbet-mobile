@@ -206,7 +206,7 @@ function SuperDecisionRow({
         `${decision.elapsed}. dakika Super tercihi`,
         ratingMarker.accessibilityLabel,
         decision.selectedOdd,
-        isCurrent ? "güncel tercih" : null,
+        isCurrent ? "ekranda seçili karar" : null,
         sharesMinute ? "başka bir olayla aynı dakika; kesin sıralama bilinmiyor" : null
       ]
         .filter(Boolean)
@@ -247,7 +247,7 @@ function SuperDecisionRow({
         </Text>
         <View style={styles.superAction}>
           {isCurrent ? (
-            <Text style={styles.currentDecision}>GÜNCEL</Text>
+            <Text style={styles.currentDecision}>SEÇİLİ</Text>
           ) : null}
           <MaterialCommunityIcons
             color={colors.textMuted}

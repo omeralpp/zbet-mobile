@@ -26,7 +26,7 @@ export function formatCurrentMarketRate(
   }
   return {
     value: "—",
-    label: selectedOdd ? "market kapalı" : "oran bekleniyor"
+    label: selectedOdd ? "oran yok" : "oran bekleniyor"
   };
 }
 
@@ -57,6 +57,7 @@ const decisionReasonLabels: Record<string, string> = {
   SCORE_DECREASED: "Skor düzeltildi",
   ODDS_CHANGED: "Oran değişti",
   STATUS_CHANGED: "Maç durumu değişti",
+  PRESSURE_RECHECK: "Yakın aralık baskısı yeniden değerlendirildi",
   MANUAL_RECHECK: "Yeniden değerlendirildi",
   HOME: "Ev sahibi yönü",
   AWAY: "Deplasman yönü",
