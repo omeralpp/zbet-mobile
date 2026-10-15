@@ -1,4 +1,4 @@
-export type NotificationAuthMode = "preview" | "pilot" | "oauth";
+export type NotificationAuthMode = "preview" | "pilot" | "oauth" | "edge";
 export type NotificationPlatform = "android" | "ios";
 
 export const legacyNotificationTopic = "BTB";

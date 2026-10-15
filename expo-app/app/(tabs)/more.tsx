@@ -55,6 +55,9 @@ import {
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
 
+// The browser build (app.surklase.com) has no push, OS settings or Fiori.
+const isWeb = Platform.OS === "web";
+
 function SettingsRow({
   icon,
   title,
@@ -112,7 +115,8 @@ function ThemeSwitchRow({
       <View style={styles.rowCopy}>
         <Text style={styles.rowTitle}>Koyu tema</Text>
         <Text style={styles.rowDetail}>
-          {dark ? "Koyu" : "Açık"} görünüm etkin · uygulama ve widget’lar birlikte değişir
+          {dark ? "Koyu" : "Açık"} görünüm etkin ·{" "}
+          {isWeb ? "değişince sayfa yeniden yüklenir" : "uygulama ve widget’lar birlikte değişir"}
         </Text>
       </View>
       <Switch
@@ -314,17 +318,20 @@ export default function MoreScreen() {
 
       <Text style={styles.sectionTitle}>Bağlantılar</Text>
       <View style={styles.group}>
-        <SettingsRow
-          detail="Gelişmiş BTB ekranlarını web üzerinde aç"
-          icon="view-dashboard-variant-outline"
-          onPress={() =>
-            router.push({
-              pathname: "/fiori",
-              params: { target: "launchpad" }
-            })
-          }
-          title="BTB Web Uygulamaları"
-        />
+        {/* The Fiori launchpad is obsolete; the web build does not offer it. */}
+        {isWeb ? null : (
+          <SettingsRow
+            detail="Gelişmiş BTB ekranlarını web üzerinde aç"
+            icon="view-dashboard-variant-outline"
+            onPress={() =>
+              router.push({
+                pathname: "/fiori",
+                params: { target: "launchpad" }
+              })
+            }
+            title="BTB Web Uygulamaları"
+          />
+        )}
         <SettingsRow
           detail="Bilyoner uygulaması veya web sitesi"
           icon="open-in-new"
@@ -337,9 +344,9 @@ export default function MoreScreen() {
       <View style={styles.group}>
         <View style={styles.note}>
           <Text style={styles.noteText}>
-            Özet, canlı maç detayı ve Super karar detayındaki analiz
-            modüllerini uzun basıp sürükleyerek kendi sıranıza taşıyabilirsiniz.
-            Sıralama bu cihazda saklanır; yeni modüller otomatik eklenir.
+            {isWeb
+              ? "Özet, canlı maç detayı ve Super karar detayındaki analiz modüllerinin üzerine gelip tutamaçla sürükleyerek ya da oklarla kendi sıranıza taşıyabilirsiniz. Sıralama bu tarayıcıda saklanır; yeni modüller otomatik eklenir."
+              : "Özet, canlı maç detayı ve Super karar detayındaki analiz modüllerini uzun basıp sürükleyerek kendi sıranıza taşıyabilirsiniz. Sıralama bu cihazda saklanır; yeni modüller otomatik eklenir."}
           </Text>
         </View>
         <SettingsRow
@@ -398,6 +405,9 @@ export default function MoreScreen() {
             title="Jinx rehberini baştan başlat"
           />
         </TutorialTarget>
+        {/* Web v1 has no push; the phone keeps notifications. */}
+        {isWeb ? null : (
+        <>
         <SettingsRow
           detail={
             registration.stage === "failed"
@@ -479,6 +489,8 @@ export default function MoreScreen() {
             })}
           </View>
         ) : null}
+        </>
+        )}
         {Platform.OS === "android" && __DEV__ ? (
           <SettingsRow
             detail={
@@ -491,13 +503,15 @@ export default function MoreScreen() {
             title="Widget önizlemesini yenile"
           />
         ) : null}
-        <SettingsRow
-          detail="Android/iOS uygulama izinlerini yönet"
-          icon="cog-outline"
-          onPress={() => Linking.openSettings()}
-          title="Sistem ayarları"
-        />
-        {__DEV__ ? (
+        {isWeb ? null : (
+          <SettingsRow
+            detail="Android/iOS uygulama izinlerini yönet"
+            icon="cog-outline"
+            onPress={() => Linking.openSettings()}
+            title="Sistem ayarları"
+          />
+        )}
+        {__DEV__ && !isWeb ? (
           <SettingsRow
             detail="Gizlendikten sonra Expo geliştirme araçlarını yeniden aç"
             icon="tools"
@@ -519,7 +533,11 @@ export default function MoreScreen() {
           <Text style={styles.sectionTitle}>Oturum</Text>
           <View style={styles.group}>
             <SettingsRow
-              detail="Bu cihazdaki güvenli oturum verisini temizle"
+              detail={
+                isWeb
+                  ? "Cloudflare Access oturumunu bu tarayıcıda kapat"
+                  : "Bu cihazdaki güvenli oturum verisini temizle"
+              }
               icon="logout"
               onPress={() => {
                 unregisterPushDevice()

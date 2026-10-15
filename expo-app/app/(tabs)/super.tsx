@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   FlatList,
+  Platform,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -15,6 +16,10 @@ import { superLogsQuery } from "@/src/api/queries";
 import { FilterChip } from "@/src/components/FilterChip";
 import { DecisionFilterChip } from "@/src/components/DecisionFilterChip";
 import { Screen } from "@/src/components/Screen";
+import { isAtLeast } from "@/src/layout/breakpoints";
+import { useBreakpoint } from "@/src/layout/use-breakpoint";
+import { useCardGrid } from "@/src/layout/use-card-grid";
+import { SuperLogTable } from "@/src/web/SuperLogTable";
 import {
   EmptyState,
   ErrorState,
@@ -83,6 +88,9 @@ export default function SuperScreen() {
     STAR: null
   });
   const query = useQuery(superLogsQuery);
+  const grid = useCardGrid();
+  const breakpoint = useBreakpoint();
+  const tableLayout = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
   const latestMatchDate = useMemo(
     () =>
       (query.data ?? [])
@@ -145,6 +153,7 @@ export default function SuperScreen() {
       eyebrow="BTB SUPER"
       scroll={false}
       title="Karar günlüğü"
+      wide
     >
       <TutorialTarget id="super-filters" style={styles.filterTarget}>
         <View style={styles.filters}>
@@ -317,8 +326,21 @@ export default function SuperScreen() {
             setDayScopeOpen(false);
             setTab(nextTab);
           }}
-          renderPage={(pageTab) => (
+          renderPage={(pageTab) => tableLayout ? (
+            // Desktop (platform exception): the same rows as a sortable table.
+            logsByTab[pageTab].length ? (
+              <SuperLogTable logs={logsByTab[pageTab]} />
+            ) : (
+              <EmptyState
+                kind="NO_DECISION"
+                message="Bu görünüm için bir Super kararı bulunmuyor."
+                title="Karar yok"
+              />
+            )
+          ) : (
             <FlatList
+              // numColumns cannot change on a mounted list; remount on a new grid.
+              key={`${pageTab}-${grid.columns}`}
               ref={(node) => {
                 listRefs.current[pageTab] = node;
               }}
@@ -326,6 +348,8 @@ export default function SuperScreen() {
               data={logsByTab[pageTab]}
               initialNumToRender={10}
               keyExtractor={(item) => item.key}
+              numColumns={grid.columns}
+              {...(grid.rowStyle ? { columnWrapperStyle: grid.rowStyle } : {})}
               ListEmptyComponent={
                 <EmptyState
                   kind="NO_DECISION"
@@ -353,15 +377,17 @@ export default function SuperScreen() {
                   setDayScopeOpen(false);
                 }
               }}
-              renderItem={({ item, index }) =>
-                pageTab === tab && index === 0 ? (
-                  <TutorialTarget id="super-first-card">
+              renderItem={({ item, index }) => (
+                <View style={grid.cellStyle}>
+                  {pageTab === tab && index === 0 ? (
+                    <TutorialTarget id="super-first-card">
+                      <SuperLogCard log={item} />
+                    </TutorialTarget>
+                  ) : (
                     <SuperLogCard log={item} />
-                  </TutorialTarget>
-                ) : (
-                  <SuperLogCard log={item} />
-                )
-              }
+                  )}
+                </View>
+              )}
               showsVerticalScrollIndicator={false}
               windowSize={7}
             />

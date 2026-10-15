@@ -3,7 +3,7 @@ import type { MobileIntelligenceMode } from "./mobile-intelligence";
 
 type RuntimeExtra = {
   mobileApiUrl?: string;
-  authMode?: "preview" | "pilot" | "oauth";
+  authMode?: "preview" | "pilot" | "oauth" | "edge";
   pilotAccessKey?: string;
   useMocks?: boolean;
   mobileIntelligence?: MobileIntelligenceMode;

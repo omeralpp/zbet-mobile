@@ -3,6 +3,75 @@ import test from "node:test";
 import type { ConfigContext } from "expo/config";
 import resolveAppConfig from "../../app.config";
 
+function withEnvironment(
+  values: Record<string, string | undefined>,
+  run: () => void
+): void {
+  const names = [
+    "BTB_WEB_BUILD",
+    "EXPO_PUBLIC_USE_MOCKS",
+    "EXPO_PUBLIC_MOBILE_AUTH_MODE",
+    "EXPO_PUBLIC_MOBILE_PILOT_KEY",
+    "EXPO_PUBLIC_MOBILE_API_URL",
+    ...Object.keys(values)
+  ];
+  const previous = Object.fromEntries(names.map((name) => [name, process.env[name]]));
+  try {
+    for (const name of names) {
+      delete process.env[name];
+    }
+    for (const [name, value] of Object.entries(values)) {
+      if (value !== undefined) {
+        process.env[name] = value;
+      }
+    }
+    run();
+  } finally {
+    for (const name of names) {
+      const value = previous[name];
+      if (value === undefined) {
+        delete process.env[name];
+      } else {
+        process.env[name] = value;
+      }
+    }
+  }
+}
+
+test("web build serves edge auth from its own origin with no credential", () => {
+  withEnvironment(
+    {
+      BTB_WEB_BUILD: "1",
+      EXPO_PUBLIC_USE_MOCKS: "false",
+      EXPO_PUBLIC_MOBILE_API_URL: "https://api.surklase.com"
+    },
+    () => {
+      const config = resolveAppConfig({ config: {} } as ConfigContext);
+      assert.equal(config.extra?.authMode, "edge");
+      assert.equal(config.extra?.mobileApiUrl, "");
+      assert.equal(config.extra?.pilotAccessKey, "");
+      assert.equal(config.extra?.authClientId, "");
+      assert.equal(config.web?.output, "single");
+    }
+  );
+});
+
+test("web build refuses a pilot key in its environment", () => {
+  withEnvironment(
+    {
+      BTB_WEB_BUILD: "1",
+      EXPO_PUBLIC_USE_MOCKS: "false",
+      EXPO_PUBLIC_MOBILE_PILOT_KEY: "p".repeat(64)
+    },
+    () => {
+      assert.throws(
+        () => resolveAppConfig({ config: {} } as ConfigContext),
+        /forbidden in a web build/
+      );
+    }
+  );
+});
+
 test("native splash yalnız uygulama arka planını gösterir", () => {
   const environmentNames = [
     "EXPO_PUBLIC_USE_MOCKS",

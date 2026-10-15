@@ -26,6 +26,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { mobileApi } from "@/src/api";
 import { superKpisQuery } from "@/src/api/queries";
+import { fioriEntryAvailable } from "@/src/legacy/fiori-availability";
 import { useSuperStarFilter } from "@/src/preferences/SuperStarFilterProvider";
 import { colors, iconSizes, radii, semantic, shadows } from "@/src/theme/theme";
 import { useTutorial } from "@/src/tutorial/TutorialProvider";
@@ -865,7 +866,7 @@ export function BtbMascotOverlay() {
       { key: "super", icon: "star-outline", label: "Super", onPress: () => router.replace("/super") },
       { key: "toto", icon: "ticket-confirmation-outline", label: "Toto", onPress: () => router.replace("/toto") }
     );
-    if (pathname !== "/fiori") {
+    if (pathname !== "/fiori" && fioriEntryAvailable) {
       items.push({
         key: "fiori",
         icon: "view-dashboard-variant-outline",

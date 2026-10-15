@@ -15,6 +15,24 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
+15 Ekim M16 Desktop Web Client W1-W4 yerelde tamamlandı ve sahip onayıyla
+commit/push edildi (TASK-0138..0141 DONE). W6 TASK-0142 BLOCKED: Cloudflare Access
+uygulaması (yalnız sahip e-postası) tünel hostname'inden önce, sonra
+`app.surklase.com -> http://127.0.0.1:4004`, dört `BTB_WEB_*` kullanıcı değişkeni
+ve ayrı `PUBLISH-WEB` onayı. Yeni genel kural **Client Parity** (AGENTS.md):
+Mobile/web aynı Expo kodu, her değişiklik iki yüzeye birlikte. Web derlemesi
+`edge` modunda, pilot anahtarı/sırları reddeder, gömülü ayarı ve sır taramasını
+doğrular. Masaüstü: kenar çubuğu, Ctrl+K, `g` kısayolları, çok sütunlu modüller,
+Canlı liste-detay, Super tablosu, Toto kupon ızgarası, grafik fare inceleme;
+768 px altı telefon düzeni aynı. Web istisnaları `ARCHITECTURE.md` "Desktop web
+boundary". BFF: Access JWT doğrulaması, salt-okunur web kimliği, aynı origin
+statik barındırma; `api.surklase.com` pilot yolu değişmedi, BFF runtime yeniden
+başlatılmadı. Kontroller: 637+18 test, tsc/eslint/brand, Android bundle, temiz
+edge web export; BFF601/build; 4105 provası validate/probe geçti. Doctor 19/20
+yalnız upstream expo 57.0.30/expo-router 57.0.28 (TASK-0135). Fiori girişleri
+Android'de sahip kararına kadar korunur. Karar kaydı
+`btb-codex/ROADMAP_AMENDMENT_2026-10-15.md`.
+
 15 Ekim tutarlılık yayını tamamlandı: UI5/Fiori istemcileri obsolete; Mobile/BFF
 ve dört SAP servis kökü aktif. BFF `e26113e16f21cb02348e9bda6c1d78d942ff1b51` mevcut pilotta, backend
 main `a7571e4ecd16392431568f8b5f3c7e19d68e2c2f` exact-SHA DEV'de doğrulandı.45 native Unit/0 yeni P1/tek onaylı eski W;
@@ -96,8 +114,9 @@ Bu exact APK için fiziksel kabul 15 Ekim sahibin doğrudan bildirimiyle tamamla
 
 ## Repo durumu
 
-15 Ekim bakım kaynakları yerelde değişmiş, henüz commit/push edilmemiştir.
-Aşağıdaki SHA'lar mevcut kabul edilmiş A3/FT45 yayınının tarihsel durumudur.
+15 Ekim tutarlılık yayını ve M16 W1-W4 kaynakları push edildi; exact SHA'lar
+TASK-0139..0141 notlarında ve `git log`'da. Web yayını yapılmadı. Aşağıdaki
+SHA'lar mevcut kabul edilmiş A3/FT45 yayınının tarihsel durumudur.
 
 Önceki A3 primary yayını tamamlandı; makbuz
 `.codex-artifacts/pressure-selection-2026-10-14/publication.json`.
@@ -136,11 +155,13 @@ legacy blank tag yeni modele yükseltilmez. Tarihsel karar kendi capture'ını o
 
 ## Exact next steps
 
-Öncelikli bakım devri: TASK-0132/0133 commit/push onayı; TASK-0134 için BTB
-sahibinde ayrıca SAP preflight ve exact-SHA DEV kapısı. TASK-0135 yeni APK
-hazırlığı ayrı kalır. Mevcut BFF düzeltmesi pilotta çalışır; aşağıdaki gözlem
-adımları performans kapılarını korur.
+TASK-0135 yeni APK hazırlığı ayrı kalır. Mevcut BFF düzeltmesi pilotta çalışır;
+aşağıdaki gözlem adımları performans kapılarını korur.
 
+0. M16 W6 (TASK-0142): sahibin Cloudflare adımları, sonra
+   `zbet-cap/scripts/publish-web-client.ps1` dry run ve ayrı `PUBLISH-WEB` onayı.
+   Yayından sonra web bulguları `OBSERVATION_LOG.md`'ye (W7); her istemci
+   değişikliği Client Parity ile Android ve web'de birlikte doğrulanır.
 1. TASK-0124 fiziksel kabulü tamamlandı; yeni cihaz bulgularını gözlem kaydına ekle.
 2.16 Ekim TASK-0123 salt-okunur kanıt incelemesi; etiket/kimlik ve gerçek sınırla
    ayır. Kontrolleri geçmiş sonuç olarak geri doldurma; ekonomik örneklem bekle.

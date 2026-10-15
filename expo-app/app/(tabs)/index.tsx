@@ -248,6 +248,7 @@ export default function DashboardScreen() {
     <Screen
       contentStyle={styles.content}
       scrollRef={scrollRef}
+      wide
       scrollProps={{
         onScroll: handleScroll,
         scrollEnabled: !reordering,

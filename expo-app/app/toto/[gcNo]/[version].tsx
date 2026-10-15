@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   Alert,
   Linking,
+  Platform,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -34,7 +35,11 @@ import {
   formatCurrencyAmount,
   formatTimestamp
 } from "@/src/utils/format";
+import { fioriEntryAvailable } from "@/src/legacy/fiori-availability";
+import { isAtLeast } from "@/src/layout/breakpoints";
+import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { summarizeTotoResults } from "@/src/utils/toto-results";
+import { TotoCouponGrid } from "@/src/web/TotoCouponGrid";
 import { totoProgramTone } from "@/src/utils/toto-status";
 
 function predictionResultPresentation(result: TotoPrediction["result"]): {
@@ -90,6 +95,9 @@ export default function TotoProgramDetailScreen() {
     }
   };
   const query = useQuery(totoProgramQuery(gcNo, version));
+  // Desktop (≥1200 px, platform exception): summary beside a coupon grid.
+  const breakpoint = useBreakpoint();
+  const desktop = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
 
   if (query.isLoading) {
     return (
@@ -131,6 +139,7 @@ export default function TotoProgramDetailScreen() {
     <Screen
       edgeSwipeBack
       onEdgeSwipeBack={handleEdgeSwipeBack}
+      wide
       contentStyle={styles.screen}
       scrollProps={{
         alwaysBounceVertical: true,
@@ -144,6 +153,8 @@ export default function TotoProgramDetailScreen() {
         )
       }}
     >
+      <View style={desktop ? styles.desktopColumns : undefined}>
+      <View style={desktop ? styles.summaryColumn : undefined}>
       <View style={styles.hero}>
         <SurfaceMaterial radius={radii.xl} />
         <Text style={styles.eyebrow}>{program.weekText}</Text>
@@ -287,12 +298,20 @@ export default function TotoProgramDetailScreen() {
           ) : null}
         </View>
       ) : null}
+      </View>
 
+      <View style={desktop ? styles.couponColumn : undefined}>
       <ModuleHeading
         eyebrow="KUPON"
         title={program.predictions.length ? "Tahminler" : "Aktif fikstür"}
       />
-      {program.predictions.length ? program.predictions.map((prediction) => {
+      {program.predictions.length && desktop ? (
+        <TotoCouponGrid
+          onOpen={openBilyoner}
+          predictions={program.predictions}
+          presentResult={predictionResultPresentation}
+        />
+      ) : program.predictions.length ? program.predictions.map((prediction) => {
         const presentation = predictionResultPresentation(prediction.result);
         return (
           <Pressable
@@ -371,6 +390,8 @@ export default function TotoProgramDetailScreen() {
           Aktif programın fikstür satırları henüz hazırlanmadı.
         </Text>
       )}
+      </View>
+      </View>
 
       <View style={styles.actions}>
         <Pressable
@@ -393,6 +414,7 @@ export default function TotoProgramDetailScreen() {
             Bilyoner Spor Toto&apos;da aç
           </Text>
         </Pressable>
+        {fioriEntryAvailable ? (
         <Pressable
           accessibilityHint="Programın gelişmiş BTB Web görünümünü açar"
           accessibilityRole="button"
@@ -413,6 +435,7 @@ export default function TotoProgramDetailScreen() {
         >
           <Text style={styles.primaryActionText}>BTB Web’de aç</Text>
         </Pressable>
+        ) : null}
       </View>
       <Text style={styles.safetyNote}>
         Tahmin üretme, sonuç kaydetme ve program güncelleme işlemleri bu mobil
@@ -425,6 +448,20 @@ export default function TotoProgramDetailScreen() {
 const styles = StyleSheet.create({
   screen: {
     paddingTop: spacing.lg
+  },
+  desktopColumns: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: spacing.xxl
+  },
+  summaryColumn: {
+    flexBasis: 400,
+    flexGrow: 0,
+    flexShrink: 0
+  },
+  couponColumn: {
+    flex: 1,
+    minWidth: 0
   },
   hero: {
     borderRadius: radii.xl,

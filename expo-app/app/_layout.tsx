@@ -1,33 +1,36 @@
 import { useCallback, useEffect, useState } from "react";
 import * as SplashScreen from "expo-splash-screen";
-import * as SystemUI from "expo-system-ui";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Appearance, StyleSheet } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAuth } from "@/src/auth/AuthProvider";
 import { AppLaunchScreen } from "@/src/components/AppLaunchScreen";
+import { hasPlayedLaunch, markLaunchPlayed } from "@/src/components/launch-session";
 import { BtbMascotOverlay } from "@/src/mascot/BtbMascotOverlay";
 import { notifyMascotInteraction } from "@/src/mascot/interaction-activity";
 import { DiscoveryProvider } from "@/src/mascot/DiscoveryProvider";
 import { MascotActionsProvider } from "@/src/mascot/MascotActions";
 import { AndroidBackGuard } from "@/src/navigation/AndroidBackGuard";
 import { AppProviders } from "@/src/providers/AppProviders";
+import { applySystemTheme } from "@/src/theme/system-theme";
 import { colors, themeMode } from "@/src/theme/theme";
 import { useReducedMotion } from "@/src/theme/use-reduced-motion";
 import { TutorialProvider } from "@/src/tutorial/TutorialProvider";
-import { syncWidgetTheme } from "@/src/widgets/btb-widget";
+import { AppShell } from "@/src/web/AppShell";
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 function RootNavigator() {
   const auth = useAuth();
   const reduceMotion = useReducedMotion();
-  const [launchComplete, setLaunchComplete] = useState(false);
+  const [skippedLaunch] = useState(hasPlayedLaunch);
+  const [launchComplete, setLaunchComplete] = useState(skippedLaunch);
   const hasSession =
     auth.status === "authenticated" || auth.status === "preview";
   const handleLaunchComplete = useCallback(() => {
+    markLaunchPlayed();
     setLaunchComplete(true);
   }, []);
   const handleLaunchLayout = useCallback(() => {
@@ -35,9 +38,7 @@ function RootNavigator() {
   }, []);
 
   useEffect(() => {
-    Appearance.setColorScheme(themeMode);
-    SystemUI.setBackgroundColorAsync(colors.background).catch(() => undefined);
-    syncWidgetTheme(themeMode).catch(() => undefined);
+    applySystemTheme(themeMode, colors.background);
   }, []);
 
   if (!launchComplete) {
@@ -52,10 +53,18 @@ function RootNavigator() {
       </>
     );
   }
+  // A skipped launch (web reload) must still wait for the auth answer, or the
+  // guards below would bounce a deep link through the sign-in route. Only the
+  // web build skips the launch, and its preview/edge modes never re-enter
+  // "loading" after boot (only native OAuth sign-in does).
+  if (skippedLaunch && auth.status === "loading") {
+    return <View style={[styles.root, { backgroundColor: colors.background }]} />;
+  }
 
   return (
     <>
       <StatusBar style={themeMode === "light" ? "dark" : "light"} />
+      <AppShell>
       <Stack
         screenOptions={{
           animation: reduceMotion ? "none" : "slide_from_right",
@@ -91,6 +100,7 @@ function RootNavigator() {
         <Stack.Screen name="auth" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" options={{ title: "Bulunamadı" }} />
       </Stack>
+      </AppShell>
       <AndroidBackGuard />
       {hasSession ? <BtbMascotOverlay /> : null}
     </>

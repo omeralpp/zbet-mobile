@@ -10,6 +10,7 @@ servers:
 security:
   - bearerAuth: []
   - pilotKey: []
+  - cloudflareAccess: []
 paths:
   /v1/dashboard:
     get:
@@ -164,6 +165,46 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MatchJourney"
+        default:
+          $ref: "#/components/responses/Error"
+  /v1/btb/matches/{key}/live-context:
+    get:
+      operationId: getMatchLiveContext
+      description: >-
+        Provider live context (timeline, statistics, freshness) reached through
+        the SAP bridge. Read-only; an unconfigured runtime answers 503. Shape:
+        `liveContextSchema` in src/api/schemas.ts.
+      parameters:
+        - $ref: "#/components/parameters/Key"
+      responses:
+        "200":
+          description: Live context with availability and freshness.
+          content:
+            application/json:
+              schema:
+                type: object
+        default:
+          $ref: "#/components/responses/Error"
+  /v1/jinx/quip:
+    post:
+      operationId: getJinxQuip
+      description: >-
+        Mascot bubble wording for the given mood. Read scope only; it writes
+        nothing and falls back to the deterministic repertoire when no wording
+        provider is configured. Shape: `jinxQuipSchema` in src/api/schemas.ts.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: One quip.
+          content:
+            application/json:
+              schema:
+                type: object
         default:
           $ref: "#/components/responses/Error"
   /v1/btb/matches/{key}/jinx-outlook:
@@ -387,7 +428,17 @@ components:
       name: X-BTB-Pilot-Key
       description: >-
         Rotatable direct-open key accepted only by the explicit pilot profile;
-        never a production identity or SAP credential.
+        never a production identity or SAP credential. Refused on the web
+        hostname.
+    cloudflareAccess:
+      type: apiKey
+      in: header
+      name: Cf-Access-Jwt-Assertion
+      description: >-
+        Desktop web client (app.surklase.com) only. Set by Cloudflare Access at
+        the edge, never by the browser bundle; the BFF verifies issuer (team
+        domain), audience tag, RS256 signature, expiry and an allowlisted email.
+        Grants read scope only: device routes answer 403.
   parameters:
     DecisionContextVersion:
       name: X-BTB-Decision-Context

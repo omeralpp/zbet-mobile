@@ -6,6 +6,7 @@ import {
   type RefObject
 } from "react";
 import {
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -24,6 +25,7 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { resolveBreakpoint, wideContentMaxWidth } from "@/src/layout/breakpoints";
 import {
   edgeSwipe,
   shouldActivateEdgeSwipe,
@@ -57,6 +59,11 @@ type ScreenProps = PropsWithChildren<{
   scrollRef?: RefObject<ScrollView | null>;
   contentStyle?: StyleProp<ViewStyle>;
   scrollProps?: Omit<ScrollViewProps, "contentContainerStyle">;
+  /**
+   * Web only: widen the content column with the window (960/1280/1560 px) for
+   * screens laid out in columns. Native and reading-style screens keep 720.
+   */
+  wide?: boolean;
 }>;
 
 export function Screen({
@@ -70,9 +77,14 @@ export function Screen({
   accent,
   scrollRef,
   contentStyle,
-  scrollProps
+  scrollProps,
+  wide = false
 }: ScreenProps) {
   const { width } = useWindowDimensions();
+  const widened =
+    wide && Platform.OS === "web"
+      ? { maxWidth: wideContentMaxWidth(resolveBreakpoint(width)), paddingHorizontal: spacing.xxl }
+      : null;
   const reduceMotion = useReducedMotion();
   const swipeX = useSharedValue(0);
   const gestureStartX = useSharedValue(0);
@@ -225,7 +237,7 @@ export function Screen({
         >
           {scroll ? (
             <ScrollView
-              contentContainerStyle={[styles.content, contentStyle]}
+              contentContainerStyle={[styles.content, widened, contentStyle]}
               keyboardShouldPersistTaps="handled"
               ref={scrollRef}
               showsVerticalScrollIndicator={false}
@@ -234,7 +246,7 @@ export function Screen({
               {content}
             </ScrollView>
           ) : (
-            <View style={[styles.content, styles.flex, contentStyle]}>
+            <View style={[styles.content, styles.flex, widened, contentStyle]}>
               {content}
             </View>
           )}

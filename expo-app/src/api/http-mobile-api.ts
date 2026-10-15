@@ -1,4 +1,9 @@
 import { z, type ZodType } from "zod";
+import {
+  browserReloadHost,
+  isEdgeSessionLost,
+  recoverEdgeSession
+} from "@/src/auth/edge-session";
 import { clearSession } from "@/src/auth/session-store";
 import { getValidAccessToken } from "@/src/auth/token-manager";
 import { runtimeConfig } from "@/src/config/runtime";
@@ -54,6 +59,7 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
           "UNAUTHENTICATED"
         );
       }
+      const edge = runtimeConfig.authMode === "edge";
       const response = await fetch(`${baseUrl}${path}`, {
         ...init,
         headers: {
@@ -62,8 +68,23 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
           ...getApiAuthHeaders(runtimeConfig.pilotAccessKey, token),
           ...Object.fromEntries(new Headers(init.headers).entries())
         },
+        // An expired Access session answers with a redirect to its login page;
+        // keep it visible instead of following it into a cross-origin failure.
+        ...(edge ? { redirect: "manual" as const } : {}),
         signal: controller.signal
       });
+
+      if (edge && isEdgeSessionLost(response)) {
+        const host = browserReloadHost();
+        if (host) {
+          recoverEdgeSession(host);
+        }
+        throw new MobileApiError(
+          "Oturum süresi doldu; giriş sayfası yeniden açılıyor.",
+          401,
+          "EDGE_SESSION_EXPIRED"
+        );
+      }
 
       if (!response.ok) {
         let message = `Mobil servis hatası (${response.status}).`;

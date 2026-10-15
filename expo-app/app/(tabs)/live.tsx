@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   RefreshControl,
   FlatList,
+  Platform,
   StyleSheet,
   Switch,
   Text,
@@ -14,6 +15,10 @@ import { DecisionFilterChip } from "@/src/components/DecisionFilterChip";
 import { MatchCard } from "@/src/components/MatchCard";
 import { LocalTabPager } from "@/src/components/LocalTabPager";
 import { Screen } from "@/src/components/Screen";
+import { isAtLeast } from "@/src/layout/breakpoints";
+import { useBreakpoint } from "@/src/layout/use-breakpoint";
+import { useCardGrid, type CardGrid } from "@/src/layout/use-card-grid";
+import { MatchDetailView } from "@/src/screens/MatchDetailView";
 import { useLiveStarFilter } from "@/src/preferences/LiveStarFilterProvider";
 import { usePinnedMatches } from "@/src/preferences/use-pinned-matches";
 import { splitPinnedMatches } from "@/src/preferences/pinned-matches";
@@ -112,6 +117,13 @@ export default function LiveScreen() {
     : persistedStarFilter;
   const tab = routeTab(params.scope, params.filter, params.decision);
   const [decisionOpen, setDecisionOpen] = useState(false);
+  const cardGrid = useCardGrid();
+  // Desktop (≥1200 px, platform exception): the list and the selected match's
+  // full detail side by side; the list then keeps a single column.
+  const breakpoint = useBreakpoint();
+  const splitLayout = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
+  const grid: CardGrid = splitLayout ? singleColumnGrid : cardGrid;
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const query = useQuery(matchesQuery);
   const insightsQuery = useQuery(matchInsightsQuery);
   const pinnedEligibleKeys = useMemo(
@@ -178,6 +190,12 @@ export default function LiveScreen() {
       ),
     [insightsQuery.data]
   );
+  // The pane follows the user's pick while it is still in the active tab, and
+  // otherwise shows the tab's first match, so it is never empty or stale.
+  const paneKey = useMemo(() => {
+    const keys = (sectionsByTab[tab] ?? []).flatMap((section) => section.data.map((match) => match.key));
+    return selectedKey && keys.includes(selectedKey) ? selectedKey : keys[0] ?? null;
+  }, [sectionsByTab, selectedKey, tab]);
 
   return (
     <Screen
@@ -188,6 +206,7 @@ export default function LiveScreen() {
       eyebrow="BTB"
       scroll={false}
       title="Canlı maçlar"
+      wide
     >
       <TutorialTarget
         id="live-filters"
@@ -237,6 +256,8 @@ export default function LiveScreen() {
           onRetry={() => query.refetch()}
         />
       ) : (
+        <View style={splitLayout ? styles.split : styles.single}>
+        <View style={splitLayout ? styles.splitList : styles.single}>
         <LocalTabPager
           activeKey={tab}
           onSelect={(nextTab) => {
@@ -249,10 +270,15 @@ export default function LiveScreen() {
           }}
           renderPage={(pageTab) => (
             <FlatList
+              // Desktop lays the kickoff sections side by side; numColumns
+              // cannot change on a mounted list, so a new grid remounts it.
+              key={`${pageTab}-${grid.columns}`}
               contentContainerStyle={styles.list}
               data={sectionsByTab[pageTab]}
               initialNumToRender={4}
               keyExtractor={(section) => section.key}
+              numColumns={grid.columns}
+              {...(grid.rowStyle ? { columnWrapperStyle: grid.rowStyle } : {})}
               ListEmptyComponent={
                 <EmptyState
                   kind="NO_LIVE_MATCH"
@@ -286,7 +312,7 @@ export default function LiveScreen() {
                 />
               }
               renderItem={({ item: section, index: sectionIndex }) => (
-                <View style={styles.group}>
+                <View style={[styles.group, grid.cellStyle]}>
                   <Text style={styles.sectionTitle}>{section.title}</Text>
                   {section.data.map((match, matchIndex) =>
                     pageTab === tab &&
@@ -296,12 +322,14 @@ export default function LiveScreen() {
                         <MatchCard
                           insight={insightMap.get(match.key)}
                           match={match}
+                          onSelect={splitLayout ? () => setSelectedKey(match.key) : undefined}
                           onTogglePinned={
                             pinnedHydrated
                               ? () => togglePinned(match.key)
                               : undefined
                           }
                           pinned={pinnedKeys.has(match.key)}
+                          selected={splitLayout && match.key === paneKey}
                         />
                       </TutorialTarget>
                     ) : (
@@ -309,12 +337,14 @@ export default function LiveScreen() {
                         insight={insightMap.get(match.key)}
                         key={match.key}
                         match={match}
+                        onSelect={splitLayout ? () => setSelectedKey(match.key) : undefined}
                         onTogglePinned={
                           pinnedHydrated
                             ? () => togglePinned(match.key)
                             : undefined
                         }
                         pinned={pinnedKeys.has(match.key)}
+                        selected={splitLayout && match.key === paneKey}
                       />
                     )
                   )}
@@ -326,14 +356,55 @@ export default function LiveScreen() {
           )}
           tabs={localTabs}
         />
+        </View>
+        {splitLayout ? (
+          <View style={styles.splitDetail}>
+            {paneKey ? (
+              <MatchDetailView embedded key={paneKey} matchKey={paneKey} />
+            ) : (
+              <EmptyState
+                kind="NO_LIVE_MATCH"
+                message="Soldaki listeden bir maç seçildiğinde detayı burada açılır."
+                title="Maç seçilmedi"
+              />
+            )}
+          </View>
+        ) : null}
+        </View>
       )}
     </Screen>
   );
 }
 
+const singleColumnGrid: CardGrid = {
+  columns: 1,
+  rowStyle: undefined,
+  cellStyle: undefined,
+  wrapStyle: undefined
+};
+
 const styles = StyleSheet.create({
   screen: {
     paddingBottom: 0
+  },
+  single: {
+    flex: 1
+  },
+  split: {
+    flex: 1,
+    flexDirection: "row",
+    gap: spacing.xl
+  },
+  splitList: {
+    flexBasis: 420,
+    flexGrow: 0,
+    flexShrink: 0
+  },
+  splitDetail: {
+    borderLeftColor: colors.borderSoft,
+    borderLeftWidth: 1,
+    flex: 1,
+    minWidth: 0
   },
   filters: {
     alignItems: "center",

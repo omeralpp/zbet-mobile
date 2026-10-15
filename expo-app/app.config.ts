@@ -18,6 +18,10 @@ export default function resolveAppConfig({
   config
 }: ConfigContext): ExpoConfig {
   const googleServicesFile = process.env.BTB_GOOGLE_SERVICES_FILE;
+  // The browser build served at app.surklase.com. Its API is the same origin,
+  // Cloudflare Access authenticates the owner, and resolveMobileAuthMode
+  // refuses any pilot key because a web bundle is public.
+  const webBuild = process.env.BTB_WEB_BUILD === "1";
   const pilotAccessKey =
     process.env.EXPO_PUBLIC_MOBILE_PILOT_KEY?.trim() ?? "";
   const useMocks = process.env.EXPO_PUBLIC_USE_MOCKS !== "false";
@@ -42,7 +46,8 @@ export default function resolveAppConfig({
   const mobileAuthMode = resolveMobileAuthMode({
     useMocks,
     configuredMode: process.env.EXPO_PUBLIC_MOBILE_AUTH_MODE,
-    pilotAccessKey
+    pilotAccessKey,
+    webBuild
   });
   const usesPilotAccess = mobileAuthMode === "pilot";
   const usesOAuth = mobileAuthMode === "oauth";
@@ -144,11 +149,22 @@ export default function resolveAppConfig({
     bundleIdentifier: previewPackage,
     supportsTablet: true
   },
+  web: {
+    bundler: "metro",
+    output: "single",
+    favicon: btbBrandMarkPath,
+    name: "BTB",
+    shortName: "BTB",
+    lang: "tr",
+    backgroundColor: "#030B16",
+    themeColor: "#030B16"
+  },
   experiments: {
     typedRoutes: true
   },
   extra: {
-    mobileApiUrl: process.env.EXPO_PUBLIC_MOBILE_API_URL ?? "",
+    // Empty in a web build: requests stay relative to the page's own origin.
+    mobileApiUrl: webBuild ? "" : process.env.EXPO_PUBLIC_MOBILE_API_URL ?? "",
     authMode: mobileAuthMode,
     pilotAccessKey: usesPilotAccess ? pilotAccessKey : "",
     useMocks,

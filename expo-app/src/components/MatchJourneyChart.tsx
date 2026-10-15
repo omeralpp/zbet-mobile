@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View, type PointerEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -133,6 +133,22 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
     });
     return Gesture.Exclusive(pan,tap);
   },[laneY,chartHeight,width,selectFromPlot,panActive,touchStartX,touchStartY]);
+  // Desktop web: a mouse hovering over the plot reads the nearest journey point
+  // like a scrub, without a button held. Event markers stay click-only so
+  // passing over them never opens an event. At most one update per 32 ms.
+  const scrubArea=useRef<View>(null);
+  const lastHoverAt=useRef(0);
+  const hoverProps=Platform.OS==='web'?{
+    onPointerMove:(event:PointerEvent)=>{
+      if(event.nativeEvent.pointerType!=='mouse'||isScrubbing)return;
+      const now=Date.now();
+      if(now-lastHoverAt.current<32)return;
+      lastHoverAt.current=now;
+      const node=scrubArea.current as unknown as {getBoundingClientRect?:()=>{left:number}}|null;
+      const rect=node?.getBoundingClientRect?.();
+      if(rect)selectFromPlot(event.nativeEvent.clientX-rect.left,false,true);
+    }
+  }:{};
   useEffect(()=>{
     const index=moments.findIndex(event=>event.key===activeEventKey);
     if(index>=0)eventRail.current?.scrollTo({x:Math.max(0,index*188-24),animated:false});
@@ -169,7 +185,7 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
       {latest?<Pressable accessibilityRole="button" accessibilityLabel="Son kayda dön" onPress={returnToLatest} style={story.latestButton}><Text style={story.controlText}>Son kayıt ↗</Text></Pressable>:null}
     </View>
     <GestureDetector gesture={plotGesture} touchAction="pan-y">
-    <View collapsable={false} style={{height:chartHeight}} testID="journey-scrub-area">
+    <View collapsable={false} ref={scrubArea} style={{height:chartHeight}} testID="journey-scrub-area" {...hoverProps}>
     <Svg width="100%" height={chartHeight} viewBox={`0 0 ${width} ${chartHeight}`} {...journeySvgAccessibility}>
       <Defs><LinearGradient id="journeyFill" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor={colors.blue} stopOpacity={.28}/><Stop offset="1" stopColor={colors.blue} stopOpacity={.02}/></LinearGradient></Defs>
       {drawn.length?<Rect x={LEFT} y={y(.3)} width={plotWidth} height={HEIGHT*.3} fill={semantic.surprise} opacity={.07} rx={4}/>:null}

@@ -1,0 +1,1199 @@
+import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Stack, useFocusEffect, useRouter } from "expo-router";
+import {
+  Alert,
+  Linking,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent
+} from "react-native";
+import {
+  matchInsightQuery,
+  matchPathQuery,
+  matchJourneyQuery,
+  matchJinxOutlookQuery,
+  matchLeagueContextQuery,
+  matchLiveContextQuery,
+  matchPeriodScoreQuery,
+  matchQuery,
+  matchSuperLogsQuery,
+  matchTeamFormQuery
+} from "@/src/api/queries";
+import { AskJinxCard } from "@/src/components/AskJinxCard";
+import { jinxIsLive, jinxSelectionKey } from "@/src/mascot/jinx-eligibility";
+import { JinxHeadingIcon } from "@/src/components/JinxHeadingIcon";
+import { ChangeEmphasis } from "@/src/components/ChangeEmphasis";
+import { LiveDot } from "@/src/components/LiveDot";
+import { SignalMeter } from "@/src/components/SignalMeter";
+import {
+  SurfaceDivider,
+  SurfaceMaterial
+} from "@/src/components/SurfaceMaterial";
+import { TeamLogo } from "@/src/components/TeamLogo";
+import { GamePulseCard } from "@/src/components/GamePulseCard";
+import { MatchJourneyChart } from "@/src/components/MatchJourneyChart";
+import { MatchTimelineCard } from "@/src/components/MatchTimelineCard";
+import { TeamFormCard } from "@/src/components/TeamFormCard";
+import { LiveContextFreshness } from "@/src/components/LiveContextNotice";
+import { StandingsModule } from "@/src/components/StandingsModule";
+import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
+import { RatioResultsChart } from "@/src/components/RatioResultsChart";
+import { Screen } from "@/src/components/Screen";
+import { fioriEntryAvailable } from "@/src/legacy/fiori-availability";
+import { runtimeConfig } from "@/src/config/runtime";
+import { mountsIntelligenceSurfaces } from "@/src/config/mobile-intelligence";
+import { ErrorState, LoadingState } from "@/src/components/StateView";
+import { buildBilyonerMatchUrl } from "@/src/external/bilyoner";
+import { CollapsibleModule } from "@/src/layout/CollapsibleModule";
+import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
+import { useModuleLayout } from "@/src/layout/module-layout-store";
+import type { LiveDetailModuleId } from "@/src/layout/module-registry";
+import {
+  colors,
+  fontWeights,
+  iconSizes,
+  radii,
+  semantic,
+  shadows,
+  spacing,
+  typeScale
+} from "@/src/theme/theme";
+import {
+  formatCurrentMarketRate,
+  formatDecisionReason,
+  formatFixtureDateTime,
+  formatElapsed,
+  formatPercentage,
+  formatRate
+} from "@/src/utils/format";
+import { relatedSuperDecisions } from "@/src/utils/related-super-decisions";
+import { deriveLiveRateTrend } from "@/src/utils/live-card-indicators";
+import { decisionModel, decisionModelLabel, recordedSelection } from "@/src/utils/decision-model";
+
+/**
+ * One Canlı detay module, as a collapsible panel.
+ *
+ * A thin binding of `CollapsibleModule` to this surface: each module then names
+ * only its registry id and its heading, and `liveDetail` cannot be mistyped at
+ * nine separate call sites.
+ */
+function LiveDetailPanel({
+  children,
+  eyebrow,
+  id,
+  leading,
+  title
+}: {
+  children: ReactNode;
+  eyebrow: string;
+  id: LiveDetailModuleId;
+  leading?: ReactNode;
+  title: string;
+}) {
+  return (
+    <CollapsibleModule
+      eyebrow={eyebrow}
+      moduleId={id}
+      surface="liveDetail"
+      title={title}
+      leading={leading}
+    >
+      {children}
+    </CollapsibleModule>
+  );
+}
+
+function TeamHeroName({
+  name,
+  participantId,
+  position,
+  redCards
+}: {
+  name: string;
+  participantId?: string | null | undefined;
+  position?: number | null | undefined;
+  redCards: number;
+}) {
+  return (
+    <View style={styles.teamIdentity}>
+      <TeamLogo participantId={participantId} size="hero" />
+      <View style={styles.teamNameRow}>
+      <Text numberOfLines={2} style={styles.team}>
+        {name}
+      </Text>
+      {position ? (
+        <Text accessibilityLabel={`Lig sırası ${position}`} style={styles.rank}>
+          #{position}
+        </Text>
+      ) : null}
+      {redCards > 0 ? (
+        <View
+          accessibilityLabel={`${name}, ${redCards} kırmızı kart`}
+          style={styles.redCardBadge}
+        >
+          <MaterialCommunityIcons
+            color={colors.red}
+            name="card"
+            size={iconSizes.micro}
+          />
+          {redCards > 1 ? (
+            <Text style={styles.redCardCount}>{redCards}</Text>
+          ) : null}
+        </View>
+      ) : null}
+      </View>
+    </View>
+  );
+}
+
+function ComparisonRow({
+  label,
+  home,
+  away,
+  suffix = "",
+  formatter,
+  note
+}: {
+  label: string;
+  home: number | null;
+  away: number | null;
+  suffix?: string;
+  formatter?: (value: number) => string;
+  note?: string;
+}) {
+  const total = Math.max(1, (home ?? 0) + (away ?? 0));
+  const homeWidth: `${number}%` = `${Math.max(4, ((home ?? 0) / total) * 100)}%`;
+  const awayWidth: `${number}%` = `${Math.max(4, ((away ?? 0) / total) * 100)}%`;
+  const formatValue = formatter ?? String;
+
+  return (
+    <View style={styles.comparison}>
+      <View style={styles.comparisonLabels}>
+        <Text style={styles.statValue}>
+          {home === null ? "—" : formatValue(home)}
+          {suffix}
+        </Text>
+        <Text style={styles.statLabel}>{label}</Text>
+        <Text style={styles.statValue}>
+          {away === null ? "—" : formatValue(away)}
+          {suffix}
+        </Text>
+      </View>
+      {home !== null && away !== null ? <View style={styles.dualBar}>
+        <View style={styles.homeTrack}>
+          <View style={[styles.homeBar, { width: homeWidth }]} />
+        </View>
+        <View style={styles.awayTrack}>
+          <View style={[styles.awayBar, { width: awayWidth }]} />
+        </View>
+      </View> : null}
+      {note ? <Text style={styles.statNote}>{note}</Text> : null}
+    </View>
+  );
+}
+
+/**
+ * Match detail. The `/match/[key]` route renders it full-screen; the desktop
+ * Canlı split view embeds it beside the list (`embedded`), where it sets no
+ * stack header, has no swipe-back and keeps a single module column.
+ */
+export function MatchDetailView({
+  matchKey,
+  embedded = false
+}: {
+  matchKey: string;
+  embedded?: boolean;
+}) {
+  const key = matchKey;
+  const router = useRouter();
+  const handleEdgeSwipeBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/");
+    }
+  };
+  const [showDecision, setShowDecision] = useState(false);
+  // Jinx is asked, never volunteered. Until this flips, its query stays
+  // disabled and the surface costs nothing but its own entry point.
+  const [askedJinxSelection, setAskedJinxSelection] = useState("");
+  const [compactHeader, setCompactHeader] = useState(false);
+  const [reordering, setReordering] = useState(false);
+  const scrollRef = useRef<ScrollView | null>(null);
+  const scrollOffset = useRef(0);
+  const { order, reorderVisible } = useModuleLayout("liveDetail");
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      scrollOffset.current = event.nativeEvent.contentOffset.y;
+      const next = event.nativeEvent.contentOffset.y > 150;
+      setCompactHeader((current) => (current === next ? current : next));
+    },
+    []
+  );
+  const [isFocused, setIsFocused] = useState(false);
+  const matchPathEnabled = mountsIntelligenceSurfaces(runtimeConfig.matchPathIntelligence);
+  useFocusEffect(useCallback(() => {
+    setIsFocused(true);
+    return () => setIsFocused(false);
+  }, []));
+  const query = useQuery({ ...matchQuery(key), refetchInterval: (state) =>
+    matchPathEnabled && isFocused && (state.state.data?.status === "LIVE" || state.state.data?.status === "HALF_TIME") ? 30_000 : false });
+  const insightQuery = useQuery(matchInsightQuery(key));
+  const leagueContextQuery = useQuery(matchLeagueContextQuery(key));
+  const periodScoreQuery = useQuery(matchPeriodScoreQuery(key));
+  const journeyPolling = matchPathEnabled && isFocused && (query.data?.status === "LIVE" || query.data?.status === "HALF_TIME") ? 30_000 : false;
+  const superLogs = useQuery({ ...matchSuperLogsQuery(key), refetchInterval: journeyPolling });
+  // Supplementary context. Its failure must never take Match Detail down, so it
+  // is never consulted for the screen's loading or error state.
+  const liveContext = useQuery({ ...matchLiveContextQuery(key), refetchInterval: journeyPolling });
+  // M15 intelligence surfaces. Mounted only where the build enables them, so a
+  // pilot APK never requests a route its BFF does not serve yet. Like live
+  // context, none of them is consulted for the screen's loading or error state.
+  const intelligence = mountsIntelligenceSurfaces(runtimeConfig.mobileIntelligence);
+  const teamFormEnabled = mountsIntelligenceSurfaces(runtimeConfig.teamFormIntelligence);
+  const teamForm = useQuery({
+    ...matchTeamFormQuery(key),
+    enabled: teamFormEnabled && Boolean(key)
+  });
+  const journey = useQuery({ ...matchJourneyQuery(key),
+    enabled: matchPathEnabled && Boolean(key), refetchInterval: journeyPolling });
+  // The existing pilot flag deliberately gates the combined analytical panel:
+  // retained Match Journey plus restored Match Path. Keeping one explicit
+  // switch avoids renaming the verified APK configuration for a UI-only merge.
+  const matchPath = useQuery({
+    ...matchPathQuery(key),
+    enabled: matchPathEnabled && Boolean(key),
+    refetchInterval: journeyPolling
+  });
+  const jinxSelection = jinxSelectionKey(query.data);
+  const askedJinx = Boolean(jinxSelection) && askedJinxSelection === jinxSelection;
+  const jinxOutlook = useQuery({
+    ...matchJinxOutlookQuery(key, askedJinx, jinxSelection),
+    enabled: intelligence && Boolean(key) && askedJinx && jinxIsLive(query.data?.status)
+  });
+  const relatedDecisions = useMemo(
+    () => relatedSuperDecisions(superLogs.data ?? [], key),
+    [key, superLogs.data]
+  );
+
+  if (query.isLoading) {
+    return (
+      <Screen edgeSwipeBack={!embedded} onEdgeSwipeBack={handleEdgeSwipeBack}>
+        <LoadingState label="Maç detayı hazırlanıyor" />
+      </Screen>
+    );
+  }
+
+  if (query.isError || !query.data) {
+    return (
+      <Screen edgeSwipeBack={!embedded} onEdgeSwipeBack={handleEdgeSwipeBack}>
+        <ErrorState
+          message={
+            query.error instanceof Error
+              ? query.error.message
+              : "Maç detayı alınamadı."
+          }
+          onRetry={() => query.refetch()}
+        />
+      </Screen>
+    );
+  }
+
+  const match = query.data;
+  const currentDecisionKey =
+    relatedDecisions.find(
+      (log) =>
+        log.selectedOdd === match.selectedOdd &&
+        log.rating === match.rating &&
+        log.elapsed === match.decisionMinute
+    )?.key ?? null;
+  const live = match.status === "LIVE" || match.status === "HALF_TIME";
+  const insight = insightQuery.data;
+  const leagueContext = leagueContextQuery.data;
+  const currentMarket = formatCurrentMarketRate(
+    match.currentRate,
+    match.selectedOdd,
+    "güncel oran"
+  );
+  // Reuses the list card's trend derivation, so Match Detail and the Live list
+  // can never disagree about which way an odd moved.
+  const trend = deriveLiveRateTrend(match.liveRate, match.currentRate);
+  const movement = {
+    UP: {
+      icon: "trending-up" as const,
+      color: semantic.positive,
+      label: "seçimden yükseldi"
+    },
+    DOWN: {
+      icon: "trending-down" as const,
+      color: semantic.negative,
+      label: "seçimden düştü"
+    },
+    STABLE: {
+      icon: "minus" as const,
+      color: colors.textMuted,
+      label: "seçimden değişmedi"
+    },
+    UNAVAILABLE: {
+      icon: "minus" as const,
+      color: colors.textSubtle,
+      label: "güncel oran bekleniyor"
+    }
+  }[trend];
+  const hasLeagueContext = Boolean(
+    leagueContext &&
+      (leagueContext.homeStandingPosition !== null ||
+        leagueContext.awayStandingPosition !== null ||
+        leagueContext.homeStandingPoints !== null ||
+        leagueContext.awayStandingPoints !== null)
+  );
+
+  // Only modules that currently have data are rendered; the persisted order
+  // still holds a slot for the rest so they return where the user left them.
+  const moduleNodes: Partial<Record<LiveDetailModuleId, ReactNode>> = {
+    gamePulse: (
+      <LiveDetailPanel eyebrow="MAÇIN NABZI" id="gamePulse" title="Canlı tempo">
+        <GamePulseCard betRadarId={match.betRadarId} />
+      </LiveDetailPanel>
+    ),
+    timeline: (
+      <LiveDetailPanel
+        eyebrow="SKOR & SUPER"
+        id="timeline"
+        title="Skor ve yıldız akışı"
+      >
+        <MatchTimelineCard
+          awayScore={match.awayScore}
+          awayTeam={match.awayTeam}
+          context={liveContext.data}
+          homeScore={match.homeScore}
+          currentDecisionKey={currentDecisionKey}
+          decisions={relatedDecisions}
+          homeTeam={match.homeTeam}
+          isLoading={liveContext.isLoading}
+          includeRedCards={!matchPathEnabled}
+          onDecisionPress={(decision) =>
+            router.push({
+              pathname: "/super/[key]",
+              params: { key: decision.key }
+            } as never)
+          }
+        />
+        <LiveContextFreshness
+          ageSeconds={liveContext.data?.freshness?.ageSeconds}
+          refreshFailed={liveContext.data?.freshness?.refreshFailed}
+          stale={liveContext.data?.freshness?.stale}
+        />
+      </LiveDetailPanel>
+    ),
+    odds: (
+      <LiveDetailPanel eyebrow="PİYASA" id="odds" title="Oran sonuçları">
+        <RatioResultsChart
+          marketRates={insight?.marketRates ?? []}
+          phase={match.ratioPhase}
+          rows={match.ratioResults}
+        />
+      </LiveDetailPanel>
+    ),
+    statistics: (
+      <LiveDetailPanel eyebrow="SAHA" id="statistics" title="Canlı saha dengesi">
+        <View style={styles.statsCard}>
+          <SurfaceMaterial radius={radii.lg} />
+          <ComparisonRow
+            away={match.awayBallPossession}
+            home={match.homeBallPossession}
+            label="Topla oynama"
+            suffix="%"
+          />
+          <ComparisonRow
+            away={match.awayTotalShots}
+            home={match.homeTotalShots}
+            label="Toplam şut"
+          />
+          <ComparisonRow
+            away={match.awayShotsOnTarget}
+            home={match.homeShotsOnTarget}
+            label="İsabetli şut"
+          />
+          <ComparisonRow
+            away={match.homeXg === 0 && match.awayXg === 0 ? null : match.awayXg}
+            formatter={formatRate}
+            home={match.homeXg === 0 && match.awayXg === 0 ? null : match.homeXg}
+            label="xG"
+            note={match.homeXg === 0 && match.awayXg === 0
+              ? "xG kapsamı doğrulanmadı · ölçülmüş sıfır kabul edilmez"
+              : "Bildirilen xG · kaynak kapsamı ve ölçüm zamanı doğrulanmadı"}
+          />
+          <ComparisonRow
+            away={match.awayCorners}
+            home={match.homeCorners}
+            label="Korner"
+          />
+          <ComparisonRow
+            away={match.awayYellowCards}
+            home={match.homeYellowCards}
+            label="Sarı kart"
+          />
+          <ComparisonRow
+            away={match.awayRedCards}
+            home={match.homeRedCards}
+            label="Kırmızı kart"
+          />
+        </View>
+      </LiveDetailPanel>
+    ),
+    scoreDistribution: (
+      <LiveDetailPanel
+        eyebrow="OLASILIK"
+        id="scoreDistribution"
+        title="Skor dağılımı"
+      >
+        <View style={styles.distributionCard}>
+          <SurfaceMaterial radius={radii.lg} />
+          {match.scoreDistribution.length ? (
+            match.scoreDistribution.map((row) => (
+              <View key={row.score} style={styles.distributionRow}>
+                <Text style={styles.distributionScore}>{row.score}</Text>
+                <View style={styles.probabilityTrack}>
+                  <View
+                    style={[
+                      styles.probabilityFill,
+                      { width: `${Math.max(3, row.probability * 100)}%` }
+                    ]}
+                  />
+                </View>
+                <Text style={styles.probability}>
+                  {formatPercentage(row.probability)}
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>Skor dağılımı henüz oluşmadı.</Text>
+          )}
+        </View>
+      </LiveDetailPanel>
+    )
+  };
+
+  // Each engine mounts only when its own build setting enables it.
+  if (matchPathEnabled) {
+    moduleNodes.matchPath = (
+      <LiveDetailPanel
+        eyebrow="MAÇ ANALİZİ"
+        id="matchPath"
+        title="Maçın yolu ve sürpriz olaylar"
+      >
+        <MatchJourneyChart
+          context={liveContext.data}
+          key={key}
+          match={match}
+          journey={journey.data}
+          path={matchPath.data}
+          isError={journey.isError}
+          isLoading={journey.isLoading}
+          pathIsLoading={matchPath.isLoading}
+        />
+      </LiveDetailPanel>
+    );
+  }
+  if (intelligence) {
+    moduleNodes.askJinx = (
+      <LiveDetailPanel eyebrow="JINX" id="askJinx" title="Jinx okuması" leading={<JinxHeadingIcon />}>
+        <AskJinxCard
+          live={jinxIsLive(match.status)}
+          selectionKey={jinxSelection}
+          asked={askedJinx}
+          isError={jinxOutlook.isError}
+          isLoading={jinxOutlook.isLoading}
+          onAsk={() => { setAskedJinxSelection(jinxSelection); if (askedJinx) void jinxOutlook.refetch(); }}
+          outlook={jinxOutlook.data}
+        />
+      </LiveDetailPanel>
+    );
+  }
+  if (teamFormEnabled) {
+    moduleNodes.teamForm = (
+      <LiveDetailPanel eyebrow="FORM" id="teamForm" title="Takım formu">
+        <TeamFormCard
+          awayTeam={match.awayTeam}
+          context={teamForm.data}
+          homeTeam={match.homeTeam}
+          isLoading={teamForm.isLoading}
+        />
+      </LiveDetailPanel>
+    );
+  }
+
+  if (match.selectedOdd && match.rating > 0) {
+    moduleNodes.decision = (
+      <LiveDetailPanel eyebrow="KARAR" id="decision" title="Karar özeti">
+        <Pressable
+          accessibilityHint={
+            showDecision ? "Model ayrıntılarını gizler" : "Model ayrıntılarını açar"
+          }
+          accessibilityRole="button"
+          onPress={() => setShowDecision((visible) => !visible)}
+          style={styles.decisionCard}
+        >
+          <SurfaceMaterial accent={semantic.intelligence} radius={radii.lg} />
+          {/* The reason is the answer to the question the card asks, so it is the
+              headline rather than something revealed after a tap. Only the model
+              internals sit behind the disclosure - a reader who wants to know why
+              gets an answer immediately, and a reader who wants the numbers asks
+              for them. */}
+          <Text style={styles.decisionReason}>
+            {formatDecisionReason(match.decisionReason)}
+          </Text>
+          <View style={styles.decisionFacts}>
+            {match.decisionMinute !== null ? (
+              <Text style={styles.decisionFact}>{match.decisionMinute}&apos; karar</Text>
+            ) : null}
+            {match.selectedOdd ? (
+              <Text style={styles.decisionFact}>{match.selectedOdd}</Text>
+            ) : null}
+            <Text style={styles.decisionToggle}>
+              {showDecision ? "Modeli gizle" : "Modeli göster"}
+            </Text>
+          </View>
+          {showDecision ? (
+            <View style={styles.decisionBody}>
+              {match.decisionConfidence !== null ? (
+                <View style={styles.decisionMetric}>
+                  <Text style={styles.decisionMetricValue}>
+                    {formatPercentage(match.decisionConfidence)}
+                  </Text>
+                  <Text style={styles.decisionMetricLabel}>güven</Text>
+                </View>
+              ) : null}
+              {match.decisionScore !== null ? (
+                <View style={styles.decisionMetric}>
+                  <Text style={styles.decisionMetricValue}>
+                    {match.decisionScore.toFixed(2)}
+                  </Text>
+                  <Text style={styles.decisionMetricLabel}>model skoru</Text>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+        </Pressable>
+      </LiveDetailPanel>
+    );
+  }
+
+  if (hasLeagueContext && leagueContext) {
+    moduleNodes.standings = (
+      <TutorialTarget id="match-standings" radius={radii.lg}>
+        <LiveDetailPanel
+          eyebrow="PUAN DURUMU"
+          id="standings"
+          title="Lig sıralaması"
+        >
+          <StandingsModule
+            away={{
+              team: leagueContext.awayTeam,
+              participantId: match.awayParticipantId,
+              position: leagueContext.awayStandingPosition,
+              points: leagueContext.awayStandingPoints,
+              side: "AWAY"
+            }}
+            caption={
+              leagueContext.source === "LATEST_SUPER_DECISION"
+                ? "Son Super kararı kaydından; yalnız doğrulanan iki takım gösterilir."
+                : "Lig bilgisi bekleniyor; yalnız doğrulanan iki takım gösterilir."
+            }
+            home={{
+              team: leagueContext.homeTeam,
+              participantId: match.homeParticipantId,
+              position: leagueContext.homeStandingPosition,
+              points: leagueContext.homeStandingPoints,
+              side: "HOME"
+            }}
+          />
+        </LiveDetailPanel>
+      </TutorialTarget>
+    );
+  }
+
+  const moduleItems = order
+    .filter((id): id is LiveDetailModuleId => Boolean(moduleNodes[id as LiveDetailModuleId]))
+    .map((id) => ({ id, node: moduleNodes[id] }));
+
+  return (
+    <>
+      {embedded ? null : (
+        <Stack.Screen
+          options={{
+            title: compactHeader
+              ? `${match.homeTeam} – ${match.awayTeam}`
+              : "Maç Detayı"
+          }}
+        />
+      )}
+      <Screen
+      edgeSwipeBack={!embedded}
+      onEdgeSwipeBack={handleEdgeSwipeBack}
+      wide={!embedded}
+      contentStyle={styles.screen}
+      scrollRef={scrollRef}
+      scrollProps={{
+        alwaysBounceVertical: true,
+        onScroll: handleScroll,
+        scrollEnabled: !reordering,
+        scrollEventThrottle: 16,
+        refreshControl: (
+          <RefreshControl
+            colors={[semantic.live]}
+              onRefresh={() =>
+                Promise.all([
+                  query.refetch(),
+                  insightQuery.refetch(),
+                  leagueContextQuery.refetch(),
+                  periodScoreQuery.refetch(),
+                  superLogs.refetch(),
+                  liveContext.refetch(),
+                  ...(matchPathEnabled ? [journey.refetch(), matchPath.refetch()] : []),
+                  ...(teamFormEnabled ? [teamForm.refetch()] : [])
+                ])
+              }
+              refreshing={
+                query.isRefetching ||
+                insightQuery.isRefetching ||
+                leagueContextQuery.isRefetching ||
+                periodScoreQuery.isRefetching ||
+                superLogs.isRefetching ||
+                liveContext.isRefetching ||
+                journey.isRefetching ||
+                matchPath.isRefetching
+              }
+            tintColor={semantic.live}
+          />
+        )
+      }}
+    >
+      <TutorialTarget id="match-summary" radius={radii.xl}>
+        <View style={styles.scoreHero}>
+        <SurfaceMaterial
+          {...(live ? { accent: semantic.live } : {})}
+          radius={radii.xl}
+        />
+        <View style={styles.leagueRow}>
+          <View style={styles.leagueCopy}>
+            <Text numberOfLines={1} style={styles.league}>
+              {match.league}
+            </Text>
+            <Text style={styles.fixtureTime}>
+              {formatFixtureDateTime(match.matchDate, match.matchTime)}
+            </Text>
+          </View>
+          <View style={[styles.elapsedPill, live && styles.elapsedPillLive]}>
+            {live ? <LiveDot /> : null}
+            <Text style={[styles.elapsed, live && styles.elapsedLive]}>
+              {formatElapsed(match.status, match.elapsed)}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.scoreRow}>
+          <View style={styles.teamBlock}>
+            <TeamHeroName
+              name={match.homeTeam}
+              participantId={match.homeParticipantId}
+              position={insight?.homeStandingPosition}
+              redCards={insight?.homeRedCards ?? match.homeRedCards}
+            />
+          </View>
+          <View style={styles.scoreBlock}>
+            <ChangeEmphasis
+              kind="alert"
+              token={`${match.homeScore}:${match.awayScore}`}
+            >
+              <Text style={styles.score}>
+                {match.homeScore}
+                <Text style={styles.scoreSeparator}> - </Text>
+                {match.awayScore}
+              </Text>
+            </ChangeEmphasis>
+            {periodScoreQuery.data?.halfTimeScore ? (
+              <Text style={styles.halfTimeScore}>
+                İY {periodScoreQuery.data.halfTimeScore.homeScore}-
+                {periodScoreQuery.data.halfTimeScore.awayScore}
+              </Text>
+            ) : null}
+          </View>
+          <View style={styles.teamBlock}>
+            <TeamHeroName
+              name={match.awayTeam}
+              participantId={match.awayParticipantId}
+              position={insight?.awayStandingPosition}
+              redCards={insight?.awayRedCards ?? match.awayRedCards}
+            />
+          </View>
+        </View>
+        {/* The verdict band. The score above is what happened; this is what
+            BTB makes of it. Giving the verdict its own lit band instead of a
+            third row of loose metrics is what stops the hero reading as a
+            scoreboard with statistics attached. */}
+        <SurfaceDivider
+          {...(live ? { accent: semantic.live } : {})}
+          style={styles.heroDivider}
+        />
+        <Text style={styles.verdictEyebrow}>
+          {recordedSelection(match.selectedOdd, match.currentRate, match.decisionContext) ? "KAYITLI BTB SEÇİMİ" : "BTB SEÇİMİ"}
+        </Text>
+        {match.selectedOdd && decisionModel(match.decisionContext) &&
+          <Text style={styles.verdictLabel}>{decisionModelLabel(match.decisionContext)}</Text>}
+        <View style={styles.verdictRow}>
+          <View style={[styles.verdictCell, styles.verdictCellWide]}>
+            <Text numberOfLines={1} style={styles.selection}>
+              {match.selectedOdd || "Aday bekleniyor"}
+            </Text>
+            <SignalMeter rating={match.rating} />
+          </View>
+          <View style={[styles.verdictCell, styles.verdictCellEnd]}>
+            <Text style={styles.verdictValue}>
+              {formatRate(match.liveRate)}
+            </Text>
+            <Text style={styles.verdictLabel}>seçim oranı</Text>
+          </View>
+          <View style={[styles.verdictCell, styles.verdictCellEnd]}>
+            <View style={styles.movementRow}>
+              <MaterialCommunityIcons
+                color={movement.color}
+                name={movement.icon}
+                size={iconSizes.small}
+              />
+              <ChangeEmphasis token={currentMarket.value}>
+                <Text
+                  accessibilityLabel={`${currentMarket.value} - ${movement.label}`}
+                  style={[styles.verdictValue, { color: movement.color }]}
+                >
+                  {currentMarket.value}
+                </Text>
+              </ChangeEmphasis>
+            </View>
+            <Text style={styles.verdictLabel}>{currentMarket.label}</Text>
+          </View>
+        </View>
+        </View>
+      </TutorialTarget>
+
+      <ReorderableModuleList
+        items={moduleItems}
+        {...(embedded ? { maxColumns: 1 } : {})}
+        onDragStateChange={setReordering}
+        onReorder={(from, to) =>
+          reorderVisible(
+            moduleItems.map((item) => item.id),
+            from,
+            to
+          )
+        }
+        scrollOffsetRef={scrollOffset}
+        scrollRef={scrollRef}
+      />
+
+      <View style={styles.actions}>
+        <Pressable
+          accessibilityHint="Maçın Bilyoner sayfasını açar"
+          accessibilityRole="button"
+          onPress={() =>
+            Linking.openURL(buildBilyonerMatchUrl(match.id)).catch(() =>
+              Alert.alert(
+                "Bilyoner açılamadı",
+                "Bu maçın Bilyoner sayfası şu anda açılamıyor."
+              )
+            )
+          }
+          style={styles.bilyonerAction}
+        >
+          <Text style={styles.bilyonerActionText}>Bilyoner&apos;da aç</Text>
+        </Pressable>
+        {fioriEntryAvailable ? (
+        <Pressable
+          accessibilityHint="Gelişmiş maç ekranını açar"
+          accessibilityRole="button"
+          onPress={() =>
+            router.push({
+              pathname: "/fiori",
+              params: {
+                target: "match",
+                matchKey: match.key
+              }
+            })
+          }
+          style={styles.fioriAction}
+        >
+          <Text style={styles.fioriActionText}>BTB Web&apos;de aç</Text>
+        </Pressable>
+        ) : null}
+      </View>
+      <Text style={styles.safetyNote}>
+        {fioriEntryAvailable
+          ? "Maç sayfası Bilyoner uygulamasında; uygulama yoksa güvenli web sayfasında açılır. Gelişmiş BTB ekranı ayrı bir web görünümünde açılır."
+          : "Maç sayfası Bilyoner'de yeni sekmede açılır."}
+      </Text>
+      </Screen>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    paddingTop: spacing.lg
+  },
+  scoreHero: {
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    padding: spacing.xl,
+    ...shadows.card
+  },
+  leagueRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.md
+  },
+  league: {
+    color: colors.textMuted,
+    ...typeScale.micro,
+    textTransform: "uppercase"
+  },
+  leagueCopy: {
+    flex: 1
+  },
+  fixtureTime: {
+    color: colors.textSubtle,
+    fontSize: 10,
+    fontWeight: "700",
+    marginTop: 3
+  },
+  // The minute pill was loss red for every status, so a finished match wore the
+  // same signal as one in progress and neither of them meant anything. It now
+  // carries the live signature only while the match is actually live.
+  elapsedPill: {
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: radii.round,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 5
+  },
+  elapsedPillLive: {
+    backgroundColor: semantic.liveSoft,
+    borderWidth: 1,
+    borderColor: semantic.live
+  },
+  elapsed: {
+    color: colors.textMuted,
+    ...typeScale.micro
+  },
+  elapsedLive: {
+    color: semantic.live
+  },
+  scoreRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: spacing.xl
+  },
+  teamBlock: {
+    flex: 1
+  },
+  teamIdentity: {
+    alignItems: "center",
+    gap: spacing.sm
+  },
+  team: {
+    color: colors.text,
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: "800",
+    textAlign: "center"
+  },
+  teamNameRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs,
+    justifyContent: "center"
+  },
+  rank: {
+    color: colors.green,
+    fontSize: 10,
+    fontWeight: "900"
+  },
+  redCardBadge: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 2
+  },
+  redCardCount: {
+    color: colors.red,
+    fontSize: 9,
+    fontWeight: "900"
+  },
+  score: {
+    color: colors.text,
+    ...typeScale.display,
+    paddingHorizontal: spacing.md,
+    textAlign: "center"
+  },
+  // The separator recedes so the two numbers read as one value rather than as
+  // three glyphs of equal weight.
+  scoreSeparator: {
+    color: colors.textSubtle,
+    fontWeight: fontWeights.medium
+  },
+  scoreBlock: {
+    alignItems: "center"
+  },
+  halfTimeScore: {
+    color: colors.textSubtle,
+    ...typeScale.label,
+    marginTop: spacing.xs,
+    textAlign: "center"
+  },
+  heroDivider: {
+    marginTop: spacing.xl,
+    marginBottom: spacing.lg
+  },
+  verdictEyebrow: {
+    color: colors.bronze,
+    ...typeScale.eyebrow,
+    marginBottom: spacing.sm
+  },
+  verdictRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: spacing.lg
+  },
+  verdictCell: {
+    gap: spacing.xs
+  },
+  verdictCellWide: {
+    flex: 1,
+    minWidth: 0
+  },
+  verdictCellEnd: {
+    alignItems: "flex-end"
+  },
+  movementRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs
+  },
+  verdictValue: {
+    color: colors.text,
+    ...typeScale.metric
+  },
+  verdictLabel: {
+    color: colors.textSubtle,
+    ...typeScale.label
+  },
+  statNote: {
+    color: colors.textMuted,
+    ...typeScale.label,
+    marginTop: spacing.xs,
+    textAlign: "center"
+  },
+  selection: {
+    color: colors.text,
+    ...typeScale.decision
+  },
+  decisionCard: {
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    padding: spacing.lg
+  },
+  decisionToggle: {
+    color: semantic.intelligence,
+    ...typeScale.label,
+    marginLeft: "auto"
+  },
+  decisionFacts: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    marginTop: spacing.md
+  },
+  decisionFact: {
+    color: colors.textMuted,
+    ...typeScale.label
+  },
+  decisionBody: {
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSoft,
+    flexDirection: "row",
+    gap: spacing.xxl,
+    marginTop: spacing.md,
+    paddingTop: spacing.md
+  },
+  decisionMetric: {
+    gap: spacing.xs
+  },
+  decisionMetricValue: {
+    color: colors.text,
+    ...typeScale.metric
+  },
+  decisionMetricLabel: {
+    color: colors.textSubtle,
+    ...typeScale.label
+  },
+  decisionReason: {
+    color: colors.text,
+    ...typeScale.decision,
+    marginTop: spacing.sm
+  },
+  decisionMeta: {
+    color: colors.textMuted,
+    fontSize: 11,
+    lineHeight: 16
+  },
+  decisionScore: {
+    color: colors.textSubtle,
+    fontSize: 10
+  },
+  statsCard: {
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    padding: spacing.lg,
+    gap: spacing.lg
+  },
+  comparison: {
+    gap: spacing.sm
+  },
+  comparisonLabels: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  statValue: {
+    color: colors.text,
+    width: 54,
+    fontSize: 14,
+    fontWeight: "900"
+  },
+  statLabel: {
+    color: colors.textMuted,
+    flex: 1,
+    textAlign: "center",
+    fontSize: 11,
+    fontWeight: "700"
+  },
+  dualBar: {
+    flexDirection: "row",
+    gap: spacing.xs
+  },
+  homeTrack: {
+    flex: 1,
+    height: 5,
+    alignItems: "flex-end",
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: radii.round,
+    overflow: "hidden"
+  },
+  awayTrack: {
+    flex: 1,
+    height: 5,
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: radii.round,
+    overflow: "hidden"
+  },
+  homeBar: {
+    height: "100%",
+    backgroundColor: colors.blue,
+    borderRadius: radii.round
+  },
+  awayBar: {
+    height: "100%",
+    backgroundColor: colors.green,
+    borderRadius: radii.round
+  },
+  distributionCard: {
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    padding: spacing.lg,
+    gap: spacing.md
+  },
+  distributionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md
+  },
+  distributionScore: {
+    color: colors.text,
+    width: 34,
+    fontSize: 12,
+    fontWeight: "900"
+  },
+  probabilityTrack: {
+    flex: 1,
+    height: 8,
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: radii.round,
+    overflow: "hidden"
+  },
+  probabilityFill: {
+    height: "100%",
+    backgroundColor: colors.gold,
+    borderRadius: radii.round
+  },
+  probability: {
+    color: colors.textMuted,
+    width: 40,
+    textAlign: "right",
+    fontSize: 11,
+    fontWeight: "800"
+  },
+  emptyText: {
+    color: colors.textMuted,
+    textAlign: "center",
+    fontSize: 12
+  },
+  actions: {
+    gap: spacing.md,
+    marginTop: spacing.xxl
+  },
+  bilyonerAction: {
+    minHeight: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radii.round,
+    backgroundColor: colors.green
+  },
+  bilyonerActionText: {
+    color: colors.background,
+    fontSize: 14,
+    fontWeight: "900"
+  },
+  fioriAction: {
+    minHeight: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radii.round,
+    backgroundColor: colors.blue
+  },
+  fioriActionText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: "900"
+  },
+  safetyNote: {
+    color: colors.textSubtle,
+    fontSize: 10,
+    lineHeight: 15,
+    textAlign: "center",
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.lg
+  }
+});

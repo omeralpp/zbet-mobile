@@ -39,6 +39,8 @@ type ReorderableModuleListProps = {
   onDragStateChange?: (dragging: boolean) => void;
   scrollRef?: RefObject<ScrollView | null>;
   scrollOffsetRef?: RefObject<number>;
+  /** Web-only column cap (an embedded pane); native always lays out one column. */
+  maxColumns?: number;
 };
 
 type ModuleSlot = {

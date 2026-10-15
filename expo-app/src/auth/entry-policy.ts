@@ -1,6 +1,10 @@
-export type EntryAuthMode = "preview" | "pilot" | "oauth";
+export type EntryAuthMode = "preview" | "pilot" | "oauth" | "edge";
 
-export type ImmediateAuthStatus = "preview" | "unauthenticated" | null;
+export type ImmediateAuthStatus =
+  | "preview"
+  | "authenticated"
+  | "unauthenticated"
+  | null;
 
 export type AuthEntryPresentation = {
   securityTitle: string;
@@ -17,6 +21,11 @@ export function resolveImmediateAuthStatus(
   }
   if (authMode === "pilot") {
     return "unauthenticated";
+  }
+  // Cloudflare Access has already authenticated the owner before the page
+  // loaded; there is no in-app sign-in step to show.
+  if (authMode === "edge") {
+    return "authenticated";
   }
   return null;
 }

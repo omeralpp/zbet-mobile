@@ -8,6 +8,7 @@ module.exports = defineConfig([
       ".expo/**",
       ".codex-artifacts/**",
       "dist/**",
+      "dist-web/**",
       "android/**",
       "ios/**",
       "coverage/**"

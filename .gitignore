@@ -12,4 +12,5 @@ node_modules/
 /expo-app/android/
 /expo-app/ios/
 /expo-app/dist/
+/expo-app/dist-web/
 /expo-app/coverage/

@@ -4,7 +4,13 @@ import { mockMobileApi } from "./mock-mobile-api";
 import { withSyntheticIntelligence } from "./synthetic-intelligence";
 import type { MobileApi } from "./mobile-api";
 
-if (!runtimeConfig.useMocks && !runtimeConfig.mobileApiUrl) {
+// The web build is the one exception: an empty base keeps requests relative
+// to the page's own origin, where Cloudflare Access fronts the BFF.
+if (
+  !runtimeConfig.useMocks &&
+  !runtimeConfig.mobileApiUrl &&
+  runtimeConfig.authMode !== "edge"
+) {
   throw new Error(
     "EXPO_PUBLIC_MOBILE_API_URL is required when mock mode is disabled."
   );

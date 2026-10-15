@@ -9,6 +9,13 @@ Bu akış Cordova production cutover değildir. `btb next cutover start` yalnız
 observation backlog’undaki yeterince açık, Mobile kapsamındaki yerel kod ve
 dokümantasyon değişikliklerini başlatır.
 
+Genel istemci kuralı (sahip kararı 2026-10-15, `AGENTS.md` Client Parity):
+Mobile Next iki eşit yüzeyle teslim edilir: Android uygulaması ve
+`app.surklase.com` web istemcisi. Her istemci geliştirmesi iki yüzeyde aynı
+batch içinde, paralel ve eşit öncelikle ilerler. Bir yüzeye uygulanamayan
+değişiklik (widget, FCM push, dokunmatik jest; masaüstüne özel düzen) platform
+istisnası ve karşılığıyla handoff’a yazılır, sessizce atlanmaz.
+
 ## Observation modu
 
 - Her kullanıcı tespiti `docs/OBSERVATION_LOG.md` içine kısa ve kanıt odaklı
@@ -31,7 +38,8 @@ Komut geldiğinde:
    beklenmeden tek batch içinde uygulanır.
 5. Mobile ve BFF katmanlarında değişen kapsama uygun type/lint/test/doctor,
    bundle/build, contract, public smoke, cihaz ve secret/log kontrolleri
-   çalıştırılır.
+   çalıştırılır. İki yüzey birlikte doğrulanır: Android bundle/build ve
+   doğrulanmış web export (`node scripts/web.mjs export`) ile tarayıcı smoke.
 6. Başarılı, ertelenen ve kanıt bekleyen maddeler ayrıştırılır; aktif log
    yalnız açık maddelerle bırakılır.
 7. Bütün zorunlu kalite kapıları geçtiğinde repo durumu, değişen dosyalar ve
@@ -54,8 +62,9 @@ Komut yalnız yerel batch edit/test ve doğrulamayı onaylar. Stage/commit/push
 ayrı açık onay ister; cutover dışındaki kullanıcı değişiklikleri hiçbir zaman
 varsayımla commit kapsamına alınmaz.
 
-BTP deploy, Cloudflare DNS/Tunnel yayını, Firebase veya SAP dış değişikliği,
-release imzalama/dağıtım ve Cordova cutover her seferinde ayrı açık onay ister.
+BTP deploy, Cloudflare DNS/Tunnel/Access yayını, web derlemesinin
+`app.surklase.com` yayını, Firebase veya SAP dış değişikliği, release
+imzalama/dağıtım ve Cordova cutover her seferinde ayrı açık onay ister.
 
 ## `observation moduna kadar devam et`
 

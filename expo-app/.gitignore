@@ -3,6 +3,7 @@
 modules/*/android/build/
 /ios/
 dist/
+dist-web/
 coverage/
 .codex-artifacts/
 .env

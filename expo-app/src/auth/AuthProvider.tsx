@@ -13,6 +13,7 @@ import * as WebBrowser from "expo-web-browser";
 import { Platform } from "react-native";
 import { runtimeConfig } from "@/src/config/runtime";
 import { toFriendlyAuthError } from "./auth-error";
+import { edgeLogoutPath } from "./edge-session";
 import { resolveImmediateAuthStatus } from "./entry-policy";
 import { getOAuthBrowserOptions } from "./oauth-browser-options";
 import { isOAuthCallbackUrl, parseOAuthCallback } from "./oauth-callback";
@@ -275,7 +276,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setStatus("preview");
       return;
     }
-    if (runtimeConfig.authMode === "pilot") {
+    if (runtimeConfig.authMode === "pilot" || runtimeConfig.authMode === "edge") {
       setError(null);
       setStatus("authenticated");
       return;
@@ -388,6 +389,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
   ]);
 
   const signOut = useCallback(async () => {
+    // Cloudflare Access holds the web session; its own logout ends it.
+    if (runtimeConfig.authMode === "edge") {
+      if (typeof window !== "undefined") {
+        window.location.assign(edgeLogoutPath);
+      }
+      return;
+    }
     if (runtimeConfig.authMode === "pilot") {
       setError(null);
       setStatus("unauthenticated");

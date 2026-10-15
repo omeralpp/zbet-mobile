@@ -76,12 +76,17 @@ export function MatchCard({
   insight,
   match,
   onTogglePinned,
-  pinned = false
+  pinned = false,
+  onSelect,
+  selected = false
 }: {
   insight?: MatchInsight | undefined;
   match: MatchSummary;
   onTogglePinned?: (() => void) | undefined;
   pinned?: boolean;
+  /** Desktop split view: select the match into the side pane instead of navigating. */
+  onSelect?: (() => void) | undefined;
+  selected?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -129,18 +134,21 @@ export function MatchCard({
 
   return (
     <Pressable
-      accessibilityHint="Maç detayını açar"
+      accessibilityHint={onSelect ? "Maç detayını yandaki panelde gösterir" : "Maç detayını açar"}
       accessibilityRole="button"
+      accessibilityState={onSelect ? { selected } : undefined}
       onPress={() =>
-        router.push({
-          pathname: "/match/[key]",
-          params: {
-            key: match.key,
-            from: pathname
-          }
-        } as never)
+        onSelect
+          ? onSelect()
+          : router.push({
+              pathname: "/match/[key]",
+              params: {
+                key: match.key,
+                from: pathname
+              }
+            } as never)
       }
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.card, selected && styles.cardSelected, pressed && styles.pressed]}
     >
       <SurfaceMaterial
         {...(live ? { accent: semantic.live } : {})}
@@ -347,6 +355,11 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.78,
     transform: [{ scale: 0.995 }]
+  },
+  // The match shown in the desktop side pane. Intelligence blue rather than the
+  // live teal, so "selected" never reads as "live".
+  cardSelected: {
+    borderColor: semantic.intelligence
   },
   topRow: {
     flexDirection: "row",

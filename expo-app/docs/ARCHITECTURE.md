@@ -23,6 +23,39 @@ temporary pilot exception, not a production or Cordova-cutover approval. A
 dedicated communication user restricted to the four allowlisted OData service roots (main, Super Log, Toto, Match Journey) is
 still mandatory.
 
+## Desktop web boundary (M16, built locally; publication gated)
+
+```text
+Browser
+  -> https://app.surklase.com
+  -> Cloudflare Access (owner email only)
+  -> same private Cloudflare Tunnel
+  -> 127.0.0.1:4004 Mobile BFF (same process)
+       Host = app.surklase.com: static web export + /v1 behind the Access JWT
+       Host = api.surklase.com: /v1 behind the pilot key (APK path unchanged)
+```
+
+- Client Parity (owner rule 2026-10-15): one Expo codebase serves Android and
+  web; every client change ships to both surfaces. Platform differences live in
+  `*.web.ts(x)` twins and breakpoints (`src/layout/breakpoints.ts`: compact
+  <768, medium, wide >=1200, ultra >=1600).
+- `BTB_WEB_BUILD=1` builds in `edge` auth mode with a same-origin API. The build
+  refuses the pilot key, runs from an allowlisted environment
+  (`scripts/web-build-policy.mjs`), verifies the embedded config and scans the
+  bundle for secret values (`node scripts/web.mjs export`).
+- The BFF verifies `Cf-Access-Jwt-Assertion` (issuer, AUD, RS256, email
+  allowlist) into a read-only `web:<email>` identity (`mobile.read`). A pilot
+  key on the web host is refused. Static hosting sends a strict CSP
+  (`script-src 'self'`, `frame-src 'none'`) with SPA fallback.
+- Web exceptions: no push, widgets or swipe pager; Game Pulse opens Bilyoner in
+  a new tab (Bilyoner refuses framing); Fiori entries are hidden on web only;
+  a theme change reloads the page. Desktop-only layouts: sidebar shell, command
+  palette and shortcuts, Canlı split view, Super table, Toto coupon grid,
+  masonry module columns, chart mouse hover.
+- Publication: `zbet-cap/scripts/publish-web-client.ps1` (dry run by default;
+  `PUBLISH-WEB` / `ROLLBACK-WEB`) after the owner creates the Access
+  application before the tunnel hostname.
+
 ## Production auth boundary (implemented locally, not deployed)
 
 ```text

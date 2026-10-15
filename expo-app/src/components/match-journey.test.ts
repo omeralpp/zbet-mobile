@@ -28,7 +28,8 @@ test("contract refuses an invented probability scale and out-of-range event rati
   assert.throws(()=>matchJourneySchema.parse({...fixture,points:[{...fixture.points[0],eliminatedRatio:1.01}]}));
 });
 test("match detail combines Match Path with the retained journey and keeps score/Super separate",async()=>{
-  const source=await readFile(new URL('../../app/match/[key].tsx',import.meta.url),'utf8');
+  // The route is a thin wrapper; the detail view lives in src/screens.
+  const source=await readFile(new URL('../screens/MatchDetailView.tsx',import.meta.url),'utf8');
   const analysisModule=source.slice(source.indexOf('moduleNodes.matchPath ='));
   const timelineModule=source.slice(source.indexOf('timeline: ('),source.indexOf('scoreDistribution: ('));
   assert.ok(source.includes('matchPathQuery(key)'));

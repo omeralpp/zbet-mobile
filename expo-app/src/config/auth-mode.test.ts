@@ -38,6 +38,46 @@ test("pilot direct-open requires an explicit profile and a strong key", () => {
   );
 });
 
+test("web builds default to edge and refuse any pilot key or app login", () => {
+  assert.equal(resolveMobileAuthMode({ useMocks: false, webBuild: true }), "edge");
+  assert.equal(resolveMobileAuthMode({ useMocks: true, webBuild: true }), "preview");
+  assert.throws(
+    () =>
+      resolveMobileAuthMode({
+        useMocks: false,
+        webBuild: true,
+        configuredMode: "pilot",
+        pilotAccessKey: "p".repeat(64)
+      }),
+    /forbidden in a web build/
+  );
+  assert.throws(
+    () =>
+      resolveMobileAuthMode({
+        useMocks: true,
+        webBuild: true,
+        pilotAccessKey: "p".repeat(64)
+      }),
+    /forbidden in a web build/
+  );
+  assert.throws(
+    () => resolveMobileAuthMode({ useMocks: false, webBuild: true, configuredMode: "oauth" }),
+    /preview or edge/
+  );
+  assert.throws(
+    () => resolveMobileAuthMode({ useMocks: true, webBuild: true, configuredMode: "edge" }),
+    /Preview authentication/
+  );
+});
+
+test("edge authentication is refused outside a web build", () => {
+  assert.throws(
+    () => resolveMobileAuthMode({ useMocks: false, configuredMode: "edge" }),
+    /only in a web build/
+  );
+  assert.equal(resolveMobileAuthMode({ useMocks: true }), "preview");
+});
+
 test("OAuth public configuration contains no secret and uses HTTPS", () => {
   assert.doesNotThrow(() =>
     validateOAuthPublicConfiguration({

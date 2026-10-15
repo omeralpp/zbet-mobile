@@ -18,6 +18,7 @@ import {
   superLogQuery
 } from "@/src/api/queries";
 import { Screen } from "@/src/components/Screen";
+import { fioriEntryAvailable } from "@/src/legacy/fiori-availability";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { SignalMeter } from "@/src/components/SignalMeter";
 import {
@@ -402,6 +403,7 @@ export default function SuperLogDetailScreen() {
       <Screen
         edgeSwipeBack
         onEdgeSwipeBack={handleEdgeSwipeBack}
+        wide
         contentStyle={styles.screen}
         scrollRef={scrollRef}
         scrollProps={{
@@ -580,6 +582,7 @@ export default function SuperLogDetailScreen() {
           scrollRef={scrollRef}
         />
 
+        {fioriEntryAvailable ? (
         <View style={styles.actions}>
           <Pressable
             accessibilityHint="Kararın gelişmiş BTB Web görünümünü açar"
@@ -603,6 +606,7 @@ export default function SuperLogDetailScreen() {
             <Text style={styles.primaryActionText}>BTB Web’de aç</Text>
           </Pressable>
         </View>
+        ) : null}
         <Text style={styles.safetyNote}>
           Bu ekran seçilen Super kararının tarihsel kaydını gösterir; güncel maç
           verisiyle değiştirilmez.

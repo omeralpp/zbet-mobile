@@ -20,6 +20,7 @@ test("requires the branded entry screen before pilot access", () => {
 test("keeps preview direct and OAuth dependent on its session bootstrap", () => {
   assert.equal(resolveImmediateAuthStatus("preview"), "preview");
   assert.equal(resolveImmediateAuthStatus("oauth"), null);
+  assert.equal(resolveImmediateAuthStatus("edge"), "authenticated");
   assert.equal(
     resolveAuthEntryPresentation("oauth").securityTitle,
     "Kurumsal oturum"

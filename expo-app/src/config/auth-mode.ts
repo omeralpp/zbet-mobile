@@ -1,9 +1,15 @@
-export type MobileAuthMode = "preview" | "pilot" | "oauth";
+/**
+ * `edge` is the browser build behind Cloudflare Access: the edge authenticates
+ * the owner and the BFF verifies the edge's signed assertion, so the bundle
+ * carries no credential at all.
+ */
+export type MobileAuthMode = "preview" | "pilot" | "oauth" | "edge";
 
 type AuthModeOptions = {
   useMocks: boolean;
   configuredMode?: string | undefined;
   pilotAccessKey?: string | undefined;
+  webBuild?: boolean | undefined;
 };
 
 type OAuthPublicConfiguration = {
@@ -39,20 +45,35 @@ function isHttpsUrl(value: string): boolean {
 export function resolveMobileAuthMode({
   useMocks,
   configuredMode,
-  pilotAccessKey
+  pilotAccessKey,
+  webBuild = false
 }: AuthModeOptions): MobileAuthMode {
   const requestedMode = String(configuredMode ?? "")
     .trim()
     .toLowerCase();
-  const mode = (requestedMode || (useMocks ? "preview" : "oauth")) as
+  const mode = (requestedMode ||
+    (useMocks ? "preview" : webBuild ? "edge" : "oauth")) as
     | MobileAuthMode
     | string;
   const pilotKey = String(pilotAccessKey ?? "").trim();
 
-  if (!new Set(["preview", "pilot", "oauth"]).has(mode)) {
+  // A browser bundle is public: anything inlined into it is readable by every
+  // visitor, so a web build refuses the key before any mode logic runs.
+  if (webBuild && pilotKey) {
     throw new Error(
-      "EXPO_PUBLIC_MOBILE_AUTH_MODE must be preview, pilot, or oauth."
+      "EXPO_PUBLIC_MOBILE_PILOT_KEY is forbidden in a web build; the browser bundle is public."
     );
+  }
+  if (!new Set(["preview", "pilot", "oauth", "edge"]).has(mode)) {
+    throw new Error(
+      "EXPO_PUBLIC_MOBILE_AUTH_MODE must be preview, pilot, oauth, or edge."
+    );
+  }
+  if (webBuild && mode !== "edge" && mode !== "preview") {
+    throw new Error("A web build uses preview or edge authentication only.");
+  }
+  if (!webBuild && mode === "edge") {
+    throw new Error("Edge authentication is allowed only in a web build.");
   }
   if (useMocks !== (mode === "preview")) {
     throw new Error(
