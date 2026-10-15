@@ -15,14 +15,16 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
-15 Ekim tutarlılık bakımı: UI5/Fiori istemcileri obsolete; Mobile/BFF ve dört SAP
-servis kökü aktif. TASK-0133 günlük KPI tam sayfalama ve kalıcı capture retry
-düzeltmeleri yerel DEV/pilot BFF'ye alındı; yapılandırma aynı, yerel/dış sağlık
-geçti. Son makbuz ve görev ayrımı:
-`BTB Logs/project_consistency_audit/2026-10-15-01/implementation/IMPLEMENTATION_REPORT.md`.
-TASK-0135 altı Expo patch güncellemesi yerel kontroller/Doctor20/20 geçti;
-yeni APK dağıtılmadı. Aşağıdaki kabul edilmiş APK 14 Ekim kaynağını taşır.
-Commit/push ve SAP bakım kaynağının yayını ayrıca bekliyor; model kapıları aynı.
+15 Ekim tutarlılık yayını tamamlandı: UI5/Fiori istemcileri obsolete; Mobile/BFF
+ve dört SAP servis kökü aktif. BFF `e26113e16f21cb02348e9bda6c1d78d942ff1b51` mevcut pilotta, backend
+main `a7571e4ecd16392431568f8b5f3c7e19d68e2c2f` exact-SHA DEV'de doğrulandı.45 native Unit/0 yeni P1/tek onaylı eski W;
+591 BFF testi/build ve 13 dış BTB/Toto Mobile şema okuması geçti.
+Yeni kaynak `2DC743F70C9FC15495F30C06A44DFAA550DE327B084D1ABD13298B4807AEAD5A`, UTC sınır `2026-10-15T13:07:05.407422Z`. Model/karar/capture yolları aynı;
+iki eski A3 kohortu mühürleriyle ayrı okunur. Yeni karar/kazanan iddiası yok.
+TASK-0132/0133/0134 DONE. TASK-0135 Expo patch kaynakları yayımlandı;612+13 kontrol
+ve Doctor20/20 geçti, yeni APK dağıtılmadı. Aşağıdaki kabul edilmiş APK korunur.
+Güncel makbuz: `BTB Logs/project_consistency_audit/2026-10-15-01/implementation/RELEASE_REPORT.md`.
+M10 performans ve diğer kanıt kapıları açık kalır.
 
 15 Ekim TASK-0124 DONE: sahibi, exact A3 APK `1168EA805A…F828117` için fiziksel
 kurulum, sürekli parmakla gezinme/bırakma, tekil olay seçimi ve TalkBack
@@ -65,13 +67,13 @@ Fiziksel sürekli sürükleme/bırakma, olay seçimi ve TalkBack 15 Ekim sahibin
 doğrudan exact-APK bildirimiyle kabul edildi; yeni otomatik fiziksel test yok.
 
 **Rota:** telefon → `https://api.surklase.com` → mevcut pilot BFF
-`zbet-cap/standalone-server.js`,127.0.0.1:4004,pilot auth. Son onaylı restart
-PID10040 (canlı PID'yi gerektiğinde listener'dan yeniden oku). Windows görevi
-`BTB Mobile BFF`,ensure/start launcher korunur. Manifest
-`zbet-abap/score-pressure-v2/PRESSURE_PATH_FT45_REGIME.json`, ham SHA-256
-`E768BEF23AA9552E90AEF4004DA82D4981131DD8A9EBF1DD69BB47AABEA2BCFB`.
-Sealed-runtime-activation.json kaynak/ayar kanıtıdır; dosya değişirse eski mühür
-sessizce kullanılamaz. Yerel/dış sağlık geçti. Cloudflare/Firebase yayını yok.
+`zbet-cap/standalone-server.js`,127.0.0.1:4004,pilot auth. Son doğrulanan restart
+PID28784 (gerektiğinde listener'dan yeniden oku). Windows görevi ve
+ensure/start launcher korunur. Manifest `PRESSURE_PATH_MAINTENANCE_20261015.json`,
+ham SHA-256 `5A8F31DBA93EAB1E7DC9D7E93ABA614DB66AA439237F8BC57140AF002556587A`. İki önceki A3 manifesti aynen korunur;
+yalnız güncel manifestin düz listesi geçmiş okumaları yetkilendirir.
+`maintenance-runtime-activation.json` kaynak/ayar makbuzudur. Yerel/dış sağlık
+geçti; diğer ayarlar aynı. Cloudflare/Firebase veya yeni APK yayını yok.
 
 Jinx'in mevcut sağlayıcısı ve açıklama davranışı korunur. İstatistik kapsamı
 bilinmeyen xG sıfır gösterilmez; kaynak zamanı ve oran-skor ilişkisi ispatlı
