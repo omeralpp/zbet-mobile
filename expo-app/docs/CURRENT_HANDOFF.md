@@ -1,6 +1,6 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-10-14
+Son güncelleme: 2026-10-15
 
 Mod: `OBSERVATION`
 
@@ -14,6 +14,13 @@ sections below instead of stacking above them; the section headings are selected
 by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
+
+15 Ekim TASK-0124 DONE: sahibi, exact A3 APK `1168EA805A…F828117` için fiziksel
+kurulum, sürekli parmakla gezinme/bırakma, tekil olay seçimi ve TalkBack
+kontrollerinin dördünü de geçtiğini doğrudan bildirdi. Gate kanonik yazıcıyla
+kaldırıldı; yeni kod, runtime, APK veya deploy yok. Kabul makbuzu:
+`btb-codex/docs/evidence/task0124-owner-acceptance-2026-10-15.json`.
+M10 performans kapıları ayrı kalır.
 
 14 Ekim TASK-0009:4,5 Alt/Üst doğrudan mevcut A3 DEV seçimine alındı; ek FT45
 gölge aşaması yok. Model/kol/ağırlık/eşik aynı;19 piyasalı kaynak
@@ -45,7 +52,8 @@ toplam baskıyı kullanmaz.612 Mobile+13 araç/type/lint/brand;581 BFF/build ge�
 Dokuz gerçek dış API şema okuması yeni/legacy Super ve mevcut baskıyı doğrular.
 Android API35 önizlemesinde gerçek seçim/etiket ve sekiz baskı işareti görüldü.
 Değişmeyen jestlerin önceki sekiz native kontrolü ve Doctor20/20 kullanıldı.
-Fiziksel telefon sürekli sürükleme/TalkBack kabulü hâlâ ayrı ve ölçülmedi.
+Fiziksel sürekli sürükleme/bırakma, olay seçimi ve TalkBack 15 Ekim sahibin
+doğrudan exact-APK bildirimiyle kabul edildi; yeni otomatik fiziksel test yok.
 
 **Rota:** telefon → `https://api.surklase.com` → mevcut pilot BFF
 `zbet-cap/standalone-server.js`,127.0.0.1:4004,pilot auth. Son onaylı restart
@@ -73,7 +81,7 @@ doğrulamalı indirme SHA/boyut birebir aynı. [Ayrıntılı teslimat](PRESSURE_
 Önceki TASK-0124 closeout SHA `7D209632…3605B6` ve sahibi tarafından kabul edilen
 TASK-0121 SHA `2CF051…55F4B2` tutulur. Önceki teslimat kanıtları
 `TASK_0124_PLAN_CLOSEOUT_2026_10_14.md`/`TASK_0121_JINX_READING_2026-10-11.md`.
-Yeni exact APK fiziksel telefon kabulü verilmiş sayılmaz.
+Bu exact APK için fiziksel kabul 15 Ekim sahibin doğrudan bildirimiyle tamamlandı.
 
 ## Repo durumu
 
@@ -103,8 +111,6 @@ legacy blank tag yeni modele yükseltilmez. Tarihsel karar kendi capture'ını o
 
 ## Açık observation / blokajlar
 
-- TASK-0124 fiziksel kurulum/sürekli sürükleme/olay/TalkBack kabulü bekliyor;
-  sonraki veri incelemesi15 Ekim. APK geliştirme/özel teslimat tamamlandı.
 - TASK-0123/M10 iki tam hafta/200 uygun sonuç/30 aile ve ekonomik kalite kapıları
   bekliyor; ilk mümkün tam-hafta incelemesi2 Kasım. M3 teknik kabulü tamam;
   milestone CLOSED, sahibin açık kapanış kararı kaydedildi.
@@ -115,12 +121,12 @@ legacy blank tag yeni modele yükseltilmez. Tarihsel karar kendi capture'ını o
 
 ## Exact next steps
 
-1. Sahibin yeni APK için fiziksel kurulum/sürekli sürükleme/olay/TalkBack kanıtı.
-2.15 Ekim salt-okunur yeni cutover incelemesi; etiket/kimlik ve gerçek sınırla
+1. TASK-0124 fiziksel kabulü tamamlandı; yeni cihaz bulgularını gözlem kaydına ekle.
+2.16 Ekim TASK-0123 salt-okunur kanıt incelemesi; etiket/kimlik ve gerçek sınırla
    ayır. Kontrolleri geçmiş sonuç olarak geri doldurma; ekonomik örneklem bekle.
 3. TASK-0009 yayını ve exact-main DEV hizalaması tamamlandı; aynı kaynak için
-   tekrar deploy gerekmez. M3 CLOSED; M10/FT45 ve fiziksel telefon veri kapıları
-   açık kalır. Yeni/önceki A3 verisini exact SHA ve gerçek sınırla ayır.
+   tekrar deploy gerekmez. M3 CLOSED; M10/FT45 veri kapıları açık kalır;
+   TASK-0124 fiziksel kabulü DONE. Yeni/önceki A3 verisini exact SHA ve gerçek sınırla ayır.
 
 ## Documents
 
