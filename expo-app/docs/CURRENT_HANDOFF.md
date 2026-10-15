@@ -15,6 +15,15 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
+15 Ekim tutarlılık bakımı: UI5/Fiori istemcileri obsolete; Mobile/BFF ve dört SAP
+servis kökü aktif. TASK-0133 günlük KPI tam sayfalama ve kalıcı capture retry
+düzeltmeleri yerel DEV/pilot BFF'ye alındı; yapılandırma aynı, yerel/dış sağlık
+geçti. Son makbuz ve görev ayrımı:
+`BTB Logs/project_consistency_audit/2026-10-15-01/implementation/IMPLEMENTATION_REPORT.md`.
+TASK-0135 altı Expo patch güncellemesi yerel kontroller/Doctor20/20 geçti;
+yeni APK dağıtılmadı. Aşağıdaki kabul edilmiş APK 14 Ekim kaynağını taşır.
+Commit/push ve SAP bakım kaynağının yayını ayrıca bekliyor; model kapıları aynı.
+
 15 Ekim TASK-0124 DONE: sahibi, exact A3 APK `1168EA805A…F828117` için fiziksel
 kurulum, sürekli parmakla gezinme/bırakma, tekil olay seçimi ve TalkBack
 kontrollerinin dördünü de geçtiğini doğrudan bildirdi. Gate kanonik yazıcıyla
@@ -85,6 +94,9 @@ Bu exact APK için fiziksel kabul 15 Ekim sahibin doğrudan bildirimiyle tamamla
 
 ## Repo durumu
 
+15 Ekim bakım kaynakları yerelde değişmiş, henüz commit/push edilmemiştir.
+Aşağıdaki SHA'lar mevcut kabul edilmiş A3/FT45 yayınının tarihsel durumudur.
+
 Önceki A3 primary yayını tamamlandı; makbuz
 `.codex-artifacts/pressure-selection-2026-10-14/publication.json`.
 TASK-0009 backend main `e6cd1cfd8bb022a80ab19df71589c2fb503d25b0`, BFF main
@@ -97,13 +109,14 @@ altında; kalıcı özet `btb-codex/docs/evidence/task0009-main-deployment-2026-
 
 ## Doğrulama
 
-Son kaynak değişikliği sonrası Mobile612+13/type/lint/brand ve BFF581/CAP build
-tam geçti. Yeni kaynak/native kabul receipt'leri backend `score-pressure-v2/`
+15 Ekim bakımında Mobile612+13/type/lint/brand, Doctor20/20 ve BFF590/CAP build
+geçti. Native APK/cihaz kabulü bu patch güncellemesine aktarılmaz.
+14 Ekim kaynak/native kabul receipt'leri backend `score-pressure-v2/`
 altında. Yerel ayrıntılar `.codex-artifacts/pressure-selection-2026-10-14/`:
 `sealed-public-smoke.json`,`apk-verification.json`,`apk-signature.txt`,
 `drive-delivery.json`,`frozen-mobile-inputs.json`,`sealed-runtime-activation.json`.
 355 frozen APK girdisi derleme sonunda aynı; sonradan yalnız güncel devir/plan
-dokümanları değişti. Yeni paket kodunu değiştiren bir düzenleme yapılmadı.
+dokümanları değişmişti. 15 Ekim dependency bakımı sonraki APK için ayrı TASK-0135'tir.
 
 V1/V2 korunur; V3 ACK/şema eşleşmesi zorunlu. V2 geri dönüş yalnız belirli
 sürüm-hatasında yapılır. Yeni opaque Super anahtarı model bileşeni içerir;
@@ -120,6 +133,11 @@ legacy blank tag yeni modele yükseltilmez. Tarihsel karar kendi capture'ını o
   TASK-0102/TASK-0121 kapalı kabul edilmiş teslimat/rollback kalır.
 
 ## Exact next steps
+
+Öncelikli bakım devri: TASK-0132/0133 commit/push onayı; TASK-0134 için BTB
+sahibinde ayrıca SAP preflight ve exact-SHA DEV kapısı. TASK-0135 yeni APK
+hazırlığı ayrı kalır. Mevcut BFF düzeltmesi pilotta çalışır; aşağıdaki gözlem
+adımları performans kapılarını korur.
 
 1. TASK-0124 fiziksel kabulü tamamlandı; yeni cihaz bulgularını gözlem kaydına ekle.
 2.16 Ekim TASK-0123 salt-okunur kanıt incelemesi; etiket/kimlik ve gerçek sınırla

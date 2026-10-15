@@ -20,7 +20,7 @@ server-side.
 The pilot origin currently uses the existing SAP `developer` credential
 behind the BFF allowlist because SAP GUI scripting is disabled. This is a
 temporary pilot exception, not a production or Cordova-cutover approval. A
-dedicated communication user restricted to the three named OData services is
+dedicated communication user restricted to the four allowlisted OData service roots (main, Super Log, Toto, Match Journey) is
 still mandatory.
 
 ## Production auth boundary (implemented locally, not deployed)
@@ -173,7 +173,7 @@ runbook'u ve rollback planı doğrulandıktan sonra emekliye ayrılır.
   revoke smoke geçmiştir. Production HTTPS OIDC issuer/public client, callback
   ve logout URI'ları, Android App Link sertifikası ve gerçek cihaz login/
   refresh/cold-start/logout kanıtı henüz dış sistemde tamamlanmamıştır.
-- Geçici SAP `developer` hesabı yerine üç OData servisiyle sınırlı ayrı
+- Geçici SAP `developer` hesabı yerine dört OData servis köküyle sınırlı ayrı
   communication user oluşturulmalıdır.
 - Store signing, fiziksel cihaz parity, destek ve rollback kapıları eksiktir.
 - Mevcut `npm audit --omit=dev` bulguları Expo CLI/config zincirindeki
