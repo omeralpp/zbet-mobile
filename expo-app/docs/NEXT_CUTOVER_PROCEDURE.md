@@ -16,6 +16,14 @@ batch içinde, paralel ve eşit öncelikle ilerler. Bir yüzeye uygulanamayan
 değişiklik (widget, FCM push, dokunmatik jest; masaüstüne özel düzen) platform
 istisnası ve karşılığıyla handoff’a yazılır, sessizce atlanmaz.
 
+16 Ekim sahip kuralı: Android veya web release'i daima iki yüzeyi birlikte,
+aynı temiz ve push edilmiş commit'ten kapsar. Platform istisnası diğer yüzeyin
+release'ini kaldırmaz. İki teslimatın açık onayları tamamlanmadan hiçbiri
+başlamaz. Exact APK teslimi/kurulumu doğrulanır, sonra eş web yayını yapılır;
+iki smoke geçmeden release tamamlandı denmez. Başarısızlıkta batch açık kalır,
+önceki APK/web çifti geri dönüş için korunur. Zorunlu kontrol:
+`scripts/client-release.mjs`; ayrıntı `COORDINATED_CLIENT_RELEASE.md`.
+
 ## Observation modu
 
 - Her kullanıcı tespiti `docs/OBSERVATION_LOG.md` içine kısa ve kanıt odaklı
@@ -48,7 +56,9 @@ Komut geldiğinde:
    checkpoint olarak bırakılır.
 8. Final telefon artifact’ının ABI, imza ve hash doğrulaması kaydedildikten sonra
    `.codex-artifacts` temizlenir. Yalnız son doğrulanmış fiziksel telefon `arm64`
-   APK’sı tutulur; önceki APK sürümleri, `x86_64` emülatör paketleri ve geçici
+   APK’sı ve önceki kabul edilmiş Android/web geri dönüş çifti korunur.
+   Bu geri dönüş çifti iki yeni istemci kabul edilmeden ve kurtarma ihtiyacı
+   kapatılmadan silinmez. Diğer eski APK sürümleri, `x86_64` emülatör paketleri ve geçici
    build/log/ekran kanıtları deploy veya kullanıcıya teslimden önce Geri Dönüşüm
    Kutusu’na taşınır. Kaynak, test, handoff ve observation arşivleri bu temizliğe
    hiçbir zaman dahil edilmez.
@@ -73,6 +83,9 @@ yerel kodu bırakmak değil, aynı dondurulmuş kapsamın hâlâ uygulanabilir b
 kapanış adımlarını tamamlayıp yeniden observation moduna dönmektir:
 
 - tek final fiziksel-telefon ARM64 pilot APK'sını üret, doğrula ve paylaş;
+- aynı commit'in doğrulanmış web export'unu aynı release batch'inde yayımla;
+  bu ifade tek başına `PUBLISH-WEB` onayı yerine geçmez. Her iki teslimatın
+  onayı eksikse hiçbirini başlatma; eksik onayı somut çift hazır olduğunda bildir;
 - yalnız bounded batch dosyalarını stage/commit/push et;
 - BFF değiştiyse mevcut onaylı yerel pilot runtime'ı temiz pushed SHA'dan bir
   kez yeniden başlat ve bounded public read-back yap;
@@ -107,6 +120,9 @@ file metadata and size, verify the uploaded bytes against SHA-256 when the
 tools allow, and record the observed file ID, URL, source commit and hash in
 the delivery checkpoint. Do not claim delivery until readback succeeds.
 Keep APK bytes and credentials out of Git; share only the private owner link.
+Before uploading or installing an APK, run the coordinated pair check from
+`COORDINATED_CLIENT_RELEASE.md` and verify that the matching web build and both
+delivery approvals are ready. Private upload alone does not complete a release.
 
 If the connection or upload capability is unavailable, retain the verified
 local APK, report the specific delivery limitation and preserve a dated review

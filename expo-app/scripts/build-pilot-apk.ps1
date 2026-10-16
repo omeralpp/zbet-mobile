@@ -27,6 +27,23 @@ function Invoke-Checked {
 
 $appRoot = Split-Path -Parent $PSScriptRoot
 $pilotFeatureConfigScript = Join-Path $PSScriptRoot 'pilot-feature-config.mjs'
+$clientReleaseScript = Join-Path $PSScriptRoot 'client-release.mjs'
+$nodePath = [Environment]::GetEnvironmentVariable('BTB_NODE_EXE', 'User')
+if ([string]::IsNullOrWhiteSpace($nodePath)) { $nodePath = (Get-Command node.exe -ErrorAction Stop).Source }
+# Final APKs and web exports share one committed release identity. This check
+# runs before staging, loading build secrets or starting Gradle.
+$sourceOutput = & $nodePath $clientReleaseScript source
+if ($LASTEXITCODE -ne 0) { throw 'Could not identify the client release source.' }
+$sourceIdentity = ($sourceOutput -join "`n") | ConvertFrom-Json
+if ($Architecture -eq 'arm64-v8a' -and $sourceIdentity.sourceDirty) { throw 'Final pilot APK requires a clean committed client source and its matching web export.' }
+$reservedArtifact = Join-Path (Join-Path $appRoot '.codex-artifacts') $ArtifactName
+if ((Test-Path -LiteralPath $reservedArtifact) -or (Test-Path -LiteralPath "$reservedArtifact.config.json")) {
+  throw 'Choose a new ArtifactName; previous APK/config receipts are retained for coordinated rollback.'
+}
+if ($Architecture -eq 'arm64-v8a') {
+  & $nodePath $clientReleaseScript verify-web --web-root (Join-Path $appRoot 'dist-web') | Out-Null
+  if ($LASTEXITCODE -ne 0) { throw 'Build and verify the web export from the same commit before the final APK.' }
+}
 $stageRoot = "C:\btb-mobile-pilot-$PID"
 $resolvedStageRoot = [IO.Path]::GetFullPath($stageRoot)
 
@@ -142,6 +159,7 @@ try {
     '.expo',
     '.codex-artifacts',
     'dist',
+    'dist-web',
     'coverage',
     '.env',
     '.env.local'
@@ -241,9 +259,15 @@ try {
       throw 'Pilot APK embedded feature-mode verifier returned invalid JSON.'
     }
 
+    $sourceAfterOutput = & $nodePath $clientReleaseScript source
+    if ($LASTEXITCODE -ne 0) { throw 'Could not recheck the client release source.' }
+    $sourceAfter = ($sourceAfterOutput -join "`n") | ConvertFrom-Json
+    if (($Architecture -eq 'arm64-v8a' -and $sourceAfter.sourceDirty) -or $sourceAfter.sourceSha -ne $sourceIdentity.sourceSha -or $sourceAfter.sourceTree -ne $sourceIdentity.sourceTree) {
+      throw 'Client source changed during the APK build; rebuild both clients.'
+    }
     # Publish the artifact only after its embedded settings match the requested
     # modes, so a failed readback cannot overwrite a previously valid APK.
-    Copy-Item -Force -LiteralPath $apkPath -Destination $artifactPath
+    [IO.File]::Copy($apkPath, $artifactPath, $false)
     $artifactItem = Get-Item -LiteralPath $artifactPath
     $artifactEvidence = [ordered]@{
       schemaVersion = 1
@@ -251,6 +275,9 @@ try {
       bytes = $artifactItem.Length
       sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $artifactPath).Hash
       architecture = $Architecture
+      sourceSha = $sourceIdentity.sourceSha
+      sourceTree = $sourceIdentity.sourceTree
+      sourceDirty = $sourceIdentity.sourceDirty
       effectiveSettings = $artifactConfig.effectiveSettings
     }
     $evidencePath = "$artifactPath.config.json"

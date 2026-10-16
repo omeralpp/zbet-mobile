@@ -1,6 +1,6 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-10-15
+Son güncelleme: 2026-10-16
 
 Mod: `OBSERVATION`
 
@@ -15,11 +15,28 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
+16 Ekim sahip kuralı: Android ve web her release'te aynı temiz/pushed commit'ten
+tek batch olarak teslim edilir; platforma özel değişiklikte de diğer yüzey atlanmaz.
+`scripts/client-release.mjs` kaynak/iki artifact hash'i/özellik kiplerini kontrol
+eder; web yayını exact APK teslim/kurulum makbuzu ister. İki istemci smoke'u
+geçmeden COMPLETE denmez, önceki APK/web çifti geri dönüş için tutulur. Ayrıntı:
+`COORDINATED_CLIENT_RELEASE.md`. Bu yerel kural/tooling değişikliği yayın değildir.
+Mevcut W6 web6911f84 ile14 Ekim kabul edilmiş APK için ortak kaynak/batch makbuzu
+yok; eşleşme UNVERIFIED. Tarihsel kabul korunur; sonraki onaylı release ikisini
+aynı kaynağa getirir. TASK-0135 ve TASK-0143'ün kalan kapıları kapanmış sayılmaz.
+
+16 Ekim M16 W6 TASK-0142 DONE: sahip `PUBLISH-WEB` onayıyla web istemcisi
+`https://app.surklase.com` adresinde yayında. Cloudflare Access `BTB Web`
+(`Owner only`, One-time PIN, 24 saat, team `black-cake-3e41`) tünel rotasından
+önce kuruldu; rota `app.surklase.com -> http://127.0.0.1:4004`, diğer üç rota aynı.
+Release `20261015T210155Z-6911f84` (zbet-mobile `6911f84`), ağaç SHA-256
+`16F5DB4EBCBD2CBA557C461214F33C8A1F120A9F1B50D7B33F8691CEEF1EF594`; makbuz
+release klasöründe. Girişsiz `/` ve `/v1` Access'e 302; `api.surklase.com` 200;
+BFF pilot auth, web configured, `BTB Mobile BFF` görevi altında. Sahibin tarayıcı
+girişi ve gerçek veri kontrolü ilk W7 gözlemidir. Yayın betiği hataları TASK-0143.
+
 15 Ekim M16 Desktop Web Client W1-W4 yerelde tamamlandı ve sahip onayıyla
-commit/push edildi (TASK-0138..0141 DONE). W6 TASK-0142 BLOCKED: Cloudflare Access
-uygulaması (yalnız sahip e-postası) tünel hostname'inden önce, sonra
-`app.surklase.com -> http://127.0.0.1:4004`, dört `BTB_WEB_*` kullanıcı değişkeni
-ve ayrı `PUBLISH-WEB` onayı. Yeni genel kural **Client Parity** (AGENTS.md):
+commit/push edildi (TASK-0138..0141 DONE). Yeni genel kural **Client Parity** (AGENTS.md):
 Mobile/web aynı Expo kodu, her değişiklik iki yüzeye birlikte. Web derlemesi
 `edge` modunda, pilot anahtarı/sırları reddeder, gömülü ayarı ve sır taramasını
 doğrular. Masaüstü: kenar çubuğu, Ctrl+K, `g` kısayolları, çok sütunlu modüller,
@@ -158,9 +175,11 @@ legacy blank tag yeni modele yükseltilmez. Tarihsel karar kendi capture'ını o
 TASK-0135 yeni APK hazırlığı ayrı kalır. Mevcut BFF düzeltmesi pilotta çalışır;
 aşağıdaki gözlem adımları performans kapılarını korur.
 
-0. M16 W6 (TASK-0142): sahibin Cloudflare adımları, sonra
-   `zbet-cap/scripts/publish-web-client.ps1` dry run ve ayrı `PUBLISH-WEB` onayı.
-   Yayından sonra web bulguları `OBSERVATION_LOG.md`'ye (W7); her istemci
+0. M16 W7: sahip `https://app.surklase.com` adresine PIN ile girip ekranları
+   gerçek veriyle kontrol eder; bulgular `OBSERVATION_LOG.md`'ye. TASK-0143 yayın
+   betiği düzeltmesi bir sonraki yayından önce. Bu ilk release'in öncesi yok;
+   web'i kapatmak için Cloudflare'de `app.surklase.com` rotası kaldırılır (beş
+   `BTB_WEB_*` değişkeni ancak birlikte silinir). Her istemci
    değişikliği Client Parity ile Android ve web'de birlikte doğrulanır.
 1. TASK-0124 fiziksel kabulü tamamlandı; yeni cihaz bulgularını gözlem kaydına ekle.
 2.16 Ekim TASK-0123 salt-okunur kanıt incelemesi; etiket/kimlik ve gerçek sınırla

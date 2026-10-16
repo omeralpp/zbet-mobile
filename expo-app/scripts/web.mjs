@@ -15,6 +15,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { sourceIdentity, stampWeb } from "./client-release.mjs";
 import {
   findSecretLeaks,
   secretCandidates,
@@ -78,6 +79,7 @@ function verifyExport({ deleteOnFailure }) {
 if (command === "start") {
   process.exit(runExpo(["start", "--web", "--clear"]));
 } else if (command === "export") {
+  const sourceBefore = sourceIdentity();
   if (existsSync(outDir)) {
     rmSync(outDir, { recursive: true, force: true });
   }
@@ -88,6 +90,12 @@ if (command === "start") {
     process.exit(status);
   }
   verifyExport({ deleteOnFailure: true });
+  const sourceAfter = sourceIdentity();
+  if (JSON.stringify(sourceBefore) !== JSON.stringify(sourceAfter)) {
+    console.error("Web export source changed during the build; build both clients again.");
+    process.exit(1);
+  }
+  stampWeb(outDir, sourceBefore, { mocks });
 } else if (command === "verify") {
   verifyExport({ deleteOnFailure: false });
 } else {

@@ -39,6 +39,13 @@ Browser
   web; every client change ships to both surfaces. Platform differences live in
   `*.web.ts(x)` twins and breakpoints (`src/layout/breakpoints.ts`: compact
   <768, medium, wide >=1200, ultra >=1600).
+- Coordinated releases (owner rule 2026-10-16): Android and web always release
+  together from one clean pushed commit, including platform-only changes.
+  `scripts/client-release.mjs` verifies both artifact identities. Web publication
+  requires the exact APK's delivery/installation receipt; the batch remains
+  incomplete until both owner smoke checks pass. Keep the prior pair for recovery.
+  See [the release procedure](COORDINATED_CLIENT_RELEASE.md); individual approval
+  boundaries remain and must cover both deliveries before either starts.
 - `BTB_WEB_BUILD=1` builds in `edge` auth mode with a same-origin API. The build
   refuses the pilot key, runs from an allowlisted environment
   (`scripts/web-build-policy.mjs`), verifies the embedded config and scans the
