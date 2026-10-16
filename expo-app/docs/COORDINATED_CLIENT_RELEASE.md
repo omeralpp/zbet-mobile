@@ -46,6 +46,12 @@ transaction. Use this bounded sequence and report any interrupted batch as
    verify remote bytes/size and record the exact source/hash. Have the owner
    install that exact APK and record the installation evidence. No new app
    build or upload is authorized by this document alone.
+   `scripts/deliver-apk-drive.ps1 -ApkPath <final.apk> -Confirm DELIVER-APK`
+   does the upload for either agent through the owner-authorized rclone
+   `drive.file` remote (private "BTB APK" folder): signature/ABI, no
+   overwrite, owner-only permissions, authenticated download and SHA-256
+   readback, then the private link and `<apk>.drive-delivery.json`. It never
+   creates a sharing link.
 2. Save a secret-free Android delivery receipt with actual observed facts:
 
    ```json
@@ -97,14 +103,19 @@ transaction. Use this bounded sequence and report any interrupted batch as
 
 ## Current transition and durable status
 
-The recorded web release `20261015T210155Z-6911f84` predates this rule. The last
-accepted Android APK is `1168EA805A14870AC707204A63F4F1B38316D0CFE038C879D739266E9F828117`
-from 14 October. No matching source/batch receipt exists for this historical
-pair; its alignment is **UNVERIFIED**, not complete. Preserve the historical
-acceptance without rewriting hashes or creating retrospective build receipts.
-The next approved release must replace both from the same frozen source.
-TASK-0135 owns the outstanding replacement APK qualification; TASK-0143's
-existing web publisher maintenance remains separate and open.
+The first coordinated batch completed on 2026-10-16:
+`client-3e9ffe9241bac12262f559f2267496f50db94da3-8757EFEA9837-06AF4EA3CA00`,
+source `3e9ffe9`, APK `8757EFEA983796F26E5371577E6D8956BC3E85106869FCCDCED9177B7544D38A`,
+web tree `06AF4EA3CA001B5AA790307ABFF09E3B86F7A4BC0DD06A7D13F2E5B61922FFE0`,
+published release `20261016T195008Z-3e9ffe9`, status **COMPLETE** after both owner
+smokes. Receipts: `btb-codex/docs/evidence/client-release-3e9ffe9-2026-10-16.json`.
+
+The pair before it (web release `20261015T210155Z-6911f84` and the 14 October APK
+`1168EA805A14870AC707204A63F4F1B38316D0CFE038C879D739266E9F828117`) predates this
+rule and has no shared source/batch receipt; its alignment stays **UNVERIFIED**.
+Preserve that historical acceptance without rewriting hashes or creating
+retrospective receipts. A web rollback to it would still need its APK delivery
+receipt, so recovery prefers a new coordinated batch.
 
 Record source SHA, both artifact hashes, batch status, approval/delivery/smoke
 receipts, previous pair and any platform exceptions in `CURRENT_HANDOFF.md`.

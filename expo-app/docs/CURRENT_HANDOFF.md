@@ -15,19 +15,18 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
-16 Ekim sahip onaylı plan, Bölüm B (TASK-0144, yerel, commit edilmedi): Maçın
-Nabzı ve tüm Fiori girişleri Android ve web'den kaldırıldı; ayrı "Skor ve yıldız
-akışı" modülü Maçın Yolu'na taşındı (grafikte altın Super yıldızları, altında
-dokunulabilir liste; grafik bayrağı kapalıyken liste kalır). `gamePulse` ve
-`timeline` kayıtlı düzenlerden uzlaştırmayla düşer. `react-native-webview`
-kaldırıldı (native değişiklik, yeni APK gerekir); TASK-0135 Expo yaması (expo
-57.0.30, expo-router 57.0.28) aynı batch'te. Kontroller: tsc/eslint, 601+32 test,
-brand, Doctor 20/20, kalite kapısı (Android Hermes 5,6 MB, temiz edge web export),
-tarayıcı smoke (masaüstü/390 px). Sıradaki: commit/push onayı, TASK-0143 yayın
-betiği düzeltmesi, ardından koordineli Android+web yayını ve Xiaomi smoke'u
-(düzen göçü, yıldız işaretlerinde TalkBack). Platform istisnası olarak Game Pulse
-ve "Fiori yalnız web'de gizli" maddeleri artık yok. Gözlem satırları
-NXT-OBS-160..162. Bölüm A (A4 kalibre EV modeli) BTB - Aktif oturumunun işidir.
+16 Ekim ilk koordineli Android+web batch'i **COMPLETE** (TASK-0144/0135/0143
+DONE): batch `client-3e9ffe9…-8757EFEA9837-06AF4EA3CA00`, kaynak zbet-mobile
+`3e9ffe9241bac12262f559f2267496f50db94da3`. Maçın Nabzı ve tüm Fiori girişleri iki
+yüzeyden kalktı; "Skor ve yıldız akışı" Maçın Yolu'nda (grafikte altın Super
+yıldızları + altta liste). `react-native-webview` çıktı; Expo 57.0.30/router 57.0.28.
+APK (aşağıda) rclone `drive.file` ile özel "BTB APK" klasörüne yüklendi; yalnız-sahip
+izni ve geri indirme SHA-256 birebir; sahip kurdu. Web release
+`20261016T195008Z-3e9ffe9`: yerel probe ok, girişsiz 302 Access (korumalı), BFF
+`BTB Mobile BFF` görevi altında. Sahip smoke'u gerçek veriyle iki yüzeyde geçti
+(telefon: Wacker Innsbruck–Austria Salzburg; web: Verona–Catanzaro). Kalıcı makbuz
+`btb-codex/docs/evidence/client-release-3e9ffe9-2026-10-16.json`. Yeni ortak araç
+`scripts/deliver-apk-drive.ps1` (Codex ile aynı teslim). Bölüm A (A4) BTB - Aktif'te.
 
 16 Ekim sahip kuralı: Android ve web her release'te aynı temiz/pushed commit'ten
 tek batch olarak teslim edilir; platforma özel değişiklikte de diğer yüzey atlanmaz.
@@ -35,9 +34,9 @@ tek batch olarak teslim edilir; platforma özel değişiklikte de diğer yüzey 
 eder; web yayını exact APK teslim/kurulum makbuzu ister. İki istemci smoke'u
 geçmeden COMPLETE denmez, önceki APK/web çifti geri dönüş için tutulur. Ayrıntı:
 `COORDINATED_CLIENT_RELEASE.md`. Bu yerel kural/tooling değişikliği yayın değildir.
-Mevcut W6 web6911f84 ile14 Ekim kabul edilmiş APK için ortak kaynak/batch makbuzu
-yok; eşleşme UNVERIFIED. Tarihsel kabul korunur; sonraki onaylı release ikisini
-aynı kaynağa getirir. TASK-0135 ve TASK-0143'ün kalan kapıları kapanmış sayılmaz.
+Önceki W6 web 6911f84 ile 14 Ekim A3 APK çiftinin ortak makbuzu yoktu (UNVERIFIED,
+tarihsel kabul korunur); 16 Ekim batch'i ikisini aynı kaynağa getirdi. Önceki
+çift geri dönüş için tutulur, ancak web geri dönüşü eşleşik APK teslim makbuzu ister.
 
 16 Ekim M16 W6 TASK-0142 DONE: sahip `PUBLISH-WEB` onayıyla web istemcisi
 `https://app.surklase.com` adresinde yayında. Cloudflare Access `BTB Web`
@@ -130,8 +129,16 @@ sayılmaz. Yeni baskı tahmindir; oran/gol ihtimali veya kârlılık değildir.
 
 ## Final yerel pilot APK
 
-[Yeni A3 özel Drive APK](https://drive.google.com/file/d/1Y_zmtI3AyXHhHc7s4vI8o6uJrvt7pn8S/view?usp=drivesdk)
+[16 Ekim koordineli batch özel Drive APK](https://drive.google.com/file/d/1aCOoE5ty3jZqR4Cp-gOxMtd9T6yKCG8v/view?usp=drivesdk)
 
+`btb-mobile-next-arm64-3e9ffe9.apk`, 54.175.948 bayt; SHA-256
+`8757EFEA983796F26E5371577E6D8956BC3E85106869FCCDCED9177B7544D38A`. Kaynak
+`3e9ffe9`, yalnız ARM64, pilot sertifikası (`FAC61745…033B9C`, A3 APK ile aynı),
+pilot/LIVE ayarları; Drive klasörü "BTB APK" (rclone `drive.file`), yalnız-sahip
+izni ve kimlik doğrulamalı geri indirme birebir. Sahip 16 Ekim'de kurdu ve smoke geçti.
+
+Önceki kabul edilmiş APK (geri dönüş çifti):
+[A3 özel Drive APK](https://drive.google.com/file/d/1Y_zmtI3AyXHhHc7s4vI8o6uJrvt7pn8S/view?usp=drivesdk)
 `btb-mobile-next-arm64-pressure-path-a3.apk`,54.424.765 bayt; SHA-256
 `1168EA805A14870AC707204A63F4F1B38316D0CFE038C879D739266E9F828117`.
 Yalnız ARM64, mevcut pilot sertifikası/APK V2 imzası, paket/config/LIVE ayarları
@@ -145,9 +152,10 @@ Bu exact APK için fiziksel kabul 15 Ekim sahibin doğrudan bildirimiyle tamamla
 
 ## Repo durumu
 
-15 Ekim tutarlılık yayını ve M16 W1-W4 kaynakları push edildi; exact SHA'lar
-TASK-0139..0141 notlarında ve `git log`'da. Web yayını yapılmadı. Aşağıdaki
-SHA'lar mevcut kabul edilmiş A3/FT45 yayınının tarihsel durumudur.
+16 Ekim koordineli batch: zbet-mobile `3e9ffe9` (istemci kaynağı), btb-codex
+`39eed43` (kalite kapısı izolasyonu, TASK-0144 kaydı), zbet-cap `0e37c3e` (TASK-0143
+yayın betiği). Kapanış commit'leri teslim aracını, makbuzu ve kayıtları taşır.
+Aşağıdaki SHA'lar kabul edilmiş A3/FT45 yayınının tarihsel durumudur.
 
 Önceki A3 primary yayını tamamlandı; makbuz
 `.codex-artifacts/pressure-selection-2026-10-14/publication.json`.
@@ -186,15 +194,14 @@ legacy blank tag yeni modele yükseltilmez. Tarihsel karar kendi capture'ını o
 
 ## Exact next steps
 
-TASK-0135 yeni APK hazırlığı ayrı kalır. Mevcut BFF düzeltmesi pilotta çalışır;
-aşağıdaki gözlem adımları performans kapılarını korur.
+Mevcut BFF pilotta çalışır; aşağıdaki gözlem adımları performans kapılarını korur.
 
-0. M16 W7: sahip `https://app.surklase.com` adresine PIN ile girip ekranları
-   gerçek veriyle kontrol eder; bulgular `OBSERVATION_LOG.md`'ye. TASK-0143 yayın
-   betiği düzeltmesi bir sonraki yayından önce. Bu ilk release'in öncesi yok;
-   web'i kapatmak için Cloudflare'de `app.surklase.com` rotası kaldırılır (beş
-   `BTB_WEB_*` değişkeni ancak birlikte silinir). Her istemci
-   değişikliği Client Parity ile Android ve web'de birlikte doğrulanır.
+0. Gözlem (M16 W7 dahil): yeni APK ve `app.surklase.com` gerçek kullanımda;
+   bulgular `OBSERVATION_LOG.md`'ye. Sonraki istemci değişikliği yine tek
+   koordineli batch: `deliver-apk-drive.ps1` ile APK teslimi, ardından
+   `publish-web-client.ps1 -ApkPath -AndroidDeliveryReceipt`. Web'i acilen
+   kapatmak için Cloudflare'de `app.surklase.com` rotası kaldırılır; beş
+   `BTB_WEB_*` değişkeni yalnız birlikte silinir.
 1. TASK-0124 fiziksel kabulü tamamlandı; yeni cihaz bulgularını gözlem kaydına ekle.
 2.16 Ekim TASK-0123 salt-okunur kanıt incelemesi; etiket/kimlik ve gerçek sınırla
    ayır. Kontrolleri geçmiş sonuç olarak geri doldurma; ekonomik örneklem bekle.
