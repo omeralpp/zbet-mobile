@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 import { matchJourneySchema } from "../api/schemas";
 import { retainedJourneyRuns, journeyPointLabel } from "./match-journey";
+import { journeyAndSuperMoments, journeyMomentEffect, superMoments } from "./journey-story";
 import { mockRetainedJourney } from "../api/mock-data";
 
 test("BFF acceptance fixture renders both halves and restores the same path after reopening",()=>{
@@ -27,20 +28,48 @@ test("contract refuses an invented probability scale and out-of-range event rati
   assert.throws(()=>matchJourneySchema.parse({...fixture,scale:'WIN_PROBABILITY'}));
   assert.throws(()=>matchJourneySchema.parse({...fixture,points:[{...fixture.points[0],eliminatedRatio:1.01}]}));
 });
-test("match detail combines Match Path with the retained journey and keeps score/Super separate",async()=>{
-  // The route is a thin wrapper; the detail view lives in src/screens.
+test("Maçın Yolu carries the score and star flow; Game Pulse and the separate timeline are gone",async()=>{
+  // Owner decision 2026-10-16. The route is a thin wrapper; the detail view
+  // lives in src/screens.
   const source=await readFile(new URL('../screens/MatchDetailView.tsx',import.meta.url),'utf8');
-  const analysisModule=source.slice(source.indexOf('moduleNodes.matchPath ='));
-  const timelineModule=source.slice(source.indexOf('timeline: ('),source.indexOf('scoreDistribution: ('));
+  const pathModule=source.slice(source.indexOf('matchPath: ('),source.indexOf('odds: ('));
   assert.ok(source.includes('matchPathQuery(key)'));
-  assert.ok(analysisModule.includes('<MatchJourneyChart'));
-  assert.ok(analysisModule.includes('path={matchPath.data}'));
-  assert.ok(timelineModule.includes('<MatchTimelineCard'));
-  assert.ok(timelineModule.includes('includeRedCards={!matchPathEnabled}'));
+  // The chart and the flow list share one panel; the chart draws the recorded
+  // Super decisions on its event lane and can open them.
+  assert.ok(pathModule.includes('<MatchJourneyChart'));
+  assert.ok(pathModule.includes('path={matchPath.data}'));
+  assert.ok(pathModule.includes('decisions={relatedDecisions}'));
+  assert.ok(pathModule.includes('onDecisionPress={openDecision}'));
+  assert.ok(pathModule.includes('<MatchTimelineCard'));
+  assert.ok(pathModule.includes('SKOR VE YILDIZ AKIŞI'));
+  assert.ok(pathModule.includes('includeRedCards={!matchPathEnabled}'));
+  // The flow survives a build with the chart engine switched off.
+  assert.ok(pathModule.includes('{matchPathEnabled ? ('));
+  assert.ok(!source.includes('timeline: ('));
+  assert.ok(!source.includes('GamePulseCard'));
   assert.ok(!source.includes('useJourneyObservations'));
-  assert.ok(timelineModule.includes('decisions={relatedDecisions}'));
   assert.ok(source.includes('journey.refetch()'));
   assert.ok(source.includes('matchPath.refetch()'));
+});
+test("recorded Super decisions become star moments on the chart's minute axis",()=>{
+  const fixture=mockRetainedJourney('test');
+  const decision={key:'super-1',matchKey:'test',matchName:'A - B',createdAt:'2026-10-16T18:00:00.000Z',elapsed:31,
+    selectedOdd:'Alt 2,5',rating:2,reason:'SCORE_CHANGED',liveRate:1.85,currentRate:1.8,result:'OPEN' as const,
+    profit:null,finalScore:'',pressureAdjustment:0,stateAdjustment:0};
+  const [moment]=superMoments([decision]);
+  assert.equal(moment?.kind,'SUPER');
+  assert.equal(moment?.minute,31);
+  assert.equal(moment?.superKey,'super-1');
+  assert.equal(moment?.stars,2);
+  assert.equal(moment?.point,undefined);
+  assert.equal(moment?.score,null);
+  // Merged with the match's own moments, every mark stays in minute order and
+  // the decision is never mistaken for an event with a measured pool effect.
+  const merged=journeyAndSuperMoments(fixture.points,undefined,[decision]);
+  const minutes=merged.map(m=>m.minute ?? Infinity);
+  assert.deepEqual(minutes,[...minutes].sort((a,b)=>a-b));
+  assert.equal(merged.filter(m=>m.kind==='SUPER').length,1);
+  assert.match(journeyMomentEffect(moment!),/karar kaydıdır/);
 });
 test("journey card keeps the published type floor and the renderable weight set",async()=>{
   const source=await readFile(new URL('./MatchJourneyChart.tsx',import.meta.url),'utf8');

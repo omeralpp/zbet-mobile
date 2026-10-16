@@ -5,6 +5,7 @@ import { Stack, useFocusEffect, useRouter } from "expo-router";
 import {
   Alert,
   Linking,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -37,7 +38,6 @@ import {
   SurfaceMaterial
 } from "@/src/components/SurfaceMaterial";
 import { TeamLogo } from "@/src/components/TeamLogo";
-import { GamePulseCard } from "@/src/components/GamePulseCard";
 import { MatchJourneyChart } from "@/src/components/MatchJourneyChart";
 import { MatchTimelineCard } from "@/src/components/MatchTimelineCard";
 import { TeamFormCard } from "@/src/components/TeamFormCard";
@@ -46,7 +46,6 @@ import { StandingsModule } from "@/src/components/StandingsModule";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { RatioResultsChart } from "@/src/components/RatioResultsChart";
 import { Screen } from "@/src/components/Screen";
-import { fioriEntryAvailable } from "@/src/legacy/fiori-availability";
 import { runtimeConfig } from "@/src/config/runtime";
 import { mountsIntelligenceSurfaces } from "@/src/config/mobile-intelligence";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
@@ -357,40 +356,54 @@ export function MatchDetailView({
 
   // Only modules that currently have data are rendered; the persisted order
   // still holds a slot for the rest so they return where the user left them.
+  const openDecision = (decisionKey: string) =>
+    router.push({
+      pathname: "/super/[key]",
+      params: { key: decisionKey }
+    } as never);
+
   const moduleNodes: Partial<Record<LiveDetailModuleId, ReactNode>> = {
-    gamePulse: (
-      <LiveDetailPanel eyebrow="MAÇIN NABZI" id="gamePulse" title="Canlı tempo">
-        <GamePulseCard betRadarId={match.betRadarId} />
-      </LiveDetailPanel>
-    ),
-    timeline: (
-      <LiveDetailPanel
-        eyebrow="SKOR & SUPER"
-        id="timeline"
-        title="Skor ve yıldız akışı"
-      >
-        <MatchTimelineCard
-          awayScore={match.awayScore}
-          awayTeam={match.awayTeam}
-          context={liveContext.data}
-          homeScore={match.homeScore}
-          currentDecisionKey={currentDecisionKey}
-          decisions={relatedDecisions}
-          homeTeam={match.homeTeam}
-          isLoading={liveContext.isLoading}
-          includeRedCards={!matchPathEnabled}
-          onDecisionPress={(decision) =>
-            router.push({
-              pathname: "/super/[key]",
-              params: { key: decision.key }
-            } as never)
-          }
-        />
-        <LiveContextFreshness
-          ageSeconds={liveContext.data?.freshness?.ageSeconds}
-          refreshFailed={liveContext.data?.freshness?.refreshFailed}
-          stale={liveContext.data?.freshness?.stale}
-        />
+    // Maçın Yolu carries the score and star flow (owner decision 2026-10-16):
+    // goals, cards and recorded Super decisions are marked on the chart's
+    // event lane, and the tappable chronological list sits under it. The
+    // panel mounts even when the chart engine is off, so the flow itself is
+    // never lost with the build flag.
+    matchPath: (
+      <LiveDetailPanel eyebrow="MAÇ ANALİZİ" id="matchPath" title="Maçın yolu">
+        {matchPathEnabled ? (
+          <MatchJourneyChart
+            context={liveContext.data}
+            decisions={relatedDecisions}
+            key={key}
+            match={match}
+            journey={journey.data}
+            path={matchPath.data}
+            isError={journey.isError}
+            isLoading={journey.isLoading}
+            onDecisionPress={openDecision}
+            pathIsLoading={matchPath.isLoading}
+          />
+        ) : null}
+        <View style={styles.flowSection}>
+          <Text style={styles.flowEyebrow}>SKOR VE YILDIZ AKIŞI</Text>
+          <MatchTimelineCard
+            awayScore={match.awayScore}
+            awayTeam={match.awayTeam}
+            context={liveContext.data}
+            homeScore={match.homeScore}
+            currentDecisionKey={currentDecisionKey}
+            decisions={relatedDecisions}
+            homeTeam={match.homeTeam}
+            isLoading={liveContext.isLoading}
+            includeRedCards={!matchPathEnabled}
+            onDecisionPress={(decision) => openDecision(decision.key)}
+          />
+          <LiveContextFreshness
+            ageSeconds={liveContext.data?.freshness?.ageSeconds}
+            refreshFailed={liveContext.data?.freshness?.refreshFailed}
+            stale={liveContext.data?.freshness?.stale}
+          />
+        </View>
       </LiveDetailPanel>
     ),
     odds: (
@@ -483,26 +496,6 @@ export function MatchDetailView({
   };
 
   // Each engine mounts only when its own build setting enables it.
-  if (matchPathEnabled) {
-    moduleNodes.matchPath = (
-      <LiveDetailPanel
-        eyebrow="MAÇ ANALİZİ"
-        id="matchPath"
-        title="Maçın yolu ve sürpriz olaylar"
-      >
-        <MatchJourneyChart
-          context={liveContext.data}
-          key={key}
-          match={match}
-          journey={journey.data}
-          path={matchPath.data}
-          isError={journey.isError}
-          isLoading={journey.isLoading}
-          pathIsLoading={matchPath.isLoading}
-        />
-      </LiveDetailPanel>
-    );
-  }
   if (intelligence) {
     moduleNodes.askJinx = (
       <LiveDetailPanel eyebrow="JINX" id="askJinx" title="Jinx okuması" leading={<JinxHeadingIcon />}>
@@ -814,29 +807,11 @@ export function MatchDetailView({
         >
           <Text style={styles.bilyonerActionText}>Bilyoner&apos;da aç</Text>
         </Pressable>
-        {fioriEntryAvailable ? (
-        <Pressable
-          accessibilityHint="Gelişmiş maç ekranını açar"
-          accessibilityRole="button"
-          onPress={() =>
-            router.push({
-              pathname: "/fiori",
-              params: {
-                target: "match",
-                matchKey: match.key
-              }
-            })
-          }
-          style={styles.fioriAction}
-        >
-          <Text style={styles.fioriActionText}>BTB Web&apos;de aç</Text>
-        </Pressable>
-        ) : null}
       </View>
       <Text style={styles.safetyNote}>
-        {fioriEntryAvailable
-          ? "Maç sayfası Bilyoner uygulamasında; uygulama yoksa güvenli web sayfasında açılır. Gelişmiş BTB ekranı ayrı bir web görünümünde açılır."
-          : "Maç sayfası Bilyoner'de yeni sekmede açılır."}
+        {Platform.OS === "web"
+          ? "Maç sayfası Bilyoner'de yeni sekmede açılır."
+          : "Maç sayfası Bilyoner uygulamasında; uygulama yoksa güvenli web sayfasında açılır."}
       </Text>
       </Screen>
     </>
@@ -1176,17 +1151,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "900"
   },
-  fioriAction: {
-    minHeight: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: radii.round,
-    backgroundColor: colors.blue
+  flowSection: {
+    gap: spacing.sm,
+    marginTop: spacing.lg
   },
-  fioriActionText: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: "900"
+  flowEyebrow: {
+    ...typeScale.eyebrow,
+    color: colors.bronze
   },
   safetyNote: {
     color: colors.textSubtle,

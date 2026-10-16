@@ -26,7 +26,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { mobileApi } from "@/src/api";
 import { superKpisQuery } from "@/src/api/queries";
-import { fioriEntryAvailable } from "@/src/legacy/fiori-availability";
 import { useSuperStarFilter } from "@/src/preferences/SuperStarFilterProvider";
 import { colors, iconSizes, radii, semantic, shadows } from "@/src/theme/theme";
 import { useTutorial } from "@/src/tutorial/TutorialProvider";
@@ -55,7 +54,6 @@ import { resolveBubblePosition } from "./bubble-position";
 import { useDiscovery } from "./DiscoveryProvider";
 import { gestureSpring } from "@/src/theme/motion";
 import { useReducedMotion } from "@/src/theme/use-reduced-motion";
-import { useMascotActions } from "./MascotActions";
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
 type Position = { x: number; y: number };
@@ -137,7 +135,6 @@ export function BtbMascotOverlay() {
   const router = useRouter();
   const { filter: superStarFilter } = useSuperStarFilter();
   const superKpis = useQuery(superKpisQuery);
-  const { pageActions } = useMascotActions();
   const tutorial = useTutorial();
   const discovery = useDiscovery();
   const presence = bibiPresence(pathname);
@@ -851,32 +848,15 @@ export function BtbMascotOverlay() {
     ]
   );
 
-  const menuItems = useMemo<MenuItem[]>(() => {
-    const items: MenuItem[] = [];
-    if (pageActions) {
-      items.push(
-        { key: "page-back", icon: "arrow-left", label: "Sayfada geri", onPress: pageActions.back },
-        { key: "page-refresh", icon: "reload", label: "Yenile", onPress: pageActions.refresh },
-        { key: "page-external", icon: "open-in-new", label: "Tarayıcıda aç", onPress: pageActions.openExternal }
-      );
-    }
-    items.push(
+  const menuItems = useMemo<MenuItem[]>(
+    () => [
       { key: "home", icon: "view-dashboard-outline", label: "Özet", onPress: () => router.replace("/") },
       { key: "live", icon: "soccer", label: "Canlı", onPress: () => router.replace("/live") },
       { key: "super", icon: "star-outline", label: "Super", onPress: () => router.replace("/super") },
       { key: "toto", icon: "ticket-confirmation-outline", label: "Toto", onPress: () => router.replace("/toto") }
-    );
-    if (pathname !== "/fiori" && fioriEntryAvailable) {
-      items.push({
-        key: "fiori",
-        icon: "view-dashboard-variant-outline",
-        label: "BTB Web",
-        onPress: () =>
-          router.push({ pathname: "/fiori", params: { target: "launchpad" } })
-      });
-    }
-    return items;
-  }, [pageActions, pathname, router]);
+    ],
+    [router]
+  );
 
   const menuDown = displayPosition.y < height / 2;
   const menuRight = displayPosition.x > width / 2;

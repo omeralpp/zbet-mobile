@@ -4,14 +4,14 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Polyline, Rect, Stop, Text as SvgText } from 'react-native-svg';
-import type { LiveContext, MatchDetail, MatchJourney, MatchJourneyPoint, MatchPathContext } from '@/src/api/schemas';
+import type { LiveContext, MatchDetail, MatchJourney, MatchJourneyPoint, MatchPathContext, SuperLog } from '@/src/api/schemas';
 import { colors, radii, semantic, spacing, typeScale } from '@/src/theme/theme';
 import { SurfaceMaterial } from './SurfaceMaterial';
 import { CaveatLine, OriginBadge } from './IntelligenceNotice';
 import { goalModeEffectText, journeyPointLabel } from './match-journey';
 import { latestMatchPathSignal, matchAnalysisEvents, type MatchAnalysisEvent } from './match-analysis-events';
 import { lowCohortNotice, normalityLabel, resolveMatchPathState, surpriseLabel } from './match-path-chart';
-import { journeyMomentEffect, journeyMoments, journeyVertices, markerGroups, poolLeaders, pressureReading } from './journey-story';
+import { journeyAndSuperMoments, journeyMomentEffect, journeyVertices, markerGroups, poolLeaders, pressureReading } from './journey-story';
 import { derivePressureBalance } from '@/src/utils/pressure-balance';
 import { capturedIntervalPressure, currentIntervalPressure } from '@/src/utils/recent-pressure';
 import { JourneyEventGlyph, JourneyEventIcon, journeyEventColor, journeySvgAccessibility } from './JourneyEventIcon';
@@ -21,12 +21,17 @@ const TOP=26, HEIGHT=124, BOTTOM=TOP+HEIGHT, LEFT=58, RIGHT=22;
 const LANE_Y=192, PRESSURE_Y=260, CHART_HEIGHT=302;
 const MARKER_GAP=journeyTouch.markerGap;
 const EMPTY_POINTS: MatchJourneyPoint[]=[];
+const EMPTY_DECISIONS: readonly SuperLog[]=[];
+const LEGEND_KINDS=['GOAL','RED_CARD','SUPER','POOL_CHANGE','CORRECTION'] as const;
+const LEGEND_LABELS: Record<(typeof LEGEND_KINDS)[number],string>={GOAL:'Gol',RED_CARD:'Kart',SUPER:'Super',POOL_CHANGE:'Yeni havuz',CORRECTION:'Düzeltme'};
 const svgLabel={fontSize:12,fontWeight:'500',fontFamily:'sans-serif'} as const;
 const bands=[{label:'Olağan',level:.85},{label:'Sıra dışı',level:.5},{label:'Sürpriz',level:.15}];
 
-export function MatchJourneyChart({ context, match, journey, path, isError, isLoading, pathIsLoading }: {
+export function MatchJourneyChart({ context, match, journey, path, isError, isLoading, pathIsLoading, decisions=EMPTY_DECISIONS, onDecisionPress }: {
   context: LiveContext | undefined; match: MatchDetail; journey: MatchJourney | undefined;
   path: MatchPathContext | undefined; isError: boolean; isLoading: boolean; pathIsLoading: boolean;
+  /** Recorded Super decisions for this match, drawn as star marks on the event lane. */
+  decisions?: readonly SuperLog[]; onDecisionPress?: (decisionKey: string) => void;
 }) {
   const [width,setWidth]=useState(310);
   const [selectedKey,setSelectedKey]=useState<string | null>(null);
@@ -44,7 +49,7 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
   const drawn=useMemo(()=>points.filter(p=>p.level!==null && p.plotMinute!==null),[points]);
   const latest=drawn.at(-1);
   const selected=drawn.find(p=>p.key===selectedKey) ?? latest;
-  const moments=useMemo(()=>journeyMoments(points,live),[points,live]);
+  const moments=useMemo(()=>journeyAndSuperMoments(points,live,decisions),[points,live,decisions]);
   const activeMoment=moments.find(event=>event.key===activeEventKey);
   const referencePoint=points.find(p=>p.referenceChange && p.plotMinute!==null);
   const referenceMinute=referencePoint?.plotMinute ?? 45;
@@ -232,12 +237,12 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
     </GestureDetector>
     </View>
     <Text style={story.gestureHint}>↔ Parmağını grafikte sürükle · ↑↓ Sayfayı kaydır</Text>
-    <View style={story.eventLegend}>{(['GOAL','RED_CARD','POOL_CHANGE','CORRECTION'] as const).map(kind=><View key={kind} style={story.legendItem}><Svg width={18} height={18} viewBox="0 0 24 24" {...journeySvgAccessibility}><JourneyEventGlyph kind={kind} color={kind==='RED_CARD'?colors.red:colors.textMuted}/></Svg><Text style={story.hint}>{kind==='GOAL'?'Gol':kind==='RED_CARD'?'Kart':kind==='POOL_CHANGE'?'Yeni havuz':'Düzeltme'}</Text></View>)}</View>
+    <View style={story.eventLegend}>{LEGEND_KINDS.map(kind=><View key={kind} style={story.legendItem}><Svg width={18} height={18} viewBox="0 0 24 24" {...journeySvgAccessibility}><JourneyEventGlyph kind={kind} color={kind==='RED_CARD'?colors.red:kind==='SUPER'?colors.gold:colors.textMuted}/></Svg><Text style={story.hint}>{LEGEND_LABELS[kind]}</Text></View>)}</View>
     <Text style={story.hint}>{drawn.length?'Çizgi: havuz uyumu, kazanma olasılığı değil. Rozet: gruplanan olay sayısı.':'Olay ikonuna dokun. Rozet: gruplanan olay sayısı.'}</Text>
     {activeGroup&&activeGroup.length>1?<View style={story.groupChoices}><Text style={story.controlText}>{momentGroupLabel(activeGroup)}</Text>{activeGroup.map(event=><Pressable key={`choice:${event.key}`} accessibilityRole="button" accessibilityState={{selected:activeEventKey===event.key}} onPress={()=>pickMoment(event.key)} style={[story.groupChoice,activeEventKey===event.key?story.momentActive:null]}><JourneyEventIcon event={event}/><View style={{flex:1}}><Text style={story.groupChoiceText}>{event.label} · {event.title}{event.score?` · ${event.score}`:''}</Text>{event.side?<Text style={story.hint}>{event.side==='HOME'?match.homeTeam:match.awayTeam}</Text>:null}</View></Pressable>)}</View>:null}
     {moments.length&&!(activeGroup&&activeGroup.length>1)?<ScrollView ref={eventRail} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={story.moments}>
       {moments.map(event=><Pressable key={event.key} accessibilityRole="button" accessibilityState={{selected:activeEventKey===event.key}} accessibilityLabel={`${event.label}, ${event.title}, ${event.score??''}`} onPress={()=>pickMoment(event.key)} style={[story.moment,activeEventKey===event.key?story.momentActive:null]}>
-        <JourneyEventIcon event={event}/><View style={{flex:1}}><Text numberOfLines={2} style={story.momentTitle}>{event.label} · {event.title}</Text><Text style={story.momentScore}>{event.score??(event.side==='HOME'?match.homeTeam:event.side==='AWAY'?match.awayTeam:'Olayı aç')}</Text></View>
+        <JourneyEventIcon event={event}/><View style={{flex:1}}><Text numberOfLines={2} style={story.momentTitle}>{event.label} · {event.title}</Text>{event.kind==='SUPER'?<Text accessibilityLabel={`${event.stars??1} yıldız`} style={[story.momentScore,story.superStars]}>{'★'.repeat(event.stars??1)}</Text>:<Text style={story.momentScore}>{event.score??(event.side==='HOME'?match.homeTeam:event.side==='AWAY'?match.awayTeam:'Olayı aç')}</Text>}</View>
       </Pressable>)}
     </ScrollView>:!moments.length?<Text style={story.hint}>{live?.timeline==null?'Gol ve kart akışı bekleniyor.':'Henüz gol, kart veya havuz geçişi yok.'}</Text>:null}
     {activeMoment?<View style={story.focus} accessibilityLiveRegion="polite">
@@ -246,6 +251,7 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
       {activeMoment.player?<Text style={story.subtitle}>{activeMoment.player}</Text>:null}
       <Text style={story.subtitle}>{journeyMomentEffect(activeMoment)}</Text>
       {activeMoment.kind==='GOAL'?<Text style={story.subtitle}>{goalModeEffectText(activeMoment.point)}</Text>:null}
+      {activeMoment.kind==='SUPER'&&activeMoment.superKey&&onDecisionPress?<Pressable accessibilityRole="button" accessibilityHint="Super karar detayını açar" onPress={()=>onDecisionPress(activeMoment.superKey!)} style={story.focusAction}><Text style={story.controlText}>Super kararını aç ›</Text></Pressable>:null}
     </View>:selected?<View style={story.focus} accessibilityLiveRegion="polite">
       <View style={story.topline}><Text style={story.eyebrow}>{selected.elapsed||selected.plotMinute}′ · {selected.home??'—'}–{selected.away??'—'}</Text><Text style={story.micro}>{selected===latest?'SON KAYIT':'SEÇİLİ AN'}</Text></View>
       <Text style={story.focusTitle}>{journeyPointLabel(selected)}</Text><Text style={story.subtitle}>{pressureReading(selected)}</Text>
@@ -281,7 +287,7 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
     {latestPath?.belowReliableCohort?<Text style={story.hint}>Az örneklem · bu havuz değerlendirmesi henüz yeterli maçla desteklenmiyor.</Text>:null}
     {showAnalysis?<AnalysisEventRail activeKey={activeEventKey} awayTeam={match.awayTeam} homeTeam={match.homeTeam} events={analysisEvents} onSelect={selectAnalysis} path={analysisPath} state={pathState}/>:null}
     <Pressable accessibilityRole="button" accessibilityState={{expanded:showRules}} onPress={()=>setShowRules(!showRules)} style={story.disclosure}><Text style={story.hint}>{drawn.filter(p=>p.capturedAt!==null).length} kayıt · Nasıl okunur?</Text><Text style={story.controlText}>{showRules?'−':'+'}</Text></Pressable>
-    {showRules?<Text style={story.subtitle}>Mavi çizgi maçın referans havuzuyla uyumunu gösteren sıralı bir ölçektir; kalibre olasılık değildir. İlk yarı devre skoru, ikinci yarı gerçekleşen devre skoruna göre maç sonu havuzu kullanılır. Yeni havuzdaki dikey basamak referans değişimidir. İçi boş noktalar ara veya düzeltme kayıtlarıdır; iki kayıt arasındaki çizgi görsel bağlantıdır, aradaki dakikalar ölçülmüş sayılmaz. Baskı şeridinde yukarı yön beklentiyi destekler, aşağı yön beklentiye karşıdır; bu renkler takım tarafı değildir. Ölçülmedi: eksik değerler sıfır olarak çizilmez. Golün elediği sonuçlar olay öncesi uyumlu havuzdan gelir; olay sürprizi ve durum normalliği farklı ölçümlerdir. Az örneklemli skor değerlendirmeleri kesin sonuç gibi okunmamalıdır. Kayıt başlangıcından önceki geçmiş üretilmez. Super kararları aşağıdaki ayrı akıştadır.</Text>:null}
+    {showRules?<Text style={story.subtitle}>Mavi çizgi maçın referans havuzuyla uyumunu gösteren sıralı bir ölçektir; kalibre olasılık değildir. İlk yarı devre skoru, ikinci yarı gerçekleşen devre skoruna göre maç sonu havuzu kullanılır. Yeni havuzdaki dikey basamak referans değişimidir. İçi boş noktalar ara veya düzeltme kayıtlarıdır; iki kayıt arasındaki çizgi görsel bağlantıdır, aradaki dakikalar ölçülmüş sayılmaz. Baskı şeridinde yukarı yön beklentiyi destekler, aşağı yön beklentiye karşıdır; bu renkler takım tarafı değildir. Ölçülmedi: eksik değerler sıfır olarak çizilmez. Golün elediği sonuçlar olay öncesi uyumlu havuzdan gelir; olay sürprizi ve durum normalliği farklı ölçümlerdir. Az örneklemli skor değerlendirmeleri kesin sonuç gibi okunmamalıdır. Kayıt başlangıcından önceki geçmiş üretilmez. Altın yıldızlar BTB’nin o dakikada kaydettiği Super tercihleridir; maç olayı değildir. Gol, kart ve Super kayıtlarının ayrıntılı listesi aşağıdaki skor ve yıldız akışındadır.</Text>:null}
   </View>;
 }
 
@@ -298,7 +304,8 @@ const story=StyleSheet.create({
   latestButton:{minHeight:48,justifyContent:'center',paddingHorizontal:6},markerHit:{position:'absolute',width:48,height:48},
   gestureHint:{...typeScale.label,color:colors.text,lineHeight:18},eventLegend:{flexDirection:'row',flexWrap:'wrap',gap:12},legendItem:{flexDirection:'row',alignItems:'center',gap:4},
   groupChoices:{gap:6},groupChoice:{flexDirection:'row',alignItems:'center',gap:8,minHeight:48,padding:10,borderColor:colors.borderSoft,borderWidth:1,borderRadius:10,backgroundColor:colors.backgroundElevated},groupChoiceText:{...typeScale.label,color:colors.text,flex:1,lineHeight:18},
-  hint:{...typeScale.label,fontSize:11,color:colors.textMuted,lineHeight:16},moments:{gap:8,paddingVertical:3},moment:{width:180,minHeight:76,flexDirection:'row',gap:10,alignItems:'center',backgroundColor:colors.backgroundElevated,borderWidth:1,borderColor:colors.borderSoft,borderRadius:12,padding:12},momentActive:{borderColor:colors.blue},momentTitle:{...typeScale.label,color:colors.textMuted},momentScore:{...typeScale.bodyCompact,color:colors.text,fontWeight:'700'},
+  hint:{...typeScale.label,fontSize:11,color:colors.textMuted,lineHeight:16},moments:{gap:8,paddingVertical:3},moment:{width:180,minHeight:76,flexDirection:'row',gap:10,alignItems:'center',backgroundColor:colors.backgroundElevated,borderWidth:1,borderColor:colors.borderSoft,borderRadius:12,padding:12},momentActive:{borderColor:colors.blue},momentTitle:{...typeScale.label,color:colors.textMuted},momentScore:{...typeScale.bodyCompact,color:colors.text,fontWeight:'700'},superStars:{color:colors.gold,letterSpacing:1},
+  focusAction:{minHeight:48,justifyContent:'center',alignSelf:'flex-start'},
   focus:{backgroundColor:colors.backgroundElevated,borderLeftWidth:3,borderLeftColor:colors.blue,borderRadius:12,padding:14,gap:7},focusTitle:{...typeScale.bodyCompact,color:colors.text,fontWeight:'700',lineHeight:22},
   controls:{flexDirection:'row',justifyContent:'space-between',gap:4},control:{flex:1,minHeight:48,alignItems:'center',justifyContent:'center',paddingHorizontal:6},controlText:{...typeScale.label,color:colors.blue,fontWeight:'700'},disabled:{opacity:.3},
   poolBox:{borderWidth:1,borderColor:colors.border,borderRadius:16,padding:12,gap:10},leaders:{flexDirection:'row',gap:12},leader:{flex:1,gap:6},poolScore:{fontSize:21,fontWeight:'700',color:colors.text},track:{height:4,borderRadius:2,backgroundColor:colors.borderSoft,overflow:'hidden'},fill:{height:4,backgroundColor:colors.bronze,borderRadius:2},

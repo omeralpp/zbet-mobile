@@ -19,9 +19,11 @@ test("detay ekranı mevcut gezinme geçmişini kullanır", () => {
   );
 });
 
-test("Fiori ekranı Android geri tuşunu WebView katmanına bırakır", () => {
-  assert.equal(resolveAndroidBackAction("/fiori", true), "delegate");
-  assert.equal(resolveAndroidBackAction("/fiori", false), "delegate");
+test("kaldırılan Fiori yolu sıradan bir ekran gibi davranır", () => {
+  // The Fiori WebView was removed on 2026-10-16; nothing delegates the back
+  // key to a web view any more.
+  assert.equal(resolveAndroidBackAction("/fiori", true), "back");
+  assert.equal(resolveAndroidBackAction("/fiori", false), "home");
 });
 
 test("geçmişsiz derin bağlantı güvenli biçimde özete döner", () => {

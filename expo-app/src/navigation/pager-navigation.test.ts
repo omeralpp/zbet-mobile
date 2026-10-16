@@ -51,11 +51,21 @@ test("the shared screen no longer installs a competing main-tab pan", () => {
   assert.match(screen, /\.enabled\(edgeSwipeBack\)/);
 });
 
-test("the Fiori shell does not paint the legacy BTB WEB badge", () => {
-  const fiori = source("app/fiori.tsx");
-
-  assert.doesNotMatch(fiori, /optionalBadge/);
-  assert.doesNotMatch(fiori, /optionalBadgeText/);
+test("no screen opens the retired Fiori web view", () => {
+  // Owner decision 2026-10-16: Fiori entry points are removed from Android
+  // and the web client alike.
+  for (const path of [
+    "app/_layout.tsx",
+    "app/(tabs)/more.tsx",
+    "app/super/[key].tsx",
+    "app/toto/[gcNo]/[version].tsx",
+    "src/screens/MatchDetailView.tsx",
+    "src/mascot/BtbMascotOverlay.tsx"
+  ]) {
+    const screen = source(path);
+    assert.doesNotMatch(screen, /\/fiori|fioriEntryAvailable|BTB Web/, path);
+  }
+  assert.throws(() => source("app/fiori.tsx"));
 });
 
 test("Super outcome band owns current-match navigation without a second button", () => {

@@ -18,7 +18,6 @@ import {
   superLogQuery
 } from "@/src/api/queries";
 import { Screen } from "@/src/components/Screen";
-import { fioriEntryAvailable } from "@/src/legacy/fiori-availability";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { SignalMeter } from "@/src/components/SignalMeter";
 import {
@@ -582,31 +581,6 @@ export default function SuperLogDetailScreen() {
           scrollRef={scrollRef}
         />
 
-        {fioriEntryAvailable ? (
-        <View style={styles.actions}>
-          <Pressable
-            accessibilityHint="Kararın gelişmiş BTB Web görünümünü açar"
-            accessibilityRole="button"
-            onPress={() =>
-              router.push({
-                pathname: "/fiori",
-                params: {
-                  target: "super",
-                  matchDate: log.matchDate,
-                  matchId: String(log.matchId),
-                  elapsed: String(log.elapsed),
-                  selectedOdd: log.selectedOdd,
-                  rating: String(log.rating),
-                  reason: log.reason
-                }
-              })
-            }
-            style={styles.primaryAction}
-          >
-            <Text style={styles.primaryActionText}>BTB Web’de aç</Text>
-          </Pressable>
-        </View>
-        ) : null}
         <Text style={styles.safetyNote}>
           Bu ekran seçilen Super kararının tarihsel kaydını gösterir; güncel maç
           verisiyle değiştirilmez.
@@ -848,18 +822,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.borderSoft
   },
-  actions: {
-    gap: spacing.md,
-    marginTop: spacing.xxl
-  },
-  primaryAction: {
-    minHeight: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: radii.round,
-    backgroundColor: colors.blue
-  },
-  primaryActionText: { color: colors.white, fontSize: 14, fontWeight: "900" },
   safetyNote: {
     color: colors.textSubtle,
     fontSize: 10,

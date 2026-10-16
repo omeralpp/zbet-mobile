@@ -35,10 +35,6 @@ export function AndroidBackGuard() {
           router.canGoBack()
         );
 
-        if (action === "delegate") {
-          return false;
-        }
-
         if (action === "back") {
           router.back();
           return true;

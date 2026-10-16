@@ -35,7 +35,6 @@ import {
   formatCurrencyAmount,
   formatTimestamp
 } from "@/src/utils/format";
-import { fioriEntryAvailable } from "@/src/legacy/fiori-availability";
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { summarizeTotoResults } from "@/src/utils/toto-results";
@@ -414,28 +413,6 @@ export default function TotoProgramDetailScreen() {
             Bilyoner Spor Toto&apos;da aç
           </Text>
         </Pressable>
-        {fioriEntryAvailable ? (
-        <Pressable
-          accessibilityHint="Programın gelişmiş BTB Web görünümünü açar"
-          accessibilityRole="button"
-          onPress={() =>
-            router.push({
-              pathname: "/fiori",
-              params: {
-                target: "toto",
-                gcNo: String(program.gcNo),
-                version: String(program.version)
-              }
-            })
-          }
-          style={({ pressed }) => [
-            styles.primaryAction,
-            pressed && styles.actionPressed
-          ]}
-        >
-          <Text style={styles.primaryActionText}>BTB Web’de aç</Text>
-        </Pressable>
-        ) : null}
       </View>
       <Text style={styles.safetyNote}>
         Tahmin üretme, sonuç kaydetme ve program güncelleme işlemleri bu mobil
@@ -693,18 +670,6 @@ const styles = StyleSheet.create({
   actions: {
     gap: spacing.md,
     marginTop: spacing.xxl
-  },
-  primaryAction: {
-    minHeight: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: radii.round,
-    backgroundColor: colors.blue
-  },
-  primaryActionText: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: "900"
   },
   bilyonerAction: {
     alignItems: "center",

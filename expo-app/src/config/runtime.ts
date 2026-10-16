@@ -17,8 +17,6 @@ type RuntimeExtra = {
   authRevocationEndpoint?: string;
   authEndSessionEndpoint?: string;
   authScopes?: string;
-  legacyLaunchpadUrl?: string;
-  sapWebAllowedHosts?: string;
 };
 
 const extra = (Constants.expoConfig?.extra ?? {}) as RuntimeExtra;
@@ -52,7 +50,5 @@ export const runtimeConfig = {
     )
       .split(/[\s,]+/)
       .filter(Boolean)
-  },
-  legacyLaunchpadUrl: String(extra.legacyLaunchpadUrl ?? ""),
-  sapWebAllowedHosts: String(extra.sapWebAllowedHosts ?? "")
+  }
 } as const;

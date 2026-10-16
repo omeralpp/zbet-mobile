@@ -1,7 +1,6 @@
 import { useEffect, useState, type ComponentProps } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
-import { useRouter } from "expo-router";
 import {
   Alert,
   Platform,
@@ -55,7 +54,7 @@ import {
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
 
-// The browser build (app.surklase.com) has no push, OS settings or Fiori.
+// The browser build (app.surklase.com) has no push or OS settings.
 const isWeb = Platform.OS === "web";
 
 function SettingsRow({
@@ -190,7 +189,6 @@ export default function MoreScreen() {
   const [notificationMinimum, setNotificationMinimumState] =
     useState<SuperNotificationMinimum>(1);
   const auth = useAuth();
-  const router = useRouter();
   const tutorial = useTutorial();
   const discovery = useDiscovery();
 
@@ -318,20 +316,6 @@ export default function MoreScreen() {
 
       <Text style={styles.sectionTitle}>Bağlantılar</Text>
       <View style={styles.group}>
-        {/* The Fiori launchpad is obsolete; the web build does not offer it. */}
-        {isWeb ? null : (
-          <SettingsRow
-            detail="Gelişmiş BTB ekranlarını web üzerinde aç"
-            icon="view-dashboard-variant-outline"
-            onPress={() =>
-              router.push({
-                pathname: "/fiori",
-                params: { target: "launchpad" }
-              })
-            }
-            title="BTB Web Uygulamaları"
-          />
-        )}
         <SettingsRow
           detail="Bilyoner uygulaması veya web sitesi"
           icon="open-in-new"

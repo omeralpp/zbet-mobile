@@ -189,12 +189,7 @@ export default function resolveAppConfig({
     authScopes:
       !usesOAuth
         ? ""
-        : oauthScopes,
-    legacyLaunchpadUrl:
-      process.env.EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL ?? "",
-    sapWebAllowedHosts:
-      process.env.EXPO_PUBLIC_SAP_WEB_ALLOWED_HOSTS ??
-      "*.hana.ondemand.com,*.accounts.ondemand.com,*.trial-accounts.ondemand.com"
+        : oauthScopes
   }
   };
 }

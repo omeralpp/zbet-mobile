@@ -1,12 +1,37 @@
-import type { LiveContext, MatchJourney, MatchJourneyPoint } from '../api/schemas';
+import type { LiveContext, MatchJourney, MatchJourneyPoint, SuperLog } from '../api/schemas';
 import { visibleEvents } from './live-context-view';
+import { buildSuperRatingMarker } from './super-rating-marker';
 
 export type JourneyMoment = {
   key: string; minute: number | null; label: string; title: string;
   score: string | null; side: 'HOME' | 'AWAY' | null;
-  kind: 'GOAL' | 'RED_CARD' | 'POOL_CHANGE' | 'CORRECTION';
+  kind: 'GOAL' | 'RED_CARD' | 'POOL_CHANGE' | 'CORRECTION' | 'SUPER';
   player: string | null; point: MatchJourneyPoint | undefined;
+  /** Set only on SUPER moments: the recorded decision and its star count. */
+  superKey?: string; stars?: number;
 };
+
+/**
+ * Recorded Super decisions as chart moments (owner decision 2026-10-16: the
+ * score and star flow lives inside Maçın Yolu). A decision is a recorded BTB
+ * selection at a minute, not a match event and not a measured pool effect, so
+ * it never carries a journey point or a score.
+ */
+export function superMoments(decisions: readonly SuperLog[]): JourneyMoment[] {
+  return decisions.map(decision => ({
+    key: `super:${decision.key}`, minute: decision.elapsed, label: `${decision.elapsed}′`,
+    title: `Super · ${decision.selectedOdd}`, score: null, side: null, kind: 'SUPER' as const,
+    player: null, point: undefined, superKey: decision.key,
+    stars: buildSuperRatingMarker(decision.rating).starCount
+  }));
+}
+
+/** Match events, captures and recorded Super decisions on one minute axis. */
+export function journeyAndSuperMoments(points: MatchJourneyPoint[], context: LiveContext | undefined,
+  decisions: readonly SuperLog[]): JourneyMoment[] {
+  return [...journeyMoments(points, context), ...superMoments(decisions)]
+    .sort((a,b) => (a.minute ?? Infinity) - (b.minute ?? Infinity));
+}
 
 /** Join only an exact score transition. A nearby capture is not proof of an event's effect. */
 export function journeyMoments(points: MatchJourneyPoint[], context?: LiveContext): JourneyMoment[] {
@@ -82,6 +107,7 @@ export function pressureReading(point: MatchJourneyPoint | undefined) {
 
 /** A known event minute is not an exact timestamp or a measured pool effect. */
 export function journeyMomentEffect(moment: JourneyMoment) {
+  if (moment.kind === 'SUPER') return `BTB bu dakikada ${moment.stars ?? 1} yıldızlı Super tercihi kaydetti. Bu bir karar kaydıdır; maç olayı veya ölçülmüş havuz etkisi değildir.`;
   if (moment.kind === 'POOL_CHANGE') return 'Devre skoruna göre yeni bir havuz seçildi. Çizgideki basamak, referansın değişmesidir.';
   const point = moment.point;
   if (point?.eliminatedRatio != null) return `${point.beforeCount} uyumlu sonuçtan ${point.eliminatedCount} elendi; ${point.compatibleCount} kaldı. Bu, golün havuz etkisi; olay sürprizi yüzdesi değil.`;

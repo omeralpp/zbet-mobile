@@ -50,6 +50,6 @@ export function resolveAuthEntryPresentation(
       "Parolanız uygulamada tutulmaz. Giriş, güvenli kurumsal doğrulama üzerinden tamamlanır.",
     buttonText: "Güvenli giriş yap",
     footerText:
-      "Mobil görünüm salt okunur çalışır. Maç veya program güncellemesi gerektiren işlemler BTB Web ekranında açılır."
+      "Mobil görünüm salt okunur çalışır; maç ve program verisi bu uygulamadan değiştirilmez."
   };
 }

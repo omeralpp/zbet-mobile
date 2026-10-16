@@ -1,19 +1,11 @@
 const rootTabPaths = new Set(["/", "/live", "/super", "/toto", "/more"]);
 
-export type AndroidBackAction =
-  | "back"
-  | "home"
-  | "confirm-exit"
-  | "delegate";
+export type AndroidBackAction = "back" | "home" | "confirm-exit";
 
 export function resolveAndroidBackAction(
   pathname: string,
   canGoBack: boolean
 ): AndroidBackAction {
-  if (pathname === "/fiori") {
-    return "delegate";
-  }
-
   if (rootTabPaths.has(pathname) && pathname !== "/") {
     return "home";
   }

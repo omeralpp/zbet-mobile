@@ -54,11 +54,13 @@ Browser
   allowlist) into a read-only `web:<email>` identity (`mobile.read`). A pilot
   key on the web host is refused. Static hosting sends a strict CSP
   (`script-src 'self'`, `frame-src 'none'`) with SPA fallback.
-- Web exceptions: no push, widgets or swipe pager; Game Pulse opens Bilyoner in
-  a new tab (Bilyoner refuses framing); Fiori entries are hidden on web only;
-  a theme change reloads the page. Desktop-only layouts: sidebar shell, command
-  palette and shortcuts, Canlı split view, Super table, Toto coupon grid,
-  masonry module columns, chart mouse hover.
+- Web exceptions: no push, widgets or swipe pager; a theme change reloads the
+  page. Desktop-only layouts: sidebar shell, command palette and shortcuts,
+  Canlı split view, Super table, Toto coupon grid, masonry module columns,
+  chart mouse hover. Maçın Nabzı (Bilyoner Game Pulse) and every Fiori entry
+  were removed from both surfaces by owner decision on 2026-10-16, so neither is
+  a platform exception any more; the score and star flow lives inside Maçın
+  Yolu on both.
 - Publication: `zbet-cap/scripts/publish-web-client.ps1` (dry run by default;
   `PUBLISH-WEB` / `ROLLBACK-WEB`) after the owner creates the Access
   application before the tunnel hostname.
@@ -141,11 +143,10 @@ Android geçiş yüzeyleri:
 - Headless bildirim görevi yüksek öncelikli FCM veri mesajını doğrular, widget
   snapshot'ını günceller ve ilgili Android kanalında görünür bildirimi üretir.
 - Widget ve bildirim dokunuşları tek Expo Router deep-link sözleşmesine gider.
-- Fiori fallback sayfaları yalnız HTTPS kaynağını uygulama içi WebView'da
-  açar; desteklenmeyen harici hedefler sistem tarayıcısına devredilir.
-- Tek native maskot katmanı hem React Native hem WebView üzerinde yaşar.
-  Fiori sayfası aktifken sayfa geri/yenile/harici tarayıcı eylemlerini
-  kaydeder; böylece ayrı bir kalıcı tarayıcı araç çubuğu gerekmez.
+- Tek native maskot katmanı tüm ekranlarda yaşar. Uygulama içi web görünümü
+  yoktur: Fiori fallback sayfası ve Maçın Nabzı 2026-10-16'da kaldırıldı,
+  `react-native-webview` bağımlılığı da bununla birlikte çıktı. Bilyoner
+  sayfaları yalnız kullanıcı istediğinde sistem tarayıcısında açılır.
 
 ## Cloudflare domain üzerinden aktif pilot
 
@@ -166,16 +167,16 @@ Standalone bildirim servisi aynı özel origin üzerinde ayrı üretici anahtar�
 yüzeydir: generic OIDC, standalone Mobile API/SAP adapter ve standalone
 notification service. Bunların hiçbiri IAS/BTP binding gerektirmez.
 
-Fiori/UI5 hosting, Work Zone shell/destination, CAP/MTA ve IAS entegrasyonu
-`OPTIONAL SAP INTEGRATION` olarak korunur. Kullanıcı Fiori yüzeyini açtığında
-BTP erişimi gerekebilir; bu durum native Dashboard/BTB/Super/Toto, auth,
-bildirim veya widget çalışma koşulu değildir. WebView yalnız yapılandırılmış SAP
-HTTPS hostlarına gider; başarısızlık core uygulamayı durdurmaz.
+UI5/Fiori istemcileri 2026-10-15'te obsolete oldu; Mobile'daki Fiori web
+görünümü ve tüm girişleri 2026-10-16'da Android ve web'den kaldırıldı. Mobile
+SAP'yi yalnız BFF üzerinden okur; BTP/Work Zone erişimi hiçbir core yüzeyin
+(Dashboard, BTB, Super, Toto, auth, bildirim, widget) koşulu değildir.
 
 ### Faz 1 — Read-only BFF
 
 Dashboard, BTB, Super ve Toto GET endpointleri gerçek SAP verisine bağlanır.
-DTO contract testleri ve aynı kayıt için Fiori/native parity kontrolü gerekir.
+DTO contract testleri gerekir (Fiori/native parity kontrolü UI5 emekliliğiyle
+sona erdi).
 
 ### Faz 2 — Pilot
 
@@ -203,7 +204,7 @@ runbook'u ve rollback planı doğrulandıktan sonra emekliye ayrılır.
 - Android production-style JS export.
 - Development build compile ve gerçek cihaz smoke testi.
 - BFF schema/authorization/timeout testleri.
-- Fiori/native örnek kayıt parity testi.
+- Doğrulanmış web export ve tarayıcı smoke'u (Client Parity).
 - Secret taraması ve Firebase service-account anahtarı temizliği.
 
 ## Üretim öncesi blokajlar

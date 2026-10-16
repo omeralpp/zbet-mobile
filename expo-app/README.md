@@ -63,27 +63,25 @@ deneyimin bağımsız kaynak kodudur.
 - Veri varsayılan olarak deterministik mock kaynaktan gelir.
 - Gerçek veri yalnızca pilot anahtarıyla korunan mobil BFF üzerinden okunur;
   mobil uygulama SAP OData servislerine doğrudan bağlanmaz.
-- Livescore, yeni fixture ve Toto `RefreshProgram` gibi veri değiştiren işlemler
-  ilk sürümde uygulama içindeki HTTPS-kısıtlı Fiori ekranına aktarılır. Bu yüzey
-  yalnız yapılandırılmış SAP hostlarında açılır; BTP/Work Zone erişilemezse
-  Dashboard, BTB, Super, Toto, bildirim ve widget akışları çalışmaya devam eder.
+- Uygulama salt okunurdur. Livescore, yeni fixture ve Toto `RefreshProgram`
+  gibi veri değiştiren işlemler uygulamada yoktur; eski Fiori/Work Zone web
+  görünümü sahip kararıyla 2026-10-16'da Android ve web'den kaldırıldı.
 - BTB/Super ile Toto aynı uygulama kabuğunu kullanır ama kaynak, performans ve
   öğrenme metrikleri birbirine karıştırılmaz.
 - Android ana ekranında `BTB Next – Son Super` ve `BTB Next – Performans`
   widget'ları bulunur. Widget'lar FCM veri mesajlarından uygulama açılmadan da
   güncellenir ve dokunulan maç/programı native deep link ile açar.
-- Kodla çizilen BTB maskotu native ve Fiori yüzeylerinde aynı konumu korur;
-  sürüklenebilir hızlı menü native sekmeleri, Fiori geri/yenile ve harici
-  tarayıcı kontrollerini tek noktada sunar.
+- Kodla çizilen BTB maskotu her ekranda aynı konumu korur; sürüklenebilir
+  hızlı menü ana sekmeleri tek noktada sunar.
 - Bibi ilk kurulumda ekran bazlı kısa rehberi açar; bir ekrandaki önemli
   noktalara hareket eder, ilerlemeyi cihazda saklar ve `Daha fazla` ekranından
   kapatılabilir, kaldığı yerden açılabilir veya baştan başlatılabilir.
 - Canlı oran oku güncel oranı seçim oranıyla karşılaştırır; ev/uçak baskı
   simgeleri yalnızca baskı tarafını anlatır. Lig tablosu SAP’ın yayınladığı
   iki takımın sıra/puanıyla sınırlıdır; tam lig verisi uydurulmaz.
-- Fiori WebView native başlık/alt araç çubuğu olmadan sistem güvenli alanı
-  içinde tam ekran çalışır ve Work Zone renderer API'siyle Launchpad başlığını
-  gizli tutar.
+- Maç detayında Maçın Yolu, skor ve yıldız akışını da taşır: gol, kart ve
+  kaydedilen Super tercihleri grafikte dakikasında işaretlenir, altında
+  dokunulabilir kronolojik liste vardır.
 
 Mimari kararlar [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), BFF sözleşmesi
 [contracts/mobile-api.openapi.yaml](contracts/mobile-api.openapi.yaml)
@@ -100,9 +98,9 @@ Copy-Item .env.example .env.local
 npm run start:go
 ```
 
-Temel mock ekranlar Expo Go ile incelenebilir. Uygulama içi Fiori WebView,
-Android widget'ları, arka plan bildirim görevi, doğrudan pilot erişimi ve Firebase
-doğrulaması için development build gerekir:
+Temel mock ekranlar Expo Go ile incelenebilir. Android widget'ları, arka plan
+bildirim görevi, doğrudan pilot erişimi ve Firebase doğrulaması için development
+build gerekir:
 
 ```powershell
 npm run android
@@ -126,11 +124,6 @@ Yalnızca public değerler `EXPO_PUBLIC_*` değişkenlerine yazılır:
   `https://api.surklase.com/auth/callback` olmalı; scope listesi `openid`,
   `offline_access`, `mobile.read` ve `mobile.device.write` içermeli. Public
   secret biçimli bir environment değeri build'i durdurur.
-- `EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL`: doğrulanmış Fiori fallback URL'si.
-- `EXPO_PUBLIC_SAP_WEB_ALLOWED_HOSTS`: Fiori/Work Zone WebView için virgülle
-  ayrılmış kesin veya `*.` wildcard SAP HTTPS host allowlist'i. Varsayılan
-  Launchpad, SAP Accounts ve trial IAS yönlendirmelerini kapsar:
-  `*.hana.ondemand.com,*.accounts.ondemand.com,*.trial-accounts.ondemand.com`.
 - `BTB_GOOGLE_SERVICES_FILE`: build makinesindeki preview Android Firebase
   client dosyasının yolu. Service-account anahtarı değildir ve repoya eklenmez.
 
@@ -202,5 +195,5 @@ powershell -NoProfile -ExecutionPolicy Bypass `
 Cordova ve yeni Expo paketi pilot boyunca yan yana kalır. Android, farklı
 package kimliğindeki eski widget yerleşimlerini yeni uygulamaya otomatik
 taşıyamaz; güncel APK kurulduktan sonra iki `BTB Next` widget'ı launcher
-seçicisinden bir kez eklenir. Bildirim, widget yönlendirmesi ve Fiori oturum
-paritesi gerçek cihazda doğrulandıktan sonra eski uygulama kaldırılır.
+seçicisinden bir kez eklenir. Bildirim ve widget yönlendirmesi gerçek cihazda
+doğrulandıktan sonra eski uygulama kaldırılır.

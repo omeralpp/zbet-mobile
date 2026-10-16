@@ -15,6 +15,20 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
+16 Ekim sahip onaylı plan, Bölüm B (TASK-0144, yerel, commit edilmedi): Maçın
+Nabzı ve tüm Fiori girişleri Android ve web'den kaldırıldı; ayrı "Skor ve yıldız
+akışı" modülü Maçın Yolu'na taşındı (grafikte altın Super yıldızları, altında
+dokunulabilir liste; grafik bayrağı kapalıyken liste kalır). `gamePulse` ve
+`timeline` kayıtlı düzenlerden uzlaştırmayla düşer. `react-native-webview`
+kaldırıldı (native değişiklik, yeni APK gerekir); TASK-0135 Expo yaması (expo
+57.0.30, expo-router 57.0.28) aynı batch'te. Kontroller: tsc/eslint, 601+32 test,
+brand, Doctor 20/20, kalite kapısı (Android Hermes 5,6 MB, temiz edge web export),
+tarayıcı smoke (masaüstü/390 px). Sıradaki: commit/push onayı, TASK-0143 yayın
+betiği düzeltmesi, ardından koordineli Android+web yayını ve Xiaomi smoke'u
+(düzen göçü, yıldız işaretlerinde TalkBack). Platform istisnası olarak Game Pulse
+ve "Fiori yalnız web'de gizli" maddeleri artık yok. Gözlem satırları
+NXT-OBS-160..162. Bölüm A (A4 kalibre EV modeli) BTB - Aktif oturumunun işidir.
+
 16 Ekim sahip kuralı: Android ve web her release'te aynı temiz/pushed commit'ten
 tek batch olarak teslim edilir; platforma özel değişiklikte de diğer yüzey atlanmaz.
 `scripts/client-release.mjs` kaynak/iki artifact hash'i/özellik kiplerini kontrol
@@ -47,7 +61,7 @@ statik barındırma; `api.surklase.com` pilot yolu değişmedi, BFF runtime yeni
 başlatılmadı. Kontroller: 637+18 test, tsc/eslint/brand, Android bundle, temiz
 edge web export; BFF601/build; 4105 provası validate/probe geçti. Doctor 19/20
 yalnız upstream expo 57.0.30/expo-router 57.0.28 (TASK-0135). Fiori girişleri
-Android'de sahip kararına kadar korunur. Karar kaydı
+16 Ekim sahip kararıyla iki yüzeyden de kaldırıldı (TASK-0144). Karar kaydı
 `btb-codex/ROADMAP_AMENDMENT_2026-10-15.md`.
 
 15 Ekim tutarlılık yayını tamamlandı: UI5/Fiori istemcileri obsolete; Mobile/BFF

@@ -77,6 +77,7 @@ test("native splash yalnız uygulama arka planını gösterir", () => {
     "EXPO_PUBLIC_USE_MOCKS",
     "EXPO_PUBLIC_MOBILE_AUTH_MODE",
     "EXPO_PUBLIC_MOBILE_PILOT_KEY",
+    "EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL",
     "EXPO_PUBLIC_SAP_WEB_ALLOWED_HOSTS"
   ] as const;
   const previous = Object.fromEntries(
@@ -106,10 +107,16 @@ test("native splash yalnız uygulama arka planını gösterir", () => {
         }
       }
     ]);
-    assert.equal(
-      config.extra?.sapWebAllowedHosts,
-      "*.hana.ondemand.com,*.accounts.ondemand.com,*.trial-accounts.ondemand.com"
-    );
+    // The Fiori/Work Zone web view was removed on 2026-10-16, so a build no
+    // longer carries its launchpad URL or its SAP host allowlist.
+    process.env.EXPO_PUBLIC_LEGACY_LAUNCHPAD_URL = "https://example.invalid/site";
+    process.env.EXPO_PUBLIC_SAP_WEB_ALLOWED_HOSTS = "*.hana.ondemand.com";
+    const withLegacyEnvironment = resolveAppConfig({
+      config: {}
+    } as ConfigContext);
+    for (const retired of ["legacyLaunchpadUrl", "sapWebAllowedHosts"]) {
+      assert.equal(retired in (withLegacyEnvironment.extra ?? {}), false, retired);
+    }
   } finally {
     for (const name of environmentNames) {
       const value = previous[name];
