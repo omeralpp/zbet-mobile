@@ -15,6 +15,7 @@ import {
 import type { MobileApi } from "./mobile-api";
 import { MobileApiError } from "./mobile-api";
 import type { AnalysisContext } from "./schemas";
+import { previewSelectionReading } from "../mascot/jinx-assessment";
 
 /**
  * Serves the three M15 routes from the built-in fixtures while every other
@@ -112,7 +113,7 @@ export function withSyntheticIntelligence(
         return jinxAssessmentSchema.parse({ contractVersion: "jinx-match-outlook.v3", matchKey: key,
           snapshotId, evidenceRevision: packet.evidenceRevision, selectionKey: packet.selectionKey,
           evaluatedAt: new Date().toISOString(), expiresAt: packet.expiresAt, verdict: "WAIT",
-          reasonCode: "VALUE_UNAVAILABLE", shortReason: "Jinx önizleme kipinde; canlı oyun kararı üretmiyor.",
+            reasonCode: "VALUE_UNAVAILABLE", shortReason: previewSelectionReading(packet),
           riskNote: "Önizleme verileri gerçek karar kanıtı olarak kullanılmaz.", evidence: [], value: null,
           sourceAvailability: packet.sourceAvailability, explanationOrigin: "DETERMINISTIC" });
       }

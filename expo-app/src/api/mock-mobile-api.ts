@@ -36,6 +36,7 @@ import {
 } from "./mock-data";
 import { MobileApiError, type MobileApi } from "./mobile-api";
 import type { AnalysisContext } from "./schemas";
+import { previewSelectionReading } from "../mascot/jinx-assessment";
 
 const analysisSnapshots = new Map<string, AnalysisContext>();
 
@@ -89,7 +90,7 @@ export const mockMobileApi: MobileApi = {
     return jinxAssessmentSchema.parse({ contractVersion: "jinx-match-outlook.v3", matchKey: key,
       snapshotId, evidenceRevision: packet.evidenceRevision, selectionKey: packet.selectionKey,
       evaluatedAt: new Date().toISOString(), expiresAt: packet.expiresAt, verdict: "WAIT",
-      reasonCode: "POLICY_UNAVAILABLE", shortReason: "Bu seçim için doğrulanmış olasılık ve değer politikası henüz yayımlanmadı.",
+      reasonCode: "POLICY_UNAVAILABLE", shortReason: previewSelectionReading(packet),
       riskNote: "Demo verisi; canlı oyun değerlendirmesi değildir.", evidence: [], value: null,
       sourceAvailability: packet.sourceAvailability, explanationOrigin: "DETERMINISTIC" });
   },

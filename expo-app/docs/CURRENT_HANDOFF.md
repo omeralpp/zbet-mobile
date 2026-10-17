@@ -15,15 +15,26 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
-17 October: core UX/Jinx V3 source batch is locally validated; the owner approved
-scoped commit/push on 17 October. Exact Git heads and remote verification are recorded
-in workspace `.codex-artifacts/ux-jinx-2026-10-17/verification.json`. Installed clients
-and the pilot runtime remain the accepted 16 October batch below.
-Compact Overview/live cards, readable selections/search, pinned short Jinx and shared
-nine-source analysis snapshots cover Android/web together. V3 waits until an approved
-BTB value policy/evidence exists; V1/V2 stay compatible. Scope, adapter prerequisites,
-checks and remaining release gates: `UX_JINX_V3_LOCAL_2026_10_17.md`. The Git approval
-grants no runtime, signing, distribution or publication approval.
+17 October: TASK-0160 coordinated UX/Jinx release remains **INCOMPLETE**. The owner
+approved scoped commit/push and subsequently completion of the owner-only release.
+Client 93e8330 APK was privately delivered with pilot signature/ARM64/full-byte
+readback verified; the owner supplied phone screenshots and reported excessive
+journey length and unhelpful Jinx (NXT-OBS-163/164). This is not accepted Android
+smoke. Its web candidate was not published; the accepted 16 October recovery pair
+below remains retained. Corrected BFF 71732a6 is active (17 October, 14:13 UTC);
+local/public live contract checks passed with all nine sources and snapshot identity.
+A real 66′ 1–2 / 2.5-under selection now explains that the score condition can no
+longer be met, while the unavailable-market gate still returns WAIT.
+
+The ongoing authorized UX correction adds graph-tap event inspection, retains
+page position on close, collapses the duplicate full timeline and explains the
+score/selection condition even when economic eligibility remains WAIT. Android
+and web share the correction; V1/V2 and the validated value gate stay intact.
+Scope and verification: `UX_JINX_V3_LOCAL_2026_10_17.md`. Exact source/artifact state
+and pending receipts are in workspace
+`.codex-artifacts/ux-jinx-2026-10-17/verification.json` and `RELEASE_STATUS.md`.
+The corrected delivery must rebuild both artifacts from its new clean pushed
+source and obtain actual owner installation and both client smoke evidence.
 
 16 Ekim ilk koordineli Android+web batch'i **COMPLETE** (TASK-0144/0135/0143
 DONE): batch `client-3e9ffe9…-8757EFEA9837-06AF4EA3CA00`, kaynak zbet-mobile
@@ -125,8 +136,8 @@ Fiziksel sürekli sürükleme/bırakma, olay seçimi ve TalkBack 15 Ekim sahibin
 doğrudan exact-APK bildirimiyle kabul edildi; yeni otomatik fiziksel test yok.
 
 **Rota:** telefon → `https://api.surklase.com` → mevcut pilot BFF
-`zbet-cap/standalone-server.js`,127.0.0.1:4004,pilot auth. Son doğrulanan restart
-PID28784 (gerektiğinde listener'dan yeniden oku). Windows görevi ve
+`zbet-cap/standalone-server.js`,127.0.0.1:4004,pilot auth. Son runtime aktivasyonu
+17 October 14:13 UTC, BFF 71732a6 (PID için listener'ı yeniden oku). Windows görevi ve
 ensure/start launcher korunur. Manifest `PRESSURE_PATH_MAINTENANCE_20261015.json`,
 ham SHA-256 `5A8F31DBA93EAB1E7DC9D7E93ABA614DB66AA439237F8BC57140AF002556587A`. İki önceki A3 manifesti aynen korunur;
 yalnız güncel manifestin düz listesi geçmiş okumaları yetkilendirir.
@@ -204,9 +215,11 @@ legacy blank tag yeni modele yükseltilmez. Tarihsel karar kendi capture'ını o
 
 ## Exact next steps
 
-UX/Jinx batch: scoped commit/push is owner-approved; verify the Git receipt, then
-obtain the separate build/sign, BFF runtime and coordinated release approvals.
-Scope and completed checks: `UX_JINX_V3_LOCAL_2026_10_17.md`.
+UX/Jinx release: continue NXT-OBS-163/164 under the owner's existing scoped Git and
+coordinated release approval. Validate and commit the bounded correction, rebuild
+and verify the matching Android/web pair, deliver the replacement APK privately,
+then publish web only after installation evidence. Close TASK-0160 only after
+both corrected client smokes. Scope: `UX_JINX_V3_LOCAL_2026_10_17.md`.
 TASK-0156: the canonical weekly scorecard exists; rolling 7/30-day data and a runtime
 feed remain missing, while approved probability/value evidence is a separate Phase
 2/3 dependency. Its OPEN task has a dated evidence review for 19 October; local UI

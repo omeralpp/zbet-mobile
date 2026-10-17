@@ -43,7 +43,8 @@ test("Maçın Yolu carries the score and star flow; Game Pulse and the separate 
   assert.ok(pathModule.includes('onDecisionPress={openDecision}'));
   assert.ok(pathModule.includes('<MatchTimelineCard'));
   assert.ok(pathModule.includes('SKOR VE YILDIZ AKIŞI'));
-  assert.ok(pathModule.includes('includeRedCards={!matchPathEnabled}'));
+  assert.ok(pathModule.includes('expandedFlowKey === key'));
+  assert.ok(!pathModule.includes('includeRedCards={!matchPathEnabled}'));
   // The flow survives a build with the chart engine switched off.
   assert.ok(pathModule.includes('{matchPathEnabled ? ('));
   assert.ok(!source.includes('timeline: ('));

@@ -10,6 +10,7 @@ export function JinxAssessmentCard({ context, assessment, pending, error, onAsk 
   pending: boolean; error: boolean; onAsk: () => void;
 }) {
   const [details, setDetails] = useState(false);
+  const [sources, setSources] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
   const matches = assessment?.matchKey === context?.matchKey;
@@ -22,7 +23,7 @@ export function JinxAssessmentCard({ context, assessment, pending, error, onAsk 
     <View style={styles.row}>
       <MaterialCommunityIcons name="chat-question-outline" color={semantic.intelligence} size={22} />
       <Text style={styles.title}>Jinx</Text>
-      {current && verdict ? <Text accessibilityLiveRegion="polite" style={styles.verdict}>{assessmentLabels[verdict]}</Text> : null}
+      {current && verdict ? <Text accessibilityLiveRegion="polite" style={styles.verdict}>{verdict === "WAIT" ? "Yeni oyun: Bekle" : assessmentLabels[verdict]}</Text> : null}
       <Pressable accessibilityRole="button" accessibilityLabel={assessment ? "Jinx değerlendirmesini yenile" : "Jinx’e sor"}
         disabled={pending || !eligible} onPress={onAsk} style={[styles.action, (pending || !eligible) && styles.disabled]}>
         <Text style={styles.actionText}>{pending ? "Bakıyor…" : assessment ? "Yenile" : "Sor"}</Text>
@@ -33,7 +34,7 @@ export function JinxAssessmentCard({ context, assessment, pending, error, onAsk 
       : !context?.selectionKey ? "Şu anda değerlendirilecek bir BTB seçimi yok."
       : error ? "Değerlendirme alınamadı. Veriyi yenileyip tekrar sor."
       : stale ? "Maç verisi değişti veya değerlendirme süresi doldu. Yeniden sor."
-      : current ? assessment?.shortReason : "Bu seçim güncel fiyatıyla oynamaya uygun mu?"}</Text>
+      : current ? assessment?.shortReason : "Skoru, maçın akışını ve bu seçimin riskini yorumla."}</Text>
     {current && assessment?.riskNote ? <Text style={styles.muted}>{assessment.riskNote}</Text> : null}
     {assessment && matches ? <>
       <View style={styles.row}>
@@ -46,11 +47,14 @@ export function JinxAssessmentCard({ context, assessment, pending, error, onAsk 
       {details ? <View style={styles.details}>
         {assessment.value ? <Text style={styles.reason}>Olasılık %{(assessment.value.probability * 100).toFixed(1)} · Adil oran {assessment.value.fairPrice.toFixed(2)} · Beklenen değer %{(assessment.value.expectedValue * 100).toFixed(1)}</Text> : null}
         {assessment.evidence.map((fact) => <Text key={fact.id} style={styles.reason}>{fact.text}</Text>)}
-        {Object.entries(assessment.sourceAvailability).map(([name, state]) => <Text key={name} style={styles.muted}>
+        <Pressable accessibilityRole="button" accessibilityState={{ expanded: sources }} onPress={() => setSources(!sources)} style={styles.sourceAction}>
+          <Text style={styles.link}>{Object.values(assessment.sourceAvailability).filter(state => state === "OK" || state === "SYNTHETIC").length}/{Object.keys(assessment.sourceAvailability).length} kaynak · {sources ? "Kaynakları gizle" : "Kaynak durumu"}</Text>
+        </Pressable>
+        {sources ? Object.entries(assessment.sourceAvailability).map(([name, state]) => <Text key={name} style={styles.muted}>
           {analysisSourceLabels[name] ?? "Ek veri"}: {state === "OK" ? "alındı" : state === "SYNTHETIC" ? "demo" : state === "UNAVAILABLE" ? "alınamadı" : "kısmi"}
-        </Text>)}
-        <Text style={styles.muted}>Verilerin alınma zamanı, kaynak ölçümlerinin aynı anda yapıldığını göstermez.</Text>
-        <Text style={styles.muted}>{assessment.explanationOrigin === "DETERMINISTIC" ? "Doğrulanmış kurallarla veri özeti" : "Verilere dayalı kısa Jinx yorumu"}</Text>
+        </Text>) : null}
+        {sources ? <Text style={styles.muted}>Verilerin alınma zamanı, kaynak ölçümlerinin aynı anda yapıldığını göstermez.</Text> : null}
+        <Text style={styles.muted}>{assessment.explanationOrigin === "DETERMINISTIC" ? "Maç verilerinden kısa yorum" : "Verilere dayalı kısa Jinx yorumu"}</Text>
       </View> : null}
     </> : null}
   </View>;
@@ -65,6 +69,7 @@ const styles = StyleSheet.create({
   action: { marginLeft: "auto", minHeight: 48, minWidth: 64, alignItems: "center", justifyContent: "center", borderRadius: radii.md, backgroundColor: colors.blueSoft, paddingHorizontal: spacing.md },
   actionText: { color: colors.white, fontSize: 14, fontWeight: "700" }, disabled: { opacity: 0.6 },
   detailsAction: { minHeight: 48, justifyContent: "center", marginLeft: "auto" },
+  sourceAction: { minHeight: 48, justifyContent: "center" },
   link: { color: colors.blue, fontSize: 14 },
   details: { borderTopWidth: 1, borderColor: colors.borderSoft, paddingTop: spacing.sm, gap: spacing.xs }
 });

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View, type PointerEvent } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type PointerEvent } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -15,10 +16,10 @@ import { journeyAndSuperMoments, journeyMomentEffect, journeyVertices, markerGro
 import { derivePressureBalance } from '@/src/utils/pressure-balance';
 import { capturedIntervalPressure, currentIntervalPressure } from '@/src/utils/recent-pressure';
 import { JourneyEventGlyph, JourneyEventIcon, journeyEventColor, journeySvgAccessibility } from './JourneyEventIcon';
-import { journeyDragIntent, journeyTouch, momentGroupLead, momentGroupSymbols, momentGroupLabel, nearestJourneyPoint, nearestMomentGroup } from './journey-interaction';
+import { journeyDragIntent, journeyTouch, momentGroupLead, momentGroupSymbols, nearestJourneyPoint, nearestMomentGroup } from './journey-interaction';
 
-const TOP=26, HEIGHT=124, BOTTOM=TOP+HEIGHT, LEFT=58, RIGHT=22;
-const LANE_Y=192, PRESSURE_Y=260, CHART_HEIGHT=302;
+const TOP=20, HEIGHT=92, BOTTOM=TOP+HEIGHT, LEFT=58, RIGHT=22;
+const LANE_Y=158, PRESSURE_Y=222, CHART_HEIGHT=258;
 const MARKER_GAP=journeyTouch.markerGap;
 const EMPTY_POINTS: MatchJourneyPoint[]=[];
 const EMPTY_DECISIONS: readonly SuperLog[]=[];
@@ -26,6 +27,36 @@ const LEGEND_KINDS=['GOAL','RED_CARD','SUPER','POOL_CHANGE','CORRECTION'] as con
 const LEGEND_LABELS: Record<(typeof LEGEND_KINDS)[number],string>={GOAL:'Gol',RED_CARD:'Kart',SUPER:'Super',POOL_CHANGE:'Yeni havuz',CORRECTION:'Düzeltme'};
 const svgLabel={fontSize:12,fontWeight:'500',fontFamily:'sans-serif'} as const;
 const bands=[{label:'Olağan',level:.85},{label:'Sıra dışı',level:.5},{label:'Sürpriz',level:.15}];
+type WebScrollNode={parentElement:WebScrollNode|null;scrollTop:number;scrollLeft:number;scrollHeight:number;clientHeight:number;focus?:(options?:{preventScroll:boolean})=>void;scrollTo:(options:{top:number;left:number;behavior:'instant';x:number;y:number;animated:false})=>void};
+
+function useJourneyInspector() {
+  const [inspectorOpen,setInspectorOpen]=useState(false);
+  const scrubArea=useRef<View>(null);
+  const inspectorTrigger=useRef<View>(null);
+  const savedScroll=useRef<{node:WebScrollNode;top:number;left:number}[]>([]);
+  const openInspector=useCallback(()=>{
+    if(Platform.OS==='web'){
+      savedScroll.current=[];
+      for(let node=(scrubArea.current as unknown as WebScrollNode|null)?.parentElement;node;node=node.parentElement){
+        if(node.scrollHeight>node.clientHeight)savedScroll.current.push({node,top:node.scrollTop,left:node.scrollLeft});
+      }
+      // RN Web restores the previously focused element when a Modal closes.
+      // Give it a meaningful trigger without moving the parent page.
+      (inspectorTrigger.current as unknown as WebScrollNode|null)?.focus?.({preventScroll:true});
+    }
+    setInspectorOpen(true);
+  },[]);
+  const restoreInspectorPosition=useCallback(()=>{
+    if(Platform.OS==='web'){
+      (inspectorTrigger.current as unknown as WebScrollNode|null)?.focus?.({preventScroll:true});
+      // RN Web ScrollView decorates its DOM node with the native x/y scrollTo
+      // shape; ordinary DOM ancestors use top/left. Both restore immediately.
+      for(const {node,top,left} of savedScroll.current)node.scrollTo({top,left,behavior:'instant',x:left,y:top,animated:false});
+      savedScroll.current=[];
+    }
+  },[]);
+  return {inspectorOpen,setInspectorOpen,scrubArea,inspectorTrigger,openInspector,restoreInspectorPosition};
+}
 
 export function MatchJourneyChart({ context, match, journey, path, isError, isLoading, pathIsLoading, decisions=EMPTY_DECISIONS, onDecisionPress }: {
   context: LiveContext | undefined; match: MatchDetail; journey: MatchJourney | undefined;
@@ -34,10 +65,13 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
   decisions?: readonly SuperLog[]; onDecisionPress?: (decisionKey: string) => void;
 }) {
   const [width,setWidth]=useState(310);
+  const {inspectorOpen,setInspectorOpen,scrubArea,inspectorTrigger,openInspector,restoreInspectorPosition}=useJourneyInspector();
+  const inspectorRail=useRef<ScrollView>(null);
+  const window=useWindowDimensions();
+  const insets=useSafeAreaInsets();
   const [selectedKey,setSelectedKey]=useState<string | null>(null);
   const [activeEventKey,setActiveEventKey]=useState<string | null>(null);
   const [isScrubbing,setIsScrubbing]=useState(false);
-  const eventRail=useRef<ScrollView>(null);
   const touchStartX=useSharedValue(0);
   const touchStartY=useSharedValue(0);
   const panActive=useSharedValue(false);
@@ -75,7 +109,6 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
   const currentTitle=latest?.level==null ? match.status==='FINISHED'?'Olaylar ve maç özeti':'Maçın hikâyesi burada birikir' : latest.level>=.7 ? 'Havuz beklentisiyle uyumlu' : latest.level>=.3 ? 'Beklentiden uzaklaşıyor' : 'Havuzun sıra dışı yolu';
   const markerX=useCallback((minute:number)=>Math.max(LEFT+24,Math.min(width-RIGHT-24,x(minute))),[width,x]);
   const groups=useMemo(()=>markerGroups(moments,markerX,MARKER_GAP),[moments,markerX]);
-  const activeGroup=groups.find(group=>group.some(event=>event.key===activeEventKey));
   const laneY=drawn.length?LANE_Y:52;
   const chartHeight=drawn.length?CHART_HEIGHT:132;
   const cursorMinute=activeMoment ? activeMoment.minute : selected?.plotMinute ?? null;
@@ -103,11 +136,11 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
     if(eventLane){
       const group=nearestMomentGroup(groups,px,markerX,drag?Infinity:journeyTouch.eventHitRadius);
       const event=group?momentGroupLead(group):undefined;
-      if(event){pickMoment(event.key);return;}
+      if(event){pickMoment(event.key);if(!drag)openInspector();return;}
     }
     const point=nearestJourneyPoint(drawn,px,x);
-    if(point) pickPoint(point);
-  },[drawn,groups,markerX,pickMoment,pickPoint,x]);
+    if(point){pickPoint(point);if(!drag)openInspector();}
+  },[drawn,groups,markerX,pickMoment,pickPoint,x,openInspector]);
   // Gesture objects stay stable across selection updates. Local gesture x is
   // measured in the same View as the SVG, avoiding child-relative tap offsets.
   const plotGesture=useMemo(()=>{
@@ -141,7 +174,6 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
   // Desktop web: a mouse hovering over the plot reads the nearest journey point
   // like a scrub, without a button held. Event markers stay click-only so
   // passing over them never opens an event. At most one update per 32 ms.
-  const scrubArea=useRef<View>(null);
   const lastHoverAt=useRef(0);
   const hoverProps=Platform.OS==='web'?{
     onPointerMove:(event:PointerEvent)=>{
@@ -154,23 +186,19 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
       if(rect)selectFromPlot(event.nativeEvent.clientX-rect.left,false,true);
     }
   }:{};
-  useEffect(()=>{
-    const index=moments.findIndex(event=>event.key===activeEventKey);
-    if(index>=0)eventRail.current?.scrollTo({x:Math.max(0,index*188-24),animated:false});
-  },[activeEventKey,moments]);
   const capturedPressure=drawn.filter(p=>p.pressureAlignment!==null);
   const hasIntervalPressure=drawn.some(p=>p.decisionContext?.recentPressure.availability==='AVAILABLE');
   const selectedIndex=selected?drawn.indexOf(selected):-1;
+  const revealInspectorEvent=useCallback(()=>{
+    const index=moments.findIndex(event=>event.key===activeEventKey);
+    if(inspectorOpen&&index>=0)inspectorRail.current?.scrollTo({x:Math.max(0,index*164-12),animated:false});
+  },[inspectorOpen,activeEventKey,moments]);
+  useEffect(revealInspectorEvent,[revealInspectorEvent]);
   return <View style={story.card}>
     <SurfaceMaterial radius={radii.lg}/>
     <View style={story.topline}><Text style={story.eyebrow}>MAÇIN YOLU</Text><Text style={story.liveTag}>{match.status==='FINISHED'?'MAÇ TAMAMLANDI':match.status==='HALF_TIME'?'DEVRE ARASI':'MAÇ AKIŞI'}</Text></View>
     {retained?<OriginBadge origin={retained.origin}/>:null}
-    <Text style={story.headline}>{currentTitle}</Text>
-    <View style={story.scoreRow}>
-      <View style={story.team}><View style={[story.dot,{backgroundColor:colors.blue}]}/><Text numberOfLines={2} style={story.teamName}>{match.homeTeam}</Text></View>
-      <View style={story.scorePill}><Text style={story.score}>{match.homeScore}–{match.awayScore}</Text><Text style={story.micro}>GÜNCEL SKOR</Text></View>
-      <View style={[story.team,{justifyContent:'flex-end'}]}><Text numberOfLines={2} style={[story.teamName,{textAlign:'right'}]}>{match.awayTeam}</Text><View style={[story.dot,{backgroundColor:colors.bronze}]}/></View>
-    </View>
+    <Text style={story.subtitle}>{currentTitle}</Text>
     <View style={story.plotSurface} onLayout={event=>setWidth(Math.max(180,event.nativeEvent.layout.width))}>
     <View style={story.plotReadout}>
       <View style={story.plotReadoutCopy} accessible accessibilityRole={drawn.length?'adjustable':'text'}
@@ -217,10 +245,10 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
         const symbolWidth=symbols.length===3?12:18, symbolScale=symbolWidth/24;
         return <G key={lead.key}>{drawn.length?members.map(member=><Line key={`lead:${member.key}`} x1={x(member.minute!)} x2={cx} y1={BOTTOM+4} y2={laneY-17} stroke={journeyEventColor(member)} opacity={.35}/>):null}<Rect x={cx-20} y={laneY-17} width={40} height={34} rx={12} fill={colors.backgroundElevated} stroke={active?colors.text:ink} strokeWidth={active?2:1}/>{symbols.map((event,index)=><G key={event.key} transform={symbols.length>1?`translate(${cx-symbols.length*symbolWidth/2+index*symbolWidth},${laneY-symbolWidth/2}) scale(${symbolScale})`:`translate(${cx-12},${laneY-12})`}><JourneyEventGlyph kind={event.kind} color={journeyEventColor(event)}/></G>)}{members.length>1?<G><Circle cx={cx+15} cy={laneY-16} r={9} fill={ink}/><SvgText x={cx+15} y={laneY-12} textAnchor="middle" fill={colors.background} {...svgLabel}>{members.length>9?'9+':members.length}</SvgText></G>:null}</G>;
       })}
-      {drawn.length?<SvgText x={LEFT} y={244} fill={colors.textMuted} {...svgLabel}>Baskı → havuz beklentisi</SvgText>:null}
+      {drawn.length?<SvgText x={LEFT} y={PRESSURE_Y-16} fill={colors.textMuted} {...svgLabel}>Baskı → havuz beklentisi</SvgText>:null}
       {drawn.length?<Line x1={LEFT} x2={width-RIGHT} y1={PRESSURE_Y} y2={PRESSURE_Y} stroke={colors.border}/>:null}
       {capturedPressure.map(p=><Line key={`pressure:${p.key}`} x1={x(p.plotMinute!)} x2={x(p.plotMinute!)} y1={PRESSURE_Y} y2={PRESSURE_Y-p.pressureAlignment!*14} stroke={p.pressureAlignment!>=0?colors.teal:colors.orange} strokeWidth={Math.max(2,Math.min(5,plotWidth/Math.max(1,capturedPressure.length)))} strokeLinecap="round"/>)}
-      {drawn.length?(!capturedPressure.length?<SvgText x={LEFT} y={288} fill={colors.textMuted} {...svgLabel}>{hasIntervalPressure?'Baskı var · skor yönü belirsiz':'Bu kayıtlarda baskı ölçümü yok'}</SvgText>:<><SvgText x={LEFT} y={288} fill={colors.teal} {...svgLabel}>↑ Skora doğru</SvgText><SvgText x={width-RIGHT} y={288} textAnchor="end" fill={colors.orange} {...svgLabel}>↓ Skora karşı</SvgText></>):null}
+      {drawn.length?(!capturedPressure.length?<SvgText x={LEFT} y={CHART_HEIGHT-14} fill={colors.textMuted} {...svgLabel}>{hasIntervalPressure?'Baskı var · skor yönü belirsiz':'Bu kayıtlarda baskı ölçümü yok'}</SvgText>:<><SvgText x={LEFT} y={CHART_HEIGHT-14} fill={colors.teal} {...svgLabel}>↑ Skora doğru</SvgText><SvgText x={width-RIGHT} y={CHART_HEIGHT-14} textAnchor="end" fill={colors.orange} {...svgLabel}>↓ Skora karşı</SvgText></>):null}
     </Svg>
     {/* Physical input belongs to the one gesture canvas. These overlay buttons
         retain keyboard/screen-reader actions without firing an origin tap after
@@ -229,29 +257,39 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
       accessibilityLabel={members.length>1?`${members.length} olay. ${members.map(event=>`${event.label}, ${event.title}`).join('; ')}. Olayları ayrı ayrı aç.`:`${members[0]!.label}, ${members[0]!.title}`}
       accessibilityState={{selected:members.some(event=>event.key===activeEventKey)}}
       accessibilityActions={[{name:'activate',label:'Olayı aç'}]}
-      onAccessibilityTap={()=>pickMoment(momentGroupLead(members)!.key)}
-      onAccessibilityAction={event=>{if(event.nativeEvent.actionName==='activate')pickMoment(momentGroupLead(members)!.key);}}
-      onPress={()=>pickMoment(momentGroupLead(members)!.key)}
+      onAccessibilityTap={()=>{pickMoment(momentGroupLead(members)!.key);openInspector();}}
+      onAccessibilityAction={event=>{if(event.nativeEvent.actionName==='activate'){pickMoment(momentGroupLead(members)!.key);openInspector();}}}
+      onPress={()=>{pickMoment(momentGroupLead(members)!.key);openInspector();}}
       style={[story.markerHit,{left:markerX(members[0]!.minute!)-24,top:laneY-24}]}/>) }
     </View>
     </GestureDetector>
     </View>
-    <Text style={story.gestureHint}>↔ Parmağını grafikte sürükle · ↑↓ Sayfayı kaydır</Text>
-    <View style={story.eventLegend}>{LEGEND_KINDS.map(kind=><View key={kind} style={story.legendItem}><Svg width={18} height={18} viewBox="0 0 24 24" {...journeySvgAccessibility}><JourneyEventGlyph kind={kind} color={kind==='RED_CARD'?colors.red:kind==='SUPER'?colors.gold:colors.textMuted}/></Svg><Text style={story.hint}>{LEGEND_LABELS[kind]}</Text></View>)}</View>
-    <Text style={story.hint}>{drawn.length?'Çizgi: havuz uyumu, kazanma olasılığı değil. Rozet: gruplanan olay sayısı.':'Olay ikonuna dokun. Rozet: gruplanan olay sayısı.'}</Text>
-    {activeGroup&&activeGroup.length>1?<View style={story.groupChoices}><Text style={story.controlText}>{momentGroupLabel(activeGroup)}</Text>{activeGroup.map(event=><Pressable key={`choice:${event.key}`} accessibilityRole="button" accessibilityState={{selected:activeEventKey===event.key}} onPress={()=>pickMoment(event.key)} style={[story.groupChoice,activeEventKey===event.key?story.momentActive:null]}><JourneyEventIcon event={event}/><View style={{flex:1}}><Text style={story.groupChoiceText}>{event.label} · {event.title}{event.score?` · ${event.score}`:''}</Text>{event.side?<Text style={story.hint}>{event.side==='HOME'?match.homeTeam:match.awayTeam}</Text>:null}</View></Pressable>)}</View>:null}
-    {moments.length&&!(activeGroup&&activeGroup.length>1)?<ScrollView ref={eventRail} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={story.moments}>
-      {moments.map(event=><Pressable key={event.key} accessibilityRole="button" accessibilityState={{selected:activeEventKey===event.key}} accessibilityLabel={`${event.label}, ${event.title}, ${event.score??''}`} onPress={()=>pickMoment(event.key)} style={[story.moment,activeEventKey===event.key?story.momentActive:null]}>
-        <JourneyEventIcon event={event}/><View style={{flex:1}}><Text numberOfLines={2} style={story.momentTitle}>{event.label} · {event.title}</Text>{event.kind==='SUPER'?<Text accessibilityLabel={`${event.stars??1} yıldız`} style={[story.momentScore,story.superStars]}>{'★'.repeat(event.stars??1)}</Text>:<Text style={story.momentScore}>{event.score??(event.side==='HOME'?match.homeTeam:event.side==='AWAY'?match.awayTeam:'Olayı aç')}</Text>}</View>
-      </Pressable>)}
-    </ScrollView>:!moments.length?<Text style={story.hint}>{live?.timeline==null?'Gol ve kart akışı bekleniyor.':'Henüz gol, kart veya havuz geçişi yok.'}</Text>:null}
+    <Text numberOfLines={2} accessibilityLiveRegion="polite" style={story.inlineSummary}>
+      {activeMoment?journeyMomentEffect(activeMoment):selected?journeyPointLabel(selected):isLoading?'Maçın yolu yükleniyor…':'Bu maç için kullanılabilir geçmiş yok.'}
+    </Text>
+    <Pressable ref={inspectorTrigger} accessibilityRole="button" accessibilityLabel="Seçili anın ayrıntısını aç" onPress={openInspector} style={story.inspectButton}>
+      <Text style={story.controlText}>Seçili anı incele</Text><Text style={story.hint}>Dokun: ayrıntı · ↔ zaman · ↕ sayfa</Text>
+    </Pressable>
+    <Modal visible={inspectorOpen} transparent animationType="fade" onRequestClose={()=>setInspectorOpen(false)} onDismiss={restoreInspectorPosition}>
+      <View style={[story.inspectorBackdrop,window.width>=768?{justifyContent:'center'}:null]}>
+        <Pressable accessible={false} onPress={()=>setInspectorOpen(false)} style={StyleSheet.absoluteFill}/>
+        <View accessibilityViewIsModal style={[story.inspector,{maxHeight:window.height*.82,paddingBottom:Math.max(12,insets.bottom)}]}>
+          <View style={story.inspectorHeading}><Text style={story.focusTitle}>Seçili an</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Ayrıntıyı kapat" onPress={()=>setInspectorOpen(false)} style={story.latestButton}><Text style={story.controlText}>Kapat ✕</Text></Pressable>
+          </View>
+          <ScrollView nestedScrollEnabled contentContainerStyle={story.inspectorContent}>
+            {moments.length?<ScrollView ref={inspectorRail} onContentSizeChange={revealInspectorEvent} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={story.moments}>
+              {moments.map(event=><Pressable key={event.key} accessibilityRole="button" accessibilityState={{selected:activeEventKey===event.key}} accessibilityLabel={`${event.label}, ${event.title}, ${event.score??''}`} onPress={()=>pickMoment(event.key)} style={[story.moment,activeEventKey===event.key?story.momentActive:null]}>
+                <JourneyEventIcon event={event}/><View style={{flex:1}}><Text numberOfLines={2} style={story.momentTitle}>{event.label} · {event.title}</Text>{event.kind==='SUPER'?<Text accessibilityLabel={`${event.stars??1} yıldız`} style={[story.momentScore,story.superStars]}>{'★'.repeat(event.stars??1)}</Text>:<Text style={story.momentScore}>{event.score??''}</Text>}</View>
+              </Pressable>)}
+            </ScrollView>:null}
     {activeMoment?<View style={story.focus} accessibilityLiveRegion="polite">
       <Text style={story.eyebrow}>{activeMoment.label} · {activeMoment.title.toLocaleUpperCase('tr-TR')}</Text>
       <Text style={story.focusTitle}>{[activeMoment.side==='HOME'?match.homeTeam:activeMoment.side==='AWAY'?match.awayTeam:null,activeMoment.score].filter(Boolean).join(' · ')||activeMoment.title}</Text>
       {activeMoment.player?<Text style={story.subtitle}>{activeMoment.player}</Text>:null}
       <Text style={story.subtitle}>{journeyMomentEffect(activeMoment)}</Text>
       {activeMoment.kind==='GOAL'?<Text style={story.subtitle}>{goalModeEffectText(activeMoment.point)}</Text>:null}
-      {activeMoment.kind==='SUPER'&&activeMoment.superKey&&onDecisionPress?<Pressable accessibilityRole="button" accessibilityHint="Super karar detayını açar" onPress={()=>onDecisionPress(activeMoment.superKey!)} style={story.focusAction}><Text style={story.controlText}>Super kararını aç ›</Text></Pressable>:null}
+      {activeMoment.kind==='SUPER'&&activeMoment.superKey&&onDecisionPress?<Pressable accessibilityRole="button" accessibilityHint="Super karar detayını açar" onPress={()=>{setInspectorOpen(false);onDecisionPress(activeMoment.superKey!);}} style={story.focusAction}><Text style={story.controlText}>Super kararını aç ›</Text></Pressable>:null}
     </View>:selected?<View style={story.focus} accessibilityLiveRegion="polite">
       <View style={story.topline}><Text style={story.eyebrow}>{selected.elapsed||selected.plotMinute}′ · {selected.home??'—'}–{selected.away??'—'}</Text><Text style={story.micro}>{selected===latest?'SON KAYIT':'SEÇİLİ AN'}</Text></View>
       <Text style={story.focusTitle}>{journeyPointLabel(selected)}</Text><Text style={story.subtitle}>{pressureReading(selected)}</Text>
@@ -288,10 +326,24 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
     {showAnalysis?<AnalysisEventRail activeKey={activeEventKey} awayTeam={match.awayTeam} homeTeam={match.homeTeam} events={analysisEvents} onSelect={selectAnalysis} path={analysisPath} state={pathState}/>:null}
     <Pressable accessibilityRole="button" accessibilityState={{expanded:showRules}} onPress={()=>setShowRules(!showRules)} style={story.disclosure}><Text style={story.hint}>{drawn.filter(p=>p.capturedAt!==null).length} kayıt · Nasıl okunur?</Text><Text style={story.controlText}>{showRules?'−':'+'}</Text></Pressable>
     {showRules?<Text style={story.subtitle}>Mavi çizgi maçın referans havuzuyla uyumunu gösteren sıralı bir ölçektir; kalibre olasılık değildir. İlk yarı devre skoru, ikinci yarı gerçekleşen devre skoruna göre maç sonu havuzu kullanılır. Yeni havuzdaki dikey basamak referans değişimidir. İçi boş noktalar ara veya düzeltme kayıtlarıdır; iki kayıt arasındaki çizgi görsel bağlantıdır, aradaki dakikalar ölçülmüş sayılmaz. Baskı şeridinde yukarı yön beklentiyi destekler, aşağı yön beklentiye karşıdır; bu renkler takım tarafı değildir. Ölçülmedi: eksik değerler sıfır olarak çizilmez. Golün elediği sonuçlar olay öncesi uyumlu havuzdan gelir; olay sürprizi ve durum normalliği farklı ölçümlerdir. Az örneklemli skor değerlendirmeleri kesin sonuç gibi okunmamalıdır. Kayıt başlangıcından önceki geçmiş üretilmez. Altın yıldızlar BTB’nin o dakikada kaydettiği Super tercihleridir; maç olayı değildir. Gol, kart ve Super kayıtlarının ayrıntılı listesi aşağıdaki skor ve yıldız akışındadır.</Text>:null}
+            {showRules?<View style={{gap:8}}>    <Text style={story.gestureHint}>↔ Parmağını grafikte sürükle · ↑↓ Sayfayı kaydır</Text>
+    <View style={story.eventLegend}>{LEGEND_KINDS.map(kind=><View key={kind} style={story.legendItem}><Svg width={18} height={18} viewBox="0 0 24 24" {...journeySvgAccessibility}><JourneyEventGlyph kind={kind} color={kind==='RED_CARD'?colors.red:kind==='SUPER'?colors.gold:colors.textMuted}/></Svg><Text style={story.hint}>{LEGEND_LABELS[kind]}</Text></View>)}</View>
+    <Text style={story.hint}>{drawn.length?'Çizgi: havuz uyumu, kazanma olasılığı değil. Rozet: gruplanan olay sayısı.':'Olay ikonuna dokun. Rozet: gruplanan olay sayısı.'}</Text>
+</View>:null}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
   </View>;
 }
 
 const story=StyleSheet.create({
+  inlineSummary:{fontSize:13,lineHeight:19,color:colors.textMuted},
+  inspectButton:{minHeight:48,gap:4,justifyContent:'center'},
+  inspectorBackdrop:{flex:1,justifyContent:'flex-end',backgroundColor:'rgba(0,0,0,0.55)',paddingHorizontal:12},
+  inspector:{width:'100%',maxWidth:640,alignSelf:'center',backgroundColor:colors.backgroundElevated,borderRadius:20,borderWidth:1,borderColor:colors.border,paddingHorizontal:16},
+  inspectorHeading:{flexDirection:'row',alignItems:'center',justifyContent:'space-between'},
+  inspectorContent:{gap:12,paddingBottom:16},
   card:{padding:16,borderRadius:radii.lg,gap:12,overflow:'hidden'},
   topline:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:8,flexWrap:'wrap'},
   eyebrow:{...typeScale.eyebrow,color:colors.bronze},liveTag:{...typeScale.micro,color:colors.teal},micro:{...typeScale.micro,color:colors.textMuted},
@@ -299,12 +351,12 @@ const story=StyleSheet.create({
   scoreRow:{flexDirection:'row',alignItems:'center',gap:10,paddingVertical:6},team:{flex:1,flexDirection:'row',alignItems:'center',gap:7},teamName:{...typeScale.label,color:colors.text,flexShrink:1,fontWeight:'700'},dot:{width:5,height:20,borderRadius:3},
   scorePill:{alignItems:'center',gap:3},score:{fontSize:28,fontWeight:'700',color:colors.text,fontVariant:['tabular-nums']},
   plotSurface:{backgroundColor:colors.backgroundElevated,borderRadius:16,marginHorizontal:-4,overflow:'hidden'},
-  plotReadout:{minHeight:72,paddingHorizontal:12,paddingVertical:8,flexDirection:'row',alignItems:'center',gap:8,borderBottomColor:colors.borderSoft,borderBottomWidth:1},
+  plotReadout:{minHeight:56,paddingHorizontal:12,paddingVertical:8,flexDirection:'row',alignItems:'center',gap:8,borderBottomColor:colors.borderSoft,borderBottomWidth:1},
   plotReadoutCopy:{flex:1,minWidth:0,gap:3},readoutValue:{fontSize:13,lineHeight:18,fontWeight:'700',color:colors.text,fontVariant:['tabular-nums']},
   latestButton:{minHeight:48,justifyContent:'center',paddingHorizontal:6},markerHit:{position:'absolute',width:48,height:48},
   gestureHint:{...typeScale.label,color:colors.text,lineHeight:18},eventLegend:{flexDirection:'row',flexWrap:'wrap',gap:12},legendItem:{flexDirection:'row',alignItems:'center',gap:4},
   groupChoices:{gap:6},groupChoice:{flexDirection:'row',alignItems:'center',gap:8,minHeight:48,padding:10,borderColor:colors.borderSoft,borderWidth:1,borderRadius:10,backgroundColor:colors.backgroundElevated},groupChoiceText:{...typeScale.label,color:colors.text,flex:1,lineHeight:18},
-  hint:{...typeScale.label,fontSize:11,color:colors.textMuted,lineHeight:16},moments:{gap:8,paddingVertical:3},moment:{width:180,minHeight:76,flexDirection:'row',gap:10,alignItems:'center',backgroundColor:colors.backgroundElevated,borderWidth:1,borderColor:colors.borderSoft,borderRadius:12,padding:12},momentActive:{borderColor:colors.blue},momentTitle:{...typeScale.label,color:colors.textMuted},momentScore:{...typeScale.bodyCompact,color:colors.text,fontWeight:'700'},superStars:{color:colors.gold,letterSpacing:1},
+  hint:{...typeScale.label,fontSize:11,color:colors.textMuted,lineHeight:16},moments:{gap:8,paddingVertical:3},moment:{width:156,minHeight:56,flexDirection:'row',gap:10,alignItems:'center',backgroundColor:colors.backgroundElevated,borderWidth:1,borderColor:colors.borderSoft,borderRadius:12,padding:12},momentActive:{borderColor:colors.blue},momentTitle:{...typeScale.label,color:colors.textMuted},momentScore:{...typeScale.bodyCompact,color:colors.text,fontWeight:'700'},superStars:{color:colors.gold,letterSpacing:1},
   focusAction:{minHeight:48,justifyContent:'center',alignSelf:'flex-start'},
   focus:{backgroundColor:colors.backgroundElevated,borderLeftWidth:3,borderLeftColor:colors.blue,borderRadius:12,padding:14,gap:7},focusTitle:{...typeScale.bodyCompact,color:colors.text,fontWeight:'700',lineHeight:22},
   controls:{flexDirection:'row',justifyContent:'space-between',gap:4},control:{flex:1,minHeight:48,alignItems:'center',justifyContent:'center',paddingHorizontal:6},controlText:{...typeScale.label,color:colors.blue,fontWeight:'700'},disabled:{opacity:.3},

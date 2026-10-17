@@ -230,6 +230,7 @@ export function MatchDetailView({
     []
   );
   const [isFocused, setIsFocused] = useState(false);
+  const [expandedFlowKey, setExpandedFlowKey] = useState<string | null>(null);
   const matchPathEnabled = mountsIntelligenceSurfaces(runtimeConfig.matchPathIntelligence);
   useFocusEffect(useCallback(() => {
     setIsFocused(true);
@@ -346,7 +347,7 @@ export function MatchDetailView({
   const moduleNodes: Partial<Record<LiveDetailModuleId, ReactNode>> = {
     // Maçın Yolu carries the score and star flow (owner decision 2026-10-16):
     // goals, cards and recorded Super decisions are marked on the chart's
-    // event lane, and the tappable chronological list sits under it. The
+    // event lane; the duplicate chronological list opens only on demand. The
     // panel mounts even when the chart engine is off, so the flow itself is
     // never lost with the build flag.
     matchPath: (
@@ -366,7 +367,11 @@ export function MatchDetailView({
           />
         ) : null}
         <View style={styles.flowSection}>
-          <Text style={styles.flowEyebrow}>SKOR VE YILDIZ AKIŞI</Text>
+          {matchPathEnabled ? <Pressable accessibilityRole="button" accessibilityState={{ expanded: expandedFlowKey === key }}
+            onPress={() => setExpandedFlowKey(expandedFlowKey === key ? null : key)} style={{ minHeight: 48, justifyContent: "center" }}>
+            <Text style={styles.flowEyebrow}>{expandedFlowKey === key ? "TÜM OLAYLARI GİZLE −" : "TÜM OLAYLARI GÖR +"}</Text>
+          </Pressable> : <Text style={styles.flowEyebrow}>SKOR VE YILDIZ AKIŞI</Text>}
+          {!matchPathEnabled || expandedFlowKey === key ? <>
           <MatchTimelineCard
             awayScore={match.awayScore}
             awayTeam={match.awayTeam}
@@ -376,7 +381,7 @@ export function MatchDetailView({
             decisions={relatedDecisions}
             homeTeam={match.homeTeam}
             isLoading={liveContext.isLoading}
-            includeRedCards={!matchPathEnabled}
+            includeRedCards
             onDecisionPress={(decision) => openDecision(decision.key)}
           />
           <LiveContextFreshness
@@ -384,6 +389,7 @@ export function MatchDetailView({
             refreshFailed={liveContext.data?.freshness?.refreshFailed}
             stale={liveContext.data?.freshness?.stale}
           />
+          </> : null}
         </View>
       </LiveDetailPanel>
     ),

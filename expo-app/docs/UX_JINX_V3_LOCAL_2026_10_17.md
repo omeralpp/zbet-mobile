@@ -21,8 +21,10 @@ validated economic value as the prerequisite for a favorable recommendation.
   explicit disclosure. Match/selection changes, evidence revisions and expiry
   invalidate the previous assessment. Opening/focusing/polling never generates it.
 - V1/V2 routes and guards remain supported. A provider failure preserves the
-  approved policy verdict with a deterministic explanation. A WAIT makes no
-  commentary provider call. Estimated interval pressure retains its caveat.
+  approved policy verdict with a deterministic explanation. A missing-policy or
+  missing-value WAIT still receives factual match commentary on explicit ask;
+  stale/conflicting/unverified contexts do not. Estimated interval pressure
+  retains its caveat. The editor selects grounded facts and cannot change the verdict.
 
 ## Boundaries and upstream prerequisites
 
@@ -71,12 +73,36 @@ not authenticated pilot/SAP evidence or physical Android acceptance.
 Desktop and 390x844 screenshots are `desktop-preview.jpg` and `phone-preview.jpg`
 in that folder; the local mock preview is `http://127.0.0.1:8092`.
 
-At the local validation checkpoint the source was unstaged/uncommitted. The owner
-approved scoped commit/push on 2026-10-17; exact heads and remote verification belong
-to the workspace verification receipt above. The installed APK, published web client,
-pilot BFF runtime and previous accepted Android/web recovery pair were not changed.
-After the approved Git batch: obtain the separate final build/sign, BFF runtime and
-coordinated Android-delivery/web-publication approvals. Deliver
-and verify installation of the matching APK before publishing web. Close the
-release only with both actual smoke receipts. Physical TalkBack, native interaction,
-real-data latency and owner usability acceptance remain release checks.
+The owner approved scoped commit/push and then completion of the coordinated
+owner-only pilot release on 2026-10-17. The first candidate was privately delivered
+but failed the owner's usability review; its companion web was not published.
+Corrected BFF 71732a6 is now active; local/public actual-data snapshot and V3 schema
+smokes passed. The prior accepted Android/web recovery pair remains retained.
+The replacement client must be built from a new clean pushed commit. Verify private
+APK delivery and actual installation before publishing its matching web artifact.
+Close the release only with both corrected client smoke receipts. Physical TalkBack,
+native interaction, real-data latency and owner usability acceptance remain release
+checks, never inferred from mock browser checks.
+
+## Owner phone correction — NXT-OBS-163/164
+
+The owner reviewed the privately delivered 93e8330 APK on R.Sociedad B–Almeria
+(87′, 1–3) and reported excessive journey length and unhelpful Jinx commentary.
+TASK-0160 remains incomplete; the matching web candidate is not published.
+
+The local correction removes the duplicate score header inside the journey,
+reduces the plot height, and opens selected-event/point detail in an inspector
+from a graph tap. Scrubbing still updates the readout without opening the panel;
+vertical motion still scrolls the page. Closing the inspector preserves page
+position. Its horizontal event choices retain every goal/card/Super, including
+coincident events. The full duplicate timeline opens only on demand.
+
+Jinx leads with the displayed score/minute and what changes the selection's score
+condition, then a concrete grounded observation when available. For the owner's
+example it explains that one more goal breaks 4.5 under; the separate short risk
+line says that the displayed 1.20 price lacks validated value evidence. WAIT
+therefore gates a new wager without suppressing match interpretation. Technical
+source status is a second disclosure, rather than nine default explanation rows.
+Neither this local correction nor the screenshots accept either client smoke or
+authorize an economic policy. A corrected release must rebuild and verify both
+artifacts from its new clean pushed client commit.
