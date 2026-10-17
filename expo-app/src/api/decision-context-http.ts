@@ -16,6 +16,11 @@ export function assertDecisionContextResponse(path: string, data: unknown, versi
     if (!data || typeof data !== "object" || !("points" in data) || !Array.isArray(data.points)) fail();
     records = (data as { points: unknown[] }).points;
   }
+  if (/^\/v1\/btb\/matches\/[^/]+\/analysis-context$/.test(path)) {
+    const sources = (data as { sources?: { matchDetail?: unknown; matchJourney?: { points?: unknown[] } | null } } | null)?.sources;
+    if (!sources?.matchDetail) fail();
+    records = [sources?.matchDetail, ...(sources?.matchJourney?.points ?? [])];
+  }
   if (records?.some(record => !record || typeof record !== "object" || !("decisionContext" in record) ||
       (record.decisionContext as { contractVersion?: string } | null)?.contractVersion !== version)) fail();
 }

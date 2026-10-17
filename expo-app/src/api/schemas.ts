@@ -897,3 +897,55 @@ export const jinxMatchOutlookSchema = z.union([
 
 export type JinxOutlookSignal = z.infer<typeof jinxOutlookSignalSchema>;
 export type JinxMatchOutlook = z.infer<typeof jinxMatchOutlookSchema>;
+
+/* Shared screen context and policy-backed Jinx assessment. Legacy readers
+ * deliberately retain their original schemas and wording guards. */
+export const analysisContextSchema = z.object({
+  contractVersion: z.literal("btb-analysis-context.v1"),
+  matchKey: z.string().min(1), snapshotId: z.string().min(1),
+  evidenceRevision: z.string().min(1), selectionKey: z.string(),
+  acquiredAt: z.string().datetime({ offset: true }), expiresAt: z.string().datetime({ offset: true }),
+  sourceAvailability: z.record(z.string(), z.string()),
+  // Value evidence is server-owned; the client never calculates eligibility.
+  valueEvidence: z.unknown().nullable(),
+  sources: z.object({
+    matchDetail: matchDetailSchema.extend({ currentMatchRecord: z.boolean() }),
+    insight: matchInsightSchema.nullable().catch(null),
+    periodScore: periodScoreContextSchema.nullable().catch(null),
+    leagueContext: matchLeagueContextSchema.nullable().catch(null),
+    superLogs: superLogListSchema.nullable().catch(null),
+    liveContext: liveContextSchema.nullable().catch(null),
+    teamForm: teamFormContextSchema.nullable().catch(null),
+    matchPath: matchPathContextSchema.nullable().catch(null),
+    matchJourney: matchJourneySchema.nullable().catch(null)
+  })
+});
+export type AnalysisContext = z.infer<typeof analysisContextSchema>;
+
+export const jinxAssessmentSchema = z.strictObject({
+  contractVersion: z.literal("jinx-match-outlook.v3"),
+  matchKey: z.string().min(1), snapshotId: z.string().min(1),
+  evidenceRevision: z.string().min(1), selectionKey: z.string(),
+  evaluatedAt: z.string().datetime({ offset: true }), expiresAt: z.string().datetime({ offset: true }),
+  verdict: z.enum(["FAVORABLE", "UNFAVORABLE", "WAIT"]),
+  reasonCode: z.enum(["MATCH_NOT_LIVE", "LIVE_NOT_VERIFIED", "NO_SELECTION", "CONTEXT_CONFLICT", "POLICY_UNAVAILABLE",
+    "VALUE_UNAVAILABLE", "MARKET_UNAVAILABLE", "STATE_MISMATCH", "EVIDENCE_STALE", "VALUE_POSITIVE", "VALUE_NEGATIVE"]),
+  shortReason: z.string().min(1).max(240),
+  riskNote: z.string().max(120).nullable(),
+  evidence: z.array(z.strictObject({ id: z.string(), source: z.string(), text: z.string().max(2500) })).max(2),
+  sourceAvailability: z.record(z.string(), z.string()),
+  explanationOrigin: z.enum(["LIVE", "DETERMINISTIC"]),
+  value: z.strictObject({ probability: finiteNumber.gt(0).lt(1), odds: finiteNumber.gt(1),
+    fairPrice: finiteNumber.gt(1), expectedValue: finiteNumber, minimumExpectedValue: finiteNumber.min(0),
+    policyId: z.string().min(1), modelVersion: z.string().min(1), validationRef: z.string().min(1),
+    quoteMeasuredAt: z.string().datetime({ offset: true }), probabilityMeasuredAt: z.string().datetime({ offset: true }) }).nullable()
+}).superRefine((dto, ctx) => {
+  const valid = dto.verdict === "WAIT" ? dto.value === null && !["VALUE_POSITIVE", "VALUE_NEGATIVE"].includes(dto.reasonCode)
+    : dto.value !== null && (dto.verdict === "FAVORABLE"
+      ? dto.reasonCode === "VALUE_POSITIVE" && dto.value.expectedValue > dto.value.minimumExpectedValue
+      : dto.reasonCode === "VALUE_NEGATIVE" && dto.value.expectedValue <= dto.value.minimumExpectedValue);
+  const consistent = !dto.value || (Math.abs(dto.value.expectedValue - (dto.value.probability * dto.value.odds - 1)) < 1e-9
+    && Math.abs(dto.value.fairPrice - 1 / dto.value.probability) < 1e-9);
+  if (!valid || !consistent) ctx.addIssue({ code: "custom", path: ["verdict"], message: "Unverified value assessment" });
+});
+export type JinxAssessment = z.infer<typeof jinxAssessmentSchema>;

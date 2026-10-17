@@ -4,6 +4,15 @@ import type {
   TotoProgram
 } from "@/src/api/schemas";
 
+/** Readable market names; unknown legacy selections keep their original code. */
+export function formatSelection(code: string): string {
+  const names: Record<string, string> = { Ms1: "Ev sahibi kazanır", MsX: "Beraberlik", Ms2: "Deplasman kazanır",
+    Ms1X: "Ev sahibi / beraberlik", MsX2: "Beraberlik / deplasman", Ms12: "Ev sahibi / deplasman",
+    Kgvar: "Karşılıklı gol var", Kgyok: "Karşılıklı gol yok" };
+  const goals = /^Ms([0-4])5([au])$/.exec(code);
+  return names[code] ?? (goals ? `Toplam gol ${goals[1]},5 ${goals[2] === "a" ? "altı" : "üstü"}` : code);
+}
+
 export function formatRate(value: number | null): string {
   return value === null
     ? "—"

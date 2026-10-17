@@ -1,4 +1,6 @@
 import {
+  analysisContextSchema,
+  jinxAssessmentSchema,
   jinxMatchOutlookSchema,
   matchPathContextSchema,
   teamFormContextSchema
@@ -11,6 +13,8 @@ import {
   type MockIntelligenceState
 } from "./mock-data";
 import type { MobileApi } from "./mobile-api";
+import { MobileApiError } from "./mobile-api";
+import type { AnalysisContext } from "./schemas";
 
 /**
  * Serves the three M15 routes from the built-in fixtures while every other
@@ -80,8 +84,39 @@ export function withSyntheticIntelligence(
   base: MobileApi,
   features = { teamForm: true, matchPath: true, jinxOutlook: true }
 ): MobileApi {
+  const synthetic = features.teamForm || features.matchPath || features.jinxOutlook;
+  const contexts = new Map<string, AnalysisContext>();
   return {
     ...base,
+    ...(synthetic ? {
+      async getMatchAnalysisContext(key: string, signal?: AbortSignal) {
+        const packet = await base.getMatchAnalysisContext(key, signal);
+        const state = syntheticStateForKey(key);
+        const sources = { ...packet.sources,
+          ...(features.teamForm ? { teamForm: mockTeamForm(key, state) } : {}),
+          ...(features.matchPath ? { matchPath: mockMatchPath(key, state), matchJourney: mockRetainedJourney(key) } : {}) };
+        const sourceAvailability = { ...packet.sourceAvailability,
+          ...(features.teamForm ? { teamForm: "SYNTHETIC" } : {}),
+          ...(features.matchPath ? { matchPath: "SYNTHETIC", matchJourney: "SYNTHETIC" } : {}) };
+        const snapshot = analysisContextSchema.parse({ ...packet, sources, sourceAvailability,
+          snapshotId: `synthetic-${packet.snapshotId}`, valueEvidence: null,
+          evidenceRevision: `${packet.evidenceRevision}:synthetic:${JSON.stringify(sources)}` });
+        if (contexts.size >= 128) contexts.delete(contexts.keys().next().value!);
+        contexts.set(snapshot.snapshotId, snapshot);
+        return snapshot;
+      },
+      async getMatchJinxAssessment(key: string, snapshotId: string) {
+        const packet = contexts.get(snapshotId);
+        if (!packet || packet.matchKey !== key || Date.parse(packet.expiresAt) <= Date.now())
+          throw new MobileApiError("Maç verisini yenileyip tekrar sor.", 409, "ANALYSIS_SNAPSHOT_EXPIRED");
+        return jinxAssessmentSchema.parse({ contractVersion: "jinx-match-outlook.v3", matchKey: key,
+          snapshotId, evidenceRevision: packet.evidenceRevision, selectionKey: packet.selectionKey,
+          evaluatedAt: new Date().toISOString(), expiresAt: packet.expiresAt, verdict: "WAIT",
+          reasonCode: "VALUE_UNAVAILABLE", shortReason: "Jinx önizleme kipinde; canlı oyun kararı üretmiyor.",
+          riskNote: "Önizleme verileri gerçek karar kanıtı olarak kullanılmaz.", evidence: [], value: null,
+          sourceAvailability: packet.sourceAvailability, explanationOrigin: "DETERMINISTIC" });
+      }
+    } : {}),
     ...(features.teamForm
       ? {
           async getMatchTeamForm(key: string) {

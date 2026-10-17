@@ -64,6 +64,8 @@ type ScreenProps = PropsWithChildren<{
    * screens laid out in columns. Native and reading-style screens keep 720.
    */
   wide?: boolean;
+  /** Compact context that stays above the scrolling content. */
+  fixedHeader?: ReactNode;
 }>;
 
 export function Screen({
@@ -78,7 +80,8 @@ export function Screen({
   scrollRef,
   contentStyle,
   scrollProps,
-  wide = false
+  wide = false,
+  fixedHeader
 }: ScreenProps) {
   const { width } = useWindowDimensions();
   const widened =
@@ -235,6 +238,7 @@ export function Screen({
         <Animated.View
           style={[styles.gestureRoot, gestureEnabled ? gestureStyle : null]}
         >
+          {fixedHeader}
           {scroll ? (
             <ScrollView
               contentContainerStyle={[styles.content, widened, contentStyle]}

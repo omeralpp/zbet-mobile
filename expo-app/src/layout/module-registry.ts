@@ -11,14 +11,12 @@ export const overviewModules = [
   "featured",
   "metrics",
   "recentSuper",
-  "toto",
-  "hero"
+  "toto"
 ] as const;
 
 export const liveDetailModules = [
-  "decision",
   "matchPath",
-  "askJinx",
+  "decision",
   "teamForm",
   "standings",
   "odds",
@@ -73,8 +71,7 @@ export const moduleLayoutAnchors: Record<
   overview: [],
   liveDetail: [
     { id: "matchPath", after: "decision" },
-    { id: "askJinx", after: "matchPath" },
-    { id: "teamForm", after: "askJinx" }
+    { id: "teamForm", after: "matchPath" }
   ],
   superDetail: []
 };
@@ -84,5 +81,12 @@ export const retiredLiveDetailModules = [
   "lineups",
   "relatedSuper",
   "gamePulse",
-  "timeline"
+  "timeline",
+  "askJinx"
 ] as const;
+
+export const moduleCollapseDefaults: Record<ModuleLayoutSurface, readonly string[]> = {
+  overview: [],
+  liveDetail: liveDetailModules.filter((id) => id !== "matchPath"),
+  superDetail: ["decisionField", "similarity", "standings"]
+};

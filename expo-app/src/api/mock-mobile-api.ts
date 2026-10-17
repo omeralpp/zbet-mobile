@@ -1,4 +1,6 @@
 import {
+  analysisContextSchema,
+  jinxAssessmentSchema,
   liveContextSchema,
   dashboardSchema,
   matchDetailSchema,
@@ -33,6 +35,9 @@ import {
   mockTeamForm
 } from "./mock-data";
 import { MobileApiError, type MobileApi } from "./mobile-api";
+import type { AnalysisContext } from "./schemas";
+
+const analysisSnapshots = new Map<string, AnalysisContext>();
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -53,6 +58,41 @@ async function mockDelay(signal?: AbortSignal): Promise<void> {
 }
 
 export const mockMobileApi: MobileApi = {
+  async getMatchAnalysisContext(key, signal) {
+    const [matchDetail, insight, periodScore, leagueContext, superLogs, liveContext,
+      teamForm, matchPath, matchJourney] = await Promise.all([
+      mockMobileApi.getMatch(key, signal), mockMobileApi.getMatchInsight(key, signal),
+      mockMobileApi.getMatchPeriodScore(key, signal), mockMobileApi.getMatchLeagueContext(key, signal),
+      mockMobileApi.getMatchSuperLogs(key, signal), mockMobileApi.getMatchLiveContext(key, signal),
+      mockMobileApi.getMatchTeamForm(key, signal), mockMobileApi.getMatchPath(key, signal),
+      mockMobileApi.getMatchJourney(key, signal)
+    ]);
+    const acquiredAt = new Date().toISOString();
+    const sources = { matchDetail: { ...matchDetail, currentMatchRecord: true }, insight,
+      periodScore, leagueContext, superLogs, liveContext, teamForm, matchPath, matchJourney };
+    const packet = analysisContextSchema.parse({ contractVersion: "btb-analysis-context.v1", matchKey: key,
+      snapshotId: `synthetic-${key}-${Date.now()}`, evidenceRevision: JSON.stringify(sources),
+      selectionKey: matchDetail.selectedOdd && matchDetail.rating > 0 ? JSON.stringify([key,
+        matchDetail.selectedOdd, matchDetail.rating, matchDetail.decisionMinute, matchDetail.decisionReason]) : "",
+      acquiredAt, expiresAt: new Date(Date.now() + 120000).toISOString(), sources,
+      sourceAvailability: Object.fromEntries(Object.keys(sources).map((name) => [name, "SYNTHETIC"])),
+      valueEvidence: null });
+    if (analysisSnapshots.size >= 128) analysisSnapshots.delete(analysisSnapshots.keys().next().value!);
+    analysisSnapshots.set(packet.snapshotId, packet);
+    return packet;
+  },
+  async getMatchJinxAssessment(key, snapshotId, signal) {
+    await mockDelay(signal);
+    const packet = analysisSnapshots.get(snapshotId);
+    if (!packet || packet.matchKey !== key || Date.parse(packet.expiresAt) <= Date.now())
+      throw new MobileApiError("Maç verisini yenileyip tekrar sor.", 409, "ANALYSIS_SNAPSHOT_EXPIRED");
+    return jinxAssessmentSchema.parse({ contractVersion: "jinx-match-outlook.v3", matchKey: key,
+      snapshotId, evidenceRevision: packet.evidenceRevision, selectionKey: packet.selectionKey,
+      evaluatedAt: new Date().toISOString(), expiresAt: packet.expiresAt, verdict: "WAIT",
+      reasonCode: "POLICY_UNAVAILABLE", shortReason: "Bu seçim için doğrulanmış olasılık ve değer politikası henüz yayımlanmadı.",
+      riskNote: "Demo verisi; canlı oyun değerlendirmesi değildir.", evidence: [], value: null,
+      sourceAvailability: packet.sourceAvailability, explanationOrigin: "DETERMINISTIC" });
+  },
   async getDashboard(signal) {
     await mockDelay(signal);
     return dashboardSchema.parse(clone(mockDashboard));

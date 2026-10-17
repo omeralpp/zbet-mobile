@@ -10,15 +10,14 @@ import {
   parseStoredModulePreference,
   type ModuleLayoutSurface
 } from "./module-layout";
-import { moduleLayoutDefaults } from "./module-registry";
+import { moduleLayoutDefaults, moduleCollapseDefaults } from "./module-registry";
 
 type Listener = () => void;
 
 const listeners = new Set<Listener>();
-// Every surface starts fully expanded. Hydration can only ever close panels the
-// user closed, never open something on their behalf.
+// New installs use focused defaults. Explicit stored choices survive upgrades.
 const state = new Map<ModuleLayoutSurface, string[]>(
-  moduleLayoutSurfaces.map((surface) => [surface, []])
+  moduleLayoutSurfaces.map((surface) => [surface, [...moduleCollapseDefaults[surface]]])
 );
 let hydration: Promise<void> | null = null;
 
@@ -72,16 +71,14 @@ export function hydrateModuleCollapse(): Promise<void> {
         commit(
           surface,
           reconcileCollapsedModules(
-            parseStoredModulePreference(
-              stored.get(moduleCollapseStorageKey(surface))
-            ),
+            parseStoredModulePreference(stored.get(moduleCollapseStorageKey(surface)))
+              ?? moduleCollapseDefaults[surface],
             moduleLayoutDefaults[surface]
           )
         );
       }
     } catch {
-      // Unreadable storage leaves every panel open, which is the state a user
-      // who has never collapsed anything would expect to find.
+      // Unreadable storage leaves the focused defaults already in memory.
     }
   })();
   return hydration;
@@ -97,10 +94,16 @@ export async function expandAllModules(
 ): Promise<void> {
   commit(surface, []);
   try {
-    await AsyncStorage.removeItem(moduleCollapseStorageKey(surface));
+    await AsyncStorage.setItem(moduleCollapseStorageKey(surface), "[]");
   } catch {
     // Losing the removal still leaves the session fully expanded.
   }
+}
+
+export async function resetModuleCollapse(surface: ModuleLayoutSurface): Promise<void> {
+  const defaults = [...moduleCollapseDefaults[surface]];
+  commit(surface, defaults);
+  await persist(surface, defaults);
 }
 
 function subscribe(listener: Listener): () => void {

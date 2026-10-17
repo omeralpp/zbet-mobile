@@ -33,7 +33,8 @@ test("Maçın Yolu carries the score and star flow; Game Pulse and the separate 
   // lives in src/screens.
   const source=await readFile(new URL('../screens/MatchDetailView.tsx',import.meta.url),'utf8');
   const pathModule=source.slice(source.indexOf('matchPath: ('),source.indexOf('odds: ('));
-  assert.ok(source.includes('matchPathQuery(key)'));
+  assert.ok(source.includes('matchAnalysisContextQuery(key)'));
+  assert.ok(source.includes('sourceView(context.data?.sources.matchPath)'));
   // The chart and the flow list share one panel; the chart draws the recorded
   // Super decisions on its event lane and can open them.
   assert.ok(pathModule.includes('<MatchJourneyChart'));
@@ -48,8 +49,8 @@ test("Maçın Yolu carries the score and star flow; Game Pulse and the separate 
   assert.ok(!source.includes('timeline: ('));
   assert.ok(!source.includes('GamePulseCard'));
   assert.ok(!source.includes('useJourneyObservations'));
-  assert.ok(source.includes('journey.refetch()'));
-  assert.ok(source.includes('matchPath.refetch()'));
+  assert.ok(source.includes('sourceView(context.data?.sources.matchJourney)'));
+  assert.ok(source.includes('context.refetch()'));
 });
 test("recorded Super decisions become star moments on the chart's minute axis",()=>{
   const fixture=mockRetainedJourney('test');

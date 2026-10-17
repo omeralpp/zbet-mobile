@@ -1,6 +1,6 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-10-16
+Son güncelleme: 2026-10-17
 
 Mod: `OBSERVATION`
 
@@ -14,6 +14,16 @@ sections below instead of stacking above them; the section headings are selected
 by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
+
+17 October: core UX/Jinx V3 source batch is locally validated; the owner approved
+scoped commit/push on 17 October. Exact Git heads and remote verification are recorded
+in workspace `.codex-artifacts/ux-jinx-2026-10-17/verification.json`. Installed clients
+and the pilot runtime remain the accepted 16 October batch below.
+Compact Overview/live cards, readable selections/search, pinned short Jinx and shared
+nine-source analysis snapshots cover Android/web together. V3 waits until an approved
+BTB value policy/evidence exists; V1/V2 stay compatible. Scope, adapter prerequisites,
+checks and remaining release gates: `UX_JINX_V3_LOCAL_2026_10_17.md`. The Git approval
+grants no runtime, signing, distribution or publication approval.
 
 16 Ekim ilk koordineli Android+web batch'i **COMPLETE** (TASK-0144/0135/0143
 DONE): batch `client-3e9ffe9…-8757EFEA9837-06AF4EA3CA00`, kaynak zbet-mobile
@@ -193,6 +203,14 @@ legacy blank tag yeni modele yükseltilmez. Tarihsel karar kendi capture'ını o
   TASK-0102/TASK-0121 kapalı kabul edilmiş teslimat/rollback kalır.
 
 ## Exact next steps
+
+UX/Jinx batch: scoped commit/push is owner-approved; verify the Git receipt, then
+obtain the separate build/sign, BFF runtime and coordinated release approvals.
+Scope and completed checks: `UX_JINX_V3_LOCAL_2026_10_17.md`.
+TASK-0156: the canonical weekly scorecard exists; rolling 7/30-day data and a runtime
+feed remain missing, while approved probability/value evidence is a separate Phase
+2/3 dependency. Its OPEN task has a dated evidence review for 19 October; local UI
+preparation can proceed. See the local UX note for exact boundaries and screenshots.
 
 Mevcut BFF pilotta çalışır; aşağıdaki gözlem adımları performans kapılarını korur.
 

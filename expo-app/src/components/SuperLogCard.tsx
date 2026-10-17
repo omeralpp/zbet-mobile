@@ -13,6 +13,7 @@ import {
   formatDecisionReason,
   formatMatchKeyDateTime,
   formatRate,
+  formatSelection,
   formatSigned,
   formatSuperResult
 } from "@/src/utils/format";
@@ -104,8 +105,8 @@ export function SuperLogCard({ log }: { log: SuperLog }) {
       </Text>
       <View style={styles.footer}>
         <View style={styles.footerLead}>
-          <Text numberOfLines={1} style={styles.value}>
-            {log.selectedOdd}
+          <Text numberOfLines={2} style={styles.value}>
+            {formatSelection(log.selectedOdd)}
           </Text>
           <Text style={styles.label}>{log.elapsed}&apos; seçim</Text>
         </View>

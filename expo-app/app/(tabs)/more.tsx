@@ -14,7 +14,7 @@ import { Screen } from "@/src/components/Screen";
 import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import { useAuth } from "@/src/auth/AuthProvider";
 import { runtimeConfig } from "@/src/config/runtime";
-import { expandAllModules } from "@/src/layout/module-collapse-store";
+import { resetModuleCollapse } from "@/src/layout/module-collapse-store";
 import { resetModuleOrder } from "@/src/layout/module-layout-store";
 import type { ModuleLayoutSurface } from "@/src/layout/module-layout";
 import { openDeveloperMenu } from "@/src/devtools/developer-menu";
@@ -244,16 +244,13 @@ export default function MoreScreen() {
     }
   };
 
-  // Order and collapse are stored independently, but this control is the user's
-  // one way back to the default layout, so it has to undo both. A reset that
-  // restored the order and left the panels shut would leave someone who closed
-  // several modules with no way to find them again short of reopening each.
+  // Restore both independent preferences to the current focused defaults.
   const restoreLayout = (surface: ModuleLayoutSurface, label: string) => {
-    Promise.all([resetModuleOrder(surface), expandAllModules(surface)])
+    Promise.all([resetModuleOrder(surface), resetModuleCollapse(surface)])
       .then(() =>
         Alert.alert(
           "Düzen sıfırlandı",
-          `${label} BTB varsayılan sırasına döndü ve tüm modüller açıldı.`
+          `${label} BTB varsayılan sırasına ve görünümüne döndü.`
         )
       )
       .catch((error: unknown) => {

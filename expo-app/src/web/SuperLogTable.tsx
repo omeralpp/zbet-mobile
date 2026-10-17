@@ -9,6 +9,7 @@ import {
   formatDecisionReason,
   formatMatchKeyDateTime,
   formatRate,
+  formatSelection,
   formatSigned,
   formatSuperResult,
   formatTimestamp
@@ -29,7 +30,7 @@ const columns: readonly Column[] = [
   { id: "elapsed", label: "Dk", flex: 0.5, align: "right" },
   { id: "market", label: "Market", flex: 1 },
   { id: "rating", label: "Yıldız", flex: 0.9 },
-  { id: "rate", label: "Oran", flex: 0.7, align: "right" },
+  { id: "rate", label: "Seçim oranı", flex: 0.9, align: "right" },
   { id: "reason", label: "Gerekçe", flex: 1.6 },
   { id: "result", label: "Sonuç", flex: 0.9, align: "center" },
   { id: "profit", label: "Kâr", flex: 0.7, align: "right" }
@@ -112,7 +113,7 @@ export function SuperLogTable({ logs }: { logs: readonly SuperLog[] }) {
                 <Text style={styles.text}>{log.elapsed}&apos;</Text>
               </View>
               <View style={[styles.cell, { flex: 1 }]}>
-                <Text numberOfLines={1} style={styles.market}>{log.selectedOdd}</Text>
+                <Text numberOfLines={2} style={styles.market}>{formatSelection(log.selectedOdd)}</Text>
               </View>
               <View style={[styles.cell, { flex: 0.9 }]}>
                 <RatingStars rating={log.rating} size={12} />

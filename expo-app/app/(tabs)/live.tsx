@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   View
 } from "react-native";
 import { matchInsightsQuery, matchesQuery } from "@/src/api/queries";
@@ -124,6 +125,7 @@ export default function LiveScreen() {
   const splitLayout = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
   const grid: CardGrid = splitLayout ? singleColumnGrid : cardGrid;
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const query = useQuery(matchesQuery);
   const insightsQuery = useQuery(matchInsightsQuery);
   const pinnedEligibleKeys = useMemo(
@@ -165,9 +167,9 @@ export default function LiveScreen() {
     const source = query.data ?? [];
     return localTabs.reduce(
       (result, pageTab) => {
-        const pageMatches = source.filter((match) =>
-          matchLiveTab(match, pageTab, starFilter)
-        );
+        const needle = search.trim().toLocaleLowerCase("tr-TR");
+        const pageMatches = source.filter((match) => matchLiveTab(match, pageTab, starFilter)
+          && (!needle || `${match.homeTeam} ${match.awayTeam} ${match.league}`.toLocaleLowerCase("tr-TR").includes(needle)));
         const split = splitPinnedMatches(pageMatches, pinnedKeys);
         result[pageTab] = [
           ...(split.pinned.length
@@ -182,7 +184,7 @@ export default function LiveScreen() {
         ReturnType<typeof groupMatchesByKickoff>
       >
     );
-  }, [pinnedKeys, query.data, starFilter]);
+  }, [pinnedKeys, query.data, starFilter, search]);
   const insightMap = useMemo(
     () =>
       new Map(
@@ -244,6 +246,10 @@ export default function LiveScreen() {
         </View>
       </TutorialTarget>
 
+      <TextInput accessibilityLabel="Takım veya lig ara" placeholder="Takım veya lig ara"
+        placeholderTextColor={colors.textMuted} value={search} onChangeText={setSearch}
+        autoCorrect={false} style={styles.search} />
+
       {query.isLoading ? (
         <LoadingState label="Canlı maçlar hazırlanıyor" />
       ) : query.isError ? (
@@ -285,7 +291,7 @@ export default function LiveScreen() {
                   message={
                     pageTab === "FIXTURE"
                       ? "Yakında başlayacak planlı bir maç bulunmuyor."
-                      : "Bu filtreye uyan bir maç bulunmuyor."
+                      : pageTab === "STAR" && !search ? "Seçilen yıldız filtresinde BTB seçimi yok. Canlı maçları izlemeye devam edebilirsin." : "Bu arama veya filtreye uyan bir maç bulunmuyor."
                   }
                   title={
                     pageTab === "FIXTURE"
@@ -320,6 +326,7 @@ export default function LiveScreen() {
                     matchIndex === 0 ? (
                       <TutorialTarget id="live-first-card" key={match.key}>
                         <MatchCard
+                          compact
                           insight={insightMap.get(match.key)}
                           match={match}
                           onSelect={splitLayout ? () => setSelectedKey(match.key) : undefined}
@@ -334,6 +341,7 @@ export default function LiveScreen() {
                       </TutorialTarget>
                     ) : (
                       <MatchCard
+                        compact
                         insight={insightMap.get(match.key)}
                         key={match.key}
                         match={match}
@@ -384,6 +392,9 @@ const singleColumnGrid: CardGrid = {
 };
 
 const styles = StyleSheet.create({
+  search: { minHeight: 48, borderWidth: 1, borderColor: colors.border, borderRadius: radii.md,
+    backgroundColor: colors.backgroundElevated, color: colors.text, fontSize: 14,
+    paddingHorizontal: spacing.md, marginBottom: spacing.md },
   screen: {
     paddingBottom: 0
   },

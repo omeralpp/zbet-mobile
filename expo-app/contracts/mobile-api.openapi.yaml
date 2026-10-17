@@ -207,14 +207,39 @@ paths:
                 type: object
         default:
           $ref: "#/components/responses/Error"
+  /v1/btb/matches/{key}/analysis-context:
+    get:
+      operationId: getMatchAnalysisContext
+      description: >-
+        Captures the match-detail screen's nine read-only sources. The snapshot
+        is scoped to the authenticated subject, retained for at most 120 seconds,
+        and bounded in memory. acquiredAt is a response acquisition time, not a
+        shared provider measurement time. Supplemental reader failures are null.
+        This endpoint never invokes Jinx generation.
+      parameters:
+        - $ref: "#/components/parameters/Key"
+        - $ref: "#/components/parameters/DecisionContextVersion"
+        - in: header
+          name: X-BTB-Analysis-Features
+          schema: { type: string, default: "journey,form" }
+          description: Comma-separated journey and form capabilities enabled on the screen; empty disables both.
+      responses:
+        "200":
+          description: Captured screen context; Cache-Control no-store.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AnalysisContext" }
+        default:
+          $ref: "#/components/responses/Error"
   /v1/btb/matches/{key}/jinx-outlook:
     get:
       operationId: getMatchJinxOutlook
       description: >-
-        Informative-only Jinx reading of one match. Carries no recommendation,
-        no forecast and no model, Super or rating decision. Default V1 is kept
-        for installed clients; V2 adds grounded evidence, counterevidence and
-        score-change sections under TASK-0121.
+        V1/V2 retain their informative-only behavior for installed clients.
+        V3 returns a short policy-backed FAVORABLE/UNFAVORABLE/WAIT assessment
+        for an existing displayed selection and server-held analysis snapshot.
+        No approved value policy is registered in the current runtime: V3 waits
+        with the specific reason and makes no provider call for that wait.
       parameters:
         - $ref: "#/components/parameters/Key"
         - $ref: "#/components/parameters/DecisionContextVersion"
@@ -223,7 +248,11 @@ paths:
           required: false
           schema:
             type: string
-            enum: [jinx-match-outlook.v1, jinx-match-outlook.v2]
+            enum: [jinx-match-outlook.v1, jinx-match-outlook.v2, jinx-match-outlook.v3]
+        - in: header
+          name: X-BTB-Analysis-Snapshot
+          schema: { type: string }
+          description: Required for V3; snapshot must belong to the same subject and match. Missing or expired snapshots return 409 ANALYSIS_SNAPSHOT_EXPIRED.
       responses:
         "200":
           description: Informative match outlook with uncertainty and freshness.
@@ -1294,6 +1323,90 @@ components:
       oneOf:
         - $ref: "#/components/schemas/JinxMatchOutlookV1"
         - $ref: "#/components/schemas/JinxMatchOutlookV2"
+        - $ref: "#/components/schemas/JinxMatchOutlookV3"
+    AnalysisContext:
+      type: object
+      required: [contractVersion, matchKey, snapshotId, evidenceRevision, selectionKey, acquiredAt, expiresAt, sources, sourceAvailability, valueEvidence]
+      properties:
+        contractVersion: { const: btb-analysis-context.v1 }
+        matchKey: { type: string }
+        snapshotId: { type: string }
+        evidenceRevision: { type: string }
+        selectionKey: { type: string }
+        acquiredAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        sourceAvailability: { type: object, additionalProperties: { type: string } }
+        valueEvidence:
+          type: [object, "null"]
+          description: >-
+            Null until an approved BTB-owned adapter is registered. Evidence
+            must carry policyId/modelVersion/validationRef, sampleStatus,
+            probability, odds, marketStatus, selectionKey, stateKey,
+            quoteStateKey, quoteMeasuredAt and probabilityMeasuredAt.
+            Legacy BASE_PROB, stars and pool shares never substitute for it.
+        sources:
+          type: object
+          required: [matchDetail, insight, periodScore, leagueContext, superLogs, liveContext, teamForm, matchPath, matchJourney]
+          properties:
+            matchDetail:
+              allOf:
+                - $ref: "#/components/schemas/MatchDetail"
+                - type: object
+                  required: [currentMatchRecord]
+                  properties:
+                    currentMatchRecord: { type: boolean }
+            insight:
+              anyOf: [{ $ref: "#/components/schemas/MatchInsight" }, { type: "null" }]
+            periodScore:
+              anyOf: [{ $ref: "#/components/schemas/PeriodScoreContext" }, { type: "null" }]
+            leagueContext:
+              anyOf: [{ $ref: "#/components/schemas/MatchLeagueContext" }, { type: "null" }]
+            superLogs:
+              type: [array, "null"]
+              items: { $ref: "#/components/schemas/SuperLog" }
+            liveContext:
+              type: [object, "null"]
+              description: Existing provider-neutral LiveContext DTO.
+            teamForm:
+              anyOf: [{ $ref: "#/components/schemas/TeamFormContext" }, { type: "null" }]
+            matchPath:
+              anyOf: [{ $ref: "#/components/schemas/MatchPathContext" }, { type: "null" }]
+            matchJourney:
+              anyOf: [{ $ref: "#/components/schemas/MatchJourney" }, { type: "null" }]
+    JinxMatchOutlookV3:
+      type: object
+      additionalProperties: false
+      required: [contractVersion, matchKey, snapshotId, evidenceRevision, selectionKey, evaluatedAt, expiresAt, verdict, reasonCode, shortReason, riskNote, evidence, sourceAvailability, explanationOrigin, value]
+      properties:
+        contractVersion: { const: jinx-match-outlook.v3 }
+        matchKey: { type: string }
+        snapshotId: { type: string }
+        evidenceRevision: { type: string }
+        selectionKey: { type: string }
+        evaluatedAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        verdict: { type: string, enum: [FAVORABLE, UNFAVORABLE, WAIT] }
+        reasonCode:
+          type: string
+          enum: [MATCH_NOT_LIVE, LIVE_NOT_VERIFIED, NO_SELECTION, CONTEXT_CONFLICT, POLICY_UNAVAILABLE, VALUE_UNAVAILABLE, MARKET_UNAVAILABLE, STATE_MISMATCH, EVIDENCE_STALE, VALUE_POSITIVE, VALUE_NEGATIVE]
+        shortReason: { type: string, minLength: 1, maxLength: 240 }
+        riskNote: { type: [string, "null"], maxLength: 120 }
+        explanationOrigin: { type: string, enum: [LIVE, DETERMINISTIC] }
+        sourceAvailability: { type: object, additionalProperties: { type: string } }
+        evidence:
+          type: array
+          maxItems: 2
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, source, text]
+            properties:
+              id: { type: string }
+              source: { type: string }
+              text: { type: string, maxLength: 2500 }
+        value:
+          type: [object, "null"]
+          description: Null for WAIT. Otherwise approved probability/odds, fairPrice, expectedValue, minimumExpectedValue, policyId, modelVersion, validationRef and both measurement timestamps; verdict must match the value criterion.
     JinxMatchOutlookV2:
       allOf:
         - $ref: "#/components/schemas/JinxMatchOutlookBase"

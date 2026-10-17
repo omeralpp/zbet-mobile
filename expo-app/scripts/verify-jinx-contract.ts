@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
-import { jinxMatchOutlookSchema } from "../src/api/schemas";
+import { jinxMatchOutlookSchema, jinxAssessmentSchema } from "../src/api/schemas";
 import { acceptHeadline, acceptBody, acceptUncertaintyNote, confidenceBand, resolveOutlookState } from "../src/mascot/jinx-match-outlook";
 
 const require = createRequire(import.meta.url);
 const { createJinxOutlookService, assessSources } = require("../../../zbet-cap/srv/mobile-bff/jinx-outlook.js");
+const { createAnalysisContextStore, selectionKey, matchStateKey } = require("../../../zbet-cap/srv/mobile-bff/analysis-context.js");
+const { createJinxAssessmentService } = require("../../../zbet-cap/srv/mobile-bff/jinx-assessment.js");
 const { matchKey, capturedAt, sources, wording } = require("../../../zbet-cap/test/fixtures/jinx-outlook.js");
 
 function verify(value: unknown) {
@@ -54,6 +56,26 @@ async function main() {
     assert.notEqual(live.availability, "UNAVAILABLE", "real provider must return a visible, validated reading");
     checked++;
   }
-  process.stdout.write(`PASS: ${checked} Jinx payloads consumed by the existing Mobile schema and current presentation guards; idle remains idle.\n`);
+  const now = () => Date.parse(capturedAt);
+  const contextStore = createAnalysisContextStore({ now });
+  const waiting = contextStore.capture(matchKey, "contract-test", sources());
+  const waitDto = jinxAssessmentSchema.parse(await createJinxAssessmentService({ now }).analyze(waiting));
+  assert.equal(waitDto.verdict, "WAIT");
+  assert.equal(waitDto.snapshotId, waiting.snapshotId);
+  assert.equal(waitDto.value, null);
+  checked++;
+  // Synthetic policy for wire compatibility only; never a registered runtime policy.
+  const policy = { id: "CONTRACT_TEST", modelVersion: "CONTRACT_TEST", validationRef: "CONTRACT_TEST",
+    minimumExpectedValue: .02, maxQuoteAgeSeconds: 30, maxProbabilityAgeSeconds: 60 };
+  const current = sources(); current.matchDetail.currentRate = 2;
+  const value = { policyId: policy.id, modelVersion: policy.modelVersion, validationRef: policy.validationRef,
+    sampleStatus: "SUFFICIENT", probability: .6, odds: 2, marketStatus: "OPEN",
+    selectionKey: selectionKey(current.matchDetail), stateKey: matchStateKey(current.matchDetail),
+    quoteStateKey: matchStateKey(current.matchDetail), quoteMeasuredAt: capturedAt, probabilityMeasuredAt: capturedAt };
+  const packet = contextStore.capture(matchKey, "contract-test", current, value);
+  const valueDto = jinxAssessmentSchema.parse(await createJinxAssessmentService({ now, valuePolicy: policy }).analyze(packet));
+  assert.equal(valueDto.verdict, "FAVORABLE"); assert.equal(valueDto.selectionKey, packet.selectionKey);
+  checked++;
+  process.stdout.write(`PASS: ${checked} Jinx payloads across legacy and V3 schemas; default WAIT, approved-test value and snapshot identity verified; idle remains idle.\n`);
 }
 main().catch((error: unknown) => { console.error(error); process.exitCode = 1; });

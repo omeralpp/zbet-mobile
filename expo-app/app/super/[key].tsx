@@ -46,6 +46,7 @@ import {
 import { teamLogoSizes } from "@/src/utils/team-logo";
 import {
   formatAbsolute,
+  formatSelection,
   formatFixtureDateTime,
   formatDecisionReason,
   formatPercentage,
@@ -498,8 +499,8 @@ export default function SuperLogDetailScreen() {
                 </Text>
               </View>
               <View style={[styles.bandCell, styles.bandCellWide]}>
-                <Text numberOfLines={1} style={styles.selection}>
-                  {log.selectedOdd}
+                <Text numberOfLines={2} style={styles.selection}>
+                  {formatSelection(log.selectedOdd)}
                 </Text>
                 <SignalMeter rating={log.rating} />
               </View>
@@ -514,7 +515,7 @@ export default function SuperLogDetailScreen() {
             <SurfaceDivider accent={colors.bronze} style={styles.bandSeam} />
             <View style={styles.outcomeHeading}>
               <Text style={[styles.bandEyebrow, styles.outcomeEyebrow]}>
-                SONUÇ
+                {outcomeBand.kind === "LIVE" ? "GÜNCEL DURUM" : outcomeBand.kind === "SETTLED" ? "KESİNLEŞEN SONUÇ" : "SONUÇ BEKLENİYOR"}
               </Text>
             </View>
             <View style={styles.bandRow}>

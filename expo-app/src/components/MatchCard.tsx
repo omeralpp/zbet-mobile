@@ -24,6 +24,7 @@ import {
   formatAbsolute,
   formatCurrentMarketRate,
   formatFixtureDateTime,
+  formatSelection,
 } from "@/src/utils/format";
 import { LiveDot } from "./LiveDot";
 import { ChangeEmphasis } from "./ChangeEmphasis";
@@ -73,6 +74,7 @@ function TeamName({
 }
 
 export function MatchCard({
+  compact = false,
   insight,
   match,
   onTogglePinned,
@@ -80,6 +82,7 @@ export function MatchCard({
   onSelect,
   selected = false
 }: {
+  compact?: boolean;
   insight?: MatchInsight | undefined;
   match: MatchSummary;
   onTogglePinned?: (() => void) | undefined;
@@ -104,12 +107,7 @@ export function MatchCard({
       : rateTrend === "DOWN"
         ? "trending-down"
         : "minus";
-  const rateTrendColor =
-    rateTrend === "UP"
-      ? semantic.positive
-      : rateTrend === "DOWN"
-        ? semantic.negative
-        : colors.textSubtle;
+  const rateTrendColor = rateTrend === "UP" || rateTrend === "DOWN" ? semantic.intelligence : colors.textSubtle;
   const intervalPressure = currentIntervalPressure(match.decisionContext);
   const pressureBalance = derivePressureBalance(
     match.decisionContext ? intervalPressure.total : match.pressureSource === "CURRENT_MATCH" ? match.totalPressure : null,
@@ -162,7 +160,7 @@ export function MatchCard({
           <View style={[styles.timePill, live && styles.livePill]}>
             {live ? <LiveDot /> : null}
             <Text style={[styles.timeText, live && styles.liveText]}>
-              {formatFixtureDateTime(match.matchDate, match.matchTime)}
+              {compact && live ? minuteProgress.label : formatFixtureDateTime(match.matchDate, match.matchTime)}
             </Text>
           </View>
           {onTogglePinned ? (
@@ -191,7 +189,7 @@ export function MatchCard({
         </View>
       </View>
 
-      {minuteProgress.visible ? (
+      {minuteProgress.visible && !compact ? (
         <View
           accessibilityLabel="Maç süresi"
           accessibilityRole="progressbar"
@@ -252,18 +250,18 @@ export function MatchCard({
           <Text style={styles.decisionEyebrow}>
             {recordedSelection(match.selectedOdd, match.currentRate, match.decisionContext) ? "KAYITLI SEÇİM" : "BTB SEÇİMİ"}
           </Text>
-          <Text numberOfLines={1} style={styles.odd}>
-            {match.selectedOdd || "Aday bekleniyor"}
+          <Text numberOfLines={2} style={styles.odd}>
+            {formatSelection(match.selectedOdd) || "Şu anda seçim yok"}
           </Text>
           <View style={styles.ratingRow}>
             <RatingStars rating={match.rating} />
-            <Text style={styles.ratingLabel}>
+            {!compact ? <Text style={styles.ratingLabel}>
               {match.rating > 0
                 ? `BTB rating · ${Math.min(5, match.rating)}/5`
                 : "BTB rating"}
-            </Text>
+            </Text> : null}
           </View>
-          {match.selectedOdd && decisionModel(match.decisionContext) &&
+          {!compact && match.selectedOdd && decisionModel(match.decisionContext) &&
             <Text style={styles.ratingLabel}>{decisionModelLabel(match.decisionContext)}</Text>}
         </View>
         {footer.showsRate ? (
@@ -295,7 +293,7 @@ export function MatchCard({
             <Text style={styles.rateLabel}>{currentMarket.label}</Text>
           </View>
         ) : null}
-        {footer.showsPressure ? (
+        {footer.showsPressure && !compact ? (
           <View
             // The spoken label keeps `Güncel` that the visible caption drops.
             // Speech has no row width to lose, and a listener cannot see the

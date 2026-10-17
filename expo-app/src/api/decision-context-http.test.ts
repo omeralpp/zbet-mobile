@@ -29,3 +29,12 @@ test("explicit acknowledged V2 fallback and non-opt-in legacy responses remain s
   assert.throws(()=>check("/v1/btb/matches",[row(v2)],v2,v3),/sözleşmesi/);
   assert.doesNotThrow(()=>check("/v1/btb/matches",[{}],null,null));
 });
+
+test("shared analysis context checks the actual nested match and journey ACK versions", () => {
+  const path = "/v1/btb/matches/key/analysis-context";
+  const packet = { sources: { matchDetail: row(v3), matchJourney: { points: [row(v3)] } } };
+  assert.doesNotThrow(() => check(path, packet, v3, v3));
+  assert.throws(() => check(path, { sources: { matchDetail: row(v2) } }, v3, v3), /sözleşmesi/);
+  assert.throws(() => check(path, { sources: { ...packet.sources, matchJourney: { points: [row(v2)] } } }, v3, v3), /sözleşmesi/);
+  assert.throws(() => check(path, {}, v3, v3), /sözleşmesi/);
+});

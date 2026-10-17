@@ -1,4 +1,6 @@
 import type {
+  AnalysisContext,
+  JinxAssessment,
   Dashboard,
   JinxMatchOutlook,
   JinxQuipRequest,
@@ -19,6 +21,8 @@ import type {
 } from "./schemas";
 
 export interface MobileApi {
+  getMatchAnalysisContext(key: string, signal?: AbortSignal): Promise<AnalysisContext>;
+  getMatchJinxAssessment(key: string, snapshotId: string, signal?: AbortSignal): Promise<JinxAssessment>;
   getDashboard(signal?: AbortSignal): Promise<Dashboard>;
   getMatches(signal?: AbortSignal): Promise<MatchSummary[]>;
   getMatchInsights(signal?: AbortSignal): Promise<MatchInsight[]>;

@@ -1,6 +1,12 @@
 import { queryOptions } from "@tanstack/react-query";
 import { mobileApi } from "./index";
 
+export function matchAnalysisContextQuery(key: string) {
+  return queryOptions({ queryKey: ["analysisContext", key], enabled: Boolean(key),
+    queryFn: ({ signal }) => mobileApi.getMatchAnalysisContext(key, signal),
+    staleTime: 15_000, retry: 1 });
+}
+
 export const queryKeys = {
   dashboard: ["dashboard"] as const,
   matches: ["matches"] as const,

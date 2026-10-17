@@ -2,9 +2,6 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import {
-  Alert,
-  Image,
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -26,15 +23,13 @@ import { useModuleLayout } from "@/src/layout/module-layout-store";
 import type { OverviewModuleId } from "@/src/layout/module-registry";
 import { useLiveStarFilter } from "@/src/preferences/LiveStarFilterProvider";
 import { useSuperStarFilter } from "@/src/preferences/SuperStarFilterProvider";
-import { btbBrandMark } from "@/src/theme/brand-mark";
-import { colors, radii, semantic, spacing, typeScale } from "@/src/theme/theme";
+import { colors, semantic, spacing } from "@/src/theme/theme";
 import {
   liveStarMetricCount,
   starMetricLabel
 } from "@/src/utils/decision-filters";
 import { formatSigned } from "@/src/utils/format";
 import { refreshPerformanceWidgetFromApi } from "@/src/widgets/performance-widget";
-import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 
 export default function DashboardScreen() {
@@ -102,42 +97,9 @@ export default function DashboardScreen() {
   const featuredCaption =
     dashboard.featuredMatchMode === "UPCOMING"
       ? "Başlama zamanı en yakın aktif fikstürler"
-      : "Skor, oran ve baskı birlikte";
+      : "Skor, seçim ve güncel oran";
 
   const moduleNodes: Partial<Record<OverviewModuleId, ReactNode>> = {
-    hero: (
-      <TutorialTarget id="home-hero" radius={radii.xl}>
-        <Pressable
-          accessibilityHint="Uygulamanın kısa açıklamasını açar"
-          accessibilityRole="button"
-          onPress={() =>
-            Alert.alert(
-              "BTB Mobile Next",
-              "Canlı maç durumunu, BTB Super kararlarını ve Spor Toto program özetlerini tek yerde, salt okunur ve mobil odaklı sunar.",
-              [{ text: "Anladım" }]
-            )
-          }
-          style={({ pressed }) => [styles.hero, pressed && styles.pressed]}
-        >
-          {/* Bronze rather than a semantic accent: the hero is the brand
-              surface, and metal marks it as premium without claiming that
-              anything on it is live, positive or in need of attention. */}
-          <SurfaceMaterial accent={colors.bronze} radius={radii.xl} />
-          <Image
-            resizeMode="contain"
-            source={btbBrandMark}
-            style={styles.logo}
-          />
-          <View style={styles.heroCopy}>
-            <Text style={styles.eyebrow}>CANLI KARAR MERKEZİ</Text>
-            <Text style={styles.heroTitle}>Saha şimdi ne söylüyor?</Text>
-            <Text style={styles.heroText}>
-              BTB, Super ve Toto sinyalleri tek mobil akışta.
-            </Text>
-          </View>
-        </Pressable>
-      </TutorialTarget>
-    ),
     metrics: (
       <View style={styles.metrics}>
         <MetricCard
@@ -214,10 +176,10 @@ export default function DashboardScreen() {
         {dashboard.featuredMatches.map((match, index) =>
           index === 0 ? (
             <TutorialTarget id="home-featured" key={match.key}>
-              <MatchCard match={match} />
+              <MatchCard compact match={match} />
             </TutorialTarget>
           ) : (
-            <MatchCard key={match.key} match={match} />
+            <MatchCard compact key={match.key} match={match} />
           )
         )}
       </>
@@ -246,6 +208,8 @@ export default function DashboardScreen() {
 
   return (
     <Screen
+      eyebrow="BTB"
+      title="Bugünün görünümü"
       contentStyle={styles.content}
       scrollRef={scrollRef}
       wide
@@ -263,6 +227,9 @@ export default function DashboardScreen() {
         )
       }}
     >
+      {dashboard.featuredMatchMode !== "SELECTED_LIVE" ? <Text style={styles.selectionNotice}>
+        Şu anda öne çıkan bir canlı BTB seçimi yok. Maçları takip edebilir, verilerini inceleyebilirsin.
+      </Text> : null}
       <ReorderableModuleList
         items={moduleItems}
         onDragStateChange={setReordering}
@@ -281,44 +248,9 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
+  selectionNotice: { color: colors.textMuted, fontSize: 14, lineHeight: 21, marginBottom: spacing.md },
   content: {
-    paddingTop: 72
-  },
-  hero: {
-    minHeight: 132,
-    borderRadius: radii.xl,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    padding: spacing.lg,
-    flexDirection: "row",
-    alignItems: "center"
-  },
-  pressed: {
-    opacity: 0.82
-  },
-  logo: {
-    width: 68,
-    height: 68,
-    marginRight: spacing.lg
-  },
-  heroCopy: {
-    flex: 1
-  },
-  eyebrow: {
-    color: colors.bronze,
-    ...typeScale.eyebrow
-  },
-  // The tagline is brand, not signal. It gave up the top of the screen so live
-  // material could rise into it.
-  heroTitle: {
-    color: colors.text,
-    ...typeScale.moduleTitle,
-    marginTop: spacing.sm
-  },
-  heroText: {
-    color: colors.textMuted,
-    ...typeScale.bodyCompact,
-    marginTop: spacing.xs
+    paddingTop: spacing.md
   },
   metrics: {
     flexDirection: "row",

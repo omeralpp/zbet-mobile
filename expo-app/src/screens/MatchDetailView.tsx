@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Stack, useFocusEffect, useRouter } from "expo-router";
 import {
@@ -16,20 +16,12 @@ import {
   type NativeSyntheticEvent
 } from "react-native";
 import {
-  matchInsightQuery,
-  matchPathQuery,
-  matchJourneyQuery,
-  matchJinxOutlookQuery,
-  matchLeagueContextQuery,
-  matchLiveContextQuery,
-  matchPeriodScoreQuery,
-  matchQuery,
-  matchSuperLogsQuery,
-  matchTeamFormQuery
+  matchAnalysisContextQuery
 } from "@/src/api/queries";
-import { AskJinxCard } from "@/src/components/AskJinxCard";
-import { jinxIsLive, jinxSelectionKey } from "@/src/mascot/jinx-eligibility";
-import { JinxHeadingIcon } from "@/src/components/JinxHeadingIcon";
+import { mobileApi } from "@/src/api";
+import type { AnalysisContext } from "@/src/api/schemas";
+import { JinxAssessmentCard } from "@/src/components/JinxAssessmentCard";
+import { analysisNeedsRefresh } from "@/src/mascot/jinx-assessment";
 import { ChangeEmphasis } from "@/src/components/ChangeEmphasis";
 import { LiveDot } from "@/src/components/LiveDot";
 import { SignalMeter } from "@/src/components/SignalMeter";
@@ -53,6 +45,7 @@ import { buildBilyonerMatchUrl } from "@/src/external/bilyoner";
 import { CollapsibleModule } from "@/src/layout/CollapsibleModule";
 import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
 import { useModuleLayout } from "@/src/layout/module-layout-store";
+import { resetModuleCollapse } from "@/src/layout/module-collapse-store";
 import type { LiveDetailModuleId } from "@/src/layout/module-registry";
 import {
   colors,
@@ -70,11 +63,12 @@ import {
   formatFixtureDateTime,
   formatElapsed,
   formatPercentage,
-  formatRate
+  formatRate,
+  formatSelection
 } from "@/src/utils/format";
 import { relatedSuperDecisions } from "@/src/utils/related-super-decisions";
 import { deriveLiveRateTrend } from "@/src/utils/live-card-indicators";
-import { decisionModel, decisionModelLabel, recordedSelection } from "@/src/utils/decision-model";
+import { recordedSelection } from "@/src/utils/decision-model";
 
 /**
  * One Canlı detay module, as a collapsible panel.
@@ -222,12 +216,11 @@ export function MatchDetailView({
   const [showDecision, setShowDecision] = useState(false);
   // Jinx is asked, never volunteered. Until this flips, its query stays
   // disabled and the surface costs nothing but its own entry point.
-  const [askedJinxSelection, setAskedJinxSelection] = useState("");
   const [compactHeader, setCompactHeader] = useState(false);
   const [reordering, setReordering] = useState(false);
   const scrollRef = useRef<ScrollView | null>(null);
   const scrollOffset = useRef(0);
-  const { order, reorderVisible } = useModuleLayout("liveDetail");
+  const { order, reorderVisible, reset } = useModuleLayout("liveDetail");
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       scrollOffset.current = event.nativeEvent.contentOffset.y;
@@ -242,41 +235,29 @@ export function MatchDetailView({
     setIsFocused(true);
     return () => setIsFocused(false);
   }, []));
-  const query = useQuery({ ...matchQuery(key), refetchInterval: (state) =>
-    matchPathEnabled && isFocused && (state.state.data?.status === "LIVE" || state.state.data?.status === "HALF_TIME") ? 30_000 : false });
-  const insightQuery = useQuery(matchInsightQuery(key));
-  const leagueContextQuery = useQuery(matchLeagueContextQuery(key));
-  const periodScoreQuery = useQuery(matchPeriodScoreQuery(key));
-  const journeyPolling = matchPathEnabled && isFocused && (query.data?.status === "LIVE" || query.data?.status === "HALF_TIME") ? 30_000 : false;
-  const superLogs = useQuery({ ...matchSuperLogsQuery(key), refetchInterval: journeyPolling });
-  // Supplementary context. Its failure must never take Match Detail down, so it
-  // is never consulted for the screen's loading or error state.
-  const liveContext = useQuery({ ...matchLiveContextQuery(key), refetchInterval: journeyPolling });
-  // M15 intelligence surfaces. Mounted only where the build enables them, so a
-  // pilot APK never requests a route its BFF does not serve yet. Like live
-  // context, none of them is consulted for the screen's loading or error state.
+  const context = useQuery({ ...matchAnalysisContextQuery(key), refetchInterval: (state) =>
+    isFocused && ["LIVE", "HALF_TIME"].includes(state.state.data?.sources.matchDetail.status ?? "") ? 30_000 : false });
+  const sourceView = <T,>(data: T | null | undefined) => ({ data: data ?? undefined,
+    isLoading: context.isLoading, isError: context.isError || (context.isSuccess && data === null),
+    error: context.error, refetch: context.refetch, isRefetching: context.isRefetching });
+  const query = sourceView(context.data?.sources.matchDetail);
+  const insightQuery = sourceView(context.data?.sources.insight);
+  const leagueContextQuery = sourceView(context.data?.sources.leagueContext);
+  const periodScoreQuery = sourceView(context.data?.sources.periodScore);
+  const superLogs = sourceView(context.data?.sources.superLogs);
+  const liveContext = sourceView(context.data?.sources.liveContext);
   const intelligence = mountsIntelligenceSurfaces(runtimeConfig.mobileIntelligence);
   const teamFormEnabled = mountsIntelligenceSurfaces(runtimeConfig.teamFormIntelligence);
-  const teamForm = useQuery({
-    ...matchTeamFormQuery(key),
-    enabled: teamFormEnabled && Boolean(key)
-  });
-  const journey = useQuery({ ...matchJourneyQuery(key),
-    enabled: matchPathEnabled && Boolean(key), refetchInterval: journeyPolling });
-  // The existing pilot flag deliberately gates the combined analytical panel:
-  // retained Match Journey plus restored Match Path. Keeping one explicit
-  // switch avoids renaming the verified APK configuration for a UI-only merge.
-  const matchPath = useQuery({
-    ...matchPathQuery(key),
-    enabled: matchPathEnabled && Boolean(key),
-    refetchInterval: journeyPolling
-  });
-  const jinxSelection = jinxSelectionKey(query.data);
-  const askedJinx = Boolean(jinxSelection) && askedJinxSelection === jinxSelection;
-  const jinxOutlook = useQuery({
-    ...matchJinxOutlookQuery(key, askedJinx, jinxSelection),
-    enabled: intelligence && Boolean(key) && askedJinx && jinxIsLive(query.data?.status)
-  });
+  const teamForm = sourceView(context.data?.sources.teamForm);
+  const journey = sourceView(context.data?.sources.matchJourney);
+  const matchPath = sourceView(context.data?.sources.matchPath);
+  const jinx = useMutation({ mutationFn: (packet: AnalysisContext) =>
+    mobileApi.getMatchJinxAssessment(packet.matchKey, packet.snapshotId), retry: false });
+  const askJinx = async () => {
+    let packet = context.data;
+    if (analysisNeedsRefresh(packet, jinx.error)) packet = (await context.refetch()).data;
+    if (packet) jinx.mutate(packet);
+  };
   const relatedDecisions = useMemo(
     () => relatedSuperDecisions(superLogs.data ?? [], key),
     [key, superLogs.data]
@@ -327,12 +308,12 @@ export function MatchDetailView({
   const movement = {
     UP: {
       icon: "trending-up" as const,
-      color: semantic.positive,
+      color: semantic.intelligence,
       label: "seçimden yükseldi"
     },
     DOWN: {
       icon: "trending-down" as const,
-      color: semantic.negative,
+      color: semantic.intelligence,
       label: "seçimden düştü"
     },
     STABLE: {
@@ -464,9 +445,9 @@ export function MatchDetailView({
     ),
     scoreDistribution: (
       <LiveDetailPanel
-        eyebrow="OLASILIK"
+        eyebrow="BENZER MAÇLAR"
         id="scoreDistribution"
-        title="Skor dağılımı"
+        title="Tarihsel skor dağılımı"
       >
         <View style={styles.distributionCard}>
           <SurfaceMaterial radius={radii.lg} />
@@ -496,21 +477,6 @@ export function MatchDetailView({
   };
 
   // Each engine mounts only when its own build setting enables it.
-  if (intelligence) {
-    moduleNodes.askJinx = (
-      <LiveDetailPanel eyebrow="JINX" id="askJinx" title="Jinx okuması" leading={<JinxHeadingIcon />}>
-        <AskJinxCard
-          live={jinxIsLive(match.status)}
-          selectionKey={jinxSelection}
-          asked={askedJinx}
-          isError={jinxOutlook.isError}
-          isLoading={jinxOutlook.isLoading}
-          onAsk={() => { setAskedJinxSelection(jinxSelection); if (askedJinx) void jinxOutlook.refetch(); }}
-          outlook={jinxOutlook.data}
-        />
-      </LiveDetailPanel>
-    );
-  }
   if (teamFormEnabled) {
     moduleNodes.teamForm = (
       <LiveDetailPanel eyebrow="FORM" id="teamForm" title="Takım formu">
@@ -549,7 +515,7 @@ export function MatchDetailView({
               <Text style={styles.decisionFact}>{match.decisionMinute}&apos; karar</Text>
             ) : null}
             {match.selectedOdd ? (
-              <Text style={styles.decisionFact}>{match.selectedOdd}</Text>
+              <Text style={styles.decisionFact}>{formatSelection(match.selectedOdd)} · {match.selectedOdd}</Text>
             ) : null}
             <Text style={styles.decisionToggle}>
               {showDecision ? "Modeli gizle" : "Modeli göster"}
@@ -635,6 +601,10 @@ export function MatchDetailView({
       wide={!embedded}
       contentStyle={styles.screen}
       scrollRef={scrollRef}
+      fixedHeader={compactHeader ? <View style={styles.fixedHeader}>
+        <Text numberOfLines={1} style={styles.fixedTitle}>{match.homeTeam} – {match.awayTeam}</Text>
+        <Text style={styles.fixedValue}>{match.homeScore}–{match.awayScore} · {formatElapsed(match.status, match.elapsed)} · {formatSelection(match.selectedOdd) || "Seçim yok"} · {currentMarket.value}</Text>
+      </View> : null}
       scrollProps={{
         alwaysBounceVertical: true,
         onScroll: handleScroll,
@@ -643,28 +613,8 @@ export function MatchDetailView({
         refreshControl: (
           <RefreshControl
             colors={[semantic.live]}
-              onRefresh={() =>
-                Promise.all([
-                  query.refetch(),
-                  insightQuery.refetch(),
-                  leagueContextQuery.refetch(),
-                  periodScoreQuery.refetch(),
-                  superLogs.refetch(),
-                  liveContext.refetch(),
-                  ...(matchPathEnabled ? [journey.refetch(), matchPath.refetch()] : []),
-                  ...(teamFormEnabled ? [teamForm.refetch()] : [])
-                ])
-              }
-              refreshing={
-                query.isRefetching ||
-                insightQuery.isRefetching ||
-                leagueContextQuery.isRefetching ||
-                periodScoreQuery.isRefetching ||
-                superLogs.isRefetching ||
-                liveContext.isRefetching ||
-                journey.isRefetching ||
-                matchPath.isRefetching
-              }
+              onRefresh={() => void context.refetch()}
+              refreshing={context.isRefetching}
             tintColor={semantic.live}
           />
         )
@@ -739,12 +689,10 @@ export function MatchDetailView({
         <Text style={styles.verdictEyebrow}>
           {recordedSelection(match.selectedOdd, match.currentRate, match.decisionContext) ? "KAYITLI BTB SEÇİMİ" : "BTB SEÇİMİ"}
         </Text>
-        {match.selectedOdd && decisionModel(match.decisionContext) &&
-          <Text style={styles.verdictLabel}>{decisionModelLabel(match.decisionContext)}</Text>}
         <View style={styles.verdictRow}>
           <View style={[styles.verdictCell, styles.verdictCellWide]}>
-            <Text numberOfLines={1} style={styles.selection}>
-              {match.selectedOdd || "Aday bekleniyor"}
+            <Text numberOfLines={2} style={styles.selection}>
+              {formatSelection(match.selectedOdd) || "Şu anda seçim yok"}
             </Text>
             <SignalMeter rating={match.rating} />
           </View>
@@ -776,6 +724,16 @@ export function MatchDetailView({
         </View>
       </TutorialTarget>
 
+      {intelligence ? <JinxAssessmentCard context={context.data} assessment={jinx.data}
+        pending={jinx.isPending && jinx.variables?.matchKey === key}
+        error={jinx.isError && jinx.variables?.matchKey === key} onAsk={() => void askJinx()} /> : null}
+
+      <View style={styles.rowTools}>
+        <Text style={styles.verdictLabel}>Maçın kanıtları</Text>
+        <Pressable accessibilityRole="button" onPress={() => { void reset(); void resetModuleCollapse("liveDetail"); }} style={styles.resetAction}>
+          <Text style={styles.decisionToggle}>Düzeni sıfırla</Text>
+        </Pressable>
+      </View>
       <ReorderableModuleList
         items={moduleItems}
         {...(embedded ? { maxColumns: 1 } : {})}
@@ -819,6 +777,10 @@ export function MatchDetailView({
 }
 
 const styles = StyleSheet.create({
+  fixedHeader: { backgroundColor: colors.background, borderBottomWidth: 1, borderColor: colors.border,
+    paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, gap: 2 },
+  fixedTitle: { color: colors.text, fontSize: 14, fontWeight: "700" },
+  fixedValue: { color: colors.textMuted, fontSize: 13 },
   screen: {
     paddingTop: spacing.lg
   },
@@ -826,7 +788,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.xl,
     borderWidth: 1,
     borderColor: colors.borderSoft,
-    padding: spacing.xl,
+    padding: spacing.md,
     ...shadows.card
   },
   leagueRow: {
@@ -876,7 +838,7 @@ const styles = StyleSheet.create({
   scoreRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: spacing.xl
+    marginVertical: spacing.sm
   },
   teamBlock: {
     flex: 1
@@ -916,7 +878,8 @@ const styles = StyleSheet.create({
   },
   score: {
     color: colors.text,
-    ...typeScale.display,
+    fontSize: 32,
+    fontWeight: "800",
     paddingHorizontal: spacing.md,
     textAlign: "center"
   },
@@ -936,14 +899,16 @@ const styles = StyleSheet.create({
     textAlign: "center"
   },
   heroDivider: {
-    marginTop: spacing.xl,
-    marginBottom: spacing.lg
+    marginTop: spacing.sm,
+    marginBottom: spacing.sm
   },
   verdictEyebrow: {
     color: colors.bronze,
     ...typeScale.eyebrow,
     marginBottom: spacing.sm
   },
+  rowTools: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  resetAction: { minHeight: 48, justifyContent: "center" },
   verdictRow: {
     flexDirection: "row",
     alignItems: "flex-end",

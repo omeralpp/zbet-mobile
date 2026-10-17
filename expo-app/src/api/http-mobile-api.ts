@@ -12,6 +12,8 @@ import { buildDeviceRegistrationPayload } from "./device-registration";
 import { assertDecisionContextResponse } from "./decision-context-http";
 import {
   dashboardSchema,
+  analysisContextSchema,
+  jinxAssessmentSchema,
   matchDetailSchema,
   matchInsightListSchema,
   matchInsightSchema,
@@ -200,6 +202,16 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
     getMatchJourney: (key, signal) =>
       request(`/v1/btb/matches/${encodeURIComponent(key)}/match-journey`, matchJourneySchema,
         { headers: { ...decisionContextHeaders, "X-BTB-Match-Journey-Version": "match-journey.v4" } }, signal),
+    getMatchAnalysisContext: (key, signal) => request(
+      `/v1/btb/matches/${encodeURIComponent(key)}/analysis-context`, analysisContextSchema,
+      { headers: { ...decisionContextHeaders, "X-BTB-Analysis-Features": [
+        ...(runtimeConfig.matchPathIntelligence === "LIVE" ? ["journey"] : []),
+        ...(runtimeConfig.teamFormIntelligence === "LIVE" ? ["form"] : [])
+      ].join(",") } }, signal),
+    getMatchJinxAssessment: (key, snapshotId, signal) => request(
+      `/v1/btb/matches/${encodeURIComponent(key)}/jinx-outlook`, jinxAssessmentSchema,
+      { headers: { ...decisionContextHeaders, "X-BTB-Jinx-Version": "jinx-match-outlook.v3",
+        "X-BTB-Analysis-Snapshot": snapshotId } }, signal),
     getMatchJinxOutlook: (key, signal) =>
       request(
         `/v1/btb/matches/${encodeURIComponent(key)}/jinx-outlook`,

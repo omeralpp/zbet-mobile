@@ -5,7 +5,8 @@ import {
   liveDetailModules,
   moduleLayoutAnchors,
   overviewModules,
-  retiredLiveDetailModules
+  retiredLiveDetailModules,
+  moduleCollapseDefaults
 } from "./module-registry";
 
 test("overview defaults put live value before brand support", () => {
@@ -13,15 +14,14 @@ test("overview defaults put live value before brand support", () => {
     "featured",
     "metrics",
     "recentSuper",
-    "toto",
-    "hero"
+    "toto"
   ]);
 });
 
-test("overview priority keeps every existing module", () => {
+test("overview retains functional modules and retires the decorative hero", () => {
   assert.deepEqual(
     new Set(overviewModules),
-    new Set(["hero", "metrics", "featured", "recentSuper", "toto"])
+    new Set(["metrics", "featured", "recentSuper", "toto"])
   );
 });
 
@@ -35,7 +35,7 @@ test("Maçın Nabzı and the separate score/star flow are retired from live deta
       `${retired} must not be a live detail module`
     );
   }
-  assert.equal(liveDetailModules.indexOf("matchPath"), 1);
+  assert.equal(liveDetailModules.indexOf("matchPath"), 0);
 });
 
 test("no live detail anchor names a retired or unknown module", () => {
@@ -70,7 +70,6 @@ test("a stored layout drops the retired modules and keeps the user's order", () 
     "odds",
     "decision",
     "matchPath",
-    "askJinx",
     "teamForm",
     "standings",
     "statistics",
@@ -95,11 +94,16 @@ test("a layout stored before Maçın Yolu gains it directly after the decision",
     moduleLayoutAnchors.liveDetail
   );
 
-  assert.deepEqual(migrated.slice(0, 4), [
+  assert.deepEqual(migrated.slice(0, 3), [
     "decision",
     "matchPath",
-    "askJinx",
     "teamForm"
   ]);
   assert.equal(new Set(migrated).size, liveDetailModules.length);
+});
+
+test("new live detail defaults keep the journey open and Jinx outside customizable panels", () => {
+  assert.equal((liveDetailModules as readonly string[]).includes("askJinx"), false);
+  assert.equal(moduleCollapseDefaults.liveDetail.includes("matchPath"), false);
+  assert.equal(moduleCollapseDefaults.liveDetail.length, liveDetailModules.length - 1);
 });
