@@ -15,56 +15,36 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
-17 October: TASK-0160 corrected Android/web batch is **COMPLETE**. Owner accepted
-Android with three Benevento–Vicenza screenshots, then confirmed web is OK with a
-live light-theme Jinx screenshot. `client-release.mjs complete` passed for client
-`bd430739b564b23195158005f711eff07c59878c`, APK SHA256
-`3C34A195F611F26B0E38616965ACC4E46447F7793B20F25EA9A1EC51DE0E634E`, paired web tree
-`56FDFDA3F1CCE05EB099000C9283C859451B9C496489E8BE8AEFFE36C58148A1`, web release
-`20261017T143340Z-bd43073`. This pair is retained for recovery. Durable evidence:
-`btb-codex/docs/evidence/client-release-bd43073-2026-10-17.json`.
-BFF `71732a6` served the accepted batch; local/public snapshot/schema/ACK smokes
-passed with all nine sources. The rejected 93e8330 candidate remains historical and was never
-published to web. V1/V2 and the approved economic/value gate remain intact.
+17 October: TASK-0161 shared UX batch is **COMPLETE**; NXT-OBS-165..168 closed.
+Client `524f2e77a839cd42e2ac520b375eef13d6765c48`, APK
+`btb-mobile-next-arm64-wheel-524f2e7.apk` (54,203,708 bytes, SHA256
+`CBAF69981D1D71C47082F5CD06AFAE03B28DEF990D6BEBC4CFE2BB12DEA46B44`), paired web tree
+`62692B1F461377E2FD805856CE90B3032DB8B74ACC6A745C0E145552F419C8B0`, web release
+`20261017T184858Z-524f2e7`, BFF `3ffea3a` unchanged. The owner accepted the
+installed APK and its native UX, then confirmed the corrected web: after Ctrl+F5,
+sideways mouse wheel over the open event panel moves between events.
+`client-release.mjs complete` passed
+(`.codex-artifacts/task0161-wheel-fix/completed-batch.json`). Durable receipt:
+`btb-codex/docs/evidence/client-release-524f2e7-2026-10-17.json`.
 
-TASK-0161 is the next owner-requested shared UX implementation: Android panel
-swipe down closes at the top (content scrolling preserved), horizontal swipes
-navigate individual events; web substitutes horizontal wheel/trackpad, keyboard
-and visible previous/next arrows. Native modal content gets its own gesture root.
-Web has an explicit in-place refresh (Android retains pull-to-refresh); refresh
-never triggers manual Jinx. Shared match search folds Turkish characters/case,
-finds substrings and bounded typo matches; desktop palette uses the same rules.
-Jinx WAIT label becomes “Bahis önerisi yok”; missing-value text says no betting
-recommendation was produced, and the headline avoids repeating the score-change
-fact. No model/probability/SAP change. NXT-OBS-165..168 record the batch.
-BFF `3ffea3a` is pushed/active (17 October 18:08 UTC) for the bounded Jinx wording
-correction; 618 BFF tests/CAP build/9 legacy+V3 contract payloads passed. Client
-quality gate passed type/lint/unit/tooling/brand, Doctor, Android JS bundle and
-verified edge web export. Browser smoke passed event arrows, horizontal wheel,
-keyboard, vertical content scrolling, refresh preserving manual Jinx time, and
-Turkish/substring/typo search at desktop and 390px. A final refresh-button placement
-fix clears the floating mascot on narrow web; targeted lint and fresh mock export
-passed. Browser screenshots use synthetic data. Client `a6e25fd` is pushed and
-privately delivered; APK SHA256 `C82A8FE5178B6B24821AE6CB6B964957BCC4A41B7D94FA31FCFA6FE62DE85BBB`,
-54,203,352 bytes, paired web tree `1F66CF0E68918160A0F30FE198E37E90A051415A61F4A869E61E6E379A46204D`.
-Owner confirms installation and all Android interactions work. Matching web release
-`20261017T182601Z-a6e25fd` is published; local/public probes and post-publication
-nine-source snapshot/schema/ACK checks passed. Owner web test confirms event arrows
-work but horizontal mouse scrolling does not. TASK-0161 remains **INCOMPLETE**;
-do not complete the batch or transfer acceptance from the old web release.
-Durable receipt: `btb-codex/docs/evidence/client-release-a6e25fd-2026-10-17.json`.
+The batch delivers on both surfaces:
+- Android: swipe down closes the panel at the top, horizontal swipes move
+  between events, pull-to-refresh stays.
+- Web: wheel and trackpad (8px noise guard, one advance per inertia burst),
+  keyboard and previous/next arrows; an explicit refresh that never triggers
+  manual Jinx.
+- Shared: Turkish- and diacritic-tolerant substring search with bounded typo
+  matches, also in the desktop palette; the Jinx WAIT label reads
+  "Bahis önerisi yok" without repeating the score-change sentence.
 
-Bounded wheel correction is in local implementation: a browser-generated 10px
-horizontal wheel step leaves the event unchanged, while 100px advances. The 44px
-threshold swallowed a discrete small step. Lower it to an 8px noise guard, retain
-one advance per inertia burst, recognize a deliberate direction reversal and share
-pixel/line/page/Shift normalization with regression tests. Explicit help describes
-wheel input over the panel. Native gestures and BFF/model/SAP behavior are unchanged.
-Small-step browser forward/back, final-event boundary, arrow fallback and vertical
-reading checks now pass on the synthetic preview. Registered type/lint/unit/Doctor,
-Android production JS bundle and verified edge export gate passed. Prepare a new
-coordinated Android/web pair; this web-specific fix still requires its matching APK
-delivery/installation. Retain the accepted bd43073 recovery pair.
+No model, probability or SAP change.
+
+The first candidate `a6e25fd` stays historical: Android accepted, web wheel
+failed (`btb-codex/docs/evidence/client-release-a6e25fd-2026-10-17.json`). The
+previous accepted pair, TASK-0160 client `bd430739b564b23195158005f711eff07c59878c`
+(APK `3C34A195…0DE634E`, web `20261017T143340Z-bd43073`;
+`btb-codex/docs/evidence/client-release-bd43073-2026-10-17.json`), is retained
+for recovery; NXT-OBS-163/164 closed with it.
 
 16 Ekim ilk koordineli Android+web batch'i **COMPLETE** (TASK-0144/0135/0143
 DONE): batch `client-3e9ffe9…-8757EFEA9837-06AF4EA3CA00`, kaynak zbet-mobile
@@ -180,15 +160,22 @@ sayılmaz. Yeni baskı tahmindir; oran/gol ihtimali veya kârlılık değildir.
 
 ## Final yerel pilot APK
 
-[16 Ekim koordineli batch özel Drive APK](https://drive.google.com/file/d/1aCOoE5ty3jZqR4Cp-gOxMtd9T6yKCG8v/view?usp=drivesdk)
+[17 Ekim TASK-0161 batch özel Drive APK](https://drive.google.com/file/d/1MWOTKW9ZemfzzrZqZA6whAy9iJAvJFB6/view?usp=drivesdk)
 
-`btb-mobile-next-arm64-3e9ffe9.apk`, 54.175.948 bayt; SHA-256
-`8757EFEA983796F26E5371577E6D8956BC3E85106869FCCDCED9177B7544D38A`. Kaynak
-`3e9ffe9`, yalnız ARM64, pilot sertifikası (`FAC61745…033B9C`, A3 APK ile aynı),
-pilot/LIVE ayarları; Drive klasörü "BTB APK" (rclone `drive.file`), yalnız-sahip
-izni ve kimlik doğrulamalı geri indirme birebir. Sahip 16 Ekim'de kurdu ve smoke geçti.
+`btb-mobile-next-arm64-wheel-524f2e7.apk`, 54.203.708 bayt; SHA-256
+`CBAF69981D1D71C47082F5CD06AFAE03B28DEF990D6BEBC4CFE2BB12DEA46B44`. Kaynak
+`524f2e7`, yalnız ARM64, pilot sertifikası (`FAC61745…033B9C`), pilot/LIVE
+ayarları; Drive klasörü "BTB APK", yalnız-sahip izni ve kimlik doğrulamalı geri
+indirme birebir. Sahip 17 Ekim'de kurdu; Android ve web smoke geçti.
 
-Önceki kabul edilmiş APK (geri dönüş çifti):
+Önceki kabul edilmiş APK (geri dönüş çifti, web `20261017T143340Z-bd43073` ile):
+[TASK-0160 özel Drive APK](https://drive.google.com/file/d/1Lp_Er_Y_PwrQDBpdk_dDFDx0zcUQi0gb/view?usp=drivesdk)
+`btb-mobile-next-arm64-ux-fix-bd43073.apk`, 54.185.568 bayt; SHA-256
+`3C34A195F611F26B0E38616965ACC4E46447F7793B20F25EA9A1EC51DE0E634E`.
+
+Daha eski kabul edilmiş APK'lar: 16 Ekim `btb-mobile-next-arm64-3e9ffe9.apk`
+([Drive](https://drive.google.com/file/d/1aCOoE5ty3jZqR4Cp-gOxMtd9T6yKCG8v/view?usp=drivesdk),
+SHA-256 `8757EFEA…544D38A`) ve
 [A3 özel Drive APK](https://drive.google.com/file/d/1Y_zmtI3AyXHhHc7s4vI8o6uJrvt7pn8S/view?usp=drivesdk)
 `btb-mobile-next-arm64-pressure-path-a3.apk`,54.424.765 bayt; SHA-256
 `1168EA805A14870AC707204A63F4F1B38316D0CFE038C879D739266E9F828117`.
@@ -203,9 +190,9 @@ Bu exact APK için fiziksel kabul 15 Ekim sahibin doğrudan bildirimiyle tamamla
 
 ## Repo durumu
 
-16 Ekim koordineli batch: zbet-mobile `3e9ffe9` (istemci kaynağı), btb-codex
-`39eed43` (kalite kapısı izolasyonu, TASK-0144 kaydı), zbet-cap `0e37c3e` (TASK-0143
-yayın betiği). Kapanış commit'leri teslim aracını, makbuzu ve kayıtları taşır.
+17 Ekim TASK-0161 batch: zbet-mobile `524f2e7` (istemci kaynağı), zbet-cap BFF
+`3ffea3a` (aktif, değişmedi). Kapanış commit'leri makbuzları, görev kaydını ve bu
+devri taşır. Önceki batch'ler: TASK-0160 `bd43073` (17 Ekim), 16 Ekim `3e9ffe9`.
 Aşağıdaki SHA'lar kabul edilmiş A3/FT45 yayınının tarihsel durumudur.
 
 Önceki A3 primary yayını tamamlandı; makbuz
@@ -235,9 +222,8 @@ legacy blank tag yeni modele yükseltilmez. Tarihsel karar kendi capture'ını o
 
 ## Açık observation / blokajlar
 
-- TASK-0123/M10 iki tam hafta/200 uygun sonuç/30 aile ve ekonomik kalite kapıları
-  bekliyor; ilk mümkün tam-hafta incelemesi2 Kasım. M3 teknik kabulü tamam;
-  milestone CLOSED, sahibin açık kapanış kararı kaydedildi.
+- TASK-0123/M10'un A3 ekonomik kapıları 17 Ekim sahip planıyla kapandı; BTB
+  sonucu BTB - Aktif'te haftalık piyasa karnesinden okunur. M3 CLOSED.
 - TASK-0101 kırmızı kart ölçümü için koşullandırılmış veri/tasarım gerekli.
   Giugliano önceki çerçeve gözlemi aynı-an kanıt olmadan açıklanamaz.
 - OBSERVATION_LOG'daki ayrı ertelenmiş işler bu A3 teslimatıyla onaylanmaz.
@@ -245,11 +231,9 @@ legacy blank tag yeni modele yükseltilmez. Tarihsel karar kendi capture'ını o
 
 ## Exact next steps
 
-TASK-0161: the local horizontal-wheel correction and proportional checks passed.
-Record the failed a6e25fd owner web smoke without discarding its successful Android
-acceptance. Deliver the correction as one new verified Android/web batch, install
-its matching APK before publishing web and close only after both current smokes.
-Retain bd43073 as the accepted recovery pair.
+TASK-0161 is DONE: the 524f2e7 pair is complete on both surfaces. Observe it in
+real use and record findings in `OBSERVATION_LOG.md`; bd43073 stays the previous
+accepted pair for recovery.
 TASK-0156: the canonical weekly scorecard exists; rolling 7/30-day data and a runtime
 feed remain missing, while approved probability/value evidence is a separate Phase
 2/3 dependency. Its OPEN task has a dated evidence review for 19 October; local UI
@@ -264,8 +248,8 @@ Mevcut BFF pilotta çalışır; aşağıdaki gözlem adımları performans kapı
    kapatmak için Cloudflare'de `app.surklase.com` rotası kaldırılır; beş
    `BTB_WEB_*` değişkeni yalnız birlikte silinir.
 1. TASK-0124 fiziksel kabulü tamamlandı; yeni cihaz bulgularını gözlem kaydına ekle.
-2.16 Ekim TASK-0123 salt-okunur kanıt incelemesi; etiket/kimlik ve gerçek sınırla
-   ayır. Kontrolleri geçmiş sonuç olarak geri doldurma; ekonomik örneklem bekle.
+2. TASK-0123 haftalık piyasa karnesinin bütünlük kontrollerine devredilip
+   kapatıldı (17 Ekim sahip planı); Mobile tarafında yapılacak iş yok.
 3. TASK-0009 yayını ve exact-main DEV hizalaması tamamlandı; aynı kaynak için
    tekrar deploy gerekmez. M3 CLOSED; M10/FT45 veri kapıları açık kalır;
    TASK-0124 fiziksel kabulü DONE. Yeni/önceki A3 verisini exact SHA ve gerçek sınırla ayır.
