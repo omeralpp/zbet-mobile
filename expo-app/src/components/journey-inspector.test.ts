@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { inspectorCommit, inspectorIntent, adjacentInspectorMoment, inspectorWheel } from './journey-inspector';
+import { inspectorCommit, inspectorIntent, adjacentInspectorMoment, inspectorWheel, inspectorWheelInput } from './journey-inspector';
 import type { JourneyMoment } from './journey-story';
 
 test('only a deliberate downward drag at the top dismisses; content scrolling and diagonals survive', () => {
@@ -36,4 +36,31 @@ test('one horizontal wheel burst advances once; vertical scroll stays untouched'
   const reverse = inspectorWheel(inertia.state, -60, 0, 1300);
   assert.equal(reverse.direction, -1);
   assert.equal(inspectorWheel(reverse.state, 3, 80, 1400).handled, false);
+});
+
+test('small discrete horizontal steps navigate, including a quick direction reversal', () => {
+  const initial = { at: 0, amount: 0, locked: false };
+  const step = inspectorWheel(initial, 10, 0, 1000);
+  assert.equal(step.direction, 1);
+  assert.equal(inspectorWheel(step.state, 10, 0, 1050).direction, 0);
+  const nextNotch = inspectorWheel(step.state, 10, 0, 1250);
+  assert.equal(nextNotch.direction, 1);
+  assert.equal(inspectorWheel(nextNotch.state, -10, 0, 1300).direction, -1);
+  const noise = inspectorWheel(initial, 2, 0, 1000);
+  assert.equal(noise.direction, 0);
+  assert.equal(inspectorWheel(noise.state, 6, 0, 1030).direction, 1);
+});
+
+test('pixel, line, page and Shift wheel inputs share navigation and preserve reading/zoom', () => {
+  const state = { at: 0, amount: 0, locked: false };
+  const wheel = { deltaMode: 0, deltaX: 10, deltaY: 0, shiftKey: false, ctrlKey: false, metaKey: false };
+  assert.equal(inspectorWheelInput(state, wheel, 1000).direction, 1);
+  assert.equal(inspectorWheelInput(state, { ...wheel, deltaMode: 1, deltaX: -1 }, 1000).direction, -1);
+  assert.equal(inspectorWheelInput(state, { ...wheel, deltaMode: 2, deltaX: 1 }, 1000).direction, 1);
+  assert.equal(inspectorWheelInput(state, { ...wheel, deltaX: 0, deltaY: 10, shiftKey: true }, 1000).direction, 1);
+  assert.equal(inspectorWheelInput(state, { ...wheel, deltaX: -10, deltaY: 10, shiftKey: true }, 1000).direction, -1);
+  assert.equal(inspectorWheelInput(state, { ...wheel, deltaX: 0, deltaY: 100 }, 1000).handled, false);
+  assert.equal(inspectorWheelInput(state, { ...wheel, deltaY: 100 }, 1000).handled, false);
+  assert.equal(inspectorWheelInput(state, { ...wheel, ctrlKey: true }, 1000).handled, false);
+  assert.equal(inspectorWheelInput(state, { ...wheel, metaKey: true }, 1000).handled, false);
 });

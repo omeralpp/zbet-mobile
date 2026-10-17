@@ -6,7 +6,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/src/theme/theme';
 import { useReducedMotion } from '@/src/theme/use-reduced-motion';
-import { inspectorCommit, inspectorIntent, inspectorWheel, type InspectorIntent } from './journey-inspector';
+import { inspectorCommit, inspectorIntent, inspectorWheelInput, type InspectorIntent } from './journey-inspector';
 
 type Props = {
   visible: boolean; onClose: () => void; onDismiss: () => void; children: ReactNode;
@@ -70,10 +70,7 @@ function InspectorPanel({ onClose, children, previous, next, selectionKey, posit
     const node = panel.current as unknown as HTMLElement | null;
     if (!node) return;
     const onWheel = (event: WheelEvent) => {
-      if (event.ctrlKey || event.metaKey) return;
-      const scale = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 300 : 1;
-      const result = inspectorWheel(wheelState.current, (event.shiftKey ? event.deltaY || event.deltaX : event.deltaX) * scale,
-        (event.shiftKey ? 0 : event.deltaY) * scale, Date.now());
+      const result = inspectorWheelInput(wheelState.current, event, Date.now());
       if (!result.handled) return;
       event.preventDefault(); event.stopPropagation(); wheelState.current = result.state;
       if (result.direction > 0) next?.(); else if (result.direction < 0) previous?.();
@@ -99,7 +96,7 @@ function InspectorPanel({ onClose, children, previous, next, selectionKey, posit
           <Pressable accessibilityRole="button" accessibilityLabel="Sonraki olay" disabled={!next} onPress={next} style={[styles.arrow, !next ? styles.disabled : null]}><Text style={styles.arrowText}>›</Text></Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="Ayrıntıyı kapat" onPress={onClose} style={styles.close}><Text style={styles.link}>Kapat ✕</Text></Pressable>
         </View>
-        <Text style={styles.instructions}>{Platform.OS === 'web' ? '← → Olaylar · Yatay kaydırarak da geçebilirsin' : '↓ Kapat · ↔ Önceki / sonraki olay'}</Text>
+        <Text style={styles.instructions}>{Platform.OS === 'web' ? '← → Olaylar · Panel üzerinde yatay tekerlek veya Shift + tekerlek' : '↓ Kapat · ↔ Önceki / sonraki olay'}</Text>
         <GestureDetector gesture={scrollGesture}>
           <ScrollView ref={content} nestedScrollEnabled scrollEventThrottle={16} bounces={false}
             onScroll={event => scrollY.set(Math.max(0, event.nativeEvent.contentOffset.y))} contentContainerStyle={styles.content}>

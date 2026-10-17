@@ -44,10 +44,27 @@ verified edge web export. Browser smoke passed event arrows, horizontal wheel,
 keyboard, vertical content scrolling, refresh preserving manual Jinx time, and
 Turkish/substring/typo search at desktop and 390px. A final refresh-button placement
 fix clears the floating mascot on narrow web; targeted lint and fresh mock export
-passed. Browser screenshots use synthetic data. New source and checks are local
-until the bounded Git/release steps; any release requires a new verified same-source
-Android/web pair. Actual new native gestures need physical owner smoke; previous
-acceptance does not transfer to them.
+passed. Browser screenshots use synthetic data. Client `a6e25fd` is pushed and
+privately delivered; APK SHA256 `C82A8FE5178B6B24821AE6CB6B964957BCC4A41B7D94FA31FCFA6FE62DE85BBB`,
+54,203,352 bytes, paired web tree `1F66CF0E68918160A0F30FE198E37E90A051415A61F4A869E61E6E379A46204D`.
+Owner confirms installation and all Android interactions work. Matching web release
+`20261017T182601Z-a6e25fd` is published; local/public probes and post-publication
+nine-source snapshot/schema/ACK checks passed. Owner web test confirms event arrows
+work but horizontal mouse scrolling does not. TASK-0161 remains **INCOMPLETE**;
+do not complete the batch or transfer acceptance from the old web release.
+Durable receipt: `btb-codex/docs/evidence/client-release-a6e25fd-2026-10-17.json`.
+
+Bounded wheel correction is in local implementation: a browser-generated 10px
+horizontal wheel step leaves the event unchanged, while 100px advances. The 44px
+threshold swallowed a discrete small step. Lower it to an 8px noise guard, retain
+one advance per inertia burst, recognize a deliberate direction reversal and share
+pixel/line/page/Shift normalization with regression tests. Explicit help describes
+wheel input over the panel. Native gestures and BFF/model/SAP behavior are unchanged.
+Small-step browser forward/back, final-event boundary, arrow fallback and vertical
+reading checks now pass on the synthetic preview. Registered type/lint/unit/Doctor,
+Android production JS bundle and verified edge export gate passed. Prepare a new
+coordinated Android/web pair; this web-specific fix still requires its matching APK
+delivery/installation. Retain the accepted bd43073 recovery pair.
 
 16 Ekim ilk koordineli Android+web batch'i **COMPLETE** (TASK-0144/0135/0143
 DONE): batch `client-3e9ffe9…-8757EFEA9837-06AF4EA3CA00`, kaynak zbet-mobile
@@ -228,11 +245,11 @@ legacy blank tag yeni modele yükseltilmez. Tarihsel karar kendi capture'ını o
 
 ## Exact next steps
 
-TASK-0161: validate the panel gestures/navigation, clearer Jinx, web refresh and
-shared tolerant search on both surfaces; retain bd43073 as the accepted recovery
-pair. Record checks and artifact identity in the release evidence. Deliver any
-replacement as one verified Android/web batch, then install/smoke Android before
-publishing matching web; close only after both current client smokes.
+TASK-0161: the local horizontal-wheel correction and proportional checks passed.
+Record the failed a6e25fd owner web smoke without discarding its successful Android
+acceptance. Deliver the correction as one new verified Android/web batch, install
+its matching APK before publishing web and close only after both current smokes.
+Retain bd43073 as the accepted recovery pair.
 TASK-0156: the canonical weekly scorecard exists; rolling 7/30-day data and a runtime
 feed remain missing, while approved probability/value evidence is a separate Phase
 2/3 dependency. Its OPEN task has a dated evidence review for 19 October; local UI

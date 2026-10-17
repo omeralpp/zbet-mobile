@@ -32,13 +32,27 @@ export function adjacentInspectorMoment(moments: readonly JourneyMoment[], activ
 
 export type InspectorWheelState = { at: number; amount: number; locked: boolean };
 
+type WheelInput = { deltaMode: number; deltaX: number; deltaY: number; shiftKey: boolean; ctrlKey: boolean; metaKey: boolean };
+
+/** Read the unit before the deltas; Shift+wheel is the one-axis mouse substitute. */
+export function inspectorWheelInput(state: InspectorWheelState, event: WheelInput, at: number) {
+  if (event.ctrlKey || event.metaKey) return { handled: false, direction: 0, state };
+  const mode = event.deltaMode;
+  const scale = mode === 1 ? 16 : mode === 2 ? 300 : 1;
+  const dx = event.shiftKey ? event.deltaX || event.deltaY : event.deltaX;
+  return inspectorWheel(state, dx * scale, (event.shiftKey ? 0 : event.deltaY) * scale, at);
+}
+
 /** A wheel/trackpad burst advances once; inertia cannot skip several events. */
 export function inspectorWheel(state: InspectorWheelState, dx: number, dy: number, at: number) {
   if (!Number.isFinite(dx) || !Number.isFinite(dy) || !Number.isFinite(at) || Math.abs(dx) <= Math.abs(dy) * 1.2) {
     return { handled: false, direction: 0, state };
   }
-  const next = at - state.at > 180 ? { at, amount: dx, locked: false }
+  const reversed = state.amount !== 0 && Math.sign(dx) !== Math.sign(state.amount);
+  const next = at - state.at > 180 || reversed ? { at, amount: dx, locked: false }
     : { ...state, at, amount: state.amount + dx };
-  const direction = !next.locked && Math.abs(next.amount) >= 44 ? Math.sign(next.amount) : 0;
+  // A discrete horizontal wheel step can be just 10px. The old 44px threshold
+  // swallowed it entirely; keep a small noise guard and lock the remaining inertia.
+  const direction = !next.locked && Math.abs(next.amount) >= 8 ? Math.sign(next.amount) : 0;
   return { handled: true, direction, state: { ...next, locked: next.locked || direction !== 0 } };
 }
