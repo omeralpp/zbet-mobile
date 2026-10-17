@@ -14,7 +14,7 @@ export function previewSelectionReading(context: AnalysisContext) {
   return `${prefix}; skor koşulu ve maçın akışı birlikte izleniyor.`;
 }
 
-export const assessmentLabels = { FAVORABLE: "Oynamak için olumlu", UNFAVORABLE: "Oynamak için olumsuz", WAIT: "Bekle" };
+export const assessmentLabels = { FAVORABLE: "Oynamak için olumlu", UNFAVORABLE: "Oynamak için olumsuz", WAIT: "Bahis önerisi yok" };
 export const analysisSourceLabels: Record<string, string> = {
   matchDetail: "Maç ve seçim", insight: "Saha göstergeleri", periodScore: "Devre skoru",
   leagueContext: "Lig durumu", superLogs: "Karar geçmişi", liveContext: "Canlı olaylar",

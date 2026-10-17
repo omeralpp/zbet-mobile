@@ -8,6 +8,7 @@ import { colors } from "@/src/theme/theme";
 import { CommandPalette } from "./CommandPalette";
 import { DesktopSidebar } from "./DesktopSidebar";
 import { ShortcutHelp } from "./ShortcutHelp";
+import { RefreshDataButton } from "./RefreshDataButton";
 import type { ShortcutAction } from "./shortcuts";
 import { useDesktopShortcuts } from "./use-desktop-shortcuts";
 
@@ -48,7 +49,7 @@ export function AppShell({ children }: PropsWithChildren) {
           onOpenPalette={() => setOverlay("palette")}
         />
       ) : null}
-      <View style={styles.content}>{children}</View>
+      <View style={styles.content}><View style={styles.toolbar}><RefreshDataButton /></View>{children}</View>
       {overlay === "palette" ? <TopLayer><CommandPalette onClose={close} /></TopLayer> : null}
       {overlay === "help" ? <TopLayer><ShortcutHelp onClose={close} /></TopLayer> : null}
     </View>
@@ -72,6 +73,7 @@ const topLayerStyle = {
 } as const;
 
 const styles = StyleSheet.create({
+  toolbar: { minHeight: 44, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
   shell: {
     backgroundColor: colors.background,
     flex: 1,

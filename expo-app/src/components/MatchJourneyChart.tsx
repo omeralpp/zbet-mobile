@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type PointerEvent } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View, type PointerEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -8,6 +7,8 @@ import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Polyline, Rect, Stop,
 import type { LiveContext, MatchDetail, MatchJourney, MatchJourneyPoint, MatchPathContext, SuperLog } from '@/src/api/schemas';
 import { colors, radii, semantic, spacing, typeScale } from '@/src/theme/theme';
 import { SurfaceMaterial } from './SurfaceMaterial';
+import { JourneyInspector } from './JourneyInspector';
+import { adjacentInspectorMoment } from './journey-inspector';
 import { CaveatLine, OriginBadge } from './IntelligenceNotice';
 import { goalModeEffectText, journeyPointLabel } from './match-journey';
 import { latestMatchPathSignal, matchAnalysisEvents, type MatchAnalysisEvent } from './match-analysis-events';
@@ -67,8 +68,6 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
   const [width,setWidth]=useState(310);
   const {inspectorOpen,setInspectorOpen,scrubArea,inspectorTrigger,openInspector,restoreInspectorPosition}=useJourneyInspector();
   const inspectorRail=useRef<ScrollView>(null);
-  const window=useWindowDimensions();
-  const insets=useSafeAreaInsets();
   const [selectedKey,setSelectedKey]=useState<string | null>(null);
   const [activeEventKey,setActiveEventKey]=useState<string | null>(null);
   const [isScrubbing,setIsScrubbing]=useState(false);
@@ -124,6 +123,11 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
     if(event?.point?.level!=null && event.point.plotMinute!==null) setSelectedKey(event.point.key);
     else if(nearest) setSelectedKey(nearest.key);
   },[moments,drawn,x]);
+  const previousMomentKey=adjacentInspectorMoment(moments,activeEventKey,selected?.plotMinute ?? null,-1)?.key;
+  const nextMomentKey=adjacentInspectorMoment(moments,activeEventKey,selected?.plotMinute ?? null,1)?.key;
+  const goPrevious=()=>{if(previousMomentKey)pickMoment(previousMomentKey);};
+  const goNext=()=>{if(nextMomentKey)pickMoment(nextMomentKey);};
+  const closeInspector=useCallback(()=>setInspectorOpen(false),[setInspectorOpen]);
   const selectAnalysis=(key:string)=>{
     setActiveEventKey(key);
     const event=analysisEvents.find(e=>e.key===key);
@@ -270,15 +274,11 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
     <Pressable ref={inspectorTrigger} accessibilityRole="button" accessibilityLabel="Seçili anın ayrıntısını aç" onPress={openInspector} style={story.inspectButton}>
       <Text style={story.controlText}>Seçili anı incele</Text><Text style={story.hint}>Dokun: ayrıntı · ↔ zaman · ↕ sayfa</Text>
     </Pressable>
-    <Modal visible={inspectorOpen} transparent animationType="fade" onRequestClose={()=>setInspectorOpen(false)} onDismiss={restoreInspectorPosition}>
-      <View style={[story.inspectorBackdrop,window.width>=768?{justifyContent:'center'}:null]}>
-        <Pressable accessible={false} onPress={()=>setInspectorOpen(false)} style={StyleSheet.absoluteFill}/>
-        <View accessibilityViewIsModal style={[story.inspector,{maxHeight:window.height*.82,paddingBottom:Math.max(12,insets.bottom)}]}>
-          <View style={story.inspectorHeading}><Text style={story.focusTitle}>Seçili an</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel="Ayrıntıyı kapat" onPress={()=>setInspectorOpen(false)} style={story.latestButton}><Text style={story.controlText}>Kapat ✕</Text></Pressable>
-          </View>
-          <ScrollView nestedScrollEnabled contentContainerStyle={story.inspectorContent}>
-            {moments.length?<ScrollView ref={inspectorRail} onContentSizeChange={revealInspectorEvent} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={story.moments}>
+    <JourneyInspector visible={inspectorOpen} onClose={closeInspector} onDismiss={restoreInspectorPosition}
+      previous={previousMomentKey?goPrevious:undefined} next={nextMomentKey?goNext:undefined}
+      selectionKey={activeEventKey ?? selected?.key ?? null}
+      positionLabel={activeMoment?`${moments.indexOf(activeMoment)+1} / ${moments.length} olay`:'Grafik kaydı'}>
+            {moments.length?<ScrollView ref={inspectorRail} onContentSizeChange={revealInspectorEvent} horizontal scrollEnabled={Platform.OS==='web'} showsHorizontalScrollIndicator={false} contentContainerStyle={story.moments}>
               {moments.map(event=><Pressable key={event.key} accessibilityRole="button" accessibilityState={{selected:activeEventKey===event.key}} accessibilityLabel={`${event.label}, ${event.title}, ${event.score??''}`} onPress={()=>pickMoment(event.key)} style={[story.moment,activeEventKey===event.key?story.momentActive:null]}>
                 <JourneyEventIcon event={event}/><View style={{flex:1}}><Text numberOfLines={2} style={story.momentTitle}>{event.label} · {event.title}</Text>{event.kind==='SUPER'?<Text accessibilityLabel={`${event.stars??1} yıldız`} style={[story.momentScore,story.superStars]}>{'★'.repeat(event.stars??1)}</Text>:<Text style={story.momentScore}>{event.score??''}</Text>}</View>
               </Pressable>)}
@@ -299,7 +299,7 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
       {selected.eliminatedRatio!==null?<Text style={story.subtitle}>{selected.beforeCount} sonuçtan {selected.eliminatedCount} elendi · {selected.compatibleCount} uyumlu sonuç kaldı</Text>:null}
       {selected.kind==='GOAL'?<Text style={story.subtitle}>{goalModeEffectText(selected)}</Text>:null}
     </View>:<View style={story.focus}><Text style={story.subtitle}>{isLoading?'Maçın yolu yükleniyor…':match.status==='NOT_STARTED'?'Başlama düdüğünden sonra ilk kayıtla başlayacak.':'Bu maç için kullanılabilir geçmiş yok. Geçmişe ait çizgi üretilmedi.'}</Text></View>}
-    {selected?<View style={story.controls}>
+    {selected&&!activeMoment?<View style={story.controls}>
       <Pressable accessibilityRole="button" accessibilityLabel="Önceki kayıt" disabled={selectedIndex<=0} style={[story.control,selectedIndex<=0?story.disabled:null]} onPress={()=>pickPoint(drawn[selectedIndex-1]!)}><Text style={story.controlText}>← Önceki</Text></Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="Son kayda dön" style={story.control} onPress={returnToLatest}><Text style={story.controlText}>Son kayıt</Text></Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="Sonraki kayıt" disabled={selectedIndex>=drawn.length-1} style={[story.control,selectedIndex>=drawn.length-1?story.disabled:null]} onPress={()=>pickPoint(drawn[selectedIndex+1]!)}><Text style={story.controlText}>Sonraki →</Text></Pressable>
@@ -330,10 +330,7 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
     <View style={story.eventLegend}>{LEGEND_KINDS.map(kind=><View key={kind} style={story.legendItem}><Svg width={18} height={18} viewBox="0 0 24 24" {...journeySvgAccessibility}><JourneyEventGlyph kind={kind} color={kind==='RED_CARD'?colors.red:kind==='SUPER'?colors.gold:colors.textMuted}/></Svg><Text style={story.hint}>{LEGEND_LABELS[kind]}</Text></View>)}</View>
     <Text style={story.hint}>{drawn.length?'Çizgi: havuz uyumu, kazanma olasılığı değil. Rozet: gruplanan olay sayısı.':'Olay ikonuna dokun. Rozet: gruplanan olay sayısı.'}</Text>
 </View>:null}
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
+    </JourneyInspector>
   </View>;
 }
 

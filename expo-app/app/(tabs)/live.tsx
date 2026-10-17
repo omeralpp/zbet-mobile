@@ -45,6 +45,7 @@ import {
   type LiveMatchTab
 } from "@/src/utils/live-match-tabs";
 import { groupMatchesByKickoff } from "@/src/utils/match-groups";
+import { normalizeSearchText, searchTextScore } from "@/src/utils/search";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 
 function firstParam(value: string | string[] | undefined): string {
@@ -167,9 +168,15 @@ export default function LiveScreen() {
     const source = query.data ?? [];
     return localTabs.reduce(
       (result, pageTab) => {
-        const needle = search.trim().toLocaleLowerCase("tr-TR");
-        const pageMatches = source.filter((match) => matchLiveTab(match, pageTab, starFilter)
-          && (!needle || `${match.homeTeam} ${match.awayTeam} ${match.league}`.toLocaleLowerCase("tr-TR").includes(needle)));
+        const needle = normalizeSearchText(search);
+        const pageMatches = source.filter(match => matchLiveTab(match, pageTab, starFilter));
+        if (needle) {
+          const found = pageMatches.map((match, index) => ({ match, index,
+            score: searchTextScore(`${match.homeTeam} ${match.awayTeam} ${match.league}`, needle) }))
+            .filter(item => item.score !== null).sort((a, b) => a.score! - b.score! || a.index - b.index);
+          result[pageTab] = found.length ? [{ key: `search-${pageTab}`, title: "Arama sonuçları", data: found.map(item => item.match) }] : [];
+          return result;
+        }
         const split = splitPinnedMatches(pageMatches, pinnedKeys);
         result[pageTab] = [
           ...(split.pinned.length
@@ -246,9 +253,9 @@ export default function LiveScreen() {
         </View>
       </TutorialTarget>
 
-      <TextInput accessibilityLabel="Takım veya lig ara" placeholder="Takım veya lig ara"
+      <TextInput accessibilityLabel="Takım veya lig ara" placeholder="Takım veya ligin bir bölümünü ara"
         placeholderTextColor={colors.textMuted} value={search} onChangeText={setSearch}
-        autoCorrect={false} style={styles.search} />
+        autoCorrect={false} autoCapitalize="none" style={styles.search} />
 
       {query.isLoading ? (
         <LoadingState label="Canlı maçlar hazırlanıyor" />

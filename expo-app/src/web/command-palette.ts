@@ -1,5 +1,7 @@
 import type { MatchStatus, MatchSummary, SuperLog, TotoProgram } from "@/src/api/schemas";
 import { desktopDestinations } from "./desktop-nav";
+import { normalizeSearchText as foldTurkish, searchTextScore } from "@/src/utils/search";
+export { normalizeSearchText as foldTurkish } from "@/src/utils/search";
 
 /**
  * The desktop command palette's search model, free of UI so it can be tested.
@@ -24,21 +26,6 @@ export type PaletteItem = {
   /** Folded search text: title, subtitle and kind words. */
   haystack: string;
 };
-
-const turkishFold: Record<string, string> = {
-  ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u", â: "a", î: "i", û: "u"
-};
-
-/** Lower-cases with Turkish rules and folds letters a keyboard may not type. */
-export function foldTurkish(value: string): string {
-  return value
-    .toLocaleLowerCase("tr-TR")
-    .replace(/[çğıöşüâîû]/g, (letter) => turkishFold[letter] ?? letter)
-    .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 const statusLabels: Record<MatchStatus, string> = {
   LIVE: "Canlı",
@@ -157,12 +144,13 @@ export function searchPalette(items: readonly PaletteItem[], query: string, limi
   }
   const scored: { entry: PaletteItem; score: number; index: number }[] = [];
   items.forEach((entry, index) => {
-    if (!words.every((word) => entry.haystack.includes(word))) {
+    const matchScore = searchTextScore(entry.haystack, query);
+    if (matchScore === null) {
       return;
     }
     const title = foldTurkish(entry.title);
     const phrase = words.join(" ");
-    let score = kindOrder[entry.kind];
+    let score = kindOrder[entry.kind] + matchScore * 100;
     if (title === phrase) {
       score -= 30;
     } else if (title.startsWith(phrase)) {

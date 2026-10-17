@@ -23,14 +23,14 @@ export function JinxAssessmentCard({ context, assessment, pending, error, onAsk 
     <View style={styles.row}>
       <MaterialCommunityIcons name="chat-question-outline" color={semantic.intelligence} size={22} />
       <Text style={styles.title}>Jinx</Text>
-      {current && verdict ? <Text accessibilityLiveRegion="polite" style={styles.verdict}>{verdict === "WAIT" ? "Yeni oyun: Bekle" : assessmentLabels[verdict]}</Text> : null}
+      {current && verdict ? <Text accessibilityLiveRegion="polite" style={styles.verdict}>{assessmentLabels[verdict]}</Text> : null}
       <Pressable accessibilityRole="button" accessibilityLabel={assessment ? "Jinx değerlendirmesini yenile" : "Jinx’e sor"}
         disabled={pending || !eligible} onPress={onAsk} style={[styles.action, (pending || !eligible) && styles.disabled]}>
         <Text style={styles.actionText}>{pending ? "Bakıyor…" : assessment ? "Yenile" : "Sor"}</Text>
       </Pressable>
     </View>
     <Text accessibilityLiveRegion="polite" style={styles.reason}>{pending ? "Gösterilen maç verileri değerlendiriliyor."
-      : !live ? "Maç devam etmiyor; yeni oyun değerlendirmesi yok."
+      : !live ? "Maç devam etmiyor; yeni bahis değerlendirmesi yok."
       : !context?.selectionKey ? "Şu anda değerlendirilecek bir BTB seçimi yok."
       : error ? "Değerlendirme alınamadı. Veriyi yenileyip tekrar sor."
       : stale ? "Maç verisi değişti veya değerlendirme süresi doldu. Yeniden sor."

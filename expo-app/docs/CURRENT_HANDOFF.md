@@ -2,7 +2,7 @@
 
 Son güncelleme: 2026-10-17
 
-Mod: `OBSERVATION`
+Mod: `LOCAL_IMPLEMENTATION`
 
 Çalışma alanı: `C:\dev\btb-cdoex` · Aktif task: `BTB Mobile Next - Aktif`
 
@@ -15,26 +15,39 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
-17 October: TASK-0160 coordinated UX/Jinx release remains **INCOMPLETE**. The owner
-approved scoped commit/push and subsequently completion of the owner-only release.
-Client 93e8330 APK was privately delivered with pilot signature/ARM64/full-byte
-readback verified; the owner supplied phone screenshots and reported excessive
-journey length and unhelpful Jinx (NXT-OBS-163/164). This is not accepted Android
-smoke. Its web candidate was not published; the accepted 16 October recovery pair
-below remains retained. Corrected BFF 71732a6 is active (17 October, 14:13 UTC);
-local/public live contract checks passed with all nine sources and snapshot identity.
-A real 66′ 1–2 / 2.5-under selection now explains that the score condition can no
-longer be met, while the unavailable-market gate still returns WAIT.
+17 October: TASK-0160 corrected Android/web batch is **COMPLETE**. Owner accepted
+Android with three Benevento–Vicenza screenshots, then confirmed web is OK with a
+live light-theme Jinx screenshot. `client-release.mjs complete` passed for client
+`bd430739b564b23195158005f711eff07c59878c`, APK SHA256
+`3C34A195F611F26B0E38616965ACC4E46447F7793B20F25EA9A1EC51DE0E634E`, paired web tree
+`56FDFDA3F1CCE05EB099000C9283C859451B9C496489E8BE8AEFFE36C58148A1`, web release
+`20261017T143340Z-bd43073`. This pair is retained for recovery. Durable evidence:
+`btb-codex/docs/evidence/client-release-bd43073-2026-10-17.json`.
+BFF `71732a6` served the accepted batch; local/public snapshot/schema/ACK smokes
+passed with all nine sources. The rejected 93e8330 candidate remains historical and was never
+published to web. V1/V2 and the approved economic/value gate remain intact.
 
-The ongoing authorized UX correction adds graph-tap event inspection, retains
-page position on close, collapses the duplicate full timeline and explains the
-score/selection condition even when economic eligibility remains WAIT. Android
-and web share the correction; V1/V2 and the validated value gate stay intact.
-Scope and verification: `UX_JINX_V3_LOCAL_2026_10_17.md`. Exact source/artifact state
-and pending receipts are in workspace
-`.codex-artifacts/ux-jinx-2026-10-17/verification.json` and `RELEASE_STATUS.md`.
-The corrected delivery must rebuild both artifacts from its new clean pushed
-source and obtain actual owner installation and both client smoke evidence.
+TASK-0161 is the next owner-requested shared UX implementation: Android panel
+swipe down closes at the top (content scrolling preserved), horizontal swipes
+navigate individual events; web substitutes horizontal wheel/trackpad, keyboard
+and visible previous/next arrows. Native modal content gets its own gesture root.
+Web has an explicit in-place refresh (Android retains pull-to-refresh); refresh
+never triggers manual Jinx. Shared match search folds Turkish characters/case,
+finds substrings and bounded typo matches; desktop palette uses the same rules.
+Jinx WAIT label becomes “Bahis önerisi yok”; missing-value text says no betting
+recommendation was produced, and the headline avoids repeating the score-change
+fact. No model/probability/SAP change. NXT-OBS-165..168 record the batch.
+BFF `3ffea3a` is pushed/active (17 October 18:08 UTC) for the bounded Jinx wording
+correction; 618 BFF tests/CAP build/9 legacy+V3 contract payloads passed. Client
+quality gate passed type/lint/unit/tooling/brand, Doctor, Android JS bundle and
+verified edge web export. Browser smoke passed event arrows, horizontal wheel,
+keyboard, vertical content scrolling, refresh preserving manual Jinx time, and
+Turkish/substring/typo search at desktop and 390px. A final refresh-button placement
+fix clears the floating mascot on narrow web; targeted lint and fresh mock export
+passed. Browser screenshots use synthetic data. New source and checks are local
+until the bounded Git/release steps; any release requires a new verified same-source
+Android/web pair. Actual new native gestures need physical owner smoke; previous
+acceptance does not transfer to them.
 
 16 Ekim ilk koordineli Android+web batch'i **COMPLETE** (TASK-0144/0135/0143
 DONE): batch `client-3e9ffe9…-8757EFEA9837-06AF4EA3CA00`, kaynak zbet-mobile
@@ -137,7 +150,7 @@ doğrudan exact-APK bildirimiyle kabul edildi; yeni otomatik fiziksel test yok.
 
 **Rota:** telefon → `https://api.surklase.com` → mevcut pilot BFF
 `zbet-cap/standalone-server.js`,127.0.0.1:4004,pilot auth. Son runtime aktivasyonu
-17 October 14:13 UTC, BFF 71732a6 (PID için listener'ı yeniden oku). Windows görevi ve
+17 October 18:08 UTC, BFF 3ffea3a (PID için listener'ı yeniden oku). Windows görevi ve
 ensure/start launcher korunur. Manifest `PRESSURE_PATH_MAINTENANCE_20261015.json`,
 ham SHA-256 `5A8F31DBA93EAB1E7DC9D7E93ABA614DB66AA439237F8BC57140AF002556587A`. İki önceki A3 manifesti aynen korunur;
 yalnız güncel manifestin düz listesi geçmiş okumaları yetkilendirir.
@@ -215,11 +228,11 @@ legacy blank tag yeni modele yükseltilmez. Tarihsel karar kendi capture'ını o
 
 ## Exact next steps
 
-UX/Jinx release: continue NXT-OBS-163/164 under the owner's existing scoped Git and
-coordinated release approval. Validate and commit the bounded correction, rebuild
-and verify the matching Android/web pair, deliver the replacement APK privately,
-then publish web only after installation evidence. Close TASK-0160 only after
-both corrected client smokes. Scope: `UX_JINX_V3_LOCAL_2026_10_17.md`.
+TASK-0161: validate the panel gestures/navigation, clearer Jinx, web refresh and
+shared tolerant search on both surfaces; retain bd43073 as the accepted recovery
+pair. Record checks and artifact identity in the release evidence. Deliver any
+replacement as one verified Android/web batch, then install/smoke Android before
+publishing matching web; close only after both current client smokes.
 TASK-0156: the canonical weekly scorecard exists; rolling 7/30-day data and a runtime
 feed remain missing, while approved probability/value evidence is a separate Phase
 2/3 dependency. Its OPEN task has a dated evidence review for 19 October; local UI
