@@ -8,6 +8,7 @@ import { useBreakpoint } from "./use-breakpoint";
 export type ReorderableModuleItem = {
   id: string;
   node: ReactNode;
+  fullWidth?: boolean;
 };
 
 type ReorderableModuleListProps = {
@@ -36,8 +37,7 @@ export function ReorderableModuleList({
   const [active, setActive] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
-  // Wide windows flow the modules into masonry columns (reading order runs
-  // down each column); the hosting Screen opts into the wider content column.
+  // Grid follows DOM/keyboard order across each row. Saved module order stays intact.
   const columns = Math.max(1, Math.min(moduleColumns(useBreakpoint()), maxColumns ?? 3));
 
   const endDrag = () => {
@@ -47,7 +47,7 @@ export function ReorderableModuleList({
   };
 
   return (
-    <div style={columns > 1 ? { ...columnsStyle, columnCount: columns } : listStyle}>
+    <div style={columns > 1 ? { ...columnsStyle, gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` } : listStyle}>
       {items.map((item, index) => {
         const shown = active === item.id || dragIndex === index;
         const dropHere = dragIndex !== null && overIndex === index && dragIndex !== index;
@@ -82,6 +82,7 @@ export function ReorderableModuleList({
             style={{
               ...moduleStyle,
               ...(columns > 1 ? columnModuleStyle : null),
+              ...(columns > 1 && item.fullWidth ? { gridColumn: "1 / -1" } : null),
               opacity: dragIndex === index ? 0.55 : 1,
               outline: dropHere ? `2px solid ${semantic.intelligence}` : "none"
             }}
@@ -162,15 +163,15 @@ const viewDefaults = {
 const listStyle = viewDefaults;
 
 const columnsStyle = {
-  columnGap: spacing.xxl,
-  display: "block",
+  gap: spacing.xxl,
+  alignItems: "start",
+  display: "grid",
   position: "relative"
 } as const;
 
 // A module never splits across two columns.
 const columnModuleStyle = {
-  breakInside: "avoid",
-  marginBottom: spacing.lg
+  minWidth: 0
 } as const;
 
 const moduleStyle = {

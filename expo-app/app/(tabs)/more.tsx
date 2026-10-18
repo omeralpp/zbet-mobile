@@ -1,6 +1,7 @@
 import { useEffect, useState, type ComponentProps } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
+import { useRouter } from "expo-router";
 import {
   Alert,
   Platform,
@@ -14,6 +15,9 @@ import { Screen } from "@/src/components/Screen";
 import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import { useAuth } from "@/src/auth/AuthProvider";
 import { runtimeConfig } from "@/src/config/runtime";
+import { designLabAvailable } from "@/src/design-lab/jinx-motion";
+import { useJinxPreferences } from "@/src/mascot/JinxPreferencesProvider";
+import { useReducedMotion } from "@/src/theme/use-reduced-motion";
 import { resetModuleCollapse } from "@/src/layout/module-collapse-store";
 import { resetModuleOrder } from "@/src/layout/module-layout-store";
 import type { ModuleLayoutSurface } from "@/src/layout/module-layout";
@@ -125,8 +129,8 @@ function ThemeSwitchRow({
         disabled={changing}
         ios_backgroundColor={colors.surfaceStrong}
         onValueChange={onChange}
-        thumbColor={dark ? colors.white : colors.textMuted}
-        trackColor={{ false: colors.surfaceStrong, true: colors.blue }}
+        thumbColor={dark ? colors.onAction : colors.textMuted}
+        trackColor={{ false: colors.surfaceStrong, true: colors.actionFill }}
         value={dark}
       />
     </View>
@@ -182,6 +186,9 @@ function registrationErrorDetail(code: RegistrationErrorCode | undefined): strin
 }
 
 export default function MoreScreen() {
+  const router = useRouter();
+  const jinx = useJinxPreferences();
+  const systemReducedMotion = useReducedMotion();
   const registration = useRegistrationState();
   const [updatingWidgets, setUpdatingWidgets] = useState(false);
   const [themeChanging, setThemeChanging] = useState(false);
@@ -281,11 +288,11 @@ export default function MoreScreen() {
   };
 
   return (
-    <Screen eyebrow="BTB MOBILE" title="Daha fazla">
+    <Screen eyebrow="BTB" title="Ayarlar ve yardım" subtitle="Görünüm, Jinx ve bu cihaza ait tercihler.">
       <View style={styles.modeCard}>
         <SurfaceMaterial
           accent={
-            runtimeConfig.useMocks ? semantic.warning : semantic.positive
+            runtimeConfig.useMocks ? semantic.warning : semantic.neutral
           }
           radius={radii.lg}
         />
@@ -296,66 +303,45 @@ export default function MoreScreen() {
               {
                 backgroundColor: runtimeConfig.useMocks
                   ? semantic.warning
-                  : semantic.positive
+                  : semantic.neutral
               }
             ]}
           />
           <Text style={styles.modeTitle}>
-            {runtimeConfig.useMocks ? "Önizleme modu" : "Canlı veriler bağlı"}
+            {runtimeConfig.useMocks ? "Önizleme modu" : "Maç verileri"}
           </Text>
         </View>
         <Text style={styles.modeDetail}>
           {runtimeConfig.useMocks
             ? "Uygulama güvenli örnek veriler gösteriyor."
-            : "Maç ve karar verileri güvenli bağlantı üzerinden güncelleniyor."}
+            : "Maç ve karar kayıtlarının zamanını ve güncelliğini ilgili ekranda kontrol et."}
         </Text>
       </View>
 
-      <Text style={styles.sectionTitle}>Bağlantılar</Text>
-      <View style={styles.group}>
-        <SettingsRow
-          detail="Bilyoner uygulaması veya web sitesi"
-          icon="open-in-new"
-          onPress={() => Linking.openURL("https://www.bilyoner.com/")}
-          title="Bilyoner"
-        />
-      </View>
-
-      <Text style={styles.sectionTitle}>Düzen</Text>
-      <View style={styles.group}>
-        <View style={styles.note}>
-          <Text style={styles.noteText}>
-            {isWeb
-              ? "Özet, canlı maç detayı ve Super karar detayındaki analiz modüllerinin üzerine gelip tutamaçla sürükleyerek ya da oklarla kendi sıranıza taşıyabilirsiniz. Sıralama bu tarayıcıda saklanır; yeni modüller otomatik eklenir."
-              : "Özet, canlı maç detayı ve Super karar detayındaki analiz modüllerini uzun basıp sürükleyerek kendi sıranıza taşıyabilirsiniz. Sıralama bu cihazda saklanır; yeni modüller otomatik eklenir."}
-          </Text>
-        </View>
-        <SettingsRow
-          detail="Panodaki bölümleri BTB varsayılan sırasına döndür"
-          icon="view-dashboard-outline"
-          onPress={() => restoreLayout("overview", "Özet düzeni")}
-          title="Özet düzenini sıfırla"
-        />
-        <SettingsRow
-          detail="Canlı maç detayı modüllerini varsayılan sıraya döndür"
-          icon="soccer"
-          onPress={() => restoreLayout("liveDetail", "Canlı detay düzeni")}
-          title="Canlı detay düzenini sıfırla"
-        />
-        <SettingsRow
-          detail="Super karar detayı modüllerini varsayılan sıraya döndür"
-          icon="star-outline"
-          onPress={() => restoreLayout("superDetail", "Super detay düzeni")}
-          title="Super detay düzenini sıfırla"
-        />
-      </View>
-
-      <Text style={styles.sectionTitle}>Cihaz</Text>
+      <Text accessibilityRole="header" aria-level={2} style={styles.sectionTitle}>Görünüm ve Jinx</Text>
       <View style={styles.group}>
         <ThemeSwitchRow
           changing={themeChanging}
           onChange={changeTheme}
         />
+        <View style={styles.jinxPreference}>
+          <Text accessibilityRole="header" aria-level={3} style={styles.rowTitle}>Jinx hareketi</Text>
+          <Text style={styles.rowDetail}>Canlı kısa futbol sahneleri oynatır; Sakin hareketi azaltır; Kapalı dekoratif hareketi durdurur.</Text>
+          <View style={styles.jinxModes}>
+            {([['LIVE', 'Canlı'], ['CALM', 'Sakin'], ['OFF', 'Kapalı']] as const).map(([mode, label]) => <Pressable key={mode}
+              accessibilityRole="button" accessibilityLabel={`Jinx hareketi: ${label}`}
+              accessibilityState={{ selected: jinx.mode === mode }} aria-pressed={jinx.mode === mode}
+              onPress={() => jinx.setMode(mode)} style={[styles.jinxMode, { borderColor: jinx.mode === mode ? semantic.intelligence : colors.border, backgroundColor: jinx.mode === mode ? colors.actionFill : colors.backgroundElevated }]}>
+              <Text style={[typeScale.body, { color: jinx.mode === mode ? colors.onAction : colors.text }]}>{label}</Text>
+            </Pressable>)}
+          </View>
+          {systemReducedMotion ? <Text style={styles.rowDetail}>Sistemin hareket azaltma ayarı açık; dekoratif hareketler kapalı.</Text> : null}
+          {jinx.saveFailed ? <Text style={styles.rowDetail}>Tercih bu oturumda uygulanıyor; cihazda kaydedilemedi.</Text> : null}
+        </View>
+        <SettingsRow icon={jinx.hidden ? "eye-outline" : "eye-off-outline"}
+          title={jinx.hidden ? "Jinx’i göster" : "Jinx’i gizle"}
+          detail="Karakter görünümünü değiştirir; maç yorumu ve isteğe bağlı rehber kullanılabilir."
+          onPress={() => jinx.setHidden(!jinx.hidden)} />
         <SettingsRow
           detail={
             discovery.pace === "QUIET"
@@ -460,7 +446,7 @@ export default function MoreScreen() {
                   </Text>
                   {selected ? (
                     <MaterialCommunityIcons
-                      color={colors.white}
+                      color={colors.onAction}
                       name="check"
                       size={iconSizes.inline}
                     />
@@ -509,9 +495,57 @@ export default function MoreScreen() {
         ) : null}
       </View>
 
+      {designLabAvailable(runtimeConfig) ? <>
+        <Text accessibilityRole="header" aria-level={2} style={styles.sectionTitle}>Tasarım önizlemesi</Text>
+        <View style={styles.group}>
+          <SettingsRow icon="palette-outline" title="Tasarım atölyesi"
+            detail="Yeni ekranları ve iki Jinx adayını aynı örnek verilerle karşılaştır"
+            onPress={() => router.push("/design-lab" as never)} />
+        </View>
+      </> : null}
+
+      <Text accessibilityRole="header" aria-level={2} style={styles.sectionTitle}>Bağlantılar</Text>
+      <View style={styles.group}>
+        <SettingsRow
+          detail="Bilyoner uygulaması veya web sitesi"
+          icon="open-in-new"
+          onPress={() => Linking.openURL("https://www.bilyoner.com/")}
+          title="Bilyoner"
+        />
+      </View>
+
+      <Text accessibilityRole="header" aria-level={2} style={styles.sectionTitle}>Düzen</Text>
+      <View style={styles.group}>
+        <View style={styles.note}>
+          <Text style={styles.noteText}>
+            {isWeb
+              ? "Özet, canlı maç detayı ve Super karar detayındaki analiz modüllerinin üzerine gelip tutamaçla sürükleyerek ya da oklarla kendi sıranıza taşıyabilirsiniz. Sıralama bu tarayıcıda saklanır; yeni modüller otomatik eklenir."
+              : "Özet, canlı maç detayı ve Super karar detayındaki analiz modüllerini uzun basıp sürükleyerek kendi sıranıza taşıyabilirsiniz. Sıralama bu cihazda saklanır; yeni modüller otomatik eklenir."}
+          </Text>
+        </View>
+        <SettingsRow
+          detail="Panodaki bölümleri BTB varsayılan sırasına döndür"
+          icon="view-dashboard-outline"
+          onPress={() => restoreLayout("overview", "Özet düzeni")}
+          title="Özet düzenini sıfırla"
+        />
+        <SettingsRow
+          detail="Canlı maç detayı modüllerini varsayılan sıraya döndür"
+          icon="soccer"
+          onPress={() => restoreLayout("liveDetail", "Canlı detay düzeni")}
+          title="Canlı detay düzenini sıfırla"
+        />
+        <SettingsRow
+          detail="Super karar detayı modüllerini varsayılan sıraya döndür"
+          icon="star-outline"
+          onPress={() => restoreLayout("superDetail", "Super detay düzeni")}
+          title="Super detay düzenini sıfırla"
+        />
+      </View>
+
       {!runtimeConfig.useMocks && !runtimeConfig.pilotAccessKey ? (
         <>
-          <Text style={styles.sectionTitle}>Oturum</Text>
+          <Text accessibilityRole="header" aria-level={2} style={styles.sectionTitle}>Oturum</Text>
           <View style={styles.group}>
             <SettingsRow
               detail={
@@ -548,6 +582,9 @@ export default function MoreScreen() {
 }
 
 const styles = StyleSheet.create({
+  jinxPreference: { padding: spacing.md, gap: spacing.sm },
+  jinxModes: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  jinxMode: { minHeight: 48, minWidth: 72, paddingHorizontal: spacing.md, borderWidth: 1, borderRadius: radii.md, justifyContent: "center", alignItems: "center", flexGrow: 1 },
   modeCard: {
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
@@ -577,8 +614,8 @@ const styles = StyleSheet.create({
   // Section labels here are the same grammar as a module eyebrow elsewhere,
   // so they take the same role and the same structural bronze.
   sectionTitle: {
-    color: colors.bronze,
-    ...typeScale.eyebrow,
+    color: colors.text,
+    ...typeScale.moduleTitle,
     marginTop: spacing.xxl,
     marginBottom: spacing.sm
   },
@@ -595,6 +632,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     backgroundColor: colors.backgroundElevated,
     paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border
   },
@@ -626,7 +664,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.md
   },
   preferenceOptionSelected: {
-    backgroundColor: colors.blueSoft
+    backgroundColor: colors.actionFill
   },
   preferenceStars: {
     width: 72,
@@ -639,7 +677,7 @@ const styles = StyleSheet.create({
     ...typeScale.bodyCompact
   },
   preferenceOptionTextSelected: {
-    color: colors.white
+    color: colors.onAction
   },
   rowIcon: {
     width: 40,

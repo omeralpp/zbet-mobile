@@ -64,3 +64,31 @@ test('pixel, line, page and Shift wheel inputs share navigation and preserve rea
   assert.equal(inspectorWheelInput(state, { ...wheel, ctrlKey: true }, 1000).handled, false);
   assert.equal(inspectorWheelInput(state, { ...wheel, metaKey: true }, 1000).handled, false);
 });
+
+test('a held mouse wheel reaches every event in both directions without requiring a pause', () => {
+  const moments = Array.from({ length: 6 }, (_, i) => ({ key: String(i), minute: i < 3 ? 45 : 60 + i })) as JourneyMoment[];
+  let state: ReturnType<typeof inspectorWheel>['state'] = { at: 0, amount: 0, locked: false };
+  let active = '0';
+  const visited = new Set([active]);
+  for (const direction of [1, -1] as const) {
+    for (let tick = 0; tick < 26; tick++) {
+      const result = inspectorWheel(state, direction * 10, 0, 1000 + (direction === -1 ? 3000 : 0) + tick * 60);
+      state = result.state;
+      if (result.direction) active = adjacentInspectorMoment(moments, active, null, direction)?.key ?? active;
+      visited.add(active);
+    }
+    assert.equal(active, direction === 1 ? '5' : '0');
+  }
+  assert.equal(visited.size, 6);
+});
+
+test('a long decaying trackpad coast never advances again; renewed input can', () => {
+  let state: ReturnType<typeof inspectorWheel>['state'] = { at: 0, amount: 0, locked: false };
+  const directions = [100, 90, 80, 60, 40, 30, 20, 10, 5, 2].map((delta, index) => {
+    const result = inspectorWheel(state, delta, 0, 1000 + index * 60);
+    state = result.state;
+    return result.direction;
+  });
+  assert.deepEqual(directions, [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  assert.equal(inspectorWheel(state, 30, 0, 1600).direction, 1);
+});

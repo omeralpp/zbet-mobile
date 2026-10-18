@@ -7,6 +7,8 @@ import {
 import { resolveDepth, type DepthLevel, type DepthPalette } from "./elevation";
 import { resolveSurfaceGradient } from "./surface";
 import { resolveSemanticColors } from "./semantic";
+import { accessibleColors } from "./accessible-colors";
+import { experiencePalettes } from "./experience-palette";
 import { syncWidgetTheme } from "@/src/widgets/btb-widget";
 
 export { parseThemeMode, type ThemeMode } from "./theme-preference";
@@ -35,48 +37,31 @@ export {
 
 export const themeStorageKey = "btb-mobile-next-theme-v1";
 
+const darkBase = experiencePalettes.dark;
+const lightBase = experiencePalettes.light;
 const darkColors = {
-  // Deep ink. The old ground was a navy that read as "dark blue UI"; this one
-  // reads as unlit space, which is what lets a single teal trace look like
-  // energy rather than like another colour on a coloured background.
-  background: "#030B16",
-  backgroundElevated: "#06101D",
-  surface: "#143552",
-  surfaceStrong: "#16324D",
-  border: "#1E4468",
-  borderSoft: "#14304A",
-  text: "#F2F7FC",
-  textMuted: "#9AB0C4",
-  textSubtle: "#6F8AA3",
-  // Intelligence moved deeper and more saturated, away from the live teal
-  // rather than toward it. Two technological accents only read as two if they
-  // are far enough apart at the size a dot renders.
-  blue: "#2E86F0",
-  blueSoft: "#10375F",
-  // Positive is jade rather than mint. A literal emerald sat 17 degrees from
-  // the live aqua and the two collapsed into each other; this holds 33, which
-  // is the widest worst-case separation this set can carry.
-  green: "#4ADE80",
-  greenSoft: "#10402A",
-  // Warning is deliberately unchanged. It already reads as amber, and moving it
-  // further warm would have closed the gap to the structural bronze for a
-  // difference of three degrees.
-  gold: "#F5C542",
-  goldSoft: "#4A3C12",
-  // Crimson rather than coral: deeper, less sugary, and still unmistakably the
-  // colour of a lost decision and a red card.
-  red: "#FA4E67",
-  redSoft: "#4A1A26",
-  // BTB's live signature, brightened slightly against the deeper ground.
-  teal: "#3FE0D2",
-  tealSoft: "#0E4650",
-  // Structural metal, never a signal. Separated from the warning amber by
-  // saturation and luminance rather than by hue.
-  bronze: "#B08046",
-  // Reserved emphasis. Deliberately unused: violet earns its rarity by not
-  // appearing until something genuinely warrants it.
-  violet: "#A78BFA",
-  orange: "#FF9A55",
+  background: darkBase.background,
+  backgroundElevated: darkBase.surface,
+  surface: darkBase.surface,
+  surfaceStrong: darkBase.soft,
+  border: darkBase.border,
+  borderSoft: darkBase.border,
+  text: darkBase.text,
+  textMuted: darkBase.muted,
+  ...accessibleColors.dark,
+  blue: darkBase.blue,
+  blueSoft: "#193A53",
+  green: "#8FE1A5",
+  greenSoft: darkBase.accentSoft,
+  gold: darkBase.warning,
+  goldSoft: darkBase.warningSoft,
+  red: "#FF9FA9",
+  redSoft: "#442B35",
+  teal: "#79DAD5",
+  tealSoft: "#153C40",
+  bronze: "#D0B48E",
+  violet: "#CEB6FF",
+  orange: "#F1B588",
   white: "#FFFFFF",
   black: "#000000"
 } as const;
@@ -84,31 +69,28 @@ const darkColors = {
 export type ThemeColors = { [Key in keyof typeof darkColors]: string };
 
 const lightColors: ThemeColors = {
-  // Light is not the dark theme inverted. The ground is a warm off-white and
-  // the surfaces above it are cool, so depth comes from temperature rather than
-  // from another step of grey. Warm paper, cool instrument.
-  background: "#F0EBE4",
-  backgroundElevated: "#FFFFFF",
-  surface: "#FFFFFF",
-  surfaceStrong: "#E9EFF5",
-  border: "#CBD8E2",
-  borderSoft: "#DFE7EE",
-  text: "#0B1B2E",
-  textMuted: "#4A5F73",
-  textSubtle: "#5C7186",
-  blue: "#1663C9",
-  blueSoft: "#12539F",
-  green: "#0F7A4A",
-  greenSoft: "#D9F0E3",
-  gold: "#8A6410",
-  goldSoft: "#F6EBCB",
-  red: "#C1304A",
+  background: lightBase.background,
+  backgroundElevated: lightBase.surface,
+  surface: lightBase.surface,
+  surfaceStrong: lightBase.soft,
+  border: lightBase.border,
+  borderSoft: lightBase.border,
+  text: lightBase.text,
+  textMuted: lightBase.muted,
+  ...accessibleColors.light,
+  blue: lightBase.blue,
+  blueSoft: "#E0EAF6",
+  green: "#176B42",
+  greenSoft: lightBase.accentSoft,
+  gold: lightBase.warning,
+  goldSoft: lightBase.warningSoft,
+  red: "#A52E42",
   redSoft: "#F8DCE1",
-  teal: "#04707F",
-  tealSoft: "#D3EDF0",
-  bronze: "#8A5F2B",
-  violet: "#6D4AC4",
-  orange: "#C86521",
+  teal: "#075F6A",
+  tealSoft: "#DCEDEC",
+  bronze: "#765D3A",
+  violet: "#6849A7",
+  orange: "#98501E",
   white: "#FFFFFF",
   black: "#000000"
 } as const;
@@ -182,10 +164,10 @@ export const iconSizes = {
 export const shadows = {
   card: {
     shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: themeMode === "light" ? 0.1 : 0.2,
-    shadowRadius: 18,
-    elevation: 4
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: themeMode === "light" ? 0.04 : 0.1,
+    shadowRadius: 8,
+    elevation: 1
   }
 } as const;
 

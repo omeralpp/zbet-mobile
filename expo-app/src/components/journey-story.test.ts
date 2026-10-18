@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { mockRetainedJourney } from '../api/mock-data';
 import type { LiveContext } from '../api/schemas';
+import { decisionContextSchema } from '../api/schemas';
 import { journeyMomentEffect, journeyMoments, journeyVertices, markerGroups, poolLeaders, pressureReading } from './journey-story';
 
 const fixture=mockRetainedJourney('story');
@@ -51,6 +52,16 @@ test('pressure absence is distinct from balance, and alignment is never a team a
   assert.equal(pressureReading({...p,pressureAlignment:0}),'Baskı dengede');
   assert.match(pressureReading({...p,pressureAlignment:-.3}),/beklentisine karşı/);
   assert.match(pressureReading({...p,pressureAlignment:.3}),/beklentisini destekliyor/);
+});
+
+test('rejected captured pressure never claims that the source did not calculate it', () => {
+  const decisionContext = decisionContextSchema.parse({contractVersion:'decision-context.v2',
+    recentPressure:{availability:'UNAVAILABLE',reason:'CAPTURE_REGIME_MISMATCH',units:'WEIGHTED_ACTIVITY_PER_MINUTE',
+      home:null,away:null,total:null,difference:null,intervalSeconds:null,observedAt:null,sourceTimingKnown:false,xgCovered:false,stateRevision:null},
+    decisionCoherence:{availability:'UNAVAILABLE',reason:'CAPTURE_REGIME_MISMATCH',stateRevision:null,quoteRevision:null}});
+  const reading = pressureReading({...fixture.points[0]!,pressureAlignment:null,decisionContext});
+  assert.match(reading, /sürüm/);
+  assert.doesNotMatch(reading, /ölçümü yok/);
 });
 const lane=(minutes:(number|null)[])=>journeyMoments([],{availability:'OK',timeline:minutes.map((minute,index)=>({eventKey:`e${index}`,kind:'GOAL' as const,minute}))});
 const phone=(minute:number)=>58+minute/90*224;

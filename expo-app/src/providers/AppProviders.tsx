@@ -13,6 +13,7 @@ import { refreshPerformanceWidgetFromApi } from "@/src/widgets/performance-widge
 import { AuthProvider } from "@/src/auth/AuthProvider";
 import { LiveStarFilterProvider } from "@/src/preferences/LiveStarFilterProvider";
 import { SuperStarFilterProvider } from "@/src/preferences/SuperStarFilterProvider";
+import { JinxPreferencesProvider } from "@/src/mascot/JinxPreferencesProvider";
 
 export function AppProviders({ children }: PropsWithChildren) {
   const [queryClient] = useState(
@@ -64,7 +65,7 @@ export function AppProviders({ children }: PropsWithChildren) {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <LiveStarFilterProvider>
-          <SuperStarFilterProvider>{children}</SuperStarFilterProvider>
+          <SuperStarFilterProvider><JinxPreferencesProvider>{children}</JinxPreferencesProvider></SuperStarFilterProvider>
         </LiveStarFilterProvider>
       </AuthProvider>
     </QueryClientProvider>

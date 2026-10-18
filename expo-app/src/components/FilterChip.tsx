@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text } from "react-native";
-import { colors, interaction, radii, spacing } from "@/src/theme/theme";
+import { colors, interaction, radii, spacing, typeScale } from "@/src/theme/theme";
 
 export function FilterChip({
   label,
@@ -17,6 +17,7 @@ export function FilterChip({
       accessibilityLabel={count === undefined ? label : `${label}, ${count} kayıt`}
       accessibilityRole="button"
       accessibilityState={{ selected }}
+      aria-pressed={selected}
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,
@@ -42,16 +43,16 @@ const styles = StyleSheet.create({
     borderColor: colors.borderSoft
   },
   selected: {
-    backgroundColor: colors.blueSoft,
+    backgroundColor: colors.actionFill,
     borderColor: colors.blue
   },
   label: {
     color: colors.textMuted,
-    fontSize: 12,
-    fontWeight: "800"
+    ...typeScale.bodyCompact,
+    fontWeight: "700"
   },
   selectedLabel: {
-    color: colors.white
+    color: colors.onAction
   },
   pressed: {
     opacity: 0.7

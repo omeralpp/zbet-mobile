@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, interaction, radii, spacing } from "@/src/theme/theme";
+import { colors, interaction, radii, spacing, typeScale } from "@/src/theme/theme";
 
 type SectionHeaderProps = {
   title: string;
@@ -17,7 +17,7 @@ export function SectionHeader({
   return (
     <View style={styles.container}>
       <View style={styles.copy}>
-        <Text style={styles.title}>{title}</Text>
+        <Text accessibilityRole="header" aria-level={2} style={styles.title}>{title}</Text>
         {caption ? <Text style={styles.caption}>{caption}</Text> : null}
       </View>
       {actionLabel && onAction ? (
@@ -52,19 +52,17 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.text,
-    fontSize: 19,
-    lineHeight: 24,
-    fontWeight: "800"
+    ...typeScale.moduleTitle
   },
   caption: {
     color: colors.textMuted,
-    fontSize: 12,
+    ...typeScale.bodyCompact,
     marginTop: 2
   },
   action: {
     color: colors.blue,
-    fontSize: 11,
-    fontWeight: "900"
+    ...typeScale.bodyCompact,
+    fontWeight: "700"
   },
   actionButton: {
     alignItems: "center",

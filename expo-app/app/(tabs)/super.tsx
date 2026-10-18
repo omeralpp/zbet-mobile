@@ -20,6 +20,7 @@ import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { useCardGrid } from "@/src/layout/use-card-grid";
 import { SuperLogTable } from "@/src/web/SuperLogTable";
+import { useReducedMotion } from "@/src/theme/use-reduced-motion";
 import {
   EmptyState,
   ErrorState,
@@ -33,7 +34,8 @@ import {
   interaction,
   radii,
   shadows,
-  spacing
+  spacing,
+  typeScale
 } from "@/src/theme/theme";
 import {
   formatFixtureDateTime,
@@ -64,6 +66,7 @@ import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 const localTabs = ["ALL", "STAR"] as const;
 
 export default function SuperScreen() {
+  const reduceMotion = useReducedMotion();
   const params = useLocalSearchParams<{
     scope?: string | string[];
   }>();
@@ -127,8 +130,8 @@ export default function SuperScreen() {
     [onlyOpen, scopedLogs, sort, starFilter]
   );
   useEffect(() => {
-    listRefs.current[tab]?.scrollToOffset({ animated: true, offset: 0 });
-  }, [onlyOpen, sort, tab]);
+    listRefs.current[tab]?.scrollToOffset({ animated: !reduceMotion, offset: 0 });
+  }, [onlyOpen, sort, tab, reduceMotion]);
   const tabCounts = useMemo(
     () => ({
       ALL: logsByTab.ALL.length,
@@ -153,6 +156,7 @@ export default function SuperScreen() {
       eyebrow="BTB SUPER"
       scroll={false}
       title="Karar günlüğü"
+      subtitle="Her kayıt, karar anındaki seçim ve oranı gösterir."
       wide
     >
       <TutorialTarget id="super-filters" style={styles.filterTarget}>
@@ -214,8 +218,8 @@ export default function SuperScreen() {
                 setDayScopeOpen(false);
                 setOnlyOpen(value);
               }}
-              thumbColor={onlyOpen ? colors.white : colors.textMuted}
-              trackColor={{ false: colors.surfaceStrong, true: colors.blue }}
+              thumbColor={onlyOpen ? colors.onAction : colors.textMuted}
+              trackColor={{ false: colors.surfaceStrong, true: colors.actionFill }}
               value={onlyOpen}
             />
           </View>
@@ -294,7 +298,7 @@ export default function SuperScreen() {
                     </Text>
                     {selected ? (
                       <MaterialCommunityIcons
-                        color={colors.white}
+                        color={colors.onAction}
                         name="check"
                         size={iconSizes.inline}
                       />
@@ -307,10 +311,12 @@ export default function SuperScreen() {
         </View>
       </View>
 
+      <Text style={styles.unitNote}>Kâr, kaydın kaynak değeridir. Birim ve bahis tutarı belirtilmedi; ROI değildir.</Text>
       {query.isLoading ? (
         <LoadingState label="Super kararları hazırlanıyor" />
       ) : query.isError ? (
         <ErrorState
+          error={query.error}
           message={
             query.error instanceof Error
               ? query.error.message
@@ -400,6 +406,7 @@ export default function SuperScreen() {
 }
 
 const styles = StyleSheet.create({
+  unitNote: { ...typeScale.bodyCompact, color: colors.textMuted, marginBottom: spacing.md },
   screen: {
     paddingBottom: 0
   },
@@ -492,7 +499,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.md
   },
   dayScopeOptionSelected: {
-    backgroundColor: colors.blueSoft
+    backgroundColor: colors.actionFill
   },
   dayScopeOptionText: {
     color: colors.textMuted,
@@ -500,7 +507,7 @@ const styles = StyleSheet.create({
     fontWeight: "800"
   },
   dayScopeOptionTextSelected: {
-    color: colors.white
+    color: colors.onAction
   },
   dayScopeButtonPressed: {
     opacity: 0.68

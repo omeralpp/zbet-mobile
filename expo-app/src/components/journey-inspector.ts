@@ -30,7 +30,7 @@ export function adjacentInspectorMoment(moments: readonly JourneyMoment[], activ
     : moments.findLast(moment => moment.minute !== null && moment.minute <= minute);
 }
 
-export type InspectorWheelState = { at: number; amount: number; locked: boolean };
+export type InspectorWheelState = { at: number; amount: number; locked: boolean; stepAt?: number; lastDelta?: number };
 
 type WheelInput = { deltaMode: number; deltaX: number; deltaY: number; shiftKey: boolean; ctrlKey: boolean; metaKey: boolean };
 
@@ -43,16 +43,23 @@ export function inspectorWheelInput(state: InspectorWheelState, event: WheelInpu
   return inspectorWheel(state, dx * scale, (event.shiftKey ? 0 : event.deltaY) * scale, at);
 }
 
-/** A wheel/trackpad burst advances once; inertia cannot skip several events. */
+/** Suppress coasting, but let a held tilt wheel keep moving after a bounded pause. */
 export function inspectorWheel(state: InspectorWheelState, dx: number, dy: number, at: number) {
   if (!Number.isFinite(dx) || !Number.isFinite(dy) || !Number.isFinite(at) || Math.abs(dx) <= Math.abs(dy) * 1.2) {
     return { handled: false, direction: 0, state };
   }
-  const reversed = state.amount !== 0 && Math.sign(dx) !== Math.sign(state.amount);
-  const next = at - state.at > 180 || reversed ? { at, amount: dx, locked: false }
+  const previousDelta = state.lastDelta ?? state.amount;
+  const reversed = previousDelta !== 0 && Math.sign(dx) !== Math.sign(previousDelta);
+  const next = at - state.at > 180 || reversed ? { at, amount: dx, locked: false, stepAt: at, lastDelta: 0 }
     : { ...state, at, amount: state.amount + dx };
   // A discrete horizontal wheel step can be just 10px. The old 44px threshold
   // swallowed it entirely; keep a small noise guard and lock the remaining inertia.
-  const direction = !next.locked && Math.abs(next.amount) >= 8 ? Math.sign(next.amount) : 0;
-  return { handled: true, direction, state: { ...next, locked: next.locked || direction !== 0 } };
+  // Compare with the last advance, not the last input. Updating the latter on
+  // every tick locked a continuously held mouse wheel forever. Falling deltas
+  // are trackpad inertia; a sustained or renewed input may repeat at most 4/s.
+  const repeat = next.locked && at - (next.stepAt ?? at) >= 250 &&
+    Math.abs(dx) >= 8 && Math.abs(dx) >= Math.abs(next.lastDelta ?? 0);
+  const direction = (!next.locked || repeat) && Math.abs(next.amount) >= 8 ? Math.sign(next.amount) : 0;
+  return { handled: true, direction, state: { ...next, locked: next.locked || direction !== 0,
+    stepAt: direction ? at : next.stepAt ?? 0, lastDelta: dx, amount: direction ? 0 : next.amount } };
 }

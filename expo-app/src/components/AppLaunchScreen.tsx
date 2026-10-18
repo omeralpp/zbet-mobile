@@ -167,7 +167,7 @@ export function AppLaunchScreen({
             ]}
           >
             <MaterialCommunityIcons
-              color={colors.white}
+              color={colors.onAction}
               name="soccer"
               size={iconSizes.state}
             />
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     width: 260,
     height: 260,
     borderRadius: 130,
-    backgroundColor: colors.blueSoft,
+    backgroundColor: colors.actionFill,
     opacity: 0.18
   },
   content: {

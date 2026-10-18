@@ -15,7 +15,7 @@ import { latestMatchPathSignal, matchAnalysisEvents, type MatchAnalysisEvent } f
 import { lowCohortNotice, normalityLabel, resolveMatchPathState, surpriseLabel } from './match-path-chart';
 import { journeyAndSuperMoments, journeyMomentEffect, journeyVertices, markerGroups, poolLeaders, pressureReading } from './journey-story';
 import { derivePressureBalance } from '@/src/utils/pressure-balance';
-import { capturedIntervalPressure, currentIntervalPressure } from '@/src/utils/recent-pressure';
+import { capturedIntervalPressure, currentIntervalPressure, unavailablePressureMessage } from '@/src/utils/recent-pressure';
 import { JourneyEventGlyph, JourneyEventIcon, journeyEventColor, journeySvgAccessibility } from './JourneyEventIcon';
 import { journeyDragIntent, journeyTouch, momentGroupLead, momentGroupSymbols, nearestJourneyPoint, nearestMomentGroup } from './journey-interaction';
 
@@ -192,6 +192,7 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
   }:{};
   const capturedPressure=drawn.filter(p=>p.pressureAlignment!==null);
   const hasIntervalPressure=drawn.some(p=>p.decisionContext?.recentPressure.availability==='AVAILABLE');
+  const unavailablePressure=unavailablePressureMessage(latest?.decisionContext?.recentPressure.reason);
   const selectedIndex=selected?drawn.indexOf(selected):-1;
   const revealInspectorEvent=useCallback(()=>{
     const index=moments.findIndex(event=>event.key===activeEventKey);
@@ -203,6 +204,7 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
     <View style={story.topline}><Text style={story.eyebrow}>MAÇIN YOLU</Text><Text style={story.liveTag}>{match.status==='FINISHED'?'MAÇ TAMAMLANDI':match.status==='HALF_TIME'?'DEVRE ARASI':'MAÇ AKIŞI'}</Text></View>
     {retained?<OriginBadge origin={retained.origin}/>:null}
     <Text style={story.subtitle}>{currentTitle}</Text>
+    <Text style={story.subtitle}>Çizgi havuz uyumunu gösterir; kazanma olasılığı değildir.</Text>
     <View style={story.plotSurface} onLayout={event=>setWidth(Math.max(180,event.nativeEvent.layout.width))}>
     <View style={story.plotReadout}>
       <View style={story.plotReadoutCopy} accessible accessibilityRole={drawn.length?'adjustable':'text'}
@@ -252,7 +254,7 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
       {drawn.length?<SvgText x={LEFT} y={PRESSURE_Y-16} fill={colors.textMuted} {...svgLabel}>Baskı → havuz beklentisi</SvgText>:null}
       {drawn.length?<Line x1={LEFT} x2={width-RIGHT} y1={PRESSURE_Y} y2={PRESSURE_Y} stroke={colors.border}/>:null}
       {capturedPressure.map(p=><Line key={`pressure:${p.key}`} x1={x(p.plotMinute!)} x2={x(p.plotMinute!)} y1={PRESSURE_Y} y2={PRESSURE_Y-p.pressureAlignment!*14} stroke={p.pressureAlignment!>=0?colors.teal:colors.orange} strokeWidth={Math.max(2,Math.min(5,plotWidth/Math.max(1,capturedPressure.length)))} strokeLinecap="round"/>)}
-      {drawn.length?(!capturedPressure.length?<SvgText x={LEFT} y={CHART_HEIGHT-14} fill={colors.textMuted} {...svgLabel}>{hasIntervalPressure?'Baskı var · skor yönü belirsiz':'Bu kayıtlarda baskı ölçümü yok'}</SvgText>:<><SvgText x={LEFT} y={CHART_HEIGHT-14} fill={colors.teal} {...svgLabel}>↑ Skora doğru</SvgText><SvgText x={width-RIGHT} y={CHART_HEIGHT-14} textAnchor="end" fill={colors.orange} {...svgLabel}>↓ Skora karşı</SvgText></>):null}
+      {drawn.length?(!capturedPressure.length?<SvgText x={LEFT} y={CHART_HEIGHT-14} fill={colors.textMuted} {...svgLabel}>{hasIntervalPressure?'Baskı var · skor yönü belirsiz':'Baskı verisi doğrulanamadı'}</SvgText>:<><SvgText x={LEFT} y={CHART_HEIGHT-14} fill={colors.teal} {...svgLabel}>↑ Skora doğru</SvgText><SvgText x={width-RIGHT} y={CHART_HEIGHT-14} textAnchor="end" fill={colors.orange} {...svgLabel}>↓ Skora karşı</SvgText></>):null}
     </Svg>
     {/* Physical input belongs to the one gesture canvas. These overlay buttons
         retain keyboard/screen-reader actions without firing an origin tap after
@@ -268,6 +270,7 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
     </View>
     </GestureDetector>
     </View>
+    {drawn.length&&!capturedPressure.length&&!hasIntervalPressure?<Text style={story.hint}>{unavailablePressure.label}</Text>:null}
     <Text numberOfLines={2} accessibilityLiveRegion="polite" style={story.inlineSummary}>
       {activeMoment?journeyMomentEffect(activeMoment):selected?journeyPointLabel(selected):isLoading?'Maçın yolu yükleniyor…':'Bu maç için kullanılabilir geçmiş yok.'}
     </Text>
@@ -293,7 +296,7 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
     </View>:selected?<View style={story.focus} accessibilityLiveRegion="polite">
       <View style={story.topline}><Text style={story.eyebrow}>{selected.elapsed||selected.plotMinute}′ · {selected.home??'—'}–{selected.away??'—'}</Text><Text style={story.micro}>{selected===latest?'SON KAYIT':'SEÇİLİ AN'}</Text></View>
       <Text style={story.focusTitle}>{journeyPointLabel(selected)}</Text><Text style={story.subtitle}>{pressureReading(selected)}</Text>
-      {selected.decisionContext ? <Text style={story.subtitle}>{capturedRecent.measured
+      {selected.decisionContext?.recentPressure.availability==='AVAILABLE' ? <Text style={story.subtitle}>{capturedRecent.measured
         ? `Kaydın ${selected.decisionContext.recentPressure.intervalSeconds} saniyelik ${selected.decisionContext.recentPressure.estimated ? 'tahmini baskısı' : 'baskısı'} · ev ${selected.decisionContext.recentPressure.home?.toFixed(2)} / deplasman ${selected.decisionContext.recentPressure.away?.toFixed(2)} · ${selected.decisionContext.recentPressure.estimated ? 'tahmini' : 'ağırlıklı'} etkinlik/dakika`
         : 'Bu kaydın yakın aralık baskısı doğrulanamadı.'}</Text> : null}
       {selected.eliminatedRatio!==null?<Text style={story.subtitle}>{selected.beforeCount} sonuçtan {selected.eliminatedCount} elendi · {selected.compatibleCount} uyumlu sonuç kaldı</Text>:null}

@@ -1,6 +1,7 @@
 import type { ComponentProps } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { usePathname } from "expo-router";
+import { useJinxPreferences } from "@/src/mascot/JinxPreferencesProvider";
 import {
   ActivityIndicator,
   Image,
@@ -20,6 +21,7 @@ import {
 } from "@/src/theme/theme";
 import { bibiPresence } from "@/src/mascot/bibi-presence";
 import { SurfaceMaterial } from "./SurfaceMaterial";
+import { describeUiError, type UiErrorCategory } from "./ui-error";
 import {
   isAlarming,
   resolveSystemState,
@@ -68,10 +70,12 @@ export function SystemState({
   onRetry?: () => void;
 }) {
   const pathname = usePathname();
+  const jinx = useJinxPreferences();
   const spec = resolveSystemState(kind);
   const accent = toneColor(spec.tone);
   const alarming = isAlarming(spec.tone);
   const showMascot =
+    jinx.ready && !jinx.hidden && !jinx.denseSurface &&
     !alarming &&
     spec.tone === "NEUTRAL" &&
     bibiPresence(pathname) === "FULL";
@@ -94,7 +98,8 @@ export function SystemState({
       ) : showMascot ? (
         <Image
           resizeMode="contain"
-          source={require("../../assets/mascot/jinx-half.png")}
+          source={require("../../assets/mascot/candidates/jinx-a-half.png")}
+          accessible={false}
           style={styles.mascot}
         />
       ) : (
@@ -104,7 +109,7 @@ export function SystemState({
           size={iconSizes.state}
         />
       )}
-      <Text style={styles.title}>{title ?? spec.title}</Text>
+      <Text accessibilityRole="header" role="heading" aria-level={2} style={styles.title}>{title ?? spec.title}</Text>
       <Text style={styles.message}>{message ?? spec.body}</Text>
       {showRetry ? (
         <Pressable
@@ -125,25 +130,25 @@ export function LoadingState({ label }: { label?: string }) {
   return <SystemState kind="LOADING" {...(label ? { title: label } : {})} />;
 }
 
-/**
- * A request that failed outright.
- *
- * This is the one place a screen has nothing to show and retrying can help, so
- * it is the only common state that carries problem styling.
- */
+/** An unavailable region with cause-aware copy and only a useful retry action. */
 export function ErrorState({
-  message,
+  error,
+  category,
   onRetry
 }: {
-  message: string;
+  error?: unknown;
+  category?: UiErrorCategory;
+  /** Legacy diagnostic text is deliberately not rendered. Pass the structured error. */
+  message?: string;
   onRetry?: () => void;
 }) {
+  const display = describeUiError(error, category);
   return (
     <SystemState
-      kind="OFFLINE"
-      message={message}
-      title="Bağlantı kurulamadı"
-      {...(onRetry ? { onRetry } : {})}
+      kind={display.kind}
+      message={display.message}
+      title={display.title}
+      {...(onRetry && display.retryable ? { onRetry } : {})}
     />
   );
 }
@@ -196,10 +201,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: spacing.xl,
     borderRadius: radii.round,
-    backgroundColor: semantic.intelligence
+    backgroundColor: semantic.actionFill
   },
   buttonText: {
-    color: colors.white,
+    color: semantic.onAction,
     ...typeScale.label
   }
 });

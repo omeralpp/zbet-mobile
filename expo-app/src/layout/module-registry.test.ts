@@ -9,10 +9,10 @@ import {
   moduleCollapseDefaults
 } from "./module-registry";
 
-test("overview defaults put live value before brand support", () => {
+test("overview starts with the summary, followed by matches and decision records", () => {
   assert.deepEqual(overviewModules, [
-    "featured",
     "metrics",
+    "featured",
     "recentSuper",
     "toto"
   ]);

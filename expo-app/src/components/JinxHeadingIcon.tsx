@@ -8,7 +8,7 @@ export function JinxHeadingIcon() {
       accessibilityElementsHidden
       importantForAccessibility="no"
       resizeMode="contain"
-      source={require("../../assets/mascot/jinx-open.png")}
+      source={require("../../assets/mascot/candidates/jinx-a-open.png")}
       style={styles.icon}
     />
   );

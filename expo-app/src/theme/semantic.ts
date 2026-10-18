@@ -29,6 +29,8 @@ export interface SemanticPalette {
   text: string;
   textMuted: string;
   textSubtle: string;
+  actionFill: string;
+  onAction: string;
   blue: string;
   blueSoft: string;
   green: string;
@@ -44,6 +46,9 @@ export interface SemanticPalette {
 }
 
 export interface SemanticColors {
+  /** Filled control and its readable foreground; no outcome judgement. */
+  actionFill: string;
+  onAction: string;
   /** BTB's analytical accent: the product is thinking or has an opinion. */
   intelligence: string;
   intelligenceSoft: string;
@@ -89,6 +94,8 @@ export function resolveSemanticColors(
   palette: SemanticPalette
 ): SemanticColors {
   return {
+    actionFill: palette.actionFill,
+    onAction: palette.onAction,
     intelligence: palette.blue,
     intelligenceSoft: palette.blueSoft,
     positive: palette.green,

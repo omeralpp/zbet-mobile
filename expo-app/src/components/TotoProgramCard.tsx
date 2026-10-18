@@ -17,8 +17,7 @@ import {
   totoProgramTone
 } from "@/src/utils/toto-status";
 import {
-  formatProgramStatus,
-  formatSigned
+  formatProgramStatus
 } from "@/src/utils/format";
 
 export function TotoProgramCard({ program }: { program: TotoProgram }) {
@@ -110,7 +109,7 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
           <Text style={styles.metricLabel}>kolon</Text>
         </View>
         <View>
-          <Text style={styles.metricValue}>{formatSigned(program.cost, 0)}</Text>
+          <Text style={styles.metricValue}>{new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 }).format(program.cost)}</Text>
           <Text style={styles.metricLabel}>maliyet</Text>
         </View>
         <View>
@@ -120,6 +119,8 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
           <Text style={styles.metricLabel}>kapsama isabet</Text>
         </View>
       </View>
+
+      <Text style={styles.contextNote}>Kapsama isabeti, kuponun kazandığı anlamına gelmez. Maliyet birimi belirtilmedi.</Text>
 
       <View style={styles.track}>
         <View style={[styles.fill, { width: `${capacity * 100}%` }]} />
@@ -193,6 +194,7 @@ const styles = StyleSheet.create({
   },
   metrics: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
     gap: spacing.md,
     marginTop: spacing.xl
@@ -225,5 +227,6 @@ const styles = StyleSheet.create({
     ...typeScale.label,
     textAlign: "right",
     marginTop: spacing.xs
-  }
+  },
+  contextNote: { ...typeScale.bodyCompact, color: colors.textMuted, marginTop: spacing.md }
 });

@@ -30,6 +30,8 @@ import {
 export type ReorderableModuleItem = {
   id: string;
   node: ReactNode;
+  /** Desktop summary spans a row; Android remains a single reading column. */
+  fullWidth?: boolean;
 };
 
 type ReorderableModuleListProps = {

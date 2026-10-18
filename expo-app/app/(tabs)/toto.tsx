@@ -22,12 +22,14 @@ export default function TotoScreen() {
       eyebrow="SPOR TOTO"
       scroll={false}
       title="Programlar"
+      subtitle="Ana tahmin, kupon kapsamı ve maliyet ayrı değerlendirilir."
       wide
     >
       {query.isLoading ? (
         <LoadingState label="Toto programları hazırlanıyor" />
       ) : query.isError ? (
         <ErrorState
+          error={query.error}
           message={
             query.error instanceof Error
               ? query.error.message

@@ -50,14 +50,14 @@ export function MetricCard({
           size={iconSizes.control}
         />
       </View>
-      <Text numberOfLines={1} style={styles.value}>
+      <Text style={styles.value}>
         {value}
       </Text>
-      <Text numberOfLines={1} style={styles.label}>
+      <Text style={styles.label}>
         {label}
       </Text>
       {detail ? (
-        <Text numberOfLines={1} style={styles.detail}>
+        <Text style={styles.detail}>
           {detail}
         </Text>
       ) : null}

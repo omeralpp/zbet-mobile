@@ -24,6 +24,7 @@ import {
   formatAbsolute,
   formatCurrentMarketRate,
   formatFixtureDateTime,
+  formatRate,
   formatSelection,
 } from "@/src/utils/format";
 import { LiveDot } from "./LiveDot";
@@ -46,7 +47,7 @@ function TeamName({
   return (
     <View style={styles.teamRow}>
       <TeamLogo participantId={participantId} size="standard" />
-      <Text numberOfLines={1} style={styles.team}>
+      <Text style={styles.team}>
         {name}
       </Text>
       {position ? (
@@ -131,10 +132,13 @@ export function MatchCard({
   );
 
   return (
+    <View style={[styles.card, selected && styles.cardSelected]}>
+      <SurfaceMaterial {...(live ? { accent: semantic.live } : {})} radius={radii.lg} />
     <Pressable
       accessibilityHint={onSelect ? "Maç detayını yandaki panelde gösterir" : "Maç detayını açar"}
       accessibilityRole="button"
       accessibilityState={onSelect ? { selected } : undefined}
+      aria-pressed={onSelect ? selected : undefined}
       onPress={() =>
         onSelect
           ? onSelect()
@@ -146,46 +150,19 @@ export function MatchCard({
               }
             } as never)
       }
-      style={({ pressed }) => [styles.card, selected && styles.cardSelected, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.cardAction, pressed && styles.pressed]}
     >
-      <SurfaceMaterial
-        {...(live ? { accent: semantic.live } : {})}
-        radius={radii.lg}
-      />
-      <View style={styles.topRow}>
+      <View style={[styles.topRow, onTogglePinned ? styles.withPin : null]}>
         <Text numberOfLines={1} style={styles.league}>
           {match.league}
         </Text>
-        <View style={styles.topActions}>
+        <View style={[styles.topActions, onTogglePinned ? styles.pinSpace : null]}>
           <View style={[styles.timePill, live && styles.livePill]}>
             {live ? <LiveDot /> : null}
             <Text style={[styles.timeText, live && styles.liveText]}>
               {compact && live ? minuteProgress.label : formatFixtureDateTime(match.matchDate, match.matchTime)}
             </Text>
           </View>
-          {onTogglePinned ? (
-            <Pressable
-              accessibilityLabel={pinned ? "Sabitlemeyi kaldır" : "Maçı sabitle"}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: pinned }}
-              hitSlop={4}
-              onPress={(event) => {
-                event.stopPropagation();
-                onTogglePinned();
-              }}
-              style={({ pressed }) => [
-                styles.pinButton,
-                pinned && styles.pinButtonActive,
-                pressed && styles.pinButtonPressed
-              ]}
-            >
-              <MaterialCommunityIcons
-                color={pinned ? colors.white : semantic.intelligence}
-                name={pinned ? "pin" : "pin-outline"}
-                size={iconSizes.control}
-              />
-            </Pressable>
-          ) : null}
         </View>
       </View>
 
@@ -217,26 +194,23 @@ export function MatchCard({
 
       <View style={styles.scoreRow}>
         <View style={styles.teams}>
+          <View style={styles.participantRow}>
           <TeamName
             name={match.homeTeam}
             participantId={match.homeParticipantId}
             position={insight?.homeStandingPosition}
             redCards={insight?.homeRedCards}
           />
+          <ChangeEmphasis kind="alert" token={match.homeScore}><Text style={styles.score}>{match.homeScore}</Text></ChangeEmphasis>
+          </View><View style={styles.participantRow}>
           <TeamName
             name={match.awayTeam}
             participantId={match.awayParticipantId}
             position={insight?.awayStandingPosition}
             redCards={insight?.awayRedCards}
           />
-        </View>
-        <View style={styles.scores}>
-          <ChangeEmphasis kind="alert" token={match.homeScore}>
-            <Text style={styles.score}>{match.homeScore}</Text>
-          </ChangeEmphasis>
-          <ChangeEmphasis kind="alert" token={match.awayScore}>
-            <Text style={styles.score}>{match.awayScore}</Text>
-          </ChangeEmphasis>
+          <ChangeEmphasis kind="alert" token={match.awayScore}><Text style={styles.score}>{match.awayScore}</Text></ChangeEmphasis>
+          </View>
         </View>
       </View>
 
@@ -250,7 +224,7 @@ export function MatchCard({
           <Text style={styles.decisionEyebrow}>
             {recordedSelection(match.selectedOdd, match.currentRate, match.decisionContext) ? "KAYITLI SEÇİM" : "BTB SEÇİMİ"}
           </Text>
-          <Text numberOfLines={2} style={styles.odd}>
+          <Text style={styles.odd}>
             {formatSelection(match.selectedOdd) || "Şu anda seçim yok"}
           </Text>
           <View style={styles.ratingRow}>
@@ -264,6 +238,10 @@ export function MatchCard({
           {!compact && match.selectedOdd && decisionModel(match.decisionContext) &&
             <Text style={styles.ratingLabel}>{decisionModelLabel(match.decisionContext)}</Text>}
         </View>
+        {footer.showsRate && match.selectedOdd ? <View accessibilityLabel={`Seçim oranı ${formatRate(match.liveRate)}`}>
+          <Text style={styles.rate}>{formatRate(match.liveRate)}</Text>
+          <Text style={styles.rateLabel}>seçim oranı</Text>
+        </View> : null}
         {footer.showsRate ? (
           <View
             accessibilityLabel={`${currentMarket.label} ${currentMarket.value}, ${
@@ -335,6 +313,15 @@ export function MatchCard({
         ) : null}
       </View>
     </Pressable>
+    {onTogglePinned ? <Pressable
+      accessibilityLabel={pinned ? "Sabitlemeyi kaldır" : "Maçı sabitle"}
+      accessibilityRole="button" accessibilityState={{ selected: pinned }} aria-pressed={pinned}
+      onPress={onTogglePinned}
+      style={({ pressed }) => [styles.pinButton, pinned && styles.pinButtonActive, pressed && styles.pinButtonPressed]}>
+      <MaterialCommunityIcons color={pinned ? colors.onAction : semantic.intelligence}
+        name={pinned ? "pin" : "pin-outline"} size={iconSizes.control} />
+    </Pressable> : null}
+    </View>
   );
 }
 
@@ -346,7 +333,6 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.borderSoft,
-    padding: spacing.lg,
     marginBottom: spacing.md,
     ...shadows.card
   },
@@ -401,18 +387,21 @@ const styles = StyleSheet.create({
     color: semantic.live
   },
   pinButton: {
+    position: "absolute",
+    top: spacing.lg,
+    right: spacing.lg,
     alignItems: "center",
     backgroundColor: colors.backgroundElevated,
     borderColor: colors.borderSoft,
     borderRadius: radii.round,
     borderWidth: 1,
-    height: 36,
+    minHeight: 48,
     justifyContent: "center",
-    width: 36
+    width: 48
   },
   pinButtonActive: {
-    backgroundColor: semantic.intelligence,
-    borderColor: semantic.intelligence
+    backgroundColor: colors.actionFill,
+    borderColor: colors.actionFill
   },
   pinButtonPressed: {
     opacity: 0.68,
@@ -445,7 +434,7 @@ const styles = StyleSheet.create({
   scoreRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: spacing.lg
+    marginTop: spacing.md
   },
   teams: {
     flex: 1,
@@ -460,7 +449,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     gap: spacing.xs,
-    minWidth: 0
+    minWidth: 0,
+    flex: 1
   },
   rank: {
     color: semantic.neutral,
@@ -485,9 +475,12 @@ const styles = StyleSheet.create({
     ...typeScale.score
   },
   divider: {
-    marginVertical: spacing.lg
+    marginVertical: spacing.md
   },
   bottomRow: {
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: radii.md,
+    padding: spacing.md,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -501,7 +494,8 @@ const styles = StyleSheet.create({
   },
   decisionBlock: {
     flexShrink: 1,
-    minWidth: 0
+    minWidth: 0,
+    width: "100%"
   },
   decisionEyebrow: {
     color: colors.bronze,
@@ -563,5 +557,9 @@ const styles = StyleSheet.create({
   pressureLabel: {
     color: colors.textSubtle,
     ...typeScale.label
-  }
+  },
+  participantRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, minWidth: 0 },
+  cardAction: { padding: spacing.lg, borderRadius: radii.lg },
+  withPin: { minHeight: 48 },
+  pinSpace: { paddingRight: 56 }
 });

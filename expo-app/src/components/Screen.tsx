@@ -39,9 +39,11 @@ import {
   typeScale
 } from "@/src/theme/theme";
 import { useReducedMotion } from "@/src/theme/use-reduced-motion";
+import { runtimeConfig } from "@/src/config/runtime";
 
 type ScreenProps = PropsWithChildren<{
   title?: string;
+  subtitle?: string;
   eyebrow?: string;
   action?: ReactNode;
   scroll?: boolean;
@@ -71,6 +73,7 @@ type ScreenProps = PropsWithChildren<{
 export function Screen({
   children,
   title,
+  subtitle,
   eyebrow,
   action,
   scroll = true,
@@ -212,7 +215,8 @@ export function Screen({
         <View style={styles.header}>
           <View style={styles.headerCopy}>
             {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
-            {title ? <Text style={styles.title}>{title}</Text> : null}
+            {title ? <Text accessibilityRole="header" role="heading" aria-level={1} style={styles.title}>{title}</Text> : null}
+            {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
           </View>
           {action}
         </View>
@@ -234,6 +238,7 @@ export function Screen({
 
   return (
     <SafeAreaView edges={["top"]} style={styles.safeArea}>
+      {runtimeConfig.useMocks ? <View style={styles.previewNotice}><Text style={styles.previewText}>Örnek veriler · canlı veri değil</Text></View> : null}
       <GestureDetector gesture={panGesture}>
         <Animated.View
           style={[styles.gestureRoot, gestureEnabled ? gestureStyle : null]}
@@ -261,6 +266,8 @@ export function Screen({
 }
 
 const styles = StyleSheet.create({
+  previewNotice: { backgroundColor: colors.goldSoft, paddingHorizontal: spacing.lg, paddingVertical: spacing.xs },
+  previewText: { ...typeScale.meta, color: colors.gold },
   safeArea: {
     flex: 1,
     backgroundColor: colors.background
@@ -309,5 +316,10 @@ const styles = StyleSheet.create({
   title: {
     color: colors.text,
     ...typeScale.pageTitle
+  },
+  subtitle: {
+    ...typeScale.bodyCompact,
+    color: colors.textMuted,
+    marginTop: spacing.xs
   }
 });

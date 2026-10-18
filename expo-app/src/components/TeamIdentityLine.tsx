@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { colors, spacing } from "@/src/theme/theme";
+import { colors, spacing, typeScale } from "@/src/theme/theme";
 import type { TeamLogoSize } from "@/src/utils/team-logo";
 import { TeamLogo } from "./TeamLogo";
 
@@ -33,14 +33,14 @@ export function TeamIdentityLine({
     >
       <View style={styles.team}>
         <TeamLogo participantId={homeParticipantId} size={size} />
-        <Text numberOfLines={1} style={styles.name}>
+        <Text style={styles.name}>
           {homeTeam}
         </Text>
       </View>
       <Text style={styles.separator}>–</Text>
       <View style={styles.team}>
         <TeamLogo participantId={awayParticipantId} size={size} />
-        <Text numberOfLines={1} style={styles.name}>
+        <Text style={styles.name}>
           {awayTeam}
         </Text>
       </View>
@@ -60,14 +60,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     flexShrink: 1,
-    gap: 6
+    gap: 6,
+    minWidth: 0
   },
   name: {
     color: colors.text,
     flexShrink: 1,
-    fontSize: 15,
-    fontWeight: "800",
-    lineHeight: 21
+    ...typeScale.identity,
+    fontWeight: "700"
   },
   separator: {
     color: colors.textSubtle,

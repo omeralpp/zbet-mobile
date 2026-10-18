@@ -13,6 +13,7 @@ import {
 } from "@/src/theme/theme";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 import { ratioMarketRateDisplay } from "./ratio-market-rate";
+import { formatHistoricalFraction, historicalFractionWidth } from "@/src/utils/statistical-geometry";
 
 type RatioPhase = NonNullable<MatchDetail["ratioPhase"]>;
 
@@ -95,6 +96,7 @@ export function RatioResultsChart({
 
       {rows.length && phases.length ? (
         <>
+          <Text style={styles.caption}>Tarihsel paylar · tahmin olasılığı değildir. Örneklem sayısı ve dönemi bu veride sağlanmıyor.</Text>
           <View style={styles.legend}>
             {phases.map((item) => (
               <View key={item.key} style={styles.legendItem}>
@@ -140,7 +142,8 @@ export function RatioResultsChart({
                       if (value === null) {
                         return null;
                       }
-                      const width: `${number}%` = `${Math.min(100, Math.max(0, value))}%`;
+                      const width = historicalFractionWidth(value / 100);
+                      if (width === null) return null;
                       return (
                         <View key={item.key} style={styles.barLine}>
                           <View style={styles.track}>
@@ -151,7 +154,7 @@ export function RatioResultsChart({
                               ]}
                             />
                           </View>
-                          <Text style={styles.value}>%{Math.round(value)}</Text>
+                          <Text style={styles.value}>{formatHistoricalFraction(value / 100)}</Text>
                         </View>
                       );
                     })}
@@ -277,7 +280,8 @@ const styles = StyleSheet.create({
   },
   value: {
     color: colors.textMuted,
-    width: 30,
+    minWidth: 48,
+    flexShrink: 0,
     textAlign: "right",
     ...typeScale.label
   },

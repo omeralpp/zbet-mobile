@@ -110,6 +110,7 @@ export default function TotoProgramDetailScreen() {
     return (
       <Screen edgeSwipeBack onEdgeSwipeBack={handleEdgeSwipeBack}>
         <ErrorState
+          error={query.error}
           message={
             query.error instanceof Error
               ? query.error.message
@@ -171,7 +172,7 @@ export default function TotoProgramDetailScreen() {
             <Text style={styles.metricLabel}>kolon</Text>
           </View>
           <View>
-            <Text style={styles.metricValue}>{program.cost}</Text>
+            <Text style={styles.metricValue}>{new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 }).format(program.cost)}</Text>
             <Text style={styles.metricLabel}>maliyet</Text>
           </View>
           <View>
@@ -192,6 +193,7 @@ export default function TotoProgramDetailScreen() {
         <Text style={styles.updatedAt}>
           Son güncelleme: {formatTimestamp(program.updatedAt)}
         </Text>
+        <Text style={styles.contextNote}>Ana isabet ve kapsama farklıdır. Kapsama isabeti, tüm kuponun veya bir kolonun kazandığı anlamına gelmez. Maliyet birimi kaynakta belirtilmedi.</Text>
       </View>
 
       {resultTotal > 0 ? (
@@ -304,6 +306,7 @@ export default function TotoProgramDetailScreen() {
         eyebrow="KUPON"
         title={program.predictions.length ? "Tahminler" : "Aktif fikstür"}
       />
+      {program.predictions.length ? <Text style={styles.contextNote}>“Güven” kaynak modelin değeridir; neyi ölçtüğü ve kalibrasyonu bu görünümde doğrulanmadı. Kazanma olasılığı olduğu doğrulanmış değil.</Text> : null}
       {program.predictions.length && desktop ? (
         <TotoCouponGrid
           onOpen={openBilyoner}
@@ -314,6 +317,10 @@ export default function TotoProgramDetailScreen() {
         const presentation = predictionResultPresentation(prediction.result);
         return (
           <Pressable
+            accessibilityRole="link"
+            accessibilityHint="Karşılaşmayı Bilyoner uygulamasında veya web sitesinde açar"
+            accessibilityLabel={`${prediction.matchNo}. ${prediction.matchName}, ana tahmin ${prediction.mainPick}, kupon ${prediction.coverage}, ${presentation.label}`}
+            accessibilityState={{ disabled: !prediction.eventId }}
             disabled={!prediction.eventId}
             key={prediction.matchNo}
             onPress={() => openBilyoner(prediction.eventId)}
@@ -326,7 +333,7 @@ export default function TotoProgramDetailScreen() {
               <Text style={styles.matchNoText}>{prediction.matchNo}</Text>
             </View>
             <View style={styles.predictionCopy}>
-              <Text numberOfLines={1} style={styles.matchName}>
+              <Text style={styles.matchName}>
                 {prediction.matchName}
               </Text>
               <Text style={styles.predictionMeta}>
@@ -359,6 +366,10 @@ export default function TotoProgramDetailScreen() {
       }) : program.fixtures.length ? (
         program.fixtures.map((fixture) => (
           <Pressable
+            accessibilityRole="link"
+            accessibilityHint="Karşılaşmayı Bilyoner uygulamasında veya web sitesinde açar"
+            accessibilityLabel={`${fixture.matchNo}. ${fixture.matchName}; tahmin hazırlanıyor`}
+            accessibilityState={{ disabled: !fixture.eventId }}
             disabled={!fixture.eventId}
             key={fixture.matchNo}
             onPress={() => openBilyoner(fixture.eventId)}
@@ -423,6 +434,7 @@ export default function TotoProgramDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  contextNote: { ...typeScale.bodyCompact, color: colors.textMuted, marginVertical: spacing.md },
   screen: {
     paddingTop: spacing.lg
   },
@@ -472,6 +484,7 @@ const styles = StyleSheet.create({
   },
   metrics: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
     gap: spacing.md,
     marginTop: spacing.xl,
@@ -481,8 +494,7 @@ const styles = StyleSheet.create({
   },
   metricValue: {
     color: colors.text,
-    fontSize: 18,
-    fontWeight: "900"
+    ...typeScale.metric
   },
   metricLabel: {
     color: colors.textSubtle,
@@ -491,7 +503,7 @@ const styles = StyleSheet.create({
   },
   distribution: {
     color: colors.textMuted,
-    fontSize: 11,
+    ...typeScale.bodyCompact,
     marginTop: spacing.lg
   },
   updatedAt: {

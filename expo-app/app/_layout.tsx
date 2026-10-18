@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import * as SplashScreen from "expo-splash-screen";
-import { Stack } from "expo-router";
+import { Stack, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -18,11 +18,14 @@ import { colors, themeMode } from "@/src/theme/theme";
 import { useReducedMotion } from "@/src/theme/use-reduced-motion";
 import { TutorialProvider } from "@/src/tutorial/TutorialProvider";
 import { AppShell } from "@/src/web/AppShell";
+import { runtimeConfig } from "@/src/config/runtime";
+import { designLabAvailable } from "@/src/design-lab/jinx-motion";
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 function RootNavigator() {
   const auth = useAuth();
+  const pathname = usePathname();
   const reduceMotion = useReducedMotion();
   const [skippedLaunch] = useState(hasPlayedLaunch);
   const [launchComplete, setLaunchComplete] = useState(skippedLaunch);
@@ -89,6 +92,9 @@ function RootNavigator() {
             options={{ title: "Toto Programı" }}
           />
         </Stack.Protected>
+        <Stack.Protected guard={hasSession && designLabAvailable(runtimeConfig)}>
+          <Stack.Screen name="design-lab" options={{ title: "Tasarım atölyesi", headerShown: false }} />
+        </Stack.Protected>
         <Stack.Protected guard={!hasSession}>
           <Stack.Screen name="sign-in" options={{ headerShown: false }} />
         </Stack.Protected>
@@ -97,7 +103,7 @@ function RootNavigator() {
       </Stack>
       </AppShell>
       <AndroidBackGuard />
-      {hasSession ? <BtbMascotOverlay /> : null}
+      {hasSession && pathname !== "/design-lab" ? <BtbMascotOverlay /> : null}
     </>
   );
 }

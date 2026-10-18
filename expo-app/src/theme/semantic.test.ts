@@ -16,6 +16,8 @@ const palette: SemanticPalette = {
   text: "#tx",
   textMuted: "#txm",
   textSubtle: "#txs",
+  actionFill: "#action",
+  onAction: "#onAction",
   blue: "#blue",
   blueSoft: "#blues",
   green: "#green",

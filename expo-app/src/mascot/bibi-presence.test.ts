@@ -9,6 +9,7 @@ import {
 test("dense analytical detail surfaces lose the ambient mascot", () => {
   assert.equal(bibiPresence("/match/2026-08-18-PSG-AVL"), "GUIDE_ONLY");
   assert.equal(bibiPresence("/super/8871"), "GUIDE_ONLY");
+  assert.equal(bibiPresence("/toto/350/1"), "GUIDE_ONLY");
 });
 
 test("brand, orientation and helper surfaces keep Bibi", () => {

@@ -6,9 +6,9 @@ import { shortcutHelp } from "./shortcuts";
 export function ShortcutHelp({ onClose }: { onClose: () => void }) {
   return (
     <View style={styles.backdrop}>
-      <Pressable accessibilityLabel="Kısayolları kapat" onPress={onClose} style={StyleSheet.absoluteFill} />
-      <View accessibilityRole="summary" style={styles.panel}>
-        <Text style={styles.title}>Klavye kısayolları</Text>
+      <Pressable accessible={false} focusable={false} tabIndex={-1} onPress={onClose} style={StyleSheet.absoluteFill} />
+      <View style={styles.panel}>
+        <Text accessibilityRole="header" role="heading" aria-level={2} style={styles.title}>Klavye kısayolları</Text>
         {shortcutHelp.map((entry) => (
           <View key={entry.keys} style={styles.row}>
             <Text style={styles.keys}>{entry.keys}</Text>
@@ -76,6 +76,8 @@ const styles = StyleSheet.create({
     flex: 1
   },
   close: {
+    minHeight: 48,
+    minWidth: 48,
     alignItems: "center",
     alignSelf: "flex-end",
     borderRadius: radii.round,

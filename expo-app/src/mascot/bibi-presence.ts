@@ -34,7 +34,7 @@ export type BibiPresence = "FULL" | "GUIDE_ONLY";
  * kept as an explicit list because "dense" is a product judgement about what a
  * surface is for, not something a path depth can infer.
  */
-export const denseAnalyticalRoutes = ["/match/", "/super/"] as const;
+export const denseAnalyticalRoutes = ["/match/", "/super/", "/toto/"] as const;
 
 /**
  * Resolves Bibi's presence for a route.

@@ -15,7 +15,8 @@ type Props = {
 };
 
 export function JourneyInspector({ visible, onDismiss, ...props }: Props) {
-  return <Modal visible={visible} transparent animationType="fade" onRequestClose={props.onClose} onDismiss={onDismiss}>
+  const reduceMotion = useReducedMotion();
+  return <Modal visible={visible} transparent animationType={reduceMotion ? "none" : "fade"} onRequestClose={props.onClose} onDismiss={onDismiss}>
     <GestureHandlerRootView style={styles.root}><InspectorPanel {...props}/></GestureHandlerRootView>
   </Modal>;
 }

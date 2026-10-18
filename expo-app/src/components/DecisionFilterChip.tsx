@@ -94,7 +94,7 @@ export function DecisionFilterChip({
         ]}
       >
         <MaterialCommunityIcons
-          color={active ? colors.white : colors.gold}
+          color={active ? colors.onAction : colors.gold}
           name="star-four-points"
           size={iconSizes.small}
         />
@@ -108,13 +108,13 @@ export function DecisionFilterChip({
                 ? "Yıldız azalan sıralı"
                 : "Yıldız artan sıralı"
             }
-            color={active ? colors.white : colors.gold}
+            color={active ? colors.onAction : colors.gold}
             name={sortValue === "RATING_DESC" ? "arrow-down" : "arrow-up"}
             size={iconSizes.small}
           />
         ) : null}
         <MaterialCommunityIcons
-          color={active ? colors.white : colors.textMuted}
+          color={active ? colors.onAction : colors.textMuted}
           name={open ? "chevron-up" : "chevron-down"}
           size={iconSizes.inline}
         />
@@ -202,7 +202,7 @@ export function DecisionFilterChip({
                     </Text>
                     {sortValue === option.value ? (
                       <MaterialCommunityIcons
-                        color={colors.white}
+                        color={colors.onAction}
                         name="check"
                         size={iconSizes.small}
                       />
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   },
   chipSelected: {
     borderColor: colors.blue,
-    backgroundColor: colors.blueSoft
+    backgroundColor: colors.actionFill
   },
   chipText: {
     color: colors.textMuted,
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
     fontWeight: "800"
   },
   chipTextSelected: {
-    color: colors.white
+    color: colors.onAction
   },
   menu: {
     position: "absolute",
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.md
   },
   optionSelected: {
-    backgroundColor: colors.blueSoft
+    backgroundColor: colors.actionFill
   },
   optionText: {
     color: colors.textMuted,
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     fontWeight: "800"
   },
   optionTextSelected: {
-    color: colors.white
+    color: colors.onAction
   },
   pressed: {
     opacity: 0.7

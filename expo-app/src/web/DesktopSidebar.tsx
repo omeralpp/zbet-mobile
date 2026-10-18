@@ -160,11 +160,11 @@ export function DesktopSidebar({ expanded, onOpenPalette, onOpenHelp }: DesktopS
             <View
               style={[
                 styles.modeDot,
-                { backgroundColor: runtimeConfig.useMocks ? semantic.warning : semantic.positive }
+                { backgroundColor: runtimeConfig.useMocks ? semantic.warning : semantic.neutral }
               ]}
             />
             <Text style={styles.modeText}>
-              {runtimeConfig.useMocks ? "Önizleme verisi" : "Canlı veri"}
+              {runtimeConfig.useMocks ? "Önizleme verisi" : "Maç verisi"}
             </Text>
           </View>
         ) : null}
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: "row",
     gap: spacing.sm,
-    minHeight: 40,
+    minHeight: 48,
     paddingHorizontal: spacing.md
   },
   searchRail: {
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     flexDirection: "row",
     gap: spacing.md,
-    minHeight: 44,
+    minHeight: 48,
     paddingHorizontal: spacing.md
   },
   itemRail: {
@@ -260,13 +260,13 @@ const styles = StyleSheet.create({
     width: 52
   },
   itemSelected: {
-    backgroundColor: colors.surface
+    backgroundColor: colors.greenSoft
   },
   hover: {
     backgroundColor: colors.borderSoft
   },
   selectedBar: {
-    backgroundColor: semantic.positive,
+    backgroundColor: colors.actionFill,
     borderRadius: radii.round,
     bottom: 10,
     left: 0,

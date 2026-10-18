@@ -9,8 +9,9 @@ function isEditable(target: EventTarget | null): boolean {
 }
 
 /** Binds the desktop keyboard grammar to the window for the shell's lifetime. */
-export function useDesktopShortcuts(onAction: (action: ShortcutAction) => void): void {
+export function useDesktopShortcuts(onAction: (action: ShortcutAction) => void, disabled = false): void {
   useEffect(() => {
+    if (disabled) return;
     const read = createShortcutReader();
     const handler = (event: KeyboardEvent) => {
       const action = read({
@@ -28,5 +29,5 @@ export function useDesktopShortcuts(onAction: (action: ShortcutAction) => void):
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [onAction]);
+  }, [onAction, disabled]);
 }

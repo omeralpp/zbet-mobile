@@ -5,6 +5,7 @@ import {
   RefreshControl,
   FlatList,
   Platform,
+  Pressable,
   StyleSheet,
   Switch,
   Text,
@@ -96,7 +97,7 @@ function LiveSwitch({
         accessibilityRole="switch"
         accessibilityState={{ checked: active }}
         onValueChange={onChange}
-        thumbColor={active ? colors.white : colors.textSubtle}
+        thumbColor={active ? colors.onAction : colors.textSubtle}
         trackColor={{ false: colors.borderSoft, true: semantic.live }}
         value={active}
       />
@@ -215,6 +216,7 @@ export default function LiveScreen() {
       eyebrow="BTB"
       scroll={false}
       title="Canlı maçlar"
+      subtitle="Maçı bul, sabitle ve güncel verileri incele."
       wide
     >
       <TutorialTarget
@@ -253,14 +255,19 @@ export default function LiveScreen() {
         </View>
       </TutorialTarget>
 
-      <TextInput accessibilityLabel="Takım veya lig ara" placeholder="Takım veya ligin bir bölümünü ara"
+      <View style={styles.searchRow}><TextInput accessibilityLabel="Takım veya lig ara" placeholder="Takım veya ligin bir bölümünü ara"
         placeholderTextColor={colors.textMuted} value={search} onChangeText={setSearch}
         autoCorrect={false} autoCapitalize="none" style={styles.search} />
+        {search ? <Pressable accessibilityRole="button" accessibilityLabel="Maç aramasını temizle" onPress={() => setSearch("")} style={styles.clearSearch}><Text style={styles.clearSearchText}>Temizle</Text></Pressable> : null}</View>
+      {query.data ? <Text accessibilityLiveRegion="polite" style={styles.resultCount}>
+        {tabCounts[tab]} maç bu kapsamda · {(sectionsByTab[tab] ?? []).reduce((count, section) => count + section.data.length, 0)} sonuç
+      </Text> : null}
 
       {query.isLoading ? (
         <LoadingState label="Canlı maçlar hazırlanıyor" />
       ) : query.isError ? (
         <ErrorState
+          error={query.error}
           message={
             query.error instanceof Error
               ? query.error.message
@@ -399,9 +406,13 @@ const singleColumnGrid: CardGrid = {
 };
 
 const styles = StyleSheet.create({
-  search: { minHeight: 48, borderWidth: 1, borderColor: colors.border, borderRadius: radii.md,
-    backgroundColor: colors.backgroundElevated, color: colors.text, fontSize: 14,
-    paddingHorizontal: spacing.md, marginBottom: spacing.md },
+  searchRow: { flexDirection: "row", gap: spacing.sm, alignItems: "center", marginBottom: spacing.sm },
+  search: { flex: 1, minWidth: 0, minHeight: 48, borderWidth: 1, borderColor: colors.border, borderRadius: radii.md,
+    backgroundColor: colors.backgroundElevated, color: colors.text, ...typeScale.body,
+    paddingHorizontal: spacing.md },
+  clearSearch: { minHeight: 48, justifyContent: "center", paddingHorizontal: spacing.sm },
+  clearSearchText: { ...typeScale.bodyCompact, color: colors.blue, fontWeight: "700" },
+  resultCount: { ...typeScale.meta, color: colors.textMuted, marginBottom: spacing.md },
   screen: {
     paddingBottom: 0
   },

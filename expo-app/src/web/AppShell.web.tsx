@@ -1,5 +1,4 @@
-import { useCallback, useState, type PropsWithChildren, type ReactNode } from "react";
-import { createPortal } from "react-dom";
+import { useCallback, useState, type PropsWithChildren } from "react";
 import { useRouter } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import { isAtLeast } from "@/src/layout/breakpoints";
@@ -11,6 +10,7 @@ import { ShortcutHelp } from "./ShortcutHelp";
 import { RefreshDataButton } from "./RefreshDataButton";
 import type { ShortcutAction } from "./shortcuts";
 import { useDesktopShortcuts } from "./use-desktop-shortcuts";
+import { AccessibleDialog } from "./AccessibleDialog";
 
 /**
  * Desktop frame around every signed-in screen, detail screens included, so
@@ -21,6 +21,11 @@ export function AppShell({ children }: PropsWithChildren) {
   const router = useRouter();
   const breakpoint = useBreakpoint();
   const [overlay, setOverlay] = useState<"palette" | "help" | null>(null);
+  const [returnFocus, setReturnFocus] = useState<HTMLElement | null>(null);
+  const openOverlay = useCallback((next: "palette" | "help") => {
+    setReturnFocus(document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    setOverlay(next);
+  }, []);
 
   const onAction = useCallback(
     (action: ShortcutAction) => {
@@ -28,16 +33,16 @@ export function AppShell({ children }: PropsWithChildren) {
         setOverlay(null);
         router.navigate(action.path);
       } else if (action.kind === "palette") {
-        setOverlay("palette");
+        openOverlay("palette");
       } else if (action.kind === "help") {
-        setOverlay("help");
+        openOverlay("help");
       } else {
         setOverlay(null);
       }
     },
-    [router]
+    [router, openOverlay]
   );
-  useDesktopShortcuts(onAction);
+  useDesktopShortcuts(onAction, overlay !== null);
   const close = useCallback(() => setOverlay(null), []);
 
   return (
@@ -45,32 +50,16 @@ export function AppShell({ children }: PropsWithChildren) {
       {isAtLeast(breakpoint, "medium") ? (
         <DesktopSidebar
           expanded={isAtLeast(breakpoint, "wide")}
-          onOpenHelp={() => setOverlay("help")}
-          onOpenPalette={() => setOverlay("palette")}
+          onOpenHelp={() => openOverlay("help")}
+          onOpenPalette={() => openOverlay("palette")}
         />
       ) : null}
       <View style={styles.content}><View style={styles.toolbar}><RefreshDataButton /></View>{children}</View>
-      {overlay === "palette" ? <TopLayer><CommandPalette onClose={close} /></TopLayer> : null}
-      {overlay === "help" ? <TopLayer><ShortcutHelp onClose={close} /></TopLayer> : null}
+      {overlay === "palette" ? <AccessibleDialog label="Yüklenen verilerde ara" onClose={close} returnFocus={returnFocus}><CommandPalette onClose={close} /></AccessibleDialog> : null}
+      {overlay === "help" ? <AccessibleDialog label="Klavye kısayolları" onClose={close} returnFocus={returnFocus}><ShortcutHelp onClose={close} /></AccessibleDialog> : null}
     </View>
   );
 }
-
-/**
- * react-native-web gives every view `z-index: 0`, so an overlay rendered in
- * the shell cannot rise above later siblings such as the mascot layer. A
- * fixed layer on <body> sits above the whole app; React context still flows.
- */
-function TopLayer({ children }: { children: ReactNode }) {
-  return createPortal(<div style={topLayerStyle}>{children}</div>, document.body);
-}
-
-const topLayerStyle = {
-  display: "flex",
-  inset: 0,
-  position: "fixed",
-  zIndex: 10000
-} as const;
 
 const styles = StyleSheet.create({
   toolbar: { minHeight: 44, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: colors.border },

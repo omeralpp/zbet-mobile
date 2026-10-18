@@ -163,6 +163,7 @@ export default function SuperLogDetailScreen() {
     return (
       <Screen edgeSwipeBack onEdgeSwipeBack={handleEdgeSwipeBack}>
         <ErrorState
+          error={query.error}
           message={
             query.error instanceof Error
               ? query.error.message
@@ -567,6 +568,7 @@ export default function SuperLogDetailScreen() {
             </View>
           </View>
         </TutorialTarget>
+        <Text style={styles.unitNote}>Kâr birimi ve bahis tutarı belirtilmedi; bu değer ROI değildir.</Text>
 
         <ReorderableModuleList
           items={moduleItems}
@@ -592,6 +594,7 @@ export default function SuperLogDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  unitNote: { ...typeScale.bodyCompact, color: colors.textMuted, marginVertical: spacing.md },
   screen: { paddingTop: spacing.lg },
   hero: {
     padding: spacing.xl,

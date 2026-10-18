@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { Link } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { SuperLog } from "@/src/api/schemas";
 import { RatingStars } from "@/src/components/RatingStars";
@@ -49,7 +49,6 @@ function resultColor(result: SuperLog["result"]): string {
  * same decision detail as a card does.
  */
 export function SuperLogTable({ logs }: { logs: readonly SuperLog[] }) {
-  const router = useRouter();
   const [sort, setSort] = useState<SuperSort>(defaultSuperSort);
   const rows = useMemo(() => sortSuperLogs(logs, sort), [logs, sort]);
 
@@ -59,20 +58,20 @@ export function SuperLogTable({ logs }: { logs: readonly SuperLog[] }) {
         {columns.map((column) => {
           const active = sort.column === column.id;
           return (
-            <Pressable
+            <View
               aria-sort={active ? (sort.direction === "asc" ? "ascending" : "descending") : "none"}
-              accessibilityLabel={`${column.label} sütununa göre sırala`}
               key={column.id}
-              onPress={() => setSort((current) => nextSuperSort(current, column.id))}
               role="columnheader"
-              style={({ hovered }) => [
+              style={[
                 styles.cell,
                 { flex: column.flex },
                 column.align === "right" && styles.right,
-                column.align === "center" && styles.center,
-                hovered && styles.headerHover
+                column.align === "center" && styles.center
               ]}
             >
+              <Pressable accessibilityRole="button" accessibilityLabel={`${column.label} sütununa göre sırala`}
+                onPress={() => setSort((current) => nextSuperSort(current, column.id))}
+                style={({ hovered }) => [styles.headerAction, column.align === "right" && styles.right, column.align === "center" && styles.center, hovered && styles.headerHover]}>
               <Text style={[styles.headerText, active && styles.headerActive]}>{column.label}</Text>
               {active ? (
                 <MaterialCommunityIcons
@@ -81,7 +80,8 @@ export function SuperLogTable({ logs }: { logs: readonly SuperLog[] }) {
                   size={iconSizes.micro}
                 />
               ) : null}
-            </Pressable>
+              </Pressable>
+            </View>
           );
         })}
       </View>
@@ -89,52 +89,52 @@ export function SuperLogTable({ logs }: { logs: readonly SuperLog[] }) {
         {rows.map((log, index) => {
           const color = resultColor(log.result);
           return (
-            <Pressable
-              accessibilityHint="Super kararının detayını açar"
-              accessibilityLabel={`${log.matchName}, ${log.rating} yıldız, ${formatSuperResult(log.result)}`}
+            <View
               key={log.key}
-              onPress={() => router.push({ pathname: "/super/[key]", params: { key: log.key } } as never)}
               role="row"
-              style={({ hovered, pressed }) => [
+              style={[
                 styles.row,
-                index % 2 === 1 && styles.zebra,
-                hovered && styles.rowHover,
-                pressed && styles.pressed
+                index % 2 === 1 && styles.zebra
               ]}
             >
-              <View style={[styles.cell, { flex: 1.1 }]}>
+              <View role="cell" style={[styles.cell, { flex: 1.1 }]}>
                 <Text style={styles.text}>{formatTimestamp(log.createdAt)}</Text>
               </View>
-              <View style={[styles.cell, styles.stack, { flex: 2.6 }]}>
-                <Text numberOfLines={1} style={styles.match}>{log.matchName}</Text>
-                <Text numberOfLines={1} style={styles.meta}>{formatMatchKeyDateTime(log.matchKey)}</Text>
+              <View role="cell" style={[styles.cell, { flex: 2.6 }]}>
+                <Link href={{ pathname: "/super/[key]", params: { key: log.key } }} asChild>
+                  <Pressable accessibilityRole="link" accessibilityLabel={`${log.matchName}, ${log.rating} yıldız, ${formatSuperResult(log.result)}; karar detayını aç`}
+                    style={({ hovered }) => [styles.matchAction, hovered && styles.rowHover]}>
+                    <Text numberOfLines={1} style={styles.match}>{log.matchName}</Text>
+                    <Text numberOfLines={1} style={styles.meta}>{formatMatchKeyDateTime(log.matchKey)}</Text>
+                  </Pressable>
+                </Link>
               </View>
-              <View style={[styles.cell, styles.right, { flex: 0.5 }]}>
+              <View role="cell" style={[styles.cell, styles.right, { flex: 0.5 }]}>
                 <Text style={styles.text}>{log.elapsed}&apos;</Text>
               </View>
-              <View style={[styles.cell, { flex: 1 }]}>
+              <View role="cell" style={[styles.cell, { flex: 1 }]}>
                 <Text numberOfLines={2} style={styles.market}>{formatSelection(log.selectedOdd)}</Text>
               </View>
-              <View style={[styles.cell, { flex: 0.9 }]}>
+              <View role="cell" style={[styles.cell, { flex: 0.9 }]}>
                 <RatingStars rating={log.rating} size={12} />
               </View>
-              <View style={[styles.cell, styles.right, { flex: 0.7 }]}>
+              <View role="cell" style={[styles.cell, styles.right, { flex: 0.9 }]}>
                 <Text style={styles.number}>{formatRate(log.liveRate)}</Text>
               </View>
-              <View style={[styles.cell, { flex: 1.6 }]}>
+              <View role="cell" style={[styles.cell, { flex: 1.6 }]}>
                 <Text numberOfLines={1} style={styles.meta}>{formatDecisionReason(log.reason)}</Text>
               </View>
-              <View style={[styles.cell, styles.center, { flex: 0.9 }]}>
+              <View role="cell" style={[styles.cell, styles.center, { flex: 0.9 }]}>
                 <View style={[styles.pill, { backgroundColor: `${color}1F` }]}>
                   <Text style={[styles.pillText, { color }]}>{formatSuperResult(log.result)}</Text>
                 </View>
               </View>
-              <View style={[styles.cell, styles.right, { flex: 0.7 }]}>
+              <View role="cell" style={[styles.cell, styles.right, { flex: 0.7 }]}>
                 <Text style={[styles.number, { color }]}>
                   {log.profit === null ? "—" : formatSigned(log.profit)}
                 </Text>
               </View>
-            </Pressable>
+            </View>
           );
         })}
       </ScrollView>
@@ -165,8 +165,10 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     backgroundColor: colors.background,
-    minHeight: 40
+    minHeight: 48
   },
+  headerAction: { flex: 1, minHeight: 48, flexDirection: "row", alignItems: "center", gap: 4 },
+  matchAction: { width: "100%", minHeight: 48, justifyContent: "center", borderRadius: radii.sm },
   zebra: {
     backgroundColor: `${colors.surface}40`
   },

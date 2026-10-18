@@ -3,6 +3,7 @@ import type {
   TeamFormContext,
   TeamFormSide
 } from "@/src/api/schemas";
+import { relativeComparisonWidths } from "@/src/utils/statistical-geometry";
 
 /**
  * Presentation decisions for the team-form comparison (M15 / TASK-0040).
@@ -215,21 +216,11 @@ export interface ComparisonWidths {
  * Relative share of one row's dual bar, as percentages.
  *
  * Mirrors the Match Detail statistics bars so form and live stats read as one
- * language. A side without a value contributes nothing and gets no bar at all,
- * which is what keeps a one-sided row visibly one-sided instead of looking
- * like a clean sweep.
+ * language. Without both values no relative share can be established; known
+ * numeric labels remain, but neither side receives an invented relative bar.
  */
 export function comparisonWidths(row: TeamFormRow): ComparisonWidths {
-  const home = row.home ?? 0;
-  const away = row.away ?? 0;
-  const total = home + away;
-  if (total <= 0) {
-    return { home: row.home === null ? 0 : 4, away: row.away === null ? 0 : 4 };
-  }
-  return {
-    home: row.home === null ? 0 : Math.max(4, (home / total) * 100),
-    away: row.away === null ? 0 : Math.max(4, (away / total) * 100)
-  };
+  return relativeComparisonWidths(row.home, row.away);
 }
 
 export function formatRowValue(

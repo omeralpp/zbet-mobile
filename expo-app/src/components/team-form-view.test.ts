@@ -224,7 +224,7 @@ test("a real zero still renders as zero", () => {
   assert.equal(formatRowValue(0, "RATE"), "0.00");
 });
 
-test("a side with no value gets no bar at all", () => {
+test("a missing comparison value leaves both relative bars empty while preserving the known label", () => {
   const widths = comparisonWidths({
     key: "btts",
     label: "KG Var",
@@ -234,7 +234,9 @@ test("a side with no value gets no bar at all", () => {
     lowerIsBetter: false
   });
   assert.equal(widths.away, 0);
-  assert.ok(widths.home > 0);
+  assert.equal(widths.home, 0);
+  assert.equal(formatRowValue(40, "PERCENT"), "%40");
+  assert.equal(formatRowValue(null, "PERCENT"), "—");
 });
 
 test("two equal values split the bar evenly", () => {
@@ -250,7 +252,7 @@ test("two equal values split the bar evenly", () => {
   assert.equal(widths.away, 50);
 });
 
-test("two zeroes do not divide by zero", () => {
+test("two measured zeroes have no visible bar", () => {
   const widths = comparisonWidths({
     key: "formPpg",
     label: "Form puanı",
@@ -259,8 +261,18 @@ test("two zeroes do not divide by zero", () => {
     format: "RATE",
     lowerIsBetter: false
   });
-  assert.ok(Number.isFinite(widths.home));
-  assert.ok(Number.isFinite(widths.away));
+  assert.deepEqual(widths, { home: 0, away: 0 });
+});
+
+test("small form shares remain small and home-away reversal is symmetric", () => {
+  const row = { key: "btts", label: "KG Var", home: 1, away: 99, format: "PERCENT" as const, lowerIsBetter: false };
+  const small = comparisonWidths(row);
+  const reversed = comparisonWidths({ ...row, home: row.away, away: row.home });
+  assert.ok(Math.abs(small.home - 1) < 1e-10);
+  assert.ok(Math.abs(small.away - 99) < 1e-10);
+  assert.equal(small.home, reversed.away);
+  assert.equal(small.away, reversed.home);
+  assert.deepEqual(comparisonWidths({ ...row, home: null }), comparisonWidths({ ...row, away: null }));
 });
 
 /* ---------------------------------------------------------------- *

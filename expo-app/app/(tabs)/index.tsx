@@ -23,7 +23,7 @@ import { useModuleLayout } from "@/src/layout/module-layout-store";
 import type { OverviewModuleId } from "@/src/layout/module-registry";
 import { useLiveStarFilter } from "@/src/preferences/LiveStarFilterProvider";
 import { useSuperStarFilter } from "@/src/preferences/SuperStarFilterProvider";
-import { colors, semantic, spacing } from "@/src/theme/theme";
+import { colors, semantic, spacing, typeScale } from "@/src/theme/theme";
 import {
   liveStarMetricCount,
   starMetricLabel
@@ -38,7 +38,6 @@ export default function DashboardScreen() {
   const { filter: superStarFilter } = useSuperStarFilter();
   const query = useQuery(dashboardQuery);
   const superKpis = useQuery(superKpisQuery);
-  const dashboardError = query.error ?? superKpis.error;
   const [reordering, setReordering] = useState(false);
   const scrollRef = useRef<ScrollView | null>(null);
   const scrollOffset = useRef(0);
@@ -59,50 +58,25 @@ export default function DashboardScreen() {
     });
   }, [query.data, superKpis.data, superStarFilter]);
 
-  if (query.isLoading || superKpis.isLoading) {
-    return (
-      <Screen eyebrow="BTB Mobile" title="Bugünün merkezi">
-        <LoadingState label="Bugünün BTB görünümü hazırlanıyor" />
-      </Screen>
-    );
-  }
-
-  if (query.isError || superKpis.isError || !query.data || !superKpis.data) {
-    return (
-      <Screen eyebrow="BTB Mobile" title="Bugünün merkezi">
-        <ErrorState
-          message={
-            dashboardError instanceof Error
-              ? dashboardError.message
-              : "Özet verisi alınamadı."
-          }
-          onRetry={() => {
-            void Promise.all([query.refetch(), superKpis.refetch()]);
-          }}
-        />
-      </Screen>
-    );
-  }
-
   const dashboard = query.data;
-  const dailySuper = superKpis.data.buckets[superStarFilter];
+  const dailySuper = superKpis.data?.buckets[superStarFilter];
   const profitColor =
-    dailySuper.profit >= 0 ? semantic.positive : semantic.negative;
+    dailySuper && dailySuper.profit >= 0 ? semantic.positive : semantic.negative;
   const featuredTitle = {
     SELECTED_LIVE: "Öne çıkan canlı maçlar",
     PRESSURE_LIVE: "Takipteki canlı maçlar",
     UPCOMING: "Sıradaki maçlar",
     EMPTY: "Maç görünümü"
-  }[dashboard.featuredMatchMode];
+  }[dashboard?.featuredMatchMode ?? "EMPTY"];
   const featuredCaption =
-    dashboard.featuredMatchMode === "UPCOMING"
+    dashboard?.featuredMatchMode === "UPCOMING"
       ? "Başlama zamanı en yakın aktif fikstürler"
       : "Skor, seçim ve güncel oran";
 
   const moduleNodes: Partial<Record<OverviewModuleId, ReactNode>> = {
     metrics: (
       <View style={styles.metrics}>
-        <MetricCard
+        {dashboard ? <><MetricCard
           // The live-match counter used loss red. It counts matches in progress
           // and says nothing about how they are going.
           accent={semantic.live}
@@ -131,9 +105,9 @@ export default function DashboardScreen() {
           value={String(
             liveStarMetricCount(dashboard.liveStarCounts, liveStarFilter)
           )}
-        />
+        /></> : null}
         <TutorialTarget id="home-super-metric" style={styles.metricTarget}>
-          <MetricCard
+          {dailySuper && superKpis.data ? <><MetricCard
             accent={profitColor}
             detail={`${dailySuper.won} kazandı · ${dailySuper.lost} kaybetti`}
             icon="chart-line"
@@ -146,10 +120,16 @@ export default function DashboardScreen() {
             }
             value={formatSigned(dailySuper.profit)}
           />
+          </> : superKpis.isLoading ? <LoadingState label="Günlük Super verisi hazırlanıyor" /> : <ErrorState error={superKpis.error} onRetry={() => { void superKpis.refetch(); }} />}
         </TutorialTarget>
+        {dailySuper && superKpis.data ? <View style={styles.metricScope}>
+          <Text style={styles.scopeNote}>Maç tarihi {superKpis.data.metricDate} · {starMetricLabel(superStarFilter)} · {dailySuper.won + dailySuper.lost} sonuçlanan karar kaydı</Text>
+          <Text style={styles.scopeNote}>Kayıt kârı toplamı; açık/geçersiz kayıtlar hariç. Birim ve bahis tutarı sağlanmadı; ROI değildir.</Text>
+          {superKpis.isError ? <Text accessibilityRole="alert" style={styles.scopeNote}>Günlük Super yenilenemedi; son alınan tarihli veri gösteriliyor.</Text> : null}
+        </View> : null}
       </View>
     ),
-    recentSuper: (
+    recentSuper: dashboard ? (
       <>
         <SectionHeader
           actionLabel="Tüm kararlar"
@@ -161,10 +141,10 @@ export default function DashboardScreen() {
           <SuperLogCard key={log.key} log={log} />
         ))}
       </>
-    )
+    ) : undefined
   };
 
-  if (dashboard.featuredMatches.length) {
+  if (dashboard?.featuredMatches.length) {
     moduleNodes.featured = (
       <>
         <SectionHeader
@@ -186,7 +166,7 @@ export default function DashboardScreen() {
     );
   }
 
-  if (dashboard.latestTotoProgram) {
+  if (dashboard?.latestTotoProgram) {
     moduleNodes.toto = (
       <>
         <SectionHeader
@@ -204,12 +184,13 @@ export default function DashboardScreen() {
     .filter((id): id is OverviewModuleId =>
       Boolean(moduleNodes[id as OverviewModuleId])
     )
-    .map((id) => ({ id, node: moduleNodes[id] }));
+    .map((id) => ({ id, node: moduleNodes[id], fullWidth: id === "metrics" }));
 
   return (
     <Screen
       eyebrow="BTB"
       title="Bugünün görünümü"
+      subtitle="Canlı maçlar, günlük karar kayıtları ve Toto programı."
       contentStyle={styles.content}
       scrollRef={scrollRef}
       wide
@@ -227,7 +208,8 @@ export default function DashboardScreen() {
         )
       }}
     >
-      {dashboard.featuredMatchMode !== "SELECTED_LIVE" ? <Text style={styles.selectionNotice}>
+      {!dashboard ? query.isLoading ? <LoadingState label="Maç ve program özeti hazırlanıyor" /> : <ErrorState error={query.error} onRetry={() => { void query.refetch(); }} /> : query.isError ? <Text accessibilityRole="alert" style={styles.scopeNote}>Özet yenilenemedi; son alınan maç ve program verileri gösteriliyor.</Text> : null}
+      {dashboard && dashboard.featuredMatchMode !== "SELECTED_LIVE" ? <Text style={styles.selectionNotice}>
         Şu anda öne çıkan bir canlı BTB seçimi yok. Maçları takip edebilir, verilerini inceleyebilirsin.
       </Text> : null}
       <ReorderableModuleList
@@ -259,7 +241,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg
   },
   metricTarget: {
-    width: "100%",
-    height: 144
-  }
+    flex: 1,
+    minWidth: 148,
+    gap: spacing.sm
+  },
+  metricScope: { width: "100%", gap: spacing.xs },
+  scopeNote: { ...typeScale.bodyCompact, color: colors.textMuted, lineHeight: 19 }
 });

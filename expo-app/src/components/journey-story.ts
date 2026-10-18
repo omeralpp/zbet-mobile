@@ -1,6 +1,7 @@
 import type { LiveContext, MatchJourney, MatchJourneyPoint, SuperLog } from '../api/schemas';
 import { visibleEvents } from './live-context-view';
 import { buildSuperRatingMarker } from './super-rating-marker';
+import { unavailablePressureMessage } from '../utils/recent-pressure';
 
 export type JourneyMoment = {
   key: string; minute: number | null; label: string; title: string;
@@ -86,6 +87,7 @@ export function poolLeaders(pool: MatchJourney['pools'][number] | undefined) {
 
 export function pressureReading(point: MatchJourneyPoint | undefined) {
   const context = point?.decisionContext;
+  if (context?.recentPressure.availability === 'UNAVAILABLE') return unavailablePressureMessage(context.recentPressure.reason).detail;
   if (context?.contractVersion === 'decision-context.v3' && context.recentPressure.availability === 'AVAILABLE') {
     const path = context.expectedScorePressure;
     const scores = path.leaders.map(row => row.score).join(' / ');

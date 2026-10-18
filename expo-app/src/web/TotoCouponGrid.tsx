@@ -24,35 +24,37 @@ export function TotoCouponGrid({
   return (
     <View role="table" aria-label="Toto kuponu" style={styles.table}>
       <View role="row" style={[styles.row, styles.headerRow]}>
-        <Text style={[styles.headerText, styles.no]}>#</Text>
-        <Text style={[styles.headerText, styles.match]}>Maç</Text>
+        <Text role="columnheader" style={[styles.headerText, styles.no]}>#</Text>
+        <Text role="columnheader" style={[styles.headerText, styles.match]}>Maç</Text>
         {["1", "X", "2"].map((outcome) => (
-          <Text key={outcome} style={[styles.headerText, styles.cellColumn]}>
+          <Text role="columnheader" key={outcome} style={[styles.headerText, styles.cellColumn]}>
             {outcome}
           </Text>
         ))}
-        <Text style={[styles.headerText, styles.confidence]}>Güven</Text>
-        <Text style={[styles.headerText, styles.status]}>Durum</Text>
+        <Text role="columnheader" style={[styles.headerText, styles.confidence]}>Güven</Text>
+        <Text role="columnheader" style={[styles.headerText, styles.status]}>Durum</Text>
       </View>
       {predictions.map((prediction, index) => {
         const cells = couponCells(prediction);
         const presentation = presentResult(prediction.result);
         const width = couponWidth(prediction);
         return (
-          <Pressable
-            accessibilityHint="Karşılaşmayı Bilyoner'de açar"
-            accessibilityLabel={`${prediction.matchNo}. ${prediction.matchName}, kupon ${prediction.coverage}, ${presentation.label}`}
-            disabled={!prediction.eventId}
+          <View
             key={prediction.matchNo}
-            onPress={() => onOpen(prediction.eventId)}
             role="row"
-            style={({ hovered }) => [styles.row, index % 2 === 1 && styles.zebra, hovered && styles.rowHover]}
+            style={[styles.row, index % 2 === 1 && styles.zebra]}
           >
-            <Text style={[styles.number, styles.no]}>{prediction.matchNo}</Text>
-            <View style={styles.match}>
+            <Text role="cell" style={[styles.number, styles.no]}>{prediction.matchNo}</Text>
+            <View role="cell" style={styles.match}>
+              <Pressable accessibilityRole="link" accessibilityHint="Karşılaşmayı Bilyoner'de açar"
+                accessibilityLabel={`${prediction.matchNo}. ${prediction.matchName}; Bilyoner'de aç`}
+                accessibilityState={{ disabled: !prediction.eventId }} aria-disabled={!prediction.eventId}
+                disabled={!prediction.eventId} onPress={() => onOpen(prediction.eventId)}
+                style={({ hovered }) => [styles.matchAction, hovered && styles.rowHover]}>
               <Text numberOfLines={1} style={styles.matchName}>
                 {prediction.matchName}
               </Text>
+              </Pressable>
               <Text numberOfLines={1} style={styles.meta}>
                 {formatFixtureDateTime(prediction.matchDate, prediction.matchTime)}
                 {width > 1 ? ` · ${width === 2 ? "çift" : "üçlü"}` : ""}
@@ -62,9 +64,8 @@ export function TotoCouponGrid({
               </Text>
             </View>
             {cells.map((cell) => (
-              <View key={cell.outcome} style={styles.cellColumn}>
+              <View role="cell" key={cell.outcome} accessibilityLabel={`${cell.outcome}${cell.main ? " ana tahmin" : cell.covered ? " kuponda" : ", kuponda değil"}${cell.actual ? ", gerçekleşen sonuç" : ""}`} style={styles.cellColumn}>
                 <View
-                  accessibilityLabel={`${cell.outcome}${cell.main ? " ana tahmin" : cell.covered ? " kuponda" : ""}${cell.actual ? ", sonuç" : ""}`}
                   style={[
                     styles.cell,
                     cell.covered && styles.cellCovered,
@@ -78,9 +79,9 @@ export function TotoCouponGrid({
                 </View>
               </View>
             ))}
-            <Text style={[styles.meta, styles.confidence]}>{formatPercentage(prediction.confidence)}</Text>
-            <Text style={[styles.statusText, styles.status, { color: presentation.color }]}>{presentation.label}</Text>
-          </Pressable>
+            <Text role="cell" style={[styles.meta, styles.confidence]}>{formatPercentage(prediction.confidence)}</Text>
+            <Text role="cell" style={[styles.statusText, styles.status, { color: presentation.color }]}>{presentation.label}</Text>
+          </View>
         );
       })}
     </View>
@@ -132,6 +133,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0
   },
+  matchAction: { minHeight: 48, justifyContent: "center", borderRadius: radii.sm },
   matchName: {
     ...typeScale.identityCompact,
     color: colors.text

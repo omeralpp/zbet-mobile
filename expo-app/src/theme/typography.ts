@@ -79,7 +79,7 @@ export const typeScale = {
   pageTitle: {
     fontSize: 28,
     lineHeight: 34,
-    fontWeight: fontWeights.black,
+    fontWeight: fontWeights.bold,
     letterSpacing: -0.6
   },
   /** Module and section heading inside a screen. */
@@ -126,8 +126,8 @@ export const typeScale = {
   },
   /** Supporting copy and explanations. */
   body: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 22,
     fontWeight: fontWeights.regular,
     letterSpacing: 0
   },
@@ -140,8 +140,8 @@ export const typeScale = {
   },
   /** The word under a metric value. */
   label: {
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 12,
+    lineHeight: 17,
     fontWeight: fontWeights.medium,
     letterSpacing: 0.3
   },
@@ -155,8 +155,8 @@ export const typeScale = {
   },
   /** League, kickoff time, timestamp. */
   meta: {
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 13,
+    lineHeight: 18,
     fontWeight: fontWeights.medium,
     letterSpacing: 0.2
   },

@@ -32,7 +32,7 @@ export function ModuleHeading({
       <View style={styles.titleRow}>
         <View style={styles.titleContent}>
           {leading ?? null}
-          <Text style={styles.title}>{title}</Text>
+          <Text accessibilityRole="header" role="heading" aria-level={2} style={styles.title}>{title}</Text>
         </View>
         {trailing ?? null}
       </View>

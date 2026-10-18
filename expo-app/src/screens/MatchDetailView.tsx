@@ -22,6 +22,7 @@ import { mobileApi } from "@/src/api";
 import type { AnalysisContext } from "@/src/api/schemas";
 import { JinxAssessmentCard } from "@/src/components/JinxAssessmentCard";
 import { analysisNeedsRefresh } from "@/src/mascot/jinx-assessment";
+import { useJinxAnalyticalSurface } from "@/src/mascot/JinxPreferencesProvider";
 import { ChangeEmphasis } from "@/src/components/ChangeEmphasis";
 import { LiveDot } from "@/src/components/LiveDot";
 import { SignalMeter } from "@/src/components/SignalMeter";
@@ -69,6 +70,7 @@ import {
 import { relatedSuperDecisions } from "@/src/utils/related-super-decisions";
 import { deriveLiveRateTrend } from "@/src/utils/live-card-indicators";
 import { recordedSelection } from "@/src/utils/decision-model";
+import { formatHistoricalFraction, historicalFractionWidth, relativeComparisonWidths } from "@/src/utils/statistical-geometry";
 
 /**
  * One Canlı detay module, as a collapsible panel.
@@ -161,9 +163,9 @@ function ComparisonRow({
   formatter?: (value: number) => string;
   note?: string;
 }) {
-  const total = Math.max(1, (home ?? 0) + (away ?? 0));
-  const homeWidth: `${number}%` = `${Math.max(4, ((home ?? 0) / total) * 100)}%`;
-  const awayWidth: `${number}%` = `${Math.max(4, ((away ?? 0) / total) * 100)}%`;
+  const widths = relativeComparisonWidths(home, away);
+  const homeWidth: `${number}%` = `${widths.home}%`;
+  const awayWidth: `${number}%` = `${widths.away}%`;
   const formatValue = formatter ?? String;
 
   return (
@@ -204,6 +206,7 @@ export function MatchDetailView({
   matchKey: string;
   embedded?: boolean;
 }) {
+  useJinxAnalyticalSurface();
   const key = matchKey;
   const router = useRouter();
   const handleEdgeSwipeBack = () => {
@@ -276,6 +279,7 @@ export function MatchDetailView({
     return (
       <Screen edgeSwipeBack={!embedded} onEdgeSwipeBack={handleEdgeSwipeBack}>
         <ErrorState
+          error={query.error}
           message={
             query.error instanceof Error
               ? query.error.message
@@ -458,22 +462,28 @@ export function MatchDetailView({
         <View style={styles.distributionCard}>
           <SurfaceMaterial radius={radii.lg} />
           {match.scoreDistribution.length ? (
-            match.scoreDistribution.map((row) => (
+            <>
+            <Text style={styles.statNote}>Tarihsel havuz payları · tahmin olasılığı değildir. Örneklem sayısı ve dönemi bu veride sağlanmıyor.</Text>
+            {match.scoreDistribution.map((row) => {
+              const width = historicalFractionWidth(row.probability);
+              return (
               <View key={row.score} style={styles.distributionRow}>
                 <Text style={styles.distributionScore}>{row.score}</Text>
                 <View style={styles.probabilityTrack}>
-                  <View
+                  {width !== null ? <View
                     style={[
                       styles.probabilityFill,
-                      { width: `${Math.max(3, row.probability * 100)}%` }
+                      { width }
                     ]}
-                  />
+                  /> : null}
                 </View>
                 <Text style={styles.probability}>
-                  {formatPercentage(row.probability)}
+                  {formatHistoricalFraction(row.probability)}
                 </Text>
               </View>
-            ))
+            );
+            })}
+            </>
           ) : (
             <Text style={styles.emptyText}>Skor dağılımı henüz oluşmadı.</Text>
           )}
@@ -1096,10 +1106,10 @@ const styles = StyleSheet.create({
   },
   probability: {
     color: colors.textMuted,
-    width: 40,
+    minWidth: 48,
+    flexShrink: 0,
     textAlign: "right",
-    fontSize: 11,
-    fontWeight: "800"
+    ...typeScale.label
   },
   emptyText: {
     color: colors.textMuted,

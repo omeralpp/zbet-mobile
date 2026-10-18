@@ -2,10 +2,46 @@
 
 This is the shared acceptance contract for native Mobile Next screens.
 
-## Design system v2
+## 2026-10-18 selected Jinx and universal UX implementation
+
+TASK-0162 evaluates a replacement design on both Android and web. `/design-lab`
+is restricted to explicit mock/preview builds, with its own palette and motion
+preference. The owner selected A (enhanced football orb); the shared local client now
+uses A. The owner then approved the proposed screen direction, now applied through
+shared palette, typography, cards, summaries and controls. Independent
+findings, cross-platform acceptance and source
+boundaries live in `ux-review-2026-10-18/COMBINED_FINDINGS.md` and `ACCEPTANCE.md`.
+The shared motion owner cancels on context change/correction, suppresses background
+and inactive-tab replay and keeps WAIT neutral. Runtime goal/half-time scenes require
+fresh, matching, explicit LIVE records; the synthetic lab bypass is confined to preview.
+System reduced motion overrides Live/Calm/Off; disabling motion keeps the text.
+The two candidate characters share scene timing, render space and content.
+Motion and hiding preferences persist per device. Analytical detail uses its own
+assessment-card space. The focused embedded desktop detail suppresses the global orb;
+inactive mounted tabs do not suppress it elsewhere. No profit/crown/money mood remains.
+Primary action text uses the contrast-checked actionFill/onAction pair; headers carry
+roles and web heading levels. Error recovery uses structured error categories. Charts
+preserve exact fractions, expose absent sample/period metadata, and distinguish pool
+compatibility from probability. Web dialogs isolate background focus and restore it.
+
+## Shared design direction — approved 18 October
 
 The token layer lives in `src/theme` and is imported through `theme.ts`. A
 screen asks for a role, never a literal.
+
+`experience-palette.ts` is the source for the approved lab and client colours.
+Dark ink/sage and warm light surfaces use quiet shading and low shadows; semantic
+outcomes retain their labels. Filled actions use `actionFill/onAction`, never an
+assumed white foreground on a text/link colour. The action and primary/secondary
+text pairs are checked on page, soft surfaces and both gradient stops.
+
+Overview starts with summary counts, followed by matches and decision records.
+Web uses row-major grid order and a full-width summary; Android uses one module
+column. Stored custom order is preserved. Primary team names and metrics can wrap.
+Match navigation and pinning are separate buttons; pinning exposes pressed state
+and a 48dp target. Search reports scope/results and has a clear action. Settings
+put appearance/Jinx before advanced layout tools. Mock data is labelled on every
+Screen, including details; runtime mode is never presented as connection health.
 
 ### Typography — `typography.ts`
 
@@ -15,6 +51,8 @@ screen asks for a role, never a literal.
   as the same step as `900`.
 - Minimum rendered size is 11pt. Sizes 8–10 do not survive Android font scaling
   on a live match surface.
+- Body copy is 15/22, metadata 13/18, metric labels 12/17. Page headings use bold;
+  the heaviest weight remains primarily for numerics.
 - Prose is `400`/`500`. `900` is reserved for numerics — scores, odds, metrics.
   Weight is the product's primary emphasis channel and only works while most of
   the screen is not using it.
@@ -256,8 +294,8 @@ most serious error this product can make in its UI.
 - `FULL` — the ambient mascot with drag, idle motion, greeting and quick menu.
   Brand, orientation and helper surfaces.
 - `GUIDE_ONLY` — no ambient presence. Bibi appears solely to deliver an active
-  tutorial step and leaves when it finishes. Match Detail and Super Decision
-  Detail are `GUIDE_ONLY`: a floating character the user has to move aside is
+  tutorial step and leaves when it finishes. Match Detail, Super Decision Detail
+  and Toto Program Detail are `GUIDE_ONLY`: a floating character the user has to move aside is
   competing with the data they opened the screen to read.
 - `GUIDE_ONLY` never means "not rendered". The tutorial targets components on
   `/match/` and `/super/` and Bibi is what renders those steps, so removing her
@@ -276,6 +314,8 @@ most serious error this product can make in its UI.
   preferred, above is the fallback, and the result is always clamped inside the
   safe area — including for a bubble with no target, which is the case the
   clamp exists for.
+- After layout, guide/discovery bubbles feed their measured heights into placement
+  so text reflow does not keep using the initial height estimate.
 
 ### Feature discovery — `feature-discovery.ts`, `DiscoveryProvider.tsx`
 
@@ -297,10 +337,10 @@ most serious error this product can make in its UI.
   slot. Someone reading Match Detail finds their hints intact afterwards.
 - Discovery is local. No hint is fetched, scheduled or targeted from a server;
   building that transport is how a help feature becomes a marketing surface.
-- Motion: a hint arrives with **one** short micro-animation, then stillness.
-  `LiveDot` remains the product's only continuous ambient animation — a second
-  loop would compete with it for the one meaning ambient motion carries here.
-  Reduced motion drops the micro-animation and keeps the hint.
+- Motion: scenes are short and interruptible. Live allows sparse idle/blink scenes;
+  Calm reduces task-scene amplitude and omits scheduled idle scenes; Off and system
+  reduced motion stop decorative motion and keep text. No perpetual mascot transform
+  loop is allowed. Drag/menu/guide suppress competing scenes. A hint closes on route change.
 - Bibi says one thing at a time. A hint never shares the screen with a guide
   step, the quick menu or the greeting, and idle motion stands down while it is
   up.

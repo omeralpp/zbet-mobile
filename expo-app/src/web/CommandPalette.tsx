@@ -56,7 +56,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
 
   return (
     <View style={styles.backdrop}>
-      <Pressable accessibilityLabel="Aramayı kapat" onPress={onClose} style={StyleSheet.absoluteFill} />
+      <Pressable accessible={false} focusable={false} tabIndex={-1} onPress={onClose} style={StyleSheet.absoluteFill} />
       <View accessibilityRole="search" style={styles.panel}>
         <View style={styles.inputRow}>
           <MaterialCommunityIcons color={colors.textMuted} name="magnify" size={iconSizes.navigation} />
@@ -87,7 +87,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
             style={styles.input}
             value={query}
           />
-          <Text style={styles.kbd}>Esc</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="Aramayı kapat" onPress={onClose} style={styles.close}><Text style={styles.closeText}>Kapat</Text></Pressable>
         </View>
         <ScrollView keyboardShouldPersistTaps="handled" style={styles.results}>
           {results.length === 0 ? (
@@ -123,6 +123,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
           )}
         </ScrollView>
         <View style={styles.footer}>
+          <Text style={styles.hint}>Yalnız ekranların yüklediği veriler aranır.</Text>
           <Text style={styles.hint}>↑ ↓ seç · Enter aç · Esc kapat</Text>
         </View>
       </View>
@@ -164,9 +165,10 @@ const styles = StyleSheet.create({
     ...typeScale.identity,
     color: colors.text,
     flex: 1,
-    minHeight: 32,
-    outlineStyle: "none"
-  } as never,
+    minHeight: 48
+  },
+  close: { minHeight: 48, minWidth: 48, paddingHorizontal: spacing.sm, justifyContent: "center" },
+  closeText: { ...typeScale.bodyCompact, color: colors.text },
   kbd: {
     ...typeScale.micro,
     borderColor: colors.border,
