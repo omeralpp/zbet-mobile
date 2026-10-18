@@ -2,7 +2,7 @@
 
 Son güncelleme: 2026-10-18
 
-Mod: `LOCAL_IMPLEMENTATION`
+Mod: `OBSERVATION`
 
 Çalışma alanı: `C:\dev\btb-cdoex` · Aktif task: `BTB Mobile Next - Aktif`
 
@@ -15,59 +15,38 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
-18 October, latest — TASK-0162 batch `1c65275` is **INCOMPLETE** and its
-correction batch is local. With the owner's explicit approval, `zbet-mobile`
-`1c652757767c5f195ea0f05dfd429c2b1afb074e` (TASK-0162 UX/Jinx + NXT-OBS-169/170 wheel
-fix) and `zbet-cap` `5efd17d` (OData `4`/`04` fix, sealed display policy
-`MOBILE_PRESSURE_DISPLAY_20261018.json`, active in the pilot BFF since 13:25:22 UTC;
-`zbet-cap/docs/MOBILE_PRESSURE_DISPLAY_2026_10_18.md`) were pushed. Batch
-`client-1c652757767c5f195ea0f05dfd429c2b1afb074e-5CBCDC99FB2F-6F98007322D6`: APK
-`btb-mobile-next-arm64-jinx-1c65275.apk` (50,043,312 bytes, SHA256
-`5CBCDC99FB2FD791F81E69F21EE0D345D8B5069B855F61F3152DD61E3A2A8249`, pilot certificate
-`FAC61745…`), web tree `6F98007322D6B67D932F47743095818BD4E4F7E627642C8A530A75F8A7BD32B5`.
-The APK was delivered to the owner-only Drive folder (full-byte readback matched) and
-installed; the owner's phone smoke failed with NXT-OBS-171..178. By owner decision the
-web was **not** published: `524f2e7` stays on the web. Receipts:
-`.codex-artifacts/task0162-jinx-1c65275/` (`batch.json`, `android-delivery.json`,
-`owner-android-smoke.json`, Drive delivery receipt next to the APK).
+18 October: TASK-0162 is **COMPLETE** on both surfaces; NXT-OBS-169..179 closed and
+archived in `docs/observation_archive/task0162_ux_jinx_corrections_2026-10-18.md`.
+Batch `client-ee48ccd950cd9b99c1095b6862103acfe7937d63-A790A6173D12-B62ADB9F07F3`: client
+`ee48ccd950cd9b99c1095b6862103acfe7937d63`, APK `btb-mobile-next-arm64-pressure-ee48ccd.apk`
+(50,060,868 bytes, SHA256 `A790A6173D12BD6C00DDACE5DB62B063EE55B534DF31484E40E38D2FDEFF6B96`,
+pilot certificate `FAC61745…`, private Drive file `1l9EO_M_4oFdERKWPY-3wHiGzUYhGttOc`),
+paired web tree `B62ADB9F07F3D427D0E8879EC74A76EDFB43604EF333F3A92C5E4B3F289866FF`, web
+release `20261018T171818Z-ee48ccd` (published 17:18:43 UTC; local probe and Cloudflare
+Access gate passed). BFF `zbet-cap` `9a2ae3f` runs under the `BTB Mobile BFF` watchdog
+task with the sealed display configuration `MOBILE_PRESSURE_DISPLAY_20261018.json`
+unchanged. The owner accepted the installed APK ("Gayet güzel yayinlayabiliriz") and the
+published web ("Kapatalım şuan çalışıyor"); `client-release.mjs complete` passed
+(`.codex-artifacts/task0162-correction-ee48ccd/completed-batch.json`). Durable receipts:
+`btb-codex/docs/evidence/client-release-ee48ccd-2026-10-18.json` and, for the superseded
+candidate `1c65275` (INCOMPLETE: phone smoke failed, web held),
+`client-release-1c65275-2026-10-18.json`.
 
-The owner then asked for the corrections directly and chose the pilot signal
-`JINX_LEAN_PILOT_V1` (confidence % + Lehte/Dengede/Aleyhte), then approved the release
-sequence (commit/push, BFF restart, new APK with private delivery, paired web after
-installation). Committed and pushed on both repos after `1c65275`/`5efd17d`; the pilot
-BFF was restarted on the pushed `zbet-cap` code at 16:48 UTC and handed to the
-`BTB Mobile BFF` watchdog task (`-AuthMode pilot`, sealed configuration unchanged;
-receipt `.codex-artifacts/ux-review-2026-10-18/jinx-v4-runtime-restart.json`). The live
-contract smoke found the current interval `OBS_ACTIVITY_UNPROVEN` on 6/6 selections, so
-Jinx falls back to the latest measured journey interval (≤10 min, named by its minute),
-and a price-less signal reads "Güncel oran yok". Changes on both surfaces: vivid palette (all text pairs ≥4.5:1, minimum 5.6:1, stronger card traces);
-screen subtitles, ROI/unit notes, caveat clauses and hints removed on every route and
-in the BFF facts; Jinx breathes, idles, blinks and cheers/doubts by lean; daily Super
-comment restored (bubble, crown/wallet/coin reaction, Overview line, "Günlük yorum"
-menu item); new Live Detail `pressure` module "Baskı grafiği" (home up, away down,
-goal marks, shares) under Maçın Yolu, whose pressure strip/box were removed and whose
-per-second line became shares; the Jinx card shows the lean, "havuz güveni" %, market
-and pressure facts and asks once on arrival. NXT-OBS-179: chart labels no longer clip
-("Yeni havuz" gets a full line above Maçın Yolu; pressure-chart goals ride lanes
-outside the bars and edge labels flip inward). BFF `jinx-match-outlook.v4`
-(`srv/mobile-bff/jinx-signal.js`, `zbet-cap/docs/MOBILE_JINX_SIGNAL_V4_2026_10_18.md`);
-V3 is unchanged for installed clients. The formal verdict stays WAIT without an approved
-value policy; no model, Super, rating, SAP or learning change. Checks: BFF gate
-626/626 + production build; client typecheck, lint, 672 unit, 32 tooling and brand;
-registered BundleOnly gate (Doctor, Android production JS bundle, verified web export
-and secret scan) — logs `.codex-artifacts/ux-review-2026-10-18/task0162-correction-*.log`;
-mock web smoke at 412x915 (dark and light) and 1280x800 (Overview comment and bubble,
-Jinx card, pressure chart, "Yeni havuz" label, inspector share line, desktop two-column). The new client requests V4, so the BFF
-restart must precede the next APK/web release.
-
-TASK-0162 `1c65275` content (owner-selected Jinx orb A and screen direction, the
-`/design-lab` mock/preview route, match-card/search/table/dialog/reduced-motion fixes)
-is described in `docs/ux-review-2026-10-18/` (`COMBINED_FINDINGS.md`, `ACCEPTANCE.md`).
-The correction batch above supersedes three of its choices on owner feedback: the
-washed-out palette, the explicit screen-purpose and caveat copy, and the removal of
-the daily Super mood. Physical TalkBack, real 200% zoom and authenticated web
-usability remain unverified. The accepted 524f2e7 pair below and its bd43073 recovery
-pair remain the release baseline.
+The batch delivers on both surfaces: the TASK-0162 orb A and screen direction with the
+owner's corrections — vivid palette (text pairs ≥4.5:1), screen subtitles, ROI/unit
+notes, caveat clauses and hints removed (also in the BFF facts), Jinx breathing, idle
+moves and cheer/doubt reactions, the daily Super comment (bubble, crown/wallet/coin
+reaction, Overview line, "Günlük yorum"), the Live Detail `pressure` module "Baskı
+grafiği" under Maçın Yolu, the selected record's pressure as shares, unclipped chart
+labels, and the NXT-OBS-169 continuous-wheel fix. Jinx asks once on arrival and reads
+outlook V4 (`zbet-cap/docs/MOBILE_JINX_SIGNAL_V4_2026_10_18.md`): pilot
+`JINX_LEAN_PILOT_V1` confidence (BTB pool share) and Lehte/Dengede/Aleyhte lean against
+the price's implied share, adjusted by the current or last measured (≤10 min) interval
+pressure; "Güncel oran yok" without a price. Uncalibrated; the formal verdict stays WAIT
+without an approved value policy, and installed V3 clients keep V3. No model, Super,
+rating, SAP or learning change; the TASK-0152 27 October model gate is unchanged.
+Physical TalkBack, real 200% zoom and authenticated web usability remain unverified.
+The accepted `524f2e7` pair below is now the recovery pair.
 
 17 October: TASK-0161 shared UX batch is **COMPLETE**; NXT-OBS-165..168 closed.
 Client `524f2e77a839cd42e2ac520b375eef13d6765c48`, APK
@@ -285,16 +264,10 @@ legacy blank tag yeni modele yükseltilmez. Tarihsel karar kendi capture'ını o
 
 ## Exact next steps
 
-TASK-0162 correction batch (NXT-OBS-171..179) is pushed and the BFF serves V4. Under
-the owner's release approval: build the new arm64 APK and verified web export from the
-pushed client commit, deliver the APK privately, publish the paired web only after the
-owner confirms installation, then both owner smokes and `client-release.mjs complete`.
-Record the final pair in a closing docs commit. Batch `1c65275` stays INCOMPLETE and is
-superseded by that batch; `524f2e7` stays the accepted pair until then.
-
-TASK-0161 is DONE: the 524f2e7 pair is complete on both surfaces. Observe it in
-real use and record findings in `OBSERVATION_LOG.md`; bd43073 stays the previous
-accepted pair for recovery.
+TASK-0162 is DONE: the `ee48ccd` pair is complete on both surfaces. Observe it in real
+use and record findings in `OBSERVATION_LOG.md`; `524f2e7` is the previous accepted
+pair for recovery (a rollback also needs its APK delivery receipt). Watch in particular
+how often Jinx has a current price for a lean and a measured interval for pressure.
 TASK-0156: the canonical weekly scorecard exists; rolling 7/30-day data and a runtime
 feed remain missing, while approved probability/value evidence is a separate Phase
 2/3 dependency. Its OPEN task has a dated evidence review for 19 October; local UI

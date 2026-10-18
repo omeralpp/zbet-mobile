@@ -240,6 +240,11 @@ paths:
         for an existing displayed selection and server-held analysis snapshot.
         No approved value policy is registered in the current runtime: V3 waits
         with the specific reason and makes no provider call for that wait.
+        V4 (owner decision 2026-10-18) is V3 plus the uncalibrated pilot
+        `signal` JINX_LEAN_PILOT_V1: the BTB pool share as confidence and a
+        FAVORABLE/NEUTRAL/UNFAVORABLE lean against the current price's implied
+        share, moved one step by the current or last measured interval
+        pressure. The policy verdict keeps the V3 rules.
       parameters:
         - $ref: "#/components/parameters/Key"
         - $ref: "#/components/parameters/DecisionContextVersion"
@@ -248,11 +253,11 @@ paths:
           required: false
           schema:
             type: string
-            enum: [jinx-match-outlook.v1, jinx-match-outlook.v2, jinx-match-outlook.v3]
+            enum: [jinx-match-outlook.v1, jinx-match-outlook.v2, jinx-match-outlook.v3, jinx-match-outlook.v4]
         - in: header
           name: X-BTB-Analysis-Snapshot
           schema: { type: string }
-          description: Required for V3; snapshot must belong to the same subject and match. Missing or expired snapshots return 409 ANALYSIS_SNAPSHOT_EXPIRED.
+          description: Required for V3 and V4; snapshot must belong to the same subject and match. Missing or expired snapshots return 409 ANALYSIS_SNAPSHOT_EXPIRED.
       responses:
         "200":
           description: Informative match outlook with uncertainty and freshness.
@@ -1324,6 +1329,7 @@ components:
         - $ref: "#/components/schemas/JinxMatchOutlookV1"
         - $ref: "#/components/schemas/JinxMatchOutlookV2"
         - $ref: "#/components/schemas/JinxMatchOutlookV3"
+        - $ref: "#/components/schemas/JinxMatchOutlookV4"
     AnalysisContext:
       type: object
       required: [contractVersion, matchKey, snapshotId, evidenceRevision, selectionKey, acquiredAt, expiresAt, sources, sourceAvailability, valueEvidence]
@@ -1407,6 +1413,50 @@ components:
         value:
           type: [object, "null"]
           description: Null for WAIT. Otherwise approved probability/odds, fairPrice, expectedValue, minimumExpectedValue, policyId, modelVersion, validationRef and both measurement timestamps; verdict must match the value criterion.
+    JinxMatchOutlookV4:
+      type: object
+      additionalProperties: false
+      description: V3 fields and verdict rules, a 320-character shortReason, no missing-value riskNote, and the pilot signal.
+      required: [contractVersion, matchKey, snapshotId, evidenceRevision, selectionKey, evaluatedAt, expiresAt, verdict, reasonCode, shortReason, riskNote, evidence, sourceAvailability, explanationOrigin, value, signal]
+      properties:
+        contractVersion: { const: jinx-match-outlook.v4 }
+        matchKey: { type: string }
+        snapshotId: { type: string }
+        evidenceRevision: { type: string }
+        selectionKey: { type: string }
+        evaluatedAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        verdict: { $ref: "#/components/schemas/JinxMatchOutlookV3/properties/verdict" }
+        reasonCode: { $ref: "#/components/schemas/JinxMatchOutlookV3/properties/reasonCode" }
+        shortReason: { type: string, minLength: 1, maxLength: 320 }
+        riskNote: { type: [string, "null"], maxLength: 120 }
+        explanationOrigin: { type: string, enum: [LIVE, DETERMINISTIC] }
+        sourceAvailability: { type: object, additionalProperties: { type: string } }
+        evidence: { $ref: "#/components/schemas/JinxMatchOutlookV3/properties/evidence" }
+        value: { $ref: "#/components/schemas/JinxMatchOutlookV3/properties/value" }
+        signal:
+          type: [object, "null"]
+          additionalProperties: false
+          required: [policyId, basis, confidence, odds, impliedProbability, edge, lean, pressure]
+          description: Null for stale, conflicting, not-live, settled or confidence-less snapshots. impliedProbability = 1/odds and edge = confidence - impliedProbability; odds, impliedProbability, edge and lean are null together when no current price exists.
+          properties:
+            policyId: { const: JINX_LEAN_PILOT_V1 }
+            basis: { const: POOL_SHARE_UNCALIBRATED }
+            confidence: { type: number, exclusiveMinimum: 0, maximum: 1 }
+            odds: { type: [number, "null"], exclusiveMinimum: 1 }
+            impliedProbability: { type: [number, "null"], exclusiveMinimum: 0, exclusiveMaximum: 1 }
+            edge: { type: [number, "null"], exclusiveMinimum: -1, exclusiveMaximum: 1 }
+            lean: { type: [string, "null"], enum: [FAVORABLE, NEUTRAL, UNFAVORABLE, null] }
+            pressure:
+              type: [object, "null"]
+              additionalProperties: false
+              required: [homeShare, leader, effect, source, minute]
+              properties:
+                homeShare: { type: [number, "null"], minimum: 0, maximum: 1 }
+                leader: { type: string, enum: [HOME, AWAY, BALANCED, NONE] }
+                effect: { type: string, enum: [FOR, AGAINST, NEUTRAL] }
+                source: { type: string, enum: [CURRENT, LAST_INTERVAL], description: "CURRENT: fresh current interval (<= 240 s); LAST_INTERVAL: latest measured journey interval (<= 10 min)" }
+                minute: { type: [integer, "null"], minimum: 0, maximum: 150, description: Match minute of a LAST_INTERVAL sample; null for CURRENT }
     JinxMatchOutlookV2:
       allOf:
         - $ref: "#/components/schemas/JinxMatchOutlookBase"
