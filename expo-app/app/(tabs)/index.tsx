@@ -31,6 +31,15 @@ import {
 import { formatSigned } from "@/src/utils/format";
 import { refreshPerformanceWidgetFromApi } from "@/src/widgets/performance-widget";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
+import { JinxDailyComment } from "@/src/mascot/JinxDailyComment";
+
+/** " · 17.10" when the daily figure belongs to an earlier match date. */
+function otherDayLabel(metricDate: string): string {
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  return metricDate === today || !/^\d{4}-\d{2}-\d{2}$/.test(metricDate)
+    ? "" : ` · ${metricDate.slice(8, 10)}.${metricDate.slice(5, 7)}`;
+}
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -109,7 +118,7 @@ export default function DashboardScreen() {
         <TutorialTarget id="home-super-metric" style={styles.metricTarget}>
           {dailySuper && superKpis.data ? <><MetricCard
             accent={profitColor}
-            detail={`${dailySuper.won} kazandı · ${dailySuper.lost} kaybetti`}
+            detail={`${dailySuper.won} kazandı · ${dailySuper.lost} kaybetti${otherDayLabel(superKpis.data.metricDate)}`}
             icon="chart-line"
             label={`Günlük Super · ${starMetricLabel(superStarFilter)}`}
             onPress={() =>
@@ -123,9 +132,8 @@ export default function DashboardScreen() {
           </> : superKpis.isLoading ? <LoadingState label="Günlük Super verisi hazırlanıyor" /> : <ErrorState error={superKpis.error} onRetry={() => { void superKpis.refetch(); }} />}
         </TutorialTarget>
         {dailySuper && superKpis.data ? <View style={styles.metricScope}>
-          <Text style={styles.scopeNote}>Maç tarihi {superKpis.data.metricDate} · {starMetricLabel(superStarFilter)} · {dailySuper.won + dailySuper.lost} sonuçlanan karar kaydı</Text>
-          <Text style={styles.scopeNote}>Kayıt kârı toplamı; açık/geçersiz kayıtlar hariç. Birim ve bahis tutarı sağlanmadı; ROI değildir.</Text>
-          {superKpis.isError ? <Text accessibilityRole="alert" style={styles.scopeNote}>Günlük Super yenilenemedi; son alınan tarihli veri gösteriliyor.</Text> : null}
+          <JinxDailyComment />
+          {superKpis.isError ? <Text accessibilityRole="alert" style={styles.scopeNote}>Günlük Super yenilenemedi; son veri gösteriliyor.</Text> : null}
         </View> : null}
       </View>
     ),
@@ -190,7 +198,6 @@ export default function DashboardScreen() {
     <Screen
       eyebrow="BTB"
       title="Bugünün görünümü"
-      subtitle="Canlı maçlar, günlük karar kayıtları ve Toto programı."
       contentStyle={styles.content}
       scrollRef={scrollRef}
       wide
@@ -210,7 +217,7 @@ export default function DashboardScreen() {
     >
       {!dashboard ? query.isLoading ? <LoadingState label="Maç ve program özeti hazırlanıyor" /> : <ErrorState error={query.error} onRetry={() => { void query.refetch(); }} /> : query.isError ? <Text accessibilityRole="alert" style={styles.scopeNote}>Özet yenilenemedi; son alınan maç ve program verileri gösteriliyor.</Text> : null}
       {dashboard && dashboard.featuredMatchMode !== "SELECTED_LIVE" ? <Text style={styles.selectionNotice}>
-        Şu anda öne çıkan bir canlı BTB seçimi yok. Maçları takip edebilir, verilerini inceleyebilirsin.
+        Şu an öne çıkan canlı BTB seçimi yok.
       </Text> : null}
       <ReorderableModuleList
         items={moduleItems}

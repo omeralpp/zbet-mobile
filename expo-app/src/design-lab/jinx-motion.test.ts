@@ -51,11 +51,22 @@ test("WAIT is a neutral answer and expired evidence cannot be celebrated", () =>
   assert.equal(jinxMotionReducer(wait, { type: "answer", context: { ...context, matchKey: "other" }, verdict: "FAVORABLE", current: true }), wait);
 });
 
+test("the pilot lean chooses cheer, doubt or a neutral answer; stale leans never cheer", () => {
+  const initial = createJinxMotionState(context);
+  const answer = (lean: "FAVORABLE" | "NEUTRAL" | "UNFAVORABLE", current = true) =>
+    jinxMotionReducer(initial, { type: "answer", context, verdict: "WAIT", current, lean });
+  assert.equal(answer("FAVORABLE").scene, "cheer");
+  assert.equal(answer("UNFAVORABLE").scene, "doubt");
+  assert.equal(answer("NEUTRAL").scene, "answer");
+  assert.equal(answer("FAVORABLE", false).scene, "waiting");
+});
+
 test("reduced motion, OFF and background win over the lively mode", () => {
   assert.equal(resolveJinxMotion("LIVE", true, true).enabled, false);
   assert.equal(resolveJinxMotion("OFF", false, true).amplitude, 0);
   assert.equal(resolveJinxMotion("LIVE", false, false).ambient, false);
-  assert.equal(resolveJinxMotion("CALM", false, true).amplitude, 0.35);
+  assert.equal(resolveJinxMotion("CALM", false, true).amplitude, 0.45);
+  assert.ok(resolveJinxMotion("LIVE", false, true).amplitude > 1);
 });
 
 test("prototype route is limited to explicit mock preview builds", () => {

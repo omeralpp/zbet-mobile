@@ -3,6 +3,7 @@ import { useFocusEffect } from "expo-router";
 import type { AnalysisContext, JinxAssessment } from "@/src/api/schemas";
 import { themeMode } from "@/src/theme/theme";
 import { JinxAnimator } from "./JinxAnimator";
+import { assessmentSignal } from "./jinx-assessment";
 import { useJinxMotion } from "./use-jinx-motion";
 import { observedJinxEvent } from "./jinx-observed-events";
 
@@ -18,7 +19,8 @@ export function JinxMatchAnimator({ context, assessment, current, pending, unava
     setFocused(true);
     return () => setFocused(false);
   }, []));
-  const { state, dispatch, finish, preferences, reduceMotion } = useJinxMotion({ matchKey, revision }, false, focused);
+  // NXT-OBS-173: the card's Jinx idles and breathes like the ambient one.
+  const { state, dispatch, finish, preferences, reduceMotion } = useJinxMotion({ matchKey, revision }, true, focused);
   const previous = useRef<AnalysisContext | undefined>(undefined);
   const displayedAssessment = useRef("");
   useEffect(() => {
@@ -35,9 +37,10 @@ export function JinxMatchAnimator({ context, assessment, current, pending, unava
     const key = `${assessment.matchKey}:${assessment.evidenceRevision}:${assessment.evaluatedAt}`;
     if (displayedAssessment.current === key) return;
     displayedAssessment.current = key;
-    dispatch({ type: "answer", context: { matchKey, revision }, verdict: assessment.verdict, current });
+    dispatch({ type: "answer", context: { matchKey, revision }, verdict: assessment.verdict, current,
+      lean: assessmentSignal(assessment)?.lean ?? null });
   }, [assessment, current, dispatch, matchKey, pending, revision]);
   if (!preferences.ready || preferences.hidden) return null;
-  return <JinxAnimator compact candidate="orb" state={state} mode={preferences.mode} size={52}
+  return <JinxAnimator compact candidate="orb" state={state} mode={preferences.mode} size={56}
     dark={themeMode === "dark"} forceReducedMotion={reduceMotion} onComplete={finish} />;
 }

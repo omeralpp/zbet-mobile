@@ -34,8 +34,7 @@ import {
   interaction,
   radii,
   shadows,
-  spacing,
-  typeScale
+  spacing
 } from "@/src/theme/theme";
 import {
   formatFixtureDateTime,
@@ -156,7 +155,6 @@ export default function SuperScreen() {
       eyebrow="BTB SUPER"
       scroll={false}
       title="Karar günlüğü"
-      subtitle="Her kayıt, karar anındaki seçim ve oranı gösterir."
       wide
     >
       <TutorialTarget id="super-filters" style={styles.filterTarget}>
@@ -311,7 +309,6 @@ export default function SuperScreen() {
         </View>
       </View>
 
-      <Text style={styles.unitNote}>Kâr, kaydın kaynak değeridir. Birim ve bahis tutarı belirtilmedi; ROI değildir.</Text>
       {query.isLoading ? (
         <LoadingState label="Super kararları hazırlanıyor" />
       ) : query.isError ? (
@@ -406,7 +403,6 @@ export default function SuperScreen() {
 }
 
 const styles = StyleSheet.create({
-  unitNote: { ...typeScale.bodyCompact, color: colors.textMuted, marginBottom: spacing.md },
   screen: {
     paddingBottom: 0
   },

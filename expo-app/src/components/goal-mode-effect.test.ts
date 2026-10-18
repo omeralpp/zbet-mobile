@@ -13,7 +13,7 @@ test("V4 parses the authentic goal boundary and renders measured zero without pr
   assert.equal(goal.eventEffect?.blockedModeShare, 0);
   assert.match(goalModeEffectText(goal), /0 elendi/);
   assert.match(goalModeEffectText(goal), /3-2 \/ 4-1/);
-  assert.match(goalModeEffectText(goal), /olasılığı değildir/);
+  assert.doesNotMatch(goalModeEffectText(goal), /değildir/);
 });
 test("legacy V3 and unavailable effects stay unmeasured; missing is never rendered as zero", () => {
   const journey = mockRetainedJourney("legacy");

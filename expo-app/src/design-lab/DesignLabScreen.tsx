@@ -148,6 +148,7 @@ export default function DesignLabScreen() {
     if (scene === "goal") emitEvent("GOAL");
     else if (scene === "halfTime") emitEvent("HALF_TIME");
     else if (scene === "answer") { dispatch({ type: "answer", context: motion.context, verdict: "WAIT", current: true }); setActionNote("Güncel örnek yanıt: WAIT. Yanıt hazır olması bahis onayı değildir."); }
+    else if (scene === "cheer" || scene === "doubt") { dispatch({ type: "answer", context: motion.context, verdict: "WAIT", current: true, lean: scene === "cheer" ? "FAVORABLE" : "UNFAVORABLE" }); setActionNote(sceneCopy[scene].message); }
     else { dispatch({ type: "scene", scene }); setActionNote(sceneCopy[scene].message); }
   };
   const motionControls = <View style={styles.row}>{(["LIVE", "CALM", "OFF"] as const).map(value => <Button key={value} selected={motionMode === value} onPress={() => changeMotion(value)} label={`Laboratuvar hareketi: ${modeLabels[value]}`}>{modeLabels[value]}</Button>)}</View>;

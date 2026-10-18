@@ -150,7 +150,6 @@ export function MatchPathChart({
         </View>
       </ScrollView>
 
-      <CaveatLine text="Dönem oranları geçicidir: k=12, öncüller ve 30 maç eşiği henüz uyarlanmadı. Yeterlilik, gösterilen kalan maç sayısının 30'a oranıdır; doğruluk olasılığı değildir." />
       <CaveatLine text={lowCohortNotice(context)} />
     </View>
   );

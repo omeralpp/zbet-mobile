@@ -87,19 +87,20 @@ export function poolLeaders(pool: MatchJourney['pools'][number] | undefined) {
 
 export function pressureReading(point: MatchJourneyPoint | undefined) {
   const context = point?.decisionContext;
-  if (context?.recentPressure.availability === 'UNAVAILABLE') return unavailablePressureMessage(context.recentPressure.reason).detail;
+  // NXT-OBS-172: the short status, not the long explanation.
+  if (context?.recentPressure.availability === 'UNAVAILABLE') return unavailablePressureMessage(context.recentPressure.reason).label;
   if (context?.contractVersion === 'decision-context.v3' && context.recentPressure.availability === 'AVAILABLE') {
     const path = context.expectedScorePressure;
     const scores = path.leaders.map(row => row.score).join(' / ');
-    if (path.state === 'MIXED') return 'Tahmini baskı var · lider skorlar farklı yollar gerektiriyor';
+    if (path.state === 'MIXED') return 'Baskı var · lider skorlar farklı yollar gerektiriyor';
     if (path.state === 'PRESERVATION') return context.recentPressure.total === 0
       ? `Beklenen ${scores} skoru gerçekleşmiş · bu aralıkta hücum hareketliliği yok`
       : `Beklenen ${scores} skoru gerçekleşmiş · hücum hareketliliği skorun korunmasına karşı`;
-    if (path.state === 'TOWARD') return `Tahmini baskı beklenen ${scores} skoruna doğru`;
+    if (path.state === 'TOWARD') return `Baskı beklenen ${scores} skoruna doğru`;
     if (path.state === 'AGAINST') return path.reason === 'REQUIRED_DIRECTION_NOT_ESTABLISHED'
       ? `Beklenen ${scores} için gereken baskı yönü oluşmamış`
-      : `Tahmini baskı beklenen ${scores} skoruna karşı`;
-    return 'Baskı kaydı var · beklenen skor yönü doğrulanamadı';
+      : `Baskı beklenen ${scores} skoruna karşı`;
+    return 'Baskı kaydı var · beklenen skor yönü belirsiz';
   }
   const value = point?.pressureAlignment;
   if (value == null) return 'Bu kayıtta baskı ölçümü yok';
@@ -109,10 +110,10 @@ export function pressureReading(point: MatchJourneyPoint | undefined) {
 
 /** A known event minute is not an exact timestamp or a measured pool effect. */
 export function journeyMomentEffect(moment: JourneyMoment) {
-  if (moment.kind === 'SUPER') return `BTB bu dakikada ${moment.stars ?? 1} yıldızlı Super tercihi kaydetti. Bu bir karar kaydıdır; maç olayı veya ölçülmüş havuz etkisi değildir.`;
-  if (moment.kind === 'POOL_CHANGE') return 'Devre skoruna göre yeni bir havuz seçildi. Çizgideki basamak, referansın değişmesidir.';
+  if (moment.kind === 'SUPER') return `BTB bu dakikada ${moment.stars ?? 1} yıldızlı Super tercihi kaydetti.`;
+  if (moment.kind === 'POOL_CHANGE') return 'Devre skoruna göre yeni bir havuz seçildi.';
   const point = moment.point;
-  if (point?.eliminatedRatio != null) return `${point.beforeCount} uyumlu sonuçtan ${point.eliminatedCount} elendi; ${point.compatibleCount} kaldı. Bu, golün havuz etkisi; olay sürprizi yüzdesi değil.`;
+  if (point?.eliminatedRatio != null) return `${point.beforeCount} uyumlu sonuçtan ${point.eliminatedCount} elendi; ${point.compatibleCount} kaldı.`;
   return moment.minute === null ? 'Bu olayın dakikası bilinmiyor. Havuz etkisi ölçülmedi.'
     : 'Olayın dakikası kayıtlı. Bu olaya ait havuz etkisi ölçülmedi.';
 }

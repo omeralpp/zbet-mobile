@@ -22,7 +22,6 @@ export default function TotoScreen() {
       eyebrow="SPOR TOTO"
       scroll={false}
       title="Programlar"
-      subtitle="Ana tahmin, kupon kapsamı ve maliyet ayrı değerlendirilir."
       wide
     >
       {query.isLoading ? (

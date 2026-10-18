@@ -288,7 +288,7 @@ export default function MoreScreen() {
   };
 
   return (
-    <Screen eyebrow="BTB" title="Ayarlar ve yardım" subtitle="Görünüm, Jinx ve bu cihaza ait tercihler.">
+    <Screen eyebrow="BTB" title="Ayarlar ve yardım">
       <View style={styles.modeCard}>
         <SurfaceMaterial
           accent={

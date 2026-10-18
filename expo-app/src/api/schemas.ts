@@ -922,7 +922,37 @@ export const analysisContextSchema = z.object({
 });
 export type AnalysisContext = z.infer<typeof analysisContextSchema>;
 
-export const jinxAssessmentSchema = z.strictObject({
+/**
+ * Owner-approved pilot signal (NXT-OBS-177/178, 2026-10-18). Confidence is the
+ * BTB pool share; the lean compares it with the price's implied share and the
+ * recent pressure direction. It never stands in for the policy verdict below.
+ */
+export const jinxLeanSchema = z.enum(["FAVORABLE", "NEUTRAL", "UNFAVORABLE"]);
+export const jinxSignalSchema = z.strictObject({
+  policyId: z.literal("JINX_LEAN_PILOT_V1"),
+  basis: z.literal("POOL_SHARE_UNCALIBRATED"),
+  confidence: finiteNumber.gt(0).max(1),
+  odds: finiteNumber.gt(1).nullable(),
+  impliedProbability: finiteNumber.gt(0).lt(1).nullable(),
+  edge: finiteNumber.gt(-1).lt(1).nullable(),
+  lean: jinxLeanSchema.nullable(),
+  pressure: z.strictObject({
+    homeShare: finiteNumber.min(0).max(1).nullable(),
+    leader: z.enum(["HOME", "AWAY", "BALANCED", "NONE"]),
+    effect: z.enum(["FOR", "AGAINST", "NEUTRAL"])
+  }).nullable()
+}).superRefine((signal, ctx) => {
+  const priced = signal.odds !== null;
+  const shaped = [signal.impliedProbability, signal.edge, signal.lean].every((field) => (field !== null) === priced);
+  const arithmetic = !priced || (Math.abs((signal.impliedProbability ?? NaN) - 1 / (signal.odds ?? NaN)) < 1e-9
+    && Math.abs((signal.edge ?? NaN) - (signal.confidence - (signal.impliedProbability ?? NaN))) < 1e-9);
+  const pressure = !signal.pressure || (signal.pressure.leader === "NONE") === (signal.pressure.homeShare === null);
+  if (!shaped || !arithmetic || !pressure) ctx.addIssue({ code: "custom", message: "Inconsistent Jinx pilot signal" });
+});
+export type JinxLean = z.infer<typeof jinxLeanSchema>;
+export type JinxSignal = z.infer<typeof jinxSignalSchema>;
+
+const jinxAssessmentFields = {
   contractVersion: z.literal("jinx-match-outlook.v3"),
   matchKey: z.string().min(1), snapshotId: z.string().min(1),
   evidenceRevision: z.string().min(1), selectionKey: z.string(),
@@ -939,7 +969,10 @@ export const jinxAssessmentSchema = z.strictObject({
     fairPrice: finiteNumber.gt(1), expectedValue: finiteNumber, minimumExpectedValue: finiteNumber.min(0),
     policyId: z.string().min(1), modelVersion: z.string().min(1), validationRef: z.string().min(1),
     quoteMeasuredAt: z.string().datetime({ offset: true }), probabilityMeasuredAt: z.string().datetime({ offset: true }) }).nullable()
-}).superRefine((dto, ctx) => {
+};
+type VerdictFields = { verdict: "FAVORABLE" | "UNFAVORABLE" | "WAIT"; reasonCode: string;
+  value: { probability: number; odds: number; fairPrice: number; expectedValue: number; minimumExpectedValue: number } | null };
+function refineVerdict(dto: VerdictFields, ctx: z.RefinementCtx) {
   const valid = dto.verdict === "WAIT" ? dto.value === null && !["VALUE_POSITIVE", "VALUE_NEGATIVE"].includes(dto.reasonCode)
     : dto.value !== null && (dto.verdict === "FAVORABLE"
       ? dto.reasonCode === "VALUE_POSITIVE" && dto.value.expectedValue > dto.value.minimumExpectedValue
@@ -947,5 +980,11 @@ export const jinxAssessmentSchema = z.strictObject({
   const consistent = !dto.value || (Math.abs(dto.value.expectedValue - (dto.value.probability * dto.value.odds - 1)) < 1e-9
     && Math.abs(dto.value.fairPrice - 1 / dto.value.probability) < 1e-9);
   if (!valid || !consistent) ctx.addIssue({ code: "custom", path: ["verdict"], message: "Unverified value assessment" });
-});
+}
+export const jinxAssessmentV4Schema = z.strictObject({ ...jinxAssessmentFields,
+  contractVersion: z.literal("jinx-match-outlook.v4"),
+  shortReason: z.string().min(1).max(320),
+  signal: jinxSignalSchema.nullable() }).superRefine(refineVerdict);
+export const jinxAssessmentSchema = z.union([jinxAssessmentV4Schema,
+  z.strictObject(jinxAssessmentFields).superRefine(refineVerdict)]);
 export type JinxAssessment = z.infer<typeof jinxAssessmentSchema>;

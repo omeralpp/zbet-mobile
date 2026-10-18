@@ -35,10 +35,25 @@ import {
   mockTeamForm
 } from "./mock-data";
 import { MobileApiError, type MobileApi } from "./mobile-api";
-import type { AnalysisContext } from "./schemas";
-import { previewSelectionReading } from "../mascot/jinx-assessment";
+import { decisionContextSchema, type AnalysisContext, type MatchJourney } from "./schemas";
+import { previewJinxSignal, previewSelectionReading } from "../mascot/jinx-assessment";
 
 const analysisSnapshots = new Map<string, AnalysisContext>();
+
+/** Preview-only interval pressure, so mock builds can show the Baskı grafiği. */
+function withPreviewPressure(journey: MatchJourney): MatchJourney {
+  return { ...journey, points: journey.points.map((point) => {
+    if (point.plotMinute === null || point.capturedAt === null) return point;
+    const home = Math.round((0.18 + 0.14 * (1 + Math.sin(point.plotMinute / 7))) * 1000) / 1000;
+    const away = Math.round((0.12 + 0.12 * (1 + Math.cos(point.plotMinute / 9))) * 1000) / 1000;
+    return { ...point, decisionContext: decisionContextSchema.parse({ contractVersion: "decision-context.v2",
+      recentPressure: { availability: "AVAILABLE", reason: null, units: "EST_SAMPLED_ACTIVITY_PER_MIN",
+        policyId: "OBSERVED_PILOT_V1", estimated: true, observedEpoch: "PREVIEW", home, away, total: home + away,
+        difference: home - away, intervalSeconds: 180, observedAt: point.capturedAt, sourceTimingKnown: false,
+        xgCovered: false, stateRevision: null },
+      decisionCoherence: { availability: "UNAVAILABLE", reason: "PREVIEW", stateRevision: null, quoteRevision: null } }) };
+  }) };
+}
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -87,11 +102,11 @@ export const mockMobileApi: MobileApi = {
     const packet = analysisSnapshots.get(snapshotId);
     if (!packet || packet.matchKey !== key || Date.parse(packet.expiresAt) <= Date.now())
       throw new MobileApiError("Maç verisini yenileyip tekrar sor.", 409, "ANALYSIS_SNAPSHOT_EXPIRED");
-    return jinxAssessmentSchema.parse({ contractVersion: "jinx-match-outlook.v3", matchKey: key,
+    return jinxAssessmentSchema.parse({ contractVersion: "jinx-match-outlook.v4", matchKey: key,
       snapshotId, evidenceRevision: packet.evidenceRevision, selectionKey: packet.selectionKey,
       evaluatedAt: new Date().toISOString(), expiresAt: packet.expiresAt, verdict: "WAIT",
       reasonCode: "POLICY_UNAVAILABLE", shortReason: previewSelectionReading(packet),
-      riskNote: "Demo verisi; canlı oyun değerlendirmesi değildir.", evidence: [], value: null,
+      riskNote: "Örnek veri.", evidence: [], value: null, signal: previewJinxSignal(packet),
       sourceAvailability: packet.sourceAvailability, explanationOrigin: "DETERMINISTIC" });
   },
   async getDashboard(signal) {
@@ -188,7 +203,7 @@ export const mockMobileApi: MobileApi = {
   },
 
   async getMatchJourney(key) {
-    return mockRetainedJourney(key);
+    return withPreviewPressure(mockRetainedJourney(key));
   },
   async getMatchPath(key, signal) {
     await mockDelay(signal);

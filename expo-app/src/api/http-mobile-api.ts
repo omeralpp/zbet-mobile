@@ -13,7 +13,7 @@ import { assertDecisionContextResponse } from "./decision-context-http";
 import {
   dashboardSchema,
   analysisContextSchema,
-  jinxAssessmentSchema,
+  jinxAssessmentV4Schema,
   matchDetailSchema,
   matchInsightListSchema,
   matchInsightSchema,
@@ -209,8 +209,8 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
         ...(runtimeConfig.teamFormIntelligence === "LIVE" ? ["form"] : [])
       ].join(",") } }, signal),
     getMatchJinxAssessment: (key, snapshotId, signal) => request(
-      `/v1/btb/matches/${encodeURIComponent(key)}/jinx-outlook`, jinxAssessmentSchema,
-      { headers: { ...decisionContextHeaders, "X-BTB-Jinx-Version": "jinx-match-outlook.v3",
+      `/v1/btb/matches/${encodeURIComponent(key)}/jinx-outlook`, jinxAssessmentV4Schema,
+      { headers: { ...decisionContextHeaders, "X-BTB-Jinx-Version": "jinx-match-outlook.v4",
         "X-BTB-Analysis-Snapshot": snapshotId } }, signal),
     getMatchJinxOutlook: (key, signal) =>
       request(

@@ -15,67 +15,52 @@ by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
 
-18 October follow-up: owner pressure/wheel findings NXT-OBS-169/170 are documented
-in `docs/ux-review-2026-10-18/PRESSURE_AND_WHEEL.md`. Continuous wheel locking is
-fixed locally; actual mock browser horizontal input traversed all eight events
-both ways. Direct read-only SAP/OData proves valid pressure at the 56′ Karlsruhe
-Super and independent replay parity (7 decisions / 532 branches / 0 differences).
-The owner then explicitly approved separate Mobile display acceptance and the
-BFF update. A new display-only sealed policy and the OData `4`/`04` status fix
-are active from 13:25:22 UTC (16:25:22 Istanbul). Local/public runtime API checks
-pass shared client schemas: 13 valid Karlsruhe pressure intervals/8 marks, the
-56′ Super interval, and positive current pressure on Osasuna–R. Santander.
-Details/recovery: `zbet-cap/docs/MOBILE_PRESSURE_DISPLAY_2026_10_18.md`.
-The original BTB manifests and TASK-0152 27 October model gate remain unchanged.
-Follow-up quality: `pressure-wheel-quality.log`, `display-bff-quality.log`;
-physical/authenticated client-screen acceptance remains pending. BFF code/config
-is uncommitted; no Git or paired client publication approval was inferred.
-The follow-up registered BundleOnly gate passed (exit 0) on the latest source,
-including Android production JS bundle and verified edge web export.
+18 October, latest — TASK-0162 batch `1c65275` is **INCOMPLETE** and its
+correction batch is local. With the owner's explicit approval, `zbet-mobile`
+`1c652757767c5f195ea0f05dfd429c2b1afb074e` (TASK-0162 UX/Jinx + NXT-OBS-169/170 wheel
+fix) and `zbet-cap` `5efd17d` (OData `4`/`04` fix, sealed display policy
+`MOBILE_PRESSURE_DISPLAY_20261018.json`, active in the pilot BFF since 13:25:22 UTC;
+`zbet-cap/docs/MOBILE_PRESSURE_DISPLAY_2026_10_18.md`) were pushed. Batch
+`client-1c652757767c5f195ea0f05dfd429c2b1afb074e-5CBCDC99FB2F-6F98007322D6`: APK
+`btb-mobile-next-arm64-jinx-1c65275.apk` (50,043,312 bytes, SHA256
+`5CBCDC99FB2FD791F81E69F21EE0D345D8B5069B855F61F3152DD61E3A2A8249`, pilot certificate
+`FAC61745…`), web tree `6F98007322D6B67D932F47743095818BD4E4F7E627642C8A530A75F8A7BD32B5`.
+The APK was delivered to the owner-only Drive folder (full-byte readback matched) and
+installed; the owner's phone smoke failed with NXT-OBS-171..178. By owner decision the
+web was **not** published: `524f2e7` stays on the web. Receipts:
+`.codex-artifacts/task0162-jinx-1c65275/` (`batch.json`, `android-delivery.json`,
+`owner-android-smoke.json`, Drive delivery receipt next to the APK).
 
-18 October TASK-0162: the owner approved the Android/web UX and Jinx plan.
-Independent UX/accessibility and statistical-presentation reviews are saved in
-`docs/ux-review-2026-10-18/`; `COMBINED_FINDINGS.md` is the single prioritized list.
-The shared Expo `/design-lab` is available only in explicit mock/preview builds,
-also through More. It compares an enhanced Jinx orb (A) and a new touchline fox (B),
-synthetic app flows, honest statistical readouts and shared event/motion controls.
-The owner selected A (enhanced football orb), then approved continuing with the
-proposed screen direction. Both are now applied in shared local Android/web source.
-The approved dark ink/sage and warm light palette is shared with the lab; larger
-body/metadata roles, quieter cards and explicit screen purposes reach every route.
-Overview defaults to summary first (full-width on web), then matches/decisions;
-web modules follow row/DOM/keyboard order and stored custom order is retained.
-Match cards wrap team names, align each score with its team, show both source odds,
-and expose a separate 48dp pin toggle (Space verified). Search shows scope/results
-and a clear control. Appearance/Jinx settings come first. All mock Screens label
-example data. Toto cost loses the misleading plus sign; coverage/unknown confidence
-and Super missing profit units are explained without redefining source metrics.
-Universal confirmed fixes cover
-exact chart proportions/metadata, KPI error isolation, structured error recovery,
-contrast tokens, heading/table/link semantics, dialog focus and reduced motion.
-Jinx rendering/state/preferences are separate from the overlay. Live/Calm/Off and
-hide persist locally; explicit fresh LIVE events are required for goal/half-time
-reactions. WAIT stays neutral. Profit/crown/money moods are removed. Focused desktop
-embedded details and match/Super/Toto details suppress the ambient character.
-No API/model/SAP or BFF behavior changed. Both original generated atlases are retained
-locally; six transparent optimized frames total 641,512 bytes.
-Verification and pending owner tasks are in `docs/ux-review-2026-10-18/ACCEPTANCE.md`.
-The current registered BundleOnly gate passed: type/lint/tests/tooling/brand,
-Doctor, Android JS bundle and verified edge web export/config/secret scan.
-The final approved-direction gate also passed on the latest source:
-`approved-design-quality-final.log` (exit 0). `implementation-quality.log` remains
-the earlier A/universal-integration checkpoint; see ACCEPTANCE for bounded evidence.
-Mock browser smoke at
-1280x720 and 390x844 passed the bounded scene, dedupe, WAIT, search/filter-return
-and persisted motion checks; 14 scoped prototype contrast pairs exceed 5.50:1.
-Actual mock-client checks also cover in-card A, inactive-tab density, motion/hide
-settings, search/help focus trap+restore and Super/Toto table/link behavior.
-Reviewable local source preview: `http://localhost:8081/design-lab` (mock server).
-ADB has no attached device; authenticated web reaches the existing Access login.
-Physical Android/TalkBack, real 200% zoom, authenticated real-web usability and
-measured owner tasks remain
-unverified. No Git, signing/distribution or publication approval is inferred.
-The accepted 524f2e7 pair below and its bd43073 recovery pair remain the release baseline.
+The owner then asked for the corrections directly and chose the pilot signal
+`JINX_LEAN_PILOT_V1` (confidence % + Lehte/Dengede/Aleyhte). Local, uncommitted on both
+surfaces: vivid palette (all text pairs ≥4.5:1, minimum 5.6:1, stronger card traces);
+screen subtitles, ROI/unit notes, caveat clauses and hints removed on every route and
+in the BFF facts; Jinx breathes, idles, blinks and cheers/doubts by lean; daily Super
+comment restored (bubble, crown/wallet/coin reaction, Overview line, "Günlük yorum"
+menu item); new Live Detail `pressure` module "Baskı grafiği" (home up, away down,
+goal marks, shares) under Maçın Yolu, whose pressure strip/box were removed and whose
+per-second line became shares; the Jinx card shows the lean, "havuz güveni" %, market
+and pressure facts and asks once on arrival. NXT-OBS-179: chart labels no longer clip
+("Yeni havuz" gets a full line above Maçın Yolu; pressure-chart goals ride lanes
+outside the bars and edge labels flip inward). BFF `jinx-match-outlook.v4`
+(`srv/mobile-bff/jinx-signal.js`, `zbet-cap/docs/MOBILE_JINX_SIGNAL_V4_2026_10_18.md`);
+V3 is unchanged for installed clients. The formal verdict stays WAIT without an approved
+value policy; no model, Super, rating, SAP or learning change. Checks: BFF gate
+626/626 + production build; client typecheck, lint, 672 unit, 32 tooling and brand;
+registered BundleOnly gate (Doctor, Android production JS bundle, verified web export
+and secret scan) — logs `.codex-artifacts/ux-review-2026-10-18/task0162-correction-*.log`;
+mock web smoke at 412x915 (dark and light) and 1280x800 (Overview comment and bubble,
+Jinx card, pressure chart, "Yeni havuz" label, inspector share line, desktop two-column). The new client requests V4, so the BFF
+restart must precede the next APK/web release.
+
+TASK-0162 `1c65275` content (owner-selected Jinx orb A and screen direction, the
+`/design-lab` mock/preview route, match-card/search/table/dialog/reduced-motion fixes)
+is described in `docs/ux-review-2026-10-18/` (`COMBINED_FINDINGS.md`, `ACCEPTANCE.md`).
+The correction batch above supersedes three of its choices on owner feedback: the
+washed-out palette, the explicit screen-purpose and caveat copy, and the removal of
+the daily Super mood. Physical TalkBack, real 200% zoom and authenticated web
+usability remain unverified. The accepted 524f2e7 pair below and its bd43073 recovery
+pair remain the release baseline.
 
 17 October: TASK-0161 shared UX batch is **COMPLETE**; NXT-OBS-165..168 closed.
 Client `524f2e77a839cd42e2ac520b375eef13d6765c48`, APK
@@ -293,12 +278,13 @@ legacy blank tag yeni modele yükseltilmez. Tarihsel karar kendi capture'ını o
 
 ## Exact next steps
 
-TASK-0162: A and the proposed screen direction are approved and implemented locally.
-Complete physical Android/authenticated-web and measured owner tasks; no device is
-attached on the latest ADB check. Upstream metric definitions/units remain dependencies.
-This implementation checkpoint is not full-plan or release completion. Preserve the statistical evidence
-boundaries and test both surfaces; use the dated canonical evidence gate for actual
-device/authenticated-web acceptance. No new final APK or web publication is prepared.
+TASK-0162 correction batch (NXT-OBS-171..179) is local and checked. Next, each with
+its own explicit owner approval: commit/push `zbet-mobile` and `zbet-cap`; restart the
+pilot BFF on the pushed `zbet-cap` commit (`ensure-mobile-bff.ps1 -AuthMode pilot`) so
+V4 is served; build the new arm64 APK and verified web export from the pushed client
+commit, deliver the APK privately, then publish the paired web after installation;
+finish with both owner smokes and `client-release.mjs complete`. Batch `1c65275`
+stays INCOMPLETE and is superseded by that batch; `524f2e7` stays the accepted pair.
 
 TASK-0161 is DONE: the 524f2e7 pair is complete on both surfaces. Observe it in
 real use and record findings in `OBSERVATION_LOG.md`; bd43073 stays the previous

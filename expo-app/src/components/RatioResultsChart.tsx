@@ -96,7 +96,6 @@ export function RatioResultsChart({
 
       {rows.length && phases.length ? (
         <>
-          <Text style={styles.caption}>Tarihsel paylar · tahmin olasılığı değildir. Örneklem sayısı ve dönemi bu veride sağlanmıyor.</Text>
           <View style={styles.legend}>
             {phases.map((item) => (
               <View key={item.key} style={styles.legendItem}>

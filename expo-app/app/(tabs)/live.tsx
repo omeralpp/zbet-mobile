@@ -216,7 +216,6 @@ export default function LiveScreen() {
       eyebrow="BTB"
       scroll={false}
       title="Canlı maçlar"
-      subtitle="Maçı bul, sabitle ve güncel verileri incele."
       wide
     >
       <TutorialTarget

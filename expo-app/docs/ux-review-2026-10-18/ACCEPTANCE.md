@@ -136,6 +136,21 @@ detay rotalarını, mevcut mock runtime ile sınar; gerçek veri/cihaz kabulü d
   1280 px. Yerel Özet ekranı incelemeye bırakıldı. Son context audit: eksik rota 0,
   flagged current-state belge 0; iki repoda diff-check temiz.
 
+## Sahip telefon smoke'u ve düzeltme batch'i (2026-10-18)
+
+- `1c65275` APK sahibin telefonunda kurulu; Android smoke **geçmedi** (NXT-OBS-171..179).
+  Web yayımlanmadı; `524f2e7` kabul edilmiş çift olarak kalır.
+- Sahip kararları: soluk palet, açıklayıcı/çekinceli metinler ve günlük Super moodunun
+  kaldırılması geri alınır; Jinx pilot `JINX_LEAN_PILOT_V1` (havuz güveni + Lehte/
+  Dengede/Aleyhte) verir. Yukarıdaki "kâr ROI sayılmaz" ve "confidence tanımı uydurulmaz"
+  ekran notları bu kararla kaldırıldı; anlamları değişmedi, yalnız gösterilmiyor.
+- Yerel kanıt: BFF 626/626 + production build; istemci typecheck/lint, 672 birim,
+  32 tooling, brand; BundleOnly kapısı (Doctor, Android production JS bundle, doğrulanmış
+  web export + secret scan); mock web 412x915 koyu/açık ve 1280x800'de Özet yorumu ve
+  baloncuğu, Jinx kartı, Baskı grafiği, "Yeni havuz" etiketi, seçili an payları.
+- Bekleyen: commit/push, BFF V4 yeniden başlatma, yeni koordineli APK/web ve iki sahip
+  smoke'u; her biri ayrı açık onayla.
+
 ## Tekrarlanabilir sahip testi — bekleyen gerçek kullanım
 
 İki kısa oturum kullan. İlkinde Android'de mevcut→A→B, web'de B→A→mevcut;

@@ -1,11 +1,10 @@
-import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Stack, useFocusEffect, useRouter } from "expo-router";
 import {
   Alert,
   Linking,
-  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -32,6 +31,7 @@ import {
 } from "@/src/components/SurfaceMaterial";
 import { TeamLogo } from "@/src/components/TeamLogo";
 import { MatchJourneyChart } from "@/src/components/MatchJourneyChart";
+import { PressureChart } from "@/src/components/PressureChart";
 import { MatchTimelineCard } from "@/src/components/MatchTimelineCard";
 import { TeamFormCard } from "@/src/components/TeamFormCard";
 import { LiveContextFreshness } from "@/src/components/LiveContextNotice";
@@ -217,8 +217,6 @@ export function MatchDetailView({
     }
   };
   const [showDecision, setShowDecision] = useState(false);
-  // Jinx is asked, never volunteered. Until this flips, its query stays
-  // disabled and the surface costs nothing but its own entry point.
   const [compactHeader, setCompactHeader] = useState(false);
   const [reordering, setReordering] = useState(false);
   const scrollRef = useRef<ScrollView | null>(null);
@@ -262,6 +260,17 @@ export function MatchDetailView({
     if (analysisNeedsRefresh(packet, jinx.error)) packet = (await context.refetch()).data;
     if (packet) jinx.mutate(packet);
   };
+  // NXT-OBS-178: Jinx gives its confidence on arrival for a live selection,
+  // once per opened match; later readings stay on the Yenile button.
+  const autoAskedKey = useRef<string | null>(null);
+  const askOnArrival = jinx.mutate;
+  useEffect(() => {
+    const packet = context.data;
+    if (!intelligence || !packet || packet.matchKey !== key || autoAskedKey.current === key) return;
+    if (!["LIVE", "HALF_TIME"].includes(packet.sources.matchDetail.status) || !packet.selectionKey) return;
+    autoAskedKey.current = key;
+    askOnArrival(packet);
+  }, [askOnArrival, context.data, intelligence, key]);
   const relatedDecisions = useMemo(
     () => relatedSuperDecisions(superLogs.data ?? [], key),
     [key, superLogs.data]
@@ -397,6 +406,12 @@ export function MatchDetailView({
         </View>
       </LiveDetailPanel>
     ),
+    // NXT-OBS-175: the two sides' pressure over the match, as its own chart.
+    pressure: (
+      <LiveDetailPanel eyebrow="BASKI" id="pressure" title="Baskı grafiği">
+        <PressureChart journey={journey.data} match={match} />
+      </LiveDetailPanel>
+    ),
     odds: (
       <LiveDetailPanel eyebrow="PİYASA" id="odds" title="Oran sonuçları">
         <RatioResultsChart
@@ -431,9 +446,6 @@ export function MatchDetailView({
             formatter={formatRate}
             home={match.homeXg === 0 && match.awayXg === 0 ? null : match.homeXg}
             label="xG"
-            note={match.homeXg === 0 && match.awayXg === 0
-              ? "xG kapsamı doğrulanmadı · ölçülmüş sıfır kabul edilmez"
-              : "Bildirilen xG · kaynak kapsamı ve ölçüm zamanı doğrulanmadı"}
           />
           <ComparisonRow
             away={match.awayCorners}
@@ -463,7 +475,6 @@ export function MatchDetailView({
           <SurfaceMaterial radius={radii.lg} />
           {match.scoreDistribution.length ? (
             <>
-            <Text style={styles.statNote}>Tarihsel havuz payları · tahmin olasılığı değildir. Örneklem sayısı ve dönemi bu veride sağlanmıyor.</Text>
             {match.scoreDistribution.map((row) => {
               const width = historicalFractionWidth(row.probability);
               return (
@@ -580,8 +591,8 @@ export function MatchDetailView({
             }}
             caption={
               leagueContext.source === "LATEST_SUPER_DECISION"
-                ? "Son Super kararı kaydından; yalnız doğrulanan iki takım gösterilir."
-                : "Lig bilgisi bekleniyor; yalnız doğrulanan iki takım gösterilir."
+                ? "Son Super kararı kaydından"
+                : "Lig bilgisi bekleniyor"
             }
             home={{
               team: leagueContext.homeTeam,
@@ -782,11 +793,6 @@ export function MatchDetailView({
           <Text style={styles.bilyonerActionText}>Bilyoner&apos;da aç</Text>
         </Pressable>
       </View>
-      <Text style={styles.safetyNote}>
-        {Platform.OS === "web"
-          ? "Maç sayfası Bilyoner'de yeni sekmede açılır."
-          : "Maç sayfası Bilyoner uygulamasında; uygulama yoksa güvenli web sayfasında açılır."}
-      </Text>
       </Screen>
     </>
   );
@@ -1139,13 +1145,5 @@ const styles = StyleSheet.create({
   flowEyebrow: {
     ...typeScale.eyebrow,
     color: colors.bronze
-  },
-  safetyNote: {
-    color: colors.textSubtle,
-    fontSize: 10,
-    lineHeight: 15,
-    textAlign: "center",
-    marginTop: spacing.md,
-    paddingHorizontal: spacing.lg
   }
 });

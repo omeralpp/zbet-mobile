@@ -70,6 +70,7 @@ test("a stored layout drops the retired modules and keeps the user's order", () 
     "odds",
     "decision",
     "matchPath",
+    "pressure",
     "teamForm",
     "standings",
     "statistics",
@@ -102,8 +103,15 @@ test("a layout stored before Maçın Yolu gains it directly after the decision",
   assert.equal(new Set(migrated).size, liveDetailModules.length);
 });
 
-test("new live detail defaults keep the journey open and Jinx outside customizable panels", () => {
+test("new live detail defaults keep the journey and pressure open and Jinx outside customizable panels", () => {
   assert.equal((liveDetailModules as readonly string[]).includes("askJinx"), false);
   assert.equal(moduleCollapseDefaults.liveDetail.includes("matchPath"), false);
-  assert.equal(moduleCollapseDefaults.liveDetail.length, liveDetailModules.length - 1);
+  assert.equal(moduleCollapseDefaults.liveDetail.includes("pressure"), false);
+  assert.equal(moduleCollapseDefaults.liveDetail.length, liveDetailModules.length - 2);
+});
+
+test("an existing layout gains the pressure chart directly under Maçın Yolu", () => {
+  const stored = liveDetailModules.filter((id) => id !== "pressure");
+  const migrated = reconcileModuleOrder(stored, liveDetailModules, moduleLayoutAnchors.liveDetail);
+  assert.equal(migrated.indexOf("pressure"), migrated.indexOf("matchPath") + 1);
 });

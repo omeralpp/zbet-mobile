@@ -373,7 +373,7 @@ export default function SuperLogDetailScreen() {
             points: log.awayStandingPoints,
             side: "AWAY"
           }}
-          caption="Karar anındaki kayıt; yalnız doğrulanan iki takım gösterilir."
+          caption="Karar anındaki kayıt"
           home={{
             team: log.homeTeam,
             participantId: log.homeParticipantId,
@@ -568,7 +568,6 @@ export default function SuperLogDetailScreen() {
             </View>
           </View>
         </TutorialTarget>
-        <Text style={styles.unitNote}>Kâr birimi ve bahis tutarı belirtilmedi; bu değer ROI değildir.</Text>
 
         <ReorderableModuleList
           items={moduleItems}
@@ -583,18 +582,12 @@ export default function SuperLogDetailScreen() {
           scrollOffsetRef={scrollOffset}
           scrollRef={scrollRef}
         />
-
-        <Text style={styles.safetyNote}>
-          Bu ekran seçilen Super kararının tarihsel kaydını gösterir; güncel maç
-          verisiyle değiştirilmez.
-        </Text>
       </Screen>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  unitNote: { ...typeScale.bodyCompact, color: colors.textMuted, marginVertical: spacing.md },
   screen: { paddingTop: spacing.lg },
   hero: {
     padding: spacing.xl,
@@ -825,13 +818,5 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     borderTopWidth: 1,
     borderTopColor: colors.borderSoft
-  },
-  safetyNote: {
-    color: colors.textSubtle,
-    fontSize: 10,
-    lineHeight: 15,
-    textAlign: "center",
-    marginTop: spacing.md,
-    paddingHorizontal: spacing.lg
   }
 });

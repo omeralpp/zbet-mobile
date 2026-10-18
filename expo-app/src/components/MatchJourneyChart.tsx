@@ -14,13 +14,18 @@ import { goalModeEffectText, journeyPointLabel } from './match-journey';
 import { latestMatchPathSignal, matchAnalysisEvents, type MatchAnalysisEvent } from './match-analysis-events';
 import { lowCohortNotice, normalityLabel, resolveMatchPathState, surpriseLabel } from './match-path-chart';
 import { journeyAndSuperMoments, journeyMomentEffect, journeyVertices, markerGroups, poolLeaders, pressureReading } from './journey-story';
-import { derivePressureBalance } from '@/src/utils/pressure-balance';
-import { capturedIntervalPressure, currentIntervalPressure, unavailablePressureMessage } from '@/src/utils/recent-pressure';
+import { pressureHeadline, pressureLeader } from './pressure-chart';
+import { capturedIntervalPressure } from '@/src/utils/recent-pressure';
 import { JourneyEventGlyph, JourneyEventIcon, journeyEventColor, journeySvgAccessibility } from './JourneyEventIcon';
 import { journeyDragIntent, journeyTouch, momentGroupLead, momentGroupSymbols, nearestJourneyPoint, nearestMomentGroup } from './journey-interaction';
 
-const TOP=20, HEIGHT=92, BOTTOM=TOP+HEIGHT, LEFT=58, RIGHT=22;
-const LANE_Y=158, PRESSURE_Y=222, CHART_HEIGHT=258;
+// TOP leaves a full text line above the plot for the "Yeni havuz" label: at 20
+// its glyphs started above the SVG's top edge and were clipped (owner, 2026-10-18).
+const TOP=32, HEIGHT=92, BOTTOM=TOP+HEIGHT, LEFT=58, RIGHT=22;
+// The pressure strip moved to its own Baskı grafiği module (NXT-OBS-175).
+const LANE_Y=170, CHART_HEIGHT=216;
+/** Baseline of a label written above the plot; keeps 12px glyphs inside the SVG. */
+const journeyTopLabelY=TOP-12;
 const MARKER_GAP=journeyTouch.markerGap;
 const EMPTY_POINTS: MatchJourneyPoint[]=[];
 const EMPTY_DECISIONS: readonly SuperLog[]=[];
@@ -98,10 +103,11 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
   const analysisEvents=matchAnalysisEvents(analysisPath,live);
   const latestPath=latestMatchPathSignal(analysisPath);
   const pathState=resolveMatchPathState(analysisPath,pathIsLoading);
-  const recent=currentIntervalPressure(match.decisionContext);
   const capturedRecent=capturedIntervalPressure(selected?.decisionContext,selected?.capturedAt ?? null);
-  const pressure=derivePressureBalance(match.decisionContext?recent.total:match.pressureSource==='CURRENT_MATCH'?match.totalPressure:null,
-    match.decisionContext?recent.difference:match.pressureSource==='CURRENT_MATCH'?match.pressureDiff:null,recent.measured);
+  const selectedPressure=selected?.decisionContext?.recentPressure;
+  // NXT-OBS-176: the selected record's pressure as the two sides' shares.
+  const selectedBalance=capturedRecent.measured&&selectedPressure?.home!=null&&selectedPressure.away!=null
+    ? pressureHeadline(pressureLeader(selectedPressure.home,selectedPressure.away),match) : null;
   const highlight=activeMoment ? activeMoment.point : selected;
   // The headline describes the latest state and keeps its height during a drag.
   // The selected historical minute/score has its own persistent readout.
@@ -190,9 +196,6 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
       if(rect)selectFromPlot(event.nativeEvent.clientX-rect.left,false,true);
     }
   }:{};
-  const capturedPressure=drawn.filter(p=>p.pressureAlignment!==null);
-  const hasIntervalPressure=drawn.some(p=>p.decisionContext?.recentPressure.availability==='AVAILABLE');
-  const unavailablePressure=unavailablePressureMessage(latest?.decisionContext?.recentPressure.reason);
   const selectedIndex=selected?drawn.indexOf(selected):-1;
   const revealInspectorEvent=useCallback(()=>{
     const index=moments.findIndex(event=>event.key===activeEventKey);
@@ -204,7 +207,6 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
     <View style={story.topline}><Text style={story.eyebrow}>MAÇIN YOLU</Text><Text style={story.liveTag}>{match.status==='FINISHED'?'MAÇ TAMAMLANDI':match.status==='HALF_TIME'?'DEVRE ARASI':'MAÇ AKIŞI'}</Text></View>
     {retained?<OriginBadge origin={retained.origin}/>:null}
     <Text style={story.subtitle}>{currentTitle}</Text>
-    <Text style={story.subtitle}>Çizgi havuz uyumunu gösterir; kazanma olasılığı değildir.</Text>
     <View style={story.plotSurface} onLayout={event=>setWidth(Math.max(180,event.nativeEvent.layout.width))}>
     <View style={story.plotReadout}>
       <View style={story.plotReadoutCopy} accessible accessibilityRole={drawn.length?'adjustable':'text'}
@@ -235,7 +237,7 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
         <Polyline points={linePoints.join(' ')} fill="none" stroke={colors.blue} strokeWidth={9} strokeOpacity={.08} strokeLinejoin="round"/>
         <Polyline points={linePoints.join(' ')} fill="none" stroke={colors.blue} strokeWidth={3} strokeLinejoin="round" strokeLinecap="round"/>
       </>:null}
-      {referencePoint&&drawn.length?<G><Line x1={x(referenceMinute)} x2={x(referenceMinute)} y1={TOP-8} y2={BOTTOM+4} stroke={colors.bronze} strokeDasharray="3 4"/><SvgText x={x(referenceMinute)} y={TOP-16} textAnchor="middle" fill={colors.bronze} {...svgLabel}>Yeni havuz</SvgText></G>:null}
+      {referencePoint&&drawn.length?<G><Line x1={x(referenceMinute)} x2={x(referenceMinute)} y1={TOP-8} y2={BOTTOM+4} stroke={colors.bronze} strokeDasharray="3 4"/><SvgText x={Math.max(LEFT+30,Math.min(width-RIGHT-30,x(referenceMinute)))} y={journeyTopLabelY} textAnchor="middle" fill={colors.bronze} {...svgLabel}>Yeni havuz</SvgText></G>:null}
       {joinMarks.map(p=><Circle key={p.key} cx={x(p.plotMinute!)} cy={y(p.level!)} r={4} stroke={colors.blue} strokeWidth={2} fill={colors.backgroundElevated}/>)}
       {cursorMinute!==null?<Line x1={x(cursorMinute)} x2={x(cursorMinute)} y1={drawn.length?TOP:32} y2={laneY+19} stroke={colors.text} strokeOpacity={isScrubbing?.8:.5} strokeWidth={1.5} strokeDasharray="3 3"/>:null}
       {highlight?.level!=null && highlight.plotMinute!==null?<G><Circle cx={x(highlight.plotMinute)} cy={y(highlight.level)} r={10} fill={colors.blue} opacity={.2}/><Circle cx={x(highlight.plotMinute)} cy={y(highlight.level)} r={5} fill={colors.backgroundElevated} stroke={colors.text} strokeWidth={2}/></G>:null}
@@ -251,10 +253,6 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
         const symbolWidth=symbols.length===3?12:18, symbolScale=symbolWidth/24;
         return <G key={lead.key}>{drawn.length?members.map(member=><Line key={`lead:${member.key}`} x1={x(member.minute!)} x2={cx} y1={BOTTOM+4} y2={laneY-17} stroke={journeyEventColor(member)} opacity={.35}/>):null}<Rect x={cx-20} y={laneY-17} width={40} height={34} rx={12} fill={colors.backgroundElevated} stroke={active?colors.text:ink} strokeWidth={active?2:1}/>{symbols.map((event,index)=><G key={event.key} transform={symbols.length>1?`translate(${cx-symbols.length*symbolWidth/2+index*symbolWidth},${laneY-symbolWidth/2}) scale(${symbolScale})`:`translate(${cx-12},${laneY-12})`}><JourneyEventGlyph kind={event.kind} color={journeyEventColor(event)}/></G>)}{members.length>1?<G><Circle cx={cx+15} cy={laneY-16} r={9} fill={ink}/><SvgText x={cx+15} y={laneY-12} textAnchor="middle" fill={colors.background} {...svgLabel}>{members.length>9?'9+':members.length}</SvgText></G>:null}</G>;
       })}
-      {drawn.length?<SvgText x={LEFT} y={PRESSURE_Y-16} fill={colors.textMuted} {...svgLabel}>Baskı → havuz beklentisi</SvgText>:null}
-      {drawn.length?<Line x1={LEFT} x2={width-RIGHT} y1={PRESSURE_Y} y2={PRESSURE_Y} stroke={colors.border}/>:null}
-      {capturedPressure.map(p=><Line key={`pressure:${p.key}`} x1={x(p.plotMinute!)} x2={x(p.plotMinute!)} y1={PRESSURE_Y} y2={PRESSURE_Y-p.pressureAlignment!*14} stroke={p.pressureAlignment!>=0?colors.teal:colors.orange} strokeWidth={Math.max(2,Math.min(5,plotWidth/Math.max(1,capturedPressure.length)))} strokeLinecap="round"/>)}
-      {drawn.length?(!capturedPressure.length?<SvgText x={LEFT} y={CHART_HEIGHT-14} fill={colors.textMuted} {...svgLabel}>{hasIntervalPressure?'Baskı var · skor yönü belirsiz':'Baskı verisi doğrulanamadı'}</SvgText>:<><SvgText x={LEFT} y={CHART_HEIGHT-14} fill={colors.teal} {...svgLabel}>↑ Skora doğru</SvgText><SvgText x={width-RIGHT} y={CHART_HEIGHT-14} textAnchor="end" fill={colors.orange} {...svgLabel}>↓ Skora karşı</SvgText></>):null}
     </Svg>
     {/* Physical input belongs to the one gesture canvas. These overlay buttons
         retain keyboard/screen-reader actions without firing an origin tap after
@@ -270,12 +268,11 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
     </View>
     </GestureDetector>
     </View>
-    {drawn.length&&!capturedPressure.length&&!hasIntervalPressure?<Text style={story.hint}>{unavailablePressure.label}</Text>:null}
     <Text numberOfLines={2} accessibilityLiveRegion="polite" style={story.inlineSummary}>
       {activeMoment?journeyMomentEffect(activeMoment):selected?journeyPointLabel(selected):isLoading?'Maçın yolu yükleniyor…':'Bu maç için kullanılabilir geçmiş yok.'}
     </Text>
     <Pressable ref={inspectorTrigger} accessibilityRole="button" accessibilityLabel="Seçili anın ayrıntısını aç" onPress={openInspector} style={story.inspectButton}>
-      <Text style={story.controlText}>Seçili anı incele</Text><Text style={story.hint}>Dokun: ayrıntı · ↔ zaman · ↕ sayfa</Text>
+      <Text style={story.controlText}>Seçili anı incele</Text>
     </Pressable>
     <JourneyInspector visible={inspectorOpen} onClose={closeInspector} onDismiss={restoreInspectorPosition}
       previous={previousMomentKey?goPrevious:undefined} next={nextMomentKey?goNext:undefined}
@@ -296,9 +293,7 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
     </View>:selected?<View style={story.focus} accessibilityLiveRegion="polite">
       <View style={story.topline}><Text style={story.eyebrow}>{selected.elapsed||selected.plotMinute}′ · {selected.home??'—'}–{selected.away??'—'}</Text><Text style={story.micro}>{selected===latest?'SON KAYIT':'SEÇİLİ AN'}</Text></View>
       <Text style={story.focusTitle}>{journeyPointLabel(selected)}</Text><Text style={story.subtitle}>{pressureReading(selected)}</Text>
-      {selected.decisionContext?.recentPressure.availability==='AVAILABLE' ? <Text style={story.subtitle}>{capturedRecent.measured
-        ? `Kaydın ${selected.decisionContext.recentPressure.intervalSeconds} saniyelik ${selected.decisionContext.recentPressure.estimated ? 'tahmini baskısı' : 'baskısı'} · ev ${selected.decisionContext.recentPressure.home?.toFixed(2)} / deplasman ${selected.decisionContext.recentPressure.away?.toFixed(2)} · ${selected.decisionContext.recentPressure.estimated ? 'tahmini' : 'ağırlıklı'} etkinlik/dakika`
-        : 'Bu kaydın yakın aralık baskısı doğrulanamadı.'}</Text> : null}
+      {selectedBalance ? <Text style={story.subtitle}>Baskı: {selectedBalance}</Text> : null}
       {selected.eliminatedRatio!==null?<Text style={story.subtitle}>{selected.beforeCount} sonuçtan {selected.eliminatedCount} elendi · {selected.compatibleCount} uyumlu sonuç kaldı</Text>:null}
       {selected.kind==='GOAL'?<Text style={story.subtitle}>{goalModeEffectText(selected)}</Text>:null}
     </View>:<View style={story.focus}><Text style={story.subtitle}>{isLoading?'Maçın yolu yükleniyor…':match.status==='NOT_STARTED'?'Başlama düdüğünden sonra ilk kayıtla başlayacak.':'Bu maç için kullanılabilir geçmiş yok. Geçmişe ait çizgi üretilmedi.'}</Text></View>}
@@ -309,15 +304,8 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
     </View>:null}
     {pool && (!activeMoment || activeMoment.point?.poolKey===pool.key)?<View style={story.poolBox}>
       <View style={story.topline}><Text style={story.eyebrow}>{pool.phase===1?'DEVRE SKORU HAVUZU':'MAÇ SONU HAVUZU'}</Text><Text style={story.micro}>{pool.count} MAÇ</Text></View>
-      <Text style={story.subtitle}>{pool.phase===2?`${pool.halfTimeScore} devre skorundan sonra · `:''}{activeMoment?'Seçili kaydın':'Grafikte seçili anın'} sabit referansı</Text>
+      {pool.phase===2?<Text style={story.subtitle}>İY {pool.halfTimeScore} sonrası</Text>:null}
       <View style={story.leaders}>{leaders.map(row=><View key={row.score} style={story.leader}><Text style={story.poolScore}>{row.score}</Text><View style={story.track}><View style={[story.fill,{width:`${Math.min(100,row.share*100)}%`}]}/></View><Text style={story.hint}>{row.count} maç · %{Math.round(row.share*100)}</Text></View>)}</View>
-      <Text style={story.hint}>Havuzdaki en sık 3 skor · yüzdeler bu havuzdaki paydır</Text>
-    </View>:null}
-    {pressure.hasData?<View style={story.pressureBox}>
-      <View style={story.topline}><Text style={story.eyebrow}>{match.status==='FINISHED'?'SON BASKI ÖLÇÜMÜ':'GÜNCEL BASKI'}</Text><Text style={story.micro}>ANLIK · GEÇMİŞ DEĞİL</Text></View>
-      <Text style={story.focusTitle}>{pressure.direction==='BALANCED'?'İki taraf dengede':`${pressure.direction==='HOME'?match.homeTeam:match.awayTeam} daha baskılı`}</Text>
-      <View style={story.pressureTrack}><View style={[story.pressureHalf,{alignItems:'flex-end'}]}><View style={{height:5,width:`${pressure.direction==='HOME'?pressure.magnitudeRatio*100:0}%`,backgroundColor:colors.blue}}/></View><View style={story.pressureZero}/><View style={story.pressureHalf}><View style={{height:5,width:`${pressure.direction==='AWAY'?pressure.magnitudeRatio*100:0}%`,backgroundColor:colors.bronze}}/></View></View>
-      <View style={story.topline}><Text style={story.hint}>Ev sahibi</Text><Text style={story.hint}>Deplasman</Text></View>
     </View>:null}
     {isError?<Text style={story.hint}>Akış yenilenemedi. {drawn.length?'Son alınan kayıt gösteriliyor.':'Yeniden yüklemeyi deneyin.'}</Text>:null}
     {live?.freshness?.stale?<Text style={story.hint}>Gol ve kart akışı güncel olmayabilir.</Text>:null}
@@ -325,13 +313,13 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
       <View style={{flex:1}}><Text style={story.controlText}>Havuz analizi</Text><Text style={story.hint}>{latestPath?`Son ölçüm · normallik %${Math.round(latestPath.stateNormality!*100)} · ${latestPath.cohortSize} benzer maç`:'Skor değerlendirmesi ve örneklem bilgisi'}</Text></View><Text style={story.controlText}>{showAnalysis?'−':'+'}</Text>
     </Pressable>
     {analysisPath?<OriginBadge origin={analysisPath.origin}/>:null}
-    {latestPath?.belowReliableCohort?<Text style={story.hint}>Az örneklem · bu havuz değerlendirmesi henüz yeterli maçla desteklenmiyor.</Text>:null}
+    {latestPath?.belowReliableCohort?<Text style={story.hint}>Az örneklem</Text>:null}
     {showAnalysis?<AnalysisEventRail activeKey={activeEventKey} awayTeam={match.awayTeam} homeTeam={match.homeTeam} events={analysisEvents} onSelect={selectAnalysis} path={analysisPath} state={pathState}/>:null}
     <Pressable accessibilityRole="button" accessibilityState={{expanded:showRules}} onPress={()=>setShowRules(!showRules)} style={story.disclosure}><Text style={story.hint}>{drawn.filter(p=>p.capturedAt!==null).length} kayıt · Nasıl okunur?</Text><Text style={story.controlText}>{showRules?'−':'+'}</Text></Pressable>
-    {showRules?<Text style={story.subtitle}>Mavi çizgi maçın referans havuzuyla uyumunu gösteren sıralı bir ölçektir; kalibre olasılık değildir. İlk yarı devre skoru, ikinci yarı gerçekleşen devre skoruna göre maç sonu havuzu kullanılır. Yeni havuzdaki dikey basamak referans değişimidir. İçi boş noktalar ara veya düzeltme kayıtlarıdır; iki kayıt arasındaki çizgi görsel bağlantıdır, aradaki dakikalar ölçülmüş sayılmaz. Baskı şeridinde yukarı yön beklentiyi destekler, aşağı yön beklentiye karşıdır; bu renkler takım tarafı değildir. Ölçülmedi: eksik değerler sıfır olarak çizilmez. Golün elediği sonuçlar olay öncesi uyumlu havuzdan gelir; olay sürprizi ve durum normalliği farklı ölçümlerdir. Az örneklemli skor değerlendirmeleri kesin sonuç gibi okunmamalıdır. Kayıt başlangıcından önceki geçmiş üretilmez. Altın yıldızlar BTB’nin o dakikada kaydettiği Super tercihleridir; maç olayı değildir. Gol, kart ve Super kayıtlarının ayrıntılı listesi aşağıdaki skor ve yıldız akışındadır.</Text>:null}
+    {showRules?<Text style={story.subtitle}>Mavi çizgi maçın havuzla uyumunu gösterir. İlk yarıda devre skoru, ikinci yarıda devre skoruna göre maç sonu havuzu kullanılır; dikey basamak havuz değişimidir. İçi boş noktalar ara veya düzeltme kayıtlarıdır. Altın yıldızlar BTB’nin Super kayıtlarıdır.</Text>:null}
             {showRules?<View style={{gap:8}}>    <Text style={story.gestureHint}>↔ Parmağını grafikte sürükle · ↑↓ Sayfayı kaydır</Text>
     <View style={story.eventLegend}>{LEGEND_KINDS.map(kind=><View key={kind} style={story.legendItem}><Svg width={18} height={18} viewBox="0 0 24 24" {...journeySvgAccessibility}><JourneyEventGlyph kind={kind} color={kind==='RED_CARD'?colors.red:kind==='SUPER'?colors.gold:colors.textMuted}/></Svg><Text style={story.hint}>{LEGEND_LABELS[kind]}</Text></View>)}</View>
-    <Text style={story.hint}>{drawn.length?'Çizgi: havuz uyumu, kazanma olasılığı değil. Rozet: gruplanan olay sayısı.':'Olay ikonuna dokun. Rozet: gruplanan olay sayısı.'}</Text>
+    <Text style={story.hint}>Rozet: gruplanan olay sayısı.</Text>
 </View>:null}
     </JourneyInspector>
   </View>;
@@ -361,7 +349,6 @@ const story=StyleSheet.create({
   focus:{backgroundColor:colors.backgroundElevated,borderLeftWidth:3,borderLeftColor:colors.blue,borderRadius:12,padding:14,gap:7},focusTitle:{...typeScale.bodyCompact,color:colors.text,fontWeight:'700',lineHeight:22},
   controls:{flexDirection:'row',justifyContent:'space-between',gap:4},control:{flex:1,minHeight:48,alignItems:'center',justifyContent:'center',paddingHorizontal:6},controlText:{...typeScale.label,color:colors.blue,fontWeight:'700'},disabled:{opacity:.3},
   poolBox:{borderWidth:1,borderColor:colors.border,borderRadius:16,padding:12,gap:10},leaders:{flexDirection:'row',gap:12},leader:{flex:1,gap:6},poolScore:{fontSize:21,fontWeight:'700',color:colors.text},track:{height:4,borderRadius:2,backgroundColor:colors.borderSoft,overflow:'hidden'},fill:{height:4,backgroundColor:colors.bronze,borderRadius:2},
-  pressureBox:{gap:10,paddingVertical:8},pressureTrack:{flexDirection:'row',alignItems:'center',gap:3},pressureHalf:{flex:1,height:5,backgroundColor:colors.borderSoft,overflow:'hidden',borderRadius:3},pressureZero:{width:2,height:11,backgroundColor:colors.textMuted},
   disclosure:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',gap:10,minHeight:48,borderTopWidth:1,borderTopColor:colors.borderSoft,paddingTop:10}
 });
 function AnalysisEventRail({ activeKey, awayTeam, events, homeTeam, onSelect, path, state }: {

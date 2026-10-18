@@ -71,7 +71,7 @@ test("recorded Super decisions become star moments on the chart's minute axis",(
   const minutes=merged.map(m=>m.minute ?? Infinity);
   assert.deepEqual(minutes,[...minutes].sort((a,b)=>a-b));
   assert.equal(merged.filter(m=>m.kind==='SUPER').length,1);
-  assert.match(journeyMomentEffect(moment!),/karar kaydıdır/);
+  assert.match(journeyMomentEffect(moment!),/yıldızlı Super tercihi kaydetti\.$/);
 });
 test("journey card keeps the published type floor and the renderable weight set",async()=>{
   const source=await readFile(new URL('./MatchJourneyChart.tsx',import.meta.url),'utf8');
@@ -138,7 +138,7 @@ test("events the contract left without a minute still reach the chart",async()=>
   // An unmeasured event has no height on this scale and rides a named lane
   // instead of being dropped on the floor of the plot.
   assert.ok(source.includes('LANE_Y'));
-  assert.ok(source.includes('Ölçülmedi'));
+  assert.ok(source.includes('ölçülmedi'));
 });
 test("the reference change is a vertical rebase, never a slope across minutes",async()=>{
   const source=await readFile(new URL('./MatchJourneyChart.tsx',import.meta.url),'utf8');

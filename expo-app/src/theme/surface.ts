@@ -42,13 +42,13 @@ export type ThemeName = "dark" | "light";
  * flat fill was, and lift the top well past it.
  */
 export const surfaceGradients = {
-  dark: ["#142A35", "#10232E"],
-  light: ["#FFFEF9", "#FBFCF6"]
+  dark: ["#173447", "#0F2331"],
+  light: ["#FFFEF9", "#FAFCF5"]
 } as const satisfies Record<ThemeName, readonly [string, string]>;
 
 /** Page ground each material sits on, used to check edge readability. */
 export const pageBackgrounds = {
-  dark: "#08141C",
+  dark: "#050F18",
   light: "#F3F0E7"
 } as const satisfies Record<ThemeName, string>;
 
@@ -62,8 +62,8 @@ export const traceWidthRatio = 0.55;
 
 /** Opacity per trace kind. An inert surface is barely lit at all. */
 export const traceOpacity = {
-  inert: 0.12,
-  accent: 0.35
+  inert: 0.24,
+  accent: 0.85
 } as const;
 
 export function resolveSurfaceGradient(

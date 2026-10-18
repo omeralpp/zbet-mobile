@@ -15,7 +15,7 @@ import {
 import type { MobileApi } from "./mobile-api";
 import { MobileApiError } from "./mobile-api";
 import type { AnalysisContext } from "./schemas";
-import { previewSelectionReading } from "../mascot/jinx-assessment";
+import { previewJinxSignal, previewSelectionReading } from "../mascot/jinx-assessment";
 
 /**
  * Serves the three M15 routes from the built-in fixtures while every other
@@ -110,11 +110,11 @@ export function withSyntheticIntelligence(
         const packet = contexts.get(snapshotId);
         if (!packet || packet.matchKey !== key || Date.parse(packet.expiresAt) <= Date.now())
           throw new MobileApiError("Maç verisini yenileyip tekrar sor.", 409, "ANALYSIS_SNAPSHOT_EXPIRED");
-        return jinxAssessmentSchema.parse({ contractVersion: "jinx-match-outlook.v3", matchKey: key,
+        return jinxAssessmentSchema.parse({ contractVersion: "jinx-match-outlook.v4", matchKey: key,
           snapshotId, evidenceRevision: packet.evidenceRevision, selectionKey: packet.selectionKey,
           evaluatedAt: new Date().toISOString(), expiresAt: packet.expiresAt, verdict: "WAIT",
-            reasonCode: "VALUE_UNAVAILABLE", shortReason: previewSelectionReading(packet),
-          riskNote: "Önizleme verileri gerçek karar kanıtı olarak kullanılmaz.", evidence: [], value: null,
+          reasonCode: "VALUE_UNAVAILABLE", shortReason: previewSelectionReading(packet),
+          riskNote: "Önizleme verisi.", evidence: [], value: null, signal: previewJinxSignal(packet),
           sourceAvailability: packet.sourceAvailability, explanationOrigin: "DETERMINISTIC" });
       }
     } : {}),

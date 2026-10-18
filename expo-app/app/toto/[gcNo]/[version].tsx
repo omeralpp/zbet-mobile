@@ -193,7 +193,6 @@ export default function TotoProgramDetailScreen() {
         <Text style={styles.updatedAt}>
           Son güncelleme: {formatTimestamp(program.updatedAt)}
         </Text>
-        <Text style={styles.contextNote}>Ana isabet ve kapsama farklıdır. Kapsama isabeti, tüm kuponun veya bir kolonun kazandığı anlamına gelmez. Maliyet birimi kaynakta belirtilmedi.</Text>
       </View>
 
       {resultTotal > 0 ? (
@@ -306,7 +305,6 @@ export default function TotoProgramDetailScreen() {
         eyebrow="KUPON"
         title={program.predictions.length ? "Tahminler" : "Aktif fikstür"}
       />
-      {program.predictions.length ? <Text style={styles.contextNote}>“Güven” kaynak modelin değeridir; neyi ölçtüğü ve kalibrasyonu bu görünümde doğrulanmadı. Kazanma olasılığı olduğu doğrulanmış değil.</Text> : null}
       {program.predictions.length && desktop ? (
         <TotoCouponGrid
           onOpen={openBilyoner}
@@ -425,16 +423,11 @@ export default function TotoProgramDetailScreen() {
           </Text>
         </Pressable>
       </View>
-      <Text style={styles.safetyNote}>
-        Tahmin üretme, sonuç kaydetme ve program güncelleme işlemleri bu mobil
-        görünümde yapılmaz.
-      </Text>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  contextNote: { ...typeScale.bodyCompact, color: colors.textMuted, marginVertical: spacing.md },
   screen: {
     paddingTop: spacing.lg
   },
@@ -698,12 +691,5 @@ const styles = StyleSheet.create({
   actionPressed: {
     opacity: 0.8,
     transform: [{ scale: 0.995 }]
-  },
-  safetyNote: {
-    color: colors.textSubtle,
-    ...typeScale.bodyCompact,
-    textAlign: "center",
-    marginTop: spacing.md,
-    paddingHorizontal: spacing.lg
   }
 });

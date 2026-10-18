@@ -1,17 +1,20 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analysisNeedsRefresh, assessmentIsCurrent } from "./jinx-assessment";
+import { analysisNeedsRefresh, assessmentIsCurrent, assessmentSignal, signalFacts } from "./jinx-assessment";
 import { mockMobileApi } from "../api/mock-mobile-api";
 import { mockMatches } from "../api/mock-data";
 import { withSyntheticIntelligence } from "../api/synthetic-intelligence";
-import { analysisContextSchema, jinxAssessmentSchema } from "../api/schemas";
-import type { AnalysisContext, JinxAssessment } from "../api/schemas";
+import { analysisContextSchema, jinxAssessmentSchema, jinxAssessmentV4Schema, jinxSignalSchema } from "../api/schemas";
+import type { AnalysisContext, JinxAssessment, JinxSignal } from "../api/schemas";
 
 test("the preview renders one validated screen context and a short policy-unavailable assessment", async () => {
   const packet = analysisContextSchema.parse(await mockMobileApi.getMatchAnalysisContext(mockMatches[0]!.key));
   const dto = jinxAssessmentSchema.parse(await mockMobileApi.getMatchJinxAssessment(packet.matchKey, packet.snapshotId));
   assert.equal(dto.verdict, "WAIT"); assert.equal(dto.reasonCode, "POLICY_UNAVAILABLE");
   assert.equal(dto.evidence.length, 0); assert.ok(dto.shortReason.length <= 240);
+  assert.equal(dto.contractVersion, "jinx-match-outlook.v4");
+  // Preview pool 72% against a 1,38 price (72.5%): within five points, so neutral.
+  assert.equal(assessmentSignal(dto)?.lean, "NEUTRAL"); assert.equal(assessmentSignal(dto)?.confidence, 0.72);
   assert.equal(Object.keys(packet.sources).length, 9);
   assert.equal(assessmentIsCurrent(dto, packet), true);
   for (const patch of [{ matchKey: "other" }, { selectionKey: "other" }, { evidenceRevision: "changed" }])
@@ -41,6 +44,39 @@ test("the client refuses a favorable label without policy evidence or with inven
   assert.equal(jinxAssessmentSchema.safeParse({ ...base, value }).success, true);
   assert.equal(jinxAssessmentSchema.safeParse({ ...base, value: { ...value, expectedValue: .8 } }).success, false);
   assert.equal(jinxAssessmentSchema.safeParse({ ...base, value, verdict: "WAIT" }).success, false);
+});
+
+const phoneSignal: JinxSignal = { policyId: "JINX_LEAN_PILOT_V1", basis: "POOL_SHARE_UNCALIBRATED", confidence: 0.74,
+  odds: 1.56, impliedProbability: 1 / 1.56, edge: 0.74 - 1 / 1.56, lean: "FAVORABLE",
+  pressure: { homeShare: 0.15 / 0.85, leader: "AWAY", effect: "FOR" } };
+
+test("the pilot signal must keep its own arithmetic and shape", () => {
+  assert.equal(jinxSignalSchema.safeParse(phoneSignal).success, true);
+  for (const broken of [{ impliedProbability: 0.7 }, { edge: 0.2 }, { odds: null }, { lean: null },
+    { pressure: { homeShare: 0.5, leader: "NONE", effect: "NEUTRAL" } }, { policyId: "OTHER" }])
+    assert.equal(jinxSignalSchema.safeParse({ ...phoneSignal, ...broken }).success, false, JSON.stringify(broken));
+  const unpriced = { ...phoneSignal, odds: null, impliedProbability: null, edge: null, lean: null };
+  assert.equal(jinxSignalSchema.safeParse(unpriced).success, true);
+});
+
+test("a V4 reading may carry a lean but never a favorable verdict without policy evidence", () => {
+  const v4 = { contractVersion: "jinx-match-outlook.v4", matchKey: "match", snapshotId: "snapshot", selectionKey: "selection",
+    evidenceRevision: "revision", evaluatedAt: "2026-10-18T14:39:12Z", expiresAt: "2026-10-18T14:41:12Z", verdict: "WAIT",
+    reasonCode: "POLICY_UNAVAILABLE", shortReason: "79′ · 0–2: Karşılıklı gol yok şu an tutuyor.", riskNote: null, evidence: [],
+    sourceAvailability: {}, explanationOrigin: "DETERMINISTIC", value: null, signal: phoneSignal };
+  assert.equal(jinxAssessmentV4Schema.safeParse(v4).success, true);
+  assert.equal(jinxAssessmentV4Schema.safeParse({ ...v4, verdict: "FAVORABLE", reasonCode: "VALUE_POSITIVE" }).success, false);
+  assert.equal(jinxAssessmentV4Schema.safeParse({ ...v4, shortReason: "x".repeat(321) }).success, false);
+});
+
+test("the card states pool, market and pressure as short facts", () => {
+  assert.deepEqual(signalFacts(phoneSignal, { homeTeam: "Kocaelispor", awayTeam: "Göztepe" }), [
+    { key: "pool", label: "Havuz", value: "%74" },
+    { key: "market", label: "Piyasa", value: "%64 · 1,56" },
+    { key: "pressure", label: "Baskı", value: "Göztepe %82" }
+  ]);
+  assert.deepEqual(signalFacts({ ...phoneSignal, odds: null, impliedProbability: null, edge: null, lean: null, pressure: null },
+    { homeTeam: "A", awayTeam: "B" }).map(fact => fact.key), ["pool"]);
 });
 
 test("current checks do not accept expired or differently selected results", () => {

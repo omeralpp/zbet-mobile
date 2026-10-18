@@ -16,6 +16,7 @@ export const overviewModules = [
 
 export const liveDetailModules = [
   "matchPath",
+  "pressure",
   "decision",
   "teamForm",
   "standings",
@@ -58,6 +59,9 @@ export const moduleLayoutLabels: Record<ModuleLayoutSurface, string> = {
  * `liveDetail` order that predates them, so without these anchors they would
  * be appended below the score distribution.
  *
+ * `pressure` (Baskı grafiği, NXT-OBS-175, 2026-10-18) sits directly under
+ * `matchPath` so the two match-flow panels stay together on existing installs.
+ *
  * Retired ids are dropped from persisted layouts by reconciliation alone:
  * `lineups` and `relatedSuper` earlier, then `gamePulse` (Maçın Nabzı) and
  * `timeline` by owner decision on 2026-10-16. The score and star flow that
@@ -71,6 +75,7 @@ export const moduleLayoutAnchors: Record<
   overview: [],
   liveDetail: [
     { id: "matchPath", after: "decision" },
+    { id: "pressure", after: "matchPath" },
     { id: "teamForm", after: "matchPath" }
   ],
   superDetail: []
@@ -87,6 +92,6 @@ export const retiredLiveDetailModules = [
 
 export const moduleCollapseDefaults: Record<ModuleLayoutSurface, readonly string[]> = {
   overview: [],
-  liveDetail: liveDetailModules.filter((id) => id !== "matchPath"),
+  liveDetail: liveDetailModules.filter((id) => id !== "matchPath" && id !== "pressure"),
   superDetail: ["decisionField", "similarity", "standings"]
 };

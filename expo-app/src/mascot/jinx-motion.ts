@@ -1,8 +1,9 @@
-/** Presentation only. No scene can create or change a betting verdict. */
+/** Presentation only. No scene can create or change a betting verdict or lean. */
 export type JinxCandidate = "orb" | "fox";
 export type JinxMotionMode = "LIVE" | "CALM" | "OFF";
-export type JinxScene = "idle" | "greeting" | "touch" | "drag" | "thinking" | "answer" | "goal" | "halfTime" | "waiting" | "guide";
+export type JinxScene = "idle" | "greeting" | "touch" | "drag" | "thinking" | "answer" | "cheer" | "doubt" | "goal" | "halfTime" | "waiting" | "guide";
 export type JinxVerdict = "FAVORABLE" | "UNFAVORABLE" | "WAIT";
+export type JinxLeanMotion = "FAVORABLE" | "NEUTRAL" | "UNFAVORABLE";
 export type JinxMotionContext = { matchKey: string; revision: string };
 export type JinxMotionState = {
   context: JinxMotionContext;
@@ -17,8 +18,8 @@ export type JinxMotionAction =
   | { type: "context"; context: JinxMotionContext }
   | { type: "active"; active: boolean }
   | { type: "interaction"; blocked: boolean }
-  | { type: "scene"; scene: Exclude<JinxScene, "goal" | "halfTime" | "answer"> }
-  | { type: "answer"; context: JinxMotionContext; verdict: JinxVerdict; current: boolean }
+  | { type: "scene"; scene: Exclude<JinxScene, "goal" | "halfTime" | "answer" | "cheer" | "doubt"> }
+  | { type: "answer"; context: JinxMotionContext; verdict: JinxVerdict; current: boolean; lean?: JinxLeanMotion | null }
   | { type: "event"; context: JinxMotionContext; eventId: string; kind: "GOAL" | "HALF_TIME" | "SCORE_CORRECTION"; verified: boolean }
   | { type: "finish"; sequence: number };
 
@@ -27,8 +28,10 @@ export const sceneCopy: Record<JinxScene, { label: string; message: string; dura
   greeting: { label: "Karşılama", message: "Hazırsan maça birlikte bakalım!", duration: 1400 },
   touch: { label: "Dokunma", message: "Buradayım! Top bende.", duration: 850 },
   drag: { label: "Sürükleme", message: "Dengemi buluyorum…", duration: 1100 },
-  thinking: { label: "Jinx’e sor", message: "Skoru ve gösterilen seçimi inceliyorum.", duration: 1800 },
-  answer: { label: "Yanıt", message: "Yorum hazır. Gerekçeyi ve veri durumunu oku.", duration: 1100 },
+  thinking: { label: "Jinx’e sor", message: "Havuzu, baskıyı ve oranı inceliyorum.", duration: 1800 },
+  answer: { label: "Yanıt", message: "Yorum hazır.", duration: 1100 },
+  cheer: { label: "Lehte", message: "Veriler bu seçimin lehine.", duration: 1600 },
+  doubt: { label: "Aleyhte", message: "Veriler bu seçimin aleyhine.", duration: 1400 },
   goal: { label: "Gol olayı", message: "Gol kaydı geldi. Skorun güncel hâlini kontrol et.", duration: 1700 },
   halfTime: { label: "Devre arası", message: "Devre arası. Taktik tahtasına kısa bir bakış.", duration: 1600 },
   waiting: { label: "Veri bekleme", message: "Veri eksik veya güncel değil; yorum bekliyor.", duration: 1000 },
@@ -66,9 +69,13 @@ export function jinxMotionReducer(state: JinxMotionState, action: JinxMotionActi
     case "answer":
       if (!state.active || state.blocked || !sameContext(state.context, action.context)) return state;
       if (!action.current) return present(state, "waiting");
+      // The pilot lean picks the reaction; a reading without one stays neutral.
+      if (action.lean === "FAVORABLE") return present(state, "cheer");
+      if (action.lean === "UNFAVORABLE") return present(state, "doubt");
+      if (action.lean === "NEUTRAL") return present(state, "answer", "Havuz ve piyasa dengede.");
       return present(state, "answer", action.verdict === "WAIT"
-        ? "Maç yorumu hazır. Bahis önerisi yok; doğrulanmış değer kanıtı bekleniyor."
-        : "Değerlendirme hazır. Kararı ve dayandığı kanıtı oku.");
+        ? "Maç yorumu hazır. Bahis önerisi yok."
+        : "Değerlendirme hazır. Kararı ve kanıtını oku.");
     case "event": {
       if (!action.verified || !action.eventId.trim() || !sameContext(state.context, action.context)) return state;
       if (state.seen.includes(action.eventId)) return state;
@@ -82,7 +89,7 @@ export function jinxMotionReducer(state: JinxMotionState, action: JinxMotionActi
 
 export function resolveJinxMotion(mode: JinxMotionMode, reduceMotion: boolean, active: boolean) {
   const enabled = mode !== "OFF" && !reduceMotion && active;
-  return { enabled, amplitude: enabled ? mode === "CALM" ? 0.35 : 1 : 0, ambient: enabled && mode === "LIVE" };
+  return { enabled, amplitude: enabled ? mode === "CALM" ? 0.45 : 1.35 : 0, ambient: enabled && mode === "LIVE" };
 }
 
 export function designLabAvailable(config: { useMocks: boolean; authMode: string }): boolean {
