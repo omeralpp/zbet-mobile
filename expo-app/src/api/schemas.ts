@@ -939,14 +939,19 @@ export const jinxSignalSchema = z.strictObject({
   pressure: z.strictObject({
     homeShare: finiteNumber.min(0).max(1).nullable(),
     leader: z.enum(["HOME", "AWAY", "BALANCED", "NONE"]),
-    effect: z.enum(["FOR", "AGAINST", "NEUTRAL"])
+    effect: z.enum(["FOR", "AGAINST", "NEUTRAL"]),
+    // CURRENT is the fresh current interval; LAST_INTERVAL the latest measured
+    // journey interval (at most ten minutes old), named by its match minute.
+    source: z.enum(["CURRENT", "LAST_INTERVAL"]),
+    minute: z.number().int().min(0).max(150).nullable()
   }).nullable()
 }).superRefine((signal, ctx) => {
   const priced = signal.odds !== null;
   const shaped = [signal.impliedProbability, signal.edge, signal.lean].every((field) => (field !== null) === priced);
   const arithmetic = !priced || (Math.abs((signal.impliedProbability ?? NaN) - 1 / (signal.odds ?? NaN)) < 1e-9
     && Math.abs((signal.edge ?? NaN) - (signal.confidence - (signal.impliedProbability ?? NaN))) < 1e-9);
-  const pressure = !signal.pressure || (signal.pressure.leader === "NONE") === (signal.pressure.homeShare === null);
+  const pressure = !signal.pressure || ((signal.pressure.leader === "NONE") === (signal.pressure.homeShare === null)
+    && (signal.pressure.source === "LAST_INTERVAL" || signal.pressure.minute === null));
   if (!shaped || !arithmetic || !pressure) ctx.addIssue({ code: "custom", message: "Inconsistent Jinx pilot signal" });
 });
 export type JinxLean = z.infer<typeof jinxLeanSchema>;

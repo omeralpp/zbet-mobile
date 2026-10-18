@@ -48,12 +48,14 @@ test("the client refuses a favorable label without policy evidence or with inven
 
 const phoneSignal: JinxSignal = { policyId: "JINX_LEAN_PILOT_V1", basis: "POOL_SHARE_UNCALIBRATED", confidence: 0.74,
   odds: 1.56, impliedProbability: 1 / 1.56, edge: 0.74 - 1 / 1.56, lean: "FAVORABLE",
-  pressure: { homeShare: 0.15 / 0.85, leader: "AWAY", effect: "FOR" } };
+  pressure: { homeShare: 0.15 / 0.85, leader: "AWAY", effect: "FOR", source: "CURRENT", minute: null } };
 
 test("the pilot signal must keep its own arithmetic and shape", () => {
   assert.equal(jinxSignalSchema.safeParse(phoneSignal).success, true);
   for (const broken of [{ impliedProbability: 0.7 }, { edge: 0.2 }, { odds: null }, { lean: null },
-    { pressure: { homeShare: 0.5, leader: "NONE", effect: "NEUTRAL" } }, { policyId: "OTHER" }])
+    { pressure: { homeShare: 0.5, leader: "NONE", effect: "NEUTRAL", source: "CURRENT", minute: null } },
+    { pressure: { ...phoneSignal.pressure!, minute: 74 } }, { pressure: { ...phoneSignal.pressure!, source: "GUESS" } },
+    { policyId: "OTHER" }])
     assert.equal(jinxSignalSchema.safeParse({ ...phoneSignal, ...broken }).success, false, JSON.stringify(broken));
   const unpriced = { ...phoneSignal, odds: null, impliedProbability: null, edge: null, lean: null };
   assert.equal(jinxSignalSchema.safeParse(unpriced).success, true);
@@ -77,6 +79,11 @@ test("the card states pool, market and pressure as short facts", () => {
   ]);
   assert.deepEqual(signalFacts({ ...phoneSignal, odds: null, impliedProbability: null, edge: null, lean: null, pressure: null },
     { homeTeam: "A", awayTeam: "B" }).map(fact => fact.key), ["pool"]);
+  // An earlier measured interval is labelled with its minute.
+  const earlier = { ...phoneSignal, pressure: { ...phoneSignal.pressure!, source: "LAST_INTERVAL" as const, minute: 74 } };
+  assert.equal(jinxSignalSchema.safeParse(earlier).success, true);
+  assert.deepEqual(signalFacts(earlier, { homeTeam: "Kocaelispor", awayTeam: "Göztepe" }).at(-1),
+    { key: "pressure", label: "Baskı · 74′", value: "Göztepe %82" });
 });
 
 test("current checks do not accept expired or differently selected results", () => {

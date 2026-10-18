@@ -23,8 +23,10 @@ export function JinxAssessmentCard({ context, assessment, pending, error, onAsk 
   const verdict = current ? assessment?.verdict : undefined;
   const signal = current ? assessmentSignal(assessment) : null;
   // A policy verdict outranks the pilot lean; neither appears on stale data.
+  // Without a current price there is nothing to lean against; say so plainly.
   const headline = verdict && verdict !== "WAIT" ? { text: assessmentLabels[verdict], color: verdict === "FAVORABLE" ? semantic.positive : semantic.negative }
     : signal?.lean ? { text: leanLabels[signal.lean], color: leanColors[signal.lean] }
+    : signal ? { text: "Güncel oran yok", color: colors.textMuted }
     : verdict ? { text: assessmentLabels.WAIT, color: semantic.intelligence } : null;
   const match = context?.sources.matchDetail;
   // The large number already is the pool share, so its chip is not repeated.

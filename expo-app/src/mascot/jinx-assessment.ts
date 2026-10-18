@@ -52,10 +52,12 @@ export function signalFacts(signal: JinxSignal, teams: { homeTeam: string; awayT
   if (signal.odds !== null && signal.impliedProbability !== null)
     facts.push({ key: "market", label: "Piyasa", value: `${percent(signal.impliedProbability)} · ${signal.odds.toFixed(2).replace(".", ",")}` });
   const pressure = signal.pressure;
+  // An earlier measured interval carries its minute so it never reads as "now".
+  const label = pressure?.source === "LAST_INTERVAL" && pressure.minute !== null ? `Baskı · ${pressure.minute}′` : "Baskı";
   if (pressure?.leader === "HOME" || pressure?.leader === "AWAY") {
     const share = pressure.leader === "HOME" ? pressure.homeShare! : 1 - pressure.homeShare!;
-    facts.push({ key: "pressure", label: "Baskı", value: `${pressure.leader === "HOME" ? teams.homeTeam : teams.awayTeam} ${percent(share)}` });
-  } else if (pressure?.leader === "BALANCED") facts.push({ key: "pressure", label: "Baskı", value: "Dengede" });
+    facts.push({ key: "pressure", label, value: `${pressure.leader === "HOME" ? teams.homeTeam : teams.awayTeam} ${percent(share)}` });
+  } else if (pressure?.leader === "BALANCED") facts.push({ key: "pressure", label, value: "Dengede" });
   return facts;
 }
 

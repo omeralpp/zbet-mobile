@@ -148,8 +148,11 @@ detay rotalarını, mevcut mock runtime ile sınar; gerçek veri/cihaz kabulü d
   32 tooling, brand; BundleOnly kapısı (Doctor, Android production JS bundle, doğrulanmış
   web export + secret scan); mock web 412x915 koyu/açık ve 1280x800'de Özet yorumu ve
   baloncuğu, Jinx kartı, Baskı grafiği, "Yeni havuz" etiketi, seçili an payları.
-- Bekleyen: commit/push, BFF V4 yeniden başlatma, yeni koordineli APK/web ve iki sahip
-  smoke'u; her biri ayrı açık onayla.
+- Sahip onayıyla commit/push yapıldı; BFF V4 ile yeniden başlatıldı ve canlı sözleşme
+  smoke'u (6 canlı seçim, istemci şemalarıyla V4 ve V3) geçti. Canlı veride güncel aralık
+  baskısı çoğunlukla `OBS_ACTIVITY_UNPROVEN` olduğu için Jinx son ölçülen aralığı (≤10 dk,
+  dakikasıyla) kullanır; fiyatsız sinyal "Güncel oran yok" der.
+- Bekleyen: yeni koordineli APK/web, kurulum sonrası web yayını ve iki sahip smoke'u.
 
 ## Tekrarlanabilir sahip testi — bekleyen gerçek kullanım
 

@@ -32,8 +32,15 @@ web was **not** published: `524f2e7` stays on the web. Receipts:
 `owner-android-smoke.json`, Drive delivery receipt next to the APK).
 
 The owner then asked for the corrections directly and chose the pilot signal
-`JINX_LEAN_PILOT_V1` (confidence % + Lehte/Dengede/Aleyhte). Local, uncommitted on both
-surfaces: vivid palette (all text pairs ≥4.5:1, minimum 5.6:1, stronger card traces);
+`JINX_LEAN_PILOT_V1` (confidence % + Lehte/Dengede/Aleyhte), then approved the release
+sequence (commit/push, BFF restart, new APK with private delivery, paired web after
+installation). Committed and pushed on both repos after `1c65275`/`5efd17d`; the pilot
+BFF was restarted on the pushed `zbet-cap` code at 16:48 UTC and handed to the
+`BTB Mobile BFF` watchdog task (`-AuthMode pilot`, sealed configuration unchanged;
+receipt `.codex-artifacts/ux-review-2026-10-18/jinx-v4-runtime-restart.json`). The live
+contract smoke found the current interval `OBS_ACTIVITY_UNPROVEN` on 6/6 selections, so
+Jinx falls back to the latest measured journey interval (≤10 min, named by its minute),
+and a price-less signal reads "Güncel oran yok". Changes on both surfaces: vivid palette (all text pairs ≥4.5:1, minimum 5.6:1, stronger card traces);
 screen subtitles, ROI/unit notes, caveat clauses and hints removed on every route and
 in the BFF facts; Jinx breathes, idles, blinks and cheers/doubts by lean; daily Super
 comment restored (bubble, crown/wallet/coin reaction, Overview line, "Günlük yorum"
@@ -278,13 +285,12 @@ legacy blank tag yeni modele yükseltilmez. Tarihsel karar kendi capture'ını o
 
 ## Exact next steps
 
-TASK-0162 correction batch (NXT-OBS-171..179) is local and checked. Next, each with
-its own explicit owner approval: commit/push `zbet-mobile` and `zbet-cap`; restart the
-pilot BFF on the pushed `zbet-cap` commit (`ensure-mobile-bff.ps1 -AuthMode pilot`) so
-V4 is served; build the new arm64 APK and verified web export from the pushed client
-commit, deliver the APK privately, then publish the paired web after installation;
-finish with both owner smokes and `client-release.mjs complete`. Batch `1c65275`
-stays INCOMPLETE and is superseded by that batch; `524f2e7` stays the accepted pair.
+TASK-0162 correction batch (NXT-OBS-171..179) is pushed and the BFF serves V4. Under
+the owner's release approval: build the new arm64 APK and verified web export from the
+pushed client commit, deliver the APK privately, publish the paired web only after the
+owner confirms installation, then both owner smokes and `client-release.mjs complete`.
+Record the final pair in a closing docs commit. Batch `1c65275` stays INCOMPLETE and is
+superseded by that batch; `524f2e7` stays the accepted pair until then.
 
 TASK-0161 is DONE: the 524f2e7 pair is complete on both surfaces. Observe it in
 real use and record findings in `OBSERVATION_LOG.md`; bd43073 stays the previous
