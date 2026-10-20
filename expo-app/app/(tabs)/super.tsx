@@ -7,12 +7,14 @@ import {
   Platform,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Switch,
   Text,
   View
 } from "react-native";
 import { superLogsQuery } from "@/src/api/queries";
+import { RebuildReportPanel } from "@/src/components/RebuildEvidencePanel";
 import { FilterChip } from "@/src/components/FilterChip";
 import { DecisionFilterChip } from "@/src/components/DecisionFilterChip";
 import { Screen } from "@/src/components/Screen";
@@ -65,6 +67,19 @@ import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 const localTabs = ["ALL", "STAR"] as const;
 
 export default function SuperScreen() {
+  const [legacy, setLegacy] = useState(false);
+  if (legacy) return <View style={{ flex: 1 }}>
+    <Pressable accessibilityRole="button" onPress={() => setLegacy(false)} style={{ padding: spacing.md }}>
+      <Text style={{ color: colors.blue }}>Yeni BTB sonuçlarına dön · Bu ekran eski A3 kayıtlarıdır</Text>
+    </Pressable><LegacySuperScreen /></View>;
+  return <Screen><ScrollView contentContainerStyle={{ padding: spacing.md, gap: spacing.md }}>
+    <RebuildReportPanel history />
+    <Pressable accessibilityRole="button" onPress={() => setLegacy(true)} style={{ minHeight: 44, justifyContent: "center" }}>
+      <Text style={{ color: colors.blue }}>Eski A3 tarihçesini ayrı incele</Text>
+    </Pressable>
+  </ScrollView></Screen>;
+}
+function LegacySuperScreen() {
   const reduceMotion = useReducedMotion();
   const params = useLocalSearchParams<{
     scope?: string | string[];

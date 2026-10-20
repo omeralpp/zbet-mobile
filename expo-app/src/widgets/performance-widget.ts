@@ -1,6 +1,6 @@
 import { mobileApi } from "@/src/api";
 import { updateWidgetsFromData } from "./btb-widget";
-import { buildPerformanceWidgetPayload } from "./performance-widget-data";
+import { buildRebuildWidgetPayload } from "./performance-widget-data";
 import {
   readSuperStarFilter
 } from "@/src/preferences/SuperStarFilterProvider";
@@ -9,18 +9,12 @@ import type { StarDecisionFilter } from "@/src/utils/decision-filters";
 export async function refreshPerformanceWidgetFromApi(
   filterOverride?: StarDecisionFilter
 ): Promise<boolean> {
-  const [dashboard, superKpis, programs, storedFilter] = await Promise.all([
-    mobileApi.getDashboard(),
-    mobileApi.getSuperKpis(),
-    mobileApi.getTotoPrograms(),
-    filterOverride ? Promise.resolve(filterOverride) : readSuperStarFilter()
+  const [report, storedFilter, programs] = await Promise.all([
+    mobileApi.getRebuildReport(),
+    filterOverride ? Promise.resolve(filterOverride) : readSuperStarFilter(),
+    mobileApi.getTotoPrograms().catch(() => [])
   ]);
   return updateWidgetsFromData(
-    buildPerformanceWidgetPayload(
-      dashboard,
-      superKpis,
-      storedFilter,
-      programs
-    )
+    buildRebuildWidgetPayload(report, storedFilter, programs)
   );
 }

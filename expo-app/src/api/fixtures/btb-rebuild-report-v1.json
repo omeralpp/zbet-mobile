@@ -1,0 +1,438 @@
+{
+  "contractVersion": "btb-rebuild-report.v1",
+  "modelRegime": "BTB_RB1_20261018",
+  "asOf": "2026-10-20T12:00:00.000Z",
+  "timeZone": "Europe/Istanbul",
+  "availability": "AVAILABLE",
+  "reason": "",
+  "accounting": "ONE_HYPOTHETICAL_UNIT_AT_FIRST_QUOTE",
+  "actualBetsAssumed": false,
+  "periods": [
+    {
+      "days": 7,
+      "from": "2026-10-14",
+      "through": "2026-10-20",
+      "recommendations": 1,
+      "matches": 1,
+      "settled": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0,
+      "pending": 1,
+      "unresolved": 0,
+      "net": "0",
+      "risk": 0,
+      "totalRisk": 1,
+      "roi": null,
+      "hitRate": null,
+      "uncertainty": null,
+      "evidenceNote": "PILOT_MATCH_CLUSTERED",
+      "byMatch": [
+        {
+          "matchKey": "2026-10-20:17:13:00:00",
+          "recommendations": 1,
+          "totalRisk": 1,
+          "settled": 0,
+          "net": "0"
+        }
+      ],
+      "byStar": [
+        {
+          "stars": 1,
+          "recommendations": 0,
+          "matches": 0,
+          "settled": 0,
+          "wins": 0,
+          "losses": 0,
+          "voids": 0,
+          "pending": 0,
+          "unresolved": 0,
+          "net": "0",
+          "risk": 0,
+          "totalRisk": 0,
+          "roi": null,
+          "hitRate": null,
+          "uncertainty": null,
+          "evidenceNote": "PILOT_MATCH_CLUSTERED",
+          "byMatch": []
+        },
+        {
+          "stars": 2,
+          "recommendations": 0,
+          "matches": 0,
+          "settled": 0,
+          "wins": 0,
+          "losses": 0,
+          "voids": 0,
+          "pending": 0,
+          "unresolved": 0,
+          "net": "0",
+          "risk": 0,
+          "totalRisk": 0,
+          "roi": null,
+          "hitRate": null,
+          "uncertainty": null,
+          "evidenceNote": "PILOT_MATCH_CLUSTERED",
+          "byMatch": []
+        },
+        {
+          "stars": 3,
+          "recommendations": 1,
+          "matches": 1,
+          "settled": 0,
+          "wins": 0,
+          "losses": 0,
+          "voids": 0,
+          "pending": 1,
+          "unresolved": 0,
+          "net": "0",
+          "risk": 0,
+          "totalRisk": 1,
+          "roi": null,
+          "hitRate": null,
+          "uncertainty": null,
+          "evidenceNote": "PILOT_MATCH_CLUSTERED",
+          "byMatch": [
+            {
+              "matchKey": "2026-10-20:17:13:00:00",
+              "recommendations": 1,
+              "totalRisk": 1,
+              "settled": 0,
+              "net": "0"
+            }
+          ]
+        },
+        {
+          "stars": 4,
+          "recommendations": 0,
+          "matches": 0,
+          "settled": 0,
+          "wins": 0,
+          "losses": 0,
+          "voids": 0,
+          "pending": 0,
+          "unresolved": 0,
+          "net": "0",
+          "risk": 0,
+          "totalRisk": 0,
+          "roi": null,
+          "hitRate": null,
+          "uncertainty": null,
+          "evidenceNote": "PILOT_MATCH_CLUSTERED",
+          "byMatch": []
+        },
+        {
+          "stars": 5,
+          "recommendations": 0,
+          "matches": 0,
+          "settled": 0,
+          "wins": 0,
+          "losses": 0,
+          "voids": 0,
+          "pending": 0,
+          "unresolved": 0,
+          "net": "0",
+          "risk": 0,
+          "totalRisk": 0,
+          "roi": null,
+          "hitRate": null,
+          "uncertainty": null,
+          "evidenceNote": "PILOT_MATCH_CLUSTERED",
+          "byMatch": []
+        }
+      ],
+      "byMarket": [
+        {
+          "market": "Ms15a",
+          "recommendations": 1,
+          "matches": 1,
+          "settled": 0,
+          "wins": 0,
+          "losses": 0,
+          "voids": 0,
+          "pending": 1,
+          "unresolved": 0,
+          "net": "0",
+          "risk": 0,
+          "totalRisk": 1,
+          "roi": null,
+          "hitRate": null,
+          "uncertainty": null,
+          "evidenceNote": "PILOT_MATCH_CLUSTERED",
+          "byMatch": [
+            {
+              "matchKey": "2026-10-20:17:13:00:00",
+              "recommendations": 1,
+              "totalRisk": 1,
+              "settled": 0,
+              "net": "0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "days": 30,
+      "from": "2026-09-21",
+      "through": "2026-10-20",
+      "recommendations": 1,
+      "matches": 1,
+      "settled": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0,
+      "pending": 1,
+      "unresolved": 0,
+      "net": "0",
+      "risk": 0,
+      "totalRisk": 1,
+      "roi": null,
+      "hitRate": null,
+      "uncertainty": null,
+      "evidenceNote": "PILOT_MATCH_CLUSTERED",
+      "byMatch": [
+        {
+          "matchKey": "2026-10-20:17:13:00:00",
+          "recommendations": 1,
+          "totalRisk": 1,
+          "settled": 0,
+          "net": "0"
+        }
+      ],
+      "byStar": [
+        {
+          "stars": 1,
+          "recommendations": 0,
+          "matches": 0,
+          "settled": 0,
+          "wins": 0,
+          "losses": 0,
+          "voids": 0,
+          "pending": 0,
+          "unresolved": 0,
+          "net": "0",
+          "risk": 0,
+          "totalRisk": 0,
+          "roi": null,
+          "hitRate": null,
+          "uncertainty": null,
+          "evidenceNote": "PILOT_MATCH_CLUSTERED",
+          "byMatch": []
+        },
+        {
+          "stars": 2,
+          "recommendations": 0,
+          "matches": 0,
+          "settled": 0,
+          "wins": 0,
+          "losses": 0,
+          "voids": 0,
+          "pending": 0,
+          "unresolved": 0,
+          "net": "0",
+          "risk": 0,
+          "totalRisk": 0,
+          "roi": null,
+          "hitRate": null,
+          "uncertainty": null,
+          "evidenceNote": "PILOT_MATCH_CLUSTERED",
+          "byMatch": []
+        },
+        {
+          "stars": 3,
+          "recommendations": 1,
+          "matches": 1,
+          "settled": 0,
+          "wins": 0,
+          "losses": 0,
+          "voids": 0,
+          "pending": 1,
+          "unresolved": 0,
+          "net": "0",
+          "risk": 0,
+          "totalRisk": 1,
+          "roi": null,
+          "hitRate": null,
+          "uncertainty": null,
+          "evidenceNote": "PILOT_MATCH_CLUSTERED",
+          "byMatch": [
+            {
+              "matchKey": "2026-10-20:17:13:00:00",
+              "recommendations": 1,
+              "totalRisk": 1,
+              "settled": 0,
+              "net": "0"
+            }
+          ]
+        },
+        {
+          "stars": 4,
+          "recommendations": 0,
+          "matches": 0,
+          "settled": 0,
+          "wins": 0,
+          "losses": 0,
+          "voids": 0,
+          "pending": 0,
+          "unresolved": 0,
+          "net": "0",
+          "risk": 0,
+          "totalRisk": 0,
+          "roi": null,
+          "hitRate": null,
+          "uncertainty": null,
+          "evidenceNote": "PILOT_MATCH_CLUSTERED",
+          "byMatch": []
+        },
+        {
+          "stars": 5,
+          "recommendations": 0,
+          "matches": 0,
+          "settled": 0,
+          "wins": 0,
+          "losses": 0,
+          "voids": 0,
+          "pending": 0,
+          "unresolved": 0,
+          "net": "0",
+          "risk": 0,
+          "totalRisk": 0,
+          "roi": null,
+          "hitRate": null,
+          "uncertainty": null,
+          "evidenceNote": "PILOT_MATCH_CLUSTERED",
+          "byMatch": []
+        }
+      ],
+      "byMarket": [
+        {
+          "market": "Ms15a",
+          "recommendations": 1,
+          "matches": 1,
+          "settled": 0,
+          "wins": 0,
+          "losses": 0,
+          "voids": 0,
+          "pending": 1,
+          "unresolved": 0,
+          "net": "0",
+          "risk": 0,
+          "totalRisk": 1,
+          "roi": null,
+          "hitRate": null,
+          "uncertainty": null,
+          "evidenceNote": "PILOT_MATCH_CLUSTERED",
+          "byMatch": [
+            {
+              "matchKey": "2026-10-20:17:13:00:00",
+              "recommendations": 1,
+              "totalRisk": 1,
+              "settled": 0,
+              "net": "0"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "decisionId": "11111111111111111111111111111111",
+      "previousDecisionId": null,
+      "episodeId": "33333333333333333333333333333333",
+      "matchKey": "2026-10-20:17:13:00:00",
+      "homeTeam": "Home",
+      "awayTeam": "Away",
+      "publishedAt": "2026-10-20T11:58:00.000Z",
+      "minute": 60,
+      "homeScore": 0,
+      "awayScore": 0,
+      "market": "Ms15a",
+      "admitted": true,
+      "selected": true,
+      "reason": "",
+      "quote": "2.123456789012345678901234567890123",
+      "quoteAt": "2026-10-20T11:58:00.000Z",
+      "consistencyScore": "81",
+      "stars": 3,
+      "poolWins": 36,
+      "poolTotal": 40,
+      "votesSupport": 2,
+      "votesUsed": 2,
+      "directionConflict": false,
+      "dissent": false,
+      "votes": [
+        {
+          "startsAt": "2026-10-20T11:54:00.000Z",
+          "endsAt": "2026-10-20T11:56:00.000Z",
+          "supports": true,
+          "estimated": true,
+          "home": "2",
+          "away": "0.5",
+          "total": "2.5"
+        },
+        {
+          "startsAt": "2026-10-20T11:56:00.000Z",
+          "endsAt": "2026-10-20T11:58:00.000Z",
+          "supports": true,
+          "estimated": true,
+          "home": "2",
+          "away": "0.5",
+          "total": "2.5"
+        }
+      ],
+      "caps": {
+        "sample": 3,
+        "direction": 5,
+        "timing": 4,
+        "xg": 4,
+        "time_goals": 5
+      },
+      "leaders": [
+        {
+          "home": 2,
+          "away": 0
+        }
+      ],
+      "countUnit": "SAP_REFERENCE_RECORD",
+      "physicalUniqueness": "UNPROVEN",
+      "result": {
+        "state": "PENDING",
+        "revision": 1,
+        "net": null
+      }
+    }
+  ],
+  "learning": {
+    "analysisOnly": true,
+    "autoPromotion": false,
+    "overall": {
+      "settled": 0,
+      "matches": 0,
+      "days": 0,
+      "requiredSettled": 100,
+      "requiredMatches": 30,
+      "requiredDays": 2,
+      "reviewAvailable": false
+    },
+    "byMarket": [
+      {
+        "market": "Ms15a",
+        "settled": 0,
+        "matches": 0,
+        "days": 0,
+        "requiredSettled": 30,
+        "requiredMatches": 10,
+        "requiredDays": 2,
+        "reviewAvailable": false
+      }
+    ],
+    "prospective": {
+      "state": "FROZEN_CANDIDATE_REGISTRATION_REQUIRED",
+      "requiredSettled": 50,
+      "requiredMatches": 20,
+      "requiredDays": 2
+    },
+    "note": "Review thresholds never authorize a rule, weight, model or release change."
+  }
+}

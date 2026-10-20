@@ -35,6 +35,7 @@ import {
   mockTeamForm
 } from "./mock-data";
 import { MobileApiError, type MobileApi } from "./mobile-api";
+import { rebuildMatchSchema, rebuildReportSchema } from "./rebuild-schemas";
 import { decisionContextSchema, type AnalysisContext, type MatchJourney } from "./schemas";
 import { previewJinxSignal, previewSelectionReading } from "../mascot/jinx-assessment";
 
@@ -74,6 +75,17 @@ async function mockDelay(signal?: AbortSignal): Promise<void> {
 }
 
 export const mockMobileApi: MobileApi = {
+  async getRebuildMatch(key, signal) {
+    await mockDelay(signal);
+    return rebuildMatchSchema.parse({ contractVersion: "btb-rebuild.v1", modelRegime: "BTB_RB1_20261018", matchKey: key, asOf: new Date().toISOString(),
+      availability: "UNAVAILABLE", reason: "DUMMY_NOT_PUBLISHED", current: null, history: [], candidates: [],
+      jinx: { source: "BACKEND", decisionId: null, reason: "DUMMY_NOT_PUBLISHED", summary: "Örnek veri gerçek öneri değildir." } });
+  },
+  async getRebuildReport(signal) {
+    await mockDelay(signal);
+    return rebuildReportSchema.parse({ contractVersion: "btb-rebuild-report.v1", modelRegime: "BTB_RB1_20261018", asOf: new Date().toISOString(), timeZone: "Europe/Istanbul",
+      availability: "UNAVAILABLE", reason: "DUMMY_NOT_PUBLISHED", accounting: "ONE_HYPOTHETICAL_UNIT_AT_FIRST_QUOTE", actualBetsAssumed: false, periods: [], recommendations: [], learning: null });
+  },
   async getMatchAnalysisContext(key, signal) {
     const [matchDetail, insight, periodScore, leagueContext, superLogs, liveContext,
       teamForm, matchPath, matchJourney] = await Promise.all([

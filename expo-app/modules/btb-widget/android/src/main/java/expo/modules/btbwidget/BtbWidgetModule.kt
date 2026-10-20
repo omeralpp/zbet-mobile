@@ -30,7 +30,7 @@ class BtbWidgetModule : Module() {
       if (
         json.has("toto_coverage_hits") ||
         json.has("toto_coverage_total") ||
-        json.has("super_min_rating")
+        json.has("super_min_rating") || json.has("super_model_regime")
       ) {
         BtbPerformanceWidgetProvider.storeAndUpdate(context, json)
       }

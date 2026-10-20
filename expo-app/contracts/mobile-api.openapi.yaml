@@ -12,6 +12,39 @@ security:
   - pilotKey: []
   - cloudflareAccess: []
 paths:
+  /v1/btb/rebuild/v1/matches/{key}:
+    get:
+      operationId: getRebuildMatch
+      description: Verified RB1 current selection and frozen recommendation history. No legacy fallback.
+      parameters:
+        - $ref: "#/components/parameters/Key"
+        - $ref: "#/components/parameters/RebuildVersion"
+      responses:
+        "200":
+          description: Canonical decision evidence; missing or stale evidence has no active current selection.
+          headers:
+            X-BTB-Rebuild:
+              schema: { type: string, const: btb-rebuild.v1 }
+          content:
+            application/json:
+              schema: { $ref: "./btb-rebuild-match.schema.json" }
+        default: { $ref: "#/components/responses/Error" }
+  /v1/btb/rebuild/v1/report:
+    get:
+      operationId: getRebuildReport
+      description: Istanbul 7/30-day first-publication cohorts, exact first-quote hypothetical results, match risk and manual review thresholds.
+      parameters:
+        - $ref: "#/components/parameters/RebuildVersion"
+      responses:
+        "200":
+          description: RB1 only. Pending, unresolved and void records are separate from settled denominators.
+          headers:
+            X-BTB-Rebuild:
+              schema: { type: string, const: btb-rebuild.v1 }
+          content:
+            application/json:
+              schema: { $ref: "./btb-rebuild-report.schema.json" }
+        default: { $ref: "#/components/responses/Error" }
   /v1/dashboard:
     get:
       operationId: getDashboard
@@ -474,6 +507,12 @@ components:
         domain), audience tag, RS256 signature, expiry and an allowlisted email.
         Grants read scope only: device routes answer 403.
   parameters:
+    RebuildVersion:
+      name: X-BTB-Rebuild
+      in: header
+      required: false
+      description: Opt into canonical RB1 summaries on dashboard/match routes. Clients require the response acknowledgement and never silently reuse A3.
+      schema: { type: string, enum: [btb-rebuild.v1] }
     DecisionContextVersion:
       name: X-BTB-Decision-Context
       in: header
@@ -537,6 +576,8 @@ components:
         - totalPressure
         - lastUpdatedAt
       properties:
+        rebuild:
+          $ref: "./btb-rebuild-summary.schema.json"
         key: { type: string, minLength: 1 }
         id: { type: integer, minimum: 1 }
         matchDate: { type: string, minLength: 1 }

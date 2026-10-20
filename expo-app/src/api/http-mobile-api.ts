@@ -33,9 +33,10 @@ import {
   totoProgramSchema
 } from "./schemas";
 import { MobileApiError, type MobileApi } from "./mobile-api";
+import { rebuildMatchSchema, rebuildReportSchema } from "./rebuild-schemas";
 
 const requestTimeoutMs = 15_000;
-const decisionContextHeaders = { "X-BTB-Decision-Context": "decision-context.v3" };
+const decisionContextHeaders = { "X-BTB-Decision-Context": "decision-context.v3", "X-BTB-Rebuild": "btb-rebuild.v1" };
 
 export function createHttpMobileApi(baseUrl: string): MobileApi {
   async function request<T>(
@@ -117,6 +118,8 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
         response.status === 204 ? undefined : await response.json();
       const requestedContext = new Headers(init.headers).get("X-BTB-Decision-Context");
       assertDecisionContextResponse(path, data, requestedContext, response.headers.get("X-BTB-Decision-Context"));
+      if (new Headers(init.headers).has("X-BTB-Rebuild") && response.headers.get("X-BTB-Rebuild") !== "btb-rebuild.v1")
+        throw new MobileApiError("Yeni algoritma sözleşmesi henüz kullanılamıyor.", 503, "REBUILD_VERSION_UNSUPPORTED");
       return schema.parse(data);
     } catch (error) {
       if (error instanceof MobileApiError) {
@@ -139,6 +142,10 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
   }
 
   return {
+    getRebuildMatch: (key, signal) => request(`/v1/btb/rebuild/v1/matches/${encodeURIComponent(key)}`, rebuildMatchSchema,
+      { headers: { "X-BTB-Rebuild": "btb-rebuild.v1" } }, signal),
+    getRebuildReport: signal => request("/v1/btb/rebuild/v1/report", rebuildReportSchema,
+      { headers: { "X-BTB-Rebuild": "btb-rebuild.v1" } }, signal),
     getDashboard: (signal) =>
       request("/v1/dashboard", dashboardSchema, { headers: decisionContextHeaders }, signal),
     getMatches: (signal) =>

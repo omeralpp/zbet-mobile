@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import {
@@ -15,38 +15,24 @@ import { MetricCard } from "@/src/components/MetricCard";
 import { Screen } from "@/src/components/Screen";
 import { SectionHeader } from "@/src/components/SectionHeader";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
-import { SuperLogCard } from "@/src/components/SuperLogCard";
 import { TotoProgramCard } from "@/src/components/TotoProgramCard";
-import { dashboardQuery, superKpisQuery } from "@/src/api/queries";
+import { dashboardQuery } from "@/src/api/queries";
+import { RebuildReportPanel } from "@/src/components/RebuildEvidencePanel";
 import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
 import { useModuleLayout } from "@/src/layout/module-layout-store";
 import type { OverviewModuleId } from "@/src/layout/module-registry";
 import { useLiveStarFilter } from "@/src/preferences/LiveStarFilterProvider";
-import { useSuperStarFilter } from "@/src/preferences/SuperStarFilterProvider";
 import { colors, semantic, spacing, typeScale } from "@/src/theme/theme";
 import {
   liveStarMetricCount,
   starMetricLabel
 } from "@/src/utils/decision-filters";
-import { formatSigned } from "@/src/utils/format";
-import { refreshPerformanceWidgetFromApi } from "@/src/widgets/performance-widget";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
-import { JinxDailyComment } from "@/src/mascot/JinxDailyComment";
-
-/** " · 17.10" when the daily figure belongs to an earlier match date. */
-function otherDayLabel(metricDate: string): string {
-  const now = new Date();
-  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  return metricDate === today || !/^\d{4}-\d{2}-\d{2}$/.test(metricDate)
-    ? "" : ` · ${metricDate.slice(8, 10)}.${metricDate.slice(5, 7)}`;
-}
 
 export default function DashboardScreen() {
   const router = useRouter();
   const { filter: liveStarFilter } = useLiveStarFilter();
-  const { filter: superStarFilter } = useSuperStarFilter();
   const query = useQuery(dashboardQuery);
-  const superKpis = useQuery(superKpisQuery);
   const [reordering, setReordering] = useState(false);
   const scrollRef = useRef<ScrollView | null>(null);
   const scrollOffset = useRef(0);
@@ -58,19 +44,7 @@ export default function DashboardScreen() {
     []
   );
 
-  useEffect(() => {
-    if (!query.data || !superKpis.data) {
-      return;
-    }
-    refreshPerformanceWidgetFromApi(superStarFilter).catch((error: unknown) => {
-      console.warn("Overview performans widgetını yenileyemedi.", error);
-    });
-  }, [query.data, superKpis.data, superStarFilter]);
-
   const dashboard = query.data;
-  const dailySuper = superKpis.data?.buckets[superStarFilter];
-  const profitColor =
-    dailySuper && dailySuper.profit >= 0 ? semantic.positive : semantic.negative;
   const featuredTitle = {
     SELECTED_LIVE: "Öne çıkan canlı maçlar",
     PRESSURE_LIVE: "Takipteki canlı maçlar",
@@ -115,41 +89,10 @@ export default function DashboardScreen() {
             liveStarMetricCount(dashboard.liveStarCounts, liveStarFilter)
           )}
         /></> : null}
-        <TutorialTarget id="home-super-metric" style={styles.metricTarget}>
-          {dailySuper && superKpis.data ? <><MetricCard
-            accent={profitColor}
-            detail={`${dailySuper.won} kazandı · ${dailySuper.lost} kaybetti${otherDayLabel(superKpis.data.metricDate)}`}
-            icon="chart-line"
-            label={`Günlük Super · ${starMetricLabel(superStarFilter)}`}
-            onPress={() =>
-              router.push({
-                pathname: "/super",
-                params: { scope: "LATEST_DAY" }
-              } as never)
-            }
-            value={formatSigned(dailySuper.profit)}
-          />
-          </> : superKpis.isLoading ? <LoadingState label="Günlük Super verisi hazırlanıyor" /> : <ErrorState error={superKpis.error} onRetry={() => { void superKpis.refetch(); }} />}
-        </TutorialTarget>
-        {dailySuper && superKpis.data ? <View style={styles.metricScope}>
-          <JinxDailyComment />
-          {superKpis.isError ? <Text accessibilityRole="alert" style={styles.scopeNote}>Günlük Super yenilenemedi; son veri gösteriliyor.</Text> : null}
-        </View> : null}
+        <RebuildReportPanel />
       </View>
     ),
-    recentSuper: dashboard ? (
-      <>
-        <SectionHeader
-          actionLabel="Tüm kararlar"
-          caption="En yeni kararlar"
-          onAction={() => router.push("/super" as never)}
-          title="Son Super hareketleri"
-        />
-        {dashboard.recentSuper.map((log) => (
-          <SuperLogCard key={log.key} log={log} />
-        ))}
-      </>
-    ) : undefined
+    recentSuper: null
   };
 
   if (dashboard?.featuredMatches.length) {
@@ -208,8 +151,8 @@ export default function DashboardScreen() {
         refreshControl: (
           <RefreshControl
             colors={[colors.green]}
-            onRefresh={() => Promise.all([query.refetch(), superKpis.refetch()])}
-            refreshing={query.isRefetching || superKpis.isRefetching}
+            onRefresh={() => query.refetch()}
+            refreshing={query.isRefetching}
             tintColor={colors.green}
           />
         )

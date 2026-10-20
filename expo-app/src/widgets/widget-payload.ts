@@ -15,7 +15,13 @@ export type BtbWidgetPayload = {
   super_min_rating?: number;
   super_wins?: number;
   super_losses?: number;
-  super_profit?: number;
+  super_profit?: number | string;
+  super_model_regime?: "BTB_RB1_20261018";
+  super_days?: 7 | 30;
+  super_available?: boolean;
+  super_pending?: number;
+  super_unresolved?: number;
+  super_voids?: number;
 };
 
 function asString(value: unknown): string {
@@ -184,10 +190,25 @@ export function buildWidgetPayload(
     }
   }
 
+  const rebuild = (data.modelRegime ?? data.model_regime ?? data.super_model_regime) === "BTB_RB1_20261018";
+  if (data.super_model_regime === "BTB_RB1_20261018" && typeof data.super_available === "boolean") {
+    payload.super_model_regime = "BTB_RB1_20261018";
+    payload.super_available = data.super_available;
+    payload.super_days = data.super_days === 30 ? 30 : 7;
+    for (const key of ["super_pending", "super_unresolved", "super_voids"] as const) {
+      const value = nonNegativeInteger(data[key]); if (value !== null) payload[key] = value;
+    }
+    if (data.super_available && typeof data.super_profit === "string" && /^-?\d+(?:\.\d+)?$/.test(data.super_profit)) {
+      const wins = nonNegativeInteger(data.super_wins), losses = nonNegativeInteger(data.super_losses), min = nonNegativeInteger(data.super_min_rating);
+      if (wins !== null && losses !== null && min !== null && min >= 1 && min <= 5) {
+        payload.super_min_rating = min; payload.super_wins = wins; payload.super_losses = losses; payload.super_profit = data.super_profit;
+      } else payload.super_available = false;
+    } else if (data.super_available) payload.super_available = false;
+  }
   const minRating = nonNegativeInteger(
     data.super_min_rating ?? data.superMinRating
   );
-  if (minRating !== null && minRating >= 1 && minRating <= 5) {
+  if (!rebuild && minRating !== null && minRating >= 1 && minRating <= 5) {
     const wins =
       nonNegativeInteger(data.super_wins ?? data.superWins ?? 0) ?? 0;
     const losses =

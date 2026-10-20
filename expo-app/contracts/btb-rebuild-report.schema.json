@@ -1,0 +1,1103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "contractVersion": {
+      "type": "string",
+      "const": "btb-rebuild-report.v1"
+    },
+    "modelRegime": {
+      "type": "string",
+      "const": "BTB_RB1_20261018"
+    },
+    "asOf": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+    },
+    "timeZone": {
+      "type": "string",
+      "const": "Europe/Istanbul"
+    },
+    "availability": {
+      "type": "string",
+      "enum": [
+        "AVAILABLE",
+        "UNAVAILABLE"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "accounting": {
+      "type": "string",
+      "const": "ONE_HYPOTHETICAL_UNIT_AT_FIRST_QUOTE"
+    },
+    "actualBetsAssumed": {
+      "type": "boolean",
+      "const": false
+    },
+    "periods": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "recommendations": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "matches": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "settled": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "wins": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "losses": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "voids": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "pending": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "unresolved": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "net": {
+            "type": "string",
+            "pattern": "^-?\\d+(?:\\.\\d+)?$"
+          },
+          "risk": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "totalRisk": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "roi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hitRate": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evidenceNote": {
+            "type": "string",
+            "const": "PILOT_MATCH_CLUSTERED"
+          },
+          "uncertainty": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "method": {
+                    "type": "string",
+                    "const": "MATCH_CLUSTER_BOOTSTRAP"
+                  },
+                  "lower": {
+                    "type": "number"
+                  },
+                  "upper": {
+                    "type": "number"
+                  },
+                  "samples": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "method",
+                  "lower",
+                  "upper",
+                  "samples"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "byMatch": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "matchKey": {
+                  "type": "string"
+                },
+                "recommendations": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "totalRisk": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "settled": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "net": {
+                  "type": "string",
+                  "pattern": "^-?\\d+(?:\\.\\d+)?$"
+                }
+              },
+              "required": [
+                "matchKey",
+                "recommendations",
+                "totalRisk",
+                "settled",
+                "net"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "days": {
+            "anyOf": [
+              {
+                "type": "number",
+                "const": 7
+              },
+              {
+                "type": "number",
+                "const": 30
+              }
+            ]
+          },
+          "from": {
+            "type": "string"
+          },
+          "through": {
+            "type": "string"
+          },
+          "byStar": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "recommendations": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "matches": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "settled": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "wins": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "losses": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "voids": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "pending": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "unresolved": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "net": {
+                  "type": "string",
+                  "pattern": "^-?\\d+(?:\\.\\d+)?$"
+                },
+                "risk": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "totalRisk": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "roi": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "hitRate": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "evidenceNote": {
+                  "type": "string",
+                  "const": "PILOT_MATCH_CLUSTERED"
+                },
+                "uncertainty": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "method": {
+                          "type": "string",
+                          "const": "MATCH_CLUSTER_BOOTSTRAP"
+                        },
+                        "lower": {
+                          "type": "number"
+                        },
+                        "upper": {
+                          "type": "number"
+                        },
+                        "samples": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "method",
+                        "lower",
+                        "upper",
+                        "samples"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "byMatch": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "matchKey": {
+                        "type": "string"
+                      },
+                      "recommendations": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "totalRisk": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "settled": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "net": {
+                        "type": "string",
+                        "pattern": "^-?\\d+(?:\\.\\d+)?$"
+                      }
+                    },
+                    "required": [
+                      "matchKey",
+                      "recommendations",
+                      "totalRisk",
+                      "settled",
+                      "net"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "stars": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "recommendations",
+                "matches",
+                "settled",
+                "wins",
+                "losses",
+                "voids",
+                "pending",
+                "unresolved",
+                "net",
+                "risk",
+                "totalRisk",
+                "roi",
+                "hitRate",
+                "evidenceNote",
+                "uncertainty",
+                "byMatch",
+                "stars"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "byMarket": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "recommendations": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "matches": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "settled": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "wins": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "losses": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "voids": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "pending": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "unresolved": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "net": {
+                  "type": "string",
+                  "pattern": "^-?\\d+(?:\\.\\d+)?$"
+                },
+                "risk": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "totalRisk": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "roi": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "hitRate": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "evidenceNote": {
+                  "type": "string",
+                  "const": "PILOT_MATCH_CLUSTERED"
+                },
+                "uncertainty": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "method": {
+                          "type": "string",
+                          "const": "MATCH_CLUSTER_BOOTSTRAP"
+                        },
+                        "lower": {
+                          "type": "number"
+                        },
+                        "upper": {
+                          "type": "number"
+                        },
+                        "samples": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "method",
+                        "lower",
+                        "upper",
+                        "samples"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "byMatch": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "matchKey": {
+                        "type": "string"
+                      },
+                      "recommendations": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "totalRisk": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "settled": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "net": {
+                        "type": "string",
+                        "pattern": "^-?\\d+(?:\\.\\d+)?$"
+                      }
+                    },
+                    "required": [
+                      "matchKey",
+                      "recommendations",
+                      "totalRisk",
+                      "settled",
+                      "net"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "market": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "recommendations",
+                "matches",
+                "settled",
+                "wins",
+                "losses",
+                "voids",
+                "pending",
+                "unresolved",
+                "net",
+                "risk",
+                "totalRisk",
+                "roi",
+                "hitRate",
+                "evidenceNote",
+                "uncertainty",
+                "byMatch",
+                "market"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "recommendations",
+          "matches",
+          "settled",
+          "wins",
+          "losses",
+          "voids",
+          "pending",
+          "unresolved",
+          "net",
+          "risk",
+          "totalRisk",
+          "roi",
+          "hitRate",
+          "evidenceNote",
+          "uncertainty",
+          "byMatch",
+          "days",
+          "from",
+          "through",
+          "byStar",
+          "byMarket"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "recommendations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "market": {
+            "type": "string"
+          },
+          "admitted": {
+            "type": "boolean"
+          },
+          "selected": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^-?\\d+(?:\\.\\d+)?$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "quoteAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "consistencyScore": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^-?\\d+(?:\\.\\d+)?$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stars": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "poolWins": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "poolTotal": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "votesSupport": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "votesUsed": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "directionConflict": {
+            "type": "boolean"
+          },
+          "dissent": {
+            "type": "boolean"
+          },
+          "votes": {
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "startsAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                },
+                "endsAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                },
+                "supports": {
+                  "type": "boolean"
+                },
+                "estimated": {
+                  "type": "boolean"
+                },
+                "home": {
+                  "type": "string",
+                  "pattern": "^-?\\d+(?:\\.\\d+)?$"
+                },
+                "away": {
+                  "type": "string",
+                  "pattern": "^-?\\d+(?:\\.\\d+)?$"
+                },
+                "total": {
+                  "type": "string",
+                  "pattern": "^-?\\d+(?:\\.\\d+)?$"
+                }
+              },
+              "required": [
+                "startsAt",
+                "endsAt",
+                "supports",
+                "estimated",
+                "home",
+                "away",
+                "total"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "caps": {
+            "type": "object",
+            "properties": {
+              "sample": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "direction": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "timing": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "xg": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "time_goals": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "sample",
+              "direction",
+              "timing",
+              "xg",
+              "time_goals"
+            ],
+            "additionalProperties": false
+          },
+          "decisionId": {
+            "type": "string",
+            "pattern": "^[A-F0-9]{32}$"
+          },
+          "previousDecisionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-F0-9]{32}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "episodeId": {
+            "type": "string",
+            "pattern": "^[A-F0-9]{32}$"
+          },
+          "matchKey": {
+            "type": "string"
+          },
+          "homeTeam": {
+            "type": "string"
+          },
+          "awayTeam": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "minute": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "homeScore": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "awayScore": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "leaders": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "home": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "away": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "home",
+                "away"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "countUnit": {
+            "type": "string"
+          },
+          "physicalUniqueness": {
+            "type": "string"
+          },
+          "result": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": [
+                  "WIN",
+                  "LOSS",
+                  "VOID",
+                  "PENDING",
+                  "UNRESOLVED"
+                ]
+              },
+              "revision": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "net": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^-?\\d+(?:\\.\\d+)?$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "state",
+              "revision",
+              "net"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "market",
+          "admitted",
+          "selected",
+          "reason",
+          "quote",
+          "quoteAt",
+          "consistencyScore",
+          "stars",
+          "poolWins",
+          "poolTotal",
+          "votesSupport",
+          "votesUsed",
+          "directionConflict",
+          "dissent",
+          "votes",
+          "caps",
+          "decisionId",
+          "previousDecisionId",
+          "episodeId",
+          "matchKey",
+          "homeTeam",
+          "awayTeam",
+          "publishedAt",
+          "minute",
+          "homeScore",
+          "awayScore",
+          "leaders",
+          "countUnit",
+          "physicalUniqueness",
+          "result"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "learning": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "analysisOnly": {
+              "type": "boolean",
+              "const": true
+            },
+            "autoPromotion": {
+              "type": "boolean",
+              "const": false
+            },
+            "overall": {
+              "type": "object",
+              "properties": {
+                "settled": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "matches": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "days": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "requiredSettled": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "requiredMatches": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "requiredDays": {
+                  "type": "number",
+                  "const": 2
+                },
+                "reviewAvailable": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "settled",
+                "matches",
+                "days",
+                "requiredSettled",
+                "requiredMatches",
+                "requiredDays",
+                "reviewAvailable"
+              ],
+              "additionalProperties": false
+            },
+            "byMarket": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "settled": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "matches": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "days": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "requiredSettled": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "requiredMatches": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "requiredDays": {
+                    "type": "number",
+                    "const": 2
+                  },
+                  "reviewAvailable": {
+                    "type": "boolean"
+                  },
+                  "market": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "settled",
+                  "matches",
+                  "days",
+                  "requiredSettled",
+                  "requiredMatches",
+                  "requiredDays",
+                  "reviewAvailable",
+                  "market"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "prospective": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "type": "string",
+                  "const": "FROZEN_CANDIDATE_REGISTRATION_REQUIRED"
+                },
+                "requiredSettled": {
+                  "type": "number",
+                  "const": 50
+                },
+                "requiredMatches": {
+                  "type": "number",
+                  "const": 20
+                },
+                "requiredDays": {
+                  "type": "number",
+                  "const": 2
+                }
+              },
+              "required": [
+                "state",
+                "requiredSettled",
+                "requiredMatches",
+                "requiredDays"
+              ],
+              "additionalProperties": false
+            },
+            "note": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "analysisOnly",
+            "autoPromotion",
+            "overall",
+            "byMarket",
+            "prospective",
+            "note"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "contractVersion",
+    "modelRegime",
+    "asOf",
+    "timeZone",
+    "availability",
+    "reason",
+    "accounting",
+    "actualBetsAssumed",
+    "periods",
+    "recommendations",
+    "learning"
+  ],
+  "additionalProperties": false
+}

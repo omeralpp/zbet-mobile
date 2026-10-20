@@ -43,6 +43,9 @@ function notificationMatchKey(data: NotificationData): string {
 export function notificationDataToPath(data: NotificationData): string {
   const matchKey = notificationMatchKey(data);
   if (matchKey) {
+    const model = asString(data.model_regime ?? data.modelRegime), decision = asString(data.decision_id ?? data.decisionId);
+    if (model === "BTB_RB1_20261018" && /^[0-9A-F]{32}$/.test(decision))
+      return `/match/${encodeURIComponent(matchKey)}?decision=${decision}`;
     return `/match/${encodeURIComponent(matchKey)}`;
   }
 

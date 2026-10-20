@@ -83,6 +83,16 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
             changed = true;
         }
 
+        boolean rebuild = "BTB_RB1_20261018".equals(payload.optString("super_model_regime"));
+        if (rebuild) {
+            editor.putString("super_model_regime", "BTB_RB1_20261018");
+            editor.putInt("super_days", payload.optInt("super_days", 7));
+            editor.putInt("super_pending", payload.optInt("super_pending", 0));
+            editor.putInt("super_unresolved", payload.optInt("super_unresolved", 0));
+            editor.putInt("super_voids", payload.optInt("super_voids", 0));
+            if (!payload.optBoolean("super_available", false)) editor.putBoolean(KEY_HAS_SUPER, false);
+            changed = true;
+        }
         Integer minRating = parseNonNegativeInteger(
                 payload.opt("super_min_rating"));
         boolean hasSuperThreshold =
@@ -97,7 +107,7 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
                 ? parseSuperProfit(payload.opt("super_profit"))
                 : null;
 
-        if (hasSuperThreshold &&
+        if ((!rebuild || payload.optBoolean("super_available", false)) && hasSuperThreshold &&
                 superWins != null &&
                 superLosses != null &&
                 superProfit != null) {
@@ -179,11 +189,17 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
                 superProfit == null ? BigDecimal.ZERO : superProfit;
         String profitValue = hasSuper ? formatProfit(safeProfit) : "--";
         String superLabel = hasSuper
-                ? getStars(minRating) + "+ Profit"
+                ? "A3 · " + getStars(minRating) + "+ Profit"
                 : context.getString(R.string.btb_kpi_super_title);
         String superDetail = hasSuper
                 ? superWins + " kazandı · " + superLosses + " kaybetti"
                 : context.getString(R.string.btb_kpi_waiting);
+        if ("BTB_RB1_20261018".equals(preferences.getString("super_model_regime", ""))) {
+            superLabel = "BTB · " + preferences.getInt("super_days", 7) + " gün"
+                    + (hasSuper && minRating > 0 ? " · " + getStars(minRating) + "+" : "");
+            superDetail = (hasSuper ? superWins + " kazandı · " + superLosses + " kaybetti" : "Sonuç bekleniyor")
+                    + " · " + preferences.getInt("super_pending", 0) + " bekleyen";
+        }
         int profitColor = safeProfit.signum() > 0
                 ? palette.success
                 : safeProfit.signum() < 0 ? palette.error : palette.muted;

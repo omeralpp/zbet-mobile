@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { rebuildSummarySchema } from "./rebuild-schemas";
 
 const isoDateTime = z.string().min(1);
 const finiteNumber = z.number().finite();
@@ -137,6 +138,7 @@ export const matchSummarySchema = z.strictObject({
   pressureProvider: z.string().min(1).nullable().optional(),
   pressureSnapshotAt: isoDateTime.nullable().optional(),
   decisionContext: decisionContextSchema.optional(),
+  rebuild: rebuildSummarySchema.optional(),
   lastUpdatedAt: isoDateTime
 });
 

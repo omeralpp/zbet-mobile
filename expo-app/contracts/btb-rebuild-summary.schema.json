@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "contractVersion": {
+      "type": "string",
+      "const": "btb-rebuild.v1"
+    },
+    "modelRegime": {
+      "type": "string",
+      "const": "BTB_RB1_20261018"
+    },
+    "matchKey": {
+      "type": "string"
+    },
+    "asOf": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+    },
+    "availability": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "WAITING_DATA",
+        "UNAVAILABLE",
+        "NOT_STARTED"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "current": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "decisionId": {
+              "type": "string",
+              "pattern": "^[A-F0-9]{32}$"
+            },
+            "market": {
+              "type": "string"
+            },
+            "quote": {
+              "type": "string",
+              "pattern": "^-?\\d+(?:\\.\\d+)?$"
+            },
+            "stars": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5
+            },
+            "consistencyScore": {
+              "type": "string",
+              "pattern": "^-?\\d+(?:\\.\\d+)?$"
+            },
+            "validUntil": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+            }
+          },
+          "required": [
+            "decisionId",
+            "market",
+            "quote",
+            "stars",
+            "consistencyScore",
+            "validUntil"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "contractVersion",
+    "modelRegime",
+    "matchKey",
+    "asOf",
+    "availability",
+    "reason",
+    "current"
+  ],
+  "additionalProperties": false
+}

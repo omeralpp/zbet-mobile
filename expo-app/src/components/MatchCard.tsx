@@ -32,6 +32,8 @@ import { ChangeEmphasis } from "./ChangeEmphasis";
 import { SurfaceDivider, SurfaceMaterial } from "./SurfaceMaterial";
 import { RatingStars } from "./RatingStars";
 import { TeamLogo } from "./TeamLogo";
+import { useRebuildClock } from "./RebuildEvidencePanel";
+import { currentRebuild } from "@/src/utils/rebuild-current";
 
 function TeamName({
   name,
@@ -77,7 +79,7 @@ function TeamName({
 export function MatchCard({
   compact = false,
   insight,
-  match,
+  match: sourceMatch,
   onTogglePinned,
   pinned = false,
   onSelect,
@@ -94,6 +96,9 @@ export function MatchCard({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const now = useRebuildClock();
+  const match = sourceMatch.rebuild && !currentRebuild(sourceMatch.rebuild, now)
+    ? { ...sourceMatch, selectedOdd: "", rating: 0, liveRate: null, currentRate: null } : sourceMatch;
   const live = match.status === "LIVE" || match.status === "HALF_TIME";
   const minuteProgress = deriveMatchMinuteProgress(match.status, match.elapsed);
   const currentMarket = formatCurrentMarketRate(
@@ -222,7 +227,7 @@ export function MatchCard({
       <View style={styles.bottomRow}>
         <View style={styles.decisionBlock}>
           <Text style={styles.decisionEyebrow}>
-            {recordedSelection(match.selectedOdd, match.currentRate, match.decisionContext) ? "KAYITLI SEÇİM" : "BTB SEÇİMİ"}
+            {match.rebuild ? match.selectedOdd ? "GÜNCEL BTB SEÇİMİ" : "TEYİT BEKLENİYOR" : recordedSelection(match.selectedOdd, match.currentRate, match.decisionContext) ? "KAYITLI SEÇİM" : "BTB SEÇİMİ"}
           </Text>
           <Text style={styles.odd}>
             {formatSelection(match.selectedOdd) || "Şu anda seçim yok"}
@@ -230,12 +235,12 @@ export function MatchCard({
           <View style={styles.ratingRow}>
             <RatingStars rating={match.rating} />
             {!compact ? <Text style={styles.ratingLabel}>
-              {match.rating > 0
+              {match.rebuild ? "Tutarlılık ve kanıt kalitesi" : match.rating > 0
                 ? `BTB rating · ${Math.min(5, match.rating)}/5`
                 : "BTB rating"}
             </Text> : null}
           </View>
-          {!compact && match.selectedOdd && decisionModel(match.decisionContext) &&
+          {!compact && !match.rebuild && match.selectedOdd && decisionModel(match.decisionContext) &&
             <Text style={styles.ratingLabel}>{decisionModelLabel(match.decisionContext)}</Text>}
         </View>
         {footer.showsRate && match.selectedOdd ? <View accessibilityLabel={`Seçim oranı ${formatRate(match.liveRate)}`}>

@@ -20,7 +20,10 @@ import type {
   TotoProgram
 } from "./schemas";
 
+import type { RebuildMatch, RebuildReport } from "./rebuild-schemas";
 export interface MobileApi {
+  getRebuildMatch(key: string, signal?: AbortSignal): Promise<RebuildMatch>;
+  getRebuildReport(signal?: AbortSignal): Promise<RebuildReport>;
   getMatchAnalysisContext(key: string, signal?: AbortSignal): Promise<AnalysisContext>;
   getMatchJinxAssessment(key: string, snapshotId: string, signal?: AbortSignal): Promise<JinxAssessment>;
   getDashboard(signal?: AbortSignal): Promise<Dashboard>;

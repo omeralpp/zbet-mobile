@@ -20,6 +20,8 @@ import {
 import { mobileApi } from "@/src/api";
 import type { AnalysisContext } from "@/src/api/schemas";
 import { JinxAssessmentCard } from "@/src/components/JinxAssessmentCard";
+import { RebuildEvidencePanel, useRebuildClock } from "@/src/components/RebuildEvidencePanel";
+import { currentRebuild } from "@/src/utils/rebuild-current";
 import { analysisNeedsRefresh } from "@/src/mascot/jinx-assessment";
 import { useJinxAnalyticalSurface } from "@/src/mascot/JinxPreferencesProvider";
 import { ChangeEmphasis } from "@/src/components/ChangeEmphasis";
@@ -208,6 +210,7 @@ export function MatchDetailView({
 }) {
   useJinxAnalyticalSurface();
   const key = matchKey;
+  const now = useRebuildClock();
   const router = useRouter();
   const handleEdgeSwipeBack = () => {
     if (router.canGoBack()) {
@@ -248,7 +251,7 @@ export function MatchDetailView({
   const periodScoreQuery = sourceView(context.data?.sources.periodScore);
   const superLogs = sourceView(context.data?.sources.superLogs);
   const liveContext = sourceView(context.data?.sources.liveContext);
-  const intelligence = mountsIntelligenceSurfaces(runtimeConfig.mobileIntelligence);
+  const intelligence = mountsIntelligenceSurfaces(runtimeConfig.mobileIntelligence) && !query.data?.rebuild;
   const teamFormEnabled = mountsIntelligenceSurfaces(runtimeConfig.teamFormIntelligence);
   const teamForm = sourceView(context.data?.sources.teamForm);
   const journey = sourceView(context.data?.sources.matchJourney);
@@ -300,7 +303,8 @@ export function MatchDetailView({
     );
   }
 
-  const match = query.data;
+  const match = query.data.rebuild && !currentRebuild(query.data.rebuild, now)
+    ? { ...query.data, selectedOdd: "", rating: 0, liveRate: null, currentRate: null } : query.data;
   const currentDecisionKey =
     relatedDecisions.find(
       (log) =>
@@ -608,6 +612,7 @@ export function MatchDetailView({
   }
 
   const moduleItems = order
+    .filter(id => !match.rebuild || !["matchPath", "pressure", "decision"].includes(id))
     .filter((id): id is LiveDetailModuleId => Boolean(moduleNodes[id as LiveDetailModuleId]))
     .map((id) => ({ id, node: moduleNodes[id] }));
 
@@ -714,7 +719,7 @@ export function MatchDetailView({
           style={styles.heroDivider}
         />
         <Text style={styles.verdictEyebrow}>
-          {recordedSelection(match.selectedOdd, match.currentRate, match.decisionContext) ? "KAYITLI BTB SEÇİMİ" : "BTB SEÇİMİ"}
+          {match.rebuild ? match.selectedOdd ? "GÜNCEL BTB SEÇİMİ" : "TEYİT BEKLENİYOR" : recordedSelection(match.selectedOdd, match.currentRate, match.decisionContext) ? "KAYITLI BTB SEÇİMİ" : "BTB SEÇİMİ"}
         </Text>
         <View style={styles.verdictRow}>
           <View style={[styles.verdictCell, styles.verdictCellWide]}>
@@ -751,7 +756,7 @@ export function MatchDetailView({
         </View>
       </TutorialTarget>
 
-      {intelligence ? <JinxAssessmentCard context={context.data} assessment={jinx.data}
+      {query.data?.rebuild ? <RebuildEvidencePanel matchKey={key} /> : intelligence ? <JinxAssessmentCard context={context.data} assessment={jinx.data}
         pending={jinx.isPending && jinx.variables?.matchKey === key}
         error={jinx.isError && jinx.variables?.matchKey === key} onAsk={() => void askJinx()} /> : null}
 

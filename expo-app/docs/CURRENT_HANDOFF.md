@@ -1,8 +1,8 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-10-18
+Son güncelleme: 2026-10-20
 
-Mod: `OBSERVATION`
+Mod: `LOCAL_IMPLEMENTATION / DELIVERY_PENDING`
 
 Çalışma alanı: `C:\dev\btb-cdoex` · Aktif task: `BTB Mobile Next - Aktif`
 
@@ -14,6 +14,38 @@ sections below instead of stacking above them; the section headings are selected
 by `btb-codex/config/thread-context.config.json`, so keep them.
 
 ## Son checkpoint
+
+20 October — accelerated RB1 implementation under M21/TASK-0167: the owner will
+observe real matches in the owner-only pilot. Local shared Android/web changes
+now include canonical evidence, immutable opportunity history, cached-selection
+expiry, backend-only Jinx, Istanbul 7/30-day first-quote results and match risk.
+A3 remains separate. Android widgets read the same RB1 report; desktop web uses
+the shared report instead. BFF has versioned read-only evidence routes. The
+JSON Schemas in `contracts/btb-rebuild-*.schema.json` are generated from the
+shared runtime validators. Final Mobile quality gate passed: type/lint/tests,
+doctor, Android bundle and verified edge web export. BFF: 642 tests passed.
+Browser preview verified the report waiting state and separate A3 control;
+this is local mock evidence, not a delivered-client/real-match smoke. 61A passed
+at `dbfcae7b1bb6f36f25aa313fb07128e4e2ac7649`: 124 harmless SAP methods,
+clean syntax, complete uncapped ATC with zero new P1 (110 inherited P1 and 178
+warnings retained). MODEL remains OFF. No new client or BFF delivery has
+occurred. The ee48ccd pair below remains accepted. Final primary Git, signed
+APK/private delivery, companion web, BFF and model activation await consolidated
+delivery approval. Current cross-repo checkpoint:
+`BTB Logs/model_lab/reports/BTB_REBUILD_ACCELERATED_CHECKPOINT_2026-10-20.md`.
+
+19 October — BTB rebuild coordination: owner approvals 33A–36A complete the
+A7 client contract under M21/TASK-0167. M20/TASK-0156 retain Mobile ownership
+with revised original-quote unit results, match exposure, evidence-quality
+stars and Istanbul 7/30-day reporting. Exact approved contract:
+`BTB Logs/model_lab/specs/BTB_REBUILD_CLIENT_2026-10-18.md` in the workspace.
+New-model Android/web must share the canonical backend decision and Jinx
+explanation, frozen original facts, explicit unavailable/version states and
+separate legacy cohorts. Client/BFF runtime code and releases are unchanged by
+this checkpoint. TASK-0152/M17 and M10/M18/M19 were SUPERSEDED without success
+credit under the approved rebuild; references to their old gates below belong
+to the delivered historical batches, not the new acceptance path. The prepared
+two-helper SAP validation batch passed under 38A (25 native Unit methods, clean syntax and complete ATC); helpers remain unconnected to MAIN. Producer activation and coordinated Android/web delivery remain separate approvals.
 
 18 October: TASK-0162 is **COMPLETE** on both surfaces; NXT-OBS-169..179 closed and
 archived in `docs/observation_archive/task0162_ux_jinx_corrections_2026-10-18.md`.
