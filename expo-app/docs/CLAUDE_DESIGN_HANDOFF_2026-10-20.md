@@ -5,18 +5,19 @@ Workspace `C:/dev/btb-cdoex`. Start through `btb` and the
 Owner request: continue web/mobile visual design after the RB1 delivery.
 Do not create or message another task automatically.
 
-Post-delivery readiness check found TASK-0170 / P1 in the BTB backend:
-evaluation time precedes pool completion, fixture selectors miss live odds, and
-180-second acquisition spacing resets pressure confirmation. Pressure arithmetic
-works; current recommendation readiness FAILS. The detailed dated report is
-`BTB Logs/model_lab/reports/BTB_RB1_READINESS_BLOCKERS_2026-10-20.md`.
-Keep this repair with the BTB owner. Design may proceed independently while
-preserving failure reasons and the decision contract; do not simulate stars or
-record the theme as resolution of the backend blocker.
+21 October: TASK-0170's three technical repairs are deployed under 66A/67A.
+265 harmless SAP methods passed; post-read clock, 19 exact live aliases and
+the minute-based sampler are active. See
+`BTB Logs/model_lab/reports/BTB_RB1_REPAIR_COMPLETE_2026-10-21.md`.
+**Claude scope is theme only.** Keep the backend decision, states, validation
+and evidence semantics. Actual new-match pressure/star admission remains a BTB
+cutover observation (TASK-0168), not a native-test or design success claim.
+TASK-0171 tracks nine stale stored LIVE fixtures confirmed PLAYED at the provider;
+do not conceal or repair that backend status problem with client-side guessing.
 
 The implementation and delivery plan is complete. Android/web artifact source
 is `a00b743ba8dab6664595a9b6ca177afb0cff2c1a`; web `20261020T190600Z-a00b743`.
-BFF `5eea01c476edd5ac9ddfe197925d22bbaae879fe`, DEV backend `6b0139167f2fca098d8a5f7eeeff5ea6cbc1e9f2`.
+BFF `c6b4b0dab6bc4c5be5aa83158ccdc7217eed88cf`, DEV backend `0f24c9debb5c5f3d09e933813147fead7dcdeb57`.
 The canonical model/evidence/learning contract is implemented and active.
 Technical receipts are linked from CURRENT_HANDOFF.md; do not repeat native
 activation or rebuild delivered artifacts solely to recover context.

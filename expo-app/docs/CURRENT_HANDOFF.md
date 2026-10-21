@@ -1,6 +1,6 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-10-20
+Son güncelleme: 2026-10-21
 Mod: `OBSERVATION`
 Delivery: `OWNER_ONLY_DEV_PILOT / PAIRED_RELEASE_COMPLETE`
 Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
@@ -33,10 +33,10 @@ Previous accepted ee48ccd APK/web pair is retained for bounded recovery.
 ## Repo durumu
 
 Artifact source `zbet-mobile/master` `a00b743ba8dab6664595a9b6ca177afb0cff2c1a`; subsequent handoff-only
-commits do not change those artifacts. BFF source `5eea01c476edd5ac9ddfe197925d22bbaae879fe`;
-backend DEV exact main `6b0139167f2fca098d8a5f7eeeff5ea6cbc1e9f2`.
+commits do not change those artifacts. BFF source `c6b4b0dab6bc4c5be5aa83158ccdc7217eed88cf`;
+backend DEV exact main `0f24c9debb5c5f3d09e933813147fead7dcdeb57`.
 Model `BTB_RB1_20261018`, policy `2BD9B781186351B53E1215B1CDCD245BD073C8CEEFB4C8B9468EFF3E18BE6F62`,
-producer `ED89FB445977071384DFB9356FB3061C949D53FFA5ADD85D71CC23DD679A84AE`. BFF/SAP identities agree.
+producer `18714D2689D36E8E0A8AB3AD62437CC46C51741D9832FDD540C018B04B81B150`. BFF/SAP identities agree; explicit ED89 predecessor history is retained.
 
 ## Doğrulama
 
@@ -50,13 +50,15 @@ Live-label repair accepts `39'`/`62′` without changing the model or client API
 
 ## Açık observation / blokajlar
 
-New live readiness blocker: TASK-0170 / P1, owner BTB. The 20 October
-23:15–23:20 Istanbul check found an evaluation-clock ordering defect, fixture-only
-quote mappings rejecting real live markets, and pressure resets from 180-second
-job spacing. Arithmetic is correct, but recommendations are not ready. See
-`BTB Logs/model_lab/reports/BTB_RB1_READINESS_BLOCKERS_2026-10-20.md`.
-Theme work must retain backend reasons and must not manufacture stars or treat
-this P1 as a visual issue. Earlier paired delivery remains a historical fact.
+TASK-0170 repaired/deployed under 66A/67A: 265 harmless SAP tests, clean syntax,
+zero unaccepted new P1 and 26 explicitly accepted source-bound CADENCE findings.
+The sampler's actual minute-based executions and 47-object/114-component source
+readback passed. BFF 646 tests and local/public list/detail/report smoke passed.
+Receipt: `BTB Logs/model_lab/reports/BTB_RB1_REPAIR_COMPLETE_2026-10-21.md`.
+Actual live pressure/star admission is still UNOBSERVED (TASK-0168). Nine old
+stored LIVE fixtures are PLAYED at the provider; terminal-state refresh is
+TASK-0171, BTB-owned. Claude changes theme only; preserve unavailable states and
+do not manufacture stars or hide this separate data issue. APK/web are unchanged.
 
 Quality/pressure/episode/result observations go
 to `BTB Logs/cutover_2026-10-20/CUTOVER_NOTES.md`; client usability findings go
