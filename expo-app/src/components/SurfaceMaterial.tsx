@@ -1,7 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, View } from "react-native";
 import { colors, surfaceGradient, themeMode } from "@/src/theme/theme";
-import { resolveEdgeTrace } from "@/src/theme/surface";
+import { edgeBar, resolveEdgeTrace } from "@/src/theme/surface";
 
 /**
  * The Intelligence Noir material for one content surface.
@@ -15,7 +15,8 @@ import { resolveEdgeTrace } from "@/src/theme/surface";
  * `accent` is the semantic colour of whatever the surface is reporting — pass
  * `semantic.live` for a live match and nothing at all otherwise. An accent is a
  * claim that this card is worth looking at before the others, so passing one by
- * default would spend the language's whole budget on the first screen.
+ * default would spend the language's whole budget on the first screen. It is
+ * drawn as the short edge bar; an inert surface keeps the barely-lit hairline.
  */
 export function SurfaceMaterial({
   accent,
@@ -42,15 +43,19 @@ export function SurfaceMaterial({
         start={{ x: 0, y: 0 }}
         style={StyleSheet.absoluteFill}
       />
-      <LinearGradient
-        colors={trace.colors}
-        end={{ x: 1, y: 0 }}
-        start={{ x: 0, y: 0 }}
-        style={[
-          styles.trace,
-          { opacity: trace.opacity, width: `${trace.widthRatio * 100}%` }
-        ]}
-      />
+      {accent ? (
+        <View style={[styles.bar, { backgroundColor: accent }]} />
+      ) : (
+        <LinearGradient
+          colors={trace.colors}
+          end={{ x: 1, y: 0 }}
+          start={{ x: 0, y: 0 }}
+          style={[
+            styles.trace,
+            { opacity: trace.opacity, width: `${trace.widthRatio * 100}%` }
+          ]}
+        />
+      )}
     </View>
   );
 }
@@ -92,6 +97,14 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     height: 1
+  },
+  bar: {
+    position: "absolute",
+    top: 0,
+    left: edgeBar.inset,
+    width: edgeBar.width,
+    height: edgeBar.height,
+    borderRadius: edgeBar.height
   },
   divider: {
     height: 1,

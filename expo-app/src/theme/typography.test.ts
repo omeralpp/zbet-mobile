@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  fontFamilies,
   hasReadableLineBox,
   minimumFontSize,
   renderableWeights,
@@ -19,11 +20,22 @@ test("no role drops below the readable floor", () => {
   }
 });
 
-test("every weight resolves to a face Android actually ships", () => {
+test("every weight resolves to a bundled face", () => {
   for (const [name, role] of roles) {
     assert.ok(
       renderableWeights.includes(role.fontWeight),
-      `${name} asks for ${role.fontWeight}, which Android resolves to another face`
+      `${name} asks for ${role.fontWeight}, which resolves to another face`
+    );
+  }
+});
+
+test("numerics use the condensed family and words use the text family", () => {
+  const numeric = ["display", "score", "metric", "metricCompact"];
+  for (const [name, role] of roles) {
+    assert.equal(
+      role.fontFamily,
+      numeric.includes(name) ? fontFamilies.numeric : fontFamilies.text,
+      `${name} uses the wrong family`
     );
   }
 });
@@ -62,9 +74,9 @@ test("only the tracked kicker is uppercased", () => {
   assert.ok(typeScale.eyebrow.letterSpacing >= 1);
 });
 
-test("large numerics tighten and small text does not", () => {
+test("only the hero numeric tightens and small text opens up", () => {
   assert.ok(typeScale.display.letterSpacing < 0);
-  assert.ok(typeScale.score.letterSpacing < 0);
+  assert.ok(typeScale.score.letterSpacing <= 0);
   assert.ok(typeScale.micro.letterSpacing > 0);
   assert.ok(typeScale.label.letterSpacing > 0);
 });

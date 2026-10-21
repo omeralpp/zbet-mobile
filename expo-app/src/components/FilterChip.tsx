@@ -1,16 +1,19 @@
-import { Pressable, StyleSheet, Text } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, interaction, radii, spacing, typeScale } from "@/src/theme/theme";
 
 export function FilterChip({
   label,
   count,
   selected,
-  onPress
+  onPress,
+  dot
 }: {
   label: string;
   count?: number;
   selected: boolean;
   onPress: () => void;
+  /** Status colour of what the chip filters to, drawn as a leading dot. */
+  dot?: string | undefined;
 }) {
   return (
     <Pressable
@@ -19,15 +22,18 @@ export function FilterChip({
       accessibilityState={{ selected }}
       aria-pressed={selected}
       onPress={onPress}
-      style={({ pressed }) => [
+      style={({ pressed, hovered }) => [
         styles.chip,
+        hovered && !selected && styles.hovered,
         selected && styles.selected,
         pressed && styles.pressed
       ]}
     >
-      <Text style={[styles.label, selected && styles.selectedLabel]}>
-        {label}{count === undefined ? "" : ` ${count}`}
-      </Text>
+      {dot && !selected ? <View style={[styles.dot, { backgroundColor: dot }]} /> : null}
+      <Text style={[styles.label, selected && styles.selectedLabel]}>{label}</Text>
+      {count === undefined ? null : (
+        <Text style={[styles.count, selected && styles.selectedLabel]}>{count}</Text>
+      )}
     </Pressable>
   );
 }
@@ -35,21 +41,38 @@ export function FilterChip({
 const styles = StyleSheet.create({
   chip: {
     minHeight: interaction.minTouchTarget,
-    justifyContent: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     paddingHorizontal: spacing.md,
     borderRadius: radii.round,
-    backgroundColor: colors.backgroundElevated,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.borderSoft
+    borderColor: colors.border
+  },
+  hovered: {
+    backgroundColor: colors.surfaceStrong
   },
   selected: {
     backgroundColor: colors.actionFill,
-    borderColor: colors.blue
+    borderColor: colors.actionFill
+  },
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4
   },
   label: {
-    color: colors.textMuted,
-    ...typeScale.bodyCompact,
+    color: colors.text,
+    ...typeScale.body,
+    fontSize: 14,
+    lineHeight: 20,
     fontWeight: "700"
+  },
+  count: {
+    color: colors.text,
+    ...typeScale.metricCompact,
+    fontSize: 16
   },
   selectedLabel: {
     color: colors.onAction

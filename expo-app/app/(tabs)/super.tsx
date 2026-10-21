@@ -7,7 +7,6 @@ import {
   Platform,
   Pressable,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Switch,
   Text,
@@ -36,7 +35,8 @@ import {
   interaction,
   radii,
   shadows,
-  spacing
+  spacing,
+  typeScale
 } from "@/src/theme/theme";
 import {
   formatFixtureDateTime,
@@ -68,16 +68,39 @@ const localTabs = ["ALL", "STAR"] as const;
 
 export default function SuperScreen() {
   const [legacy, setLegacy] = useState(false);
-  if (legacy) return <View style={{ flex: 1 }}>
-    <Pressable accessibilityRole="button" onPress={() => setLegacy(false)} style={{ padding: spacing.md }}>
-      <Text style={{ color: colors.blue }}>Yeni BTB sonuçlarına dön · Bu ekran eski A3 kayıtlarıdır</Text>
-    </Pressable><LegacySuperScreen /></View>;
-  return <Screen><ScrollView contentContainerStyle={{ padding: spacing.md, gap: spacing.md }}>
-    <RebuildReportPanel history />
-    <Pressable accessibilityRole="button" onPress={() => setLegacy(true)} style={{ minHeight: 44, justifyContent: "center" }}>
-      <Text style={{ color: colors.blue }}>Eski A3 tarihçesini ayrı incele</Text>
+  const breakpoint = useBreakpoint();
+  const wideReport = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
+  if (legacy) return <View style={styles.legacyRoot}>
+    {/* The old cohort stays one tap away but never shares a surface with the
+        new results: this bar names it and is the only way back. */}
+    <Pressable accessibilityRole="button" onPress={() => setLegacy(false)}
+      style={({ pressed }) => [styles.legacyBar, pressed && styles.legacyPressed]}>
+      <MaterialCommunityIcons color={colors.blue} name="arrow-left" size={iconSizes.inline} />
+      <Text style={styles.legacyBarText}>Yeni BTB sonuçlarına dön</Text>
+      <View style={styles.legacyTag}><Text style={styles.legacyTagText}>ESKİ A3</Text></View>
     </Pressable>
-  </ScrollView></Screen>;
+    <Text style={styles.legacyNote}>Bu ekran eski A3 kayıtlarıdır.</Text>
+    <LegacySuperScreen />
+  </View>;
+  const legacyLink = <Pressable accessibilityRole="button" onPress={() => setLegacy(true)}
+    style={({ pressed, hovered }) => [styles.legacyLink, hovered && styles.legacyLinkHover, pressed && styles.legacyPressed]}>
+    <View style={styles.legacyIcon}>
+      <MaterialCommunityIcons color={colors.textMuted} name="history" size={iconSizes.control} />
+    </View>
+    <View style={styles.legacyCopy}>
+      <Text style={styles.legacyTitle}>Eski A3 tarihçesini ayrı incele</Text>
+      <Text style={styles.legacyCaption}>Eski A3 kayıtları ayrı tutulur.</Text>
+    </View>
+    <MaterialCommunityIcons color={colors.textMuted} name="chevron-right" size={iconSizes.control} />
+  </Pressable>;
+  return <Screen brand eyebrow="BTB SUPER" title="Karar günlüğü" wide>
+    <View style={styles.rebuild}>
+      {wideReport ? <RebuildReportPanel aside={legacyLink} columns history /> : <>
+        <RebuildReportPanel history />
+        {legacyLink}
+      </>}
+    </View>
+  </Screen>;
 }
 function LegacySuperScreen() {
   const reduceMotion = useReducedMotion();
@@ -418,6 +441,83 @@ function LegacySuperScreen() {
 }
 
 const styles = StyleSheet.create({
+  rebuild: {
+    gap: spacing.md
+  },
+  legacyLink: {
+    alignItems: "center",
+    borderColor: colors.borderSoft,
+    borderRadius: 20,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing.md,
+    minHeight: 64,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md
+  },
+  legacyLinkHover: {
+    backgroundColor: colors.surfaceStrong
+  },
+  legacyIcon: {
+    alignItems: "center",
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: radii.md,
+    height: 40,
+    justifyContent: "center",
+    width: 40
+  },
+  legacyCopy: {
+    flex: 1,
+    minWidth: 0
+  },
+  legacyTitle: {
+    color: colors.text,
+    ...typeScale.identity,
+    fontWeight: "700"
+  },
+  legacyCaption: {
+    color: colors.textMuted,
+    ...typeScale.label,
+    letterSpacing: 0
+  },
+  legacyRoot: {
+    backgroundColor: colors.background,
+    flex: 1
+  },
+  legacyBar: {
+    alignItems: "center",
+    backgroundColor: colors.surfaceStrong,
+    flexDirection: "row",
+    gap: spacing.sm,
+    minHeight: interaction.minTouchTarget + 4,
+    paddingHorizontal: spacing.lg
+  },
+  legacyBarText: {
+    color: colors.blue,
+    flex: 1,
+    ...typeScale.bodyCompact,
+    fontWeight: "700"
+  },
+  legacyTag: {
+    backgroundColor: colors.background,
+    borderRadius: radii.round,
+    paddingHorizontal: 9,
+    paddingVertical: 4
+  },
+  legacyTagText: {
+    color: colors.textMuted,
+    ...typeScale.eyebrow
+  },
+  legacyNote: {
+    color: colors.textMuted,
+    ...typeScale.label,
+    letterSpacing: 0,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm
+  },
+  legacyPressed: {
+    opacity: 0.72
+  },
   screen: {
     paddingBottom: 0
   },
@@ -439,9 +539,9 @@ const styles = StyleSheet.create({
     paddingRight: spacing.xs
   },
   openFilterLabel: {
-    color: colors.textMuted,
-    fontSize: 12,
-    fontWeight: "800"
+    color: colors.text,
+    ...typeScale.bodyCompact,
+    fontWeight: "700"
   },
   openFilterDisabled: {
     opacity: 0.5
@@ -451,8 +551,8 @@ const styles = StyleSheet.create({
   },
   scope: {
     flex: 1,
-    color: colors.textSubtle,
-    fontSize: 10
+    color: colors.textMuted,
+    ...typeScale.meta
   },
   scopeRow: {
     minHeight: 24,
@@ -464,8 +564,8 @@ const styles = StyleSheet.create({
   },
   dayScopeAction: {
     color: colors.blue,
-    fontSize: 11,
-    fontWeight: "900"
+    ...typeScale.bodyCompact,
+    fontWeight: "700"
   },
   dayScopeButton: {
     minHeight: interaction.minTouchTarget,
@@ -513,9 +613,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.actionFill
   },
   dayScopeOptionText: {
-    color: colors.textMuted,
-    fontSize: 12,
-    fontWeight: "800"
+    color: colors.text,
+    ...typeScale.bodyCompact,
+    fontWeight: "700"
   },
   dayScopeOptionTextSelected: {
     color: colors.onAction

@@ -10,6 +10,7 @@ import { ShortcutHelp } from "./ShortcutHelp";
 import { RefreshDataButton } from "./RefreshDataButton";
 import type { ShortcutAction } from "./shortcuts";
 import { useDesktopShortcuts } from "./use-desktop-shortcuts";
+import { useSidebarPreference } from "./sidebar-preference";
 import { AccessibleDialog } from "./AccessibleDialog";
 
 /**
@@ -45,16 +46,22 @@ export function AppShell({ children }: PropsWithChildren) {
   useDesktopShortcuts(onAction, overlay !== null);
   const close = useCallback(() => setOverlay(null), []);
 
+  const desktop = isAtLeast(breakpoint, "medium");
+  const sidebar = useSidebarPreference(isAtLeast(breakpoint, "wide"));
+
   return (
     <View style={styles.shell}>
-      {isAtLeast(breakpoint, "medium") ? (
+      {desktop ? (
         <DesktopSidebar
-          expanded={isAtLeast(breakpoint, "wide")}
+          expanded={sidebar.expanded}
           onOpenHelp={() => openOverlay("help")}
           onOpenPalette={() => openOverlay("palette")}
+          onToggleExpanded={sidebar.toggle}
         />
       ) : null}
-      <View style={styles.content}><View style={styles.toolbar}><RefreshDataButton /></View>{children}</View>
+      {/* Desktop keeps the refresh beside the page title, clear of Jinx's
+          corner; a narrow window gets it in each screen's brand bar instead. */}
+      <View style={styles.content}>{children}{desktop ? <View style={styles.toolbar}><RefreshDataButton /></View> : null}</View>
       {overlay === "palette" ? <AccessibleDialog label="Yüklenen verilerde ara" onClose={close} returnFocus={returnFocus}><CommandPalette onClose={close} /></AccessibleDialog> : null}
       {overlay === "help" ? <AccessibleDialog label="Klavye kısayolları" onClose={close} returnFocus={returnFocus}><ShortcutHelp onClose={close} /></AccessibleDialog> : null}
     </View>
@@ -62,7 +69,7 @@ export function AppShell({ children }: PropsWithChildren) {
 }
 
 const styles = StyleSheet.create({
-  toolbar: { minHeight: 44, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
+  toolbar: { position: "absolute", top: 18, right: 96, zIndex: 2 },
   shell: {
     backgroundColor: colors.background,
     flex: 1,

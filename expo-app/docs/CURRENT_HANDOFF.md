@@ -17,6 +17,22 @@ Ongoing algorithm observation is BTB cutover work, not a remaining design gate.
 Claude may continue shared Android/web design from
 `CLAUDE_DESIGN_HANDOFF_2026-10-20.md`.
 
+## Tema batch'i (Claude, 2026-10-21) — push edildi, release bekliyor
+
+Design canvas v40 teması `11d4b12` üzerine yalnız tema olarak, iki yüzeyde
+birlikte uygulandı ve sahip onayıyla `master`'a commit/push edildi; APK ve web
+henüz bu commit'ten üretilmedi. Gömülü Manrope/Barlow Condensed (OFL,
+`assets/fonts`), RB1 karar ve kanıt ile sonuç ekranları ve Karar fişi, board
+düzeninde Özet/Canlı/Super/Toto/Daha Fazla, web kenar çubuğu daraltma oku.
+Backend kararı, durumlar, doğrulayıcılar, sözleşmeler ve kanıt anlamı
+değişmedi. Typecheck, lint, 691 test, tooling 32, marka, doctor 20/20, edge ve
+mocks web export (scratch; yayınlanmış `dist-web` korunur) ve tarayıcıda iki
+tema/iki genişlik geçti. İzole, gizli değersiz mocks x86_64 APK emulator
+smoke'u (yerel yazı tipleri, RB1 ekranları, Karar fişi, iki tema) geçti; bu
+derleme emülatördeki önceki test kurulumunun yerine kuruldu (uygulama verisi
+korundu, sahip telefonu etkilenmedi). Ayrıntı, platform istisnaları ve panodan
+bilinçli sapmalar: `THEME_BATCH_2026-10-21.md`. Yeni bulgular NXT-OBS-180/181.
+
 ## Final yerel pilot APK
 
 [Private RB1 APK](https://drive.google.com/file/d/1X314Uy3RKwTcC-4FvqAYpfNkD7XasZ2S/view?usp=drivesdk)
@@ -86,8 +102,10 @@ describes the agent's rejected deletion attempt, not the owner's later actions.
 
 ## Exact next steps
 
-Continue Android/web design together in Claude using the handoff below. Keep
-backend decisions, frozen first facts, result accounting and Jinx evidence
+Coordinated APK/web release of the pushed 2026-10-21 theme batch: signing and
+private APK delivery and the matching web publication each need their own
+explicit approval; physical Xiaomi and published-web smokes close NXT-OBS-181.
+Keep backend decisions, frozen first facts, result accounting and Jinx evidence
 meaning unchanged unless the owner separately approves a model change.
 Every future client release still requires a new clean pushed common commit,
 paired APK/web artifacts, actual installation before web publication and both

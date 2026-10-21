@@ -16,7 +16,7 @@ import {
   deriveLiveRateTrend,
   pressureFooterCaption
 } from "@/src/utils/live-card-indicators";
-import { derivePressureBalance } from "@/src/utils/pressure-balance";
+import { derivePressureBalance, type PressureDirection } from "@/src/utils/pressure-balance";
 import { currentIntervalPressure } from "@/src/utils/recent-pressure";
 import { decisionModel, decisionModelLabel, recordedSelection } from "@/src/utils/decision-model";
 import { deriveMatchMinuteProgress } from "@/src/utils/match-minute-progress";
@@ -29,48 +29,71 @@ import {
 } from "@/src/utils/format";
 import { LiveDot } from "./LiveDot";
 import { ChangeEmphasis } from "./ChangeEmphasis";
-import { SurfaceDivider, SurfaceMaterial } from "./SurfaceMaterial";
+import { SurfaceMaterial } from "./SurfaceMaterial";
 import { RatingStars } from "./RatingStars";
 import { TeamLogo } from "./TeamLogo";
 import { useRebuildClock } from "./RebuildEvidencePanel";
 import { currentRebuild } from "@/src/utils/rebuild-current";
 
+/**
+ * Home pressure is drawn in intelligence blue and away pressure in orange, the
+ * same pair the pressure chart uses, so the arrow beside a team name and the bar
+ * on the detail screen are one vocabulary.
+ */
+const pressureSide = {
+  HOME: { icon: "home-variant-outline", color: semantic.intelligence, label: "ev sahibinde" },
+  AWAY: { icon: "airplane", color: colors.orange, label: "deplasmanda" }
+} as const;
+
 function TeamName({
   name,
   participantId,
   position,
-  redCards
+  redCards,
+  compact,
+  pressure,
+  pressureEstimated
 }: {
   name: string;
   participantId?: string | null | undefined;
   position?: number | null | undefined;
   redCards?: number | undefined;
+  compact: boolean;
+  /** Set only on the side that currently has the pressure. */
+  pressure?: Exclude<PressureDirection, "BALANCED"> | undefined;
+  pressureEstimated: boolean;
 }) {
+  const side = pressure ? pressureSide[pressure] : null;
   return (
     <View style={styles.teamRow}>
-      <TeamLogo participantId={participantId} size="standard" />
-      <Text style={styles.team}>
+      <TeamLogo participantId={participantId} size={compact ? "compact" : "standard"} />
+      <Text numberOfLines={1} style={styles.team}>
         {name}
+        {position ? (
+          <Text accessibilityLabel={`Lig sırası ${position}`} style={styles.rank}>
+            {` #${position}`}
+          </Text>
+        ) : null}
       </Text>
-      {position ? (
-        <Text accessibilityLabel={`Lig sırası ${position}`} style={styles.rank}>
-          #{position}
-        </Text>
-      ) : null}
       {redCards && redCards > 0 ? (
         <View
           accessibilityLabel={`${name}, ${redCards} kırmızı kart`}
           style={styles.redCardBadge}
         >
-          <MaterialCommunityIcons
-            color={semantic.negative}
-            name="card"
-            size={iconSizes.micro}
-          />
+          <View style={styles.redCard} />
           {redCards > 1 ? (
             <Text style={styles.redCardCount}>{redCards}</Text>
           ) : null}
         </View>
+      ) : null}
+      {side ? (
+        <MaterialCommunityIcons
+          accessibilityLabel={`${pressureEstimated ? "Tahmini baskı" : "Baskı"} ${side.label}`}
+          color={side.color}
+          name={side.icon}
+          size={compact ? iconSizes.small : 17}
+          style={pressureEstimated ? styles.estimated : undefined}
+        />
       ) : null}
     </View>
   );
@@ -101,6 +124,7 @@ export function MatchCard({
     ? { ...sourceMatch, selectedOdd: "", rating: 0, liveRate: null, currentRate: null } : sourceMatch;
   const live = match.status === "LIVE" || match.status === "HALF_TIME";
   const minuteProgress = deriveMatchMinuteProgress(match.status, match.elapsed);
+  const kickoff = formatFixtureDateTime(match.matchDate, match.matchTime);
   const currentMarket = formatCurrentMarketRate(
     match.currentRate,
     match.selectedOdd,
@@ -109,9 +133,9 @@ export function MatchCard({
   const rateTrend = deriveLiveRateTrend(match.liveRate, match.currentRate);
   const rateTrendIcon =
     rateTrend === "UP"
-      ? "trending-up"
+      ? "arrow-top-right"
       : rateTrend === "DOWN"
-        ? "trending-down"
+        ? "arrow-bottom-right"
         : "minus";
   const rateTrendColor = rateTrend === "UP" || rateTrend === "DOWN" ? semantic.intelligence : colors.textSubtle;
   const intervalPressure = currentIntervalPressure(match.decisionContext);
@@ -120,25 +144,58 @@ export function MatchCard({
     match.decisionContext ? intervalPressure.difference : match.pressureSource === "CURRENT_MATCH" ? match.pressureDiff : null,
     intervalPressure.measured
   );
-  const pressureIcon =
-    pressureBalance.direction === "HOME"
-      ? "home-variant-outline"
-      : pressureBalance.direction === "AWAY"
-        ? "airplane"
-        : "scale-balance";
-  const pressureColor =
-    pressureBalance.direction === "BALANCED"
-      ? semantic.neutral
-      : semantic.intelligence;
+  const pressureEstimated = Boolean(match.decisionContext?.recentPressure.estimated);
+  const pressureDirection =
+    pressureBalance.hasData && pressureBalance.direction !== "BALANCED"
+      ? pressureBalance.direction
+      : undefined;
+  const pressureValue = formatAbsolute(
+    (match.decisionContext ? intervalPressure.difference : match.pressureDiff) ?? 0,
+    1
+  );
   const footer = deriveLiveCardFooter(
     match.selectedOdd,
     match.currentRate,
     pressureBalance.hasData
   );
+  const leader =
+    match.homeScore === match.awayScore ? null : match.homeScore > match.awayScore ? "HOME" : "AWAY";
+  // Spelled in capitals here rather than left to `textTransform`, which follows
+  // the device locale on Android and would print a dotless I in SEÇİMİ.
+  const eyebrow = match.rebuild
+    ? match.selectedOdd ? "GÜNCEL BTB SEÇİMİ" : "TEYİT BEKLENİYOR"
+    : recordedSelection(match.selectedOdd, match.currentRate, match.decisionContext) ? "KAYITLI SEÇİM" : "BTB SEÇİMİ";
+  const ratingCaption = match.rebuild
+    ? "Tutarlılık ve kanıt kalitesi"
+    : match.rating > 0 ? `BTB rating · ${Math.min(5, match.rating)}/5` : "BTB rating";
+  const rateSpoken = `${currentMarket.label} ${currentMarket.value}, ${
+    rateTrend === "UP"
+      ? "seçim oranından yüksek"
+      : rateTrend === "DOWN"
+        ? "seçim oranından düşük"
+        : "değişim yok veya güncel oran bulunamadı"
+  }`;
+  const pressureSpoken = pressureBalance.hasData
+    ? `${pressureEstimated ? "Tahmini yakın aralık" : "Güncel"} baskı farkı ${pressureValue}, ${
+        pressureBalance.direction === "HOME"
+          ? "ev sahibi baskıda"
+          : pressureBalance.direction === "AWAY"
+            ? "deplasman baskıda"
+            : "dengeli"
+      }`
+    : "Baskı verisi bekleniyor";
+
+  const trendGlyph = rateTrend !== "UNAVAILABLE" ? (
+    <MaterialCommunityIcons
+      color={rateTrendColor}
+      name={rateTrendIcon}
+      size={compact ? iconSizes.small : iconSizes.inline}
+    />
+  ) : null;
 
   return (
-    <View style={[styles.card, selected && styles.cardSelected]}>
-      <SurfaceMaterial {...(live ? { accent: semantic.live } : {})} radius={radii.lg} />
+    <View style={[styles.card, compact && styles.cardCompact, selected && styles.cardSelected]}>
+      <SurfaceMaterial {...(live ? { accent: semantic.live } : {})} radius={compact ? radii.lg : 20} />
     <Pressable
       accessibilityHint={onSelect ? "Maç detayını yandaki panelde gösterir" : "Maç detayını açar"}
       accessibilityRole="button"
@@ -155,176 +212,139 @@ export function MatchCard({
               }
             } as never)
       }
-      style={({ pressed }) => [styles.cardAction, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.cardAction, compact && styles.cardActionCompact, pressed && styles.pressed]}
     >
-      <View style={[styles.topRow, onTogglePinned ? styles.withPin : null]}>
-        <Text numberOfLines={1} style={styles.league}>
-          {match.league}
-        </Text>
-        <View style={[styles.topActions, onTogglePinned ? styles.pinSpace : null]}>
-          <View style={[styles.timePill, live && styles.livePill]}>
-            {live ? <LiveDot /> : null}
-            <Text style={[styles.timeText, live && styles.liveText]}>
-              {compact && live ? minuteProgress.label : formatFixtureDateTime(match.matchDate, match.matchTime)}
-            </Text>
-          </View>
+      <View style={[styles.topRow, onTogglePinned ? styles.pinSpace : null]}>
+        <View style={styles.leagueBlock}>
+          <Text numberOfLines={1} style={styles.league}>
+            {match.league}
+          </Text>
+          {!compact && (live || minuteProgress.visible) ? (
+            <Text numberOfLines={1} style={styles.kickoff}>{kickoff}</Text>
+          ) : null}
+        </View>
+        <View
+          accessibilityLabel={live ? `Maç süresi ${minuteProgress.label}` : undefined}
+          style={[styles.timePill, live && styles.livePill]}
+        >
+          {live ? <LiveDot /> : null}
+          <Text numberOfLines={1} style={[styles.timeText, live && styles.liveText]}>
+            {minuteProgress.visible ? minuteProgress.label : kickoff}
+          </Text>
         </View>
       </View>
 
-      {minuteProgress.visible && !compact ? (
-        <View
-          accessibilityLabel="Maç süresi"
-          accessibilityRole="progressbar"
-          accessibilityValue={{
-            max: 90,
-            min: 0,
-            now: Math.min(90, minuteProgress.minute),
-            text: minuteProgress.label
-          }}
-          style={styles.minuteProgress}
-        >
-          <View style={styles.minuteProgressTrack}>
-            <View
-              style={[
-                styles.minuteProgressFill,
-                { width: `${minuteProgress.ratio * 100}%` }
-              ]}
-            />
-          </View>
-          <Text style={[styles.minuteProgressValue, live && styles.liveText]}>
-            {minuteProgress.label}
-          </Text>
-        </View>
-      ) : null}
-
-      <View style={styles.scoreRow}>
-        <View style={styles.teams}>
-          <View style={styles.participantRow}>
+      <View style={[styles.teams, compact && styles.teamsCompact]}>
+        <View style={styles.participantRow}>
           <TeamName
+            compact={compact}
             name={match.homeTeam}
             participantId={match.homeParticipantId}
             position={insight?.homeStandingPosition}
+            pressure={pressureDirection === "HOME" ? "HOME" : undefined}
+            pressureEstimated={pressureEstimated}
             redCards={insight?.homeRedCards}
           />
-          <ChangeEmphasis kind="alert" token={match.homeScore}><Text style={styles.score}>{match.homeScore}</Text></ChangeEmphasis>
-          </View><View style={styles.participantRow}>
+          <ChangeEmphasis kind="alert" token={match.homeScore}>
+            <Text style={[styles.score, compact && styles.scoreCompact, leader === "AWAY" && styles.scoreTrailing]}>{match.homeScore}</Text>
+          </ChangeEmphasis>
+        </View>
+        <View style={styles.participantRow}>
           <TeamName
+            compact={compact}
             name={match.awayTeam}
             participantId={match.awayParticipantId}
             position={insight?.awayStandingPosition}
+            pressure={pressureDirection === "AWAY" ? "AWAY" : undefined}
+            pressureEstimated={pressureEstimated}
             redCards={insight?.awayRedCards}
           />
-          <ChangeEmphasis kind="alert" token={match.awayScore}><Text style={styles.score}>{match.awayScore}</Text></ChangeEmphasis>
-          </View>
+          <ChangeEmphasis kind="alert" token={match.awayScore}>
+            <Text style={[styles.score, compact && styles.scoreCompact, leader === "HOME" && styles.scoreTrailing]}>{match.awayScore}</Text>
+          </ChangeEmphasis>
         </View>
       </View>
 
-      <SurfaceDivider
-        {...(live ? { accent: semantic.live } : {})}
-        style={styles.divider}
-      />
-
-      <View style={styles.bottomRow}>
-        <View style={styles.decisionBlock}>
-          <Text style={styles.decisionEyebrow}>
-            {match.rebuild ? match.selectedOdd ? "GÜNCEL BTB SEÇİMİ" : "TEYİT BEKLENİYOR" : recordedSelection(match.selectedOdd, match.currentRate, match.decisionContext) ? "KAYITLI SEÇİM" : "BTB SEÇİMİ"}
-          </Text>
+      {compact ? (
+        <View style={styles.compactDecision}>
+          <View style={styles.compactDecisionCopy}>
+            <Text numberOfLines={1} style={styles.compactOdd}>
+              {formatSelection(match.selectedOdd) || "Şu anda seçim yok"}
+            </Text>
+            {match.selectedOdd ? <RatingStars rating={match.rating} size={12} /> : null}
+          </View>
+          {footer.showsRate ? (
+            <View accessibilityLabel={`${match.selectedOdd ? `Seçim oranı ${formatRate(match.liveRate)}, ` : ""}${rateSpoken}`} style={styles.compactRates}>
+              {match.selectedOdd ? <Text style={styles.compactRate}>{formatRate(match.liveRate)}</Text> : null}
+              <ChangeEmphasis style={styles.rateHeadline} token={currentMarket.value}>
+                {trendGlyph}
+                <Text style={[styles.compactRate, { color: rateTrendColor }]}>{currentMarket.value}</Text>
+              </ChangeEmphasis>
+            </View>
+          ) : null}
+        </View>
+      ) : (
+        <View style={styles.decisionPanel}>
+          <View style={styles.decisionHeader}>
+            <Text numberOfLines={1} style={styles.decisionEyebrow}>{eyebrow}</Text>
+            {match.selectedOdd ? <RatingStars rating={match.rating} size={13} /> : null}
+          </View>
           <Text style={styles.odd}>
             {formatSelection(match.selectedOdd) || "Şu anda seçim yok"}
           </Text>
-          <View style={styles.ratingRow}>
-            <RatingStars rating={match.rating} />
-            {!compact ? <Text style={styles.ratingLabel}>
-              {match.rebuild ? "Tutarlılık ve kanıt kalitesi" : match.rating > 0
-                ? `BTB rating · ${Math.min(5, match.rating)}/5`
-                : "BTB rating"}
-            </Text> : null}
-          </View>
-          {!compact && !match.rebuild && match.selectedOdd && decisionModel(match.decisionContext) &&
-            <Text style={styles.ratingLabel}>{decisionModelLabel(match.decisionContext)}</Text>}
-        </View>
-        {footer.showsRate && match.selectedOdd ? <View accessibilityLabel={`Seçim oranı ${formatRate(match.liveRate)}`}>
-          <Text style={styles.rate}>{formatRate(match.liveRate)}</Text>
-          <Text style={styles.rateLabel}>seçim oranı</Text>
-        </View> : null}
-        {footer.showsRate ? (
-          <View
-            accessibilityLabel={`${currentMarket.label} ${currentMarket.value}, ${
-              rateTrend === "UP"
-                ? "seçim oranından yüksek"
-                : rateTrend === "DOWN"
-                  ? "seçim oranından düşük"
-                  : "değişim yok veya güncel oran bulunamadı"
-            }`}
-            style={styles.rateBlock}
-          >
-            <ChangeEmphasis
-              style={styles.rateHeadline}
-              token={currentMarket.value}
-            >
-              {rateTrend !== "UNAVAILABLE" ? (
-                <MaterialCommunityIcons
-                  color={rateTrendColor}
-                  name={rateTrendIcon}
-                  size={iconSizes.inline}
-                />
+          {match.selectedOdd || match.rebuild ? (
+            <Text style={styles.caption}>{ratingCaption}</Text>
+          ) : null}
+          {!match.rebuild && match.selectedOdd && decisionModel(match.decisionContext) ? (
+            <Text style={styles.caption}>{decisionModelLabel(match.decisionContext)}</Text>
+          ) : null}
+          {footer.showsRate ? (
+            <View style={styles.rateRow}>
+              {match.selectedOdd ? (
+                <View accessibilityLabel={`Seçim oranı ${formatRate(match.liveRate)}`} style={styles.rateBlock}>
+                  <Text style={styles.rate}>{formatRate(match.liveRate)}</Text>
+                  <Text style={styles.rateLabel}>seçim oranı</Text>
+                </View>
               ) : null}
-              <Text style={[styles.rate, { color: rateTrendColor }]}>
-                {currentMarket.value}
-              </Text>
-            </ChangeEmphasis>
-            <Text style={styles.rateLabel}>{currentMarket.label}</Text>
-          </View>
-        ) : null}
-        {footer.showsPressure && !compact ? (
-          <View
+              <View accessibilityLabel={rateSpoken} style={[styles.rateBlock, styles.rateBlockEnd]}>
+                <ChangeEmphasis style={styles.rateHeadline} token={currentMarket.value}>
+                  {trendGlyph}
+                  <Text style={[styles.rate, { color: rateTrendColor }]}>
+                    {currentMarket.value}
+                  </Text>
+                </ChangeEmphasis>
+                <Text style={styles.rateLabel}>{currentMarket.label}</Text>
+              </View>
+            </View>
+          ) : null}
+          {footer.showsPressure ? (
             // The spoken label keeps `Güncel` that the visible caption drops.
             // Speech has no row width to lose, and a listener cannot see the
             // live card framing that makes the figure's currency obvious.
-            accessibilityLabel={
-              pressureBalance.hasData
-                ? `${match.decisionContext?.recentPressure.estimated ? "Tahmini yakın aralık" : "Güncel"} baskı farkı ${formatAbsolute((match.decisionContext ? intervalPressure.difference : match.pressureDiff) ?? 0, 1)}, ${
-                    pressureBalance.direction === "HOME"
-                      ? "ev sahibi baskıda"
-                      : pressureBalance.direction === "AWAY"
-                        ? "deplasman baskıda"
-                        : "dengeli"
-                  }`
-                : "Baskı verisi bekleniyor"
-            }
-            style={styles.pressureBlock}
-          >
-            <MaterialCommunityIcons
-              color={pressureColor}
-              name={pressureIcon}
-              size={iconSizes.control}
-            />
-            <View style={styles.pressureCopy}>
-              <Text style={[styles.pressure, { color: pressureColor }]}>
-                {pressureBalance.hasData
-                  ? formatAbsolute((match.decisionContext ? intervalPressure.difference : match.pressureDiff) ?? 0, 1)
-                  : "—"}
-              </Text>
-              {/* Two lines, not one: the waiting caption is the only footer
-                  caption wider than the row's proven ceiling, and it earns the
-                  wrap rather than being truncated into a different claim. */}
+            <View accessibilityLabel={pressureSpoken} style={styles.pressureLine}>
+              <MaterialCommunityIcons
+                color={pressureDirection ? pressureSide[pressureDirection].color : semantic.neutral}
+                name={pressureDirection ? pressureSide[pressureDirection].icon : "scale-balance"}
+                size={iconSizes.small}
+              />
+              {pressureBalance.hasData ? <Text style={styles.pressureValue}>{pressureValue}</Text> : null}
               <Text numberOfLines={2} style={styles.pressureLabel}>
-                {pressureBalance.hasData && match.decisionContext?.recentPressure.estimated
+                {pressureBalance.hasData && pressureEstimated
                   ? "Tahmini baskı"
                   : pressureFooterCaption(pressureBalance.hasData)}
               </Text>
             </View>
-          </View>
-        ) : null}
-      </View>
+          ) : null}
+        </View>
+      )}
     </Pressable>
     {onTogglePinned ? <Pressable
       accessibilityLabel={pinned ? "Sabitlemeyi kaldır" : "Maçı sabitle"}
       accessibilityRole="button" accessibilityState={{ selected: pinned }} aria-pressed={pinned}
       onPress={onTogglePinned}
       style={({ pressed }) => [styles.pinButton, pinned && styles.pinButtonActive, pressed && styles.pinButtonPressed]}>
-      <MaterialCommunityIcons color={pinned ? colors.onAction : semantic.intelligence}
-        name={pinned ? "pin" : "pin-outline"} size={iconSizes.control} />
+      <MaterialCommunityIcons color={pinned ? colors.white : semantic.intelligence}
+        name={pinned ? "pin" : "pin-outline"} size={19} />
     </Pressable> : null}
     </View>
   );
@@ -334,12 +354,15 @@ const styles = StyleSheet.create({
   card: {
     // The fill is the Intelligence Noir material, so the card clips its corners
     // and lets that layer paint. The border stays soft even when the card is
-    // live: the energy is the edge trace, never a lit outline.
-    borderRadius: radii.lg,
+    // live: the energy is the short edge bar, never a lit outline.
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.borderSoft,
     marginBottom: spacing.md,
     ...shadows.card
+  },
+  cardCompact: {
+    borderRadius: radii.lg
   },
   pressed: {
     opacity: 0.78,
@@ -348,223 +371,257 @@ const styles = StyleSheet.create({
   // The match shown in the desktop side pane. Intelligence blue rather than the
   // live teal, so "selected" never reads as "live".
   cardSelected: {
-    borderColor: semantic.intelligence
+    borderColor: semantic.intelligence,
+    borderWidth: 2
+  },
+  cardAction: {
+    paddingTop: spacing.md,
+    paddingRight: spacing.md,
+    paddingBottom: 14,
+    paddingLeft: 14,
+    borderRadius: 20,
+    gap: spacing.sm
+  },
+  cardActionCompact: {
+    paddingHorizontal: 14,
+    paddingVertical: spacing.md,
+    borderRadius: radii.lg
   },
   topRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: spacing.md
+    gap: spacing.sm,
+    minHeight: 28
+  },
+  pinSpace: {
+    minHeight: 44,
+    paddingRight: 52
+  },
+  leagueBlock: {
+    flex: 1,
+    minWidth: 0
   },
   league: {
     color: colors.textMuted,
-    flex: 1,
-    ...typeScale.micro,
-    textTransform: "uppercase"
+    ...typeScale.eyebrow
   },
-  topActions: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: spacing.xs
+  kickoff: {
+    color: colors.textMuted,
+    ...typeScale.label,
+    letterSpacing: 0,
+    lineHeight: 16
   },
   timePill: {
-    minHeight: 28,
+    minHeight: 24,
     borderRadius: radii.round,
     backgroundColor: colors.surfaceStrong,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: 10,
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs
+    gap: 5
   },
   livePill: {
     // Live state used loss red, so a match in progress and a decision that lost
-    // were the same colour. It now carries BTB's own live signature and says
-    // only that the match is happening.
-    backgroundColor: semantic.liveSoft,
-    borderWidth: 1,
-    borderColor: semantic.live
+    // were the same colour. It carries BTB's own live signature and says only
+    // that the match is happening.
+    backgroundColor: semantic.liveSoft
   },
   timeText: {
     color: colors.textMuted,
-    ...typeScale.micro
+    ...typeScale.eyebrow
   },
   liveText: {
     color: semantic.live
   },
   pinButton: {
     position: "absolute",
-    top: spacing.lg,
-    right: spacing.lg,
+    top: spacing.md,
+    right: spacing.md,
     alignItems: "center",
-    backgroundColor: colors.backgroundElevated,
-    borderColor: colors.borderSoft,
+    backgroundColor: "transparent",
+    borderColor: colors.border,
     borderRadius: radii.round,
     borderWidth: 1,
-    minHeight: 48,
+    height: 44,
     justifyContent: "center",
-    width: 48
+    width: 44
   },
   pinButtonActive: {
-    backgroundColor: colors.actionFill,
-    borderColor: colors.actionFill
+    backgroundColor: semantic.intelligence,
+    borderColor: semantic.intelligence
   },
   pinButtonPressed: {
     opacity: 0.68,
     transform: [{ scale: 0.94 }]
   },
-  minuteProgress: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: spacing.sm,
-    marginTop: spacing.sm
-  },
-  minuteProgressValue: {
-    color: colors.textMuted,
-    minWidth: 44,
-    textAlign: "right",
-    ...typeScale.micro
-  },
-  minuteProgressTrack: {
-    backgroundColor: colors.surfaceStrong,
-    borderRadius: radii.round,
-    flex: 1,
-    height: 3,
-    overflow: "hidden"
-  },
-  minuteProgressFill: {
-    backgroundColor: semantic.live,
-    borderRadius: radii.round,
-    height: "100%"
-  },
-  scoreRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: spacing.md
-  },
   teams: {
-    flex: 1,
-    gap: spacing.sm
+    gap: 6,
+    marginTop: 2
+  },
+  teamsCompact: {
+    gap: spacing.xs,
+    marginTop: 0
+  },
+  participantRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, minWidth: 0 },
+  teamRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
+    minWidth: 0,
+    flex: 1
   },
   team: {
     color: colors.text,
     flexShrink: 1,
-    ...typeScale.identity
-  },
-  teamRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: spacing.xs,
-    minWidth: 0,
-    flex: 1
+    ...typeScale.identity,
+    lineHeight: 19
   },
   rank: {
-    color: semantic.neutral,
-    ...typeScale.micro
+    color: colors.textMuted,
+    ...typeScale.label,
+    fontWeight: "700",
+    letterSpacing: 0
   },
   redCardBadge: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 2
+    gap: 3
+  },
+  redCard: {
+    width: 9,
+    height: 13,
+    borderRadius: 2,
+    backgroundColor: semantic.negative
   },
   redCardCount: {
     color: semantic.negative,
     ...typeScale.micro
   },
-  scores: {
-    alignItems: "center",
-    gap: spacing.sm,
-    marginLeft: spacing.lg
+  estimated: {
+    opacity: 0.6
   },
   score: {
     color: colors.text,
-    ...typeScale.score
+    ...typeScale.score,
+    minWidth: 24,
+    textAlign: "right"
   },
-  divider: {
-    marginVertical: spacing.md
+  scoreCompact: {
+    fontSize: 26,
+    lineHeight: 28,
+    minWidth: 22
   },
-  bottomRow: {
+  // The trailing side dims so the leading score reads first at a glance; a
+  // level score keeps both at full strength.
+  scoreTrailing: {
+    color: colors.textMuted
+  },
+  decisionPanel: {
     backgroundColor: colors.surfaceStrong,
-    borderRadius: radii.md,
+    borderRadius: 14,
     padding: spacing.md,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: spacing.md,
-    // Last line of defence. The footer drops the blocks that have nothing to
-    // report, but a long selection string next to a three-digit pressure value
-    // can still outgrow a 360dp card, and wrapping to a second line is the only
-    // failure mode here that neither truncates a Turkish label into nonsense nor
-    // pushes content past the card edge.
-    flexWrap: "wrap"
+    gap: spacing.sm,
+    marginTop: 2
   },
-  decisionBlock: {
-    flexShrink: 1,
-    minWidth: 0,
-    width: "100%"
+  decisionHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: spacing.sm
   },
   decisionEyebrow: {
     color: colors.bronze,
+    flexShrink: 1,
     ...typeScale.eyebrow
   },
   odd: {
     color: colors.text,
-    ...typeScale.decision,
-    marginTop: spacing.xs
+    ...typeScale.decision
   },
-  ratingRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-    marginTop: spacing.sm
-  },
-  ratingLabel: {
+  caption: {
     color: colors.textSubtle,
-    ...typeScale.label
+    ...typeScale.label,
+    marginTop: -spacing.xs
+  },
+  rateRow: {
+    alignItems: "flex-end",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: spacing.md,
+    // Last line of defence: a long market label next to a three-digit rate can
+    // still outgrow a 360dp card, and wrapping is the only failure mode here
+    // that neither truncates a Turkish label nor pushes past the card edge.
+    flexWrap: "wrap"
   },
   rateBlock: {
-    alignItems: "flex-end",
-    flexShrink: 1,
-    // Keeps the two market and pressure blocks grouped at the right edge while
-    // the decision block holds the left, which is the reading order the card
-    // shipped with.
-    marginLeft: "auto",
     minWidth: 0
+  },
+  rateBlockEnd: {
+    alignItems: "flex-end",
+    marginLeft: "auto"
   },
   rateHeadline: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 3
+    gap: 2
   },
   rate: {
     color: colors.text,
-    ...typeScale.metricCompact
+    ...typeScale.metric
   },
   rateLabel: {
-    color: colors.textSubtle,
+    color: colors.textMuted,
     ...typeScale.label,
-    marginTop: spacing.xs
+    letterSpacing: 0
   },
-  pressureBlock: {
-    flexDirection: "row",
+  pressureLine: {
     alignItems: "center",
-    flexShrink: 1,
-    gap: 3,
-    minWidth: 0
+    flexDirection: "row",
+    gap: 6,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing.sm
   },
-  pressureCopy: {
-    flexShrink: 1,
-    minWidth: 0
-  },
-  pressure: {
-    ...typeScale.micro
+  pressureValue: {
+    color: colors.text,
+    ...typeScale.metricCompact,
+    fontSize: 15,
+    lineHeight: 18
   },
   pressureLabel: {
-    color: colors.textSubtle,
-    ...typeScale.label
+    color: colors.textMuted,
+    flexShrink: 1,
+    ...typeScale.label,
+    letterSpacing: 0
   },
-  participantRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, minWidth: 0 },
-  cardAction: { padding: spacing.lg, borderRadius: radii.lg },
-  withPin: { minHeight: 48 },
-  pinSpace: { paddingRight: 56 }
+  compactDecision: {
+    alignItems: "center",
+    borderTopColor: colors.border,
+    borderTopWidth: 1,
+    flexDirection: "row",
+    gap: spacing.sm,
+    paddingTop: spacing.sm,
+    marginTop: 2
+  },
+  compactDecisionCopy: {
+    flex: 1,
+    minWidth: 0
+  },
+  compactOdd: {
+    color: colors.text,
+    ...typeScale.decision,
+    fontSize: 14,
+    lineHeight: 19
+  },
+  compactRates: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 6
+  },
+  compactRate: {
+    color: colors.text,
+    ...typeScale.metric,
+    fontSize: 20,
+    lineHeight: 22
+  }
 });

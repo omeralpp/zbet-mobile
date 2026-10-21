@@ -1,11 +1,13 @@
 const PARTICIPANT_ID_PATTERN = /^[A-Za-z0-9_-]{1,32}$/;
 
 // One shared identity scale keeps crests predictable across list rows,
-// standard cards and detail heroes instead of per-screen sizes.
+// standard cards and detail heroes instead of per-screen sizes. Compact is the
+// dense row (decision lists, standings), standard the live card beside a
+// 30pt score, hero the match header.
 export const teamLogoSizes = {
-  compact: 18,
-  standard: 24,
-  hero: 40
+  compact: 24,
+  standard: 30,
+  hero: 56
 } as const;
 
 export type TeamLogoSize = keyof typeof teamLogoSizes;

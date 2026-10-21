@@ -6,6 +6,7 @@ import {
   type RefObject
 } from "react";
 import {
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -25,7 +26,9 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { resolveBreakpoint, wideContentMaxWidth } from "@/src/layout/breakpoints";
+import { isAtLeast, resolveBreakpoint, wideContentMaxWidth } from "@/src/layout/breakpoints";
+import { btbBrandMark } from "@/src/theme/brand-mark";
+import { RefreshDataButton } from "@/src/web/RefreshDataButton";
 import {
   edgeSwipe,
   shouldActivateEdgeSwipe,
@@ -68,7 +71,29 @@ type ScreenProps = PropsWithChildren<{
   wide?: boolean;
   /** Compact context that stays above the scrolling content. */
   fixedHeader?: ReactNode;
+  /**
+   * Top-level tab screens: the BTB brand bar with the refresh control. Phone
+   * and narrow web only — from 768 px the desktop sidebar carries the brand
+   * and the shell carries the refresh.
+   */
+  brand?: boolean;
 }>;
+
+/**
+ * Mark, name and refresh, with the right end left clear for Jinx, whose
+ * overlay docks in that corner by default.
+ */
+function BrandBar() {
+  return (
+    <View style={styles.brandBar}>
+      <Image accessibilityIgnoresInvertColors source={btbBrandMark} style={styles.brandMark} />
+      <Text accessibilityRole="header" style={styles.brandName}>BTB</Text>
+      <View style={styles.flex} />
+      <RefreshDataButton variant="icon" />
+      <View style={styles.mascotDock} />
+    </View>
+  );
+}
 
 export function Screen({
   children,
@@ -84,9 +109,12 @@ export function Screen({
   contentStyle,
   scrollProps,
   wide = false,
-  fixedHeader
+  fixedHeader,
+  brand = false
 }: ScreenProps) {
   const { width } = useWindowDimensions();
+  const showsBrandBar =
+    brand && (Platform.OS !== "web" || !isAtLeast(resolveBreakpoint(width), "medium"));
   const widened =
     wide && Platform.OS === "web"
       ? { maxWidth: wideContentMaxWidth(resolveBreakpoint(width)), paddingHorizontal: spacing.xxl }
@@ -206,13 +234,12 @@ export function Screen({
   // A hairline that fades out from the leading edge rather than a rule that
   // crosses the screen: it reads as the residue of something moving through the
   // interface instead of as a divider, which is the whole difference between a
-  // signature and a border. It carries the accent only when the screen has a
-  // state to report, so an inert screen stays completely calm.
-  const traceColor = accent ?? colors.border;
+  // signature and a border. It is drawn only while the screen has a state to
+  // report, so an inert screen has no rule under its title at all.
   const header =
     title || eyebrow || action ? (
-      <View>
-        <View style={styles.header}>
+      <View style={styles.headerBlock}>
+        <View style={[styles.header, showsBrandBar && styles.headerUnderBrand]}>
           <View style={styles.headerCopy}>
             {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
             {title ? <Text accessibilityRole="header" role="heading" aria-level={1} style={styles.title}>{title}</Text> : null}
@@ -220,12 +247,14 @@ export function Screen({
           </View>
           {action}
         </View>
-        <LinearGradient
-          colors={[traceColor, `${traceColor}00`]}
-          end={{ x: 1, y: 0 }}
-          start={{ x: 0, y: 0 }}
-          style={[styles.trace, accent ? styles.traceAccent : null]}
-        />
+        {accent ? (
+          <LinearGradient
+            colors={[accent, `${accent}00`]}
+            end={{ x: 1, y: 0 }}
+            start={{ x: 0, y: 0 }}
+            style={styles.trace}
+          />
+        ) : null}
       </View>
     ) : null;
 
@@ -237,7 +266,11 @@ export function Screen({
   );
 
   return (
-    <SafeAreaView edges={["top"]} style={styles.safeArea}>
+    // A swipe-back screen is a pushed stack page under the native header,
+    // which already clears the status bar; insetting it again left an empty
+    // band between the header and the content on Android.
+    <SafeAreaView edges={edgeSwipeBack ? [] : ["top"]} style={styles.safeArea}>
+      {showsBrandBar ? <BrandBar /> : null}
       {runtimeConfig.useMocks ? <View style={styles.previewNotice}><Text style={styles.previewText}>Örnek veriler · canlı veri değil</Text></View> : null}
       <GestureDetector gesture={panGesture}>
         <Animated.View
@@ -285,33 +318,58 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: 112
   },
-  header: {
-    minHeight: 76,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
-    flexDirection: "row",
+  brandBar: {
     alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.sm,
+    height: 64,
+    paddingLeft: spacing.lg,
+    paddingRight: 6
+  },
+  brandMark: {
+    height: 32,
+    width: 32
+  },
+  brandName: {
+    color: colors.text,
+    ...typeScale.decision,
+    fontWeight: "800",
+    letterSpacing: 0.6
+  },
+  // Jinx's overlay docks here by default: 68pt plus its edge margin.
+  mascotDock: {
+    width: 72
+  },
+  headerBlock: {
+    marginBottom: spacing.lg
+  },
+  header: {
+    minHeight: 64,
+    paddingTop: spacing.lg,
+    flexDirection: "row",
+    alignItems: "flex-end",
     justifyContent: "space-between",
     gap: spacing.md
+  },
+  headerUnderBrand: {
+    minHeight: 0,
+    paddingTop: 2
   },
   headerCopy: {
     flex: 1
   },
   trace: {
     height: 1,
-    opacity: 0.45,
-    marginBottom: spacing.lg
-  },
-  traceAccent: {
-    opacity: 0.9
+    opacity: 0.9,
+    marginTop: spacing.md
   },
   eyebrow: {
     // Previously BTB green on every screen, which made the brand accent ambient
     // and left it unable to mean "won" anywhere else. Muted here, so green is
     // spent only where it reports something.
-    color: colors.textSubtle,
+    color: colors.textMuted,
     ...typeScale.eyebrow,
-    marginBottom: spacing.xs
+    marginBottom: 2
   },
   title: {
     color: colors.text,

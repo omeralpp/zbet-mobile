@@ -46,12 +46,9 @@ export const discoveryHints: readonly DiscoveryHint[] = [
     title: "Kullanmadığın modülü kapat",
     body: "Maç detayında modül başlığına dokun; o bölüm kapanır ve kapalı kalır."
   },
-  {
-    id: "super-star-filter",
-    route: "/super",
-    title: "Yıldıza göre süz",
-    body: "Karar günlüğünü yıldız eşiğine göre süzebilir, listeyi kendi eşiğinde tutabilirsin."
-  },
+  // `super-star-filter` retired 2026-10-21: since RB1 the Super tab opens on
+  // the rebuild report, and the star filter it named lives only in the
+  // separate legacy A3 view, so the hint described a control the screen lacks.
   {
     id: "layout-reset",
     route: "/more",

@@ -4,7 +4,7 @@ import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-g
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '@/src/theme/theme';
+import { colors, textFont } from '@/src/theme/theme';
 import { useReducedMotion } from '@/src/theme/use-reduced-motion';
 import { inspectorCommit, inspectorIntent, inspectorWheelInput, type InspectorIntent } from './journey-inspector';
 
@@ -115,10 +115,10 @@ const styles = StyleSheet.create({
   panel: { width: '100%', maxWidth: 640, alignSelf: 'center', backgroundColor: colors.backgroundElevated, borderRadius: 20, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 16 },
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.textMuted, opacity: .5, alignSelf: 'center', marginTop: 10 },
   heading: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingTop: 4 }, titleBlock: { flex: 1, gap: 2 },
-  title: { fontSize: 15, fontWeight: '700', color: colors.text }, hint: { fontSize: 11, color: colors.textMuted },
-  instructions: { fontSize: 11, lineHeight: 17, color: colors.textMuted, marginBottom: 8 },
+  title: { ...textFont('700'), fontSize: 15, color: colors.text }, hint: { ...textFont('400'), fontSize: 11, color: colors.textMuted },
+  instructions: { ...textFont('400'), fontSize: 11, lineHeight: 17, color: colors.textMuted, marginBottom: 8 },
   arrow: { minWidth: 44, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
-  arrowText: { fontSize: 32, color: colors.blue }, close: { minHeight: 48, paddingHorizontal: 6, justifyContent: 'center' },
-  link: { fontSize: 13, fontWeight: '700', color: colors.blue }, disabled: { opacity: .3 },
+  arrowText: { ...textFont('400'), fontSize: 32, color: colors.blue }, close: { minHeight: 48, paddingHorizontal: 6, justifyContent: 'center' },
+  link: { ...textFont('700'), fontSize: 13, color: colors.blue }, disabled: { opacity: .3 },
   content: { gap: 12, paddingBottom: 16 }
 });

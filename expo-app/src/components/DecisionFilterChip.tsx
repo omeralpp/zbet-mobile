@@ -14,7 +14,8 @@ import {
   interaction,
   radii,
   shadows,
-  spacing
+  spacing,
+  typeScale
 } from "@/src/theme/theme";
 import {
   decisionFilterLabel,
@@ -93,14 +94,12 @@ export function DecisionFilterChip({
           pressed && styles.pressed
         ]}
       >
-        <MaterialCommunityIcons
-          color={active ? colors.onAction : colors.gold}
-          name="star-four-points"
-          size={iconSizes.small}
-        />
-        <Text style={[styles.chipText, active && styles.chipTextSelected]}>
-          {decisionFilterLabel(value)}{count === undefined ? "" : ` ${count}`}
+        <Text style={[styles.chipText, styles.chipStars, active && styles.chipTextSelected]}>
+          {decisionFilterLabel(value)}
         </Text>
+        {count === undefined ? null : (
+          <Text style={[styles.chipCount, active && styles.chipTextSelected]}>{count}</Text>
+        )}
         {sortValue && sortValue !== "DEFAULT" ? (
           <MaterialCommunityIcons
             accessibilityLabel={
@@ -231,17 +230,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: radii.round,
     borderWidth: 1,
-    borderColor: colors.borderSoft,
-    backgroundColor: colors.backgroundElevated
+    borderColor: colors.border,
+    backgroundColor: "transparent"
   },
   chipSelected: {
-    borderColor: colors.blue,
+    borderColor: colors.actionFill,
     backgroundColor: colors.actionFill
   },
   chipText: {
-    color: colors.textMuted,
-    fontSize: 12,
-    fontWeight: "800"
+    color: colors.text,
+    ...typeScale.bodyCompact,
+    fontWeight: "700"
+  },
+  chipStars: {
+    color: colors.gold,
+    letterSpacing: 1
+  },
+  chipCount: {
+    color: colors.text,
+    ...typeScale.metricCompact
   },
   chipTextSelected: {
     color: colors.onAction
@@ -264,12 +271,9 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     color: colors.textSubtle,
-    fontSize: 9,
-    fontWeight: "900",
-    letterSpacing: 0.8,
+    ...typeScale.eyebrow,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    textTransform: "uppercase"
+    paddingVertical: spacing.sm
   },
   divider: {
     height: 1,
@@ -292,9 +296,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.actionFill
   },
   optionText: {
-    color: colors.textMuted,
-    fontSize: 12,
-    fontWeight: "800"
+    color: colors.text,
+    ...typeScale.bodyCompact,
+    fontWeight: "700"
   },
   optionTextSelected: {
     color: colors.onAction

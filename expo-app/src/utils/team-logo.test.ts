@@ -45,16 +45,16 @@ test("never infers a URL from a team name", () => {
 });
 
 test("keeps one ascending identity scale for every surface", () => {
-  assert.deepEqual(teamLogoSizes, { compact: 18, standard: 24, hero: 40 });
+  assert.deepEqual(teamLogoSizes, { compact: 24, standard: 30, hero: 56 });
   assert.ok(teamLogoSizes.compact < teamLogoSizes.standard);
   assert.ok(teamLogoSizes.standard < teamLogoSizes.hero);
 });
 
 test("resolves each named size and defaults to standard", () => {
-  assert.equal(resolveTeamLogoSize("compact"), 18);
-  assert.equal(resolveTeamLogoSize("standard"), 24);
-  assert.equal(resolveTeamLogoSize("hero"), 40);
-  assert.equal(resolveTeamLogoSize(undefined), 24);
+  assert.equal(resolveTeamLogoSize("compact"), 24);
+  assert.equal(resolveTeamLogoSize("standard"), 30);
+  assert.equal(resolveTeamLogoSize("hero"), 56);
+  assert.equal(resolveTeamLogoSize(undefined), 30);
 });
 
 test("detects whether any side of a match has a usable identity", () => {

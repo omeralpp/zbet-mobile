@@ -7,7 +7,9 @@ import {
   radii,
   semantic,
   spacing,
-  typeScale
+  typeScale,
+  textFont,
+  numericFont
 } from "@/src/theme/theme";
 import { CaveatLine, OriginBadge } from "./IntelligenceNotice";
 import { SurfaceMaterial } from "./SurfaceMaterial";
@@ -331,10 +333,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between"
   },
   summary: {
+    ...textFont("800"),
     color: colors.text,
     flexShrink: 1,
     fontSize: 13,
-    fontWeight: "800",
     lineHeight: 18
   },
   verdictPill: {
@@ -419,10 +421,10 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xs
   },
   cohortValue: {
+    ...numericFont("800"),
     color: colors.text,
     flex: 1,
     fontSize: 13,
-    fontWeight: "900",
     textAlign: "center"
   },
   cohortValueThin: {
@@ -447,6 +449,7 @@ const styles = StyleSheet.create({
     alignSelf: "stretch"
   },
   alertText: {
+    ...textFont("400"),
     color: colors.textMuted,
     flexShrink: 1,
     fontSize: 12,

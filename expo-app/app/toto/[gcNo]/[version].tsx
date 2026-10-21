@@ -26,7 +26,9 @@ import {
   semantic,
   shadows,
   spacing,
-  typeScale
+  typeScale,
+  textFont,
+  numericFont
 } from "@/src/theme/theme";
 import {
   formatFixtureDateTime,
@@ -459,9 +461,9 @@ const styles = StyleSheet.create({
     ...typeScale.eyebrow
   },
   title: {
+    ...textFont("800"),
     color: colors.text,
     fontSize: 27,
-    fontWeight: "900",
     marginTop: spacing.sm
   },
   statusPill: {
@@ -518,14 +520,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between"
   },
   resultProgressTitle: {
+    ...textFont("800"),
     color: colors.text,
-    fontSize: 14,
-    fontWeight: "900"
+    fontSize: 14
   },
   resultProgressValue: {
+    ...numericFont("800"),
     color: colors.green,
-    fontSize: 14,
-    fontWeight: "900"
+    fontSize: 14
   },
   resultProgressTrack: {
     height: 6,
@@ -568,9 +570,9 @@ const styles = StyleSheet.create({
     flex: 1
   },
   prizeLabel: {
+    ...textFont("800"),
     color: colors.text,
-    fontSize: 12,
-    fontWeight: "900"
+    fontSize: 12
   },
   prizeDescription: {
     color: colors.textSubtle,
@@ -578,9 +580,9 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs
   },
   prizeValue: {
+    ...numericFont("800"),
     color: colors.green,
     fontSize: 15,
-    fontWeight: "900",
     textAlign: "right"
   },
   legendItem: {
@@ -621,17 +623,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceStrong
   },
   matchNoText: {
+    ...numericFont("800"),
     color: colors.blue,
-    fontSize: 14,
-    fontWeight: "900"
+    fontSize: 14
   },
   predictionCopy: {
     flex: 1
   },
   matchName: {
+    ...textFont("800"),
     color: colors.text,
-    fontSize: 13,
-    fontWeight: "800"
+    fontSize: 13
   },
   predictionMeta: {
     color: colors.textSubtle,
@@ -642,9 +644,9 @@ const styles = StyleSheet.create({
     alignItems: "flex-end"
   },
   pick: {
+    ...numericFont("800"),
     color: colors.gold,
-    fontSize: 16,
-    fontWeight: "900"
+    fontSize: 16
   },
   result: {
     ...typeScale.micro,
@@ -667,6 +669,7 @@ const styles = StyleSheet.create({
     ...typeScale.label
   },
   emptyFixtures: {
+    ...textFont("400"),
     color: colors.textMuted,
     textAlign: "center",
     fontSize: 12,
@@ -684,9 +687,9 @@ const styles = StyleSheet.create({
     minHeight: 50
   },
   bilyonerActionText: {
+    ...textFont("800"),
     color: colors.background,
-    fontSize: 14,
-    fontWeight: "900"
+    fontSize: 14
   },
   actionPressed: {
     opacity: 0.8,

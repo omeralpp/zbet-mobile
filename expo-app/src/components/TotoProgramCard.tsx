@@ -20,6 +20,19 @@ import {
   formatProgramStatus
 } from "@/src/utils/format";
 
+export function totoStatusColor(status: TotoProgram["status"]): string {
+  const tone = totoProgramTone(status);
+  // Waiting for results keeps the analytical accent (toto-status.ts), not a
+  // caution it has not earned.
+  return tone === "LIVE"
+    ? semantic.live
+    : tone === "OPEN"
+      ? semantic.intelligence
+      : tone === "PROBLEM"
+        ? semantic.negative
+        : colors.textMuted;
+}
+
 export function TotoProgramCard({ program }: { program: TotoProgram }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -28,16 +41,9 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
     program.maxColumns > 0 ? program.columns / program.maxColumns : 0
   );
   const tone = totoProgramTone(program.status);
-  const statusColor =
-    tone === "LIVE"
-      ? semantic.live
-      : tone === "OPEN"
-        ? semantic.intelligence
-        : tone === "PROBLEM"
-          ? semantic.negative
-          : colors.textMuted;
+  const statusColor = totoStatusColor(program.status);
   // Only a program that can still change earns the accent. A resulted one is
-  // history and recedes, exactly as a settled Super row does.
+  // history and recedes, exactly as a settled decision row does.
   const inPlay = tone === "LIVE" || tone === "OPEN";
   const showsTheoreticalPrize = hasTheoreticalPrize(program);
 
@@ -62,12 +68,12 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
     >
       <SurfaceMaterial
         {...(inPlay ? { accent: statusColor } : {})}
-        radius={radii.lg}
+        radius={20}
       />
       <View style={styles.header}>
-        <View style={[styles.icon, { backgroundColor: `${statusColor}1F` }]}>
+        <View style={styles.icon}>
           <MaterialCommunityIcons
-            color={statusColor}
+            color={inPlay ? statusColor : colors.textMuted}
             name="ticket-confirmation-outline"
             size={iconSizes.control}
           />
@@ -78,10 +84,11 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
         </View>
         <View style={styles.statusStack}>
           <View
-            style={[styles.statusPill, { backgroundColor: `${statusColor}1F` }]}
+            style={[styles.statusPill, inPlay ? { backgroundColor: `${statusColor}24` } : null]}
           >
-            <Text style={[styles.status, { color: statusColor }]}>
-              {formatProgramStatus(program.status)}
+            {inPlay ? <View style={[styles.statusDot, { backgroundColor: statusColor }]} /> : null}
+            <Text style={[styles.status, { color: inPlay ? statusColor : colors.text }]}>
+              {formatProgramStatus(program.status).toLocaleUpperCase("tr-TR")}
             </Text>
           </View>
           {showsTheoreticalPrize ? (
@@ -96,7 +103,7 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
                     ? "currency-try"
                     : "cash"
                 }
-                size={iconSizes.inline}
+                size={iconSizes.small}
               />
             </View>
           ) : null}
@@ -104,15 +111,15 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
       </View>
 
       <View style={styles.metrics}>
-        <View>
+        <View style={styles.metric}>
           <Text style={styles.metricValue}>{program.columns}</Text>
           <Text style={styles.metricLabel}>kolon</Text>
         </View>
-        <View>
+        <View style={styles.metric}>
           <Text style={styles.metricValue}>{new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 }).format(program.cost)}</Text>
           <Text style={styles.metricLabel}>maliyet</Text>
         </View>
-        <View>
+        <View style={styles.metric}>
           <Text style={styles.metricValue}>
             {program.coverageHits ?? "—"}
           </Text>
@@ -122,22 +129,32 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
 
       <Text style={styles.contextNote}>Kapsama isabeti, kuponun kazandığı anlamına gelmez. Maliyet birimi belirtilmedi.</Text>
 
-      <View style={styles.track}>
-        <View style={[styles.fill, { width: `${capacity * 100}%` }]} />
+      <View style={styles.capacityBlock}>
+        <View style={styles.track}>
+          <View style={[styles.fill, { width: `${capacity * 100}%` }]} />
+        </View>
+        <View style={styles.capacityRow}>
+          <Text style={styles.capacityLabel}>Kolon kapasitesi</Text>
+          <Text style={styles.capacityValue}>
+            {program.columns} / {program.maxColumns}
+          </Text>
+        </View>
       </View>
-      <Text style={styles.capacity}>
-        {program.columns} / {program.maxColumns} kolon kapasitesi
-      </Text>
+      <View style={styles.open}>
+        <Text style={styles.openText}>Programı aç</Text>
+        <MaterialCommunityIcons color={semantic.intelligence} name="chevron-right" size={iconSizes.small} />
+      </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: radii.lg,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.borderSoft,
     padding: spacing.lg,
+    gap: 14,
     marginBottom: spacing.md,
     ...shadows.card
   },
@@ -150,28 +167,37 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   icon: {
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: radii.md
+    borderRadius: 14,
+    backgroundColor: colors.surfaceStrong
   },
   headerCopy: {
     flex: 1
   },
   title: {
     color: colors.text,
-    ...typeScale.decision
+    ...typeScale.moduleTitle
   },
   week: {
     color: colors.textMuted,
-    ...typeScale.label,
-    marginTop: spacing.xs
+    ...typeScale.bodyCompact
   },
   statusPill: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: radii.round
+    alignItems: "center",
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: radii.round,
+    flexDirection: "row",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5
+  },
+  statusDot: {
+    borderRadius: 3,
+    height: 6,
+    width: 6
   },
   statusStack: {
     alignItems: "flex-end",
@@ -181,52 +207,82 @@ const styles = StyleSheet.create({
   theoreticalPrizeBadge: {
     alignItems: "center",
     backgroundColor: semantic.positiveSoft,
-    borderColor: semantic.positive,
     borderRadius: radii.round,
-    borderWidth: 1,
     height: 26,
     justifyContent: "center",
     width: 26
   },
   status: {
-    ...typeScale.micro,
-    textTransform: "uppercase"
+    ...typeScale.eyebrow
   },
   metrics: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: spacing.md,
-    marginTop: spacing.xl
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colors.border
+  },
+  metric: {
+    flex: 1,
+    minWidth: 0
   },
   metricValue: {
     color: colors.text,
-    ...typeScale.metricCompact
+    ...typeScale.metric,
+    fontSize: 28,
+    lineHeight: 30,
+    fontWeight: "800"
   },
   metricLabel: {
-    color: colors.textSubtle,
+    color: colors.textMuted,
     ...typeScale.label,
-    marginTop: spacing.xs
+    letterSpacing: 0
+  },
+  capacityBlock: {
+    gap: 6
   },
   track: {
-    height: 5,
-    borderRadius: radii.round,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: colors.surfaceStrong,
-    overflow: "hidden",
-    marginTop: spacing.lg
+    overflow: "hidden"
   },
   // Capacity is a readout, not an outcome, so it takes the analytical accent
   // rather than the colour of a won decision.
   fill: {
     height: "100%",
-    borderRadius: radii.round,
+    borderRadius: 3,
     backgroundColor: semantic.intelligence
   },
-  capacity: {
-    color: colors.textSubtle,
-    ...typeScale.label,
-    textAlign: "right",
-    marginTop: spacing.xs
+  capacityRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "baseline"
   },
-  contextNote: { ...typeScale.bodyCompact, color: colors.textMuted, marginTop: spacing.md }
+  capacityLabel: {
+    color: colors.textMuted,
+    ...typeScale.label,
+    fontWeight: "700",
+    letterSpacing: 0
+  },
+  capacityValue: {
+    color: colors.text,
+    ...typeScale.metricCompact,
+    fontSize: 14,
+    lineHeight: 18
+  },
+  open: {
+    alignItems: "center",
+    alignSelf: "flex-end",
+    flexDirection: "row",
+    gap: 2
+  },
+  openText: {
+    color: semantic.intelligence,
+    ...typeScale.bodyCompact,
+    fontSize: 14,
+    fontWeight: "700"
+  },
+  contextNote: { ...typeScale.bodyCompact, color: colors.textMuted }
 });

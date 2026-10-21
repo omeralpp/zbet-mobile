@@ -64,20 +64,18 @@ const styles = StyleSheet.create({
     ...typeScale.bodyCompact,
     fontWeight: "700"
   },
+  // The analytical blue on its own soft fill: a way into more of the same
+  // data, never mistaken for the green primary action.
   actionButton: {
     alignItems: "center",
-    backgroundColor: colors.surfaceStrong,
-    borderColor: colors.border,
+    backgroundColor: colors.blueSoft,
     borderRadius: radii.round,
-    borderWidth: 1,
     justifyContent: "center",
     minHeight: interaction.minTouchTarget,
-    paddingHorizontal: spacing.md
+    paddingHorizontal: 14
   },
   pressed: {
-    backgroundColor: colors.borderSoft,
-    borderColor: colors.blue,
-    opacity: 0.82,
+    opacity: 0.78,
     transform: [{ scale: 0.98 }]
   }
 });

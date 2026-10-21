@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { colors, radii, spacing } from "@/src/theme/theme";
+import { colors, radii, spacing, textFont, numericFont } from "@/src/theme/theme";
 import { TeamLogo } from "./TeamLogo";
 
 export type StandingsTeam = {
@@ -34,7 +34,7 @@ function StandingsRow({ team }: { team: StandingsTeam }) {
     >
       <View style={[styles.accent, { backgroundColor: accent }]} />
       <View style={styles.identity}>
-        <TeamLogo participantId={team.participantId} size="standard" />
+        <TeamLogo participantId={team.participantId} size="compact" />
         <View style={styles.identityCopy}>
           <Text numberOfLines={2} style={styles.team}>
             {team.team}
@@ -154,14 +154,14 @@ const styles = StyleSheet.create({
     flexShrink: 1
   },
   team: {
+    ...textFont("800"),
     color: colors.text,
     fontSize: 14,
-    fontWeight: "900",
     lineHeight: 19
   },
   side: {
-    fontSize: 8,
-    fontWeight: "900",
+    ...textFont("800"),
+    fontSize: 11,
     letterSpacing: 0.8,
     marginTop: 2
   },
@@ -170,17 +170,18 @@ const styles = StyleSheet.create({
     minWidth: 48
   },
   metricValue: {
+    ...numericFont("800"),
     color: colors.text,
     fontSize: 17,
-    fontWeight: "900",
     lineHeight: 22
   },
   metricValueMissing: {
     color: colors.textSubtle
   },
   metricLabel: {
+    ...textFont("400"),
     color: colors.textSubtle,
-    fontSize: 9,
+    fontSize: 11,
     lineHeight: 13,
     marginTop: 1
   },
@@ -195,13 +196,14 @@ const styles = StyleSheet.create({
     minHeight: 30
   },
   gapText: {
+    ...textFont("800"),
     color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: "800"
+    fontSize: 11
   },
   boundary: {
+    ...textFont("400"),
     color: colors.textSubtle,
-    fontSize: 9,
+    fontSize: 11,
     lineHeight: 13,
     marginTop: spacing.sm,
     textAlign: "center"

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { AnalysisContext, JinxAssessment, JinxLean } from "@/src/api/schemas";
 import { analysisSourceLabels, assessmentIsCurrent, assessmentLabels, assessmentSignal, leanLabels, signalFacts } from "@/src/mascot/jinx-assessment";
-import { colors, semantic, spacing, radii, typeScale } from "@/src/theme/theme";
+import { colors, semantic, spacing, radii, typeScale, numericFont } from "@/src/theme/theme";
 import { JinxMatchAnimator } from "@/src/mascot/JinxMatchAnimator";
 
 const leanColors: Record<JinxLean, string> = { FAVORABLE: semantic.positive, NEUTRAL: semantic.warning, UNFAVORABLE: semantic.negative };
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   title: { ...typeScale.decision, color: colors.text },
   verdict: { ...typeScale.identity, fontWeight: "800", flexShrink: 1 },
   confidenceRow: { flexDirection: "row", alignItems: "baseline", gap: spacing.sm },
-  confidence: { fontSize: 40, lineHeight: 46, fontWeight: "800", fontVariant: ["tabular-nums"] },
+  confidence: { ...numericFont("800"), fontSize: 40, lineHeight: 46, fontVariant: ["tabular-nums"] },
   confidenceLabel: { ...typeScale.bodyCompact, color: colors.textMuted, fontWeight: "700" },
   facts: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   fact: { backgroundColor: colors.surfaceStrong, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.xs, gap: 1 },

@@ -41,7 +41,9 @@ import {
   semantic,
   shadows,
   spacing,
-  typeScale
+  typeScale,
+  textFont,
+  numericFont
 } from "@/src/theme/theme";
 import { teamLogoSizes } from "@/src/utils/team-logo";
 import {
@@ -606,10 +608,10 @@ const styles = StyleSheet.create({
     flex: 1
   },
   league: {
+    ...textFont("800"),
     flex: 1,
     color: colors.textMuted,
     fontSize: 11,
-    fontWeight: "900",
     textTransform: "uppercase"
   },
   resultPill: {
@@ -620,8 +622,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: spacing.md
   },
-  result: { fontSize: 10, fontWeight: "900" },
-  fixtureTime: { color: colors.textSubtle, fontSize: 10, marginTop: 4 },
+  result: { ...textFont("800"), fontSize: 11 },
+  fixtureTime: { ...textFont("400"), color: colors.textSubtle, fontSize: 11, marginTop: 4 },
   matchIdentity: {
     alignItems: "center",
     flexDirection: "row",
@@ -634,19 +636,19 @@ const styles = StyleSheet.create({
     gap: spacing.sm
   },
   matchTeamName: {
+    ...textFont("800"),
     color: colors.text,
     fontSize: 15,
-    fontWeight: "900",
     lineHeight: 20,
     textAlign: "center"
   },
   matchVersus: {
+    ...textFont("800"),
     // Pin the separator to the crest row instead of the block centre, so it
     // reads as a connector rather than floating between crest and name.
     alignSelf: "flex-start",
     color: colors.textMuted,
     fontSize: 15,
-    fontWeight: "900",
     lineHeight: teamLogoSizes.hero
   },
   modelHeadline: {
@@ -778,9 +780,9 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl
   },
   groupLabel: {
+    ...textFont("800"),
     color: colors.textSubtle,
-    fontSize: 9,
-    fontWeight: "900",
+    fontSize: 11,
     letterSpacing: 0.8,
     marginTop: spacing.lg,
     textTransform: "uppercase"
@@ -799,18 +801,20 @@ const styles = StyleSheet.create({
   },
   metric: { flexBasis: "45%", flexGrow: 1, minWidth: 128 },
   metricValue: {
+    ...numericFont("800"),
     color: colors.text,
     fontSize: 16,
-    lineHeight: 21,
-    fontWeight: "900"
+    lineHeight: 21
   },
   metricLabel: {
+    ...textFont("400"),
     color: colors.textSubtle,
-    fontSize: 10,
+    fontSize: 11,
     lineHeight: 14,
     marginTop: 2
   },
   comment: {
+    ...textFont("400"),
     color: colors.textMuted,
     fontSize: 11,
     lineHeight: 17,

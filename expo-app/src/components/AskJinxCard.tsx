@@ -22,7 +22,8 @@ import {
   radii,
   semantic,
   spacing,
-  typeScale
+  typeScale,
+  textFont
 } from "@/src/theme/theme";
 import { CaveatLine, OriginBadge } from "./IntelligenceNotice";
 import { SurfaceMaterial } from "./SurfaceMaterial";
@@ -205,9 +206,9 @@ const styles = StyleSheet.create({
     gap: 2
   },
   entryTitle: {
+    ...textFont("800"),
     color: colors.text,
-    fontSize: 14,
-    fontWeight: "900"
+    fontSize: 14
   },
   entryBody: {
     color: colors.textMuted,
@@ -237,12 +238,13 @@ const styles = StyleSheet.create({
     ...typeScale.label
   },
   headline: {
+    ...textFont("800"),
     color: colors.text,
     fontSize: 15,
-    fontWeight: "800",
     lineHeight: 21
   },
   body: {
+    ...textFont("400"),
     color: colors.textMuted,
     fontSize: 13,
     lineHeight: 19

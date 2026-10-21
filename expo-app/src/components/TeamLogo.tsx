@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: colors.surfaceStrong,
     borderColor: colors.borderSoft,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     overflow: "hidden"
   },
   image: {

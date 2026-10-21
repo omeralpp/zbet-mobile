@@ -1,7 +1,7 @@
 import { Link } from "expo-router";
 import { StyleSheet, Text } from "react-native";
 import { Screen } from "@/src/components/Screen";
-import { colors, spacing } from "@/src/theme/theme";
+import { colors, spacing, textFont } from "@/src/theme/theme";
 
 export default function NotFoundScreen() {
   return (
@@ -19,15 +19,16 @@ export default function NotFoundScreen() {
 
 const styles = StyleSheet.create({
   message: {
+    ...textFont("400"),
     color: colors.textMuted,
     fontSize: 14,
     lineHeight: 21,
     marginTop: spacing.lg
   },
   link: {
+    ...textFont("800"),
     color: colors.blue,
     fontSize: 14,
-    fontWeight: "900",
     marginTop: spacing.xl
   }
 });

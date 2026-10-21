@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { AppState, Animated, Easing, Image, Platform, StyleSheet, View } from "react-native";
+import { textFont } from "@/src/theme/typography";
 import { useReducedMotion } from "@/src/theme/use-reduced-motion";
 import { resolveJinxMotion, sceneCopy, type JinxCandidate, type JinxMotionMode, type JinxMotionState } from "./jinx-motion";
 
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
   pitch: { position: "absolute", borderWidth: 1, borderRadius: 100, transform: [{ scaleY: .48 }], alignItems: "center", justifyContent: "center" },
   pitchLine: { height: "90%", width: "32%", borderRadius: 100, borderWidth: 1 },
   shadow: { backgroundColor: "#000000", position: "absolute", borderRadius: 100 },
-  spark: { position: "absolute", color: "#56C8FF", fontWeight: "900" },
+  spark: { ...textFont("800"), position: "absolute", color: "#56C8FF" },
   board: { position: "absolute", padding: 7, borderRadius: 8, backgroundColor: "#173E32", borderWidth: 1, borderColor: "#567D66", transform: [{ rotate: "-8deg" }] },
   badge: { position: "absolute" },
   waiting: { position: "absolute", padding: 6, borderRadius: 30, backgroundColor: "#122B3B" }

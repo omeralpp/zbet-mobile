@@ -19,7 +19,8 @@ import {
   iconSizes,
   radii,
   spacing,
-  themeMode
+  themeMode,
+  textFont
 } from "@/src/theme/theme";
 
 export default function SignInScreen() {
@@ -165,20 +166,21 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxl
   },
   eyebrow: {
+    ...textFont("800"),
     color: colors.green,
     fontSize: 12,
-    fontWeight: "900",
     letterSpacing: 2
   },
   title: {
+    ...textFont("800"),
     color: colors.text,
     fontSize: 38,
     lineHeight: 44,
-    fontWeight: "900",
     letterSpacing: -1.2,
     marginTop: spacing.sm
   },
   description: {
+    ...textFont("400"),
     color: colors.textMuted,
     fontSize: 15,
     lineHeight: 23,
@@ -206,11 +208,12 @@ const styles = StyleSheet.create({
     flex: 1
   },
   securityTitle: {
+    ...textFont("800"),
     color: colors.text,
-    fontSize: 14,
-    fontWeight: "800"
+    fontSize: 14
   },
   securityText: {
+    ...textFont("400"),
     color: colors.textSubtle,
     fontSize: 11,
     lineHeight: 17,
@@ -225,6 +228,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg
   },
   errorText: {
+    ...textFont("400"),
     flex: 1,
     color: colors.text,
     fontSize: 12,
@@ -248,13 +252,14 @@ const styles = StyleSheet.create({
     opacity: 0.48
   },
   buttonText: {
+    ...textFont("800"),
     color: colors.background,
-    fontSize: 15,
-    fontWeight: "900"
+    fontSize: 15
   },
   footer: {
+    ...textFont("400"),
     color: colors.textSubtle,
-    fontSize: 10,
+    fontSize: 11,
     lineHeight: 16,
     textAlign: "center",
     marginTop: spacing.xxl,

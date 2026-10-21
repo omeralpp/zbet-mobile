@@ -23,14 +23,27 @@ type DesktopSidebarProps = {
   expanded: boolean;
   onOpenPalette: () => void;
   onOpenHelp: () => void;
+  onToggleExpanded: () => void;
 };
 
+/** The rail hides labels, so hovering an icon names it beside the rail. */
+function RailTooltip({ label, hint }: { label: string; hint?: string | undefined }) {
+  return (
+    <View pointerEvents="none" style={styles.tooltip}>
+      <Text style={styles.tooltipText}>{label}</Text>
+      {hint ? <Text style={styles.tooltipHint}>{hint}</Text> : null}
+    </View>
+  );
+}
+
 /**
- * Desktop navigation. Expanded (≥1200 px) it carries labels, the live-match
- * count and the `g` chord hints; as a rail (768–1199 px) it keeps icons only.
- * It addresses the same five routes as the phone's bottom bar.
+ * Desktop navigation. Open it carries labels, the live-match count and the `g`
+ * chord hints; as a rail it keeps icons only and names them on hover. The edge
+ * handle switches between the two and the choice is kept on this device (see
+ * sidebar-preference.ts). It addresses the same five routes as the phone's
+ * bottom bar, which has no collapsed form: that is the platform exception.
  */
-export function DesktopSidebar({ expanded, onOpenPalette, onOpenHelp }: DesktopSidebarProps) {
+export function DesktopSidebar({ expanded, onOpenPalette, onOpenHelp, onToggleExpanded }: DesktopSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const active = activeDestination(pathname);
@@ -57,19 +70,41 @@ export function DesktopSidebar({ expanded, onOpenPalette, onOpenHelp }: DesktopS
       </View>
 
       <Pressable
+        accessibilityLabel={expanded ? "Kenar çubuğunu daralt" : "Kenar çubuğunu genişlet"}
+        accessibilityRole="button"
+        aria-expanded={expanded}
+        onPress={onToggleExpanded}
+        style={styles.handle}
+      >
+        {({ hovered }) => (
+          <View style={[styles.handleDisc, hovered && styles.handleDiscHover]}>
+            <MaterialCommunityIcons
+              color={hovered ? colors.text : colors.textMuted}
+              name={expanded ? "chevron-left" : "chevron-right"}
+              size={iconSizes.inline}
+            />
+          </View>
+        )}
+      </Pressable>
+
+      <Pressable
         accessibilityHint="Maç, Super kararı veya Toto programı arar"
         accessibilityLabel="Ara"
         accessibilityRole="search"
         onPress={onOpenPalette}
         style={({ hovered }) => [styles.search, !expanded && styles.searchRail, hovered && styles.hover]}
       >
-        <MaterialCommunityIcons color={colors.textMuted} name="magnify" size={iconSizes.control} />
-        {expanded ? (
+        {({ hovered }) => (
           <>
-            <Text style={styles.searchText}>Ara</Text>
-            <Text style={styles.kbd}>Ctrl K</Text>
+            <MaterialCommunityIcons color={colors.textMuted} name="magnify" size={iconSizes.control} />
+            {expanded ? (
+              <>
+                <Text style={styles.searchText}>Ara</Text>
+                <Text style={styles.kbd}>Ctrl K</Text>
+              </>
+            ) : hovered ? <RailTooltip hint="Ctrl K" label="Ara" /> : null}
           </>
-        ) : null}
+        )}
       </Pressable>
 
       <View style={styles.items}>
@@ -91,31 +126,40 @@ export function DesktopSidebar({ expanded, onOpenPalette, onOpenHelp }: DesktopS
                 selected && styles.itemSelected
               ]}
             >
-              {selected ? <View style={styles.selectedBar} /> : null}
-              <MaterialCommunityIcons
-                color={color}
-                name={presentation?.icon ?? "circle-outline"}
-                size={iconSizes.navigation}
-              />
-              {expanded ? (
+              {({ hovered }) => (
                 <>
-                  <Text style={[styles.itemLabel, selected && styles.itemLabelSelected]}>
-                    {destination.label}
-                  </Text>
-                  {destination.route === "live" && liveCount > 0 ? (
-                    <View style={styles.liveBadge}>
-                      <View style={styles.liveDot} />
-                      <Text style={styles.liveText}>{liveCount}</Text>
-                    </View>
+                  {selected ? <View style={styles.selectedBar} /> : null}
+                  <MaterialCommunityIcons
+                    color={color}
+                    name={presentation?.icon ?? "circle-outline"}
+                    size={iconSizes.navigation}
+                  />
+                  {expanded ? (
+                    <>
+                      <Text style={[styles.itemLabel, selected && styles.itemLabelSelected]}>
+                        {destination.label}
+                      </Text>
+                      {destination.route === "live" && liveCount > 0 ? (
+                        <View style={styles.liveBadge}>
+                          <View style={styles.liveDot} />
+                          <Text style={styles.liveText}>{liveCount}</Text>
+                        </View>
+                      ) : (
+                        <Text style={styles.chord}>g {destination.chordKey}</Text>
+                      )}
+                    </>
                   ) : (
-                    <Text style={styles.chord}>g {destination.chordKey}</Text>
+                    <>
+                      {destination.route === "live" && liveCount > 0 ? (
+                        <View style={styles.railBadge}>
+                          <Text style={styles.railBadgeText}>{liveCount}</Text>
+                        </View>
+                      ) : null}
+                      {hovered ? <RailTooltip hint={`g ${destination.chordKey}`} label={destination.label} /> : null}
+                    </>
                   )}
                 </>
-              ) : destination.route === "live" && liveCount > 0 ? (
-                <View style={styles.railBadge}>
-                  <Text style={styles.railBadgeText}>{liveCount}</Text>
-                </View>
-              ) : null}
+              )}
             </Pressable>
           );
         })}
@@ -179,7 +223,55 @@ const styles = StyleSheet.create({
     borderRightColor: colors.borderSoft,
     borderRightWidth: 1,
     gap: spacing.lg,
-    paddingVertical: spacing.lg
+    paddingVertical: spacing.lg,
+    // Above the page so the edge handle and rail tooltips can overhang it.
+    zIndex: 3
+  },
+  // 44 px target centred on the sidebar's right edge, level with the brand row.
+  handle: {
+    alignItems: "center",
+    height: 44,
+    justifyContent: "center",
+    position: "absolute",
+    right: -22,
+    top: 14,
+    width: 44,
+    zIndex: 4
+  },
+  handleDisc: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radii.round,
+    borderWidth: 1,
+    height: 28,
+    justifyContent: "center",
+    width: 28
+  },
+  handleDiscHover: {
+    backgroundColor: colors.surfaceStrong
+  },
+  tooltip: {
+    alignItems: "center",
+    backgroundColor: colors.text,
+    borderRadius: radii.sm,
+    flexDirection: "row",
+    gap: spacing.sm,
+    left: "100%",
+    marginLeft: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    position: "absolute"
+  },
+  tooltipText: {
+    ...typeScale.bodyCompact,
+    color: colors.background,
+    fontWeight: "700"
+  },
+  tooltipHint: {
+    ...typeScale.micro,
+    color: colors.background,
+    opacity: 0.7
   },
   expanded: {
     paddingHorizontal: spacing.md,
@@ -206,7 +298,7 @@ const styles = StyleSheet.create({
   brandTitle: {
     ...typeScale.moduleTitle,
     color: colors.text,
-    fontWeight: "900"
+    fontWeight: "800"
   },
   brandTagline: {
     ...typeScale.micro,

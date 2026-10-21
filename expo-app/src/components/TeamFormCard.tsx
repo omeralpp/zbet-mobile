@@ -5,7 +5,9 @@ import {
   radii,
   semantic,
   spacing,
-  typeScale
+  typeScale,
+  textFont,
+  numericFont
 } from "@/src/theme/theme";
 import { CaveatLine, OriginBadge } from "./IntelligenceNotice";
 import { SurfaceMaterial } from "./SurfaceMaterial";
@@ -225,17 +227,17 @@ const styles = StyleSheet.create({
     paddingVertical: 2
   },
   resultText: {
-    fontSize: 11,
-    fontWeight: "900"
+    ...textFont("800"),
+    fontSize: 11
   },
   recordTeam: {
     color: colors.textMuted,
     ...typeScale.label
   },
   recordValue: {
+    ...numericFont("800"),
     color: colors.text,
     fontSize: 17,
-    fontWeight: "900",
     lineHeight: 22
   },
   recordSample: {
@@ -251,9 +253,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between"
   },
   rowValue: {
+    ...numericFont("800"),
     color: colors.text,
     fontSize: 13,
-    fontWeight: "800",
     minWidth: 56
   },
   rowLabel: {

@@ -94,7 +94,21 @@ export function SystemState({
         radius={radii.lg}
       />
       {kind === "LOADING" ? (
-        <ActivityIndicator color={accent} size="large" />
+        // The shape of what is coming instead of a spinner: a header line,
+        // two rows and a block, still, so it never competes with live data.
+        <View accessibilityElementsHidden style={styles.skeleton}>
+          <View style={styles.skeletonHead}>
+            <View style={[styles.bone, styles.boneTitle]} />
+            <View style={[styles.bone, styles.bonePill]} />
+          </View>
+          {[0, 1].map((row) => (
+            <View key={row} style={styles.skeletonRow}>
+              <View style={[styles.bone, styles.boneDot]} />
+              <View style={[styles.bone, row === 0 ? styles.boneLong : styles.boneShort]} />
+            </View>
+          ))}
+          <View style={[styles.bone, styles.boneBlock]} />
+        </View>
       ) : showMascot ? (
         <Image
           resizeMode="contain"
@@ -103,14 +117,25 @@ export function SystemState({
           style={styles.mascot}
         />
       ) : (
-        <MaterialCommunityIcons
-          color={accent}
-          name={spec.icon as IconName}
-          size={iconSizes.state}
-        />
+        <View style={styles.iconTile}>
+          <MaterialCommunityIcons
+            color={accent}
+            name={spec.icon as IconName}
+            size={iconSizes.control}
+          />
+        </View>
       )}
-      <Text accessibilityRole="header" role="heading" aria-level={2} style={styles.title}>{title ?? spec.title}</Text>
-      <Text style={styles.message}>{message ?? spec.body}</Text>
+      {kind === "LOADING" ? (
+        <View style={styles.loadingLabel}>
+          <ActivityIndicator color={accent} size="small" />
+          <Text accessibilityRole="header" role="heading" aria-level={2} style={styles.loadingText}>{title ?? spec.title}</Text>
+        </View>
+      ) : (
+        <>
+          <Text accessibilityRole="header" role="heading" aria-level={2} style={styles.title}>{title ?? spec.title}</Text>
+          <Text style={styles.message}>{message ?? spec.body}</Text>
+        </>
+      )}
       {showRetry ? (
         <Pressable
           accessibilityHint="Bu ekranın verilerini yeniden yükler"
@@ -183,6 +208,49 @@ const styles = StyleSheet.create({
     width: 54,
     height: 54
   },
+  iconTile: {
+    alignItems: "center",
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: 16,
+    height: 52,
+    justifyContent: "center",
+    width: 52
+  },
+  skeleton: {
+    alignSelf: "stretch",
+    gap: spacing.md
+  },
+  skeletonHead: {
+    flexDirection: "row",
+    justifyContent: "space-between"
+  },
+  skeletonRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.md
+  },
+  bone: {
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: radii.round
+  },
+  boneTitle: { height: 12, width: "38%" },
+  bonePill: { height: 20, width: 56 },
+  boneDot: { height: 30, width: 30 },
+  boneLong: { height: 12, flex: 1 },
+  boneShort: { height: 12, width: "55%" },
+  boneBlock: { borderRadius: 14, height: 88 },
+  loadingLabel: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.lg
+  },
+  loadingText: {
+    color: colors.text,
+    ...typeScale.bodyCompact,
+    fontWeight: "700"
+  },
   title: {
     color: colors.text,
     ...typeScale.moduleTitle,
@@ -205,6 +273,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: semantic.onAction,
-    ...typeScale.label
+    ...typeScale.bodyCompact,
+    fontWeight: "700"
   }
 });

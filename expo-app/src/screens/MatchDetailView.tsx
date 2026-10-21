@@ -27,6 +27,7 @@ import { useJinxAnalyticalSurface } from "@/src/mascot/JinxPreferencesProvider";
 import { ChangeEmphasis } from "@/src/components/ChangeEmphasis";
 import { LiveDot } from "@/src/components/LiveDot";
 import { SignalMeter } from "@/src/components/SignalMeter";
+import { RatingStars } from "@/src/components/RatingStars";
 import {
   SurfaceDivider,
   SurfaceMaterial
@@ -58,7 +59,9 @@ import {
   semantic,
   shadows,
   spacing,
-  typeScale
+  typeScale,
+  textFont,
+  numericFont
 } from "@/src/theme/theme";
 import {
   formatCurrentMarketRate,
@@ -658,6 +661,15 @@ export function MatchDetailView({
           {...(live ? { accent: semantic.live } : {})}
           radius={radii.xl}
         />
+        {/* Faint pitch markings behind the score: halfway line, centre
+            circle and both boxes. Decoration only, so it stays below every
+            reading contrast and out of the accessibility tree. */}
+        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none" style={styles.pitch}>
+          <View style={styles.pitchHalfway} />
+          <View style={styles.pitchCircle} />
+          <View style={[styles.pitchBox, styles.pitchBoxHome]} />
+          <View style={[styles.pitchBox, styles.pitchBoxAway]} />
+        </View>
         <View style={styles.leagueRow}>
           <View style={styles.leagueCopy}>
             <Text numberOfLines={1} style={styles.league}>
@@ -690,7 +702,7 @@ export function MatchDetailView({
             >
               <Text style={styles.score}>
                 {match.homeScore}
-                <Text style={styles.scoreSeparator}> - </Text>
+                <Text style={styles.scoreSeparator}>–</Text>
                 {match.awayScore}
               </Text>
             </ChangeEmphasis>
@@ -726,7 +738,18 @@ export function MatchDetailView({
             <Text numberOfLines={2} style={styles.selection}>
               {formatSelection(match.selectedOdd) || "Şu anda seçim yok"}
             </Text>
-            <SignalMeter rating={match.rating} />
+            {/* The rebuild's stars measure consistency and evidence quality;
+                the legacy meter's "BTB rating" wording would misname them. */}
+            {match.rebuild ? (
+              match.selectedOdd ? (
+                <View style={styles.rebuildStars}>
+                  <RatingStars rating={match.rating} size={13} />
+                  <Text style={styles.verdictLabel}>Tutarlılık ve kanıt kalitesi</Text>
+                </View>
+              ) : null
+            ) : (
+              <SignalMeter rating={match.rating} />
+            )}
           </View>
           <View style={[styles.verdictCell, styles.verdictCellEnd]}>
             <Text style={styles.verdictValue}>
@@ -806,8 +829,8 @@ export function MatchDetailView({
 const styles = StyleSheet.create({
   fixedHeader: { backgroundColor: colors.background, borderBottomWidth: 1, borderColor: colors.border,
     paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, gap: 2 },
-  fixedTitle: { color: colors.text, fontSize: 14, fontWeight: "700" },
-  fixedValue: { color: colors.textMuted, fontSize: 13 },
+  fixedTitle: { ...textFont("700"), color: colors.text, fontSize: 14 },
+  fixedValue: { ...textFont("400"), color: colors.textMuted, fontSize: 13 },
   screen: {
     paddingTop: spacing.lg
   },
@@ -826,17 +849,17 @@ const styles = StyleSheet.create({
   },
   league: {
     color: colors.textMuted,
-    ...typeScale.micro,
-    textTransform: "uppercase"
+    ...typeScale.eyebrow
   },
   leagueCopy: {
     flex: 1
   },
   fixtureTime: {
-    color: colors.textSubtle,
-    fontSize: 10,
-    fontWeight: "700",
-    marginTop: 3
+    ...textFont("500"),
+    color: colors.textMuted,
+    fontSize: 12,
+    lineHeight: 16,
+    marginTop: 2
   },
   // The minute pill was loss red for every status, so a finished match wore the
   // same signal as one in progress and neither of them meant anything. It now
@@ -851,13 +874,11 @@ const styles = StyleSheet.create({
     paddingVertical: 5
   },
   elapsedPillLive: {
-    backgroundColor: semantic.liveSoft,
-    borderWidth: 1,
-    borderColor: semantic.live
+    backgroundColor: semantic.liveSoft
   },
   elapsed: {
     color: colors.textMuted,
-    ...typeScale.micro
+    ...typeScale.eyebrow
   },
   elapsedLive: {
     color: semantic.live
@@ -875,10 +896,10 @@ const styles = StyleSheet.create({
     gap: spacing.sm
   },
   team: {
+    ...textFont("700"),
     color: colors.text,
     fontSize: 15,
     lineHeight: 20,
-    fontWeight: "800",
     textAlign: "center"
   },
   teamNameRow: {
@@ -889,9 +910,9 @@ const styles = StyleSheet.create({
     justifyContent: "center"
   },
   rank: {
-    color: colors.green,
-    fontSize: 10,
-    fontWeight: "900"
+    ...textFont("700"),
+    color: colors.textMuted,
+    fontSize: 12
   },
   redCardBadge: {
     alignItems: "center",
@@ -899,14 +920,13 @@ const styles = StyleSheet.create({
     gap: 2
   },
   redCardCount: {
+    ...textFont("800"),
     color: colors.red,
-    fontSize: 9,
-    fontWeight: "900"
+    fontSize: 11
   },
   score: {
     color: colors.text,
-    fontSize: 32,
-    fontWeight: "800",
+    ...typeScale.display,
     paddingHorizontal: spacing.md,
     textAlign: "center"
   },
@@ -915,6 +935,51 @@ const styles = StyleSheet.create({
   scoreSeparator: {
     color: colors.textSubtle,
     fontWeight: fontWeights.medium
+  },
+  rebuildStars: {
+    gap: 2
+  },
+  pitch: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    opacity: 0.5
+  },
+  pitchHalfway: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    width: 1,
+    backgroundColor: colors.border
+  },
+  pitchCircle: {
+    width: 128,
+    height: 128,
+    borderRadius: 64,
+    borderWidth: 1,
+    borderColor: colors.border
+  },
+  pitchBox: {
+    position: "absolute",
+    top: "28%",
+    height: "34%",
+    width: 22,
+    borderWidth: 1,
+    borderColor: colors.border
+  },
+  pitchBoxHome: {
+    left: -1,
+    borderTopRightRadius: 4,
+    borderBottomRightRadius: 4
+  },
+  pitchBoxAway: {
+    right: -1,
+    borderTopLeftRadius: 4,
+    borderBottomLeftRadius: 4
   },
   scoreBlock: {
     alignItems: "center"
@@ -1020,13 +1085,15 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm
   },
   decisionMeta: {
+    ...textFont("400"),
     color: colors.textMuted,
     fontSize: 11,
     lineHeight: 16
   },
   decisionScore: {
+    ...textFont("400"),
     color: colors.textSubtle,
-    fontSize: 10
+    fontSize: 11
   },
   statsCard: {
     borderRadius: radii.lg,
@@ -1044,17 +1111,17 @@ const styles = StyleSheet.create({
     justifyContent: "space-between"
   },
   statValue: {
+    ...numericFont("800"),
     color: colors.text,
     width: 54,
-    fontSize: 14,
-    fontWeight: "900"
+    fontSize: 14
   },
   statLabel: {
+    ...textFont("700"),
     color: colors.textMuted,
     flex: 1,
     textAlign: "center",
-    fontSize: 11,
-    fontWeight: "700"
+    fontSize: 11
   },
   dualBar: {
     flexDirection: "row",
@@ -1098,10 +1165,10 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   distributionScore: {
+    ...numericFont("800"),
     color: colors.text,
     width: 34,
-    fontSize: 12,
-    fontWeight: "900"
+    fontSize: 12
   },
   probabilityTrack: {
     flex: 1,
@@ -1123,6 +1190,7 @@ const styles = StyleSheet.create({
     ...typeScale.label
   },
   emptyText: {
+    ...textFont("400"),
     color: colors.textMuted,
     textAlign: "center",
     fontSize: 12
@@ -1139,9 +1207,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.green
   },
   bilyonerActionText: {
+    ...textFont("800"),
     color: colors.background,
-    fontSize: 14,
-    fontWeight: "900"
+    fontSize: 14
   },
   flowSection: {
     gap: spacing.sm,

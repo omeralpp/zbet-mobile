@@ -5,7 +5,7 @@ import * as Haptics from "expo-haptics";
 import { usePathname, useRouter } from "expo-router";
 import { AppState, Animated, Easing, PanResponder, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, iconSizes, radii, semantic, shadows, themeMode, typeScale } from "@/src/theme/theme";
+import { colors, iconSizes, radii, semantic, shadows, themeMode, typeScale, textFont } from "@/src/theme/theme";
 import { useTutorial } from "@/src/tutorial/TutorialProvider";
 import { jinxSleepDelayMs } from "./idle-behavior";
 import { subscribeMascotInteraction } from "./interaction-activity";
@@ -703,10 +703,10 @@ const styles = StyleSheet.create({
   },
   moodAccessory: { alignItems: "center", justifyContent: "center", position: "absolute", right: -4, top: -9 },
   moodAccessoryLow: { bottom: -3, right: -4, top: undefined },
-  moodCoin: { fontSize: 16, fontWeight: "900", left: 26, position: "absolute", top: 20 },
+  moodCoin: { ...textFont("800"), fontSize: 16, left: 26, position: "absolute", top: 20 },
   moodBubble: { minHeight: 92 },
   moodEyebrow: { ...typeScale.eyebrow, marginBottom: 4 },
-  moodBody: { color: "#203546", fontSize: 13, lineHeight: 19, fontWeight: "600", marginTop: 5 },
+  moodBody: { ...textFont("500"), color: "#203546", fontSize: 13, lineHeight: 19, marginTop: 4 },
   greeting: {
     position: "absolute",
     top: 8,
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
   },
   greetingLeft: { left: mascotSize + 8 },
   greetingRight: { right: mascotSize + 8 },
-  greetingText: { color: "#102538", fontSize: 12, fontWeight: "900" },
+  greetingText: { ...textFont("800"), color: "#102538", fontSize: 12 },
   tutorialBubble: {
     position: "absolute",
     borderRadius: radii.lg,
@@ -738,15 +738,19 @@ const styles = StyleSheet.create({
     marginBottom: 4
   },
   tutorialTitle: {
+    ...textFont("800"),
     color: "#102538",
-    fontSize: 14,
-    fontWeight: "900"
+    fontSize: 16,
+    lineHeight: 21
   },
+  // The bubble is always light, so its copy uses the light palette's muted ink
+  // at a reading size rather than the floor.
   tutorialBody: {
-    color: "#4D6577",
-    fontSize: 11,
-    lineHeight: 16,
-    marginTop: 5
+    ...textFont("400"),
+    color: "#455C63",
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 4
   },
   tutorialActions: {
     alignItems: "center",
@@ -810,5 +814,5 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: colors.blueSoft
   },
-  menuLabel: { color: colors.text, fontSize: 12, fontWeight: "800" }
+  menuLabel: { ...textFont("800"), color: colors.text, fontSize: 12 }
 });

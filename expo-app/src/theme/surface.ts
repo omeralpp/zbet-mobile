@@ -60,6 +60,20 @@ export const pageBackgrounds = {
  */
 export const traceWidthRatio = 0.55;
 
+/**
+ * The accent form of the trace: a short solid bar riding the top edge, inset
+ * from the leading corner.
+ *
+ * A fading hairline in the accent colour read as a tint on a phone held at arm's
+ * length; a 64pt bar reads as a deliberate mark and still covers a fraction of
+ * the narrowest card, so it can never close into an outline.
+ */
+export const edgeBar = {
+  width: 64,
+  height: 2,
+  inset: 18
+} as const;
+
 /** Opacity per trace kind. An inert surface is barely lit at all. */
 export const traceOpacity = {
   inert: 0.24,

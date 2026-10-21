@@ -13,6 +13,7 @@ import { notifyMascotInteraction } from "@/src/mascot/interaction-activity";
 import { DiscoveryProvider } from "@/src/mascot/DiscoveryProvider";
 import { AndroidBackGuard } from "@/src/navigation/AndroidBackGuard";
 import { AppProviders } from "@/src/providers/AppProviders";
+import { useBrandFonts } from "@/src/theme/fonts";
 import { applySystemTheme } from "@/src/theme/system-theme";
 import { colors, themeMode } from "@/src/theme/theme";
 import { useReducedMotion } from "@/src/theme/use-reduced-motion";
@@ -27,6 +28,7 @@ function RootNavigator() {
   const auth = useAuth();
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
+  const fontsReady = useBrandFonts();
   const [skippedLaunch] = useState(hasPlayedLaunch);
   const [launchComplete, setLaunchComplete] = useState(skippedLaunch);
   const hasSession =
@@ -50,7 +52,7 @@ function RootNavigator() {
         <AppLaunchScreen
           onComplete={handleLaunchComplete}
           onLayout={handleLaunchLayout}
-          ready={auth.status !== "loading"}
+          ready={auth.status !== "loading" && fontsReady}
         />
       </>
     );
@@ -58,8 +60,9 @@ function RootNavigator() {
   // A skipped launch (web reload) must still wait for the auth answer, or the
   // guards below would bounce a deep link through the sign-in route. Only the
   // web build skips the launch, and its preview/edge modes never re-enter
-  // "loading" after boot (only native OAuth sign-in does).
-  if (skippedLaunch && auth.status === "loading") {
+  // "loading" after boot (only native OAuth sign-in does). It also waits for
+  // the bundled faces, so a reload never paints in the fallback font first.
+  if (skippedLaunch && (auth.status === "loading" || !fontsReady)) {
     return <View style={[styles.root, { backgroundColor: colors.background }]} />;
   }
 

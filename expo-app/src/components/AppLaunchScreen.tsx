@@ -15,9 +15,9 @@ import { btbBrandMark } from "@/src/theme/brand-mark";
 import {
   colors,
   iconSizes,
-  radii,
   spacing,
-  themeMode
+  themeMode,
+  textFont
 } from "@/src/theme/theme";
 
 type AppLaunchScreenProps = {
@@ -143,9 +143,13 @@ export function AppLaunchScreen({
       onLayout={onLayout}
       style={styles.container}
     >
-      <View style={styles.glow} />
       <View style={styles.content}>
         <View style={styles.logoStage}>
+          {/* The centre circle and halfway line, centred on the mark: the
+              pitch the product reads. */}
+          <View pointerEvents="none" style={styles.halfway} />
+          <View pointerEvents="none" style={styles.ring} />
+          <View pointerEvents="none" style={styles.centreSpot} />
           <Image
             accessibilityIgnoresInvertColors
             resizeMode="contain"
@@ -189,20 +193,21 @@ export function AppLaunchScreen({
           >
             <Animated.View
               style={[styles.progressClip, { width: progressWidth }]}
-            >
-              <LinearGradient
-                colors={[colors.blue, colors.green]}
-                end={{ x: 1, y: 0 }}
-                start={{ x: 0, y: 0 }}
-                style={styles.progressFill}
-              />
-            </Animated.View>
+            />
           </View>
           <View style={styles.statusRow}>
             <Text style={styles.status}>
               {ready ? "BTB hazır" : "Güvenli oturum hazırlanıyor"}
             </Text>
-            <Text style={styles.statusMark}>{ready ? "100%" : "•••"}</Text>
+            {ready ? (
+              <Text style={styles.statusMark}>100%</Text>
+            ) : (
+              <View accessibilityElementsHidden style={styles.dots}>
+                <View style={styles.dot} />
+                <View style={[styles.dot, styles.dotMid]} />
+                <View style={[styles.dot, styles.dotLow]} />
+              </View>
+            )}
           </View>
         </View>
       </View>
@@ -212,7 +217,7 @@ export function AppLaunchScreen({
           { bottom: Math.max(insets.bottom, spacing.lg) + spacing.md }
         ]}
       >
-        Canlı analiz • Super • Toto
+        Canlı analiz · Super · Toto
       </Text>
     </LinearGradient>
   );
@@ -226,13 +231,36 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     paddingHorizontal: spacing.xxl
   },
-  glow: {
+  // Centred on the 176pt mark; the line runs past both screen edges.
+  halfway: {
     position: "absolute",
-    width: 260,
-    height: 260,
-    borderRadius: 130,
-    backgroundColor: colors.actionFill,
-    opacity: 0.18
+    left: -2000,
+    right: -2000,
+    top: 88,
+    height: 1,
+    backgroundColor: colors.border,
+    opacity: 0.45
+  },
+  ring: {
+    position: "absolute",
+    left: -62,
+    top: -62,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    borderWidth: 1,
+    borderColor: colors.border,
+    opacity: 0.45
+  },
+  centreSpot: {
+    position: "absolute",
+    left: 84,
+    top: 84,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.border,
+    opacity: 0.7
   },
   content: {
     width: "100%",
@@ -240,16 +268,16 @@ const styles = StyleSheet.create({
     alignItems: "center"
   },
   logo: {
-    width: 132,
-    height: 132
+    width: 176,
+    height: 176
   },
   logoStage: {
-    width: 132,
-    height: 132
+    width: 176,
+    height: 176
   },
   ball: {
     position: "absolute",
-    left: 51,
+    left: 73,
     top: 0,
     width: 30,
     height: 30,
@@ -261,62 +289,74 @@ const styles = StyleSheet.create({
     elevation: 8
   },
   brand: {
-    marginTop: spacing.xl,
+    ...textFont("800"),
+    marginTop: spacing.md,
     color: colors.text,
-    fontSize: 27,
-    fontWeight: "900",
-    letterSpacing: 3.2
+    fontSize: 26,
+    lineHeight: 30,
+    letterSpacing: 6
   },
   tagline: {
-    marginTop: spacing.sm,
-    color: colors.green,
-    fontSize: 11,
-    fontWeight: "800",
+    ...textFont("800"),
+    marginTop: 6,
+    color: colors.actionFill,
+    fontSize: 12,
+    lineHeight: 16,
     letterSpacing: 3.6
   },
   statusArea: {
-    width: "100%",
-    marginTop: 54
+    width: 260,
+    marginTop: 56
   },
   track: {
-    height: 7,
+    height: 6,
     overflow: "hidden",
-    borderRadius: radii.round,
-    backgroundColor: colors.surfaceStrong,
-    borderWidth: 1,
-    borderColor: colors.border
+    borderRadius: 3,
+    backgroundColor: colors.surfaceStrong
   },
   progressClip: {
     height: "100%",
-    overflow: "hidden",
-    borderRadius: radii.round
+    borderRadius: 3,
+    backgroundColor: colors.actionFill
   },
-  progressFill: {
-    width: "100%",
-    height: "100%"
+  dots: {
+    flexDirection: "row",
+    gap: 4
+  },
+  dot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: colors.actionFill
+  },
+  dotMid: {
+    opacity: 0.6
+  },
+  dotLow: {
+    opacity: 0.3
   },
   statusRow: {
-    marginTop: spacing.md,
+    marginTop: 10,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between"
   },
   status: {
+    ...textFont("500"),
     color: colors.textMuted,
-    fontSize: 12,
-    fontWeight: "700"
+    fontSize: 13,
+    lineHeight: 18
   },
   statusMark: {
-    color: colors.green,
+    ...textFont("800"),
+    color: colors.actionFill,
     fontSize: 12,
-    fontWeight: "900",
     letterSpacing: 1
   },
   footer: {
+    ...textFont("700"),
     position: "absolute",
-    color: colors.textSubtle,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1.2
+    color: colors.textMuted,
+    fontSize: 13
   }
 });

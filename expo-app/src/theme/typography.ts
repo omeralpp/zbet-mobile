@@ -7,13 +7,18 @@
  * at or near the heaviest weight the font offers. Emphasis then had nowhere to
  * go and had to be recovered through size and colour alone.
  *
- * Two rules keep that from coming back.
+ * Three rules keep that from coming back.
  *
- * **Only weights Android actually renders.** The default Android family ships
- * Regular(400), Medium(500), Bold(700) and Black(900). A requested `800` is
- * resolved to the nearest available face, so `800` and `900` were never two
- * steps — they were one step spelled two ways. This scale uses the four real
- * faces and nothing else.
+ * **Two bundled families, one job each.** Manrope carries every word; Barlow
+ * Condensed carries scores, odds and metrics, so a number reads as one shape
+ * and a column of them lines up. Both ship inside the app (assets/fonts, OFL),
+ * so Android and web render the same letters instead of whatever system face
+ * the device happens to have.
+ *
+ * **Only weights that exist as files.** Each family ships Regular or Medium,
+ * Bold and ExtraBold, and nothing else. A requested weight between two faces is
+ * resolved to the nearest one, so an off-scale weight is never a real step —
+ * it is an existing step spelled differently on each platform.
  *
  * **A floor of 11pt.** Sizes 8, 9 and 10 appeared 66 times. At Android font
  * scale 0.85 an 8pt label is under 7pt of rendered text, which is below what a
@@ -22,28 +27,32 @@
  * Roles are named for what they carry in a football terminal, not for how big
  * they are, so a later retune changes one entry instead of every screen.
  */
+import { fontFamilies } from "./font-families";
 
-export type FontWeight = "400" | "500" | "700" | "900";
+export { fontFamilies } from "./font-families";
+
+export type FontWeight = "400" | "500" | "700" | "800";
 
 export const fontWeights = {
   regular: "400",
   medium: "500",
   bold: "700",
-  black: "900"
+  heavy: "800"
 } as const satisfies Record<string, FontWeight>;
 
 /** Smallest size any BTB surface may render. See the module note. */
 export const minimumFontSize = 11;
 
-/** Weights the Android system family resolves to a distinct face. */
+/** Weights the bundled families resolve to a distinct face. */
 export const renderableWeights: readonly FontWeight[] = [
   "400",
   "500",
   "700",
-  "900"
+  "800"
 ];
 
 export interface TypeRole {
+  fontFamily: string;
   fontSize: number;
   lineHeight: number;
   fontWeight: FontWeight;
@@ -52,31 +61,54 @@ export interface TypeRole {
 }
 
 /**
+ * Text style for a string that does not fit a role: the family is never left
+ * to the platform default, whatever size the caller needs.
+ */
+export function textFont(
+  fontWeight: FontWeight = fontWeights.regular
+): Pick<TypeRole, "fontFamily" | "fontWeight"> {
+  return { fontFamily: fontFamilies.text, fontWeight };
+}
+
+/** Numeric twin of `textFont`: Barlow Condensed with tabular figures. */
+export function numericFont(fontWeight: FontWeight = fontWeights.bold) {
+  return {
+    fontFamily: fontFamilies.numeric,
+    fontWeight,
+    fontVariant: ["tabular-nums"] as ["tabular-nums"]
+  };
+}
+
+/**
  * The scale.
  *
- * Numerics (`display`, `score`, `metric`, `metricCompact`) stay at `900` with
- * negative tracking: a score is read as a shape, and tightening it is what makes
- * it read as one value instead of two digits and a separator. Prose drops to
- * `400`/`500`, which is the change that gives the heavy roles something to be
- * heavy against.
+ * Numerics (`display`, `score`, `metric`, `metricCompact`) are Barlow
+ * Condensed. The face is already narrow, so only the hero score tightens; the
+ * sizes are a step larger than the old system-font numerals because a
+ * condensed figure carries less ink at the same size. Prose stays at
+ * `400`/`500`, which is what gives the heavy roles something to be heavy
+ * against.
  */
 export const typeScale = {
   /** Hero match score on Match Detail. The largest thing in the product. */
   display: {
-    fontSize: 38,
-    lineHeight: 42,
-    fontWeight: fontWeights.black,
-    letterSpacing: -1.2
+    fontFamily: fontFamilies.numeric,
+    fontSize: 52,
+    lineHeight: 56,
+    fontWeight: fontWeights.heavy,
+    letterSpacing: -1
   },
   /** Score inside a list card, where two lines must stay on one card row. */
   score: {
-    fontSize: 27,
-    lineHeight: 30,
-    fontWeight: fontWeights.black,
-    letterSpacing: -0.8
+    fontFamily: fontFamilies.numeric,
+    fontSize: 30,
+    lineHeight: 32,
+    fontWeight: fontWeights.heavy,
+    letterSpacing: 0
   },
   /** `Screen` title. One per screen. */
   pageTitle: {
+    fontFamily: fontFamilies.text,
     fontSize: 28,
     lineHeight: 34,
     fontWeight: fontWeights.bold,
@@ -84,6 +116,7 @@ export const typeScale = {
   },
   /** Module and section heading inside a screen. */
   moduleTitle: {
+    fontFamily: fontFamilies.text,
     fontSize: 19,
     lineHeight: 24,
     fontWeight: fontWeights.bold,
@@ -91,6 +124,7 @@ export const typeScale = {
   },
   /** What BTB selected. The sentence the whole product exists to show. */
   decision: {
+    fontFamily: fontFamilies.text,
     fontSize: 17,
     lineHeight: 22,
     fontWeight: fontWeights.bold,
@@ -98,6 +132,7 @@ export const typeScale = {
   },
   /** Team name on a detail surface. */
   identity: {
+    fontFamily: fontFamilies.text,
     fontSize: 15,
     lineHeight: 20,
     fontWeight: fontWeights.medium,
@@ -105,6 +140,7 @@ export const typeScale = {
   },
   /** Team name in a list row, where long Turkish club names must still fit. */
   identityCompact: {
+    fontFamily: fontFamilies.text,
     fontSize: 13,
     lineHeight: 17,
     fontWeight: fontWeights.medium,
@@ -112,20 +148,23 @@ export const typeScale = {
   },
   /** Primary metric value — odds, rating, profit. */
   metric: {
-    fontSize: 19,
+    fontFamily: fontFamilies.numeric,
+    fontSize: 22,
     lineHeight: 24,
-    fontWeight: fontWeights.black,
-    letterSpacing: -0.3
+    fontWeight: fontWeights.bold,
+    letterSpacing: 0
   },
   /** Metric value in a dense three-column rhythm. */
   metricCompact: {
-    fontSize: 15,
-    lineHeight: 19,
-    fontWeight: fontWeights.black,
-    letterSpacing: -0.2
+    fontFamily: fontFamilies.numeric,
+    fontSize: 17,
+    lineHeight: 20,
+    fontWeight: fontWeights.bold,
+    letterSpacing: 0
   },
   /** Supporting copy and explanations. */
   body: {
+    fontFamily: fontFamilies.text,
     fontSize: 15,
     lineHeight: 22,
     fontWeight: fontWeights.regular,
@@ -133,6 +172,7 @@ export const typeScale = {
   },
   /** Supporting copy inside a card that cannot grow. */
   bodyCompact: {
+    fontFamily: fontFamilies.text,
     fontSize: 13,
     lineHeight: 18,
     fontWeight: fontWeights.regular,
@@ -140,6 +180,7 @@ export const typeScale = {
   },
   /** The word under a metric value. */
   label: {
+    fontFamily: fontFamilies.text,
     fontSize: 12,
     lineHeight: 17,
     fontWeight: fontWeights.medium,
@@ -147,14 +188,16 @@ export const typeScale = {
   },
   /** Tracked uppercase kicker above a title. Carries BTB's voice. */
   eyebrow: {
+    fontFamily: fontFamilies.text,
     fontSize: 11,
     lineHeight: 14,
-    fontWeight: fontWeights.black,
+    fontWeight: fontWeights.heavy,
     letterSpacing: 1.4,
     textTransform: "uppercase"
   },
   /** League, kickoff time, timestamp. */
   meta: {
+    fontFamily: fontFamilies.text,
     fontSize: 13,
     lineHeight: 18,
     fontWeight: fontWeights.medium,
@@ -162,6 +205,7 @@ export const typeScale = {
   },
   /** Compact metadata: badge counts, pill text. Sits on the floor. */
   micro: {
+    fontFamily: fontFamilies.text,
     fontSize: 11,
     lineHeight: 14,
     fontWeight: fontWeights.bold,

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Svg, { Circle, G, Line, Rect, Text as SvgText } from "react-native-svg";
 import type { MatchDetail, MatchJourney } from "@/src/api/schemas";
-import { colors, radii, spacing, typeScale } from "@/src/theme/theme";
+import { colors, fontFamilies, radii, spacing, typeScale } from "@/src/theme/theme";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 import { journeySvgAccessibility } from "./JourneyEventIcon";
 import { edgeSafeLabel, pressureHeadline, pressureSeries } from "./pressure-chart";
@@ -13,7 +13,7 @@ import { edgeSafeLabel, pressureHeadline, pressureSeries } from "./pressure-char
 const HEIGHT = 192, LEFT = 8, RIGHT = 8;
 const HOME_GOAL_Y = 12, TOP = 26, PLOT_BOTTOM = 150, AWAY_GOAL_Y = 164, AXIS_Y = 186;
 const GOAL_LABEL_WIDTH = 22;
-const svgLabel = { fontSize: 11, fontWeight: "600", fontFamily: "sans-serif" } as const;
+const svgLabel = { fontSize: 11, fontWeight: "700", fontFamily: fontFamilies.text } as const;
 
 /** Home pressure rises above the axis, away pressure falls below it. */
 export function PressureChart({ match, journey }: { match: MatchDetail; journey: MatchJourney | undefined }) {

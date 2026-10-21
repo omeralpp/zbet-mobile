@@ -5,7 +5,7 @@ import { useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Polyline, Rect, Stop, Text as SvgText } from 'react-native-svg';
 import type { LiveContext, MatchDetail, MatchJourney, MatchJourneyPoint, MatchPathContext, SuperLog } from '@/src/api/schemas';
-import { colors, radii, semantic, spacing, typeScale } from '@/src/theme/theme';
+import { colors, fontFamilies, radii, semantic, spacing, typeScale, textFont, numericFont } from '@/src/theme/theme';
 import { SurfaceMaterial } from './SurfaceMaterial';
 import { JourneyInspector } from './JourneyInspector';
 import { adjacentInspectorMoment } from './journey-inspector';
@@ -31,7 +31,7 @@ const EMPTY_POINTS: MatchJourneyPoint[]=[];
 const EMPTY_DECISIONS: readonly SuperLog[]=[];
 const LEGEND_KINDS=['GOAL','RED_CARD','SUPER','POOL_CHANGE','CORRECTION'] as const;
 const LEGEND_LABELS: Record<(typeof LEGEND_KINDS)[number],string>={GOAL:'Gol',RED_CARD:'Kart',SUPER:'Super',POOL_CHANGE:'Yeni havuz',CORRECTION:'Düzeltme'};
-const svgLabel={fontSize:12,fontWeight:'500',fontFamily:'sans-serif'} as const;
+const svgLabel={fontSize:12,fontWeight:'500',fontFamily:fontFamilies.text} as const;
 const bands=[{label:'Olağan',level:.85},{label:'Sıra dışı',level:.5},{label:'Sürpriz',level:.15}];
 type WebScrollNode={parentElement:WebScrollNode|null;scrollTop:number;scrollLeft:number;scrollHeight:number;clientHeight:number;focus?:(options?:{preventScroll:boolean})=>void;scrollTo:(options:{top:number;left:number;behavior:'instant';x:number;y:number;animated:false})=>void};
 
@@ -326,7 +326,7 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
 }
 
 const story=StyleSheet.create({
-  inlineSummary:{fontSize:13,lineHeight:19,color:colors.textMuted},
+  inlineSummary:{...textFont('400'), fontSize:13,lineHeight:19,color:colors.textMuted},
   inspectButton:{minHeight:48,gap:4,justifyContent:'center'},
   inspectorBackdrop:{flex:1,justifyContent:'flex-end',backgroundColor:'rgba(0,0,0,0.55)',paddingHorizontal:12},
   inspector:{width:'100%',maxWidth:640,alignSelf:'center',backgroundColor:colors.backgroundElevated,borderRadius:20,borderWidth:1,borderColor:colors.border,paddingHorizontal:16},
@@ -337,10 +337,10 @@ const story=StyleSheet.create({
   eyebrow:{...typeScale.eyebrow,color:colors.bronze},liveTag:{...typeScale.micro,color:colors.teal},micro:{...typeScale.micro,color:colors.textMuted},
   headline:{...typeScale.moduleTitle,fontSize:20,lineHeight:26,color:colors.text},subtitle:{...typeScale.label,color:colors.textMuted,lineHeight:19},
   scoreRow:{flexDirection:'row',alignItems:'center',gap:10,paddingVertical:6},team:{flex:1,flexDirection:'row',alignItems:'center',gap:7},teamName:{...typeScale.label,color:colors.text,flexShrink:1,fontWeight:'700'},dot:{width:5,height:20,borderRadius:3},
-  scorePill:{alignItems:'center',gap:3},score:{fontSize:28,fontWeight:'700',color:colors.text,fontVariant:['tabular-nums']},
+  scorePill:{alignItems:'center',gap:3},score:{...numericFont('700'), fontSize:28,color:colors.text,fontVariant:['tabular-nums']},
   plotSurface:{backgroundColor:colors.backgroundElevated,borderRadius:16,marginHorizontal:-4,overflow:'hidden'},
   plotReadout:{minHeight:56,paddingHorizontal:12,paddingVertical:8,flexDirection:'row',alignItems:'center',gap:8,borderBottomColor:colors.borderSoft,borderBottomWidth:1},
-  plotReadoutCopy:{flex:1,minWidth:0,gap:3},readoutValue:{fontSize:13,lineHeight:18,fontWeight:'700',color:colors.text,fontVariant:['tabular-nums']},
+  plotReadoutCopy:{flex:1,minWidth:0,gap:3},readoutValue:{...numericFont('700'), fontSize:13,lineHeight:18,color:colors.text,fontVariant:['tabular-nums']},
   latestButton:{minHeight:48,justifyContent:'center',paddingHorizontal:6},markerHit:{position:'absolute',width:48,height:48},
   gestureHint:{...typeScale.label,color:colors.text,lineHeight:18},eventLegend:{flexDirection:'row',flexWrap:'wrap',gap:12},legendItem:{flexDirection:'row',alignItems:'center',gap:4},
   groupChoices:{gap:6},groupChoice:{flexDirection:'row',alignItems:'center',gap:8,minHeight:48,padding:10,borderColor:colors.borderSoft,borderWidth:1,borderRadius:10,backgroundColor:colors.backgroundElevated},groupChoiceText:{...typeScale.label,color:colors.text,flex:1,lineHeight:18},
@@ -348,7 +348,7 @@ const story=StyleSheet.create({
   focusAction:{minHeight:48,justifyContent:'center',alignSelf:'flex-start'},
   focus:{backgroundColor:colors.backgroundElevated,borderLeftWidth:3,borderLeftColor:colors.blue,borderRadius:12,padding:14,gap:7},focusTitle:{...typeScale.bodyCompact,color:colors.text,fontWeight:'700',lineHeight:22},
   controls:{flexDirection:'row',justifyContent:'space-between',gap:4},control:{flex:1,minHeight:48,alignItems:'center',justifyContent:'center',paddingHorizontal:6},controlText:{...typeScale.label,color:colors.blue,fontWeight:'700'},disabled:{opacity:.3},
-  poolBox:{borderWidth:1,borderColor:colors.border,borderRadius:16,padding:12,gap:10},leaders:{flexDirection:'row',gap:12},leader:{flex:1,gap:6},poolScore:{fontSize:21,fontWeight:'700',color:colors.text},track:{height:4,borderRadius:2,backgroundColor:colors.borderSoft,overflow:'hidden'},fill:{height:4,backgroundColor:colors.bronze,borderRadius:2},
+  poolBox:{borderWidth:1,borderColor:colors.border,borderRadius:16,padding:12,gap:10},leaders:{flexDirection:'row',gap:12},leader:{flex:1,gap:6},poolScore:{...numericFont('700'), fontSize:21,color:colors.text},track:{height:4,borderRadius:2,backgroundColor:colors.borderSoft,overflow:'hidden'},fill:{height:4,backgroundColor:colors.bronze,borderRadius:2},
   disclosure:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',gap:10,minHeight:48,borderTopWidth:1,borderTopColor:colors.borderSoft,paddingTop:10}
 });
 function AnalysisEventRail({ activeKey, awayTeam, events, homeTeam, onSelect, path, state }: {

@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { colors, spacing, typeScale } from "@/src/theme/theme";
+import { colors, spacing, typeScale, textFont } from "@/src/theme/theme";
 import type { TeamLogoSize } from "@/src/utils/team-logo";
 import { TeamLogo } from "./TeamLogo";
 
@@ -70,8 +70,8 @@ const styles = StyleSheet.create({
     fontWeight: "700"
   },
   separator: {
+    ...textFont("800"),
     color: colors.textSubtle,
-    fontSize: 13,
-    fontWeight: "900"
+    fontSize: 13
   }
 });

@@ -80,12 +80,16 @@ export function BottomTabBar({ navigation, state }: TopTabBarProps) {
               pressed && styles.tabItemPressed
             ]}
           >
-            <MaterialCommunityIcons
-              color={color}
-              name={presentation.icon}
-              size={focused ? iconSizes.navigation : iconSizes.control}
-            />
-            <Text style={[styles.tabLabel, { color }]}>{presentation.label}</Text>
+            {/* The active tab sits on a soft action pill, so the selection
+                reads by shape as well as colour. */}
+            <View style={[styles.iconPill, focused && styles.iconPillActive]}>
+              <MaterialCommunityIcons
+                color={color}
+                name={presentation.icon}
+                size={iconSizes.control}
+              />
+            </View>
+            <Text style={[styles.tabLabel, focused && styles.tabLabelActive, { color }]}>{presentation.label}</Text>
           </Pressable>
         );
       })}
@@ -105,14 +109,33 @@ const styles = StyleSheet.create({
   tabItem: {
     alignItems: "center",
     flex: 1,
-    gap: 2,
+    gap: 3,
     justifyContent: "center",
     minHeight: interaction.minTouchTarget
   },
   tabItemPressed: {
     opacity: 0.68
   },
+  // Transparent and clipped from the first frame: on Android a fill added to
+  // a view that mounted without one dropped the radius and drew a rectangle.
+  iconPill: {
+    alignItems: "center",
+    backgroundColor: "transparent",
+    borderRadius: 16,
+    height: 30,
+    justifyContent: "center",
+    overflow: "hidden",
+    width: 52
+  },
+  iconPillActive: {
+    backgroundColor: colors.greenSoft
+  },
   tabLabel: {
-    ...typeScale.micro
+    ...typeScale.label,
+    letterSpacing: 0,
+    lineHeight: 16
+  },
+  tabLabelActive: {
+    fontWeight: "700"
   }
 });

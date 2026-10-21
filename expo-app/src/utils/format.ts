@@ -129,6 +129,18 @@ export function formatFixtureDateTime(
   return `${date} · ${matchTime}`;
 }
 
+/**
+ * Today's date as a screen kicker: "28 TEMMUZ · SALI", Istanbul calendar.
+ * Upper-cased here with the Turkish locale rather than by `textTransform`, so
+ * PAZARTESİ keeps its dotted capital on a device set to another language.
+ */
+export function formatTodayEyebrow(now: Date = new Date()): string {
+  const timeZone = "Europe/Istanbul";
+  const day = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", timeZone }).format(now);
+  const weekday = new Intl.DateTimeFormat("tr-TR", { weekday: "long", timeZone }).format(now);
+  return `${day} · ${weekday}`.toLocaleUpperCase("tr-TR");
+}
+
 export function formatTimestamp(value: string): string {
   const parsed = new Date(value);
   if (!Number.isFinite(parsed.getTime())) {

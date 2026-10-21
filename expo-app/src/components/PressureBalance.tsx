@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { colors, spacing } from "@/src/theme/theme";
+import { colors, spacing, textFont, numericFont } from "@/src/theme/theme";
 import { formatAbsolute } from "@/src/utils/format";
 import {
   derivePressureBalance,
@@ -73,9 +73,9 @@ const styles = StyleSheet.create({
     borderTopColor: colors.borderSoft
   },
   label: {
+    ...textFont("800"),
     color: colors.textMuted,
     fontSize: 11,
-    fontWeight: "900",
     textAlign: "center",
     marginBottom: spacing.md
   },
@@ -86,16 +86,16 @@ const styles = StyleSheet.create({
     gap: spacing.sm
   },
   home: {
+    ...textFont("800"),
     flex: 1,
     color: colors.blue,
-    fontSize: 10,
-    fontWeight: "800"
+    fontSize: 11
   },
   away: {
+    ...textFont("800"),
     flex: 1,
     color: colors.green,
-    fontSize: 10,
-    fontWeight: "800",
+    fontSize: 11,
     textAlign: "right"
   },
   valueBlock: {
@@ -103,13 +103,14 @@ const styles = StyleSheet.create({
     minWidth: 92
   },
   value: {
+    ...numericFont("800"),
     color: colors.text,
-    fontSize: 16,
-    fontWeight: "900"
+    fontSize: 16
   },
   caption: {
+    ...textFont("400"),
     color: colors.textSubtle,
-    fontSize: 9,
+    fontSize: 11,
     marginTop: 2
   },
   axis: {

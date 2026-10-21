@@ -87,6 +87,35 @@ export default function resolveAppConfig({
   plugins: [
     "expo-router",
     "expo-secure-store",
+    // Bundled type (src/theme/typography.ts). XML font families give Android
+    // one family name per typeface that resolves `fontWeight` to the right
+    // file; the web build registers the same names itself (fonts.web.ts).
+    [
+      "expo-font",
+      {
+        android: {
+          fonts: [
+            {
+              fontFamily: "Manrope",
+              fontDefinitions: [
+                { path: "./assets/fonts/Manrope-Regular.ttf", weight: 400 },
+                { path: "./assets/fonts/Manrope-Medium.ttf", weight: 500 },
+                { path: "./assets/fonts/Manrope-Bold.ttf", weight: 700 },
+                { path: "./assets/fonts/Manrope-ExtraBold.ttf", weight: 800 }
+              ]
+            },
+            {
+              fontFamily: "BarlowCondensed",
+              fontDefinitions: [
+                { path: "./assets/fonts/BarlowCondensed-Medium.ttf", weight: 500 },
+                { path: "./assets/fonts/BarlowCondensed-Bold.ttf", weight: 700 },
+                { path: "./assets/fonts/BarlowCondensed-ExtraBold.ttf", weight: 800 }
+              ]
+            }
+          ]
+        }
+      }
+    ],
     [
       "expo-notifications",
       {

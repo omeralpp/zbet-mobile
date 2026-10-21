@@ -12,7 +12,6 @@ import {
   View
 } from "react-native";
 import { Screen } from "@/src/components/Screen";
-import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import { useAuth } from "@/src/auth/AuthProvider";
 import { runtimeConfig } from "@/src/config/runtime";
 import { designLabAvailable } from "@/src/design-lab/jinx-motion";
@@ -288,34 +287,23 @@ export default function MoreScreen() {
   };
 
   return (
-    <Screen eyebrow="BTB" title="Ayarlar ve yardım">
+    <Screen brand eyebrow="BTB" title="Ayarlar ve yardım">
       <View style={styles.modeCard}>
-        <SurfaceMaterial
-          accent={
-            runtimeConfig.useMocks ? semantic.warning : semantic.neutral
-          }
-          radius={radii.lg}
+        <MaterialCommunityIcons
+          color={runtimeConfig.useMocks ? semantic.warning : semantic.intelligence}
+          name={runtimeConfig.useMocks ? "alert-circle-outline" : "information-outline"}
+          size={iconSizes.control}
         />
-        <View style={styles.modeHeader}>
-          <View
-            style={[
-              styles.modeDot,
-              {
-                backgroundColor: runtimeConfig.useMocks
-                  ? semantic.warning
-                  : semantic.neutral
-              }
-            ]}
-          />
+        <View style={styles.modeCopy}>
           <Text style={styles.modeTitle}>
             {runtimeConfig.useMocks ? "Önizleme modu" : "Maç verileri"}
           </Text>
+          <Text style={styles.modeDetail}>
+            {runtimeConfig.useMocks
+              ? "Uygulama güvenli örnek veriler gösteriyor."
+              : "Maç ve karar kayıtlarının zamanını ve güncelliğini ilgili ekranda kontrol et."}
+          </Text>
         </View>
-        <Text style={styles.modeDetail}>
-          {runtimeConfig.useMocks
-            ? "Uygulama güvenli örnek veriler gösteriyor."
-            : "Maç ve karar kayıtlarının zamanını ve güncelliğini ilgili ekranda kontrol et."}
-        </Text>
       </View>
 
       <Text accessibilityRole="header" aria-level={2} style={styles.sectionTitle}>Görünüm ve Jinx</Text>
@@ -331,8 +319,8 @@ export default function MoreScreen() {
             {([['LIVE', 'Canlı'], ['CALM', 'Sakin'], ['OFF', 'Kapalı']] as const).map(([mode, label]) => <Pressable key={mode}
               accessibilityRole="button" accessibilityLabel={`Jinx hareketi: ${label}`}
               accessibilityState={{ selected: jinx.mode === mode }} aria-pressed={jinx.mode === mode}
-              onPress={() => jinx.setMode(mode)} style={[styles.jinxMode, { borderColor: jinx.mode === mode ? semantic.intelligence : colors.border, backgroundColor: jinx.mode === mode ? colors.actionFill : colors.backgroundElevated }]}>
-              <Text style={[typeScale.body, { color: jinx.mode === mode ? colors.onAction : colors.text }]}>{label}</Text>
+              onPress={() => jinx.setMode(mode)} style={[styles.jinxMode, jinx.mode === mode ? { backgroundColor: colors.actionFill } : null]}>
+              <Text style={[typeScale.body, { fontWeight: "700", color: jinx.mode === mode ? colors.onAction : colors.text }]}>{label}</Text>
             </Pressable>)}
           </View>
           {systemReducedMotion ? <Text style={styles.rowDetail}>Sistemin hareket azaltma ayarı açık; dekoratif hareketler kapalı.</Text> : null}
@@ -583,41 +571,37 @@ export default function MoreScreen() {
 
 const styles = StyleSheet.create({
   jinxPreference: { padding: spacing.md, gap: spacing.sm },
-  jinxModes: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
-  jinxMode: { minHeight: 48, minWidth: 72, paddingHorizontal: spacing.md, borderWidth: 1, borderRadius: radii.md, justifyContent: "center", alignItems: "center", flexGrow: 1 },
+  jinxModes: { flexDirection: "row", gap: 4, padding: 4, borderRadius: radii.round, backgroundColor: colors.surfaceStrong },
+  jinxMode: { minHeight: 44, minWidth: 72, paddingHorizontal: spacing.md, borderRadius: radii.round, justifyContent: "center", alignItems: "center", flex: 1 },
   modeCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+    alignItems: "flex-start",
+    backgroundColor: runtimeConfig.useMocks ? semantic.warningSoft : semantic.intelligenceSoft,
+    borderRadius: 18,
+    flexDirection: "row",
+    gap: spacing.md,
     padding: spacing.lg
   },
-  modeHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm
-  },
-  modeDot: {
-    width: 9,
-    height: 9,
-    borderRadius: 5
+  modeCopy: {
+    flex: 1,
+    gap: 2
   },
   modeTitle: {
     color: colors.text,
-    ...typeScale.decision
+    ...typeScale.identity,
+    fontWeight: "700"
   },
   modeDetail: {
-    color: colors.textMuted,
-    ...typeScale.body,
-    marginTop: spacing.sm
+    color: colors.text,
+    ...typeScale.bodyCompact
   },
   // Section labels here are the same grammar as a module eyebrow elsewhere,
   // so they take the same role and the same structural bronze.
   sectionTitle: {
-    color: colors.text,
-    ...typeScale.moduleTitle,
+    color: colors.textMuted,
+    ...typeScale.eyebrow,
     marginTop: spacing.xxl,
-    marginBottom: spacing.sm
+    marginBottom: 10,
+    paddingHorizontal: spacing.xs
   },
   group: {
     borderRadius: radii.lg,
@@ -692,7 +676,8 @@ const styles = StyleSheet.create({
   },
   rowTitle: {
     color: colors.text,
-    ...typeScale.identity
+    ...typeScale.identity,
+    fontWeight: "700"
   },
   rowDetail: {
     color: colors.textSubtle,

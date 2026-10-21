@@ -13,8 +13,11 @@ import { syncWidgetTheme } from "@/src/widgets/btb-widget";
 
 export { parseThemeMode, type ThemeMode } from "./theme-preference";
 export {
+  fontFamilies,
   fontWeights,
   minimumFontSize,
+  numericFont,
+  textFont,
   typeScale,
   type TypeRole,
   type TypeRoleName
@@ -85,7 +88,8 @@ const lightColors: ThemeColors = {
   gold: lightBase.warning,
   goldSoft: lightBase.warningSoft,
   red: "#BE2843",
-  redSoft: "#F9D9DF",
+  // #F9D9DF left red text at 4.48:1, just under the reading floor.
+  redSoft: "#FADEE3",
   teal: "#036E74",
   tealSoft: "#D6EEEC",
   bronze: "#7A5B30",

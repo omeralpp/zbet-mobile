@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import {
   RefreshControl,
   FlatList,
   Platform,
   Pressable,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View
@@ -31,6 +31,7 @@ import {
 } from "@/src/components/StateView";
 import {
   colors,
+  iconSizes,
   interaction,
   radii,
   semantic,
@@ -48,6 +49,7 @@ import {
 import { groupMatchesByKickoff } from "@/src/utils/match-groups";
 import { normalizeSearchText, searchTextScore } from "@/src/utils/search";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
+import { formatTodayEyebrow } from "@/src/utils/format";
 
 function firstParam(value: string | string[] | undefined): string {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
@@ -69,38 +71,55 @@ function routeTab(
 
 const localTabs = ["LIVE", "FIXTURE", "STAR"] as const;
 
+/**
+ * The single compact Canlı / Fikstür segment (NXT-OBS-123). Each half names
+ * the scope it shows and its count, so the switched-off state still says what
+ * the list is: the upcoming fixtures, never "all".
+ */
 function LiveSwitch({
-  active,
+  tab,
   fixtureCount,
   liveCount,
   onChange
 }: {
-  active: boolean;
+  /** The star view selects neither half; the star chip shows it instead. */
+  tab: LiveMatchTab;
   fixtureCount: number;
   liveCount: number;
   onChange: (active: boolean) => void;
 }) {
-  // The chip names the scope the list is actually showing, not the control's
-  // on-state: switched off the page is the fixture list, so it says so.
-  const label = active ? "Canlı" : "Fikstür";
-  const count = active ? liveCount : fixtureCount;
+  const segments = [
+    { live: true, label: "Canlı", count: liveCount },
+    { live: false, label: "Fikstür", count: fixtureCount }
+  ];
   return (
-    <View style={[styles.liveSwitch, active && styles.liveSwitchActive]}>
-      <View>
-        <Text style={[styles.liveSwitchLabel, active && styles.liveSwitchLabelActive]}>
-          {label}
-        </Text>
-        <Text style={styles.liveSwitchCount}>{count} maç</Text>
-      </View>
-      <Switch
-        accessibilityLabel={`${label}, ${count} maç`}
-        accessibilityRole="switch"
-        accessibilityState={{ checked: active }}
-        onValueChange={onChange}
-        thumbColor={active ? colors.onAction : colors.textSubtle}
-        trackColor={{ false: colors.borderSoft, true: semantic.live }}
-        value={active}
-      />
+    <View accessibilityRole="tablist" style={styles.liveSwitch}>
+      {segments.map((segment) => {
+        const selected = segment.live ? tab === "LIVE" : tab === "FIXTURE";
+        return (
+          <Pressable
+            accessibilityLabel={`${segment.label}, ${segment.count} maç`}
+            accessibilityRole="tab"
+            accessibilityState={{ selected }}
+            key={segment.label}
+            onPress={() => {
+              if (!selected) {
+                onChange(segment.live);
+              }
+            }}
+            style={({ pressed }) => [
+              styles.liveSegment,
+              selected && (segment.live ? styles.liveSegmentLive : styles.liveSegmentSelected),
+              pressed && styles.segmentPressed
+            ]}
+          >
+            {segment.live ? <View style={[styles.segmentDot, !selected && styles.segmentDotIdle]} /> : null}
+            <Text style={[styles.liveSwitchLabel, selected && (segment.live ? styles.liveSwitchLabelActive : styles.liveSwitchLabelSelected)]}>
+              {segment.label} · {segment.count}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
@@ -212,8 +231,9 @@ export default function LiveScreen() {
       // The shell reports live-ness only while something is actually live, so
       // the trace is evidence rather than theming.
       {...(tabCounts.LIVE > 0 ? { accent: semantic.live } : {})}
+      brand
       contentStyle={styles.screen}
-      eyebrow="BTB"
+      eyebrow={formatTodayEyebrow()}
       scroll={false}
       title="Canlı maçlar"
       wide
@@ -225,7 +245,7 @@ export default function LiveScreen() {
       >
         <View style={styles.filters}>
           <LiveSwitch
-            active={tab === "LIVE"}
+            tab={tab}
             fixtureCount={tabCounts.FIXTURE}
             liveCount={tabCounts.LIVE}
             onChange={(enabled) => {
@@ -254,9 +274,13 @@ export default function LiveScreen() {
         </View>
       </TutorialTarget>
 
-      <View style={styles.searchRow}><TextInput accessibilityLabel="Takım veya lig ara" placeholder="Takım veya ligin bir bölümünü ara"
-        placeholderTextColor={colors.textMuted} value={search} onChangeText={setSearch}
-        autoCorrect={false} autoCapitalize="none" style={styles.search} />
+      <View style={styles.searchRow}>
+        <View style={styles.searchField}>
+          <MaterialCommunityIcons color={colors.textMuted} name="magnify" size={iconSizes.inline} />
+          <TextInput accessibilityLabel="Takım veya lig ara" placeholder="Takım veya lig ara"
+            placeholderTextColor={colors.textMuted} value={search} onChangeText={setSearch}
+            autoCorrect={false} autoCapitalize="none" style={styles.search} />
+        </View>
         {search ? <Pressable accessibilityRole="button" accessibilityLabel="Maç aramasını temizle" onPress={() => setSearch("")} style={styles.clearSearch}><Text style={styles.clearSearchText}>Temizle</Text></Pressable> : null}</View>
       {query.data ? <Text accessibilityLiveRegion="polite" style={styles.resultCount}>
         {tabCounts[tab]} maç bu kapsamda · {(sectionsByTab[tab] ?? []).reduce((count, section) => count + section.data.length, 0)} sonuç
@@ -332,14 +356,18 @@ export default function LiveScreen() {
               }
               renderItem={({ item: section, index: sectionIndex }) => (
                 <View style={[styles.group, grid.cellStyle]}>
-                  <Text style={styles.sectionTitle}>{section.title}</Text>
+                  {/* Every card carries its own kickoff now, so only the
+                      groupings a card cannot express keep a heading. */}
+                  {section.key.startsWith("pinned-") || section.key.startsWith("search-") ? (
+                    <Text style={styles.sectionTitle}>{section.title}</Text>
+                  ) : null}
                   {section.data.map((match, matchIndex) =>
                     pageTab === tab &&
                     sectionIndex === 0 &&
                     matchIndex === 0 ? (
                       <TutorialTarget id="live-first-card" key={match.key}>
                         <MatchCard
-                          compact
+                          compact={splitLayout}
                           insight={insightMap.get(match.key)}
                           match={match}
                           onSelect={splitLayout ? () => setSelectedKey(match.key) : undefined}
@@ -354,7 +382,7 @@ export default function LiveScreen() {
                       </TutorialTarget>
                     ) : (
                       <MatchCard
-                        compact
+                        compact={splitLayout}
                         insight={insightMap.get(match.key)}
                         key={match.key}
                         match={match}
@@ -406,9 +434,10 @@ const singleColumnGrid: CardGrid = {
 
 const styles = StyleSheet.create({
   searchRow: { flexDirection: "row", gap: spacing.sm, alignItems: "center", marginBottom: spacing.sm },
-  search: { flex: 1, minWidth: 0, minHeight: 48, borderWidth: 1, borderColor: colors.border, borderRadius: radii.md,
-    backgroundColor: colors.backgroundElevated, color: colors.text, ...typeScale.body,
-    paddingHorizontal: spacing.md },
+  searchField: { flex: 1, minWidth: 0, minHeight: 48, flexDirection: "row", alignItems: "center", gap: spacing.sm,
+    borderWidth: 1, borderColor: colors.border, borderRadius: 14, backgroundColor: colors.backgroundElevated,
+    paddingLeft: 14 },
+  search: { flex: 1, minWidth: 0, minHeight: 46, color: colors.text, ...typeScale.body, paddingRight: spacing.md },
   clearSearch: { minHeight: 48, justifyContent: "center", paddingHorizontal: spacing.sm },
   clearSearchText: { ...typeScale.bodyCompact, color: colors.blue, fontWeight: "700" },
   resultCount: { ...typeScale.meta, color: colors.textMuted, marginBottom: spacing.md },
@@ -443,31 +472,50 @@ const styles = StyleSheet.create({
   liveSwitch: {
     alignItems: "center",
     backgroundColor: colors.backgroundElevated,
-    borderColor: colors.borderSoft,
+    borderColor: colors.border,
     borderRadius: radii.round,
     borderWidth: 1,
     flexDirection: "row",
-    gap: spacing.sm,
-    minHeight: interaction.minTouchTarget,
-    paddingLeft: spacing.md,
-    paddingRight: spacing.sm
+    padding: 3
   },
-  liveSwitchActive: {
-    backgroundColor: semantic.liveSoft,
-    borderColor: semantic.live
+  liveSegment: {
+    alignItems: "center",
+    borderRadius: radii.round,
+    flexDirection: "row",
+    gap: 6,
+    justifyContent: "center",
+    minHeight: interaction.minTouchTarget - 2,
+    minWidth: 96,
+    paddingHorizontal: spacing.lg
+  },
+  liveSegmentLive: {
+    backgroundColor: semantic.liveSoft
+  },
+  liveSegmentSelected: {
+    backgroundColor: colors.surfaceStrong
+  },
+  segmentPressed: {
+    opacity: 0.72
+  },
+  segmentDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: semantic.live
+  },
+  segmentDotIdle: {
+    backgroundColor: colors.textSubtle
   },
   liveSwitchLabel: {
     color: colors.textMuted,
-    fontSize: 12,
-    fontWeight: "800"
+    ...typeScale.bodyCompact,
+    fontWeight: "700"
   },
   liveSwitchLabelActive: {
     color: semantic.live
   },
-  liveSwitchCount: {
-    color: colors.textSubtle,
-    fontSize: 10,
-    fontWeight: "900"
+  liveSwitchLabelSelected: {
+    color: colors.text
   },
   filterTarget: {
     marginBottom: spacing.lg
@@ -476,16 +524,11 @@ const styles = StyleSheet.create({
     paddingBottom: 112
   },
   group: {
-    borderColor: colors.borderSoft,
-    borderRadius: radii.xl,
-    borderWidth: 1,
-    marginBottom: spacing.lg,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm
+    marginBottom: spacing.xs
   },
   sectionTitle: {
     color: colors.textMuted,
-    ...typeScale.meta,
+    ...typeScale.eyebrow,
     marginBottom: spacing.sm,
     marginTop: spacing.xs
   }

@@ -11,23 +11,26 @@ import {
   type NativeSyntheticEvent
 } from "react-native";
 import { MatchCard } from "@/src/components/MatchCard";
-import { MetricCard } from "@/src/components/MetricCard";
+import { MetricStrip, MetricTile } from "@/src/components/MetricCard";
+import { toneColor } from "@/src/components/DecisionTicket";
 import { Screen } from "@/src/components/Screen";
 import { SectionHeader } from "@/src/components/SectionHeader";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { TotoProgramCard } from "@/src/components/TotoProgramCard";
 import { dashboardQuery } from "@/src/api/queries";
-import { RebuildReportPanel } from "@/src/components/RebuildEvidencePanel";
+import { RecentRecommendations, useRebuildWeek } from "@/src/components/RebuildEvidencePanel";
+import { formatRatio, formatUnits, unitsTone } from "@/src/utils/rebuild-display";
 import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
 import { useModuleLayout } from "@/src/layout/module-layout-store";
 import type { OverviewModuleId } from "@/src/layout/module-registry";
 import { useLiveStarFilter } from "@/src/preferences/LiveStarFilterProvider";
-import { colors, semantic, spacing, typeScale } from "@/src/theme/theme";
+import { colors, semantic, spacing, typeScale, textFont } from "@/src/theme/theme";
 import {
   liveStarMetricCount,
   starMetricLabel
 } from "@/src/utils/decision-filters";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
+import { formatTodayEyebrow } from "@/src/utils/format";
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -45,6 +48,7 @@ export default function DashboardScreen() {
   );
 
   const dashboard = query.data;
+  const week = useRebuildWeek();
   const featuredTitle = {
     SELECTED_LIVE: "Öne çıkan canlı maçlar",
     PRESSURE_LIVE: "Takipteki canlı maçlar",
@@ -56,43 +60,74 @@ export default function DashboardScreen() {
       ? "Başlama zamanı en yakın aktif fikstürler"
       : "Skor, seçim ve güncel oran";
 
+  const weekTone = week.period ? unitsTone(week.period.net) : "neutral";
   const moduleNodes: Partial<Record<OverviewModuleId, ReactNode>> = {
-    metrics: (
+    metrics: dashboard ? (
       <View style={styles.metrics}>
-        {dashboard ? <><MetricCard
-          // The live-match counter used loss red. It counts matches in progress
-          // and says nothing about how they are going.
-          accent={semantic.live}
-          detail="aktif takip"
-          icon="access-point"
-          label="Canlı maç"
-          onPress={() =>
-            router.push({
-              pathname: "/live",
-              params: { scope: "LIVE" }
-            } as never)
-          }
-          value={String(dashboard.liveMatchCount)}
-        />
-        <MetricCard
-          accent={colors.gold}
-          detail="canlı maç filtresi"
-          icon="star-four-points-outline"
-          label={starMetricLabel(liveStarFilter)}
-          onPress={() =>
-            router.push({
-              pathname: "/live",
-              params: { scope: "STAR", decision: liveStarFilter }
-            } as never)
-          }
-          value={String(
-            liveStarMetricCount(dashboard.liveStarCounts, liveStarFilter)
-          )}
-        /></> : null}
-        <RebuildReportPanel />
+        <MetricStrip>
+          <MetricTile
+            // The live-match counter used loss red. It counts matches in
+            // progress and says nothing about how they are going.
+            accent={semantic.live}
+            detail="aktif takip"
+            icon="access-point"
+            label="Canlı maç"
+            onPress={() =>
+              router.push({
+                pathname: "/live",
+                params: { scope: "LIVE" }
+              } as never)
+            }
+            value={String(dashboard.liveMatchCount)}
+          />
+          <MetricTile
+            accent={colors.gold}
+            detail="canlı maç filtresi"
+            icon="star"
+            label={starMetricLabel(liveStarFilter)}
+            onPress={() =>
+              router.push({
+                pathname: "/live",
+                params: { scope: "STAR", decision: liveStarFilter }
+              } as never)
+            }
+            value={String(
+              liveStarMetricCount(dashboard.liveStarCounts, liveStarFilter)
+            )}
+          />
+          {/* The rebuild's own seven-day result at the original quote, one
+              hypothetical unit per recommendation; the full report and its
+              caveats live on the Super tab. */}
+          <MetricTile
+            accent={week.period ? toneColor[weekTone] : semantic.neutral}
+            accessibilityLabel={week.period
+              ? `BTB son 7 gün, varsayımsal birim ${formatUnits(week.period.net)}; ${week.period.wins} kazandı, ${week.period.losses} kaybetti; ROI ${formatRatio(week.period.roi)}`
+              : "BTB son 7 gün: rapor bekleniyor"}
+            detail={!week.period
+              ? week.loading ? "hazırlanıyor" : "rapor bekleniyor"
+              : week.period.recommendations === 0
+                ? "henüz öneri yok"
+                : `${week.period.wins} kazandı · ${week.period.losses} kaybetti`}
+            icon="chart-line"
+            label="BTB · 7 gün"
+            onPress={() => router.push("/super" as never)}
+            value={week.period ? formatUnits(week.period.net) : "—"}
+            valueColor={week.period && weekTone !== "neutral" ? toneColor[weekTone] : undefined}
+          />
+        </MetricStrip>
       </View>
-    ),
-    recentSuper: null
+    ) : null,
+    recentSuper: week.recommendations.length ? (
+      <>
+        <SectionHeader
+          actionLabel="Tümü"
+          caption="İlk oran ve sonuç, karar anındaki haliyle"
+          onAction={() => router.push("/super" as never)}
+          title="Son BTB önerileri"
+        />
+        <RecentRecommendations />
+      </>
+    ) : null
   };
 
   if (dashboard?.featuredMatches.length) {
@@ -139,7 +174,8 @@ export default function DashboardScreen() {
 
   return (
     <Screen
-      eyebrow="BTB"
+      brand
+      eyebrow={formatTodayEyebrow()}
       title="Bugünün görünümü"
       contentStyle={styles.content}
       scrollRef={scrollRef}
@@ -180,15 +216,12 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  selectionNotice: { color: colors.textMuted, fontSize: 14, lineHeight: 21, marginBottom: spacing.md },
+  selectionNotice: { ...textFont("400"), color: colors.textMuted, fontSize: 14, lineHeight: 21, marginBottom: spacing.md },
   content: {
     paddingTop: spacing.md
   },
   metrics: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.md,
-    marginTop: spacing.lg
+    width: "100%"
   },
   metricTarget: {
     flex: 1,
