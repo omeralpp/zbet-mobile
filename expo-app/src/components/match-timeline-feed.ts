@@ -1,4 +1,4 @@
-import type { SuperLog } from "@/src/api/schemas";
+import type { SuperMark } from "@/src/utils/super-mark";
 import type { VisibleEvent } from "./live-context-view";
 
 export type MatchTimelineEntry =
@@ -14,7 +14,7 @@ export type MatchTimelineEntry =
       kind: "SUPER";
       key: string;
       minute: number;
-      decision: SuperLog;
+      decision: SuperMark;
       isCurrent: boolean;
       sharesMinute: boolean;
     };
@@ -44,7 +44,7 @@ function eventMinute(event: VisibleEvent): number {
  */
 export function buildMatchTimelineFeed(
   events: readonly VisibleEvent[],
-  decisions: readonly SuperLog[],
+  decisions: readonly SuperMark[],
   currentDecisionKey?: string | null
 ): MatchTimelineEntry[] {
   const eventRows = events

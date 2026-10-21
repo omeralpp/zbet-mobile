@@ -1,4 +1,5 @@
-import type { LiveContext, MatchJourney, MatchJourneyPoint, SuperLog } from '../api/schemas';
+import type { LiveContext, MatchJourney, MatchJourneyPoint } from '../api/schemas';
+import type { SuperMark } from '../utils/super-mark';
 import { visibleEvents } from './live-context-view';
 import { buildSuperRatingMarker } from './super-rating-marker';
 import { unavailablePressureMessage } from '../utils/recent-pressure';
@@ -18,7 +19,7 @@ export type JourneyMoment = {
  * selection at a minute, not a match event and not a measured pool effect, so
  * it never carries a journey point or a score.
  */
-export function superMoments(decisions: readonly SuperLog[]): JourneyMoment[] {
+export function superMoments(decisions: readonly SuperMark[]): JourneyMoment[] {
   return decisions.map(decision => ({
     key: `super:${decision.key}`, minute: decision.elapsed, label: `${decision.elapsed}′`,
     title: `Super · ${decision.selectedOdd}`, score: null, side: null, kind: 'SUPER' as const,
@@ -29,7 +30,7 @@ export function superMoments(decisions: readonly SuperLog[]): JourneyMoment[] {
 
 /** Match events, captures and recorded Super decisions on one minute axis. */
 export function journeyAndSuperMoments(points: MatchJourneyPoint[], context: LiveContext | undefined,
-  decisions: readonly SuperLog[]): JourneyMoment[] {
+  decisions: readonly SuperMark[]): JourneyMoment[] {
   return [...journeyMoments(points, context), ...superMoments(decisions)]
     .sort((a,b) => (a.minute ?? Infinity) - (b.minute ?? Infinity));
 }

@@ -5,6 +5,7 @@ import { Stack, useFocusEffect, useRouter } from "expo-router";
 import {
   Alert,
   Linking,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -15,19 +16,21 @@ import {
   type NativeSyntheticEvent
 } from "react-native";
 import {
-  matchAnalysisContextQuery
+  matchAnalysisContextQuery,
+  rebuildMatchQuery
 } from "@/src/api/queries";
 import { mobileApi } from "@/src/api";
 import type { AnalysisContext } from "@/src/api/schemas";
 import { JinxAssessmentCard } from "@/src/components/JinxAssessmentCard";
-import { RebuildEvidencePanel, useRebuildClock } from "@/src/components/RebuildEvidencePanel";
+import { pressureSide } from "@/src/components/MatchCard";
+import { PitchMarkings } from "@/src/components/PitchMarkings";
+import { RebuildDecisionModule, RebuildJinxCard, useRebuildClock } from "@/src/components/RebuildEvidencePanel";
 import { currentRebuild } from "@/src/utils/rebuild-current";
 import { analysisNeedsRefresh } from "@/src/mascot/jinx-assessment";
 import { useJinxAnalyticalSurface } from "@/src/mascot/JinxPreferencesProvider";
 import { ChangeEmphasis } from "@/src/components/ChangeEmphasis";
 import { LiveDot } from "@/src/components/LiveDot";
 import { SignalMeter } from "@/src/components/SignalMeter";
-import { RatingStars } from "@/src/components/RatingStars";
 import {
   SurfaceDivider,
   SurfaceMaterial
@@ -47,9 +50,11 @@ import { mountsIntelligenceSurfaces } from "@/src/config/mobile-intelligence";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { buildBilyonerMatchUrl } from "@/src/external/bilyoner";
 import { CollapsibleModule } from "@/src/layout/CollapsibleModule";
+import { isAtLeast } from "@/src/layout/breakpoints";
+import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
 import { useModuleLayout } from "@/src/layout/module-layout-store";
-import { resetModuleCollapse } from "@/src/layout/module-collapse-store";
+import { resetModuleCollapse, useModuleCollapse } from "@/src/layout/module-collapse-store";
 import type { LiveDetailModuleId } from "@/src/layout/module-registry";
 import {
   colors,
@@ -65,17 +70,27 @@ import {
 } from "@/src/theme/theme";
 import {
   formatCurrentMarketRate,
-  formatDecisionReason,
   formatFixtureDateTime,
   formatElapsed,
-  formatPercentage,
   formatRate,
   formatSelection
 } from "@/src/utils/format";
-import { relatedSuperDecisions } from "@/src/utils/related-super-decisions";
 import { deriveLiveRateTrend } from "@/src/utils/live-card-indicators";
-import { recordedSelection } from "@/src/utils/decision-model";
+import { matchPressureSide } from "@/src/utils/match-pressure";
+import { rebuildMarks } from "@/src/utils/super-mark";
 import { formatHistoricalFraction, historicalFractionWidth, relativeComparisonWidths } from "@/src/utils/statistical-geometry";
+
+/** The evidence chips under "Maçın kanıtları", in the v40 board's words. */
+const evidenceChips: { id: LiveDetailModuleId; label: string }[] = [
+  { id: "matchPath", label: "Yol" },
+  { id: "pressure", label: "Baskı" },
+  { id: "decision", label: "Karar" },
+  { id: "teamForm", label: "Form" },
+  { id: "odds", label: "Piyasa" },
+  { id: "statistics", label: "Saha" },
+  { id: "scoreDistribution", label: "Benzer maçlar" },
+  { id: "standings", label: "Lig" }
+];
 
 /**
  * One Canlı detay module, as a collapsible panel.
@@ -114,24 +129,41 @@ function TeamHeroName({
   name,
   participantId,
   position,
-  redCards
+  redCards,
+  pressure,
+  pressureEstimated
 }: {
   name: string;
   participantId?: string | null | undefined;
   position?: number | null | undefined;
   redCards: number;
+  /** Set only on the side that currently has the pressure. */
+  pressure?: "HOME" | "AWAY" | undefined;
+  pressureEstimated: boolean;
 }) {
+  const side = pressure ? pressureSide[pressure] : null;
+  // The v40 board: the name on its own line, then rank, pressure mark and
+  // red cards beneath it.
   return (
     <View style={styles.teamIdentity}>
-      <TeamLogo participantId={participantId} size="hero" />
-      <View style={styles.teamNameRow}>
+      <TeamLogo name={name} participantId={participantId} size="hero" />
       <Text numberOfLines={2} style={styles.team}>
         {name}
       </Text>
+      <View style={styles.teamNameRow}>
       {position ? (
         <Text accessibilityLabel={`Lig sırası ${position}`} style={styles.rank}>
           #{position}
         </Text>
+      ) : null}
+      {side ? (
+        <MaterialCommunityIcons
+          accessibilityLabel={`${pressureEstimated ? "Tahmini baskı" : "Baskı"} ${side.label}`}
+          color={side.color}
+          name={side.icon}
+          size={iconSizes.small}
+          style={pressureEstimated ? styles.estimated : undefined}
+        />
       ) : null}
       {redCards > 0 ? (
         <View
@@ -222,8 +254,12 @@ export function MatchDetailView({
       router.replace("/");
     }
   };
-  const [showDecision, setShowDecision] = useState(false);
   const [compactHeader, setCompactHeader] = useState(false);
+  const breakpoint = useBreakpoint();
+  const wideWeb = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
+  const { collapsed, toggle: toggleModule } = useModuleCollapse("liveDetail");
+  const moduleRefs = useRef(new Map<string, View | null>());
+  const contentTopRef = useRef<View | null>(null);
   const [reordering, setReordering] = useState(false);
   const scrollRef = useRef<ScrollView | null>(null);
   const scrollOffset = useRef(0);
@@ -252,8 +288,11 @@ export function MatchDetailView({
   const insightQuery = sourceView(context.data?.sources.insight);
   const leagueContextQuery = sourceView(context.data?.sources.leagueContext);
   const periodScoreQuery = sourceView(context.data?.sources.periodScore);
-  const superLogs = sourceView(context.data?.sources.superLogs);
   const liveContext = sourceView(context.data?.sources.liveContext);
+  // RB1 records are the match's published decisions (the A3 Super log marks
+  // are retired, owner decision 2026-10-21); a match outside RB1 has none.
+  const isRebuild = Boolean(context.data?.sources.matchDetail?.rebuild);
+  const rebuildMatch = useQuery(rebuildMatchQuery(isRebuild ? key : ""));
   const intelligence = mountsIntelligenceSurfaces(runtimeConfig.mobileIntelligence) && !query.data?.rebuild;
   const teamFormEnabled = mountsIntelligenceSurfaces(runtimeConfig.teamFormIntelligence);
   const teamForm = sourceView(context.data?.sources.teamForm);
@@ -278,9 +317,24 @@ export function MatchDetailView({
     askOnArrival(packet);
   }, [askOnArrival, context.data, intelligence, key]);
   const relatedDecisions = useMemo(
-    () => relatedSuperDecisions(superLogs.data ?? [], key),
-    [key, superLogs.data]
+    () => rebuildMarks(rebuildMatch.data?.history ?? []),
+    [rebuildMatch.data?.history]
   );
+  // A chip opens its module if it is closed, then brings it under the header.
+  // Window positions keep this independent of how the list lays modules out.
+  const jumpToModule = (id: LiveDetailModuleId) => {
+    if (collapsed.includes(id)) toggleModule(id);
+    setTimeout(() => {
+      const target = moduleRefs.current.get(id);
+      const top = contentTopRef.current;
+      if (!target || !top) return;
+      top.measureInWindow((_topX, topY) => {
+        target.measureInWindow((_x, y) => {
+          scrollRef.current?.scrollTo({ y: Math.max(0, y - topY + spacing.lg - spacing.sm), animated: true });
+        });
+      });
+    }, 60);
+  };
 
   if (query.isLoading) {
     return (
@@ -308,13 +362,13 @@ export function MatchDetailView({
 
   const match = query.data.rebuild && !currentRebuild(query.data.rebuild, now)
     ? { ...query.data, selectedOdd: "", rating: 0, liveRate: null, currentRate: null } : query.data;
-  const currentDecisionKey =
-    relatedDecisions.find(
-      (log) =>
-        log.selectedOdd === match.selectedOdd &&
-        log.rating === match.rating &&
-        log.elapsed === match.decisionMinute
-    )?.key ?? null;
+  const current = match.rebuild ? currentRebuild(match.rebuild, now) : null;
+  const currentDecisionKey = current?.decisionId ?? null;
+  const currentMinute = current
+    ? rebuildMatch.data?.history.find((record) => record.decisionId === current.decisionId)?.minute ?? null
+    : match.rebuild ? null : match.decisionMinute;
+  const pressure = matchPressureSide(match);
+  const phase = match.status === "LIVE" ? (match.elapsed > 45 ? "2. YARI" : "1. YARI") : null;
   const live = match.status === "LIVE" || match.status === "HALF_TIME";
   const insight = insightQuery.data;
   const leagueContext = leagueContextQuery.data;
@@ -361,7 +415,7 @@ export function MatchDetailView({
   const openDecision = (decisionKey: string) =>
     router.push({
       pathname: "/super/[key]",
-      params: { key: decisionKey }
+      params: { key: decisionKey, match: key }
     } as never);
 
   const moduleNodes: Partial<Record<LiveDetailModuleId, ReactNode>> = {
@@ -524,58 +578,12 @@ export function MatchDetailView({
     );
   }
 
-  if (match.selectedOdd && match.rating > 0) {
+  // Karar özeti is the RB1 record and its frozen evidence (owner decision
+  // 2026-10-21); the A3 model summary it used to show is retired.
+  if (match.rebuild) {
     moduleNodes.decision = (
       <LiveDetailPanel eyebrow="KARAR" id="decision" title="Karar özeti">
-        <Pressable
-          accessibilityHint={
-            showDecision ? "Model ayrıntılarını gizler" : "Model ayrıntılarını açar"
-          }
-          accessibilityRole="button"
-          onPress={() => setShowDecision((visible) => !visible)}
-          style={styles.decisionCard}
-        >
-          <SurfaceMaterial accent={semantic.intelligence} radius={radii.lg} />
-          {/* The reason is the answer to the question the card asks, so it is the
-              headline rather than something revealed after a tap. Only the model
-              internals sit behind the disclosure - a reader who wants to know why
-              gets an answer immediately, and a reader who wants the numbers asks
-              for them. */}
-          <Text style={styles.decisionReason}>
-            {formatDecisionReason(match.decisionReason)}
-          </Text>
-          <View style={styles.decisionFacts}>
-            {match.decisionMinute !== null ? (
-              <Text style={styles.decisionFact}>{match.decisionMinute}&apos; karar</Text>
-            ) : null}
-            {match.selectedOdd ? (
-              <Text style={styles.decisionFact}>{formatSelection(match.selectedOdd)} · {match.selectedOdd}</Text>
-            ) : null}
-            <Text style={styles.decisionToggle}>
-              {showDecision ? "Modeli gizle" : "Modeli göster"}
-            </Text>
-          </View>
-          {showDecision ? (
-            <View style={styles.decisionBody}>
-              {match.decisionConfidence !== null ? (
-                <View style={styles.decisionMetric}>
-                  <Text style={styles.decisionMetricValue}>
-                    {formatPercentage(match.decisionConfidence)}
-                  </Text>
-                  <Text style={styles.decisionMetricLabel}>güven</Text>
-                </View>
-              ) : null}
-              {match.decisionScore !== null ? (
-                <View style={styles.decisionMetric}>
-                  <Text style={styles.decisionMetricValue}>
-                    {match.decisionScore.toFixed(2)}
-                  </Text>
-                  <Text style={styles.decisionMetricLabel}>model skoru</Text>
-                </View>
-              ) : null}
-            </View>
-          ) : null}
-        </Pressable>
+        <RebuildDecisionModule matchKey={key} />
       </LiveDetailPanel>
     );
   }
@@ -614,10 +622,20 @@ export function MatchDetailView({
     );
   }
 
+  // Every module with data shows on RB1 matches too (owner decision
+  // 2026-10-21: Maçın yolu, Baskı grafiği and Karar özeti return). Each node
+  // carries a ref so an evidence chip can bring it into view.
   const moduleItems = order
-    .filter(id => !match.rebuild || !["matchPath", "pressure", "decision"].includes(id))
     .filter((id): id is LiveDetailModuleId => Boolean(moduleNodes[id as LiveDetailModuleId]))
-    .map((id) => ({ id, node: moduleNodes[id] }));
+    .map((id) => ({
+      id,
+      node: (
+        <View collapsable={false} ref={(node) => { moduleRefs.current.set(id, node); }}>
+          {moduleNodes[id]}
+        </View>
+      )
+    }));
+  const visibleChips = evidenceChips.filter((chip) => moduleItems.some((item) => item.id === chip.id));
 
   return (
     <>
@@ -626,7 +644,24 @@ export function MatchDetailView({
           options={{
             title: compactHeader
               ? `${match.homeTeam} – ${match.awayTeam}`
-              : "Maç Detayı"
+              : "Maç detayı",
+            // Desktop already carries the shell's Yenile button.
+            ...(wideWeb ? {} : {
+              headerRight: () => (
+                <Pressable
+                  accessibilityLabel="Ekrandaki verileri yenile"
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={() => {
+                    void context.refetch();
+                    if (isRebuild) void rebuildMatch.refetch();
+                  }}
+                  style={styles.headerAction}
+                >
+                  <MaterialCommunityIcons color={semantic.intelligence} name="refresh" size={iconSizes.control} />
+                </Pressable>
+              )
+            })
           }}
         />
       )}
@@ -655,21 +690,16 @@ export function MatchDetailView({
         )
       }}
     >
+      <View collapsable={false} ref={contentTopRef}>
       <TutorialTarget id="match-summary" radius={radii.xl}>
         <View style={styles.scoreHero}>
         <SurfaceMaterial
           {...(live ? { accent: semantic.live } : {})}
           radius={radii.xl}
         />
-        {/* Faint pitch markings behind the score: halfway line, centre
-            circle and both boxes. Decoration only, so it stays below every
-            reading contrast and out of the accessibility tree. */}
-        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none" style={styles.pitch}>
-          <View style={styles.pitchHalfway} />
-          <View style={styles.pitchCircle} />
-          <View style={[styles.pitchBox, styles.pitchBoxHome]} />
-          <View style={[styles.pitchBox, styles.pitchBoxAway]} />
-        </View>
+        {/* Faint pitch markings behind the score. Decoration only, so they
+            stay below every reading contrast and out of the accessibility tree. */}
+        <PitchMarkings />
         <View style={styles.leagueRow}>
           <View style={styles.leagueCopy}>
             <Text numberOfLines={1} style={styles.league}>
@@ -682,7 +712,7 @@ export function MatchDetailView({
           <View style={[styles.elapsedPill, live && styles.elapsedPillLive]}>
             {live ? <LiveDot /> : null}
             <Text style={[styles.elapsed, live && styles.elapsedLive]}>
-              {formatElapsed(match.status, match.elapsed)}
+              {formatElapsed(match.status, match.elapsed)}{phase ? ` · ${phase}` : ""}
             </Text>
           </View>
         </View>
@@ -692,6 +722,8 @@ export function MatchDetailView({
               name={match.homeTeam}
               participantId={match.homeParticipantId}
               position={insight?.homeStandingPosition}
+              pressure={pressure.direction === "HOME" ? "HOME" : undefined}
+              pressureEstimated={pressure.estimated}
               redCards={insight?.homeRedCards ?? match.homeRedCards}
             />
           </View>
@@ -718,6 +750,8 @@ export function MatchDetailView({
               name={match.awayTeam}
               participantId={match.awayParticipantId}
               position={insight?.awayStandingPosition}
+              pressure={pressure.direction === "AWAY" ? "AWAY" : undefined}
+              pressureEstimated={pressure.estimated}
               redCards={insight?.awayRedCards ?? match.awayRedCards}
             />
           </View>
@@ -731,25 +765,21 @@ export function MatchDetailView({
           style={styles.heroDivider}
         />
         <Text style={styles.verdictEyebrow}>
-          {match.rebuild ? match.selectedOdd ? "GÜNCEL BTB SEÇİMİ" : "TEYİT BEKLENİYOR" : recordedSelection(match.selectedOdd, match.currentRate, match.decisionContext) ? "KAYITLI BTB SEÇİMİ" : "BTB SEÇİMİ"}
+          {match.rebuild && !match.selectedOdd ? "TEYİT BEKLENİYOR" : `BTB SEÇİMİ${currentMinute !== null && match.selectedOdd ? ` · ${currentMinute}′` : ""}`}
         </Text>
         <View style={styles.verdictRow}>
           <View style={[styles.verdictCell, styles.verdictCellWide]}>
             <Text numberOfLines={2} style={styles.selection}>
               {formatSelection(match.selectedOdd) || "Şu anda seçim yok"}
             </Text>
-            {/* The rebuild's stars measure consistency and evidence quality;
-                the legacy meter's "BTB rating" wording would misname them. */}
-            {match.rebuild ? (
-              match.selectedOdd ? (
-                <View style={styles.rebuildStars}>
-                  <RatingStars rating={match.rating} size={13} />
-                  <Text style={styles.verdictLabel}>Tutarlılık ve kanıt kalitesi</Text>
-                </View>
-              ) : null
-            ) : (
-              <SignalMeter rating={match.rating} />
-            )}
+            {/* The rebuild's stars measure consistency and evidence quality,
+                so the board's meter carries that name rather than "BTB rating". */}
+            {match.selectedOdd ? (
+              <SignalMeter
+                {...(match.rebuild ? { label: `Kanıt kalitesi · ${Math.min(5, match.rating)}/5` } : {})}
+                rating={match.rating}
+              />
+            ) : null}
           </View>
           <View style={[styles.verdictCell, styles.verdictCellEnd]}>
             <Text style={styles.verdictValue}>
@@ -778,17 +808,38 @@ export function MatchDetailView({
         </View>
         </View>
       </TutorialTarget>
+      </View>
 
-      {query.data?.rebuild ? <RebuildEvidencePanel matchKey={key} /> : intelligence ? <JinxAssessmentCard context={context.data} assessment={jinx.data}
+      {query.data?.rebuild ? <RebuildJinxCard matchKey={key} /> : intelligence ? <JinxAssessmentCard context={context.data} assessment={jinx.data}
         pending={jinx.isPending && jinx.variables?.matchKey === key}
         error={jinx.isError && jinx.variables?.matchKey === key} onAsk={() => void askJinx()} /> : null}
 
       <View style={styles.rowTools}>
-        <Text style={styles.verdictLabel}>Maçın kanıtları</Text>
+        <Text accessibilityRole="header" aria-level={2} style={styles.evidenceTitle}>Maçın kanıtları</Text>
         <Pressable accessibilityRole="button" onPress={() => { void reset(); void resetModuleCollapse("liveDetail"); }} style={styles.resetAction}>
-          <Text style={styles.decisionToggle}>Düzeni sıfırla</Text>
+          <Text style={styles.resetText}>Düzeni sıfırla</Text>
         </Pressable>
       </View>
+      {visibleChips.length ? (
+        <ScrollView
+          contentContainerStyle={styles.chipRow}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.chipScroll}
+        >
+          {visibleChips.map((chip, index) => (
+            <Pressable
+              accessibilityHint={`${chip.label} bölümüne gider`}
+              accessibilityRole="button"
+              key={chip.id}
+              onPress={() => jumpToModule(chip.id)}
+              style={({ pressed, hovered }) => [styles.chip, index === 0 && styles.chipLead, hovered && styles.chipHover, pressed && styles.chipPressed]}
+            >
+              <Text style={[styles.chipText, index === 0 && styles.chipTextLead]}>{chip.label}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      ) : null}
       <ReorderableModuleList
         items={moduleItems}
         {...(embedded ? { maxColumns: 1 } : {})}
@@ -816,9 +867,10 @@ export function MatchDetailView({
               )
             )
           }
-          style={styles.bilyonerAction}
+          style={({ pressed, hovered }) => [styles.bilyonerAction, hovered && styles.chipHover, pressed && styles.chipPressed]}
         >
           <Text style={styles.bilyonerActionText}>Bilyoner&apos;da aç</Text>
+          <MaterialCommunityIcons color={colors.text} name="open-in-new" size={iconSizes.small} />
         </Pressable>
       </View>
       </Screen>
@@ -936,50 +988,15 @@ const styles = StyleSheet.create({
     color: colors.textSubtle,
     fontWeight: fontWeights.medium
   },
-  rebuildStars: {
-    gap: 2
+  estimated: {
+    opacity: 0.6
   },
-  pitch: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
+  headerAction: {
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
-    opacity: 0.5
-  },
-  pitchHalfway: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    width: 1,
-    backgroundColor: colors.border
-  },
-  pitchCircle: {
-    width: 128,
-    height: 128,
-    borderRadius: 64,
-    borderWidth: 1,
-    borderColor: colors.border
-  },
-  pitchBox: {
-    position: "absolute",
-    top: "28%",
-    height: "34%",
-    width: 22,
-    borderWidth: 1,
-    borderColor: colors.border
-  },
-  pitchBoxHome: {
-    left: -1,
-    borderTopRightRadius: 4,
-    borderBottomRightRadius: 4
-  },
-  pitchBoxAway: {
-    right: -1,
-    borderTopLeftRadius: 4,
-    borderBottomLeftRadius: 4
+    borderRadius: 14
   },
   scoreBlock: {
     alignItems: "center"
@@ -999,8 +1016,27 @@ const styles = StyleSheet.create({
     ...typeScale.eyebrow,
     marginBottom: spacing.sm
   },
-  rowTools: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  rowTools: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: spacing.sm },
   resetAction: { minHeight: 48, justifyContent: "center" },
+  evidenceTitle: { color: colors.text, ...typeScale.identity, fontWeight: "700", fontSize: 17, lineHeight: 22 },
+  resetText: { color: semantic.intelligence, ...typeScale.bodyCompact, fontWeight: "700" },
+  // The board's evidence chips: a row that scrolls sideways on a phone.
+  chipScroll: { marginHorizontal: -spacing.lg, marginBottom: spacing.sm },
+  chipRow: { gap: spacing.sm, paddingHorizontal: spacing.lg },
+  chip: {
+    minHeight: 44,
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    borderRadius: radii.round,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface
+  },
+  chipLead: { borderColor: colors.actionFill, backgroundColor: colors.greenSoft },
+  chipHover: { backgroundColor: colors.surfaceStrong },
+  chipPressed: { opacity: 0.72 },
+  chipText: { color: colors.text, ...typeScale.bodyCompact, fontWeight: "700" },
+  chipTextLead: { color: colors.actionFill },
   verdictRow: {
     flexDirection: "row",
     alignItems: "flex-end",
@@ -1038,62 +1074,6 @@ const styles = StyleSheet.create({
   selection: {
     color: colors.text,
     ...typeScale.decision
-  },
-  decisionCard: {
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    padding: spacing.lg
-  },
-  decisionToggle: {
-    color: semantic.intelligence,
-    ...typeScale.label,
-    marginLeft: "auto"
-  },
-  decisionFacts: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    marginTop: spacing.md
-  },
-  decisionFact: {
-    color: colors.textMuted,
-    ...typeScale.label
-  },
-  decisionBody: {
-    borderTopWidth: 1,
-    borderTopColor: colors.borderSoft,
-    flexDirection: "row",
-    gap: spacing.xxl,
-    marginTop: spacing.md,
-    paddingTop: spacing.md
-  },
-  decisionMetric: {
-    gap: spacing.xs
-  },
-  decisionMetricValue: {
-    color: colors.text,
-    ...typeScale.metric
-  },
-  decisionMetricLabel: {
-    color: colors.textSubtle,
-    ...typeScale.label
-  },
-  decisionReason: {
-    color: colors.text,
-    ...typeScale.decision,
-    marginTop: spacing.sm
-  },
-  decisionMeta: {
-    ...textFont("400"),
-    color: colors.textMuted,
-    fontSize: 11,
-    lineHeight: 16
-  },
-  decisionScore: {
-    ...textFont("400"),
-    color: colors.textSubtle,
-    fontSize: 11
   },
   statsCard: {
     borderRadius: radii.lg,
@@ -1147,9 +1127,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.blue,
     borderRadius: radii.round
   },
+  // Away in orange, the pair the pressure marks and chart use (v40 board).
   awayBar: {
     height: "100%",
-    backgroundColor: colors.green,
+    backgroundColor: colors.orange,
     borderRadius: radii.round
   },
   distributionCard: {
@@ -1199,17 +1180,22 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginTop: spacing.xxl
   },
+  // The board's outlined full-width link out, not a primary action.
   bilyonerAction: {
-    minHeight: 50,
+    minHeight: 56,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: radii.round,
-    backgroundColor: colors.green
+    gap: spacing.sm,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surface
   },
   bilyonerActionText: {
-    ...textFont("800"),
-    color: colors.background,
-    fontSize: 14
+    ...textFont("700"),
+    color: colors.text,
+    fontSize: 15
   },
   flowSection: {
     gap: spacing.sm,

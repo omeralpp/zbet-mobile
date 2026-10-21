@@ -1,4 +1,4 @@
-import type { MatchSummary, SuperLog } from "@/src/api/schemas";
+import type { MatchSummary } from "@/src/api/schemas";
 
 export type StarDecisionFilter =
   | "STAR_1_PLUS"
@@ -132,36 +132,4 @@ export function matchDecisionFilter(
     return true;
   }
   return Boolean(match.selectedOdd) && ratingMatches(match.rating, filter);
-}
-
-export function superDecisionFilter(
-  log: SuperLog,
-  filter: DecisionFilter
-): boolean {
-  return ratingMatches(log.rating, filter);
-}
-
-export function sortSuperLogs(
-  logs: SuperLog[],
-  sort: SuperStarSort
-): SuperLog[] {
-  if (sort === "DEFAULT") {
-    return logs;
-  }
-  return logs
-    .map((log, index) => ({ log, index }))
-    .sort((left, right) => {
-      const ratingOrder =
-        sort === "RATING_DESC"
-          ? right.log.rating - left.log.rating
-          : left.log.rating - right.log.rating;
-      if (ratingOrder !== 0) {
-        return ratingOrder;
-      }
-      const dateOrder =
-        new Date(right.log.createdAt).getTime() -
-        new Date(left.log.createdAt).getTime();
-      return dateOrder || left.index - right.index;
-    })
-    .map(({ log }) => log);
 }

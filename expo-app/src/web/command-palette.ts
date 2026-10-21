@@ -1,4 +1,7 @@
-import type { MatchStatus, MatchSummary, SuperLog, TotoProgram } from "@/src/api/schemas";
+import type { RebuildRecommendation } from "@/src/api/rebuild-schemas";
+import type { MatchStatus, MatchSummary, TotoProgram } from "@/src/api/schemas";
+import { formatSelection } from "@/src/utils/format";
+import { resultPresentation } from "@/src/utils/rebuild-display";
 import { desktopDestinations } from "./desktop-nav";
 import { normalizeSearchText as foldTurkish, searchTextScore } from "@/src/utils/search";
 export { normalizeSearchText as foldTurkish } from "@/src/utils/search";
@@ -6,8 +9,8 @@ export { normalizeSearchText as foldTurkish } from "@/src/utils/search";
 /**
  * The desktop command palette's search model, free of UI so it can be tested.
  * It indexes only data the screens already loaded (the shared query cache):
- * the five pages, current matches, recent Super decisions and Toto programs.
- * Nothing is fetched for the palette and nothing is written.
+ * the five pages, current matches, RB1 published Super records and Toto
+ * programs. Nothing is fetched for the palette and nothing is written.
  */
 export type PaletteKind = "page" | "match" | "super" | "toto";
 
@@ -33,13 +36,6 @@ const statusLabels: Record<MatchStatus, string> = {
   NOT_STARTED: "Başlamadı",
   FINISHED: "Bitti",
   NOT_PLAYED: "Oynanmadı"
-};
-
-const resultLabels: Record<SuperLog["result"], string> = {
-  OPEN: "Açık",
-  WON: "Kazandı",
-  LOST: "Kaybetti",
-  VOID: "İade"
 };
 
 const totoStatusLabels: Record<TotoProgram["status"], string> = {
@@ -71,11 +67,11 @@ function item(
 
 export function buildPaletteItems({
   matches = [],
-  superLogs = [],
+  recommendations = [],
   totoPrograms = []
 }: {
   matches?: readonly MatchSummary[];
-  superLogs?: readonly SuperLog[];
+  recommendations?: readonly RebuildRecommendation[];
   totoPrograms?: readonly TotoProgram[];
 }): PaletteItem[] {
   const pages = desktopDestinations.map((destination) =>
@@ -102,15 +98,15 @@ export function buildPaletteItems({
       `mac ${match.selectedOdd}`
     );
   });
-  const superItems = superLogs.map((log) =>
+  const superItems = recommendations.map((record) =>
     item(
-      `super:${log.key}`,
+      `super:${record.decisionId}`,
       "super",
-      log.matchName,
-      `Super · ${log.selectedOdd} · ${"★".repeat(log.rating)} · ${resultLabels[log.result]}`,
-      { pathname: "/super/[key]", params: { key: log.key } },
-      log.result === "OPEN",
-      `super karar ${log.reason}`
+      `${record.homeTeam} - ${record.awayTeam}`,
+      `Super · ${formatSelection(record.market)} · ${"★".repeat(record.stars)} · ${resultPresentation[record.result.state].label}`,
+      { pathname: "/super/[key]", params: { key: record.decisionId, match: record.matchKey } },
+      record.result.state === "PENDING",
+      `super karar ${record.market}`
     )
   );
   const totoItems = totoPrograms.map((program) =>

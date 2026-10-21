@@ -9,6 +9,8 @@ export type ReorderableModuleItem = {
   id: string;
   node: ReactNode;
   fullWidth?: boolean;
+  /** Desktop grid rows this module spans, so a tall module keeps its column. */
+  rowSpan?: number;
 };
 
 type ReorderableModuleListProps = {
@@ -83,6 +85,7 @@ export function ReorderableModuleList({
               ...moduleStyle,
               ...(columns > 1 ? columnModuleStyle : null),
               ...(columns > 1 && item.fullWidth ? { gridColumn: "1 / -1" } : null),
+              ...(columns > 1 && item.rowSpan ? { gridRow: `span ${item.rowSpan}` } : null),
               opacity: dragIndex === index ? 0.55 : 1,
               outline: dropHere ? `2px solid ${semantic.intelligence}` : "none"
             }}

@@ -26,6 +26,11 @@ final class BtbWidgetTheme {
         return LIGHT.equals(mode) ? Palette.light() : Palette.dark();
     }
 
+    /**
+     * The app's v40 tokens (src/theme/experience-palette.ts) so a widget reads
+     * as part of BTB in both themes: ink, muted ink, gold, the soft track,
+     * the accent and loss colours, the analytical blue and the ink on accent.
+     */
     static final class Palette {
         final int backgroundDrawable;
         final int secondaryButtonDrawable;
@@ -37,6 +42,8 @@ final class BtbWidgetTheme {
         final int track;
         final int success;
         final int error;
+        final int blue;
+        final int onAccent;
 
         private Palette(
                 int backgroundDrawable,
@@ -48,7 +55,9 @@ final class BtbWidgetTheme {
                 int gold,
                 int track,
                 int success,
-                int error) {
+                int error,
+                int blue,
+                int onAccent) {
             this.backgroundDrawable = backgroundDrawable;
             this.secondaryButtonDrawable = secondaryButtonDrawable;
             this.primaryButtonDrawable = primaryButtonDrawable;
@@ -59,6 +68,8 @@ final class BtbWidgetTheme {
             this.track = track;
             this.success = success;
             this.error = error;
+            this.blue = blue;
+            this.onAccent = onAccent;
         }
 
         static Palette dark() {
@@ -66,13 +77,15 @@ final class BtbWidgetTheme {
                     R.drawable.btb_widget_background,
                     R.drawable.btb_widget_secondary_button,
                     R.drawable.btb_widget_primary_button,
-                    Color.rgb(244, 248, 252),
-                    Color.rgb(148, 169, 188),
-                    Color.rgb(110, 135, 157),
-                    Color.rgb(245, 197, 66),
-                    Color.rgb(23, 59, 89),
-                    Color.rgb(98, 230, 109),
-                    Color.rgb(255, 101, 115));
+                    Color.rgb(247, 245, 236),
+                    Color.rgb(182, 202, 212),
+                    Color.rgb(182, 202, 212),
+                    Color.rgb(255, 200, 69),
+                    Color.rgb(23, 53, 72),
+                    Color.rgb(61, 220, 151),
+                    Color.rgb(255, 92, 112),
+                    Color.rgb(98, 176, 255),
+                    Color.rgb(4, 40, 26));
         }
 
         static Palette light() {
@@ -80,13 +93,15 @@ final class BtbWidgetTheme {
                     R.drawable.btb_widget_background_light,
                     R.drawable.btb_widget_secondary_button_light,
                     R.drawable.btb_widget_primary_button_light,
-                    Color.rgb(16, 37, 56),
-                    Color.rgb(77, 101, 119),
-                    Color.rgb(108, 129, 144),
-                    Color.rgb(155, 114, 0),
-                    Color.rgb(213, 226, 234),
-                    Color.rgb(25, 138, 67),
-                    Color.rgb(201, 63, 81));
+                    Color.rgb(18, 42, 51),
+                    Color.rgb(69, 92, 99),
+                    Color.rgb(69, 92, 99),
+                    Color.rgb(122, 84, 10),
+                    Color.rgb(229, 239, 234),
+                    Color.rgb(11, 106, 75),
+                    Color.rgb(190, 40, 67),
+                    Color.rgb(28, 93, 166),
+                    Color.rgb(255, 255, 255));
         }
     }
 }

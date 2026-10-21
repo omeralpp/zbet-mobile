@@ -1,70 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mockDashboard, mockSuperKpis } from "@/src/api/mock-data";
+import type { RebuildReport } from "@/src/api/rebuild-schemas";
+import { mockDashboard } from "@/src/api/mock-data";
 import {
-  buildPerformanceWidgetPayload,
+  buildRebuildWidgetPayload,
   hasPerformanceWidgetData,
   withoutSuperKpiData
 } from "./performance-widget-data";
-
-test("dashboard özetini Performans widget KPI snapshotına dönüştürür", () => {
-  const dashboard = {
-    ...mockDashboard,
-    todaySuperWon: 5,
-    todaySuperLost: 8,
-    todaySuperProfit: -3.77,
-    latestTotoProgram: mockDashboard.latestTotoProgram
-      ? { ...mockDashboard.latestTotoProgram, coverageHits: 2 }
-      : null
-  };
-
-  assert.deepEqual(
-    buildPerformanceWidgetPayload(
-      dashboard,
-      mockSuperKpis,
-      "STAR_4_PLUS"
-    ),
-    {
-      toto_coverage_hits: 2,
-      toto_coverage_total: 3,
-      toto_program_gc_no: 350,
-      toto_program_version: 1,
-      super_min_rating: 4,
-      super_wins: 1,
-      super_losses: 0,
-      super_profit: 1.14
-    }
-  );
-});
-
-test("sonuç kapsamı olmayan Toto programını widgeta taşımaz", () => {
-  const dashboard = {
-    ...mockDashboard,
-    latestTotoProgram: mockDashboard.latestTotoProgram
-      ? {
-          ...mockDashboard.latestTotoProgram,
-          coverageHits: null,
-          predictions: mockDashboard.latestTotoProgram.predictions.map(
-            (prediction) => ({ ...prediction, result: "OPEN" as const })
-          )
-        }
-      : null
-  };
-
-  assert.deepEqual(
-    buildPerformanceWidgetPayload(
-      dashboard,
-      mockSuperKpis,
-      "STAR_2_PLUS"
-    ),
-    {
-      super_min_rating: 2,
-      super_wins: 1,
-      super_losses: 1,
-      super_profit: 0.14
-    }
-  );
-});
 
 test("dashboard aktif programdayken son sonuçlanan programı widgetta kullanır", () => {
   const settled = {
@@ -84,25 +26,15 @@ test("dashboard aktif programdayken son sonuçlanan programı widgetta kullanır
       (prediction) => ({ ...prediction, result: "OPEN" as const })
     )
   };
+  // The Toto half does not depend on the Super report being available.
+  const report = { availability: "UNAVAILABLE", periods: [] } as unknown as RebuildReport;
 
-  assert.deepEqual(
-    buildPerformanceWidgetPayload(
-      { ...mockDashboard, latestTotoProgram: active },
-      mockSuperKpis,
-      "STAR_3_PLUS",
-      [active, settled]
-    ),
-    {
-      toto_coverage_hits: 2,
-      toto_coverage_total: 3,
-      toto_program_gc_no: 349,
-      toto_program_version: 1,
-      super_min_rating: 3,
-      super_wins: 1,
-      super_losses: 1,
-      super_profit: 0.14
-    }
-  );
+  const payload = buildRebuildWidgetPayload(report, "STAR_3_PLUS", [active, settled]);
+  assert.equal(payload.toto_coverage_hits, 2);
+  assert.equal(payload.toto_coverage_total, 3);
+  assert.equal(payload.toto_program_gc_no, 349);
+  assert.equal(payload.toto_program_version, 1);
+  assert.equal(payload.super_available, false);
 });
 
 test("bildirim payloadında Performans KPI alanını ayırt eder", () => {

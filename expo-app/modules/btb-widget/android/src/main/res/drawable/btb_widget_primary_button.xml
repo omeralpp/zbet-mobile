@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- v40 board widget surface (owner decision 2026-10-21). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
   android:shape="rectangle">
-  <solid android:color="#FF1597E5" />
-  <corners android:radius="16dp" />
+  <solid android:color="#FF3DDC97" />
+  <corners android:radius="12dp" />
   <padding
     android:left="12dp"
     android:top="6dp"

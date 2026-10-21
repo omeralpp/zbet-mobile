@@ -43,8 +43,8 @@ export const tutorialTips: readonly TutorialTip[] = [
   },
   {
     id: "home-super-summary",
-    title: "Günlük Super",
-    body: "Bu metrik, seçili yıldız filtresindeki güncel Super sonuçlarını özetler; kazanç ve kayıp sayısını birlikte gösterir.",
+    title: "BTB · 7 gün",
+    body: "Bu metrik son 7 günde yayımlanan BTB önerilerinin sonucunu özetler; her öneri seçim oranıyla varsayımsal 1 birim sayılır.",
     route: "/",
     match: "EXACT",
     targetId: "home-super-metric"
@@ -76,7 +76,7 @@ export const tutorialTips: readonly TutorialTip[] = [
   {
     id: "super-list",
     title: "Super kararları",
-    body: "Yıldız filtresiyle kararları daraltabilir, bir karta dokunarak tarihsel kaydı açabilirsin.",
+    body: "Yıldız filtresiyle kararları daraltabilir, bir karta dokunarak Super kararı sayfasını açabilirsin.",
     route: "/super",
     match: "EXACT",
     targetId: "super-first-card"
@@ -99,8 +99,8 @@ export const tutorialTips: readonly TutorialTip[] = [
   },
   {
     id: "super-result",
-    title: "Karar ve biten skor",
-    body: "Karar anı skoru ayrıdır; maç sonuçlandığında biten skor da burada gösterilir.",
+    title: "Karar anı ve güncel durum",
+    body: "Kesik çizginin üstü karar anında donmuş bilgidir; altında sonuç ve maçın güncel skoru gösterilir.",
     route: "/super/",
     match: "PREFIX",
     targetId: "super-summary"

@@ -25,11 +25,14 @@ export const liveDetailModules = [
   "scoreDistribution"
 ] as const;
 
+// Super kararı on RB1 (owner decision 2026-10-21): the A3 `standings` module
+// had no RB1 counterpart and is dropped on reconcile; `matchHistory` lists the
+// match's other published records in its place.
 export const superDetailModules = [
   "decisionSummary",
   "decisionField",
   "similarity",
-  "standings"
+  "matchHistory"
 ] as const;
 
 export type OverviewModuleId = (typeof overviewModules)[number];
@@ -90,8 +93,10 @@ export const retiredLiveDetailModules = [
   "askJinx"
 ] as const;
 
+// The v40 board opens every analytical module except the two reference
+// tables (score distribution and standings), which start closed.
 export const moduleCollapseDefaults: Record<ModuleLayoutSurface, readonly string[]> = {
   overview: [],
-  liveDetail: liveDetailModules.filter((id) => id !== "matchPath" && id !== "pressure"),
-  superDetail: ["decisionField", "similarity", "standings"]
+  liveDetail: ["scoreDistribution", "standings"],
+  superDetail: []
 };

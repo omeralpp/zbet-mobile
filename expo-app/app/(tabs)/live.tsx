@@ -72,9 +72,10 @@ function routeTab(
 const localTabs = ["LIVE", "FIXTURE", "STAR"] as const;
 
 /**
- * The single compact Canlı / Fikstür segment (NXT-OBS-123). Each half names
- * the scope it shows and its count, so the switched-off state still says what
- * the list is: the upcoming fixtures, never "all".
+ * The single compact Canlı / Tümü segment. The second half lists the upcoming
+ * fixtures under the v40 board's "Tümü" label (owner decision 2026-10-21,
+ * replacing NXT-OBS-123's "Fikstür"); the count line under the search field
+ * still says how many it holds.
  */
 function LiveSwitch({
   tab,
@@ -89,8 +90,8 @@ function LiveSwitch({
   onChange: (active: boolean) => void;
 }) {
   const segments = [
-    { live: true, label: "Canlı", count: liveCount },
-    { live: false, label: "Fikstür", count: fixtureCount }
+    { live: true, label: "Canlı", count: liveCount as number | null },
+    { live: false, label: "Tümü", count: null }
   ];
   return (
     <View accessibilityRole="tablist" style={styles.liveSwitch}>
@@ -98,7 +99,7 @@ function LiveSwitch({
         const selected = segment.live ? tab === "LIVE" : tab === "FIXTURE";
         return (
           <Pressable
-            accessibilityLabel={`${segment.label}, ${segment.count} maç`}
+            accessibilityLabel={`${segment.label}, ${segment.count ?? fixtureCount} maç`}
             accessibilityRole="tab"
             accessibilityState={{ selected }}
             key={segment.label}
@@ -115,7 +116,7 @@ function LiveSwitch({
           >
             {segment.live ? <View style={[styles.segmentDot, !selected && styles.segmentDotIdle]} /> : null}
             <Text style={[styles.liveSwitchLabel, selected && (segment.live ? styles.liveSwitchLabelActive : styles.liveSwitchLabelSelected)]}>
-              {segment.label} · {segment.count}
+              {segment.count === null ? segment.label : `${segment.label} · ${segment.count}`}
             </Text>
           </Pressable>
         );
@@ -228,9 +229,8 @@ export default function LiveScreen() {
 
   return (
     <Screen
-      // The shell reports live-ness only while something is actually live, so
-      // the trace is evidence rather than theming.
-      {...(tabCounts.LIVE > 0 ? { accent: semantic.live } : {})}
+      // No trace under the title: the v40 board keeps live-ness on the cards'
+      // own edge bars and the tab badge.
       brand
       contentStyle={styles.screen}
       eyebrow={formatTodayEyebrow()}
@@ -238,10 +238,13 @@ export default function LiveScreen() {
       title="Canlı maçlar"
       wide
     >
+      {/* Phone: filters, search and count stack; desktop (v40 W-Canlı) keeps
+          them on one toolbar row above the list and the detail pane. */}
+      <View style={splitLayout ? styles.toolbarWide : undefined}>
       <TutorialTarget
         id="live-filters"
         radius={radii.round}
-        style={styles.filterTarget}
+        style={splitLayout ? styles.filterTargetWide : styles.filterTarget}
       >
         <View style={styles.filters}>
           <LiveSwitch
@@ -274,7 +277,7 @@ export default function LiveScreen() {
         </View>
       </TutorialTarget>
 
-      <View style={styles.searchRow}>
+      <View style={[styles.searchRow, splitLayout && styles.searchRowWide]}>
         <View style={styles.searchField}>
           <MaterialCommunityIcons color={colors.textMuted} name="magnify" size={iconSizes.inline} />
           <TextInput accessibilityLabel="Takım veya lig ara" placeholder="Takım veya lig ara"
@@ -282,9 +285,10 @@ export default function LiveScreen() {
             autoCorrect={false} autoCapitalize="none" style={styles.search} />
         </View>
         {search ? <Pressable accessibilityRole="button" accessibilityLabel="Maç aramasını temizle" onPress={() => setSearch("")} style={styles.clearSearch}><Text style={styles.clearSearchText}>Temizle</Text></Pressable> : null}</View>
-      {query.data ? <Text accessibilityLiveRegion="polite" style={styles.resultCount}>
+      {query.data ? <Text accessibilityLiveRegion="polite" style={[styles.resultCount, splitLayout && styles.resultCountWide]}>
         {tabCounts[tab]} maç bu kapsamda · {(sectionsByTab[tab] ?? []).reduce((count, section) => count + section.data.length, 0)} sonuç
       </Text> : null}
+      </View>
 
       {query.isLoading ? (
         <LoadingState label="Canlı maçlar hazırlanıyor" />
@@ -337,6 +341,16 @@ export default function LiveScreen() {
                   }
                 />
               }
+              ListFooterComponent={
+                (sectionsByTab[pageTab] ?? []).length ? (
+                  // The v40 board closes the list and says how to refresh it.
+                  <View accessibilityRole="text" style={styles.listEnd}>
+                    <View style={styles.listEndLine} />
+                    <Text style={styles.listEndText}>{Platform.OS === "web" ? "Liste sonu" : "Liste sonu · aşağı çek, yenile"}</Text>
+                    <View style={styles.listEndLine} />
+                  </View>
+                ) : null
+              }
               maxToRenderPerBatch={4}
               onScrollBeginDrag={() => setDecisionOpen(false)}
               onTouchStart={() => {
@@ -368,6 +382,7 @@ export default function LiveScreen() {
                       <TutorialTarget id="live-first-card" key={match.key}>
                         <MatchCard
                           compact={splitLayout}
+                          dense={splitLayout}
                           insight={insightMap.get(match.key)}
                           match={match}
                           onSelect={splitLayout ? () => setSelectedKey(match.key) : undefined}
@@ -383,6 +398,7 @@ export default function LiveScreen() {
                     ) : (
                       <MatchCard
                         compact={splitLayout}
+                          dense={splitLayout}
                         insight={insightMap.get(match.key)}
                         key={match.key}
                         match={match}
@@ -441,6 +457,13 @@ const styles = StyleSheet.create({
   clearSearch: { minHeight: 48, justifyContent: "center", paddingHorizontal: spacing.sm },
   clearSearchText: { ...typeScale.bodyCompact, color: colors.blue, fontWeight: "700" },
   resultCount: { ...typeScale.meta, color: colors.textMuted, marginBottom: spacing.md },
+  toolbarWide: { flexDirection: "row", alignItems: "center", gap: spacing.md, marginBottom: spacing.lg, zIndex: 10 },
+  filterTargetWide: { marginBottom: 0 },
+  searchRowWide: { flex: 1, marginBottom: 0 },
+  resultCountWide: { marginBottom: 0 },
+  listEnd: { flexDirection: "row", alignItems: "center", gap: spacing.md, marginTop: spacing.sm, marginBottom: spacing.lg },
+  listEndLine: { flex: 1, height: 1, backgroundColor: colors.border },
+  listEndText: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0 },
   screen: {
     paddingBottom: 0
   },

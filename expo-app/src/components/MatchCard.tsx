@@ -13,15 +13,12 @@ import {
 } from "@/src/theme/theme";
 import {
   deriveLiveCardFooter,
-  deriveLiveRateTrend,
-  pressureFooterCaption
+  deriveLiveRateTrend
 } from "@/src/utils/live-card-indicators";
-import { derivePressureBalance, type PressureDirection } from "@/src/utils/pressure-balance";
-import { currentIntervalPressure } from "@/src/utils/recent-pressure";
-import { decisionModel, decisionModelLabel, recordedSelection } from "@/src/utils/decision-model";
+import type { PressureDirection } from "@/src/utils/pressure-balance";
+import { matchPressureSide } from "@/src/utils/match-pressure";
 import { deriveMatchMinuteProgress } from "@/src/utils/match-minute-progress";
 import {
-  formatAbsolute,
   formatCurrentMarketRate,
   formatFixtureDateTime,
   formatRate,
@@ -40,7 +37,7 @@ import { currentRebuild } from "@/src/utils/rebuild-current";
  * same pair the pressure chart uses, so the arrow beside a team name and the bar
  * on the detail screen are one vocabulary.
  */
-const pressureSide = {
+export const pressureSide = {
   HOME: { icon: "home-variant-outline", color: semantic.intelligence, label: "ev sahibinde" },
   AWAY: { icon: "airplane", color: colors.orange, label: "deplasmanda" }
 } as const;
@@ -64,9 +61,11 @@ function TeamName({
   pressureEstimated: boolean;
 }) {
   const side = pressure ? pressureSide[pressure] : null;
+  // The name takes the row, so red cards and the pressure mark sit against the
+  // score as on the v40 board.
   return (
     <View style={styles.teamRow}>
-      <TeamLogo participantId={participantId} size={compact ? "compact" : "standard"} />
+      <TeamLogo name={name} participantId={participantId} size={compact ? "compact" : "standard"} />
       <Text numberOfLines={1} style={styles.team}>
         {name}
         {position ? (
@@ -101,6 +100,8 @@ function TeamName({
 
 export function MatchCard({
   compact = false,
+  dense = false,
+  horizontal = false,
   insight,
   match: sourceMatch,
   onTogglePinned,
@@ -109,6 +110,10 @@ export function MatchCard({
   selected = false
 }: {
   compact?: boolean;
+  /** Desktop Canlı list row (v40 W-Canlı): kickoff beside the league, stars beside the market. */
+  dense?: boolean;
+  /** Desktop Özet feature (v40 W-Özet): the match on the left, the BTB selection panel on the right. */
+  horizontal?: boolean;
   insight?: MatchInsight | undefined;
   match: MatchSummary;
   onTogglePinned?: (() => void) | undefined;
@@ -138,36 +143,23 @@ export function MatchCard({
         ? "arrow-bottom-right"
         : "minus";
   const rateTrendColor = rateTrend === "UP" || rateTrend === "DOWN" ? semantic.intelligence : colors.textSubtle;
-  const intervalPressure = currentIntervalPressure(match.decisionContext);
-  const pressureBalance = derivePressureBalance(
-    match.decisionContext ? intervalPressure.total : match.pressureSource === "CURRENT_MATCH" ? match.totalPressure : null,
-    match.decisionContext ? intervalPressure.difference : match.pressureSource === "CURRENT_MATCH" ? match.pressureDiff : null,
-    intervalPressure.measured
-  );
-  const pressureEstimated = Boolean(match.decisionContext?.recentPressure.estimated);
-  const pressureDirection =
-    pressureBalance.hasData && pressureBalance.direction !== "BALANCED"
-      ? pressureBalance.direction
-      : undefined;
-  const pressureValue = formatAbsolute(
-    (match.decisionContext ? intervalPressure.difference : match.pressureDiff) ?? 0,
-    1
-  );
+  const pressure = matchPressureSide(match);
+  const pressureEstimated = pressure.estimated;
+  const pressureDirection = pressure.direction;
   const footer = deriveLiveCardFooter(
     match.selectedOdd,
     match.currentRate,
-    pressureBalance.hasData
+    pressure.hasData
   );
   const leader =
     match.homeScore === match.awayScore ? null : match.homeScore > match.awayScore ? "HOME" : "AWAY";
   // Spelled in capitals here rather than left to `textTransform`, which follows
-  // the device locale on Android and would print a dotless I in SEÇİMİ.
-  const eyebrow = match.rebuild
-    ? match.selectedOdd ? "GÜNCEL BTB SEÇİMİ" : "TEYİT BEKLENİYOR"
-    : recordedSelection(match.selectedOdd, match.currentRate, match.decisionContext) ? "KAYITLI SEÇİM" : "BTB SEÇİMİ";
-  const ratingCaption = match.rebuild
-    ? "Tutarlılık ve kanıt kalitesi"
-    : match.rating > 0 ? `BTB rating · ${Math.min(5, match.rating)}/5` : "BTB rating";
+  // the device locale on Android and would print a dotless I in SEÇİMİ. The
+  // v40 board names the current selection plainly; an RB1 match without one
+  // says it is waiting for confirmation. The stars keep their meaning in the
+  // spoken label (consistency and evidence quality).
+  const eyebrow = match.rebuild && !match.selectedOdd ? "TEYİT BEKLENİYOR" : "BTB SEÇİMİ";
+  const starsSpoken = match.rebuild ? "tutarlılık ve kanıt kalitesi" : "BTB rating";
   const rateSpoken = `${currentMarket.label} ${currentMarket.value}, ${
     rateTrend === "UP"
       ? "seçim oranından yüksek"
@@ -175,16 +167,6 @@ export function MatchCard({
         ? "seçim oranından düşük"
         : "değişim yok veya güncel oran bulunamadı"
   }`;
-  const pressureSpoken = pressureBalance.hasData
-    ? `${pressureEstimated ? "Tahmini yakın aralık" : "Güncel"} baskı farkı ${pressureValue}, ${
-        pressureBalance.direction === "HOME"
-          ? "ev sahibi baskıda"
-          : pressureBalance.direction === "AWAY"
-            ? "deplasman baskıda"
-            : "dengeli"
-      }`
-    : "Baskı verisi bekleniyor";
-
   const trendGlyph = rateTrend !== "UNAVAILABLE" ? (
     <MaterialCommunityIcons
       color={rateTrendColor}
@@ -212,12 +194,13 @@ export function MatchCard({
               }
             } as never)
       }
-      style={({ pressed }) => [styles.cardAction, compact && styles.cardActionCompact, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.cardAction, compact && styles.cardActionCompact, horizontal && styles.cardActionHorizontal, pressed && styles.pressed]}
     >
+      <View style={horizontal ? styles.horizontalMain : styles.verticalMain}>
       <View style={[styles.topRow, onTogglePinned ? styles.pinSpace : null]}>
         <View style={styles.leagueBlock}>
           <Text numberOfLines={1} style={styles.league}>
-            {match.league}
+            {dense ? `${match.league} · ${match.matchTime}` : match.league}
           </Text>
           {!compact && (live || minuteProgress.visible) ? (
             <Text numberOfLines={1} style={styles.kickoff}>{kickoff}</Text>
@@ -264,10 +247,34 @@ export function MatchCard({
           </ChangeEmphasis>
         </View>
       </View>
+      </View>
 
-      {compact ? (
+      {horizontal ? (
+        <View style={styles.sidePanel}>
+          <Text numberOfLines={1} style={styles.decisionEyebrow}>{eyebrow}</Text>
+          <Text numberOfLines={2} style={styles.sideOdd}>
+            {formatSelection(match.selectedOdd) || "Şu anda seçim yok"}
+          </Text>
+          <View style={styles.sideFoot}>
+            {match.selectedOdd ? (
+              <View accessibilityLabel={`${match.rating} / 5 yıldız, ${starsSpoken}`} accessible>
+                <RatingStars rating={match.rating} size={12} />
+              </View>
+            ) : <View />}
+            {footer.showsRate ? (
+              <View accessibilityLabel={`${match.selectedOdd ? `Seçim oranı ${formatRate(match.liveRate)}, ` : ""}${rateSpoken}`} style={styles.compactRates}>
+                {match.selectedOdd ? <Text style={styles.compactRate}>{formatRate(match.liveRate)}</Text> : null}
+                <ChangeEmphasis style={styles.rateHeadline} token={currentMarket.value}>
+                  {trendGlyph}
+                  <Text style={[styles.compactRate, { color: rateTrendColor }]}>{currentMarket.value}</Text>
+                </ChangeEmphasis>
+              </View>
+            ) : null}
+          </View>
+        </View>
+      ) : compact ? (
         <View style={styles.compactDecision}>
-          <View style={styles.compactDecisionCopy}>
+          <View accessibilityLabel={match.selectedOdd ? `${formatSelection(match.selectedOdd)}, ${match.rating} yıldız, ${starsSpoken}` : undefined} style={[styles.compactDecisionCopy, dense && styles.compactDecisionInline]}>
             <Text numberOfLines={1} style={styles.compactOdd}>
               {formatSelection(match.selectedOdd) || "Şu anda seçim yok"}
             </Text>
@@ -287,17 +294,15 @@ export function MatchCard({
         <View style={styles.decisionPanel}>
           <View style={styles.decisionHeader}>
             <Text numberOfLines={1} style={styles.decisionEyebrow}>{eyebrow}</Text>
-            {match.selectedOdd ? <RatingStars rating={match.rating} size={13} /> : null}
+            {match.selectedOdd ? (
+              <View accessibilityLabel={`${match.rating} / 5 yıldız, ${starsSpoken}`} accessible>
+                <RatingStars rating={match.rating} size={13} />
+              </View>
+            ) : null}
           </View>
           <Text style={styles.odd}>
             {formatSelection(match.selectedOdd) || "Şu anda seçim yok"}
           </Text>
-          {match.selectedOdd || match.rebuild ? (
-            <Text style={styles.caption}>{ratingCaption}</Text>
-          ) : null}
-          {!match.rebuild && match.selectedOdd && decisionModel(match.decisionContext) ? (
-            <Text style={styles.caption}>{decisionModelLabel(match.decisionContext)}</Text>
-          ) : null}
           {footer.showsRate ? (
             <View style={styles.rateRow}>
               {match.selectedOdd ? (
@@ -315,24 +320,6 @@ export function MatchCard({
                 </ChangeEmphasis>
                 <Text style={styles.rateLabel}>{currentMarket.label}</Text>
               </View>
-            </View>
-          ) : null}
-          {footer.showsPressure ? (
-            // The spoken label keeps `Güncel` that the visible caption drops.
-            // Speech has no row width to lose, and a listener cannot see the
-            // live card framing that makes the figure's currency obvious.
-            <View accessibilityLabel={pressureSpoken} style={styles.pressureLine}>
-              <MaterialCommunityIcons
-                color={pressureDirection ? pressureSide[pressureDirection].color : semantic.neutral}
-                name={pressureDirection ? pressureSide[pressureDirection].icon : "scale-balance"}
-                size={iconSizes.small}
-              />
-              {pressureBalance.hasData ? <Text style={styles.pressureValue}>{pressureValue}</Text> : null}
-              <Text numberOfLines={2} style={styles.pressureLabel}>
-                {pressureBalance.hasData && pressureEstimated
-                  ? "Tahmini baskı"
-                  : pressureFooterCaption(pressureBalance.hasData)}
-              </Text>
             </View>
           ) : null}
         </View>
@@ -472,7 +459,8 @@ const styles = StyleSheet.create({
   },
   team: {
     color: colors.text,
-    flexShrink: 1,
+    flex: 1,
+    minWidth: 0,
     ...typeScale.identity,
     lineHeight: 19
   },
@@ -607,8 +595,49 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0
   },
+  // Desktop list row (v40 W-Canlı): the market with its stars on one line.
+  compactDecisionInline: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6
+  },
+  verticalMain: {
+    gap: spacing.sm
+  },
+  cardActionHorizontal: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    gap: spacing.md
+  },
+  horizontalMain: {
+    flex: 1,
+    minWidth: 0,
+    gap: spacing.sm
+  },
+  // Desktop Özet feature (v40 W-Özet): the selection on its own panel.
+  sidePanel: {
+    width: "44%",
+    justifyContent: "center",
+    gap: 6,
+    padding: spacing.md,
+    borderRadius: 14,
+    backgroundColor: colors.surfaceStrong
+  },
+  sideOdd: {
+    color: colors.text,
+    ...typeScale.decision,
+    fontSize: 15,
+    lineHeight: 20
+  },
+  sideFoot: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.sm
+  },
   compactOdd: {
     color: colors.text,
+    flexShrink: 1,
     ...typeScale.decision,
     fontSize: 14,
     lineHeight: 19

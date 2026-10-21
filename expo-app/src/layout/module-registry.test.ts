@@ -107,7 +107,10 @@ test("new live detail defaults keep the journey and pressure open and Jinx outsi
   assert.equal((liveDetailModules as readonly string[]).includes("askJinx"), false);
   assert.equal(moduleCollapseDefaults.liveDetail.includes("matchPath"), false);
   assert.equal(moduleCollapseDefaults.liveDetail.includes("pressure"), false);
-  assert.equal(moduleCollapseDefaults.liveDetail.length, liveDetailModules.length - 2);
+  // The v40 board (owner decision 2026-10-21) opens every analytical module
+  // and starts only the two reference tables closed.
+  assert.deepEqual([...moduleCollapseDefaults.liveDetail].sort(), ["scoreDistribution", "standings"]);
+  assert.deepEqual(moduleCollapseDefaults.superDetail, []);
 });
 
 test("an existing layout gains the pressure chart directly under Maçın Yolu", () => {

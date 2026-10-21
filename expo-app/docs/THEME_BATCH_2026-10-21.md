@@ -72,6 +72,9 @@ birim 7/30 gün sonuçları; legacy A3 ayrı. İstemci puanlaması eklenmedi.
 
 ## Panodan bilinçli sapmalar (kod ve kayıtlı kararlar önceliklidir)
 
+> Aynı gün sahip bu sapmaların ilk dördünü panoya döndürdü; ayrıntı
+> `ONE_TO_ONE_BATCH_2026-10-21.md` (NXT-OBS-182).
+
 - Logosuz takımda BTB işareti kalır (cutover 2026-08-17-03, NXT-OBS-103);
   panodaki baş harf çemberi uygulanmadı.
 - `Sonuç bekliyor` Toto tonu analitik mavi kalır (`toto-status.ts`); panodaki

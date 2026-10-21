@@ -23,18 +23,12 @@ export const queryKeys = {
     ["matches", key, "leagueContext"] as const,
   match: (key: string) => ["matches", key] as const,
   matchPeriodScore: (key: string) => ["matches", key, "periodScore"] as const,
-  matchSuperLogs: (key: string) => ["matches", key, "superLogs"] as const,
   matchLiveContext: (key: string) => ["matches", key, "liveContext"] as const,
   matchTeamForm: (key: string) => ["matches", key, "teamForm"] as const,
   matchPath: (key: string) => ["matches", key, "matchPath"] as const,
   matchJourney: (key: string) => ["matches", key, "matchJourney"] as const,
   matchJinxOutlook: (key: string) =>
     ["matches", key, "jinxOutlook"] as const,
-  superLogs: ["superLogs"] as const,
-  superKpis: ["superKpis"] as const,
-  superLog: (key: string) => ["superLogs", key] as const,
-  superLogPeriodScore: (key: string) =>
-    ["superLogs", key, "periodScore"] as const,
   totoPrograms: ["totoPrograms"] as const,
   totoProgram: (gcNo: number, version: number) =>
     ["totoPrograms", gcNo, version] as const
@@ -93,16 +87,6 @@ export function matchPeriodScoreQuery(key: string) {
   return queryOptions({
     queryKey: queryKeys.matchPeriodScore(key),
     queryFn: ({ signal }) => mobileApi.getMatchPeriodScore(key, signal),
-    staleTime: 15_000,
-    enabled: Boolean(key),
-    retry: 1
-  });
-}
-
-export function matchSuperLogsQuery(key: string) {
-  return queryOptions({
-    queryKey: queryKeys.matchSuperLogs(key),
-    queryFn: ({ signal }) => mobileApi.getMatchSuperLogs(key, signal),
     staleTime: 15_000,
     enabled: Boolean(key),
     retry: 1
@@ -173,37 +157,6 @@ export function matchJinxOutlookQuery(key: string, asked: boolean, selectionKey 
     staleTime: 60_000,
     enabled: Boolean(key) && asked,
     retry: false
-  });
-}
-
-export const superLogsQuery = queryOptions({
-  queryKey: queryKeys.superLogs,
-  queryFn: ({ signal }) => mobileApi.getSuperLogs(signal),
-  staleTime: 30_000
-});
-
-export const superKpisQuery = queryOptions({
-  queryKey: queryKeys.superKpis,
-  queryFn: ({ signal }) => mobileApi.getSuperKpis(signal),
-  staleTime: 30_000
-});
-
-export function superLogQuery(key: string) {
-  return queryOptions({
-    queryKey: queryKeys.superLog(key),
-    queryFn: ({ signal }) => mobileApi.getSuperLog(key, signal),
-    staleTime: 30_000,
-    enabled: Boolean(key)
-  });
-}
-
-export function superLogPeriodScoreQuery(key: string) {
-  return queryOptions({
-    queryKey: queryKeys.superLogPeriodScore(key),
-    queryFn: ({ signal }) => mobileApi.getSuperLogPeriodScore(key, signal),
-    staleTime: 30_000,
-    enabled: Boolean(key),
-    retry: 1
   });
 }
 

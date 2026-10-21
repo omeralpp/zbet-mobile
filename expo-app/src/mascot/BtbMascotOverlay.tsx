@@ -3,9 +3,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { usePathname, useRouter } from "expo-router";
-import { AppState, Animated, Easing, PanResponder, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { AppState, Animated, PanResponder, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, iconSizes, radii, semantic, shadows, themeMode, typeScale, textFont } from "@/src/theme/theme";
+import { useLiveMatchCount } from "@/src/api/use-live-match-count";
+import { colors, iconSizes, numericFont, radii, semantic, shadows, themeMode, typeScale, textFont } from "@/src/theme/theme";
 import { useTutorial } from "@/src/tutorial/TutorialProvider";
 import { jinxSleepDelayMs } from "./idle-behavior";
 import { subscribeMascotInteraction } from "./interaction-activity";
@@ -16,7 +17,6 @@ import { useJinxMotion } from "./use-jinx-motion";
 import { useJinxDailyQuip } from "./use-jinx-daily-quip";
 import { JinxAnimator } from "./JinxAnimator";
 
-const nativeDriver = Platform.OS !== "web";
 /** How long the daily-result bubble stays before Jinx tidies it away. */
 const moodBubbleMs = 7000;
 
@@ -27,6 +27,11 @@ type MenuItem = {
   icon: IconName;
   label: string;
   onPress: () => void;
+  /** The tab this item opens; marks the item when that tab is showing. */
+  path?: string;
+  badge?: number;
+  /** The daily comment wears the gold of its bubble. */
+  gold?: boolean;
 };
 
 const storageKey = "btb-mobile-next-bibi-position-v3";
@@ -113,12 +118,12 @@ export function BtbMascotOverlay() {
   const [dragTilt] = useState(() => new Animated.Value(0));
   const [dragTranslation] = useState(() => new Animated.ValueXY({ x: 0, y: 0 }));
   const [guideTranslation] = useState(() => new Animated.ValueXY({ x: 0, y: 0 }));
-  // NXT-OBS-174: the daily Super comment and its short reaction are back.
-  const { mood: dailyMood, signature: dailyMoodSignature, quip: dailyQuip } = useJinxDailyQuip();
+  // The daily comment reads the RB1 seven-day report in neutral words (owner
+  // decision 2026-10-21); there is no mood and no reaction show any more.
+  const { signature: dailyMoodSignature, quip: dailyQuip } = useJinxDailyQuip();
+  const liveCount = useLiveMatchCount();
   const [moodBubble, setMoodBubble] = useState(false);
-  const [moodReacting, setMoodReacting] = useState(false);
   const [presentedMoodSignature, setPresentedMoodSignature] = useState<string | null>(null);
-  const [moodPhase] = useState(() => new Animated.Value(1));
   const moodPending = dailyMoodSignature !== null && dailyMoodSignature !== presentedMoodSignature;
   const defaultPosition = useMemo(() => ({ x: Math.max(edgeMargin + insets.left, width - insets.right - mascotSize - edgeMargin), y: edgeMargin + insets.top }), [insets.left, insets.right, insets.top, width]);
   const [position, setPosition] = useState<Position>(defaultPosition);
@@ -201,12 +206,11 @@ export function BtbMascotOverlay() {
     dispatch({ type: "interaction", blocked: !ambient || dragging || open || guideActive || sleeping });
   }, [ambient, dispatch, dragging, guideActive, open, sleeping]);
   useEffect(() => {
-    if (!ambient || !appActive || dragging || open || guideActive || sleeping || moodReacting || moodBubble) return;
+    if (!ambient || !appActive || dragging || open || guideActive || sleeping || moodBubble) return;
     const timer = setTimeout(() => { sleepingRef.current = true; setSleeping(true); }, jinxSleepDelayMs);
     return () => clearTimeout(timer);
-  }, [activityVersion, ambient, appActive, dragging, guideActive, moodBubble, moodReacting, open, pathname, sleeping]);
-  // One reaction per day/filter/sign boundary; a profit change inside the same
-  // sign refreshes the words but does not replay the show.
+  }, [activityVersion, ambient, appActive, dragging, guideActive, moodBubble, open, pathname, sleeping]);
+  // The comment speaks once per change in the seven-day figures.
   useEffect(() => {
     if (!dailyMoodSignature || !dailyQuip || dailyMoodSignature === presentedMoodSignature || showGreeting || sleeping
       || dragging || open || guideActive || !appActive || !ambient) return;
@@ -214,19 +218,9 @@ export function BtbMascotOverlay() {
       setPresentedMoodSignature(dailyMoodSignature);
       setMoodBubble(true);
       setActivityVersion(current => current + 1);
-      if (reduceMotion) return;
-      setMoodReacting(true);
-      moodPhase.stopAnimation();
-      moodPhase.setValue(0);
-      Animated.sequence([
-        Animated.timing(moodPhase, { toValue: 0.18, duration: 220, easing: Easing.out(Easing.quad), useNativeDriver: nativeDriver }),
-        Animated.spring(moodPhase, { toValue: 0.62, damping: 7, stiffness: 240, mass: 0.65, useNativeDriver: nativeDriver }),
-        Animated.timing(moodPhase, { toValue: 0.82, duration: 620, easing: Easing.inOut(Easing.ease), useNativeDriver: nativeDriver }),
-        Animated.spring(moodPhase, { toValue: 1, damping: 12, stiffness: 170, mass: 0.75, useNativeDriver: nativeDriver })
-      ]).start(() => setMoodReacting(false));
     }, 360);
     return () => clearTimeout(timer);
-  }, [ambient, appActive, dailyMoodSignature, dailyQuip, dragging, guideActive, moodPhase, open, presentedMoodSignature, reduceMotion, showGreeting, sleeping]);
+  }, [ambient, appActive, dailyMoodSignature, dailyQuip, dragging, guideActive, open, presentedMoodSignature, showGreeting, sleeping]);
   useEffect(() => {
     if (!moodBubble) return;
     const timer = setTimeout(() => setMoodBubble(false), moodBubbleMs);
@@ -356,14 +350,14 @@ export function BtbMascotOverlay() {
 
   const menuItems = useMemo<MenuItem[]>(
     () => [
-      { key: "home", icon: "view-dashboard-outline", label: "Özet", onPress: () => router.replace("/") },
-      { key: "live", icon: "soccer", label: "Canlı", onPress: () => router.replace("/live") },
-      { key: "super", icon: "star-outline", label: "Super", onPress: () => router.replace("/super") },
-      { key: "toto", icon: "ticket-confirmation-outline", label: "Toto", onPress: () => router.replace("/toto") },
-      // Replays the daily comment on demand; the reaction effect does the rest.
-      { key: "daily", icon: "chat-outline", label: "Günlük yorum", onPress: () => setPresentedMoodSignature(null) }
+      { key: "home", icon: "view-grid-outline", label: "Özet", path: "/", onPress: () => router.replace("/") },
+      { key: "live", icon: "radar", label: "Canlı", path: "/live", badge: liveCount, onPress: () => router.replace("/live") },
+      { key: "super", icon: "star-outline", label: "Super", path: "/super", onPress: () => router.replace("/super") },
+      { key: "toto", icon: "ticket-outline", label: "Toto", path: "/toto", onPress: () => router.replace("/toto") },
+      // Replays the daily comment on demand; the presentation effect does the rest.
+      { key: "daily", icon: "message-text-outline", label: "Günlük yorum", gold: true, onPress: () => setPresentedMoodSignature(null) }
     ],
-    [router]
+    [liveCount, router]
   );
 
   const menuDown = displayPosition.y < height / 2;
@@ -425,23 +419,6 @@ export function BtbMascotOverlay() {
   };
   const characterState = guideActive ? { ...character, scene: "guide" as const }
     : dragging ? { ...character, scene: "drag" as const } : character;
-  const moodIcon: IconName | null = dailyMood.kind === "POSITIVE" ? "crown" : dailyMood.kind === "NEGATIVE" ? "wallet-outline"
-    : dailyMood.kind === "EVEN" ? "scale-balance" : dailyMood.kind === "EMPTY" ? "clock-outline" : null;
-  const moodColor = dailyMood.kind === "POSITIVE" ? colors.gold : dailyMood.kind === "NEGATIVE" ? semantic.negative : colors.bronze;
-  // The bubble is always light, so its eyebrow uses the readable dark ink.
-  const moodInk = dailyMood.kind === "POSITIVE" ? "#7A540A" : dailyMood.kind === "NEGATIVE" ? "#BE2843" : "#7A5B30";
-  const reacting = moodReacting && !reduceMotion;
-  const reducedOrIdle = !reacting;
-  const negative = dailyMood.kind === "NEGATIVE";
-  const moodStops = [0, 0.18, 0.62, 1];
-  const moodY = moodPhase.interpolate({ inputRange: moodStops, outputRange: negative ? [0, -1, 3.5, 0] : [0, 2.5, -9, 0] });
-  const moodScale = moodPhase.interpolate({ inputRange: moodStops, outputRange: [0.86, 0.8, 1.16, 1] });
-  const moodTilt = moodPhase.interpolate({ inputRange: moodStops, outputRange: negative ? ["0deg", "4deg", "-3deg", "-1deg"] : ["0deg", "-4deg", "3deg", "0deg"] });
-  const moodAccessoryY = moodPhase.interpolate({ inputRange: moodStops, outputRange: [8, 5, -4, 0] });
-  const moodAccessoryScale = moodPhase.interpolate({ inputRange: moodStops, outputRange: [0.2, 0.45, 1.24, 1] });
-  const moodCoinX = moodPhase.interpolate({ inputRange: moodStops, outputRange: [0, -3, 19, 7] });
-  const moodCoinY = moodPhase.interpolate({ inputRange: moodStops, outputRange: negative ? [0, -8, 24, 18] : [0, -7, -24, -5] });
-  const moodCoinRotation = moodPhase.interpolate({ inputRange: [0, 1], outputRange: ["0deg", negative ? "260deg" : "520deg"] });
 
   // Presence is acted on after every hook so the early return never changes the
   // hook order. On a dense analytical surface Jinx is absent until the tutorial
@@ -578,20 +555,22 @@ export function BtbMascotOverlay() {
           <Pressable
             accessibilityLiveRegion="polite"
             accessibilityRole="button"
-            accessibilityLabel={`Jinx günlük yorum: ${dailyQuip.body}. Kapatmak için dokun.`}
+            accessibilityLabel={`Jinx günlük yorum: ${dailyQuip.title}. ${dailyQuip.body} Kapatmak için dokun.`}
             onPress={() => setMoodBubble(false)}
             style={[
               styles.tutorialBubble,
               styles.moodBubble,
               {
-                borderColor: moodColor,
                 left: discoveryBubblePosition.left,
                 top: discoveryBubblePosition.top,
                 width: tutorialBubbleWidth
               }
             ]}
           >
-            <Text style={[styles.moodEyebrow, { color: moodInk }]}>GÜNLÜK SUPER</Text>
+            <View style={styles.moodHead}>
+              <Text style={styles.moodEyebrow}>BTB · 7 GÜN</Text>
+              <MaterialCommunityIcons color={colors.textMuted} name="close" size={iconSizes.small} />
+            </View>
             <Text style={styles.tutorialTitle}>{dailyQuip.title}</Text>
             <Text style={styles.moodBody}>{dailyQuip.body}</Text>
           </Pressable>
@@ -605,31 +584,37 @@ export function BtbMascotOverlay() {
               menuRight ? styles.menuRight : styles.menuLeft
             ]}
           >
-            {menuItems.map((item) => (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={item.label}
-                key={item.key}
-                onPress={() => {
-                  setOpenPath(null);
-                  item.onPress();
-                }}
-                style={({ pressed }) => [
-                  styles.menuItem,
-                  menuRight && styles.menuItemRight,
-                  pressed && styles.menuItemPressed
-                ]}
-              >
-                <View style={styles.menuIcon}>
-                  <MaterialCommunityIcons
-                    color={colors.text}
-                    name={item.icon}
-                    size={iconSizes.control}
-                  />
-                </View>
-                <Text style={styles.menuLabel}>{item.label}</Text>
-              </Pressable>
-            ))}
+            {menuItems.map((item) => {
+              const current = item.path !== undefined && pathname === item.path;
+              const ink = item.gold ? colors.gold : current ? colors.actionFill : colors.text;
+              return (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={item.badge ? `${item.label}, ${item.badge} canlı maç` : item.label}
+                  accessibilityState={{ selected: current }}
+                  key={item.key}
+                  onPress={() => {
+                    setOpenPath(null);
+                    item.onPress();
+                  }}
+                  style={({ pressed }) => [
+                    styles.menuItem,
+                    menuRight && styles.menuItemRight,
+                    current && styles.menuItemCurrent,
+                    item.gold && styles.menuItemGold,
+                    pressed && styles.menuItemPressed
+                  ]}
+                >
+                  <MaterialCommunityIcons color={ink} name={item.icon} size={iconSizes.control} />
+                  <Text style={[styles.menuLabel, { color: ink }]}>{item.label}</Text>
+                  {item.badge ? (
+                    <View style={styles.menuBadge}>
+                      <Text style={styles.menuBadgeText}>{item.badge}</Text>
+                    </View>
+                  ) : null}
+                </Pressable>
+              );
+            })}
           </View>
         ) : null}
 
@@ -650,11 +635,8 @@ export function BtbMascotOverlay() {
         ) : null}
 
         <Animated.View style={{ transform: [
-          { translateY: reacting ? moodY : 0 },
-          { scale: reducedOrIdle ? 1 : moodScale },
           { scale: reduceMotion ? 1 : pressScale },
-          { rotate: reduceMotion ? "0deg" : dragTilt.interpolate({ inputRange: [-1, 1], outputRange: ["-8deg", "8deg"] }) },
-          { rotate: reacting ? moodTilt : "0deg" }] }}>
+          { rotate: reduceMotion ? "0deg" : dragTilt.interpolate({ inputRange: [-1, 1], outputRange: ["-8deg", "8deg"] }) }] }}>
           <Pressable accessibilityRole="button"
             accessibilityLabel={tutorial.activeTip ? "Jinx rehber anlatımı" : sleeping ? "Jinx uyuyor; dokununca uyanır ve hızlı menüyü açar" : "Jinx hızlı menü"}
             accessibilityState={{ expanded: open }} aria-expanded={open}
@@ -664,15 +646,6 @@ export function BtbMascotOverlay() {
             <JinxAnimator candidate="orb" compact size={mascotSize} dark={themeMode === "dark"} asleep={sleeping}
               state={characterState} mode={preferences.mode} forceReducedMotion={reduceMotion} onComplete={finish} />
             {sleeping ? <Text pointerEvents="none" style={styles.sleepMark}>zZ</Text> : null}
-            {moodIcon && !sleeping ? <Animated.View pointerEvents="none" style={[styles.moodAccessory,
-              dailyMood.kind === "NEGATIVE" && styles.moodAccessoryLow,
-              { transform: [{ translateY: reacting ? moodAccessoryY : 0 }, { scale: reacting ? moodAccessoryScale : 1 }] }]}>
-              <MaterialCommunityIcons color={moodColor} name={moodIcon} size={20} />
-            </Animated.View> : null}
-            {reacting && (dailyMood.kind === "POSITIVE" || dailyMood.kind === "NEGATIVE") ? <Animated.Text pointerEvents="none"
-              style={[styles.moodCoin, { color: colors.gold, transform: [{ translateX: moodCoinX }, { translateY: moodCoinY }, { rotate: moodCoinRotation }] }]}>
-              ₺
-            </Animated.Text> : null}
           </Pressable>
         </Animated.View>
       </Animated.View>
@@ -701,12 +674,10 @@ const styles = StyleSheet.create({
     right: -5,
     top: -8
   },
-  moodAccessory: { alignItems: "center", justifyContent: "center", position: "absolute", right: -4, top: -9 },
-  moodAccessoryLow: { bottom: -3, right: -4, top: undefined },
-  moodCoin: { ...textFont("800"), fontSize: 16, left: 26, position: "absolute", top: 20 },
   moodBubble: { minHeight: 92 },
-  moodEyebrow: { ...typeScale.eyebrow, marginBottom: 4 },
-  moodBody: { ...textFont("500"), color: "#203546", fontSize: 13, lineHeight: 19, marginTop: 4 },
+  moodHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
+  moodEyebrow: { ...typeScale.eyebrow, color: colors.gold },
+  moodBody: { ...textFont("400"), color: colors.textMuted, fontSize: 14, lineHeight: 20, marginTop: 4 },
   greeting: {
     position: "absolute",
     top: 8,
@@ -714,42 +685,43 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.blue,
-    backgroundColor: colors.white,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceStrong,
     ...shadows.card
   },
   greetingLeft: { left: mascotSize + 8 },
   greetingRight: { right: mascotSize + 8 },
-  greetingText: { ...textFont("800"), color: "#102538", fontSize: 12 },
+  greetingText: { ...textFont("800"), color: colors.text, fontSize: 12 },
+  // The v40 board's dark bubble (owner decision 2026-10-21), in both themes'
+  // own surface tokens so it always reads as part of the app.
   tutorialBubble: {
     position: "absolute",
-    borderRadius: radii.lg,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: colors.blue,
-    backgroundColor: "rgba(244, 248, 252, 0.98)",
-    padding: 14,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceStrong,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     ...shadows.card
   },
   discoveryEyebrow: {
     // Names the bubble as something the product volunteered, so it is never
     // mistaken for a guide step the user opened.
     ...typeScale.eyebrow,
-    color: "#4D647A",
+    color: colors.textMuted,
     marginBottom: 4
   },
   tutorialTitle: {
-    ...textFont("800"),
-    color: "#102538",
-    fontSize: 16,
-    lineHeight: 21
+    ...textFont("700"),
+    color: colors.text,
+    fontSize: 15,
+    lineHeight: 20
   },
-  // The bubble is always light, so its copy uses the light palette's muted ink
-  // at a reading size rather than the floor.
   tutorialBody: {
     ...textFont("400"),
-    color: "#455C63",
-    fontSize: 13,
-    lineHeight: 19,
+    color: colors.textMuted,
+    fontSize: 14,
+    lineHeight: 20,
     marginTop: 4
   },
   tutorialActions: {
@@ -768,7 +740,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8
   },
   tutorialSecondaryText: {
-    color: "#4D646A",
+    color: colors.textMuted,
     ...typeScale.meta,
     fontWeight: "700"
   },
@@ -786,33 +758,29 @@ const styles = StyleSheet.create({
     ...typeScale.meta,
     fontWeight: "700"
   },
-  menu: { position: "absolute", gap: 6, minWidth: 150 },
+  menu: { position: "absolute", gap: 8, minWidth: 150 },
   menuUp: { bottom: mascotSize + 8 },
   menuDown: { top: mascotSize + 8 },
-  menuLeft: { left: 0 },
-  menuRight: { right: 0 },
+  menuLeft: { left: 0, alignItems: "flex-start" },
+  menuRight: { right: 0, alignItems: "flex-end" },
   menuItem: {
-    minHeight: 44,
+    minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
+    gap: 10,
+    paddingLeft: 14,
+    paddingRight: 18,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radii.round,
-    backgroundColor: colors.backgroundElevated,
+    backgroundColor: colors.surface,
     ...shadows.card
   },
-  menuItemRight: { flexDirection: "row-reverse" },
+  menuItemRight: { flexDirection: "row" },
+  menuItemCurrent: { backgroundColor: colors.greenSoft, borderColor: colors.actionFill },
+  menuItemGold: { backgroundColor: colors.goldSoft, borderColor: colors.gold },
   menuItemPressed: { backgroundColor: colors.surfaceStrong },
-  menuIcon: {
-    width: 31,
-    height: 31,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 16,
-    backgroundColor: colors.blueSoft
-  },
-  menuLabel: { ...textFont("800"), color: colors.text, fontSize: 12 }
+  menuLabel: { ...textFont("700"), color: colors.text, fontSize: 15 },
+  menuBadge: { minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, alignItems: "center", justifyContent: "center", backgroundColor: semantic.live },
+  menuBadgeText: { ...numericFont("800"), color: colors.background, fontSize: 14, lineHeight: 16 }
 });

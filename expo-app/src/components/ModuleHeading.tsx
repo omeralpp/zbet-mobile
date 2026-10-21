@@ -26,37 +26,38 @@ export function ModuleHeading({
   leading?: ReactNode;
   trailing?: ReactNode;
 }) {
+  // The v40 board centres the control against the eyebrow and title together.
   return (
     <View style={styles.container}>
-      <Text style={styles.eyebrow}>{eyebrow}</Text>
-      <View style={styles.titleRow}>
+      <View style={styles.copy}>
+        <Text style={styles.eyebrow}>{eyebrow}</Text>
         <View style={styles.titleContent}>
           {leading ?? null}
           <Text accessibilityRole="header" role="heading" aria-level={2} style={styles.title}>{title}</Text>
         </View>
-        {trailing ?? null}
       </View>
+      {trailing ?? null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.sm,
     marginBottom: spacing.md,
     marginTop: spacing.xxl
+  },
+  copy: {
+    flex: 1,
+    minWidth: 0
   },
   eyebrow: {
     // Bronze rather than BTB green: a module label is structure, and green is
     // reserved for reporting that something went well.
     color: colors.bronze,
     ...typeScale.eyebrow
-  },
-  titleRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: spacing.sm,
-    justifyContent: "space-between",
-    marginTop: spacing.xs
   },
   title: {
     color: colors.text,
@@ -68,8 +69,8 @@ const styles = StyleSheet.create({
   titleContent: {
     alignItems: "center",
     flexDirection: "row",
-    flex: 1,
     gap: spacing.sm,
+    marginTop: spacing.xs,
     minWidth: 0
   }
 });

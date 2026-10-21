@@ -12,22 +12,19 @@ import {
   typeScale
 } from "@/src/theme/theme";
 import { SurfaceMaterial } from "./SurfaceMaterial";
-import {
-  hasTheoreticalPrize,
-  totoProgramTone
-} from "@/src/utils/toto-status";
+import { totoProgramTone } from "@/src/utils/toto-status";
 import {
   formatProgramStatus
 } from "@/src/utils/format";
 
 export function totoStatusColor(status: TotoProgram["status"]): string {
   const tone = totoProgramTone(status);
-  // Waiting for results keeps the analytical accent (toto-status.ts), not a
-  // caution it has not earned.
+  // Waiting for results wears the v40 board's gold (owner decision
+  // 2026-10-21); the tone itself stays "open" in toto-status.ts.
   return tone === "LIVE"
     ? semantic.live
     : tone === "OPEN"
-      ? semantic.intelligence
+      ? colors.gold
       : tone === "PROBLEM"
         ? semantic.negative
         : colors.textMuted;
@@ -45,14 +42,13 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
   // Only a program that can still change earns the accent. A resulted one is
   // history and recedes, exactly as a settled decision row does.
   const inPlay = tone === "LIVE" || tone === "OPEN";
-  const showsTheoreticalPrize = hasTheoreticalPrize(program);
 
+  // The theoretical prize lives in the program itself (v40 board); the card
+  // stays the program's columns, cost and coverage.
   return (
     <Pressable
       accessibilityHint="Toto program detayını açar"
-      accessibilityLabel={`Program ${program.gcNo}, ${program.weekText}${
-        showsTheoreticalPrize ? ", teorik ikramiye var" : ""
-      }`}
+      accessibilityLabel={`Program ${program.gcNo}, ${program.weekText}`}
       accessibilityRole="button"
       onPress={() =>
         router.push({
@@ -91,22 +87,6 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
               {formatProgramStatus(program.status).toLocaleUpperCase("tr-TR")}
             </Text>
           </View>
-          {showsTheoreticalPrize ? (
-            <View
-              accessibilityLabel="Teorik ikramiye var"
-              style={styles.theoreticalPrizeBadge}
-            >
-              <MaterialCommunityIcons
-                color={semantic.positive}
-                name={
-                  (program.theoreticalPrizeCurrency ?? "TRY") === "TRY"
-                    ? "currency-try"
-                    : "cash"
-                }
-                size={iconSizes.small}
-              />
-            </View>
-          ) : null}
         </View>
       </View>
 
@@ -203,14 +183,6 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     flexShrink: 0,
     gap: spacing.xs
-  },
-  theoreticalPrizeBadge: {
-    alignItems: "center",
-    backgroundColor: semantic.positiveSoft,
-    borderRadius: radii.round,
-    height: 26,
-    justifyContent: "center",
-    width: 26
   },
   status: {
     ...typeScale.eyebrow

@@ -117,24 +117,28 @@ export function CollapsibleModule({
           title={title}
           leading={leading}
           trailing={
-            <Animated.View
-              style={{
-                transform: [
-                  {
-                    rotate: chevron.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ["0deg", "180deg"]
-                    })
-                  }
-                ]
-              }}
-            >
-              <MaterialCommunityIcons
-                color={colors.textMuted}
-                name="chevron-up"
-                size={iconSizes.control}
-              />
-            </Animated.View>
+            // The v40 board's square control: the chevron on its own surface
+            // tile, so the header reads as a button and not just a title.
+            <View style={styles.toggle}>
+              <Animated.View
+                style={{
+                  transform: [
+                    {
+                      rotate: chevron.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ["0deg", "180deg"]
+                      })
+                    }
+                  ]
+                }}
+              >
+                <MaterialCommunityIcons
+                  color={colors.text}
+                  name="chevron-up"
+                  size={iconSizes.small}
+                />
+              </Animated.View>
+            </View>
           }
         />
       </Pressable>
@@ -146,5 +150,13 @@ export function CollapsibleModule({
 const styles = StyleSheet.create({
   headerCollapsed: {
     marginBottom: -spacing.md
+  },
+  toggle: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+    backgroundColor: colors.surface
   }
 });

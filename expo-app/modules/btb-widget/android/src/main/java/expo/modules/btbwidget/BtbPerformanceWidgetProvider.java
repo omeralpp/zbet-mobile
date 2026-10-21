@@ -9,7 +9,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import android.graphics.Typeface;
 import android.text.format.DateFormat;
 import android.widget.RemoteViews;
 
@@ -175,58 +174,58 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
                 R.id.btb_kpi_app_icon,
                 context.getApplicationInfo().icon);
 
-        int coveragePercent = totoTotal > 0
-                ? Math.round((totoHits * 100f) / totoTotal)
-                : 0;
-        String coverageValue = hasToto && totoTotal > 0
-                ? coveragePercent + "%"
-                : "--";
-        String coverageDetail = hasToto && totoTotal > 0
-                ? totoHits + "/" + totoTotal + " kapsadı"
+        // v40 board: each column is one large figure over a bar. Toto shows
+        // the covered results of the last resulted program; the right column
+        // is the RB1 report's seven days (the A3 daily profit is retired).
+        boolean totoReady = hasToto && totoTotal > 0;
+        String coverageValue = totoReady ? String.valueOf(totoHits) : "—";
+        String coverageDetail = totoReady
+                ? (totoGcNo > 0 ? "Program " + totoGcNo + " · " : "")
+                        + totoHits + " / " + totoTotal + " sonuç kapsandı"
                 : context.getString(R.string.btb_kpi_waiting);
 
         BigDecimal safeProfit =
                 superProfit == null ? BigDecimal.ZERO : superProfit;
-        String profitValue = hasSuper ? formatProfit(safeProfit) : "--";
-        String superLabel = hasSuper
-                ? "A3 · " + getStars(minRating) + "+ Profit"
-                : context.getString(R.string.btb_kpi_super_title);
-        String superDetail = hasSuper
+        String profitValue = hasSuper ? formatProfit(safeProfit) : "—";
+        String superLabel = "BTB · " + preferences.getInt("super_days", 7) + " GÜN"
+                + (hasSuper && minRating > 0 ? " · " + minRating + "+ YILDIZ" : "");
+        String superDetail = (hasSuper
                 ? superWins + " kazandı · " + superLosses + " kaybetti"
-                : context.getString(R.string.btb_kpi_waiting);
-        if ("BTB_RB1_20261018".equals(preferences.getString("super_model_regime", ""))) {
-            superLabel = "BTB · " + preferences.getInt("super_days", 7) + " gün"
-                    + (hasSuper && minRating > 0 ? " · " + getStars(minRating) + "+" : "");
-            superDetail = (hasSuper ? superWins + " kazandı · " + superLosses + " kaybetti" : "Sonuç bekleniyor")
-                    + " · " + preferences.getInt("super_pending", 0) + " bekleyen";
-        }
+                : "Sonuç bekleniyor")
+                + " · " + preferences.getInt("super_pending", 0) + " bekleyen";
         int profitColor = safeProfit.signum() > 0
                 ? palette.success
-                : safeProfit.signum() < 0 ? palette.error : palette.muted;
+                : safeProfit.signum() < 0 ? palette.error : palette.text;
 
+        views.setTextViewText(R.id.btb_kpi_toto_value, coverageValue);
+        views.setTextColor(R.id.btb_kpi_toto_value, totoReady ? palette.blue : palette.muted);
         views.setImageViewBitmap(
                 R.id.btb_kpi_toto_chart,
-                createDonut(
+                createBar(
                         context,
-                        totoHits,
-                        Math.max(totoTotal - totoHits, 0),
-                        coverageValue,
-                        hasToto && totoTotal > 0 ? palette.text : palette.muted,
-                        palette));
+                        totoReady ? totoHits : 0,
+                        0,
+                        totoReady ? Math.max(totoTotal - totoHits, 0) : 1,
+                        palette.blue,
+                        palette.error,
+                        palette.track));
         views.setTextViewText(
                 R.id.btb_kpi_toto_label,
                 context.getString(R.string.btb_kpi_toto_title));
         views.setTextViewText(R.id.btb_kpi_toto_detail, coverageDetail);
 
+        views.setTextViewText(R.id.btb_kpi_super_value, profitValue);
+        views.setTextColor(R.id.btb_kpi_super_value, hasSuper ? profitColor : palette.muted);
         views.setImageViewBitmap(
                 R.id.btb_kpi_super_chart,
-                createDonut(
+                createBar(
                         context,
-                        superWins,
-                        superLosses,
-                        profitValue,
-                        hasSuper ? profitColor : palette.muted,
-                        palette));
+                        hasSuper ? superWins : 0,
+                        hasSuper ? superLosses : 0,
+                        hasSuper ? 0 : 1,
+                        palette.success,
+                        palette.error,
+                        palette.track));
         views.setTextViewText(R.id.btb_kpi_super_label, superLabel);
         views.setTextViewText(R.id.btb_kpi_super_detail, superDetail);
         views.setTextViewText(
@@ -242,9 +241,9 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
                         : context.getString(R.string.btb_widget_ready));
         views.setTextColor(R.id.btb_kpi_title, palette.text);
         views.setTextColor(R.id.btb_kpi_updated, palette.subtle);
-        views.setTextColor(R.id.btb_kpi_toto_label, palette.text);
+        views.setTextColor(R.id.btb_kpi_toto_label, palette.muted);
         views.setTextColor(R.id.btb_kpi_toto_detail, palette.muted);
-        views.setTextColor(R.id.btb_kpi_super_label, palette.text);
+        views.setTextColor(R.id.btb_kpi_super_label, palette.muted);
         views.setTextColor(R.id.btb_kpi_super_detail, palette.muted);
         views.setInt(R.id.btb_kpi_divider, "setBackgroundColor", palette.track);
 
@@ -275,77 +274,59 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
         return views;
     }
 
-    private static Bitmap createDonut(
+    /**
+     * The board's thin bar under a figure: the first part, an optional second
+     * part (losses) and the rest of the track, as one rounded strip.
+     */
+    private static Bitmap createBar(
             Context context,
-            int primaryValue,
-            int secondaryValue,
-            String centerText,
-            int centerColor,
-            BtbWidgetTheme.Palette palette) {
-        int size = dpToPx(context, 88);
-        float strokeWidth = dpToPx(context, 10);
-        float inset = strokeWidth / 2f + dpToPx(context, 3);
-        Bitmap bitmap = Bitmap.createBitmap(
-                size,
-                size,
-                Bitmap.Config.ARGB_8888);
+            int first,
+            int second,
+            int rest,
+            int firstColor,
+            int secondColor,
+            int trackColor) {
+        int width = dpToPx(context, 160);
+        int height = dpToPx(context, 6);
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
-        Paint ring = new Paint(Paint.ANTI_ALIAS_FLAG);
-        RectF bounds = new RectF(inset, inset, size - inset, size - inset);
-
-        ring.setStyle(Paint.Style.STROKE);
-        ring.setStrokeWidth(strokeWidth);
-        ring.setStrokeCap(Paint.Cap.BUTT);
-        ring.setColor(palette.track);
-        canvas.drawArc(bounds, -90f, 360f, false, ring);
-
-        int total = Math.max(primaryValue, 0) + Math.max(secondaryValue, 0);
-        if (total > 0) {
-            float primarySweep =
-                    360f * Math.max(primaryValue, 0) / total;
-            ring.setColor(palette.success);
-            canvas.drawArc(bounds, -90f, primarySweep, false, ring);
-            if (secondaryValue > 0) {
-                ring.setColor(palette.error);
-                canvas.drawArc(
-                        bounds,
-                        -90f + primarySweep,
-                        360f - primarySweep,
-                        false,
-                        ring);
-            }
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        float radius = height / 2f;
+        paint.setColor(trackColor);
+        canvas.drawRoundRect(new RectF(0, 0, width, height), radius, radius, paint);
+        int total = Math.max(first, 0) + Math.max(second, 0) + Math.max(rest, 0);
+        if (total <= 0) {
+            return bitmap;
         }
-
-        Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
-        text.setColor(centerColor);
-        text.setTextAlign(Paint.Align.CENTER);
-        text.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        text.setTextSize(spToPx(context, centerText.length() > 6 ? 13 : 17));
-        Paint.FontMetrics metrics = text.getFontMetrics();
-        float textY = size / 2f -
-                (metrics.ascent + metrics.descent) / 2f;
-        canvas.drawText(centerText, size / 2f, textY, text);
+        float firstWidth = width * Math.max(first, 0) / (float) total;
+        float secondWidth = width * Math.max(second, 0) / (float) total;
+        if (firstWidth > 0) {
+            paint.setColor(firstColor);
+            canvas.drawRoundRect(new RectF(0, 0, firstWidth, height), radius, radius, paint);
+        }
+        if (secondWidth > 0) {
+            paint.setColor(secondColor);
+            canvas.drawRoundRect(
+                    new RectF(firstWidth, 0, firstWidth + secondWidth, height),
+                    radius,
+                    radius,
+                    paint);
+        }
         return bitmap;
     }
 
+    /** Hypothetical units with a Turkish decimal comma, as the app prints them. */
     private static String formatProfit(BigDecimal value) {
+        Locale turkish = new Locale("tr", "TR");
         double number = value.doubleValue();
         double absolute = Math.abs(number);
         if (absolute >= 1000) {
-            return String.format(Locale.US, "%+.1fk", number / 1000d);
+            return String.format(turkish, "%+.1fk", number / 1000d);
         }
         if (number > 0) {
-            return String.format(Locale.US, "+%.2f", number);
+            return String.format(turkish, "+%.2f", number);
         }
-        return String.format(Locale.US, "%.2f", number);
-    }
-
-    private static String getStars(int rating) {
-        StringBuilder stars = new StringBuilder();
-        for (int index = 0; index < rating; index += 1) {
-            stars.append('\u2605');
-        }
-        return stars.toString();
+        return String.format(turkish, "%.2f", number);
     }
 
     private static Integer parseNonNegativeInteger(Object value) {
@@ -408,10 +389,5 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
                 Math.round(
                         value *
                         context.getResources().getDisplayMetrics().density));
-    }
-
-    private static float spToPx(Context context, int value) {
-        return value *
-                context.getResources().getDisplayMetrics().scaledDensity;
     }
 }

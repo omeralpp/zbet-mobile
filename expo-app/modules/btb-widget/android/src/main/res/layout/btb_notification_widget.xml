@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- v40 board "Yeni Super kupon" widget: mark, title and time, stars, the
+     decision line, then BTB (primary), Super and Toto. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
   android:id="@+id/btb_widget_root"
   android:layout_width="match_parent"
@@ -15,8 +17,8 @@
 
     <ImageView
       android:id="@+id/btb_widget_icon"
-      android:layout_width="36dp"
-      android:layout_height="36dp"
+      android:layout_width="30dp"
+      android:layout_height="30dp"
       android:contentDescription="@string/btb_widget_app_icon"
       android:scaleType="fitCenter" />
 
@@ -35,17 +37,17 @@
         android:maxLines="1"
         android:text="@string/btb_widget_default_title"
         android:textColor="@color/btb_widget_text"
-        android:textSize="14sp"
+        android:textSize="15sp"
         android:textStyle="bold" />
 
       <TextView
         android:id="@+id/btb_widget_updated"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
+        android:layout_marginTop="1dp"
         android:text="@string/btb_widget_ready"
         android:textColor="@color/btb_widget_subtle"
-        android:textSize="9sp" />
+        android:textSize="11sp" />
     </LinearLayout>
 
     <TextView
@@ -53,8 +55,9 @@
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:gravity="end"
+      android:letterSpacing="0.08"
       android:textColor="@color/btb_widget_gold"
-      android:textSize="16sp"
+      android:textSize="14sp"
       android:textStyle="bold" />
   </LinearLayout>
 
@@ -69,38 +72,38 @@
     android:maxLines="2"
     android:text="@string/btb_widget_default_body"
     android:textColor="@color/btb_widget_text"
-    android:textSize="12sp" />
+    android:textSize="13sp" />
 
   <LinearLayout
     android:layout_width="match_parent"
-    android:layout_height="34dp"
-    android:layout_marginTop="8dp"
+    android:layout_height="40dp"
+    android:layout_marginTop="10dp"
     android:gravity="center"
     android:orientation="horizontal">
-
-    <TextView
-      android:id="@+id/btb_widget_super"
-      android:layout_width="0dp"
-      android:layout_height="match_parent"
-      android:layout_weight="1"
-      android:background="@drawable/btb_widget_secondary_button"
-      android:gravity="center"
-      android:text="@string/btb_widget_super_log"
-      android:textColor="@color/btb_widget_text"
-      android:textSize="10sp"
-      android:textStyle="bold" />
 
     <TextView
       android:id="@+id/btb_widget_open"
       android:layout_width="0dp"
       android:layout_height="match_parent"
-      android:layout_marginHorizontal="8dp"
       android:layout_weight="1"
       android:background="@drawable/btb_widget_primary_button"
       android:gravity="center"
       android:text="@string/btb_widget_open"
       android:textColor="@color/btb_widget_text"
-      android:textSize="10sp"
+      android:textSize="13sp"
+      android:textStyle="bold" />
+
+    <TextView
+      android:id="@+id/btb_widget_super"
+      android:layout_width="0dp"
+      android:layout_height="match_parent"
+      android:layout_marginHorizontal="8dp"
+      android:layout_weight="1"
+      android:background="@drawable/btb_widget_secondary_button"
+      android:gravity="center"
+      android:text="@string/btb_widget_super_log"
+      android:textColor="@color/btb_widget_text"
+      android:textSize="13sp"
       android:textStyle="bold" />
 
     <TextView
@@ -112,7 +115,7 @@
       android:gravity="center"
       android:text="@string/btb_widget_toto"
       android:textColor="@color/btb_widget_text"
-      android:textSize="10sp"
+      android:textSize="13sp"
       android:textStyle="bold" />
   </LinearLayout>
 </LinearLayout>

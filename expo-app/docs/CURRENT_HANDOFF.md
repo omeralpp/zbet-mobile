@@ -2,27 +2,39 @@
 
 Son güncelleme: 2026-10-21
 Mod: `OBSERVATION`
-Delivery: `OWNER_ONLY_DEV_PILOT / PAIRED_RELEASE_COMPLETE`
+Delivery: `OWNER_ONLY_DEV_PILOT / 473d4f2 PAIR AWAITING_BOTH_CLIENT_SMOKE`
 Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
 Previous checkpoint preserved verbatim in
 `handoff_archive/CURRENT_HANDOFF_before_RB1_2026-10-20.md`.
 
 ## Son checkpoint
 
-RB1 implementation and coordinated delivery complete under 62A/63A/64A.
-Installed Android and published web share source `a00b743` and both actual
-owner smokes passed. New model is active in DEV; normal maintenance has begun.
+RB1 implementation and coordinated delivery complete under 62A/63A/64A; the
+`a00b743` pair passed both owner smokes. On 2026-10-21 the theme pair `473d4f2`
+replaced it on both surfaces (installed APK, published web) and awaits the
+owner's web smoke and the completion receipt (see below). New model is active
+in DEV; normal maintenance has begun.
 M21/TASK-0167 and M20/TASK-0156 implementation/delivery are complete.
 Ongoing algorithm observation is BTB cutover work, not a remaining design gate.
 Claude may continue shared Android/web design from
 `CLAUDE_DESIGN_HANDOFF_2026-10-20.md`.
 
-## Tema batch'i (Claude, 2026-10-21) — push edildi, release bekliyor
+## Tema batch'i (Claude, 2026-10-21) — yayımlandı, smoke bekliyor
 
 Design canvas v40 teması `11d4b12` üzerine yalnız tema olarak, iki yüzeyde
 birlikte uygulandı ve sahip onayıyla `master`'a commit/push edildi:
-`32a85a8d0ad4297fe650dc75d5b8527a8cb09dcd`. APK ve web henüz bu commit'ten
-üretilmedi; kurulu Android ve yayındaki web `a00b743` çiftinde kalır. Gömülü
+`32a85a8d0ad4297fe650dc75d5b8527a8cb09dcd`; handoff `473d4f2`. Sahip onayıyla
+(`release'i başlat, APK ve web yayınını onaylıyorum`) çift `473d4f2`'den üretildi:
+[Private APK](https://drive.google.com/file/d/1y0dL75LLmzu8CJ1I2N0wMRTe2cgTP5_2/view?usp=drivesdk)
+`btb-mobile-next-arm64-theme-473d4f2.apk`, 50441405 bytes, ARM64, SHA256
+`3DC55EF0DCE9DFDE1847E2E079B6DC64A1BDC476C40ECFE51ABE275467D981DE`; owner-only
+Drive, imza/ABI ve kimlikli readback doğrulandı. Sahip kurdu ("açılıyor, veriler
+yükleniyor"; ADB ölçümü iddia edilmez); kurulum makbuzu `ANDROID_INSTALLED_WEB_PENDING`.
+Web `20261021T135353Z-473d4f2` yayımlandı (yerel probe ve Access kapısı geçti),
+batch `client-473d4f232e5203fa72bdb69af8dd9deab0cb42eb-3DC55EF0DCE9-7DE6B564811D`
+durumu `AWAITING_BOTH_CLIENT_SMOKE`: sahibin web smoke'u ve iki smoke'un kabul
+makbuzu `client-release.mjs complete`'i bekler. Önceki `a00b743` çifti kurtarma
+için korunur. Gömülü
 Manrope/Barlow Condensed (OFL, `assets/fonts`), RB1 karar ve kanıt ile sonuç
 ekranları ve Karar fişi, board
 düzeninde Özet/Canlı/Super/Toto/Daha Fazla, web kenar çubuğu daraltma oku.
@@ -35,7 +47,20 @@ derleme emülatördeki önceki test kurulumunun yerine kuruldu (uygulama verisi
 korundu, sahip telefonu etkilenmedi). Ayrıntı, platform istisnaları ve panodan
 bilinçli sapmalar: `THEME_BATCH_2026-10-21.md`. Yeni bulgular NXT-OBS-180/181.
 
-## Final yerel pilot APK
+## Bire bir batch (Claude, 2026-10-21) — yerel, commit edilmedi
+
+Sahip kurulumdan sonra panoya göre eksikler bildirdi ve eski A3 bölümünün
+kaldırılmasını istedi (NXT-OBS-182). Eksikler soru olarak soruldu; cevaplar ve
+uygulama `ONE_TO_ONE_BATCH_2026-10-21.md`: tüm A3 izleri kalkar, Super günlüğü ve
+Super kararı pano düzeninde RB1 verisiyle, Jinx günlük kartı RB1 7 gün nötr
+(NXT-OBS-180 çözüldü), RB1 maç detayında Maçın yolu/Baskı/Karar özeti geri,
+bilinçli sapmalar panoya döner (baş harf, `Tümü`, koyu balon, altın `Sonuç
+bekliyor`), Android widget'ları v40. Typecheck, lint, 658 test, tooling, marka, web
+export'ları, web iki tema/iki genişlik ve örnek veriyle Android emulator smoke'u
+(widget dahil) geçti; Expo Doctor 19/20 (dış `expo-router` 57.0.29 kayması, ayrı
+karar). Commit/push ve yeni APK+web çifti ayrı onay ister.
+
+## Önceki kabul edilmiş çift (a00b743, kurtarma için)
 
 [Private RB1 APK](https://drive.google.com/file/d/1X314Uy3RKwTcC-4FvqAYpfNkD7XasZ2S/view?usp=drivesdk)
 `btb-mobile-next-arm64-rb1-a00b743.apk`, 50085332 bytes, ARM64.
@@ -104,9 +129,10 @@ describes the agent's rejected deletion attempt, not the owner's later actions.
 
 ## Exact next steps
 
-Coordinated APK/web release of the pushed 2026-10-21 theme batch: signing and
-private APK delivery and the matching web publication each need their own
-explicit approval; physical Xiaomi and published-web smokes close NXT-OBS-181.
+Close the `473d4f2` batch: the owner's published-web smoke, then the owner
+acceptance receipt and `client-release.mjs complete`. Then the local one-to-one
+batch: checks, commit/push, a new paired APK+web release, each under its own
+explicit approval; physical Xiaomi and published-web smokes close NXT-OBS-181/182.
 Keep backend decisions, frozen first facts, result accounting and Jinx evidence
 meaning unchanged unless the owner separately approves a model change.
 Every future client release still requires a new clean pushed common commit,

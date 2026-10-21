@@ -4,6 +4,7 @@ import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import {
   Alert,
+  Image,
   Platform,
   Pressable,
   StyleSheet,
@@ -59,6 +60,44 @@ type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
 
 // The browser build (app.surklase.com) has no push or OS settings.
 const isWeb = Platform.OS === "web";
+const jinxFace = require("../../assets/mascot/candidates/jinx-a-open.png");
+
+/** A setting that is on or off, as a row with a switch (v40 board). */
+function SwitchRow({
+  icon,
+  title,
+  detail,
+  value,
+  onChange
+}: {
+  icon: IconName;
+  title: string;
+  detail: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <View style={styles.row}>
+      <View style={styles.rowIcon}>
+        <MaterialCommunityIcons color={colors.blue} name={icon} size={iconSizes.control} />
+      </View>
+      <View style={styles.rowCopy}>
+        <Text style={styles.rowTitle}>{title}</Text>
+        <Text style={styles.rowDetail}>{detail}</Text>
+      </View>
+      <Switch
+        accessibilityLabel={title}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: value }}
+        ios_backgroundColor={colors.surfaceStrong}
+        onValueChange={onChange}
+        thumbColor={value ? colors.onAction : colors.textMuted}
+        trackColor={{ false: colors.surfaceStrong, true: colors.actionFill }}
+        value={value}
+      />
+    </View>
+  );
+}
 
 function SettingsRow({
   icon,
@@ -313,8 +352,13 @@ export default function MoreScreen() {
           onChange={changeTheme}
         />
         <View style={styles.jinxPreference}>
-          <Text accessibilityRole="header" aria-level={3} style={styles.rowTitle}>Jinx hareketi</Text>
-          <Text style={styles.rowDetail}>Canlı kısa futbol sahneleri oynatır; Sakin hareketi azaltır; Kapalı dekoratif hareketi durdurur.</Text>
+          <View style={styles.jinxHead}>
+            <Image accessible={false} resizeMode="contain" source={jinxFace} style={styles.jinxAvatar} />
+            <View style={styles.rowCopy}>
+              <Text accessibilityRole="header" aria-level={3} style={styles.rowTitle}>Jinx hareketi</Text>
+              <Text style={styles.rowDetail}>Canlı kısa futbol sahneleri oynatır; Sakin hareketi azaltır; Kapalı dekoratif hareketi durdurur.</Text>
+            </View>
+          </View>
           <View style={styles.jinxModes}>
             {([['LIVE', 'Canlı'], ['CALM', 'Sakin'], ['OFF', 'Kapalı']] as const).map(([mode, label]) => <Pressable key={mode}
               accessibilityRole="button" accessibilityLabel={`Jinx hareketi: ${label}`}
@@ -326,10 +370,13 @@ export default function MoreScreen() {
           {systemReducedMotion ? <Text style={styles.rowDetail}>Sistemin hareket azaltma ayarı açık; dekoratif hareketler kapalı.</Text> : null}
           {jinx.saveFailed ? <Text style={styles.rowDetail}>Tercih bu oturumda uygulanıyor; cihazda kaydedilemedi.</Text> : null}
         </View>
-        <SettingsRow icon={jinx.hidden ? "eye-outline" : "eye-off-outline"}
-          title={jinx.hidden ? "Jinx’i göster" : "Jinx’i gizle"}
-          detail="Karakter görünümünü değiştirir; maç yorumu ve isteğe bağlı rehber kullanılabilir."
-          onPress={() => jinx.setHidden(!jinx.hidden)} />
+        <SwitchRow
+          detail="Karakter gizlenir; maç yorumu ve isteğe bağlı rehber çalışır."
+          icon="eye-off-outline"
+          onChange={(hidden) => jinx.setHidden(hidden)}
+          title="Jinx’i gizle"
+          value={jinx.hidden}
+        />
         <SettingsRow
           detail={
             discovery.pace === "QUIET"
@@ -570,7 +617,17 @@ export default function MoreScreen() {
 }
 
 const styles = StyleSheet.create({
-  jinxPreference: { padding: spacing.md, gap: spacing.sm },
+  // Same surface as its sibling rows (v40 board), avatar beside the title.
+  jinxPreference: {
+    gap: spacing.md,
+    backgroundColor: colors.backgroundElevated,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border
+  },
+  jinxHead: { flexDirection: "row", alignItems: "center", gap: spacing.md },
+  jinxAvatar: { width: 40, height: 40 },
   jinxModes: { flexDirection: "row", gap: 4, padding: 4, borderRadius: radii.round, backgroundColor: colors.surfaceStrong },
   jinxMode: { minHeight: 44, minWidth: 72, paddingHorizontal: spacing.md, borderRadius: radii.round, justifyContent: "center", alignItems: "center", flex: 1 },
   modeCard: {

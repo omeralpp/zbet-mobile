@@ -32,7 +32,8 @@ test("pager scene and stack share the BTB background token", () => {
 test("live uses one switch, pins, and keeps the native star-filter page", () => {
   const live = source("app/(tabs)/live.tsx");
   const matchCard = source("src/components/MatchCard.tsx");
-  const superLog = source("app/(tabs)/super.tsx");
+  // The RB1 Karar günlüğü (2026-10-21) owns the Super tab's pager.
+  const superLog = source("src/components/RebuildDecisionLog.tsx");
 
   assert.match(live, /\["LIVE", "FIXTURE", "STAR"\]/);
   assert.match(live, /<LiveSwitch/);
@@ -69,14 +70,15 @@ test("no screen opens the retired Fiori web view", () => {
 });
 
 test("Super outcome band owns current-match navigation without a second button", () => {
-  const detail = source("app/super/[key].tsx");
+  // Super kararı on RB1 (2026-10-21) lives in RebuildDecisionView.
+  const detail = source("src/screens/RebuildDecisionView.tsx");
 
   assert.match(
     detail,
     /<Pressable\s+accessibilityHint="Bu karşılaşmanın güncel maç detayını açar"/
   );
-  assert.match(detail, /onPress=\{openCurrentMatch\}/);
-  assert.match(detail, /currentMatchKey \? \(/);
+  assert.match(detail, /onPress=\{openMatch\}/);
+  assert.match(detail, /matchKey \? \(/);
   assert.match(detail, /name="chevron-right"/);
   assert.doesNotMatch(
     detail,

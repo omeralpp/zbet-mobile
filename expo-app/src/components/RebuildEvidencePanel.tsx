@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { rebuildMatchQuery, rebuildReportQuery } from "@/src/api/queries";
 import type { RebuildRecommendation, RebuildReport } from "@/src/api/rebuild-schemas";
-import { currentRebuild, rebuildCalendarDay, rebuildReason } from "@/src/utils/rebuild-current";
+import { currentRebuild, rebuildReason } from "@/src/utils/rebuild-current";
 import {
   formatDecimal,
   formatQuote,
@@ -17,7 +17,8 @@ import {
   matchLabel,
   outcomeSegments,
   resultPresentation,
-  unitsTone
+  unitsTone,
+  type Tone
 } from "@/src/utils/rebuild-display";
 import { colors, iconSizes, interaction, radii, semantic, shadows, spacing, typeScale } from "@/src/theme/theme";
 import { formatSelection } from "@/src/utils/format";
@@ -34,7 +35,7 @@ const capLabel: Record<string, string> = { sample: "Havuz", direction: "Yön", t
 const jinxFace = require("../../assets/mascot/candidates/jinx-a-open.png");
 
 /** Card frame shared by every rebuild surface: the Intelligence Noir material. */
-function Card({ children, padded = true, accent }: { children: ReactNode; padded?: boolean; accent?: string | undefined }) {
+export function Card({ children, padded = true, accent }: { children: ReactNode; padded?: boolean; accent?: string | undefined }) {
   return (
     <View style={styles.card}>
       <SurfaceMaterial accent={accent} radius={20} />
@@ -44,7 +45,7 @@ function Card({ children, padded = true, accent }: { children: ReactNode; padded
 }
 
 /** Text action with a 44pt target, the rebuild screens' only button shape. */
-function Action({ title, onPress, icon, busy = false }: { title: string; onPress: () => void; icon?: "refresh" | "chevron-down" | "chevron-up" | "chevron-right"; busy?: boolean }) {
+export function Action({ title, onPress, icon, busy = false }: { title: string; onPress: () => void; icon?: "refresh" | "chevron-down" | "chevron-up" | "chevron-right"; busy?: boolean }) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -56,19 +57,6 @@ function Action({ title, onPress, icon, busy = false }: { title: string; onPress
       <Text style={styles.link}>{title}</Text>
       {icon && icon !== "refresh" ? <MaterialCommunityIcons color={semantic.intelligence} name={icon} size={iconSizes.inline} /> : null}
     </Pressable>
-  );
-}
-
-/** Eyebrow + title, with an optional control on the title line. */
-function Heading({ eyebrow, title, trailing }: { eyebrow: string; title: string; trailing?: ReactNode }) {
-  return (
-    <View style={styles.heading}>
-      <View style={styles.headingCopy}>
-        <Text style={styles.eyebrowBronze}>{eyebrow}</Text>
-        <Text accessibilityRole="header" aria-level={2} style={styles.headingTitle}>{title}</Text>
-      </View>
-      {trailing}
-    </View>
   );
 }
 
@@ -175,7 +163,7 @@ function RecommendationTicket({ record, wide }: { record: RebuildRecommendation;
           <Text style={styles.ticketMarketText}>{formatSelection(record.market)}</Text>
           <RatingStars rating={record.stars} size={13} />
         </View>
-        <TicketFigure align="right" label="ilk oran" value={formatQuote(record.quote)} />
+        <TicketFigure align="right" label="seçim oranı" value={formatQuote(record.quote)} />
       </View>
     </View>
   );
@@ -228,82 +216,148 @@ function RecommendationRow({
           <ResultPill state={record.result.state} />
         </View>
         {showTeams ? <Text numberOfLines={1} style={styles.rowTeams}>{record.homeTeam} – {record.awayTeam}</Text> : null}
-        {/* The minute and score wrap as one unit, never between the goals. */}
+        {/* Market, frozen quote and minute as the board's one line; the minute
+            and score wrap as one unit, never between the goals. */}
         <View style={styles.rowDetailLine}>
-          <Text style={[styles.rowDetail, styles.rowMarket]}>{formatSelection(record.market)}</Text>
+          <Text style={styles.rowDetail}>{formatSelection(record.market)} · </Text>
+          <Text style={[styles.rowDetail, styles.rowMarket]}>{formatQuote(record.quote)}</Text>
           <Text numberOfLines={1} style={styles.rowDetail}> · {record.minute}′ · {record.homeScore}–{record.awayScore}</Text>
         </View>
       </View>
-      <TicketFigure align="right" label="ilk oran" size="compact" value={formatQuote(record.quote)} />
       <ListPerforation />
       <TicketFigure align="right" label="birim" size="compact" style={styles.rowUnits} tone={tone} value={formatUnits(record.result.net)} />
     </Pressable>
   );
 }
 
+function asOfTime(iso: string | undefined): string {
+  const date = iso ? new Date(iso) : null;
+  return date && Number.isFinite(date.getTime())
+    ? date.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Europe/Istanbul" })
+    : "—";
+}
+
+function JinxChip({ label, value, accent }: { label: string; value: string; accent?: string }) {
+  return (
+    <View style={styles.jinxChip}>
+      <Text style={styles.jinxChipLabel}>{label}</Text>
+      <Text style={[styles.jinxChipValue, accent ? { color: accent } : null]}>{value}</Text>
+    </View>
+  );
+}
+
 /**
- * The match's canonical decision and its evidence (A7 questions 33–35): one
- * current best eligible choice, Jinx explaining that same decision, every
- * published record as its own event, and rejected candidates kept apart from
- * published units.
+ * Jinx on an RB1 match, in the v40 board's card: the decision state, Jinx
+ * explaining the same backend decision, the current record's pool support
+ * (percentages mean pool support), and the rejected candidates with their
+ * exact backend reasons behind "Kanıtı gör" (A7 questions 33–35).
  */
-export function RebuildEvidencePanel({ matchKey }: { matchKey: string }) {
+export function RebuildJinxCard({ matchKey }: { matchKey: string }) {
+  const query = useQuery(rebuildMatchQuery(matchKey)), now = useRebuildClock();
+  const [showCandidates, setShowCandidates] = useState(false);
+  const data = query.data, current = !query.isError ? currentRebuild(data, now) : null;
+  const record = current ? data?.history.find(h => h.decisionId === current.decisionId) : undefined;
+  const reason = query.isError ? "Veri yenilenemedi" : data?.availability === "ACTIVE" && !current ? "Oran / ölçüm güncel değil" : rebuildReason(data?.reason);
+  const text = current ? data?.jinx.summary : `Güncel veri/teyit bekleniyor · ${reason}`;
+  const state: { label: string; tone: Tone } = query.isError ? { label: "VERİ ALINAMADI", tone: "neutral" }
+    : current ? { label: "GÜNCEL SEÇİM", tone: "positive" }
+    : data?.availability === "NOT_STARTED" ? { label: "BAŞLAMADI", tone: "neutral" }
+    : data?.availability === "UNAVAILABLE" ? { label: "KULLANILAMIYOR", tone: "neutral" }
+    : { label: "TEYİT BEKLENİYOR", tone: "warning" };
+  const support = record ? formatSupport(record.poolWins, record.poolTotal) : null;
+  return (
+    <View style={styles.jinxCard}>
+      <SurfaceMaterial accent={current ? semantic.intelligence : undefined} radius={20} />
+      <View style={styles.jinxHead}>
+        <Image accessible={false} resizeMode="contain" source={jinxFace} style={styles.jinxAvatar} />
+        <View style={styles.jinxIdentity}>
+          <Text accessibilityRole="header" aria-level={2} style={styles.jinxTitle}>Jinx</Text>
+          <TonePill label={state.label} tone={state.tone} />
+        </View>
+        <Pressable
+          accessibilityLabel="Jinx değerlendirmesini yenile"
+          accessibilityRole="button"
+          accessibilityState={{ busy: query.isFetching }}
+          onPress={() => { void query.refetch(); }}
+          style={({ pressed, hovered }) => [styles.jinxRefresh, hovered && styles.actionHover, pressed && styles.pressed]}
+        >
+          <MaterialCommunityIcons color={colors.text} name="refresh" size={iconSizes.small} />
+          <Text style={styles.jinxRefreshText}>{query.isFetching ? "Yenileniyor…" : "Yenile"}</Text>
+        </Pressable>
+      </View>
+      <View style={styles.jinxSpeech}>
+        <Text accessibilityLiveRegion="polite" style={styles.jinxSpeechText}>{text}</Text>
+      </View>
+      {support && current && record ? (
+        <>
+          <View accessible accessibilityLabel={`Havuz desteği ${support.share}, ${support.counts}`} style={styles.jinxFigure}>
+            <Text style={styles.jinxFigureValue}>{support.share}</Text>
+            <Text style={styles.jinxFigureLabel}>havuz desteği</Text>
+          </View>
+          <View style={styles.jinxChips}>
+            <JinxChip label="Havuz" value={support.counts} />
+            <JinxChip label="Piyasa" value={formatQuote(current.quote)} />
+            <JinxChip accent={semantic.intelligence} label="Baskı" value={`${record.votesSupport}/${record.votesUsed} teyit`} />
+          </View>
+        </>
+      ) : null}
+      <View style={styles.jinxFoot}>
+        <Text style={styles.jinxTime}>{asOfTime(data?.asOf)} <Text style={styles.jinxTimeLabel}>· {query.isError ? "güncel değil" : "güncel"}</Text></Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: showCandidates }}
+          onPress={() => setShowCandidates(!showCandidates)}
+          style={({ pressed }) => [styles.jinxEvidenceAction, pressed && styles.pressed]}
+        >
+          <Text style={styles.link}>{showCandidates ? "Kanıtı gizle" : "Kanıtı gör"}</Text>
+          <MaterialCommunityIcons color={semantic.intelligence} name={showCandidates ? "chevron-up" : "chevron-down"} size={iconSizes.inline} />
+        </Pressable>
+      </View>
+      {showCandidates ? (
+        <View style={styles.jinxCandidates}>
+          <Text style={styles.caption}>Diğer adaylar ve elenme nedenleri · yayımlanmış birimlerden ayrı tutulur; bahis önerisi değildir.</Text>
+          {data?.candidates.length ? data.candidates.map(c => {
+            const status = c.selected ? { label: "EN İYİ ADAY", tone: "positive" as const } : c.admitted ? { label: "UYGUN, SEÇİLMEDİ", tone: "pending" as const } : { label: "ELENDİ", tone: "neutral" as const };
+            return (
+              <View key={c.market} style={styles.candidate}>
+                <View style={styles.rowBetween}>
+                  <Text style={styles.candidateMarket}>{formatSelection(c.market)}</Text>
+                  <TonePill label={status.label} tone={status.tone} />
+                </View>
+                <Text style={styles.candidateReason}>{rebuildReason(c.reason)}</Text>
+                <Text style={styles.candidateFacts}>
+                  Puan {formatScore(c.consistencyScore)} · {c.votesSupport}/{c.votesUsed} teyit · {c.poolWins}/{c.poolTotal} havuz desteği
+                </Text>
+              </View>
+            );
+          }) : <Text style={styles.caption}>Aday kaydı yok.</Text>}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/**
+ * Karar özeti on an RB1 match: the selected published record as a Karar fişi
+ * with its frozen evidence, then every record of the match as its own event
+ * (one current best eligible choice; distinct later opportunities).
+ */
+export function RebuildDecisionModule({ matchKey }: { matchKey: string }) {
   const query = useQuery(rebuildMatchQuery(matchKey)), now = useRebuildClock();
   const params = useLocalSearchParams<{ decision?: string | string[] }>();
-  const [selectedId, setSelectedId] = useState<string | null>(null), [showCandidates, setShowCandidates] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [width, setWidth] = useState(0);
   const data = query.data, current = !query.isError ? currentRebuild(data, now) : null;
   const requested = typeof params.decision === "string" ? params.decision : null;
   const selected = data?.history.find(h => h.decisionId === (selectedId || requested || current?.decisionId));
-  const reason = query.isError ? "Veri yenilenemedi" : data?.availability === "ACTIVE" && !current ? "Oran / ölçüm güncel değil" : rebuildReason(data?.reason);
-  const jinxText = selected && selected.decisionId !== current?.decisionId
-    ? `${formatSelection(selected.market)} için kaydedilmiş karar: ${selected.votesSupport}/${selected.votesUsed} baskı teyidi, ${selected.poolWins}/${selected.poolTotal} havuz desteği; yön çelişkisi ${selected.directionConflict ? "var" : "yok"}.`
-    : current ? data?.jinx.summary : `Güncel veri/teyit bekleniyor · ${reason}`;
-  const waitingTone = query.isError || data?.availability === "UNAVAILABLE" ? "neutral" : "warning";
   const wide = width >= 560;
-
   return (
     <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)} style={styles.stack}>
-      <Heading
-        eyebrow="BTB"
-        title="Karar ve kanıt"
-        trailing={<Action busy={query.isFetching} icon="refresh" onPress={() => { void query.refetch(); }} title={query.isFetching ? "Yenileniyor…" : "Yenile"} />}
-      />
-
-      <Card accent={current ? semantic.intelligence : undefined}>
-        {current ? (
-          <View style={styles.currentBlock}>
-            <View style={styles.rowBetween}>
-              <Text style={styles.eyebrowBronze}>GÜNCEL BTB SEÇİMİ</Text>
-              <RatingStars rating={current.stars} size={13} />
-            </View>
-            <Text accessibilityLiveRegion="polite" style={styles.currentMarket}>{formatSelection(current.market)}</Text>
-            <Text style={styles.caption}>Yıldız: tutarlılık ve kanıt kalitesi</Text>
-            <View style={styles.figures}>
-              <TicketFigure label="güncel oran" value={formatQuote(current.quote)} />
-              <TicketFigure align="right" label="tutarlılık puanı" value={formatScore(current.consistencyScore)} />
-            </View>
-          </View>
-        ) : (
-          <View accessibilityLiveRegion="polite" style={styles.currentBlock}>
-            <TonePill
-              dot
-              label={query.isError ? "VERİ ALINAMADI" : data?.availability === "NOT_STARTED" ? "BAŞLAMADI" : data?.availability === "UNAVAILABLE" ? "KULLANILAMIYOR" : "TEYİT BEKLENİYOR"}
-              tone={waitingTone}
-            />
-            <Text style={styles.waitingTitle}>Şu anda yayımlanmış güncel seçim yok</Text>
-            <Text style={styles.waitingReason}>{reason}</Text>
-          </View>
-        )}
-        <View style={styles.jinx}>
-          <Image accessible={false} resizeMode="contain" source={jinxFace} style={styles.jinxFace} />
-          <View style={styles.jinxBubble}>
-            <Text style={styles.jinxName}>Jinx</Text>
-            <Text style={styles.jinxText}>{jinxText}</Text>
-          </View>
-        </View>
-      </Card>
-
+      {selected && selected.decisionId !== current?.decisionId ? (
+        <Text style={styles.recordNote}>
+          {formatSelection(selected.market)} için kaydedilmiş karar: {selected.votesSupport}/{selected.votesUsed} baskı teyidi, {selected.poolWins}/{selected.poolTotal} havuz desteği; yön çelişkisi {selected.directionConflict ? "var" : "yok"}.
+        </Text>
+      ) : null}
       {selected ? (
         <>
           <RecommendationTicket record={selected} wide={wide} />
@@ -312,7 +366,6 @@ export function RebuildEvidencePanel({ matchKey }: { matchKey: string }) {
       ) : data?.history.length ? (
         <Text style={styles.hint}>Bir öneriyi seçtiğinde karar anındaki kanıt burada açılır.</Text>
       ) : null}
-
       <Card padded={false}>
         <View style={styles.listHead}>
           <Text style={styles.eyebrowMuted}>MAÇ BOYUNCA ÖNERİLER</Text>
@@ -326,58 +379,8 @@ export function RebuildEvidencePanel({ matchKey }: { matchKey: string }) {
             selected={record.decisionId === selected?.decisionId}
             showTeams={false}
           />
-        )) : <Text style={styles.empty}>Yayımlanmış öneri yok.</Text>}
+        )) : <Text style={styles.empty}>{query.isError ? "Veri alınamadı." : "Yayımlanmış öneri yok."}</Text>}
       </Card>
-
-      <Card padded={false}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ expanded: showCandidates }}
-          onPress={() => setShowCandidates(!showCandidates)}
-          style={({ pressed, hovered }) => [styles.disclosure, hovered && styles.rowHover, pressed && styles.pressed]}
-        >
-          <View style={styles.headingCopy}>
-            <Text style={styles.disclosureTitle}>{showCandidates ? "Diğer adayları gizle" : "Diğer adaylar ve elenme nedenleri"}</Text>
-            <Text style={styles.caption}>Yayımlanmış birimlerden ayrı tutulur; bahis önerisi değildir.</Text>
-          </View>
-          <MaterialCommunityIcons color={semantic.intelligence} name={showCandidates ? "chevron-up" : "chevron-down"} size={iconSizes.control} />
-        </Pressable>
-        {showCandidates ? data?.candidates.map(c => {
-          const status = c.selected ? { label: "EN İYİ ADAY", tone: "positive" as const } : c.admitted ? { label: "UYGUN, SEÇİLMEDİ", tone: "pending" as const } : { label: "ELENDİ", tone: "neutral" as const };
-          return (
-            <View key={c.market} style={styles.candidate}>
-              <View style={styles.rowBetween}>
-                <Text style={styles.candidateMarket}>{formatSelection(c.market)}</Text>
-                <TonePill label={status.label} tone={status.tone} />
-              </View>
-              <Text style={styles.candidateReason}>{rebuildReason(c.reason)}</Text>
-              <Text style={styles.candidateFacts}>
-                Puan {formatScore(c.consistencyScore)} · {c.votesSupport}/{c.votesUsed} teyit · {c.poolWins}/{c.poolTotal} havuz desteği
-              </Text>
-            </View>
-          );
-        }) : null}
-      </Card>
-    </View>
-  );
-}
-
-/** The 7/30 segment. */
-function PeriodSwitch({ days, onChange }: { days: 7 | 30; onChange: (days: 7 | 30) => void }) {
-  return (
-    <View accessibilityRole="tablist" style={styles.segment}>
-      {([7, 30] as const).map(option => (
-        <Pressable
-          accessibilityLabel={`${option} gün`}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: days === option }}
-          key={option}
-          onPress={() => onChange(option)}
-          style={({ pressed }) => [styles.segmentItem, days === option && styles.segmentItemActive, pressed && styles.pressed]}
-        >
-          <Text style={[styles.segmentText, days === option && styles.segmentTextActive]}>{option} gün</Text>
-        </Pressable>
-      ))}
     </View>
   );
 }
@@ -430,124 +433,81 @@ function Progress({ label, value, required }: { label: string; value: number; re
 }
 
 /**
- * Hypothetical one-unit results at the original quote (A7 question 36): last 7
- * or 30 Istanbul days by publication, five outcomes kept apart, a dash for a
- * ratio with no resolved risk, match-level risk retained, legacy kept out.
+ * The period's report behind the decision log's summary (A7 question 36):
+ * hypothetical one-unit results at the original quote, five outcomes kept
+ * apart, a dash for a ratio with no resolved risk, match-level risk retained.
+ * Always the whole period as the backend reports it, never a filtered view.
  */
-export function RebuildReportPanel({ history = false, columns = false, aside }: {
-  history?: boolean;
-  /** Wide desktop: the report and its supporting links on the left, the published records on the right. */
-  columns?: boolean;
-  /** Supporting content kept under the report card, such as the legacy link. */
-  aside?: ReactNode;
-}) {
-  const query = useQuery(rebuildReportQuery), router = useRouter(), [days, setDays] = useState<7 | 30>(7), [expanded, setExpanded] = useState(false);
-  const data = query.data, period = data?.periods.find(p => p.days === days);
-  const available = !query.isError && data?.availability === "AVAILABLE" && period;
-  const recommendations = available ? data.recommendations.filter(r => rebuildCalendarDay(r.publishedAt) >= period.from) : [];
+export function RebuildReportDetails({ report, period }: { report: RebuildReport; period: RebuildReport["periods"][number] }) {
+  const [expanded, setExpanded] = useState(false);
   return (
-    <View style={[styles.stack, columns && styles.columns]}>
-      <View style={[styles.stack, columns && styles.reportColumn]}>
-      <Card>
-        <View style={styles.reportHead}>
-          <View style={styles.headingCopy}>
-            <Text style={styles.eyebrowBronze}>BTB</Text>
-            <Text accessibilityRole="header" aria-level={2} style={styles.headingTitle}>Sonuçlar</Text>
-          </View>
-          <PeriodSwitch days={days} onChange={setDays} />
-        </View>
-        {!available ? (
-          <View style={styles.waiting}>
-            <TonePill dot label={query.isError ? "VERİ ALINAMADI" : "RAPOR BEKLENİYOR"} tone={query.isError ? "neutral" : "warning"} />
-            <Text style={styles.waitingReason}>{query.isError ? "Veri alınamadı" : rebuildReason(data?.reason)}</Text>
-            <Action icon="refresh" onPress={() => { void query.refetch(); }} title="Yenile" />
-          </View>
-        ) : (
-          <View style={styles.reportBody}>
-            <Text style={styles.period}>{days} gün · {formatReportRange(period.from, period.through)} · İstanbul</Text>
-            {period.recommendations === 0 ? (
-              <View style={styles.waiting}>
-                <Text style={styles.waitingTitle}>Bu dönemde yayımlanmış öneri yok</Text>
-                <Text style={styles.waitingReason}>BTB bir öneri yayımladığında ilk oranıyla burada sayılır.</Text>
-              </View>
-            ) : (
-              <>
-                <View style={styles.hero}>
-                  <TicketFigure label="birim · varsayımsal" size="large" tone={unitsTone(period.net)} value={formatUnits(period.net)} />
-                  <View style={styles.heroSide}>
-                    <TicketFigure align="right" label="ROI" value={formatRatio(period.roi)} />
-                    <TicketFigure align="right" label="isabet" value={formatRatio(period.hitRate)} />
-                  </View>
-                </View>
-                <OutcomeBar period={period} />
-                <Text style={styles.exposure}>
-                  {period.recommendations} öneri · {period.matches} maç · Toplam risk {period.totalRisk} · Sonuçlanan risk {period.risk}
-                </Text>
-              </>
-            )}
-            <View style={styles.note}>
-              <MaterialCommunityIcons color={colors.textMuted} name="information-outline" size={iconSizes.small} />
-              <Text style={styles.noteText}>Her öneri ilk oranıyla varsayımsal 1 birimdir. Aynı maçtaki öneriler bağımsız maç sayılmaz. Eski A3 kayıtları ayrı tutulur.</Text>
+    <View style={styles.reportBody}>
+      <Text style={styles.eyebrowMuted}>RAPOR · {period.days} GÜN · {formatReportRange(period.from, period.through)}</Text>
+      {period.recommendations === 0 ? (
+        <Text style={styles.waitingReason}>BTB bir öneri yayımladığında seçim oranıyla burada sayılır.</Text>
+      ) : (
+        <>
+          <View style={styles.hero}>
+            <TicketFigure label="birim · varsayımsal" tone={unitsTone(period.net)} value={formatUnits(period.net)} />
+            <View style={styles.heroSide}>
+              <TicketFigure align="right" label="ROI" value={formatRatio(period.roi)} />
+              <TicketFigure align="right" label="isabet" value={formatRatio(period.hitRate)} />
             </View>
-            <Text style={styles.noteText}>{period.uncertainty ? `Maç bazlı keşif aralığı: ${formatRatio(period.uncertainty.lower)} — ${formatRatio(period.uncertainty.upper)}; küçük örneklemde kanıt sınırlıdır.` : "Belirsizlik hesabı için farklı maç kanıtı yetersiz."}</Text>
-            <Action icon={expanded ? "chevron-up" : "chevron-down"} onPress={() => setExpanded(!expanded)} title={expanded ? "Kırılımları gizle" : "Yıldız / pazar / maç kırılımları"} />
-            {expanded ? (
-              <View style={styles.stackTight}>
-                <BreakdownTable rows={period.byStar.map(s => ({ key: String(s.stars), label: <RatingStars rating={s.stars} size={12} />, settled: s.settled, net: s.net }))} title="YILDIZA GÖRE" />
-                <BreakdownTable rows={period.byMarket.map(m => ({ key: m.market, label: formatSelection(m.market), settled: m.settled, net: m.net }))} title="PAZARA GÖRE" />
-                <BreakdownTable rows={period.byMatch.map(m => ({ key: m.matchKey, label: matchLabel(m.matchKey, data.recommendations), settled: m.settled, net: m.net, extra: `${m.recommendations} öneri · risk ${m.totalRisk}` }))} title="MAÇA GÖRE" />
-                {data.learning ? (
-                  <View style={styles.learning}>
-                    <Text style={styles.eyebrowMuted}>ÖĞRENME İNCELEMESİ</Text>
-                    <Progress label="Sonuçlanan öneri" required={100} value={data.learning.overall.settled} />
-                    <Progress label="Farklı maç" required={30} value={data.learning.overall.matches} />
-                    <Progress label="Gün" required={2} value={data.learning.overall.days} />
-                    <Text style={styles.noteText}>Yalnız inceleme içindir; kurallar yalnız onayla değişir.</Text>
-                  </View>
-                ) : null}
-              </View>
-            ) : null}
           </View>
-        )}
-      </Card>
-      {aside}
+          <OutcomeBar period={period} />
+          <Text style={styles.exposure}>
+            {period.recommendations} öneri · {period.matches} maç · Toplam risk {period.totalRisk} · Sonuçlanan risk {period.risk}
+          </Text>
+        </>
+      )}
+      <View style={styles.note}>
+        <MaterialCommunityIcons color={colors.textMuted} name="information-outline" size={iconSizes.small} />
+        <Text style={styles.noteText}>Her öneri seçim oranıyla varsayımsal 1 birimdir. Aynı maçtaki öneriler bağımsız maç sayılmaz.</Text>
       </View>
-      {history && available ? (
-        <View style={columns ? styles.historyColumn : null}>
-        <Card padded={false}>
-          <View style={styles.listHead}>
-            <Text style={styles.eyebrowMuted}>İLK ÖNERİLER VE SONUÇLARI</Text>
-            <Text style={styles.listCount}>{recommendations.length}</Text>
-          </View>
-          {recommendations.length ? recommendations.map(r => (
-            <RecommendationRow
-              key={r.decisionId}
-              onPress={() => router.push({ pathname: "/match/[key]", params: { key: r.matchKey, decision: r.decisionId } } as never)}
-              record={r}
-            />
-          )) : <Text style={styles.empty}>Bu dönemde yayımlanmış öneri yok.</Text>}
-        </Card>
+      <Text style={styles.noteText}>{period.uncertainty ? `Maç bazlı keşif aralığı: ${formatRatio(period.uncertainty.lower)} — ${formatRatio(period.uncertainty.upper)}; küçük örneklemde kanıt sınırlıdır.` : "Belirsizlik hesabı için farklı maç kanıtı yetersiz."}</Text>
+      <Action icon={expanded ? "chevron-up" : "chevron-down"} onPress={() => setExpanded(!expanded)} title={expanded ? "Kırılımları gizle" : "Yıldız / pazar / maç kırılımları"} />
+      {expanded ? (
+        <View style={styles.stackTight}>
+          <BreakdownTable rows={period.byStar.map(s => ({ key: String(s.stars), label: <RatingStars rating={s.stars} size={12} />, settled: s.settled, net: s.net }))} title="YILDIZA GÖRE" />
+          <BreakdownTable rows={period.byMarket.map(m => ({ key: m.market, label: formatSelection(m.market), settled: m.settled, net: m.net }))} title="PAZARA GÖRE" />
+          <BreakdownTable rows={period.byMatch.map(m => ({ key: m.matchKey, label: matchLabel(m.matchKey, report.recommendations), settled: m.settled, net: m.net, extra: `${m.recommendations} öneri · risk ${m.totalRisk}` }))} title="MAÇA GÖRE" />
+          {report.learning ? (
+            <View style={styles.learning}>
+              <Text style={styles.eyebrowMuted}>ÖĞRENME İNCELEMESİ</Text>
+              <Progress label="Sonuçlanan öneri" required={100} value={report.learning.overall.settled} />
+              <Progress label="Farklı maç" required={30} value={report.learning.overall.matches} />
+              <Progress label="Gün" required={2} value={report.learning.overall.days} />
+              <Text style={styles.noteText}>Yalnız inceleme içindir; kurallar yalnız onayla değişir.</Text>
+            </View>
+          ) : null}
         </View>
       ) : null}
     </View>
   );
 }
 
-/** The latest published records, for the Overview's decision module. */
+/**
+ * The latest published records, for the Overview's "Son Super hareketleri"
+ * (v40 board): always present, with a plain state when there is none yet.
+ * A row opens the record's Super kararı page.
+ */
 export function RecentRecommendations({ limit = 3 }: { limit?: number }) {
   const query = useQuery(rebuildReportQuery), router = useRouter();
   const records = query.data?.availability === "AVAILABLE" ? [...query.data.recommendations]
     .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)).slice(0, limit) : [];
-  if (!records.length) return null;
   return (
     <Card padded={false}>
-      {records.map(r => (
+      {records.length ? records.map(r => (
         <RecommendationRow
           key={r.decisionId}
-          onPress={() => router.push({ pathname: "/match/[key]", params: { key: r.matchKey, decision: r.decisionId } } as never)}
+          onPress={() => router.push({ pathname: "/super/[key]", params: { key: r.decisionId, match: r.matchKey } } as never)}
           record={r}
         />
-      ))}
+      )) : (
+        <Text style={styles.recentEmpty}>
+          {query.isLoading ? "Öneriler hazırlanıyor…" : query.isError || query.data?.availability !== "AVAILABLE" ? "Rapor şu anda alınamıyor." : "Henüz yayımlanmış öneri yok."}
+        </Text>
+      )}
     </Card>
   );
 }
@@ -561,15 +521,9 @@ export function useRebuildWeek() {
 
 const styles = StyleSheet.create({
   stack: { gap: spacing.md, width: "100%" },
-  columns: { flexDirection: "row", alignItems: "flex-start", gap: spacing.xl },
-  reportColumn: { width: 440, flexShrink: 0 },
-  historyColumn: { flex: 1, minWidth: 0 },
   stackTight: { gap: spacing.lg },
   card: { borderRadius: 20, borderWidth: 1, borderColor: colors.borderSoft, ...shadows.card },
   cardBody: { padding: spacing.lg, gap: spacing.md },
-  heading: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: spacing.md, marginTop: spacing.sm },
-  headingCopy: { flex: 1, minWidth: 0 },
-  headingTitle: { color: colors.text, ...typeScale.moduleTitle, marginTop: 2 },
   eyebrowBronze: { color: colors.bronze, ...typeScale.eyebrow },
   eyebrowMuted: { color: colors.textMuted, ...typeScale.eyebrow },
   rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
@@ -578,16 +532,32 @@ const styles = StyleSheet.create({
   action: { minHeight: interaction.minTouchTarget, flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: 6, paddingHorizontal: spacing.sm, marginHorizontal: -spacing.sm, borderRadius: radii.md },
   actionHover: { backgroundColor: colors.surfaceStrong },
   pressed: { opacity: 0.72 },
-  currentBlock: { gap: spacing.sm },
-  currentMarket: { color: colors.text, ...typeScale.decision, fontSize: 20, lineHeight: 26 },
-  figures: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: spacing.md, marginTop: spacing.xs },
-  waitingTitle: { color: colors.text, ...typeScale.decision },
   waitingReason: { color: colors.textMuted, ...typeScale.body },
-  jinx: { flexDirection: "row", alignItems: "flex-start", gap: spacing.md, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.md },
-  jinxFace: { width: 44, height: 44 },
-  jinxBubble: { flex: 1, minWidth: 0, backgroundColor: colors.surfaceStrong, borderRadius: 14, borderTopLeftRadius: 4, padding: spacing.md, gap: 2 },
-  jinxName: { color: colors.text, ...typeScale.label, fontWeight: "800", letterSpacing: 0 },
-  jinxText: { color: colors.text, ...typeScale.body },
+  // Jinx card: the v40 board's match card (avatar, state pill, outlined
+  // Yenile, a speech bubble, the pool-support figure, chips, time and evidence).
+  jinxCard: { gap: 12, marginTop: 12, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 16, borderRadius: 22, borderWidth: 1, borderColor: colors.borderSoft, ...shadows.card },
+  jinxHead: { flexDirection: "row", alignItems: "center", gap: 10 },
+  jinxAvatar: { width: 50, height: 50 },
+  jinxIdentity: { flex: 1, minWidth: 0, gap: 2, alignItems: "flex-start" },
+  jinxTitle: { color: colors.text, ...typeScale.decision },
+  jinxRefresh: { minHeight: interaction.minTouchTarget, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 16, borderRadius: radii.round, borderWidth: 1, borderColor: colors.border },
+  jinxRefreshText: { color: colors.text, ...typeScale.bodyCompact, fontWeight: "700" },
+  jinxSpeech: { paddingHorizontal: 14, paddingVertical: 12, borderRadius: 16, borderTopLeftRadius: 6, backgroundColor: colors.surfaceStrong },
+  jinxSpeechText: { color: colors.text, ...typeScale.body, fontSize: 16, lineHeight: 23, fontWeight: "500" },
+  jinxFigure: { flexDirection: "row", alignItems: "baseline", gap: 10 },
+  jinxFigureValue: { color: colors.text, ...typeScale.display, fontSize: 48, lineHeight: 50 },
+  jinxFigureLabel: { color: colors.textMuted, ...typeScale.bodyCompact, fontWeight: "700" },
+  jinxChips: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  jinxChip: { flexDirection: "row", alignItems: "baseline", gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: colors.border },
+  jinxChipLabel: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0 },
+  jinxChipValue: { color: colors.text, ...typeScale.metricCompact, fontSize: 15, lineHeight: 18 },
+  jinxFoot: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border },
+  jinxTime: { color: colors.textMuted, ...typeScale.metricCompact, fontSize: 14, lineHeight: 18 },
+  jinxTimeLabel: { ...typeScale.label, letterSpacing: 0 },
+  jinxEvidenceAction: { minHeight: 48, flexDirection: "row", alignItems: "center", gap: 4 },
+  jinxCandidates: { gap: 2 },
+  recordNote: { color: colors.textMuted, ...typeScale.bodyCompact },
+  recentEmpty: { color: colors.textMuted, ...typeScale.bodyCompact, padding: spacing.lg },
   hint: { color: colors.textMuted, ...typeScale.bodyCompact, textAlign: "center", paddingHorizontal: spacing.lg },
   ticket: { borderRadius: 20, borderWidth: 1, borderColor: colors.borderSoft, padding: spacing.lg, gap: spacing.md, ...shadows.card },
   ticketWide: { flexDirection: "row", alignItems: "stretch", gap: spacing.lg },
@@ -636,15 +606,11 @@ const styles = StyleSheet.create({
   rowDetail: { color: colors.textMuted, ...typeScale.bodyCompact },
   rowMarket: { color: colors.text, fontWeight: "700" },
   rowUnits: { minWidth: 52 },
-  disclosure: { flexDirection: "row", alignItems: "center", gap: spacing.md, padding: spacing.lg, minHeight: 64 },
-  disclosureTitle: { color: colors.text, ...typeScale.identity, fontWeight: "700" },
-  candidate: { gap: 4, borderTopWidth: 1, borderTopColor: colors.border, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
+  candidate: { gap: 4, borderTopWidth: 1, borderTopColor: colors.border, paddingVertical: spacing.md },
   candidateMarket: { color: colors.text, ...typeScale.bodyCompact, fontWeight: "700", flexShrink: 1 },
   candidateReason: { color: colors.textMuted, ...typeScale.bodyCompact },
   candidateFacts: { color: colors.textSubtle, ...typeScale.label, letterSpacing: 0 },
-  reportHead: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: spacing.md, flexWrap: "wrap" },
   reportBody: { gap: spacing.md },
-  period: { color: colors.textMuted, ...typeScale.meta },
   waiting: { gap: spacing.sm, alignItems: "flex-start" },
   hero: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: spacing.lg },
   heroSide: { flexDirection: "row", gap: spacing.xl },
@@ -653,11 +619,6 @@ const styles = StyleSheet.create({
   outcomeEmpty: { flex: 1 },
   outcomeLegend: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0 },
   exposure: { color: colors.text, ...typeScale.bodyCompact },
-  segment: { flexDirection: "row", padding: 3, borderRadius: 999, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.backgroundElevated },
-  segmentItem: { minHeight: 38, minWidth: 64, paddingHorizontal: spacing.md, alignItems: "center", justifyContent: "center", borderRadius: 999 },
-  segmentItemActive: { backgroundColor: colors.actionFill },
-  segmentText: { color: colors.textMuted, ...typeScale.bodyCompact, fontWeight: "700" },
-  segmentTextActive: { color: colors.onAction },
   table: { gap: 2 },
   tableRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, minHeight: 36, borderBottomWidth: 1, borderBottomColor: colors.border },
   tableLabel: { flex: 1, minWidth: 0, color: colors.text, ...typeScale.bodyCompact, fontWeight: "700" },

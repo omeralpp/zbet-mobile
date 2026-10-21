@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <color name="btb_widget_text">#FFF4F8FC</color>
-  <color name="btb_widget_muted">#FF94A9BC</color>
-  <color name="btb_widget_subtle">#FF6E879D</color>
-  <color name="btb_widget_blue">#FF1597E5</color>
-  <color name="btb_widget_green">#FF62E66D</color>
-  <color name="btb_widget_gold">#FFF5C542</color>
+  <!-- Layout defaults in the v40 dark tokens; providers apply the active theme. -->
+  <color name="btb_widget_text">#FFF7F5EC</color>
+  <color name="btb_widget_muted">#FFB6CAD4</color>
+  <color name="btb_widget_subtle">#FFB6CAD4</color>
+  <color name="btb_widget_blue">#FF62B0FF</color>
+  <color name="btb_widget_green">#FF3DDC97</color>
+  <color name="btb_widget_gold">#FFFFC845</color>
 
   <string name="btb_widget_name">BTB Next – Son Super</string>
   <string name="btb_widget_description">Son BTB ve Super bildirimini ana ekranda gösterir.</string>
@@ -19,9 +20,9 @@
   <string name="btb_widget_updated">Güncellendi %1$s</string>
 
   <string name="btb_kpi_widget_name">BTB Next – Performans</string>
-  <string name="btb_kpi_widget_description">Toto kapsam ve Super profit KPI değerlerini gösterir.</string>
+  <string name="btb_kpi_widget_description">Toto kapsamını ve BTB son 7 gün sonucunu gösterir.</string>
   <string name="btb_kpi_widget_title">BTB Performans</string>
-  <string name="btb_kpi_toto_title">Toto kapsamı</string>
-  <string name="btb_kpi_super_title">Super profit</string>
+  <string name="btb_kpi_toto_title">TOTO KAPSAMI</string>
+  <string name="btb_kpi_super_title">BTB · 7 GÜN</string>
   <string name="btb_kpi_waiting">Veri bekleniyor</string>
 </resources>

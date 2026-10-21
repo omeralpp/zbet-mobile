@@ -1,7 +1,10 @@
-import { useCallback, useRef, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
+  Platform,
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -16,15 +19,19 @@ import { toneColor } from "@/src/components/DecisionTicket";
 import { Screen } from "@/src/components/Screen";
 import { SectionHeader } from "@/src/components/SectionHeader";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
+import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import { TotoProgramCard } from "@/src/components/TotoProgramCard";
-import { dashboardQuery } from "@/src/api/queries";
+import { dashboardQuery, matchInsightsQuery } from "@/src/api/queries";
 import { RecentRecommendations, useRebuildWeek } from "@/src/components/RebuildEvidencePanel";
 import { formatRatio, formatUnits, unitsTone } from "@/src/utils/rebuild-display";
+import { isAtLeast } from "@/src/layout/breakpoints";
 import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
 import { useModuleLayout } from "@/src/layout/module-layout-store";
 import type { OverviewModuleId } from "@/src/layout/module-registry";
+import { useBreakpoint } from "@/src/layout/use-breakpoint";
+import { JinxDailyComment } from "@/src/mascot/JinxDailyComment";
 import { useLiveStarFilter } from "@/src/preferences/LiveStarFilterProvider";
-import { colors, semantic, spacing, typeScale, textFont } from "@/src/theme/theme";
+import { colors, iconSizes, radii, semantic, spacing, typeScale, textFont } from "@/src/theme/theme";
 import {
   liveStarMetricCount,
   starMetricLabel
@@ -36,15 +43,24 @@ export default function DashboardScreen() {
   const router = useRouter();
   const { filter: liveStarFilter } = useLiveStarFilter();
   const query = useQuery(dashboardQuery);
+  const insights = useQuery(matchInsightsQuery);
+  const breakpoint = useBreakpoint();
+  // Desktop (v40 W-Özet): four separate figure tiles with Jinx as the fourth,
+  // and each featured match as one horizontal row.
+  const wideWeb = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
   const [reordering, setReordering] = useState(false);
   const scrollRef = useRef<ScrollView | null>(null);
   const scrollOffset = useRef(0);
-  const { order, reorderVisible } = useModuleLayout("overview");
+  const { order, reorderVisible, reset } = useModuleLayout("overview");
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       scrollOffset.current = event.nativeEvent.contentOffset.y;
     },
     []
+  );
+  const insightMap = useMemo(
+    () => new Map((insights.data ?? []).map((insight) => [insight.key, insight])),
+    [insights.data]
   );
 
   const dashboard = query.data;
@@ -61,73 +77,95 @@ export default function DashboardScreen() {
       : "Skor, seçim ve güncel oran";
 
   const weekTone = week.period ? unitsTone(week.period.net) : "neutral";
+  const tiles = dashboard ? [
+    <MetricTile
+      // The live-match counter used loss red. It counts matches in
+      // progress and says nothing about how they are going.
+      accent={semantic.live}
+      detail="aktif takip"
+      icon="access-point"
+      key="live"
+      label="Canlı maç"
+      onPress={() =>
+        router.push({
+          pathname: "/live",
+          params: { scope: "LIVE" }
+        } as never)
+      }
+      value={String(dashboard.liveMatchCount)}
+    />,
+    <MetricTile
+      accent={colors.gold}
+      detail="canlı maç filtresi"
+      icon="star"
+      key="stars"
+      label={starMetricLabel(liveStarFilter)}
+      onPress={() =>
+        router.push({
+          pathname: "/live",
+          params: { scope: "STAR", decision: liveStarFilter }
+        } as never)
+      }
+      value={String(
+        liveStarMetricCount(dashboard.liveStarCounts, liveStarFilter)
+      )}
+    />,
+    // The rebuild's own seven-day result at the original quote, one
+    // hypothetical unit per recommendation; the full report and its caveats
+    // live on the Super tab.
+    <TutorialTarget id="home-super-metric" key="week" style={wideWeb ? styles.metricTarget : styles.stripTarget}>
+      <MetricTile
+        accent={week.period ? toneColor[weekTone] : semantic.neutral}
+        accessibilityLabel={week.period
+          ? `BTB son 7 gün, varsayımsal birim ${formatUnits(week.period.net)}; ${week.period.wins} kazandı, ${week.period.losses} kaybetti; ROI ${formatRatio(week.period.roi)}`
+          : "BTB son 7 gün: rapor bekleniyor"}
+        detail={!week.period
+          ? week.loading ? "hazırlanıyor" : "rapor bekleniyor"
+          : week.period.recommendations === 0
+            ? "henüz öneri yok"
+            : `${week.period.wins} kazandı · ${week.period.losses} kaybetti`}
+        icon="chart-line"
+        label="BTB · 7 gün"
+        onPress={() => router.push("/super" as never)}
+        value={week.period ? formatUnits(week.period.net) : "—"}
+        valueColor={week.period && weekTone !== "neutral" ? toneColor[weekTone] : undefined}
+      />
+    </TutorialTarget>
+  ] : [];
+
   const moduleNodes: Partial<Record<OverviewModuleId, ReactNode>> = {
     metrics: dashboard ? (
-      <View style={styles.metrics}>
-        <MetricStrip>
-          <MetricTile
-            // The live-match counter used loss red. It counts matches in
-            // progress and says nothing about how they are going.
-            accent={semantic.live}
-            detail="aktif takip"
-            icon="access-point"
-            label="Canlı maç"
-            onPress={() =>
-              router.push({
-                pathname: "/live",
-                params: { scope: "LIVE" }
-              } as never)
-            }
-            value={String(dashboard.liveMatchCount)}
-          />
-          <MetricTile
-            accent={colors.gold}
-            detail="canlı maç filtresi"
-            icon="star"
-            label={starMetricLabel(liveStarFilter)}
-            onPress={() =>
-              router.push({
-                pathname: "/live",
-                params: { scope: "STAR", decision: liveStarFilter }
-              } as never)
-            }
-            value={String(
-              liveStarMetricCount(dashboard.liveStarCounts, liveStarFilter)
-            )}
-          />
-          {/* The rebuild's own seven-day result at the original quote, one
-              hypothetical unit per recommendation; the full report and its
-              caveats live on the Super tab. */}
-          <MetricTile
-            accent={week.period ? toneColor[weekTone] : semantic.neutral}
-            accessibilityLabel={week.period
-              ? `BTB son 7 gün, varsayımsal birim ${formatUnits(week.period.net)}; ${week.period.wins} kazandı, ${week.period.losses} kaybetti; ROI ${formatRatio(week.period.roi)}`
-              : "BTB son 7 gün: rapor bekleniyor"}
-            detail={!week.period
-              ? week.loading ? "hazırlanıyor" : "rapor bekleniyor"
-              : week.period.recommendations === 0
-                ? "henüz öneri yok"
-                : `${week.period.wins} kazandı · ${week.period.losses} kaybetti`}
-            icon="chart-line"
-            label="BTB · 7 gün"
-            onPress={() => router.push("/super" as never)}
-            value={week.period ? formatUnits(week.period.net) : "—"}
-            valueColor={week.period && weekTone !== "neutral" ? toneColor[weekTone] : undefined}
-          />
-        </MetricStrip>
-      </View>
+      wideWeb ? (
+        <View style={styles.metricRow}>
+          {tiles.map((tile, index) => (
+            <View key={index} style={styles.metricCard}>
+              <SurfaceMaterial radius={18} />
+              {tile}
+            </View>
+          ))}
+          <JinxDailyComment variant="tile" />
+        </View>
+      ) : (
+        <View style={styles.metrics}>
+          <TutorialTarget id="home-hero" radius={18}>
+            <MetricStrip>{tiles}</MetricStrip>
+          </TutorialTarget>
+          <JinxDailyComment />
+        </View>
+      )
     ) : null,
-    recentSuper: week.recommendations.length ? (
+    // Always present (v40 board), with its own state while nothing is published.
+    recentSuper: (
       <>
         <SectionHeader
-          actionLabel="Tümü"
-          caption="İlk oran ve sonuç, karar anındaki haliyle"
+          actionLabel="Tüm kararlar"
+          caption="En yeni kararlar"
           onAction={() => router.push("/super" as never)}
-          title="Son BTB önerileri"
+          title="Son Super hareketleri"
         />
         <RecentRecommendations />
       </>
-    ) : null
+    )
   };
 
   if (dashboard?.featuredMatches.length) {
@@ -142,10 +180,10 @@ export default function DashboardScreen() {
         {dashboard.featuredMatches.map((match, index) =>
           index === 0 ? (
             <TutorialTarget id="home-featured" key={match.key}>
-              <MatchCard compact match={match} />
+              <MatchCard compact horizontal={wideWeb} insight={insightMap.get(match.key)} match={match} />
             </TutorialTarget>
           ) : (
-            <MatchCard compact key={match.key} match={match} />
+            <MatchCard compact horizontal={wideWeb} insight={insightMap.get(match.key)} key={match.key} match={match} />
           )
         )}
       </>
@@ -170,7 +208,14 @@ export default function DashboardScreen() {
     .filter((id): id is OverviewModuleId =>
       Boolean(moduleNodes[id as OverviewModuleId])
     )
-    .map((id) => ({ id, node: moduleNodes[id], fullWidth: id === "metrics" }));
+    .map((id) => ({
+      id,
+      node: moduleNodes[id],
+      fullWidth: id === "metrics",
+      // The featured matches keep the left column while the decisions and
+      // the Toto program stack on the right (v40 W-Özet).
+      ...(id === "featured" ? { rowSpan: 2 } : {})
+    }));
 
   return (
     <Screen
@@ -211,6 +256,16 @@ export default function DashboardScreen() {
         scrollOffsetRef={scrollOffset}
         scrollRef={scrollRef}
       />
+      {/* The phone's reorder hint (v40 board); desktop shows handles on hover. */}
+      {Platform.OS !== "web" && dashboard ? (
+        <View style={styles.reorderHint}>
+          <MaterialCommunityIcons color={colors.textMuted} name="drag" size={iconSizes.small} />
+          <Text style={styles.reorderText}>Bölümleri basılı tutup sürükleyerek sırala.</Text>
+          <Pressable accessibilityRole="button" hitSlop={8} onPress={() => { void reset(); }} style={styles.reorderAction}>
+            <Text style={styles.reorderActionText}>Düzeni sıfırla</Text>
+          </Pressable>
+        </View>
+      ) : null}
     </Screen>
   );
 }
@@ -221,13 +276,42 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md
   },
   metrics: {
-    width: "100%"
+    width: "100%",
+    gap: spacing.md
+  },
+  stripTarget: {
+    flex: 1
   },
   metricTarget: {
-    flex: 1,
-    minWidth: 148,
-    gap: spacing.sm
+    flex: 1
   },
-  metricScope: { width: "100%", gap: spacing.xs },
-  scopeNote: { ...typeScale.bodyCompact, color: colors.textMuted, lineHeight: 19 }
+  metricRow: {
+    flexDirection: "row",
+    gap: spacing.md,
+    width: "100%"
+  },
+  metricCard: {
+    flex: 1,
+    minWidth: 0,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.borderSoft
+  },
+  scopeNote: { ...typeScale.bodyCompact, color: colors.textMuted, lineHeight: 19 },
+  reorderHint: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginTop: spacing.xxl,
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: colors.border
+  },
+  reorderText: { flex: 1, color: colors.textMuted, ...typeScale.bodyCompact },
+  reorderAction: { minHeight: 44, justifyContent: "center" },
+  reorderActionText: { color: semantic.intelligence, ...typeScale.bodyCompact, fontWeight: "700" }
 });

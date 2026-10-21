@@ -1,6 +1,5 @@
 import type {
   MatchStatus,
-  SuperLog,
   TotoProgram
 } from "@/src/api/schemas";
 
@@ -59,33 +58,6 @@ export function formatPercentage(value: number): string {
     style: "percent",
     maximumFractionDigits: 0
   }).format(value);
-}
-
-const decisionReasonLabels: Record<string, string> = {
-  SCORE_CHANGED: "Skor değişti",
-  SCORE_DECREASED: "Skor düzeltildi",
-  ODDS_CHANGED: "Oran değişti",
-  STATUS_CHANGED: "Maç durumu değişti",
-  PRESSURE_RECHECK: "Yakın aralık baskısı yeniden değerlendirildi",
-  MANUAL_RECHECK: "Yeniden değerlendirildi",
-  HOME: "Ev sahibi yönü",
-  AWAY: "Deplasman yönü",
-  DRAW: "Beraberlik yönü",
-  GOAL: "Gol marketi",
-  NOGO: "Gol olmama marketi"
-};
-
-export function formatDecisionReason(value: string): string {
-  const parts = value
-    .split("/")
-    .map((part) => part.trim())
-    .filter(Boolean);
-  if (!parts.length) {
-    return "Model değerlendirmesi";
-  }
-  return parts
-    .map((part) => decisionReasonLabels[part.toUpperCase()] ?? part)
-    .join(" · ");
 }
 
 export function formatElapsed(status: MatchStatus, elapsed: number): string {
@@ -189,36 +161,6 @@ export function formatMatchKeyDateTime(matchKey: string): string {
     return `${dateOnly} · saat bilgisi yok`;
   }
   return formatFixtureDateTime(date, time);
-}
-
-export function formatSuperDateScope(values: string[]): string {
-  const dates = values
-    .map((value) => new Date(value))
-    .filter((value) => Number.isFinite(value.getTime()))
-    .sort((left, right) => left.getTime() - right.getTime());
-  if (!dates.length) {
-    return "";
-  }
-
-  const formatter = new Intl.DateTimeFormat("tr-TR", {
-    day: "2-digit",
-    month: "short",
-    timeZone: "Europe/Istanbul"
-  });
-  const first = formatter.format(dates[0]);
-  const last = formatter.format(dates[dates.length - 1]);
-  const range = first === last ? first : `${first} – ${last}`;
-  return `${range} · en yeni ${dates.length} karar`;
-}
-
-export function formatSuperResult(result: SuperLog["result"]): string {
-  const labels: Record<SuperLog["result"], string> = {
-    OPEN: "Açık",
-    WON: "Kazandı",
-    LOST: "Kaybetti",
-    VOID: "Geçersiz"
-  };
-  return labels[result];
 }
 
 export function formatProgramStatus(status: TotoProgram["status"]): string {

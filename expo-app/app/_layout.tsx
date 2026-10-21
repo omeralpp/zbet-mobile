@@ -84,15 +84,15 @@ function RootNavigator() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen
             name="match/[key]"
-            options={{ title: "Maç Detayı" }}
+            options={{ title: "Maç detayı" }}
           />
           <Stack.Screen
             name="super/[key]"
-            options={{ title: "Super Kararı Detayı" }}
+            options={{ title: "Super kararı" }}
           />
           <Stack.Screen
             name="toto/[gcNo]/[version]"
-            options={{ title: "Toto Programı" }}
+            options={{ title: "Toto programı" }}
           />
         </Stack.Protected>
         <Stack.Protected guard={hasSession && designLabAvailable(runtimeConfig)}>

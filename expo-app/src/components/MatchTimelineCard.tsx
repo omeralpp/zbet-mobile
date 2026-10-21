@@ -7,7 +7,8 @@ import {
   Text,
   View
 } from "react-native";
-import type { LiveContext, SuperLog } from "@/src/api/schemas";
+import type { LiveContext } from "@/src/api/schemas";
+import type { SuperMark } from "@/src/utils/super-mark";
 import { LiveContextNotice } from "@/src/components/LiveContextNotice";
 import { ChangeEmphasis } from "@/src/components/ChangeEmphasis";
 import { RatingStars } from "@/src/components/RatingStars";
@@ -190,11 +191,11 @@ function SuperDecisionRow({
   onPress,
   sharesMinute
 }: {
-  decision: SuperLog;
+  decision: SuperMark;
   isCurrent: boolean;
   isFirst: boolean;
   isLast: boolean;
-  onPress: ((decision: SuperLog) => void) | undefined;
+  onPress: ((decision: SuperMark) => void) | undefined;
   sharesMinute: boolean;
 }) {
   const ratingMarker = buildSuperRatingMarker(decision.rating);
@@ -268,9 +269,9 @@ function TimelineList({
   teams
 }: {
   currentDecisionKey: string | null | undefined;
-  decisions: SuperLog[];
+  decisions: SuperMark[];
   events: VisibleEvent[];
-  onDecisionPress: ((decision: SuperLog) => void) | undefined;
+  onDecisionPress: ((decision: SuperMark) => void) | undefined;
   teams: EventTeams;
 }) {
   // The first content payload is the quiet baseline. A later event gets a new
@@ -330,12 +331,12 @@ function MatchTimelineCardComponent({
   awayTeam?: string | null | undefined;
   context?: LiveContext | undefined;
   currentDecisionKey?: string | null;
-  decisions?: SuperLog[];
+  decisions?: SuperMark[];
   homeScore?: number | null | undefined;
   homeTeam?: string | null | undefined;
   includeRedCards?: boolean;
   isLoading?: boolean;
-  onDecisionPress?: (decision: SuperLog) => void;
+  onDecisionPress?: (decision: SuperMark) => void;
 }) {
   const sourceState = resolveTimelineState(context, isLoading);
   const events = visibleEvents(context?.timeline).filter(

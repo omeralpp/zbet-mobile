@@ -7,7 +7,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.text.format.DateFormat;
@@ -129,7 +128,7 @@ public class BtbNotificationWidgetProvider extends AppWidgetProvider {
         views.setTextColor(R.id.btb_widget_updated, palette.subtle);
         views.setTextColor(R.id.btb_widget_rating, palette.gold);
         views.setTextColor(R.id.btb_widget_super, palette.text);
-        views.setTextColor(R.id.btb_widget_open, Color.WHITE);
+        views.setTextColor(R.id.btb_widget_open, palette.onAccent);
         views.setTextColor(R.id.btb_widget_toto, palette.text);
         views.setInt(
                 R.id.btb_widget_super,

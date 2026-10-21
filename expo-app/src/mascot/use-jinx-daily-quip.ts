@@ -1,32 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
-import { mobileApi } from "@/src/api";
-import { superKpisQuery } from "@/src/api/queries";
-import { useSuperStarFilter } from "@/src/preferences/SuperStarFilterProvider";
-import { deriveJinxDailyMood, jinxMoodSignature, selectJinxMoodQuip } from "./jinx-mood";
-import { acceptRemoteQuip, jinxQuipRequest } from "./jinx-quip-remote";
+import { rebuildReportQuery } from "@/src/api/queries";
+import { jinxWeekQuip } from "./jinx-week";
 
 /**
- * NXT-OBS-174: Jinx's comment on the day's Super result, shared by the ambient
- * bubble and the Overview line so both always say the same thing. The BFF
- * wording is used only when it passes the client guard for the current
- * numbers; otherwise the deterministic repertoire speaks.
+ * Jinx's daily comment, shared by the ambient bubble, "Günlük yorum" and the
+ * Overview card so all three always say the same thing. Since 2026-10-21 it
+ * reads the RB1 report's seven days in neutral words (owner decision); the old
+ * A3 daily Super figures and their mood are retired.
  */
 export function useJinxDailyQuip() {
-  const { filter } = useSuperStarFilter();
-  const kpis = useQuery(superKpisQuery);
-  const mood = deriveJinxDailyMood({ ready: kpis.isSuccess, metricDate: kpis.data?.metricDate,
-    filter, bucket: kpis.data?.buckets[filter] });
-  const signature = jinxMoodSignature(mood);
-  const request = jinxQuipRequest(mood);
-  const remote = useQuery({
-    queryKey: ["jinxDailyQuip", signature, mood.won, mood.lost, mood.profit],
-    enabled: Boolean(signature && request),
-    staleTime: Infinity, gcTime: 6 * 60 * 60 * 1000, retry: false,
-    queryFn: async ({ signal }) => {
-      const response = await mobileApi.getJinxQuip(request!, signal);
-      return response.enabled ? acceptRemoteQuip(response.body, mood) : null;
-    }
-  });
-  const quip = selectJinxMoodQuip(mood);
-  return { mood, signature, quip: quip ? { ...quip, body: remote.data ?? quip.body } : null };
+  const report = useQuery(rebuildReportQuery);
+  const period = !report.isError && report.data?.availability === "AVAILABLE"
+    ? report.data.periods.find((item) => item.days === 7)
+    : undefined;
+  const quip = jinxWeekQuip(period);
+  return { signature: quip?.signature ?? null, quip };
 }

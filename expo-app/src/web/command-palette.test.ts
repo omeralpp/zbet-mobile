@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { MatchSummary, SuperLog, TotoProgram } from "@/src/api/schemas";
+import type { RebuildRecommendation } from "@/src/api/rebuild-schemas";
+import type { MatchSummary, TotoProgram } from "@/src/api/schemas";
 import { buildPaletteItems, foldTurkish, searchPalette } from "./command-palette";
 
 const match = (over: Partial<MatchSummary>): MatchSummary => ({
@@ -26,23 +27,15 @@ const match = (over: Partial<MatchSummary>): MatchSummary => ({
   ...over
 });
 
-const superLog: SuperLog = {
-  key: "super-472780-82",
+const record = {
+  decisionId: "A".repeat(32),
   matchKey: "2026-07-28:472780:20:45:00",
-  matchName: "VPS - Ilves",
-  createdAt: "2026-07-28T20:45:00.000Z",
-  elapsed: 82,
-  selectedOdd: "Ms25a",
-  rating: 3,
-  reason: "PRESSURE_RECHECK",
-  liveRate: 2.14,
-  currentRate: null,
-  result: "WON",
-  profit: 1.14,
-  finalScore: "2-1",
-  pressureAdjustment: 0,
-  stateAdjustment: 0
-};
+  homeTeam: "VPS",
+  awayTeam: "Ilves",
+  market: "Ms25a",
+  stars: 3,
+  result: { state: "WIN", revision: 1, net: "1.14" }
+} as RebuildRecommendation;
 
 const toto = { key: "362:1", gcNo: 362, version: 1, weekText: "16.10 - 19.10 Programı", status: "ACTIVE" } as TotoProgram;
 
@@ -51,7 +44,7 @@ const items = buildPaletteItems({
     match({}),
     match({ key: "b", homeTeam: "Inter Turku", awayTeam: "Gnistan", league: "Finland Veikkausliiga", status: "NOT_STARTED", matchTime: "20:45" })
   ],
-  superLogs: [superLog],
+  recommendations: [record],
   totoPrograms: [toto]
 });
 
@@ -78,7 +71,7 @@ test("every word must match, accent-insensitively, and links point at real route
   assert.deepEqual(first?.href, { pathname: "/match/[key]", params: { key: "2026-07-28:472961:19:15:00" } });
   assert.deepEqual(searchPalette(items, "karagumruk ilves"), []);
   const [superHit] = searchPalette(items, "ilves");
-  assert.deepEqual(superHit?.href, { pathname: "/super/[key]", params: { key: "super-472780-82" } });
+  assert.deepEqual(superHit?.href, { pathname: "/super/[key]", params: { key: "A".repeat(32), match: "2026-07-28:472780:20:45:00" } });
   const [totoHit] = searchPalette(items, "362");
   assert.deepEqual(totoHit?.href, { pathname: "/toto/[gcNo]/[version]", params: { gcNo: "362", version: "1" } });
 });

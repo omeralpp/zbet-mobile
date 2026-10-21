@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { Image, StyleSheet, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Image, Platform, StyleSheet, Text, View } from "react-native";
 import { btbBrandMark } from "@/src/theme/brand-mark";
-import { colors, radii } from "@/src/theme/theme";
+import { colors, radii, textFont } from "@/src/theme/theme";
+import { teamInitials } from "@/src/utils/rebuild-log";
 import {
   getTeamLogoUrl,
   isProviderPlaceholderLogo,
@@ -11,14 +12,39 @@ import {
 
 export function TeamLogo({
   participantId,
-  size
+  size,
+  name
 }: {
   participantId?: string | null | undefined;
   size?: TeamLogoSize | undefined;
+  /** Team name; a team without a crest then shows its initials (owner decision 2026-10-21, replaces NXT-OBS-103's BTB mark). */
+  name?: string | undefined;
 }) {
   const url = getTeamLogoUrl(participantId);
   const [failed, setFailed] = useState(false);
   const box = resolveTeamLogoSize(size);
+
+  // The web image's load event carries no intrinsic size, so the provider
+  // placeholder would pass as a crest there; the browser measures it instead
+  // (from its cache, no second download).
+  useEffect(() => {
+    if (Platform.OS !== "web" || !url) {
+      return;
+    }
+    let active = true;
+    Image.getSize(
+      url,
+      (width, height) => {
+        if (active && isProviderPlaceholderLogo(width, height)) {
+          setFailed(true);
+        }
+      },
+      () => undefined
+    );
+    return () => {
+      active = false;
+    };
+  }, [url]);
 
   // The crest CDN returns a provider-branded placeholder with HTTP 200 for an
   // unknown participant, so `onError` never fires for it. It is identified by
@@ -39,8 +65,16 @@ export function TeamLogo({
     { width: box, height: box, borderRadius: box / 2 }
   ];
 
-  // Missing, invalid, failed, or a provider placeholder all resolve to the BTB
-  // mark. The provider's own placeholder is never shown as BTB's fallback.
+  // Missing, invalid, failed, or a provider placeholder resolve to the team's
+  // initials when the name is known (the v40 board), otherwise to the BTB mark.
+  // The provider's own placeholder is never shown as BTB's fallback.
+  if ((!url || failed) && name) {
+    return (
+      <View accessibilityElementsHidden style={frame}>
+        <Text style={[styles.initials, { fontSize: Math.max(11, Math.round(box * 0.29)) }]}>{teamInitials(name)}</Text>
+      </View>
+    );
+  }
   if (!url || failed) {
     return (
       <View accessibilityElementsHidden style={frame}>
@@ -66,23 +100,6 @@ export function TeamLogo({
   );
 }
 
-export function TeamLogoPair({
-  awayParticipantId,
-  homeParticipantId,
-  size
-}: {
-  awayParticipantId?: string | null | undefined;
-  homeParticipantId?: string | null | undefined;
-  size?: TeamLogoSize | undefined;
-}) {
-  return (
-    <View style={styles.pair}>
-      <TeamLogo participantId={homeParticipantId} size={size} />
-      <TeamLogo participantId={awayParticipantId} size={size} />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   frame: {
     alignItems: "center",
@@ -103,8 +120,10 @@ const styles = StyleSheet.create({
     width: "78%",
     height: "78%"
   },
-  pair: {
-    flexDirection: "row",
-    gap: 2
+  initials: {
+    ...textFont("700"),
+    color: colors.textMuted,
+    includeFontPadding: false,
+    letterSpacing: 0.2
   }
 });

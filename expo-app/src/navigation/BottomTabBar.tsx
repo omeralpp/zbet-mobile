@@ -3,7 +3,8 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, iconSizes, interaction, semantic, typeScale } from "@/src/theme/theme";
+import { useLiveMatchCount } from "@/src/api/use-live-match-count";
+import { colors, iconSizes, interaction, numericFont, semantic, typeScale } from "@/src/theme/theme";
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
 
@@ -22,17 +23,19 @@ export type TopTabBarProps = {
   };
 };
 
+// The v40 board's tab icons: a grid for Özet and a live target for Canlı.
 export const tabPresentation: Record<string, { icon: IconName; label: string }> = {
-  index: { icon: "view-dashboard-outline", label: "Özet" },
-  live: { icon: "soccer", label: "Canlı" },
+  index: { icon: "view-grid-outline", label: "Özet" },
+  live: { icon: "record-circle-outline", label: "Canlı" },
   super: { icon: "star-outline", label: "Super" },
-  toto: { icon: "ticket-confirmation-outline", label: "Toto" },
+  toto: { icon: "ticket-outline", label: "Toto" },
   more: { icon: "dots-horizontal-circle-outline", label: "Daha Fazla" }
 };
 
 export function BottomTabBar({ navigation, state }: TopTabBarProps) {
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom, 8);
+  const liveCount = useLiveMatchCount();
 
   return (
     <View
@@ -49,10 +52,11 @@ export function BottomTabBar({ navigation, state }: TopTabBarProps) {
           label: route.name
         };
         const color = focused ? semantic.positive : colors.textSubtle;
+        const badge = route.name === "live" && liveCount > 0 ? liveCount : null;
 
         return (
           <Pressable
-            accessibilityLabel={presentation.label}
+            accessibilityLabel={badge ? `${presentation.label}, ${badge} canlı maç` : presentation.label}
             accessibilityRole="tab"
             accessibilityState={{ selected: focused }}
             key={route.key}
@@ -82,12 +86,20 @@ export function BottomTabBar({ navigation, state }: TopTabBarProps) {
           >
             {/* The active tab sits on a soft action pill, so the selection
                 reads by shape as well as colour. */}
-            <View style={[styles.iconPill, focused && styles.iconPillActive]}>
-              <MaterialCommunityIcons
-                color={color}
-                name={presentation.icon}
-                size={iconSizes.control}
-              />
+            <View>
+              <View style={[styles.iconPill, focused && styles.iconPillActive]}>
+                <MaterialCommunityIcons
+                  color={color}
+                  name={presentation.icon}
+                  size={iconSizes.control}
+                />
+              </View>
+              {/* Outside the clipped pill, so the count can sit on its edge. */}
+              {badge ? (
+                <View pointerEvents="none" style={styles.badge}>
+                  <Text style={styles.badgeText}>{badge}</Text>
+                </View>
+              ) : null}
             </View>
             <Text style={[styles.tabLabel, focused && styles.tabLabelActive, { color }]}>{presentation.label}</Text>
           </Pressable>
@@ -129,6 +141,24 @@ const styles = StyleSheet.create({
   },
   iconPillActive: {
     backgroundColor: colors.greenSoft
+  },
+  badge: {
+    position: "absolute",
+    top: -5,
+    right: 6,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: semantic.live
+  },
+  badgeText: {
+    ...numericFont("800"),
+    color: colors.background,
+    fontSize: 13,
+    lineHeight: 15
   },
   tabLabel: {
     ...typeScale.label,

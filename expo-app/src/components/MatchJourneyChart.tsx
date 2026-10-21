@@ -4,7 +4,8 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Polyline, Rect, Stop, Text as SvgText } from 'react-native-svg';
-import type { LiveContext, MatchDetail, MatchJourney, MatchJourneyPoint, MatchPathContext, SuperLog } from '@/src/api/schemas';
+import type { LiveContext, MatchDetail, MatchJourney, MatchJourneyPoint, MatchPathContext } from '@/src/api/schemas';
+import type { SuperMark } from '@/src/utils/super-mark';
 import { colors, fontFamilies, radii, semantic, spacing, typeScale, textFont, numericFont } from '@/src/theme/theme';
 import { SurfaceMaterial } from './SurfaceMaterial';
 import { JourneyInspector } from './JourneyInspector';
@@ -28,7 +29,7 @@ const LANE_Y=170, CHART_HEIGHT=216;
 const journeyTopLabelY=TOP-12;
 const MARKER_GAP=journeyTouch.markerGap;
 const EMPTY_POINTS: MatchJourneyPoint[]=[];
-const EMPTY_DECISIONS: readonly SuperLog[]=[];
+const EMPTY_DECISIONS: readonly SuperMark[]=[];
 const LEGEND_KINDS=['GOAL','RED_CARD','SUPER','POOL_CHANGE','CORRECTION'] as const;
 const LEGEND_LABELS: Record<(typeof LEGEND_KINDS)[number],string>={GOAL:'Gol',RED_CARD:'Kart',SUPER:'Super',POOL_CHANGE:'Yeni havuz',CORRECTION:'Düzeltme'};
 const svgLabel={fontSize:12,fontWeight:'500',fontFamily:fontFamilies.text} as const;
@@ -68,7 +69,7 @@ export function MatchJourneyChart({ context, match, journey, path, isError, isLo
   context: LiveContext | undefined; match: MatchDetail; journey: MatchJourney | undefined;
   path: MatchPathContext | undefined; isError: boolean; isLoading: boolean; pathIsLoading: boolean;
   /** Recorded Super decisions for this match, drawn as star marks on the event lane. */
-  decisions?: readonly SuperLog[]; onDecisionPress?: (decisionKey: string) => void;
+  decisions?: readonly SuperMark[]; onDecisionPress?: (decisionKey: string) => void;
 }) {
   const [width,setWidth]=useState(310);
   const {inspectorOpen,setInspectorOpen,scrubArea,inspectorTrigger,openInspector,restoreInspectorPosition}=useJourneyInspector();

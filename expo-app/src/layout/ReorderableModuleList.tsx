@@ -32,6 +32,8 @@ export type ReorderableModuleItem = {
   node: ReactNode;
   /** Desktop summary spans a row; Android remains a single reading column. */
   fullWidth?: boolean;
+  /** Desktop only (grid rows spanned); the native single column ignores it. */
+  rowSpan?: number;
 };
 
 type ReorderableModuleListProps = {

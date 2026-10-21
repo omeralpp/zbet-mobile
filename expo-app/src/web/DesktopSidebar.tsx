@@ -140,8 +140,7 @@ export function DesktopSidebar({ expanded, onOpenPalette, onOpenHelp, onToggleEx
                         {destination.label}
                       </Text>
                       {destination.route === "live" && liveCount > 0 ? (
-                        <View style={styles.liveBadge}>
-                          <View style={styles.liveDot} />
+                        <View accessibilityLabel={`${liveCount} canlı maç`} style={styles.liveBadge}>
                           <Text style={styles.liveText}>{liveCount}</Text>
                         </View>
                       ) : (
@@ -379,24 +378,20 @@ const styles = StyleSheet.create({
     ...typeScale.micro,
     color: colors.textSubtle
   },
+  // The v40 board's round live count, the same badge as the phone tab bar.
   liveBadge: {
     alignItems: "center",
-    backgroundColor: colors.tealSoft,
-    borderRadius: radii.round,
-    flexDirection: "row",
-    gap: 5,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2
-  },
-  liveDot: {
     backgroundColor: semantic.live,
     borderRadius: radii.round,
-    height: 7,
-    width: 7
+    height: 20,
+    justifyContent: "center",
+    minWidth: 20,
+    paddingHorizontal: 5
   },
   liveText: {
     ...typeScale.micro,
-    color: semantic.live
+    color: colors.background,
+    fontWeight: "800"
   },
   railBadge: {
     alignItems: "center",
