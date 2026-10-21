@@ -2,7 +2,7 @@
 
 Son güncelleme: 2026-10-21
 Mod: `OBSERVATION`
-Delivery: `OWNER_ONLY_DEV_PILOT / 473d4f2 PAIR AWAITING_BOTH_CLIENT_SMOKE`
+Delivery: `OWNER_ONLY_DEV_PILOT / f6e18b3 PAIR AWAITING_BOTH_CLIENT_SMOKE`
 Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
 Previous checkpoint preserved verbatim in
 `handoff_archive/CURRENT_HANDOFF_before_RB1_2026-10-20.md`.
@@ -47,7 +47,7 @@ derleme emülatördeki önceki test kurulumunun yerine kuruldu (uygulama verisi
 korundu, sahip telefonu etkilenmedi). Ayrıntı, platform istisnaları ve panodan
 bilinçli sapmalar: `THEME_BATCH_2026-10-21.md`. Yeni bulgular NXT-OBS-180/181.
 
-## Bire bir batch (Claude, 2026-10-21) — yerel, commit edilmedi
+## Bire bir batch (Claude, 2026-10-21) — yayımlandı, smoke bekliyor
 
 Sahip kurulumdan sonra panoya göre eksikler bildirdi ve eski A3 bölümünün
 kaldırılmasını istedi (NXT-OBS-182). Eksikler soru olarak soruldu; cevaplar ve
@@ -58,7 +58,17 @@ bilinçli sapmalar panoya döner (baş harf, `Tümü`, koyu balon, altın `Sonu�
 bekliyor`), Android widget'ları v40. Typecheck, lint, 658 test, tooling, marka, web
 export'ları, web iki tema/iki genişlik ve örnek veriyle Android emulator smoke'u
 (widget dahil) geçti; Expo Doctor 19/20 (dış `expo-router` 57.0.29 kayması, ayrı
-karar). Commit/push ve yeni APK+web çifti ayrı onay ister.
+karar). Sahip onayıyla (`Commit, push ve yeni APK+web`) `master`'a
+`f6e18b374594bef5e58e04dd9f833960c914b691` olarak push edildi ve çift üretildi:
+[Private APK](https://drive.google.com/file/d/1Tj_9f6CYZdJMjUi8NEY1nmufiWU70KTT/view?usp=drivesdk)
+`btb-mobile-next-arm64-o2o-f6e18b3.apk`, 50443125 bytes, ARM64, SHA256
+`620359DEAB623663F55308AA02AA58913F0465F61D24314430051A8EEABEBD6A`; imza/ABI ve
+kimlikli readback doğrulandı, sahip kurdu ("kurdum"; ADB iddiası yok). Web
+`20261021T184108Z-f6e18b3` yayımlandı (yerel probe ve Access kapısı geçti), batch
+`client-f6e18b374594bef5e58e04dd9f833960c914b691-620359DEAB62-1FF96E17746C`
+`AWAITING_BOTH_CLIENT_SMOKE`: iki sahip smoke'u, kabul makbuzu ve
+`client-release.mjs complete` bekler. `473d4f2` çifti web smoke'u olmadan bu çiftle
+değiştirildi (tamamlanmadı); kurtarma çifti `a00b743`.
 
 ## Önceki kabul edilmiş çift (a00b743, kurtarma için)
 
@@ -129,10 +139,10 @@ describes the agent's rejected deletion attempt, not the owner's later actions.
 
 ## Exact next steps
 
-Close the `473d4f2` batch: the owner's published-web smoke, then the owner
-acceptance receipt and `client-release.mjs complete`. Then the local one-to-one
-batch: checks, commit/push, a new paired APK+web release, each under its own
-explicit approval; physical Xiaomi and published-web smokes close NXT-OBS-181/182.
+Close the `f6e18b3` batch: the owner's Android and published-web smokes, then
+the owner acceptance receipt and `client-release.mjs complete`; these close
+NXT-OBS-181/182. `473d4f2` was superseded before its web smoke and stays
+incomplete. Expo Doctor's `expo-router` 57.0.29 drift is a separate decision.
 Keep backend decisions, frozen first facts, result accounting and Jinx evidence
 meaning unchanged unless the owner separately approves a model change.
 Every future client release still requires a new clean pushed common commit,
