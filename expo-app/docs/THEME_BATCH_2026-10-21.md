@@ -2,7 +2,8 @@
 
 Kaynak tasarım: özel Design canvas (v40, 31 pano; v30 sahibin beğendiği görünüm).
 Uygulama tabanı: `zbet-mobile/master` `11d4b12` (artifact kaynağı `a00b743`).
-Durum: sahip onayıyla (2026-10-21) `master`'a commit/push edildi. APK
+Durum: sahip onayıyla (2026-10-21) `master`'a commit/push edildi
+(`32a85a8d0ad4297fe650dc75d5b8527a8cb09dcd`). APK
 imzalama/özel teslim ve eş web yayını ayrı açık onay ister; bu batch hiçbir
 release'i yetkilendirmez.
 

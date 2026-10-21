@@ -20,9 +20,11 @@ Claude may continue shared Android/web design from
 ## Tema batch'i (Claude, 2026-10-21) — push edildi, release bekliyor
 
 Design canvas v40 teması `11d4b12` üzerine yalnız tema olarak, iki yüzeyde
-birlikte uygulandı ve sahip onayıyla `master`'a commit/push edildi; APK ve web
-henüz bu commit'ten üretilmedi. Gömülü Manrope/Barlow Condensed (OFL,
-`assets/fonts`), RB1 karar ve kanıt ile sonuç ekranları ve Karar fişi, board
+birlikte uygulandı ve sahip onayıyla `master`'a commit/push edildi:
+`32a85a8d0ad4297fe650dc75d5b8527a8cb09dcd`. APK ve web henüz bu commit'ten
+üretilmedi; kurulu Android ve yayındaki web `a00b743` çiftinde kalır. Gömülü
+Manrope/Barlow Condensed (OFL, `assets/fonts`), RB1 karar ve kanıt ile sonuç
+ekranları ve Karar fişi, board
 düzeninde Özet/Canlı/Super/Toto/Daha Fazla, web kenar çubuğu daraltma oku.
 Backend kararı, durumlar, doğrulayıcılar, sözleşmeler ve kanıt anlamı
 değişmedi. Typecheck, lint, 691 test, tooling 32, marka, doctor 20/20, edge ve
