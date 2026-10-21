@@ -50,12 +50,37 @@ Live-label repair accepts `39'`/`62′` without changing the model or client API
 
 ## Açık observation / blokajlar
 
-No delivery blocker remains. Quality/pressure/episode/result observations go
+New live readiness blocker: TASK-0170 / P1, owner BTB. The 20 October
+23:15–23:20 Istanbul check found an evaluation-clock ordering defect, fixture-only
+quote mappings rejecting real live markets, and pressure resets from 180-second
+job spacing. Arithmetic is correct, but recommendations are not ready. See
+`BTB Logs/model_lab/reports/BTB_RB1_READINESS_BLOCKERS_2026-10-20.md`.
+Theme work must retain backend reasons and must not manufacture stars or treat
+this P1 as a visual issue. Earlier paired delivery remains a historical fact.
+
+Quality/pressure/episode/result observations go
 to `BTB Logs/cutover_2026-10-20/CUTOVER_NOTES.md`; client usability findings go
 to `OBSERVATION_LOG.md`. A5 learning remains analysis/manual approval only.
 No profitability or calibrated-probability claim. Stars mean consistency and
 evidence quality; pool percentages mean sample support. A3 remains separate.
 Android widgets consume the RB1 report; desktop web uses the shared report.
+
+65A runtime maintenance: legacy A3 prospective writer is off
+(`BTB_PROSPECTIVE_ENABLED=false` in User and launch Process); list/detail/report
+smokes passed. Future restarts must not inherit stale Process=true. RB1 seals,
+APK/web assets and notification settings are unchanged. Separate local-history
+cleanup is BLOCKED as TASK-0169: automatic approval review rejected deletion,
+zero files removed. The SAP cleanup inventory is read-only; preserve MAIN and
+all RB1 tables/results. Details are in the two `BTB_LEGACY_CLEANUP_*_2026-10-20.md`
+reports under `BTB Logs/model_lab/reports/`.
+
+Owner cleanup verified afterward: collector and all 18 listed whole folders
+are absent; 287 original files are absent and 144 remain (3,876,542 bytes),
+keeping TASK-0169 unfinished. Earlier SAP verification found nine legacy tables
+empty; checked protected counts and RB1 source hashes show no loss/drift.
+Local/public API report/list/detail/evidence checks passed. See the latest
+`BTB_LEGACY_CLEANUP_VERIFICATION_2026-10-20.md` report; prior checkpoint above
+describes the agent's rejected deletion attempt, not the owner's later actions.
 
 ## Exact next steps
 

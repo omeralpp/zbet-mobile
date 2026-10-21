@@ -5,6 +5,15 @@ Workspace `C:/dev/btb-cdoex`. Start through `btb` and the
 Owner request: continue web/mobile visual design after the RB1 delivery.
 Do not create or message another task automatically.
 
+Post-delivery readiness check found TASK-0170 / P1 in the BTB backend:
+evaluation time precedes pool completion, fixture selectors miss live odds, and
+180-second acquisition spacing resets pressure confirmation. Pressure arithmetic
+works; current recommendation readiness FAILS. The detailed dated report is
+`BTB Logs/model_lab/reports/BTB_RB1_READINESS_BLOCKERS_2026-10-20.md`.
+Keep this repair with the BTB owner. Design may proceed independently while
+preserving failure reasons and the decision contract; do not simulate stars or
+record the theme as resolution of the backend blocker.
+
 The implementation and delivery plan is complete. Android/web artifact source
 is `a00b743ba8dab6664595a9b6ca177afb0cff2c1a`; web `20261020T190600Z-a00b743`.
 BFF `5eea01c476edd5ac9ddfe197925d22bbaae879fe`, DEV backend `6b0139167f2fca098d8a5f7eeeff5ea6cbc1e9f2`.
