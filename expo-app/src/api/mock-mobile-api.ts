@@ -36,6 +36,7 @@ import {
 } from "./mock-data";
 import { MobileApiError, type MobileApi } from "./mobile-api";
 import { rebuildMatchSchema, rebuildReportSchema } from "./rebuild-schemas";
+import { rebuildPressureHistorySchema, rebuildStatisticsSchema } from "./rebuild-statistics-schemas";
 import { decisionContextSchema, type AnalysisContext, type MatchJourney } from "./schemas";
 import { previewJinxSignal, previewSelectionReading } from "../mascot/jinx-assessment";
 
@@ -85,6 +86,24 @@ export const mockMobileApi: MobileApi = {
     await mockDelay(signal);
     return rebuildReportSchema.parse({ contractVersion: "btb-rebuild-report.v1", modelRegime: "BTB_RB1_20261018", asOf: new Date().toISOString(), timeZone: "Europe/Istanbul",
       availability: "UNAVAILABLE", reason: "DUMMY_NOT_PUBLISHED", accounting: "ONE_HYPOTHETICAL_UNIT_AT_FIRST_QUOTE", actualBetsAssumed: false, periods: [], recommendations: [], learning: null });
+  },
+  // Sample data publishes no RB1 facts, so both RB1 match reads are honestly
+  // unavailable here, like the decision and report above.
+  async getRebuildStatistics(key, signal) {
+    await mockDelay(signal);
+    const statistics = Object.fromEntries(["TotalShots", "ShotsOnTarget", "Corners", "Xg", "BallPossession", "YellowCards",
+      "RedCards", "BoxTouches", "BlockedShots", "GoalkeeperSaves"].flatMap((name) => [[`home${name}`, null], [`away${name}`, null]]));
+    return rebuildStatisticsSchema.parse({ contractVersion: "btb-match-statistics.v1", modelRegime: "BTB_RB1_20261018", matchKey: key,
+      asOf: new Date().toISOString(), availability: "UNAVAILABLE", reason: "DUMMY_NOT_PUBLISHED", observedAt: null,
+      source: "VERIFIED_RB1_OBSERVATION", captureId: null, pressurePolicy: null, phase: null, elapsed: null, homeScore: null,
+      awayScore: null, xgScopeVerified: false, statistics, coverage: [], pressure: null });
+  },
+  async getRebuildPressureHistory(key, signal) {
+    await mockDelay(signal);
+    return rebuildPressureHistorySchema.parse({ contractVersion: "btb-pressure-history.v1", modelRegime: "BTB_RB1_20261018", matchKey: key,
+      asOf: new Date().toISOString(), availability: "UNAVAILABLE", reason: "DUMMY_NOT_PUBLISHED", source: "VERIFIED_RB1_HISTORY",
+      historical: true, coverage: "PERSISTED_VERIFIED_INTERVALS_ONLY", fullMatchCoverageProven: false, samples: [], observations: [],
+      poolPath: { availability: "UNAVAILABLE", reason: "RB1_POOL_PATH_NOT_EXPOSED" } });
   },
   async getMatchAnalysisContext(key, signal) {
     const [matchDetail, insight, periodScore, leagueContext, superLogs, liveContext,

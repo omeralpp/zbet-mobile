@@ -8,6 +8,19 @@ export function rebuildMatchQuery(key: string) {
     staleTime: 0, refetchInterval: 10_000, retry: false });
 }
 
+// The statistics panel reads the latest verified observation; the backend
+// withholds it after 120 seconds, so a live screen asks again every 30.
+export function rebuildStatisticsQuery(key: string) {
+  return queryOptions({ queryKey: ["rebuildStatistics", key], enabled: Boolean(key),
+    queryFn: ({ signal }) => mobileApi.getRebuildStatistics(key, signal), staleTime: 0, retry: false });
+}
+
+/** Persisted verified intervals and observations; it only grows while live. */
+export function rebuildPressureHistoryQuery(key: string) {
+  return queryOptions({ queryKey: ["rebuildPressureHistory", key], enabled: Boolean(key),
+    queryFn: ({ signal }) => mobileApi.getRebuildPressureHistory(key, signal), staleTime: 15_000, retry: false });
+}
+
 export function matchAnalysisContextQuery(key: string) {
   return queryOptions({ queryKey: ["analysisContext", key], enabled: Boolean(key),
     queryFn: ({ signal }) => mobileApi.getMatchAnalysisContext(key, signal),

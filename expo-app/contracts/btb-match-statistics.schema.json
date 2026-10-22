@@ -1,0 +1,598 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "contractVersion": {
+      "type": "string",
+      "const": "btb-match-statistics.v1"
+    },
+    "modelRegime": {
+      "type": "string",
+      "const": "BTB_RB1_20261018"
+    },
+    "matchKey": {
+      "type": "string"
+    },
+    "asOf": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+    },
+    "availability": {
+      "type": "string",
+      "enum": [
+        "AVAILABLE",
+        "PARTIAL",
+        "NOT_STARTED",
+        "UNAVAILABLE"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "observedAt": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source": {
+      "type": "string",
+      "const": "VERIFIED_RB1_OBSERVATION"
+    },
+    "captureId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "pressurePolicy": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "RB1_APPROVED_BASE_10A",
+            "RB1_OPT_STATS_74A_V1"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "phase": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "elapsed": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "homeScore": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "awayScore": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "xgScopeVerified": {
+      "type": "boolean"
+    },
+    "statistics": {
+      "type": "object",
+      "properties": {
+        "homeTotalShots": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "awayTotalShots": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "homeShotsOnTarget": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "awayShotsOnTarget": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "homeCorners": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "awayCorners": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "homeXg": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "awayXg": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "homeBallPossession": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "awayBallPossession": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "homeYellowCards": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "awayYellowCards": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "homeRedCards": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "awayRedCards": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "homeBoxTouches": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "awayBoxTouches": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "homeBlockedShots": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "awayBlockedShots": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "homeGoalkeeperSaves": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "awayGoalkeeperSaves": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "homeTotalShots",
+        "awayTotalShots",
+        "homeShotsOnTarget",
+        "awayShotsOnTarget",
+        "homeCorners",
+        "awayCorners",
+        "homeXg",
+        "awayXg",
+        "homeBallPossession",
+        "awayBallPossession",
+        "homeYellowCards",
+        "awayYellowCards",
+        "homeRedCards",
+        "awayRedCards",
+        "homeBoxTouches",
+        "awayBoxTouches",
+        "homeBlockedShots",
+        "awayBlockedShots",
+        "homeGoalkeeperSaves",
+        "awayGoalkeeperSaves"
+      ],
+      "additionalProperties": false
+    },
+    "coverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "metric": {
+            "type": "string"
+          },
+          "homePresent": {
+            "type": "boolean"
+          },
+          "awayPresent": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "metric",
+          "homePresent",
+          "awayPresent",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "pressure": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "source": {
+              "type": "string",
+              "const": "BACKEND_INTERVAL"
+            },
+            "method": {
+              "type": "string",
+              "enum": [
+                "RB1_APPROVED_BASE_10A",
+                "RB1_OPT_STATS_74A_V1"
+              ]
+            },
+            "captureId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "startsAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+            },
+            "endsAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+            },
+            "home": {
+              "type": "string",
+              "pattern": "^\\d+(?:\\.\\d+)?$"
+            },
+            "away": {
+              "type": "string",
+              "pattern": "^\\d+(?:\\.\\d+)?$"
+            },
+            "total": {
+              "type": "string",
+              "pattern": "^\\d+(?:\\.\\d+)?$"
+            },
+            "estimated": {
+              "type": "boolean"
+            },
+            "components": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "baseHome": {
+                      "type": "string",
+                      "pattern": "^\\d+(?:\\.\\d+)?$"
+                    },
+                    "baseAway": {
+                      "type": "string",
+                      "pattern": "^\\d+(?:\\.\\d+)?$"
+                    },
+                    "cappedExtraHome": {
+                      "type": "string",
+                      "pattern": "^\\d+(?:\\.\\d+)?$"
+                    },
+                    "cappedExtraAway": {
+                      "type": "string",
+                      "pattern": "^\\d+(?:\\.\\d+)?$"
+                    },
+                    "optional": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "metric": {
+                            "type": "string",
+                            "enum": [
+                              "box",
+                              "blocked",
+                              "saves"
+                            ]
+                          },
+                          "used": {
+                            "type": "boolean"
+                          },
+                          "reason": {
+                            "type": "string"
+                          },
+                          "homeDelta": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "awayDelta": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "homeContribution": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "pattern": "^\\d+(?:\\.\\d+)?$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "awayContribution": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "pattern": "^\\d+(?:\\.\\d+)?$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "metric",
+                          "used",
+                          "reason",
+                          "homeDelta",
+                          "awayDelta",
+                          "homeContribution",
+                          "awayContribution"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "baseHome",
+                    "baseAway",
+                    "cappedExtraHome",
+                    "cappedExtraAway",
+                    "optional"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "source",
+            "method",
+            "captureId",
+            "startsAt",
+            "endsAt",
+            "home",
+            "away",
+            "total",
+            "estimated",
+            "components"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "contractVersion",
+    "modelRegime",
+    "matchKey",
+    "asOf",
+    "availability",
+    "reason",
+    "observedAt",
+    "source",
+    "captureId",
+    "pressurePolicy",
+    "phase",
+    "elapsed",
+    "homeScore",
+    "awayScore",
+    "xgScopeVerified",
+    "statistics",
+    "coverage",
+    "pressure"
+  ],
+  "additionalProperties": false
+}

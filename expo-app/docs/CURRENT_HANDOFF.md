@@ -1,6 +1,6 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-10-21
+Son güncelleme: 2026-10-22
 Mod: `OBSERVATION`
 Delivery: `OWNER_ONLY_DEV_PILOT / f6e18b3 PAIR AWAITING_BOTH_CLIENT_SMOKE`
 Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
@@ -70,6 +70,18 @@ kimlikli readback doğrulandı, sahip kurdu ("kurdum"; ADB iddiası yok). Web
 `client-release.mjs complete` bekler. `473d4f2` çifti web smoke'u olmadan bu çiftle
 değiştirildi (tamamlanmadı); kurtarma çifti `a00b743`.
 
+## Maçın yolu ve RB1 istatistik batch'i (Claude, 2026-10-22) — yerel
+
+Sahip v45 Maçın yolu panolarını onayladı; Codex 76A backend teslimini bitirip
+kullanım sınırına takıldı, sahip işi buradan tamamlamayı istedi. Codex'in yarım
+kalan 76A kayıtları push edildi (`BTB Logs` b626236, `zbet-cap` 46c4cdc,
+`btb-codex` 2e5a7f4). TASK-0177: istatistik paneli `btb-match-statistics.v1`,
+Baskı grafiği `btb-pressure-history.v1` ile iki yüzeyde; Maçın yolu Jinx'in
+altında ayrı kart, RB1 havuz yolu sunulmadığı için çizgi yerine tek not.
+Ayrıntı `MATCH_PATH_STATISTICS_BATCH_2026-10-22.md` (NXT-OBS-183). Biten maçta
+`TEYİT BEKLENİYOR` metni NXT-OBS-184 olarak kayıtlı, değiştirilmedi. Commit/push
+ve yeni APK+web çifti ayrı onay ister; `f6e18b3` çifti hâlâ smoke bekliyor.
+
 ## Önceki kabul edilmiş çift (a00b743, kurtarma için)
 
 [Private RB1 APK](https://drive.google.com/file/d/1X314Uy3RKwTcC-4FvqAYpfNkD7XasZ2S/view?usp=drivesdk)
@@ -86,10 +98,11 @@ Previous accepted ee48ccd APK/web pair is retained for bounded recovery.
 ## Repo durumu
 
 Artifact source `zbet-mobile/master` `a00b743ba8dab6664595a9b6ca177afb0cff2c1a`; subsequent handoff-only
-commits do not change those artifacts. BFF source `c6b4b0dab6bc4c5be5aa83158ccdc7217eed88cf`;
-backend DEV exact main `0f24c9debb5c5f3d09e933813147fead7dcdeb57`.
-Model `BTB_RB1_20261018`, policy `2BD9B781186351B53E1215B1CDCD245BD073C8CEEFB4C8B9468EFF3E18BE6F62`,
-producer `18714D2689D36E8E0A8AB3AD62437CC46C51741D9832FDD540C018B04B81B150`. BFF/SAP identities agree; explicit ED89 predecessor history is retained.
+commits do not change those artifacts. BFF runtime source `e851fd3fcec5c5bdd57d5dedd8405af99ead2234`
+(76A, 2026-10-22); backend DEV exact main `8a389b28e3db3b848f96da8f7221abe4a95e3820`.
+Model `BTB_RB1_20261018`, pressure `RB1_OPT_STATS_74A_V1`, policy `873AF557AB4BC72ECDC81829922583F86E9F84C0F0E7697A6C89F4FF549D9597`,
+producer `90132B9184DB7D4CB3128705264793446BF3B993D3389678CFA80AB7CE14E433`; earlier base-10A
+identity pairs stay historical (accepted boundary 2026-10-22T08:15:36.8796732Z).
 
 ## Doğrulama
 
@@ -143,6 +156,9 @@ Close the `f6e18b3` batch: the owner's Android and published-web smokes, then
 the owner acceptance receipt and `client-release.mjs complete`; these close
 NXT-OBS-181/182. `473d4f2` was superseded before its web smoke and stays
 incomplete. Expo Doctor's `expo-router` 57.0.29 drift is a separate decision.
+Then the local Maçın yolu / RB1 statistics batch (TASK-0177): checks, commit/push
+and a new paired APK+web release under their approvals; both smokes close
+TASK-0177 and NXT-OBS-183.
 Keep backend decisions, frozen first facts, result accounting and Jinx evidence
 meaning unchanged unless the owner separately approves a model change.
 Every future client release still requires a new clean pushed common commit,

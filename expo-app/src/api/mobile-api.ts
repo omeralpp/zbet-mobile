@@ -21,9 +21,12 @@ import type {
 } from "./schemas";
 
 import type { RebuildMatch, RebuildReport } from "./rebuild-schemas";
+import type { RebuildPressureHistory, RebuildStatistics } from "./rebuild-statistics-schemas";
 export interface MobileApi {
   getRebuildMatch(key: string, signal?: AbortSignal): Promise<RebuildMatch>;
   getRebuildReport(signal?: AbortSignal): Promise<RebuildReport>;
+  getRebuildStatistics(key: string, signal?: AbortSignal): Promise<RebuildStatistics>;
+  getRebuildPressureHistory(key: string, signal?: AbortSignal): Promise<RebuildPressureHistory>;
   getMatchAnalysisContext(key: string, signal?: AbortSignal): Promise<AnalysisContext>;
   getMatchJinxAssessment(key: string, snapshotId: string, signal?: AbortSignal): Promise<JinxAssessment>;
   getDashboard(signal?: AbortSignal): Promise<Dashboard>;

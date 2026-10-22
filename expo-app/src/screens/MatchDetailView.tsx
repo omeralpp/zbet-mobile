@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Stack, useFocusEffect, useRouter } from "expo-router";
@@ -17,7 +17,9 @@ import {
 } from "react-native";
 import {
   matchAnalysisContextQuery,
-  rebuildMatchQuery
+  rebuildMatchQuery,
+  rebuildPressureHistoryQuery,
+  rebuildStatisticsQuery
 } from "@/src/api/queries";
 import { mobileApi } from "@/src/api";
 import type { AnalysisContext } from "@/src/api/schemas";
@@ -36,9 +38,14 @@ import {
   SurfaceMaterial
 } from "@/src/components/SurfaceMaterial";
 import { TeamLogo } from "@/src/components/TeamLogo";
-import { MatchJourneyChart } from "@/src/components/MatchJourneyChart";
+import { ComparisonRow } from "@/src/components/ComparisonRow";
+import { visibleEvents } from "@/src/components/live-context-view";
+import { latestMatchPathSignal } from "@/src/components/match-analysis-events";
+import { MatchPathCard } from "@/src/components/MatchPathCard";
+import { buildMatchPath } from "@/src/components/match-path-model";
 import { PressureChart } from "@/src/components/PressureChart";
-import { MatchTimelineCard } from "@/src/components/MatchTimelineCard";
+import { RebuildPressureChart } from "@/src/components/RebuildPressureChart";
+import { RebuildStatisticsPanel } from "@/src/components/RebuildStatisticsPanel";
 import { TeamFormCard } from "@/src/components/TeamFormCard";
 import { LiveContextFreshness } from "@/src/components/LiveContextNotice";
 import { StandingsModule } from "@/src/components/StandingsModule";
@@ -77,12 +84,14 @@ import {
 } from "@/src/utils/format";
 import { deriveLiveRateTrend } from "@/src/utils/live-card-indicators";
 import { matchPressureSide } from "@/src/utils/match-pressure";
-import { rebuildMarks } from "@/src/utils/super-mark";
-import { formatHistoricalFraction, historicalFractionWidth, relativeComparisonWidths } from "@/src/utils/statistical-geometry";
+import { latestIntervalReading, observedHalfTimeScore, pressureIntervals } from "@/src/utils/rebuild-pressure";
+import { formatHistoricalFraction, historicalFractionWidth } from "@/src/utils/statistical-geometry";
 
-/** The evidence chips under "Maçın kanıtları", in the v40 board's words. */
+/**
+ * The evidence chips under "Maçın kanıtları", in the v40 board's words. Maçın
+ * yolu is its own card above them (v45 board), so it has no chip.
+ */
 const evidenceChips: { id: LiveDetailModuleId; label: string }[] = [
-  { id: "matchPath", label: "Yol" },
   { id: "pressure", label: "Baskı" },
   { id: "decision", label: "Karar" },
   { id: "teamForm", label: "Form" },
@@ -185,52 +194,6 @@ function TeamHeroName({
   );
 }
 
-function ComparisonRow({
-  label,
-  home,
-  away,
-  suffix = "",
-  formatter,
-  note
-}: {
-  label: string;
-  home: number | null;
-  away: number | null;
-  suffix?: string;
-  formatter?: (value: number) => string;
-  note?: string;
-}) {
-  const widths = relativeComparisonWidths(home, away);
-  const homeWidth: `${number}%` = `${widths.home}%`;
-  const awayWidth: `${number}%` = `${widths.away}%`;
-  const formatValue = formatter ?? String;
-
-  return (
-    <View style={styles.comparison}>
-      <View style={styles.comparisonLabels}>
-        <Text style={styles.statValue}>
-          {home === null ? "—" : formatValue(home)}
-          {suffix}
-        </Text>
-        <Text style={styles.statLabel}>{label}</Text>
-        <Text style={styles.statValue}>
-          {away === null ? "—" : formatValue(away)}
-          {suffix}
-        </Text>
-      </View>
-      {home !== null && away !== null ? <View style={styles.dualBar}>
-        <View style={styles.homeTrack}>
-          <View style={[styles.homeBar, { width: homeWidth }]} />
-        </View>
-        <View style={styles.awayTrack}>
-          <View style={[styles.awayBar, { width: awayWidth }]} />
-        </View>
-      </View> : null}
-      {note ? <Text style={styles.statNote}>{note}</Text> : null}
-    </View>
-  );
-}
-
 /**
  * Match detail. The `/match/[key]` route renders it full-screen; the desktop
  * Canlı split view embeds it beside the list (`embedded`), where it sets no
@@ -273,7 +236,6 @@ export function MatchDetailView({
     []
   );
   const [isFocused, setIsFocused] = useState(false);
-  const [expandedFlowKey, setExpandedFlowKey] = useState<string | null>(null);
   const matchPathEnabled = mountsIntelligenceSurfaces(runtimeConfig.matchPathIntelligence);
   useFocusEffect(useCallback(() => {
     setIsFocused(true);
@@ -293,6 +255,17 @@ export function MatchDetailView({
   // are retired, owner decision 2026-10-21); a match outside RB1 has none.
   const isRebuild = Boolean(context.data?.sources.matchDetail?.rebuild);
   const rebuildMatch = useQuery(rebuildMatchQuery(isRebuild ? key : ""));
+  // RB1 statistics and pressure history (TASK-0177). Current statistics expire
+  // after 120 seconds at the backend, so a focused live screen asks every 30.
+  const liveNow = ["LIVE", "HALF_TIME"].includes(context.data?.sources.matchDetail.status ?? "");
+  const rebuildStatistics = useQuery({ ...rebuildStatisticsQuery(isRebuild ? key : ""), refetchInterval: isFocused && liveNow ? 30_000 : false });
+  const pressureHistory = useQuery({ ...rebuildPressureHistoryQuery(isRebuild ? key : ""), refetchInterval: isFocused && liveNow ? 60_000 : false });
+  const refreshRebuild = () => {
+    if (!isRebuild) return;
+    void rebuildMatch.refetch();
+    void rebuildStatistics.refetch();
+    void pressureHistory.refetch();
+  };
   const intelligence = mountsIntelligenceSurfaces(runtimeConfig.mobileIntelligence) && !query.data?.rebuild;
   const teamFormEnabled = mountsIntelligenceSurfaces(runtimeConfig.teamFormIntelligence);
   const teamForm = sourceView(context.data?.sources.teamForm);
@@ -316,10 +289,6 @@ export function MatchDetailView({
     autoAskedKey.current = key;
     askOnArrival(packet);
   }, [askOnArrival, context.data, intelligence, key]);
-  const relatedDecisions = useMemo(
-    () => rebuildMarks(rebuildMatch.data?.history ?? []),
-    [rebuildMatch.data?.history]
-  );
   // A chip opens its module if it is closed, then brings it under the header.
   // Window positions keep this independent of how the list lays modules out.
   const jumpToModule = (id: LiveDetailModuleId) => {
@@ -363,7 +332,6 @@ export function MatchDetailView({
   const match = query.data.rebuild && !currentRebuild(query.data.rebuild, now)
     ? { ...query.data, selectedOdd: "", rating: 0, liveRate: null, currentRate: null } : query.data;
   const current = match.rebuild ? currentRebuild(match.rebuild, now) : null;
-  const currentDecisionKey = current?.decisionId ?? null;
   const currentMinute = current
     ? rebuildMatch.data?.history.find((record) => record.decisionId === current.decisionId)?.minute ?? null
     : match.rebuild ? null : match.decisionMinute;
@@ -410,6 +378,30 @@ export function MatchDetailView({
         leagueContext.awayStandingPoints !== null)
   );
 
+  // Maçın yolu: provider events, RB1 observations and published records on one
+  // axis. RB1 exposes no pool path, so only a non-RB1 journey can draw a line.
+  const history = pressureHistory.data?.matchKey === key ? pressureHistory.data : undefined;
+  const statistics = rebuildStatistics.data?.matchKey === key ? rebuildStatistics.data : undefined;
+  const intervals = pressureIntervals(history);
+  const liveTimeline = liveContext.data?.matchKey && liveContext.data.matchKey !== key ? undefined : liveContext.data;
+  const legacyPath = !isRebuild && matchPathEnabled;
+  const halfTime = periodScoreQuery.data?.halfTimeScore;
+  const pathModel = buildMatchPath({
+    match,
+    isRebuild,
+    events: visibleEvents(liveTimeline?.timeline),
+    observations: history?.observations ?? [],
+    records: isRebuild ? rebuildMatch.data?.history ?? [] : [],
+    journeyPoints: legacyPath && journey.data?.matchKey === key ? journey.data.points : [],
+    halfTimeScore: halfTime ? `${halfTime.homeScore}–${halfTime.awayScore}` : observedHalfTimeScore(history?.observations ?? []),
+    latestReading: latestIntervalReading(intervals, match)
+  });
+  const analysisSignal = legacyPath ? latestMatchPathSignal(matchPath.data?.matchKey === key ? matchPath.data : undefined) : undefined;
+  const analysisText = analysisSignal?.stateNormality != null
+    ? `Son ölçüm · normallik %${Math.round(analysisSignal.stateNormality * 100)} · ${analysisSignal.cohortSize} benzer maç` : null;
+  const pressureGoals = pathModel.moments.flatMap((moment) =>
+    moment.kind === "GOAL" && moment.side ? [{ key: moment.key, minute: moment.minute, side: moment.side }] : []);
+
   // Only modules that currently have data are rendered; the persisted order
   // still holds a slot for the rest so they return where the user left them.
   const openDecision = (decisionKey: string) =>
@@ -419,58 +411,11 @@ export function MatchDetailView({
     } as never);
 
   const moduleNodes: Partial<Record<LiveDetailModuleId, ReactNode>> = {
-    // Maçın Yolu carries the score and star flow (owner decision 2026-10-16):
-    // goals, cards and recorded Super decisions are marked on the chart's
-    // event lane; the duplicate chronological list opens only on demand. The
-    // panel mounts even when the chart engine is off, so the flow itself is
-    // never lost with the build flag.
-    matchPath: (
-      <LiveDetailPanel eyebrow="MAÇ ANALİZİ" id="matchPath" title="Maçın yolu">
-        {matchPathEnabled ? (
-          <MatchJourneyChart
-            context={liveContext.data}
-            decisions={relatedDecisions}
-            key={key}
-            match={match}
-            journey={journey.data}
-            path={matchPath.data}
-            isError={journey.isError}
-            isLoading={journey.isLoading}
-            onDecisionPress={openDecision}
-            pathIsLoading={matchPath.isLoading}
-          />
-        ) : null}
-        <View style={styles.flowSection}>
-          {matchPathEnabled ? <Pressable accessibilityRole="button" accessibilityState={{ expanded: expandedFlowKey === key }}
-            onPress={() => setExpandedFlowKey(expandedFlowKey === key ? null : key)} style={{ minHeight: 48, justifyContent: "center" }}>
-            <Text style={styles.flowEyebrow}>{expandedFlowKey === key ? "TÜM OLAYLARI GİZLE −" : "TÜM OLAYLARI GÖR +"}</Text>
-          </Pressable> : <Text style={styles.flowEyebrow}>SKOR VE YILDIZ AKIŞI</Text>}
-          {!matchPathEnabled || expandedFlowKey === key ? <>
-          <MatchTimelineCard
-            awayScore={match.awayScore}
-            awayTeam={match.awayTeam}
-            context={liveContext.data}
-            homeScore={match.homeScore}
-            currentDecisionKey={currentDecisionKey}
-            decisions={relatedDecisions}
-            homeTeam={match.homeTeam}
-            isLoading={liveContext.isLoading}
-            includeRedCards
-            onDecisionPress={(decision) => openDecision(decision.key)}
-          />
-          <LiveContextFreshness
-            ageSeconds={liveContext.data?.freshness?.ageSeconds}
-            refreshFailed={liveContext.data?.freshness?.refreshFailed}
-            stale={liveContext.data?.freshness?.stale}
-          />
-          </> : null}
-        </View>
-      </LiveDetailPanel>
-    ),
     // NXT-OBS-175: the two sides' pressure over the match, as its own chart.
     pressure: (
       <LiveDetailPanel eyebrow="BASKI" id="pressure" title="Baskı grafiği">
-        <PressureChart journey={journey.data} match={match} />
+        {isRebuild ? <RebuildPressureChart goals={pressureGoals} history={history} isError={pressureHistory.isError}
+          isLoading={pressureHistory.isLoading} match={match} statistics={statistics} /> : <PressureChart journey={journey.data} match={match} />}
       </LiveDetailPanel>
     ),
     odds: (
@@ -484,7 +429,7 @@ export function MatchDetailView({
     ),
     statistics: (
       <LiveDetailPanel eyebrow="SAHA" id="statistics" title="Canlı saha dengesi">
-        <View style={styles.statsCard}>
+        {isRebuild ? <RebuildStatisticsPanel isError={rebuildStatistics.isError} isLoading={rebuildStatistics.isLoading} statistics={statistics} /> : <View style={styles.statsCard}>
           <SurfaceMaterial radius={radii.lg} />
           <ComparisonRow
             away={match.awayBallPossession}
@@ -523,7 +468,7 @@ export function MatchDetailView({
             home={match.homeRedCards}
             label="Kırmızı kart"
           />
-        </View>
+        </View>}
       </LiveDetailPanel>
     ),
     scoreDistribution: (
@@ -654,7 +599,7 @@ export function MatchDetailView({
                   hitSlop={8}
                   onPress={() => {
                     void context.refetch();
-                    if (isRebuild) void rebuildMatch.refetch();
+                    refreshRebuild();
                   }}
                   style={styles.headerAction}
                 >
@@ -683,7 +628,10 @@ export function MatchDetailView({
         refreshControl: (
           <RefreshControl
             colors={[semantic.live]}
-              onRefresh={() => void context.refetch()}
+              onRefresh={() => {
+                void context.refetch();
+                refreshRebuild();
+              }}
               refreshing={context.isRefetching}
             tintColor={semantic.live}
           />
@@ -813,6 +761,25 @@ export function MatchDetailView({
       {query.data?.rebuild ? <RebuildJinxCard matchKey={key} /> : intelligence ? <JinxAssessmentCard context={context.data} assessment={jinx.data}
         pending={jinx.isPending && jinx.variables?.matchKey === key}
         error={jinx.isError && jinx.variables?.matchKey === key} onAsk={() => void askJinx()} /> : null}
+
+      <View collapsable={false} ref={(node) => { moduleRefs.current.set("matchPath", node); }}>
+        <MatchPathCard
+          analysisText={analysisText}
+          collapsed={collapsed.includes("matchPath")}
+          footer={<LiveContextFreshness
+            ageSeconds={liveTimeline?.freshness?.ageSeconds}
+            refreshFailed={liveTimeline?.freshness?.refreshFailed}
+            stale={liveTimeline?.freshness?.stale}
+          />}
+          key={key}
+          match={match}
+          model={pathModel}
+          onDecisionPress={openDecision}
+          onToggleCollapse={() => toggleModule("matchPath")}
+          synthetic={legacyPath && journey.data?.origin === "SYNTHETIC"}
+          wide={wideWeb}
+        />
+      </View>
 
       <View style={styles.rowTools}>
         <Text accessibilityRole="header" aria-level={2} style={styles.evidenceTitle}>Maçın kanıtları</Text>
@@ -1065,12 +1032,6 @@ const styles = StyleSheet.create({
     color: colors.textSubtle,
     ...typeScale.label
   },
-  statNote: {
-    color: colors.textMuted,
-    ...typeScale.label,
-    marginTop: spacing.xs,
-    textAlign: "center"
-  },
   selection: {
     color: colors.text,
     ...typeScale.decision
@@ -1081,57 +1042,6 @@ const styles = StyleSheet.create({
     borderColor: colors.borderSoft,
     padding: spacing.lg,
     gap: spacing.lg
-  },
-  comparison: {
-    gap: spacing.sm
-  },
-  comparisonLabels: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between"
-  },
-  statValue: {
-    ...numericFont("800"),
-    color: colors.text,
-    width: 54,
-    fontSize: 14
-  },
-  statLabel: {
-    ...textFont("700"),
-    color: colors.textMuted,
-    flex: 1,
-    textAlign: "center",
-    fontSize: 11
-  },
-  dualBar: {
-    flexDirection: "row",
-    gap: spacing.xs
-  },
-  homeTrack: {
-    flex: 1,
-    height: 5,
-    alignItems: "flex-end",
-    backgroundColor: colors.surfaceStrong,
-    borderRadius: radii.round,
-    overflow: "hidden"
-  },
-  awayTrack: {
-    flex: 1,
-    height: 5,
-    backgroundColor: colors.surfaceStrong,
-    borderRadius: radii.round,
-    overflow: "hidden"
-  },
-  homeBar: {
-    height: "100%",
-    backgroundColor: colors.blue,
-    borderRadius: radii.round
-  },
-  // Away in orange, the pair the pressure marks and chart use (v40 board).
-  awayBar: {
-    height: "100%",
-    backgroundColor: colors.orange,
-    borderRadius: radii.round
   },
   distributionCard: {
     borderRadius: radii.lg,
@@ -1196,13 +1106,5 @@ const styles = StyleSheet.create({
     ...textFont("700"),
     color: colors.text,
     fontSize: 15
-  },
-  flowSection: {
-    gap: spacing.sm,
-    marginTop: spacing.lg
-  },
-  flowEyebrow: {
-    ...typeScale.eyebrow,
-    color: colors.bronze
   }
 });

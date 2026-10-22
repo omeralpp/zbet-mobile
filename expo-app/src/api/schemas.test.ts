@@ -250,6 +250,8 @@ test("keeps the checked-in OpenAPI document parseable and route-complete", async
       "/v1/btb/match-insights",
       "/v1/btb/match-insights/{key}",
       "/v1/btb/rebuild/v1/matches/{key}",
+      "/v1/btb/rebuild/v1/matches/{key}/pressure-history",
+      "/v1/btb/rebuild/v1/matches/{key}/statistics",
       "/v1/btb/rebuild/v1/report",
       "/v1/dashboard",
       "/v1/devices",

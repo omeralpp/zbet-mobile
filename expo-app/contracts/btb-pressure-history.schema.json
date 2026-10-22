@@ -1,0 +1,373 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "contractVersion": {
+      "type": "string",
+      "const": "btb-pressure-history.v1"
+    },
+    "modelRegime": {
+      "type": "string",
+      "const": "BTB_RB1_20261018"
+    },
+    "matchKey": {
+      "type": "string"
+    },
+    "asOf": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+    },
+    "availability": {
+      "type": "string",
+      "enum": [
+        "AVAILABLE",
+        "PARTIAL",
+        "UNAVAILABLE",
+        "NOT_STARTED"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "const": "VERIFIED_RB1_HISTORY"
+    },
+    "historical": {
+      "type": "boolean",
+      "const": true
+    },
+    "coverage": {
+      "type": "string",
+      "const": "PERSISTED_VERIFIED_INTERVALS_ONLY"
+    },
+    "fullMatchCoverageProven": {
+      "type": "boolean"
+    },
+    "samples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "captureId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "stateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pressureSequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "policySha": {
+            "type": "string",
+            "pattern": "^[A-F0-9]{64}$"
+          },
+          "producerSha": {
+            "type": "string",
+            "pattern": "^[A-F0-9]{64}$"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "RB1_APPROVED_BASE_10A",
+              "RB1_OPT_STATS_74A_V1"
+            ]
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "startsAtExact": {
+            "type": "string",
+            "minLength": 1
+          },
+          "endsAtExact": {
+            "type": "string",
+            "minLength": 1
+          },
+          "startMinute": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "endMinute": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "1H",
+              "2H"
+            ]
+          },
+          "homeScore": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "awayScore": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "home": {
+            "type": "string",
+            "pattern": "^\\d+(?:\\.\\d+)?$"
+          },
+          "away": {
+            "type": "string",
+            "pattern": "^\\d+(?:\\.\\d+)?$"
+          },
+          "total": {
+            "type": "string",
+            "pattern": "^\\d+(?:\\.\\d+)?$"
+          },
+          "estimated": {
+            "type": "boolean"
+          },
+          "connects": {
+            "type": "boolean"
+          },
+          "components": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "baseHome": {
+                    "type": "string",
+                    "pattern": "^\\d+(?:\\.\\d+)?$"
+                  },
+                  "baseAway": {
+                    "type": "string",
+                    "pattern": "^\\d+(?:\\.\\d+)?$"
+                  },
+                  "cappedExtraHome": {
+                    "type": "string",
+                    "pattern": "^\\d+(?:\\.\\d+)?$"
+                  },
+                  "cappedExtraAway": {
+                    "type": "string",
+                    "pattern": "^\\d+(?:\\.\\d+)?$"
+                  },
+                  "optional": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "metric": {
+                          "type": "string",
+                          "enum": [
+                            "box",
+                            "blocked",
+                            "saves"
+                          ]
+                        },
+                        "used": {
+                          "type": "boolean"
+                        },
+                        "reason": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "metric",
+                        "used",
+                        "reason"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "baseHome",
+                  "baseAway",
+                  "cappedExtraHome",
+                  "cappedExtraAway",
+                  "optional"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "captureId",
+          "stateId",
+          "pressureSequence",
+          "policySha",
+          "producerSha",
+          "method",
+          "startsAt",
+          "endsAt",
+          "startsAtExact",
+          "endsAtExact",
+          "startMinute",
+          "endMinute",
+          "phase",
+          "homeScore",
+          "awayScore",
+          "home",
+          "away",
+          "total",
+          "estimated",
+          "connects",
+          "components"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "captureId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "stateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pressureSequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "observedAtExact": {
+            "type": "string",
+            "minLength": 1
+          },
+          "policySha": {
+            "type": "string",
+            "pattern": "^[A-F0-9]{64}$"
+          },
+          "producerSha": {
+            "type": "string",
+            "pattern": "^[A-F0-9]{64}$"
+          },
+          "minute": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "1H",
+              "2H"
+            ]
+          },
+          "homeScore": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "awayScore": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "homeRedCards": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "awayRedCards": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "RB1_APPROVED_BASE_10A",
+              "RB1_OPT_STATS_74A_V1"
+            ]
+          }
+        },
+        "required": [
+          "captureId",
+          "stateId",
+          "pressureSequence",
+          "observedAt",
+          "observedAtExact",
+          "policySha",
+          "producerSha",
+          "minute",
+          "phase",
+          "homeScore",
+          "awayScore",
+          "homeRedCards",
+          "awayRedCards",
+          "method"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "poolPath": {
+      "type": "object",
+      "properties": {
+        "availability": {
+          "type": "string",
+          "enum": [
+            "AVAILABLE",
+            "UNAVAILABLE"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "availability",
+        "reason"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "contractVersion",
+    "modelRegime",
+    "matchKey",
+    "asOf",
+    "availability",
+    "reason",
+    "source",
+    "historical",
+    "coverage",
+    "fullMatchCoverageProven",
+    "samples",
+    "observations",
+    "poolPath"
+  ],
+  "additionalProperties": false
+}

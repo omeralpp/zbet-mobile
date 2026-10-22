@@ -1,0 +1,147 @@
+{
+  "contractVersion": "btb-match-statistics.v1",
+  "modelRegime": "BTB_RB1_20261018",
+  "matchKey": "2026-07-28:472910:20:45:00",
+  "asOf": "2026-07-28T18:58:30.000Z",
+  "availability": "PARTIAL",
+  "reason": "OPTIONAL_OR_METRIC_DATA_MISSING",
+  "observedAt": "2026-07-28T18:57:41.000Z",
+  "source": "VERIFIED_RB1_OBSERVATION",
+  "captureId": "8A567574798B1FD1B3B0970244CC88BA",
+  "pressurePolicy": "RB1_OPT_STATS_74A_V1",
+  "phase": "2H",
+  "elapsed": 67,
+  "homeScore": 2,
+  "awayScore": 1,
+  "xgScopeVerified": true,
+  "statistics": {
+    "homeTotalShots": 14,
+    "awayTotalShots": 9,
+    "homeShotsOnTarget": 6,
+    "awayShotsOnTarget": 3,
+    "homeCorners": 7,
+    "awayCorners": 2,
+    "homeXg": 1.84,
+    "awayXg": 0.97,
+    "homeBallPossession": 58,
+    "awayBallPossession": 42,
+    "homeYellowCards": 1,
+    "awayYellowCards": 2,
+    "homeRedCards": 0,
+    "awayRedCards": 0,
+    "homeBoxTouches": 31,
+    "awayBoxTouches": 17,
+    "homeBlockedShots": 3,
+    "awayBlockedShots": null,
+    "homeGoalkeeperSaves": 2,
+    "awayGoalkeeperSaves": 4
+  },
+  "coverage": [
+    {
+      "metric": "totalShots",
+      "homePresent": true,
+      "awayPresent": true,
+      "reason": "AVAILABLE"
+    },
+    {
+      "metric": "shotsOnTarget",
+      "homePresent": true,
+      "awayPresent": true,
+      "reason": "AVAILABLE"
+    },
+    {
+      "metric": "corners",
+      "homePresent": true,
+      "awayPresent": true,
+      "reason": "AVAILABLE"
+    },
+    {
+      "metric": "xg",
+      "homePresent": true,
+      "awayPresent": true,
+      "reason": "AVAILABLE"
+    },
+    {
+      "metric": "possession",
+      "homePresent": true,
+      "awayPresent": true,
+      "reason": "AVAILABLE"
+    },
+    {
+      "metric": "yellowCards",
+      "homePresent": true,
+      "awayPresent": true,
+      "reason": "AVAILABLE"
+    },
+    {
+      "metric": "redCards",
+      "homePresent": true,
+      "awayPresent": true,
+      "reason": "AVAILABLE"
+    },
+    {
+      "metric": "boxTouches",
+      "homePresent": true,
+      "awayPresent": true,
+      "reason": "AVAILABLE"
+    },
+    {
+      "metric": "blockedShots",
+      "homePresent": true,
+      "awayPresent": false,
+      "reason": "MISSING_OR_INVALID"
+    },
+    {
+      "metric": "goalkeeperSaves",
+      "homePresent": true,
+      "awayPresent": true,
+      "reason": "AVAILABLE"
+    }
+  ],
+  "pressure": {
+    "source": "BACKEND_INTERVAL",
+    "method": "RB1_OPT_STATS_74A_V1",
+    "captureId": "8A567574798B1FD1B3B0970245CC88BA",
+    "startsAt": "2026-07-28T18:55:41.000Z",
+    "endsAt": "2026-07-28T18:57:41.000Z",
+    "home": "1.075",
+    "away": "0.32",
+    "total": "1.395",
+    "estimated": true,
+    "components": {
+      "baseHome": "0.8",
+      "baseAway": "0.27",
+      "cappedExtraHome": "0.275",
+      "cappedExtraAway": "0.05",
+      "optional": [
+        {
+          "metric": "box",
+          "used": true,
+          "reason": "AVAILABLE",
+          "homeDelta": 3,
+          "awayDelta": 1,
+          "homeContribution": "0.15",
+          "awayContribution": "0.05"
+        },
+        {
+          "metric": "blocked",
+          "used": false,
+          "reason": "MISSING_OR_INVALID",
+          "homeDelta": null,
+          "awayDelta": null,
+          "homeContribution": null,
+          "awayContribution": null
+        },
+        {
+          "metric": "saves",
+          "used": true,
+          "reason": "AVAILABLE",
+          "homeDelta": 0,
+          "awayDelta": 1,
+          "homeContribution": "0.125",
+          "awayContribution": "0"
+        }
+      ]
+    }
+  }
+}

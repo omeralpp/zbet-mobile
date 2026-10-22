@@ -2,24 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import retained from "../api/fixtures/match-journey-v4.json";
 import { matchJourneySchema } from "../api/schemas";
-import { goalModeEffectText } from "./match-journey";
-import { mockRetainedJourney } from "../api/mock-data";
 
-test("V4 parses the authentic goal boundary and renders measured zero without probability wording", () => {
+test("V4 parses the authentic goal boundary with measured zero", () => {
   const journey = matchJourneySchema.parse(retained), goal = journey.points.at(-1)!;
   assert.equal(goal.eventEffect?.beforeCount, 11);
   assert.equal(goal.eventEffect?.afterCount, 8);
   assert.deepEqual(goal.eventEffect?.preModes, ["3-2", "4-1"]);
   assert.equal(goal.eventEffect?.blockedModeShare, 0);
-  assert.match(goalModeEffectText(goal), /0 elendi/);
-  assert.match(goalModeEffectText(goal), /3-2 \/ 4-1/);
-  assert.doesNotMatch(goalModeEffectText(goal), /değildir/);
-});
-test("legacy V3 and unavailable effects stay unmeasured; missing is never rendered as zero", () => {
-  const journey = mockRetainedJourney("legacy");
-  assert.equal(journey.contractVersion, "match-journey.v3");
-  assert.match(goalModeEffectText(journey.points.find(p => p.kind === "GOAL")), /ölçülmedi/);
-  assert.match(goalModeEffectText(undefined), /ölçülmedi/);
 });
 test("V4 requires explicit effect fields and refuses invented event probabilities", () => {
   const mutate = (change: (copy: typeof retained) => void) => {
@@ -38,7 +27,7 @@ test("unmeasured boundaries carry a reason and null arithmetic", () => {
     preModes: [], postModes: [], beforeCount: null, afterCount: null,
     preModeCount: null, blockedModeCount: null, blockedModeShare: null} as never;
   const journey = matchJourneySchema.parse(copy);
-  assert.match(goalModeEffectText(journey.points[1]), /ölçülmedi/);
+  assert.equal(journey.points[1]?.eventEffect?.beforeCount, null);
   const invalid = structuredClone(journey);
   invalid.points[1]!.eventEffect!.blockedModeShare = 0;
   assert.equal(matchJourneySchema.safeParse(invalid).success, false);

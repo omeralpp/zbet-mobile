@@ -29,6 +29,32 @@ paths:
             application/json:
               schema: { $ref: "./btb-rebuild-match.schema.json" }
         default: { $ref: "#/components/responses/Error" }
+  /v1/btb/rebuild/v1/matches/{key}/statistics:
+    get:
+      operationId: getRebuildStatistics
+      description: Latest verified RB1 observation (at most 120 seconds old) with nullable statistics, per-metric coverage and the backend's current interval pressure. Measured zero is 0; missing is null.
+      parameters:
+        - $ref: "#/components/parameters/Key"
+      responses:
+        "200":
+          description: Stale, unsupported or unverifiable sources return empty nullable statistics, never cached values.
+          content:
+            application/json:
+              schema: { $ref: "./btb-match-statistics.schema.json" }
+        default: { $ref: "#/components/responses/Error" }
+  /v1/btb/rebuild/v1/matches/{key}/pressure-history:
+    get:
+      operationId: getRebuildPressureHistory
+      description: Persisted verified RB1 pressure intervals and observations. Not full-match coverage; the expected-score pool path is not exposed.
+      parameters:
+        - $ref: "#/components/parameters/Key"
+      responses:
+        "200":
+          description: Historical series only; break the curve where connects is false.
+          content:
+            application/json:
+              schema: { $ref: "./btb-pressure-history.schema.json" }
+        default: { $ref: "#/components/responses/Error" }
   /v1/btb/rebuild/v1/report:
     get:
       operationId: getRebuildReport

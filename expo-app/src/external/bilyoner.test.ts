@@ -38,7 +38,8 @@ test("Maçın Nabzı kaldırıldı: Bilyoner içeriği uygulama içinde açılma
 test("live context source files contain no provider host or endpoint", () => {
   const files = [
     "src/components/live-context-view.ts",
-    "src/components/MatchTimelineCard.tsx",
+    "src/components/MatchPathCard.tsx",
+    "src/components/match-path-model.ts",
     "src/components/LiveContextNotice.tsx"
   ];
 

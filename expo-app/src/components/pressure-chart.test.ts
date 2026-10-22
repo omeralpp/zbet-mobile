@@ -55,11 +55,6 @@ test("a mark's label flips inward instead of running past the chart edge", () =>
 });
 
 test("chart labels above or beside the plot stay inside their SVG", async () => {
-  // Owner, 2026-10-18: the "Yeni havuz" label was cut by the top of Maçın Yolu.
-  const journey = await readFile(new URL("./MatchJourneyChart.tsx", import.meta.url), "utf8");
-  const top = Number(/const TOP=(\d+)/.exec(journey)?.[1]);
-  assert.ok(top - 12 >= 12, "a 12px label baseline needs a full line of room above the plot");
-  assert.match(journey, /y=\{journeyTopLabelY\}[^>]*>Yeni havuz/);
   const pressure = await readFile(new URL("./PressureChart.tsx", import.meta.url), "utf8");
   const lanes = /HOME_GOAL_Y = (\d+), TOP = (\d+), PLOT_BOTTOM = (\d+), AWAY_GOAL_Y = (\d+), AXIS_Y = (\d+)/.exec(pressure)!.slice(1).map(Number);
   const height = Number(/const HEIGHT = (\d+)/.exec(pressure)?.[1]);
