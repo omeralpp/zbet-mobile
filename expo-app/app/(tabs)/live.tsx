@@ -147,6 +147,7 @@ export default function LiveScreen() {
   const splitLayout = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
   const grid: CardGrid = splitLayout ? singleColumnGrid : cardGrid;
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const query = useQuery(matchesQuery);
   const insightsQuery = useQuery(matchInsightsQuery);
@@ -226,6 +227,16 @@ export default function LiveScreen() {
     const keys = (sectionsByTab[tab] ?? []).flatMap((section) => section.data.map((match) => match.key));
     return selectedKey && keys.includes(selectedKey) ? selectedKey : keys[0] ?? null;
   }, [sectionsByTab, selectedKey, tab]);
+  const detailExpanded = splitLayout && Boolean(paneKey) && expandedKey === paneKey;
+
+  useEffect(() => {
+    if (Platform.OS !== "web" || !detailExpanded) return;
+    const restore = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setExpandedKey(null);
+    };
+    window.addEventListener("keydown", restore);
+    return () => window.removeEventListener("keydown", restore);
+  }, [detailExpanded]);
 
   return (
     <Screen
@@ -304,7 +315,7 @@ export default function LiveScreen() {
         />
       ) : (
         <View style={splitLayout ? styles.split : styles.single}>
-        <View style={splitLayout ? styles.splitList : styles.single}>
+        <View style={[splitLayout ? styles.splitList : styles.single, splitLayout && detailExpanded && styles.hiddenList]}>
         <LocalTabPager
           activeKey={tab}
           onSelect={(nextTab) => {
@@ -423,9 +434,17 @@ export default function LiveScreen() {
         />
         </View>
         {splitLayout ? (
-          <View style={styles.splitDetail}>
+          <View style={[styles.splitDetail, detailExpanded && styles.expandedDetail]}>
+            {paneKey ? <View style={styles.detailActions}>
+              <Pressable accessibilityRole="button" accessibilityLabel={detailExpanded ? "Maç detayını küçült, maç listesine dön" : "Maç detayını büyüt"}
+                accessibilityState={{ expanded: detailExpanded }} onPress={() => setExpandedKey(detailExpanded ? null : paneKey)}
+                style={({ pressed }) => [styles.expandAction, pressed && styles.segmentPressed]}>
+                <MaterialCommunityIcons name={detailExpanded ? "arrow-collapse" : "arrow-expand"} size={20} color={colors.blue} />
+                <Text style={styles.expandText}>{detailExpanded ? "Küçült · listeye dön" : "Detayı büyüt"}</Text>
+              </Pressable>
+            </View> : null}
             {paneKey ? (
-              <MatchDetailView embedded key={paneKey} matchKey={paneKey} />
+              <MatchDetailView embedded expanded={detailExpanded} key={paneKey} matchKey={paneKey} />
             ) : (
               <EmptyState
                 kind="NO_LIVE_MATCH"
@@ -449,6 +468,11 @@ const singleColumnGrid: CardGrid = {
 };
 
 const styles = StyleSheet.create({
+  hiddenList: { display: "none" },
+  expandedDetail: { borderLeftWidth: 0 },
+  detailActions: { alignItems: "flex-end", paddingBottom: spacing.sm },
+  expandAction: { minHeight: 44, flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingHorizontal: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: radii.md },
+  expandText: { ...typeScale.label, color: colors.blue },
   searchRow: { flexDirection: "row", gap: spacing.sm, alignItems: "center", marginBottom: spacing.sm },
   searchField: { flex: 1, minWidth: 0, minHeight: 48, flexDirection: "row", alignItems: "center", gap: spacing.sm,
     borderWidth: 1, borderColor: colors.border, borderRadius: 14, backgroundColor: colors.backgroundElevated,

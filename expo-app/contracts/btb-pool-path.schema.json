@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "contractVersion": {
+      "type": "string",
+      "const": "btb-pool-path.v1"
+    },
+    "modelRegime": {
+      "type": "string",
+      "const": "BTB_RB1_20261018"
+    },
+    "matchKey": {
+      "type": "string"
+    },
+    "asOf": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+    },
+    "availability": {
+      "type": "string",
+      "enum": [
+        "AVAILABLE",
+        "UNAVAILABLE"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "const": "VERIFIED_RB1_OBSERVATION_POOLS"
+    },
+    "label": {
+      "type": "string",
+      "const": "Havuzda kalan pay"
+    },
+    "unit": {
+      "type": "string",
+      "const": "SURVIVING_REFERENCE_SHARE"
+    },
+    "winningProbability": {
+      "type": "boolean",
+      "const": false
+    },
+    "historical": {
+      "type": "boolean",
+      "const": true
+    },
+    "fullMatchCoverageProven": {
+      "type": "boolean",
+      "const": false
+    },
+    "points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "captureId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "baselineCaptureId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "baselineAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "observedAtExact": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minute": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "1H",
+              "2H"
+            ]
+          },
+          "policySha": {
+            "type": "string",
+            "pattern": "^[A-F0-9]{64}$"
+          },
+          "producerSha": {
+            "type": "string",
+            "pattern": "^[A-F0-9]{64}$"
+          },
+          "sourceSha": {
+            "type": "string",
+            "pattern": "^[A-F0-9]{64}$"
+          },
+          "homeScore": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "awayScore": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "baselineCount": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 5000
+          },
+          "remainingCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "level": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "connects": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "captureId",
+          "baselineCaptureId",
+          "baselineAt",
+          "observedAt",
+          "observedAtExact",
+          "minute",
+          "phase",
+          "policySha",
+          "producerSha",
+          "sourceSha",
+          "homeScore",
+          "awayScore",
+          "baselineCount",
+          "remainingCount",
+          "level",
+          "connects"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "contractVersion",
+    "modelRegime",
+    "matchKey",
+    "asOf",
+    "availability",
+    "reason",
+    "source",
+    "label",
+    "unit",
+    "winningProbability",
+    "historical",
+    "fullMatchCoverageProven",
+    "points"
+  ],
+  "additionalProperties": false
+}

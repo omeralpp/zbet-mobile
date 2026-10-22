@@ -20,6 +20,10 @@ export function rebuildPressureHistoryQuery(key: string) {
   return queryOptions({ queryKey: ["rebuildPressureHistory", key], enabled: Boolean(key),
     queryFn: ({ signal }) => mobileApi.getRebuildPressureHistory(key, signal), staleTime: 15_000, retry: false });
 }
+export function rebuildPoolPathQuery(key: string) {
+  return queryOptions({queryKey:["rebuildPoolPath",key],enabled:Boolean(key),
+    queryFn:({signal})=>mobileApi.getRebuildPoolPath(key,signal),staleTime:15_000,retry:false});
+}
 
 export function matchAnalysisContextQuery(key: string) {
   return queryOptions({ queryKey: ["analysisContext", key], enabled: Boolean(key),

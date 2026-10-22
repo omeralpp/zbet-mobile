@@ -4,7 +4,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSharedValue } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
-import Svg, { Defs, G, Line, LinearGradient, Path, Rect, Stop, Text as SvgText } from "react-native-svg";
+import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Rect, Stop, Text as SvgText } from "react-native-svg";
 import type { MatchDetail } from "@/src/api/schemas";
 import { colors, fontFamilies, iconSizes, numericFont, radii, semantic, spacing, textFont, typeScale } from "@/src/theme/theme";
 import { formatSelection } from "@/src/utils/format";
@@ -173,7 +173,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
   const chips = useMemo(() => placeChips(model, g, chipWidth), [model, g, chipWidth]);
   const status = statusPill(match);
   const hasLine = !model.lineNotice;
-  const lineD = hasLine ? `M ${model.line.map((vertex) => `${g.x(vertex.minute).toFixed(1)} ${g.y(vertex.level).toFixed(1)}`).join(" L ")}` : "";
+  const lineD = hasLine ? model.line.map((vertex,index) => `${index === 0 || vertex.connects === false ? "M" : "L"} ${g.x(vertex.minute).toFixed(1)} ${g.y(vertex.level).toFixed(1)}`).join(" ") : "";
   const first = model.line[0], last = model.line.at(-1);
   const areaD = hasLine && first && last ? `${lineD} L ${g.x(last.minute).toFixed(1)} ${PT + g.plotHeight} L ${g.x(first.minute).toFixed(1)} ${PT + g.plotHeight} Z` : "";
   // Without a line the live pill sits on the axis; the minutes it would cover
@@ -239,16 +239,20 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
         <View collapsable={false} style={{ height: g.height }} testID="match-path-canvas">
           <Svg width={g.width} height={g.height} {...journeySvgAccessibility}>
             <Defs><LinearGradient id="matchPathFill" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor={colors.blue} stopOpacity={0.3} /><Stop offset="1" stopColor={colors.blue} stopOpacity={0.02} /></LinearGradient></Defs>
-            {hasLine ? bands.map((band, index) => <G key={band.label}>
+            {hasLine && model.poolShare ? [0,0.5,1].map(level => <G key={level}>
+              <Line x1={g.gutter} x2={g.gutter+g.plotWidth} y1={g.y(level)} y2={g.y(level)} stroke={colors.borderSoft} strokeDasharray="3 4" />
+              <SvgText x={g.gutter+4} y={g.y(level)+(level===1?12:-4)} fill={colors.textMuted} fontSize={11} fontFamily={fontFamilies.text}>%{Math.round(level*100)}</SvgText>
+            </G>) : hasLine ? bands.map((band, index) => <G key={band.label}>
               <Rect x={g.gutter} y={g.y(band.to)} width={g.plotWidth} height={g.y(band.from) - g.y(band.to)}
                 fill={index === 0 ? colors.blue : index === 1 ? colors.gold : colors.violet} opacity={index === 1 ? 0.05 : 0.08} />
               {wide ? <SvgText x={g.gutter - 8} y={(g.y(band.from) + g.y(band.to)) / 2 + 4} textAnchor="end" fill={colors.textMuted} fontSize={12} fontFamily={fontFamilies.text}>{band.label}</SvgText>
                 : <SvgText x={g.gutter + g.plotWidth - 4} y={g.y(band.to) + 13} textAnchor="end" fill={colors.textMuted} fontSize={11} fontFamily={fontFamilies.text}>{band.label}</SvgText>}
             </G>) : <Rect x={g.gutter} y={PT + 6} width={g.plotWidth} height={g.plotHeight - 12} rx={12} fill={colors.surface} stroke={colors.borderSoft} strokeDasharray="4 5" />}
             {hasLine ? <>
-              <Path d={areaD} fill="url(#matchPathFill)" />
+              {!model.poolShare ? <Path d={areaD} fill="url(#matchPathFill)" /> : null}
               <Path d={lineD} fill="none" stroke={colors.blue} strokeOpacity={0.12} strokeWidth={9} strokeLinejoin="round" />
               <Path d={lineD} fill="none" stroke={colors.blue} strokeWidth={3} strokeLinejoin="round" strokeLinecap="round" />
+              {model.poolShare ? model.line.map((point,index)=><Circle key={index} cx={g.x(point.minute)} cy={g.y(point.level)} r={3} fill={colors.blue} />) : null}
             </> : null}
             <Line x1={g.gutter} x2={g.gutter + g.plotWidth} y1={RIB} y2={RIB} stroke={colors.borderSoft} strokeWidth={2} />
             <Line x1={g.gutter} x2={g.gutter + g.plotWidth} y1={HOME} y2={HOME} stroke={colors.borderSoft} />
@@ -294,7 +298,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
             <View style={styles.btbBadge}><Svg width={14} height={14} viewBox="0 0 24 24" {...journeySvgAccessibility}><JourneyEventGlyph kind="SUPER" color={colors.gold} /></Svg></View>
             {wide ? <Text style={styles.gutterName}>BTB</Text> : null}
           </View>
-          {hasLine && wide ? <Text pointerEvents="none" style={[styles.lineLabel, { top: PT - 18 }]}>HAVUZ UYUMU</Text> : null}
+          {hasLine && wide ? <Text pointerEvents="none" style={[styles.lineLabel, { top: PT - 18 }]}>{model.poolShare ? "HAVUZDA KALAN PAY" : "HAVUZ UYUMU"}</Text> : null}
           {model.lineNotice ? <View pointerEvents="none" style={[styles.notice, { left: g.gutter + 1, width: g.plotWidth - 2, top: PT + 7, height: g.plotHeight - 14 }]}>
             <Text style={styles.noticeTitle}>{model.lineNotice.title}</Text>
             <Text style={styles.noticeBody}>{model.lineNotice.body}</Text>
@@ -405,7 +409,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
         </View>
         {rulesOpen ? <Text style={styles.rules}>
           Üstteki şerit her golün yeni skorunu kendi dakikasında gösterir. Ev sahibinin olayları üst, deplasmanın olayları alt şeritte.
-          {hasLine ? " Mavi çizgi maçın havuzla uyumudur; devrede havuz değişir ve çizgi basamak yapar." : " Havuz uyumu çizgisi yalnız kaynağı sunduğunda çizilir."}
+          {hasLine && model.poolShare ? " Mavi çizgi yarının ilk geçerli referans havuzunda güncel skorla uyumlu kalan paydır; kazanma olasılığı değildir. Devrede veya kaynak değişiminde çizgi kesilir. Yalnız kayıtlı havuzlar gösterilir." : hasLine ? " Mavi çizgi maçın havuzla uyumudur; devrede havuz değişir ve çizgi basamak yapar." : " Havuz çizgisi yalnız kaynak sunduğunda çizilir."}
           {" "}Altın fişler BTB kararlarıdır: dakika, yıldız, donmuş seçim oranı ve sonucun rengi. Yıldız tutarlılık ve kanıt kalitesidir.
         </Text> : null}
         {footer}

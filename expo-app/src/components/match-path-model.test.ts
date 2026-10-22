@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import history from "@/src/api/fixtures/btb-pressure-history-v1.json";
 import decision from "@/src/api/fixtures/btb-rebuild-v1.json";
-import { rebuildPressureHistorySchema } from "@/src/api/rebuild-statistics-schemas";
+import { rebuildPressureHistorySchema, rebuildPoolPathSchema } from "@/src/api/rebuild-statistics-schemas";
 import { rebuildMatchSchema, type RebuildRecommendation } from "@/src/api/rebuild-schemas";
 import type { MatchJourneyPoint } from "@/src/api/schemas";
 import type { VisibleEvent } from "./live-context-view";
@@ -14,17 +14,28 @@ const record: RebuildRecommendation = { ...template, minute: 64, homeScore: 2, a
   result: { state: "LOSS", revision: 2, net: "-1" } };
 const finished = { homeTeam: "Bayern Münih", awayTeam: "Arsenal", status: "FINISHED", elapsed: 90, homeScore: 2, awayScore: 2 };
 
+test("RB1 uses only the verified display pool with source gaps and honest labels",()=>{
+  const point={captureId:"A",baselineCaptureId:"A",baselineAt:"2026-10-22T17:00:00Z",observedAt:"2026-10-22T17:00:00Z",observedAtExact:"20261022170000",minute:20,phase:"1H",policySha:"D".repeat(64),producerSha:"E".repeat(64),sourceSha:"F".repeat(64),homeScore:0,awayScore:0,baselineCount:10,remainingCount:10,level:1,connects:false};
+  const poolPath=rebuildPoolPathSchema.parse({contractVersion:"btb-pool-path.v1",modelRegime:"BTB_RB1_20261018",matchKey:"k",asOf:"2026-10-22T17:10:00Z",availability:"AVAILABLE",reason:"AVAILABLE",source:"VERIFIED_RB1_OBSERVATION_POOLS",label:"Havuzda kalan pay",unit:"SURVIVING_REFERENCE_SHARE",winningProbability:false,historical:true,fullMatchCoverageProven:false,
+    points:[point,{...point,captureId:"B",minute:21,remainingCount:6,level:0.6,connects:true},{...point,captureId:"C",minute:46,phase:"2H",connects:false}]});
+  const path=buildMatchPath(input({poolPath}));
+  assert.deepEqual(path.line.map(point=>point.connects),[false,true,false]);
+  assert.equal(path.poolShare,true);assert.equal(path.referenceMinute,46);assert.equal(path.lineNotice,null);
+  assert.match(path.headline,/Havuzda kalan pay/);assert.doesNotMatch(path.headline,/Olağan|Sürpriz|normallik/);
+  assert.equal(rebuildPoolPathSchema.safeParse({...poolPath,winningProbability:true}).success,false);
+});
+
 function input(patch: Partial<PathInput>): PathInput {
   return { match: finished, isRebuild: true, events: [], observations, records: [record], journeyPoints: [],
     halfTimeScore: "1–1", latestReading: null, ...patch };
 }
 
-test("an RB1 match tells its score story from observations and never draws a pool line", () => {
+test("an RB1 match without recorded pools never fabricates a pool line", () => {
   const path = buildMatchPath(input({}));
   assert.deepEqual(path.chips.map((chip) => chip.label), ["0–0", "0–1", "1–1", "2–1", "2–2"]);
   assert.equal(path.chips.at(-1)?.current, true);
   assert.deepEqual(path.line, []);
-  assert.match(path.lineNotice?.body ?? "", /henüz sunulmuyor/);
+  assert.match(path.lineNotice?.body ?? "", /sonradan çizgi üretilmez/);
   assert.deepEqual(path.moments.filter((moment) => moment.kind === "GOAL").map((moment) => [moment.minute, moment.side]),
     [[25, "AWAY"], [35, "HOME"], [61, "HOME"], [82, "AWAY"]]);
   assert.equal(path.defaultKey, `btb:${record.decisionId}`);

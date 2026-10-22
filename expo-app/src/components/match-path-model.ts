@@ -1,5 +1,5 @@
 import type { MatchJourneyPoint } from "@/src/api/schemas";
-import type { RebuildObservation } from "@/src/api/rebuild-statistics-schemas";
+import type { RebuildObservation, RebuildPoolPath } from "@/src/api/rebuild-statistics-schemas";
 import type { RebuildRecommendation } from "@/src/api/rebuild-schemas";
 import { formatQuote, formatUnits, resultPresentation } from "@/src/utils/rebuild-display";
 import { formatSelection } from "@/src/utils/format";
@@ -42,7 +42,8 @@ export interface ScoreChip { key: string; minute: number; label: string; current
 export interface PathModel {
   moments: PathMoment[];
   chips: ScoreChip[];
-  line: { minute: number; level: number }[];
+  line: { minute: number; level: number; connects?: boolean }[];
+  poolShare: boolean;
   referenceMinute: number | null;
   /** Shown instead of the line; null when the line is drawn. */
   lineNotice: { title: string; body: string } | null;
@@ -63,6 +64,7 @@ export interface PathInput {
   journeyPoints: readonly MatchJourneyPoint[];
   halfTimeScore: string | null;
   latestReading: IntervalReading | null;
+  poolPath?: RebuildPoolPath | undefined;
 }
 
 const unmeasured = "Olayın dakikası kayıtlı. Bu olaya ait havuz etkisi ölçülmedi.";
@@ -158,7 +160,9 @@ export function buildMatchPath(input: PathInput): PathModel {
     });
   }
 
-  const line = input.isRebuild ? [] : journeyVertices([...input.journeyPoints]);
+  const poolShare = input.isRebuild;
+  const poolPoints = input.poolPath?.availability === "AVAILABLE" ? input.poolPath.points : [];
+  const line = input.isRebuild ? poolPoints.map(point => ({minute:point.minute,level:point.level,connects:point.connects})) : journeyVertices([...input.journeyPoints]);
   const reference = input.isRebuild ? undefined : input.journeyPoints.find((point) => point.referenceChange && point.plotMinute !== null);
   if (reference && reference.plotMinute !== null) {
     moments.push({ key: `pool:${reference.key}`, minute: reference.plotMinute, kind: "POOL", side: null,
@@ -168,6 +172,9 @@ export function buildMatchPath(input: PathInput): PathModel {
   }
 
   const latestLevel = line.at(-1)?.level;
+  const latestPool = poolPoints.at(-1);
+  const poolHeadline = latestPool ? `Havuzda kalan pay %${Math.round(latestPool.level*100)} · ${latestPool.remainingCount}/${latestPool.baselineCount} referans` : null;
+  const describeLevel = (value:number) => poolShare ? poolHeadline ?? `Havuzda kalan pay %${Math.round(value*100)}` : levelHeadline(value);
   const lastObserved = input.observations.at(-1);
   const nowMinute = live ? Math.max(0, input.match.elapsed) : null;
   if (live && nowMinute !== null) {
@@ -176,10 +183,10 @@ export function buildMatchPath(input: PathInput): PathModel {
     moments.push({
       key: "latest", minute: nowMinute, kind: "LATEST", side: null,
       railTitle: `${nowMinute}′ · Son kayıt`,
-      railSub: latestLevel !== undefined ? levelHeadline(latestLevel) : reading ? reading.headline : score,
+      railSub: latestLevel !== undefined ? describeLevel(latestLevel) : reading ? reading.headline : score,
       label: `Son kayıt, ${nowMinute}. dakika, skor ${score}`, score, record: null,
       lines: [
-        latestLevel !== undefined ? levelHeadline(latestLevel) : null,
+        latestLevel !== undefined ? describeLevel(latestLevel) : null,
         reading ? `Son baskı aralığı ${reading.range} · ${reading.headline} (ev ${reading.homeText} · deplasman ${reading.awayText})`
           : input.isRebuild ? "Bu maç için kayıtlı baskı aralığı yok." : null,
         lastObserved ? `Son doğrulanmış gözlem ${lastObserved.minute}′.` : null
@@ -209,15 +216,15 @@ export function buildMatchPath(input: PathInput): PathModel {
   const lastGoal = [...moments].reverse().find((moment) => moment.kind === "GOAL");
   const defaultKey = live ? "latest" : latestBtb?.key ?? lastGoal?.key ?? moments.at(-1)?.key ?? null;
 
-  const lineNotice = line.length > 1 ? null : input.isRebuild
-    ? { title: "Havuz uyumu kaydı yok", body: "RB1 beklenen skor havuzu yolu henüz sunulmuyor; skor, olaylar ve BTB kararları gösteriliyor." }
+  const lineNotice = (poolShare ? line.length > 0 : line.length > 1) ? null : input.isRebuild
+    ? { title: "Havuzda kalan pay kaydı yok", body: "Doğrulanmış havuz yolu bulunamadı; eski maçlar için sonradan çizgi üretilmez. Skor, olaylar ve BTB kararları gösteriliyor." }
     : { title: "Havuz uyumu kaydı yok", body: "Bu maç için havuz kaydı yok; geçmişe çizgi üretilmez." };
   const headline = input.match.status === "NOT_STARTED" ? "Başlama düdüğünden sonra ilk kayıtla başlar."
-    : line.length > 1 && latestLevel !== undefined ? levelHeadline(latestLevel)
+    : line.length > 0 && latestLevel !== undefined ? describeLevel(latestLevel)
       : "Skor, iki takımın olayları ve BTB kararları tek zaman çizgisinde.";
 
   return {
-    moments, chips, line, referenceMinute: reference?.plotMinute ?? null, lineNotice, maxMinute, nowMinute,
+    moments, chips, line, poolShare, referenceMinute: poolShare ? poolPoints.find(point=>point.phase==="2H")?.minute ?? null : reference?.plotMinute ?? null, lineNotice, maxMinute, nowMinute,
     halfTimeLabel: input.halfTimeScore ? `İY ${input.halfTimeScore}` : null,
     defaultKey, headline
   };

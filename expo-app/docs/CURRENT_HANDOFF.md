@@ -1,13 +1,28 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-22
-Mod: `OBSERVATION`
+Mod: `77A_DELIVERY_APPROVED / NATIVE_VALIDATION_IN_PROGRESS`
 Delivery: `OWNER_ONLY_DEV_PILOT / 6e6dcd9 PAIR AWAITING_BOTH_CLIENT_SMOKE`
 Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
 Previous checkpoint preserved verbatim in
 `handoff_archive/CURRENT_HANDOFF_before_RB1_2026-10-20.md`.
 
+## Pending completion batch — 22 October evening
+
+Owner-approved local implementation: TASK-0179 fixed-half surviving pool share
+(`btb-pool-path.v1`), TASK-0171 verified terminal projection without context,
+Live detail expand/restore, close-goal label grouping, state-aware Hero/Jinx,
+frozen last-published recommendation and honest uncalculated candidate metrics.
+Android uses its existing full-screen detail/back navigation; desktop adds the
+split-pane control. Both surfaces share every data/wording change.
+See `COMPLETION_BATCH_2026-10-22.md`. Owner 77A authorizes the scoped SAP,
+Git/BFF and paired delivery; native validation is in progress. Client source
+will be frozen for that release after its passed local checks. The 6e6dcd9 pair still awaits both
+owner smokes; do not close it retrospectively. Rescue pair a00b743 is retained.
+
 ## Son checkpoint
+
+Historical initial RB1 delivery (the pending/current pair status above takes precedence):
 
 RB1 implementation and coordinated delivery complete under 62A/63A/64A; the
 `a00b743` pair passed both owner smokes. On 2026-10-21 the theme pair `473d4f2`
@@ -106,14 +121,20 @@ Previous accepted ee48ccd APK/web pair is retained for bounded recovery.
 
 ## Repo durumu
 
-Artifact source `zbet-mobile/master` `a00b743ba8dab6664595a9b6ca177afb0cff2c1a`; subsequent handoff-only
-commits do not change those artifacts. BFF runtime source `e851fd3fcec5c5bdd57d5dedd8405af99ead2234`
-(76A, 2026-10-22); backend DEV exact main `8a389b28e3db3b848f96da8f7221abe4a95e3820`.
-Model `BTB_RB1_20261018`, pressure `RB1_OPT_STATS_74A_V1`, policy `873AF557AB4BC72ECDC81829922583F86E9F84C0F0E7697A6C89F4FF549D9597`,
-producer `90132B9184DB7D4CB3128705264793446BF3B993D3389678CFA80AB7CE14E433`; earlier base-10A
-identity pairs stay historical (accepted boundary 2026-10-22T08:15:36.8796732Z).
+Current published client source is `6e6dcd9c7e1adafbf240b0b2d32004344517aa7b`;
+handoff-only source `ba1d5305b00cd14f15d19094246c8bf718d55ea0`.
+Current BFF runtime source is `cabd48b1c44fdd8a5ea5cd537cdc64e83c05a3a4`;
+178 native DEV main is `47dd13cce1174f23af59a920438c195c70c8b178`.
+Status policy `RB1_RED_UNKNOWN_178_V1`, pressure `RB1_OPT_STATS_74A_V1`;
+policy `64D1F7A780CE1565BD27AA158FA6BD72949F7EF3D9E266851B2E0BE42D929015`,
+producer `DA03C9E7B18A61179FD5E817B35DCD1954DF2CEB332FB928EA3627FB84138DF5`.
+Accepted boundary `2026-10-22T17:04:32.3153834Z`; earlier exact pairs remain
+historical. Unknown red-card statistics render “—”, never measured zero.
+These are the last delivered identities; the pending local candidate differs.
 
 ## Doğrulama
+
+Historical initial RB1 pair checks; pending batch checks are in COMPLETION_BATCH_2026-10-22.md.
 
 Client type/lint/tests/doctor, Android bundle/build/signature/ARM64, verified
 edge web export and canonical paired-release completion passed. Both actual
@@ -122,6 +143,13 @@ detail smoke passed. Fresh native read matched 45 objects / 110 components.
 Final MODEL syntax and full ATC have zero findings; no Unit methods confirmed.
 Reuse 61A's 124 harmless dependency methods; retain inherited findings.
 Live-label repair accepts `39'`/`62′` without changing the model or client API.
+
+## Final yerel pilot APK
+
+Current delivered pair: 6e6dcd9, listed above; no new completion-batch APK has
+been built or distributed. Both current owner smokes remain pending. The final
+new APK and matching web will be rebuilt from one clean pushed commit only
+after explicit delivery approval.
 
 ## Açık observation / blokajlar
 

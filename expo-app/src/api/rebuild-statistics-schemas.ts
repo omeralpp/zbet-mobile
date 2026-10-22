@@ -87,3 +87,20 @@ export type RebuildCurrentPressure = NonNullable<RebuildStatistics["pressure"]>;
 export type RebuildPressureHistory = z.infer<typeof rebuildPressureHistorySchema>;
 export type RebuildPressureSample = RebuildPressureHistory["samples"][number];
 export type RebuildObservation = RebuildPressureHistory["observations"][number];
+
+/** Display-only fixed-half reference survival, never a win probability. */
+export const rebuildPoolPathSchema = z.strictObject({
+  contractVersion: z.literal("btb-pool-path.v1"), modelRegime: z.literal("BTB_RB1_20261018"),
+  matchKey: z.string(), asOf: timestamp, availability: z.enum(["AVAILABLE", "UNAVAILABLE"]), reason: z.string(),
+  source: z.literal("VERIFIED_RB1_OBSERVATION_POOLS"), label: z.literal("Havuzda kalan pay"),
+  unit: z.literal("SURVIVING_REFERENCE_SHARE"), winningProbability: z.literal(false), historical: z.literal(true),
+  fullMatchCoverageProven: z.literal(false),
+  points: z.array(z.strictObject({
+    captureId: z.string().min(1), baselineCaptureId: z.string().min(1), baselineAt: timestamp,
+    observedAt: timestamp, observedAtExact: exactTime, minute: count, phase, policySha: sha, producerSha: sha,
+    sourceSha: sha, homeScore: count, awayScore: count, baselineCount: count.positive().max(5000), remainingCount: count,
+    level: z.number().min(0).max(1), connects: z.boolean()
+  }).refine(point => point.remainingCount <= point.baselineCount && Math.abs(point.level - point.remainingCount / point.baselineCount) < 1e-10,
+    { message: "Pool survival counts and share disagree" }))
+});
+export type RebuildPoolPath = z.infer<typeof rebuildPoolPathSchema>;

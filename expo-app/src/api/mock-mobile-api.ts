@@ -36,7 +36,7 @@ import {
 } from "./mock-data";
 import { MobileApiError, type MobileApi } from "./mobile-api";
 import { rebuildMatchSchema, rebuildReportSchema } from "./rebuild-schemas";
-import { rebuildPressureHistorySchema, rebuildStatisticsSchema } from "./rebuild-statistics-schemas";
+import { rebuildPressureHistorySchema, rebuildStatisticsSchema, rebuildPoolPathSchema } from "./rebuild-statistics-schemas";
 import { decisionContextSchema, type AnalysisContext, type MatchJourney } from "./schemas";
 import { previewJinxSignal, previewSelectionReading } from "../mascot/jinx-assessment";
 
@@ -104,6 +104,12 @@ export const mockMobileApi: MobileApi = {
       asOf: new Date().toISOString(), availability: "UNAVAILABLE", reason: "DUMMY_NOT_PUBLISHED", source: "VERIFIED_RB1_HISTORY",
       historical: true, coverage: "PERSISTED_VERIFIED_INTERVALS_ONLY", fullMatchCoverageProven: false, samples: [], observations: [],
       poolPath: { availability: "UNAVAILABLE", reason: "RB1_POOL_PATH_NOT_EXPOSED" } });
+  },
+  async getRebuildPoolPath(key, signal) {
+    await mockDelay(signal);
+    return rebuildPoolPathSchema.parse({contractVersion:"btb-pool-path.v1",modelRegime:"BTB_RB1_20261018",matchKey:key,
+      asOf:new Date().toISOString(),availability:"UNAVAILABLE",reason:"DUMMY_NOT_PUBLISHED",source:"VERIFIED_RB1_OBSERVATION_POOLS",
+      label:"Havuzda kalan pay",unit:"SURVIVING_REFERENCE_SHARE",winningProbability:false,historical:true,fullMatchCoverageProven:false,points:[]});
   },
   async getMatchAnalysisContext(key, signal) {
     const [matchDetail, insight, periodScore, leagueContext, superLogs, liveContext,

@@ -6,6 +6,7 @@ import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { rebuildMatchQuery, rebuildReportQuery } from "@/src/api/queries";
 import type { RebuildRecommendation, RebuildReport } from "@/src/api/rebuild-schemas";
 import { currentRebuild, rebuildReason } from "@/src/utils/rebuild-current";
+import { candidateFacts, rebuildPresentation } from "@/src/utils/rebuild-presentation";
 import {
   formatDecimal,
   formatQuote,
@@ -17,8 +18,7 @@ import {
   matchLabel,
   outcomeSegments,
   resultPresentation,
-  unitsTone,
-  type Tone
+  unitsTone
 } from "@/src/utils/rebuild-display";
 import { colors, iconSizes, interaction, radii, semantic, shadows, spacing, typeScale } from "@/src/theme/theme";
 import { formatSelection } from "@/src/utils/format";
@@ -58,6 +58,20 @@ export function Action({ title, onPress, icon, busy = false }: { title: string; 
       {icon && icon !== "refresh" ? <MaterialCommunityIcons color={semantic.intelligence} name={icon} size={iconSizes.inline} /> : null}
     </Pressable>
   );
+}
+
+export function LastPublishedRecommendation({record,onOpen}:{record:RebuildRecommendation;onOpen:()=>void}) {
+  return <Card>
+    <View style={styles.rowBetween}>
+      <Text accessibilityRole="header" aria-level={2} style={styles.candidateMarket}>Son yayımlanan öneri · {record.minute}′</Text>
+      <TonePill label="ŞU ANDA AKTİF DEĞİL" tone="neutral" />
+    </View>
+    <Text style={styles.evidenceNumber}>{formatSelection(record.market)} · {record.stars} yıldız</Text>
+    <Text style={styles.candidateFacts}>İlk oran {formatQuote(record.quote)} · karar skoru {record.homeScore}–{record.awayScore}</Text>
+    <Text style={styles.caption}>Geçmiş karar kaydıdır; güncel ve oynanabilir seçim anlamına gelmez. İlk oran ve yıldız korunur.</Text>
+    <ResultPill state={record.result.state} />
+    <Action title="Karar kaydını aç" icon="chevron-right" onPress={onOpen} />
+  </Card>;
 }
 
 /** Winning share of the reference pool, drawn as sample support. */
@@ -252,18 +266,14 @@ function JinxChip({ label, value, accent }: { label: string; value: string; acce
  * (percentages mean pool support), and the rejected candidates with their
  * exact backend reasons behind "Kanıtı gör" (A7 questions 33–35).
  */
-export function RebuildJinxCard({ matchKey }: { matchKey: string }) {
+export function RebuildJinxCard({ matchKey, matchStatus = "LIVE" }: { matchKey: string; matchStatus?: string }) {
   const query = useQuery(rebuildMatchQuery(matchKey)), now = useRebuildClock();
   const [showCandidates, setShowCandidates] = useState(false);
   const data = query.data, current = !query.isError ? currentRebuild(data, now) : null;
   const record = current ? data?.history.find(h => h.decisionId === current.decisionId) : undefined;
-  const reason = query.isError ? "Veri yenilenemedi" : data?.availability === "ACTIVE" && !current ? "Oran / ölçüm güncel değil" : rebuildReason(data?.reason);
-  const text = current ? data?.jinx.summary : `Güncel veri/teyit bekleniyor · ${reason}`;
-  const state: { label: string; tone: Tone } = query.isError ? { label: "VERİ ALINAMADI", tone: "neutral" }
-    : current ? { label: "GÜNCEL SEÇİM", tone: "positive" }
-    : data?.availability === "NOT_STARTED" ? { label: "BAŞLAMADI", tone: "neutral" }
-    : data?.availability === "UNAVAILABLE" ? { label: "KULLANILAMIYOR", tone: "neutral" }
-    : { label: "TEYİT BEKLENİYOR", tone: "warning" };
+  const state = rebuildPresentation({ status: matchStatus, summary: data, now, error: query.isError,
+    redUnknown: data?.candidates.some(candidate => candidate.reason === "RED_CARD_UNKNOWN") });
+  const text = current ? data?.jinx.summary : state.text;
   const support = record ? formatSupport(record.poolWins, record.poolTotal) : null;
   return (
     <View style={styles.jinxCard}>
@@ -316,8 +326,9 @@ export function RebuildJinxCard({ matchKey }: { matchKey: string }) {
       {showCandidates ? (
         <View style={styles.jinxCandidates}>
           <Text style={styles.caption}>Diğer adaylar ve elenme nedenleri · yayımlanmış birimlerden ayrı tutulur; bahis önerisi değildir.</Text>
+          <Text style={styles.caption}>Erken elenen pazarda sonraki ölçütler hesaplanmamış olabilir. Hesaplanmayan değerler sıfır değildir; son kayıtlı değerlendirme gösterilir.</Text>
           {data?.candidates.length ? data.candidates.map(c => {
-            const status = c.selected ? { label: "EN İYİ ADAY", tone: "positive" as const } : c.admitted ? { label: "UYGUN, SEÇİLMEDİ", tone: "pending" as const } : { label: "ELENDİ", tone: "neutral" as const };
+            const status = c.selected ? { label: current ? "EN İYİ ADAY" : "SON HESABIN LİDERİ", tone: "positive" as const } : c.admitted ? { label: "UYGUN, SEÇİLMEDİ", tone: "pending" as const } : { label: "ELENDİ", tone: "neutral" as const };
             return (
               <View key={c.market} style={styles.candidate}>
                 <View style={styles.rowBetween}>
@@ -326,7 +337,7 @@ export function RebuildJinxCard({ matchKey }: { matchKey: string }) {
                 </View>
                 <Text style={styles.candidateReason}>{rebuildReason(c.reason)}</Text>
                 <Text style={styles.candidateFacts}>
-                  Puan {formatScore(c.consistencyScore)} · {c.votesSupport}/{c.votesUsed} teyit · {c.poolWins}/{c.poolTotal} havuz desteği
+                  {candidateFacts(c)}
                 </Text>
               </View>
             );

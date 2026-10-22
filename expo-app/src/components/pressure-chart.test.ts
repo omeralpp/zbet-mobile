@@ -3,7 +3,18 @@ import test from "node:test";
 import { mockMatches, mockRetainedJourney } from "../api/mock-data";
 import { decisionContextSchema, type MatchDetail, type MatchJourney, type MatchJourneyPoint } from "../api/schemas";
 import { readFile } from "node:fs/promises";
-import { edgeSafeLabel, pressureHeadline, pressureLeader, pressureSeries } from "./pressure-chart";
+import { edgeSafeLabel, pressureGoalGroups, pressureHeadline, pressureLeader, pressureSeries } from "./pressure-chart";
+
+test("nearby goals share a label without losing minutes or team", () => {
+  const goals = [{key:"a",minute:2,side:"HOME" as const},{key:"b",minute:3,side:"HOME" as const},{key:"c",minute:3,side:"AWAY" as const},{key:"d",minute:88,side:"HOME" as const}];
+  for (const width of [160,320,900]) {
+    const groups = pressureGoalGroups(goals, minute => minute / 90 * width);
+    assert.equal(groups.length,3);
+    assert.deepEqual(groups[0]!.goals.map(goal => goal.minute),[2,3]);
+    assert.equal(groups[1]!.side,"AWAY");
+    assert.deepEqual(goals.map(goal => goal.minute),[2,3,3,88]);
+  }
+});
 
 const now = Date.parse("2026-10-18T14:39:00Z");
 const pressure = (home: number, away: number, observedAt: string) => decisionContextSchema.parse({

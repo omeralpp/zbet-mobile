@@ -19,6 +19,7 @@ import {
   matchAnalysisContextQuery,
   rebuildMatchQuery,
   rebuildPressureHistoryQuery,
+  rebuildPoolPathQuery,
   rebuildStatisticsQuery
 } from "@/src/api/queries";
 import { mobileApi } from "@/src/api";
@@ -26,8 +27,9 @@ import type { AnalysisContext } from "@/src/api/schemas";
 import { JinxAssessmentCard } from "@/src/components/JinxAssessmentCard";
 import { pressureSide } from "@/src/components/MatchCard";
 import { PitchMarkings } from "@/src/components/PitchMarkings";
-import { RebuildDecisionModule, RebuildJinxCard, useRebuildClock } from "@/src/components/RebuildEvidencePanel";
+import { RebuildDecisionModule, RebuildJinxCard, LastPublishedRecommendation, useRebuildClock } from "@/src/components/RebuildEvidencePanel";
 import { currentRebuild } from "@/src/utils/rebuild-current";
+import { rebuildPresentation } from "@/src/utils/rebuild-presentation";
 import { analysisNeedsRefresh } from "@/src/mascot/jinx-assessment";
 import { useJinxAnalyticalSurface } from "@/src/mascot/JinxPreferencesProvider";
 import { ChangeEmphasis } from "@/src/components/ChangeEmphasis";
@@ -201,10 +203,12 @@ function TeamHeroName({
  */
 export function MatchDetailView({
   matchKey,
-  embedded = false
+  embedded = false,
+  expanded = false
 }: {
   matchKey: string;
   embedded?: boolean;
+  expanded?: boolean;
 }) {
   useJinxAnalyticalSurface();
   const key = matchKey;
@@ -260,11 +264,13 @@ export function MatchDetailView({
   const liveNow = ["LIVE", "HALF_TIME"].includes(context.data?.sources.matchDetail.status ?? "");
   const rebuildStatistics = useQuery({ ...rebuildStatisticsQuery(isRebuild ? key : ""), refetchInterval: isFocused && liveNow ? 30_000 : false });
   const pressureHistory = useQuery({ ...rebuildPressureHistoryQuery(isRebuild ? key : ""), refetchInterval: isFocused && liveNow ? 60_000 : false });
+  const poolPath = useQuery({...rebuildPoolPathQuery(isRebuild ? key : ""),refetchInterval:isFocused && liveNow ? 60_000 : false});
   const refreshRebuild = () => {
     if (!isRebuild) return;
     void rebuildMatch.refetch();
     void rebuildStatistics.refetch();
     void pressureHistory.refetch();
+    void poolPath.refetch();
   };
   const intelligence = mountsIntelligenceSurfaces(runtimeConfig.mobileIntelligence) && !query.data?.rebuild;
   const teamFormEnabled = mountsIntelligenceSurfaces(runtimeConfig.teamFormIntelligence);
@@ -389,6 +395,7 @@ export function MatchDetailView({
   const pathModel = buildMatchPath({
     match,
     isRebuild,
+    poolPath:poolPath.data?.matchKey === key && !poolPath.isError ? poolPath.data : undefined,
     events: visibleEvents(liveTimeline?.timeline),
     observations: history?.observations ?? [],
     records: isRebuild ? rebuildMatch.data?.history ?? [] : [],
@@ -613,7 +620,7 @@ export function MatchDetailView({
       <Screen
       edgeSwipeBack={!embedded}
       onEdgeSwipeBack={handleEdgeSwipeBack}
-      wide={!embedded}
+      wide={!embedded || expanded}
       contentStyle={styles.screen}
       scrollRef={scrollRef}
       fixedHeader={compactHeader ? <View style={styles.fixedHeader}>
@@ -713,7 +720,8 @@ export function MatchDetailView({
           style={styles.heroDivider}
         />
         <Text style={styles.verdictEyebrow}>
-          {match.rebuild && !match.selectedOdd ? "TEYİT BEKLENİYOR" : `BTB SEÇİMİ${currentMinute !== null && match.selectedOdd ? ` · ${currentMinute}′` : ""}`}
+          {match.rebuild && !match.selectedOdd ? rebuildPresentation({status:match.status,summary:rebuildMatch.data ?? match.rebuild,now,
+            redUnknown:rebuildMatch.data?.candidates.some(candidate => candidate.reason === "RED_CARD_UNKNOWN")}).label : `BTB SEÇİMİ${currentMinute !== null && match.selectedOdd ? ` · ${currentMinute}′` : ""}`}
         </Text>
         <View style={styles.verdictRow}>
           <View style={[styles.verdictCell, styles.verdictCellWide]}>
@@ -758,7 +766,9 @@ export function MatchDetailView({
       </TutorialTarget>
       </View>
 
-      {query.data?.rebuild ? <RebuildJinxCard matchKey={key} /> : intelligence ? <JinxAssessmentCard context={context.data} assessment={jinx.data}
+      {isRebuild && !current && !currentRebuild(rebuildMatch.data,now) && rebuildMatch.data?.history.at(-1) ? <LastPublishedRecommendation
+        record={rebuildMatch.data.history.at(-1)!} onOpen={()=>openDecision(rebuildMatch.data!.history.at(-1)!.decisionId)} /> : null}
+      {query.data?.rebuild ? <RebuildJinxCard matchKey={key} matchStatus={match.status} /> : intelligence ? <JinxAssessmentCard context={context.data} assessment={jinx.data}
         pending={jinx.isPending && jinx.variables?.matchKey === key}
         error={jinx.isError && jinx.variables?.matchKey === key} onAsk={() => void askJinx()} /> : null}
 
@@ -809,7 +819,7 @@ export function MatchDetailView({
       ) : null}
       <ReorderableModuleList
         items={moduleItems}
-        {...(embedded ? { maxColumns: 1 } : {})}
+        {...(embedded && !expanded ? { maxColumns: 1 } : {})}
         onDragStateChange={setReordering}
         onReorder={(from, to) =>
           reorderVisible(

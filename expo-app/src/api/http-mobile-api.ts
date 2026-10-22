@@ -34,7 +34,7 @@ import {
 } from "./schemas";
 import { MobileApiError, type MobileApi } from "./mobile-api";
 import { rebuildMatchSchema, rebuildReportSchema } from "./rebuild-schemas";
-import { rebuildPressureHistorySchema, rebuildStatisticsSchema } from "./rebuild-statistics-schemas";
+import { rebuildPressureHistorySchema, rebuildStatisticsSchema, rebuildPoolPathSchema } from "./rebuild-statistics-schemas";
 
 const requestTimeoutMs = 15_000;
 const decisionContextHeaders = { "X-BTB-Decision-Context": "decision-context.v3", "X-BTB-Rebuild": "btb-rebuild.v1" };
@@ -150,6 +150,8 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
     getRebuildStatistics: (key, signal) => request(`/v1/btb/rebuild/v1/matches/${encodeURIComponent(key)}/statistics`, rebuildStatisticsSchema,
       { headers: { "X-BTB-Rebuild": "btb-rebuild.v1" } }, signal),
     getRebuildPressureHistory: (key, signal) => request(`/v1/btb/rebuild/v1/matches/${encodeURIComponent(key)}/pressure-history`, rebuildPressureHistorySchema,
+      { headers: { "X-BTB-Rebuild": "btb-rebuild.v1" } }, signal),
+    getRebuildPoolPath: (key, signal) => request(`/v1/btb/rebuild/v1/matches/${encodeURIComponent(key)}/pool-path`, rebuildPoolPathSchema,
       { headers: { "X-BTB-Rebuild": "btb-rebuild.v1" } }, signal),
     getDashboard: (signal) =>
       request("/v1/dashboard", dashboardSchema, { headers: decisionContextHeaders }, signal),

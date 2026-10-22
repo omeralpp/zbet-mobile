@@ -9,6 +9,19 @@ export type PressureSample = { key: string; minute: number; home: number; away: 
 export type PressureLeader = "HOME" | "AWAY" | "BALANCED" | "NONE";
 export type PressureGoal = { key: string; minute: number; side: "HOME" | "AWAY" };
 
+/** Nearby goals share one label, while their original minutes remain explicit. */
+export function pressureGoalGroups(goals: readonly PressureGoal[], x: (minute: number) => number, gap = 48) {
+  const groups: { key: string; side: PressureGoal["side"]; minute: number; goals: PressureGoal[] }[] = [];
+  for (const goal of [...goals].sort((a, b) => a.minute - b.minute || a.key.localeCompare(b.key))) {
+    const previous = groups.findLast(group => group.side === goal.side);
+    if (previous && x(goal.minute) - x(previous.goals.at(-1)!.minute) < gap) {
+      previous.goals.push(goal);
+      previous.minute = previous.goals.reduce((sum, item) => sum + item.minute, 0) / previous.goals.length;
+    } else groups.push({ key: goal.key, side: goal.side, minute: goal.minute, goals: [goal] });
+  }
+  return groups;
+}
+
 /** Same 60/40 rule the BFF uses to name the pressing side for Jinx. */
 export const dominanceShare = 0.6;
 const maxCurrentAgeMs = 240_000;

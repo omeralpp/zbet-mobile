@@ -30,6 +30,7 @@ import { SurfaceMaterial } from "./SurfaceMaterial";
 import { RatingStars } from "./RatingStars";
 import { TeamLogo } from "./TeamLogo";
 import { useRebuildClock } from "./RebuildEvidencePanel";
+import { rebuildPresentation } from "@/src/utils/rebuild-presentation";
 import { currentRebuild } from "@/src/utils/rebuild-current";
 
 /**
@@ -158,7 +159,7 @@ export function MatchCard({
   // v40 board names the current selection plainly; an RB1 match without one
   // says it is waiting for confirmation. The stars keep their meaning in the
   // spoken label (consistency and evidence quality).
-  const eyebrow = match.rebuild && !match.selectedOdd ? "TEYİT BEKLENİYOR" : "BTB SEÇİMİ";
+  const eyebrow = match.rebuild && !match.selectedOdd ? rebuildPresentation({status:match.status,summary:match.rebuild,now}).label : "BTB SEÇİMİ";
   const starsSpoken = match.rebuild ? "tutarlılık ve kanıt kalitesi" : "BTB rating";
   const rateSpoken = `${currentMarket.label} ${currentMarket.value}, ${
     rateTrend === "UP"

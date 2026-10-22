@@ -5,7 +5,7 @@ import type { RebuildPressureHistory, RebuildStatistics } from "@/src/api/rebuil
 import { colors, fontFamilies, numericFont, radii, spacing, textFont, typeScale } from "@/src/theme/theme";
 import { currentPressureView, latestIntervalReading, pressureIntervals, pressureRuns } from "@/src/utils/rebuild-pressure";
 import { journeySvgAccessibility } from "./JourneyEventIcon";
-import { edgeSafeLabel } from "./pressure-chart";
+import { edgeSafeLabel, pressureGoalGroups } from "./pressure-chart";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 
 /**
@@ -108,14 +108,16 @@ export function RebuildPressureChart({ match, history, statistics, goals, isLoad
           })}
         </G>)}
         <Line x1={LEFT} x2={LEFT + plotWidth} y1={mid} y2={mid} stroke={colors.textMuted} strokeWidth={1.5} />
-        {goals.map((goal) => {
+        {pressureGoalGroups(goals, x).map((goal) => {
           const cy = goal.side === "HOME" ? HOME_GOAL_Y : AWAY_GOAL_Y;
           const ink = goal.side === "HOME" ? colors.blue : colors.orange;
-          const label = edgeSafeLabel(x(goal.minute), LEFT, LEFT + plotWidth, 22);
+          const label = edgeSafeLabel(x(goal.minute), LEFT, LEFT + plotWidth, 36);
           return <G key={goal.key}>
-            <Line x1={x(goal.minute)} x2={x(goal.minute)} y1={goal.side === "HOME" ? HOME_GOAL_Y + 5 : mid} y2={goal.side === "HOME" ? mid : AWAY_GOAL_Y - 5} stroke={ink} strokeOpacity={0.35} />
-            <Circle cx={x(goal.minute)} cy={cy} r={5} fill={colors.text} stroke={ink} strokeWidth={2} />
-            <SvgText x={label.x} y={cy + 4} textAnchor={label.anchor} fill={colors.text} {...svgLabel}>gol</SvgText>
+            {goal.goals.map(mark => <G key={mark.key}>
+              <Line x1={x(mark.minute)} x2={x(mark.minute)} y1={mark.side === "HOME" ? HOME_GOAL_Y + 5 : mid} y2={mark.side === "HOME" ? mid : AWAY_GOAL_Y - 5} stroke={ink} strokeOpacity={0.35} />
+              <Circle cx={x(mark.minute)} cy={cy} r={5} fill={colors.text} stroke={ink} strokeWidth={2} />
+            </G>)}
+            <SvgText x={label.x} y={cy + 4} textAnchor={label.anchor} fill={colors.text} {...svgLabel}>{goal.goals.length > 1 ? `${goal.goals.length} gol` : "gol"}</SvgText>
           </G>;
         })}
       </Svg>
@@ -129,6 +131,7 @@ export function RebuildPressureChart({ match, history, statistics, goals, isLoad
     <Text style={styles.coverage}>
       {intervals.length} doğrulanmış aralık · tarihsel kayıt{allEstimated ? " · tahmini ölçüm" : ""}. Yalnız kaydedilen aralıklar çizilir; boşluklar ölçüm olmayan dakikalardır, maçın tamamı kanıtlanmadı.
     </Text>
+    {goals.length ? <Text style={styles.meta}>Goller: {goals.map(goal => `${goal.minute}′ ${goal.side === "HOME" ? match.homeTeam : match.awayTeam}`).join(" · ")}</Text> : null}
   </View>;
 }
 

@@ -55,6 +55,19 @@ paths:
             application/json:
               schema: { $ref: "./btb-pressure-history.schema.json" }
         default: { $ref: "#/components/responses/Error" }
+  /v1/btb/rebuild/v1/matches/{key}/pool-path:
+    get:
+      operationId: getRebuildPoolPath
+      description: Verified fixed-half reference survival. Display only; never a winning probability or a substitute for pressure history.
+      parameters:
+        - $ref: "#/components/parameters/Key"
+      responses:
+        "200":
+          description: Retained reference counts and explicit connection boundaries; no backfill or full-match coverage claim.
+          content:
+            application/json:
+              schema: { $ref: "./btb-pool-path.schema.json" }
+        default: { $ref: "#/components/responses/Error" }
   /v1/btb/rebuild/v1/report:
     get:
       operationId: getRebuildReport
