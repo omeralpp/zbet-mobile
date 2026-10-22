@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { rebuildReportQuery } from "@/src/api/queries";
-import type { RebuildRecommendation } from "@/src/api/rebuild-schemas";
+import { rebuildCohortsReportQuery } from "@/src/api/queries";
+import type { RebuildCohortsReport, RebuildRecommendation } from "@/src/api/rebuild-schemas";
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { useSuperStarFilter } from "@/src/preferences/SuperStarFilterProvider";
@@ -14,6 +14,8 @@ import { formatSelection } from "@/src/utils/format";
 import { rebuildReason } from "@/src/utils/rebuild-current";
 import { formatQuote, formatReportRange, formatUnits, resultPresentation, unitsTone } from "@/src/utils/rebuild-display";
 import {
+  cohortReport,
+  defaultCohortId,
   defaultLogSort,
   evidenceLine,
   filterLog,
@@ -109,7 +111,7 @@ function OutcomeLine({ summary }: { summary: LogSummary }) {
 }
 
 /** The board's decision card: stars and outcome, the match, why, then the frozen price against the result. */
-export function RebuildDecisionCard({ record, onPress }: { record: RebuildRecommendation; onPress: () => void }) {
+export function RebuildDecisionCard({ record, onPress, cohortLabel }: { record: RebuildRecommendation; onPress: () => void; cohortLabel?: string | undefined }) {
   const tone = record.result.net === null ? "neutral" : unitsTone(record.result.net);
   const published = publishedParts(record.publishedAt);
   const pending = record.result.state === "PENDING";
@@ -133,7 +135,7 @@ export function RebuildDecisionCard({ record, onPress }: { record: RebuildRecomm
         <TeamLogo name={record.awayTeam} size="compact" />
         <Text numberOfLines={1} style={styles.team}>{record.awayTeam}</Text>
       </View>
-      <Text style={styles.meta}>{published.day} · {published.time} · {evidenceLine(record)}</Text>
+      <Text style={styles.meta}>{published.day} · {published.time} · {evidenceLine(record)}{cohortLabel ? ` · ${cohortLabel}` : ""}</Text>
       <View style={styles.cardFoot}>
         <View style={styles.cardMarket}>
           <Text style={styles.market}>{formatSelection(record.market)}</Text>
@@ -166,7 +168,7 @@ const tableColumns: readonly { id: LogColumn | null; label: string; flex: number
 ];
 
 /** Desktop Karar günlüğü (platform exception): the same records as a sortable table. */
-function DecisionTable({ records, sort, onSort, onOpen }: { records: readonly RebuildRecommendation[]; sort: LogSort; onSort: (column: LogColumn) => void; onOpen: (record: RebuildRecommendation) => void }) {
+function DecisionTable({ records, labels, sort, onSort, onOpen }: { records: readonly RebuildRecommendation[]; labels: ReadonlyMap<string, string>; sort: LogSort; onSort: (column: LogColumn) => void; onOpen: (record: RebuildRecommendation) => void }) {
   return (
     <View aria-label="Karar günlüğü" role="table" style={styles.table}>
       <View role="row" style={[styles.tableRow, styles.tableHead]}>
@@ -211,7 +213,7 @@ function DecisionTable({ records, sort, onSort, onOpen }: { records: readonly Re
             </View>
             <View role="cell" style={[styles.tableCell, styles.stackCell, { flex: 2.4 }]}>
               <Text numberOfLines={1} style={styles.cellStrong}>{record.homeTeam} – {record.awayTeam}</Text>
-              <Text numberOfLines={1} style={styles.cellMeta}>karar anında {record.homeScore}–{record.awayScore}</Text>
+              <Text numberOfLines={1} style={styles.cellMeta}>karar anında {record.homeScore}–{record.awayScore}{labels.get(record.decisionId) ? ` · ${labels.get(record.decisionId)}` : ""}</Text>
             </View>
             <View role="cell" style={[styles.tableCell, styles.alignRight, { flex: 0.5 }]}>
               <Text style={styles.cellNumber}>{record.minute}′</Text>
@@ -255,11 +257,13 @@ function Tile({ value, label, color, children }: { value?: string; label: string
 /**
  * Karar günlüğü on RB1 data, in the v40 board's layout: every published
  * record of the report's 7 or 30 Istanbul days, filtered by star floor or
- * pending result. The summary is the report's own (a star scope adds its
- * per-star rows); the full report sits behind "Rapor ayrıntısı".
+ * pending result. The list spans every accepted policy cohort, each record
+ * tagged with its cohort; the summary, tiles and "Rapor ayrıntısı" are one
+ * chosen cohort's own figures (a star scope adds its per-star rows), never
+ * merged across cohorts (owner decision 2026-10-22).
  */
 export function RebuildDecisionLog() {
-  const query = useQuery(rebuildReportQuery);
+  const query = useQuery(rebuildCohortsReportQuery);
   const breakpoint = useBreakpoint();
   const wide = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
   const openDecision = useOpenDecision();
@@ -272,11 +276,16 @@ export function RebuildDecisionLog() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [starSort, setStarSort] = useState<SuperStarSort>("DEFAULT");
   const [tableSort, setTableSort] = useState<LogSort>(defaultLogSort);
-  const report = query.data;
+  const [cohortChoice, setCohortChoice] = useState<string | null>(null);
+  const full = query.data;
+  const cohortId = full ? (full.cohorts.some((item) => item.id === cohortChoice) ? cohortChoice : defaultCohortId(full, days)) : null;
+  const cohort = full?.cohorts.find((item) => item.id === cohortId) ?? null;
+  const report = full ? cohortReport(full, cohortId) : null;
   const period = report?.periods.find((item) => item.days === days);
-  const available = !query.isError && report?.availability === "AVAILABLE" && period ? period : null;
+  const available = !query.isError && full?.availability === "AVAILABLE" && period ? period : null;
+  const labels = useMemo(() => cohortLabels(full), [full]);
   const minStars = starFilterMinRating(starFilter);
-  const records = useMemo(() => (report && available ? periodRecords(report, available) : []), [available, report]);
+  const records = useMemo(() => (full && available ? periodRecords(full, available) : []), [available, full]);
   const counts = {
     all: records.length,
     star: filterLog(records, { minStars, pendingOnly: false }).length,
@@ -365,6 +374,27 @@ export function RebuildDecisionLog() {
     </View>
   );
 
+  const pickable = full ? full.cohorts.filter((item) => item.current || (item.periods.find((entry) => entry.days === days)?.recommendations ?? 0) > 0) : [];
+  const cohortPicker = pickable.length > 1 ? (
+    <View accessibilityLabel="Özet sürümü" style={styles.cohorts}>
+      <Text style={styles.cohortsLabel}>Özet sürümü</Text>
+      {pickable.map((item) => (
+        <FilterChip
+          count={item.periods.find((entry) => entry.days === days)?.recommendations ?? 0}
+          key={item.id}
+          label={item.label}
+          onPress={() => {
+            closeMenus();
+            setCohortChoice(item.id);
+            setDetailsOpen(false);
+          }}
+          selected={item.id === cohortId}
+        />
+      ))}
+    </View>
+  ) : null;
+  const cohortName = cohort?.label ?? "";
+
   if (!available || !report) {
     return (
       <View style={[styles.stack, styles.phoneHead]}>
@@ -373,7 +403,7 @@ export function RebuildDecisionLog() {
         <Card>
           <View style={styles.waiting}>
             <TonePill dot label={query.isError ? "VERİ ALINAMADI" : "RAPOR BEKLENİYOR"} tone={query.isError ? "neutral" : "warning"} />
-            <Text style={styles.waitingText}>{query.isError ? "Veri alınamadı" : rebuildReason(report?.reason)}</Text>
+            <Text style={styles.waitingText}>{query.isError ? "Veri alınamadı" : rebuildReason(full?.reason)}</Text>
             <Action icon="refresh" onPress={() => { void query.refetch(); }} title="Yenile" />
           </View>
         </Card>
@@ -415,8 +445,9 @@ export function RebuildDecisionLog() {
           {filters}
           {scope}
         </View>
+        {cohortPicker}
         <View style={styles.tiles}>
-          <Tile label={`karar · ${formatReportRange(available.from, available.through)}`} value={String(summary.recommendations)} />
+          <Tile label={`karar · ${cohortName}`} value={String(summary.recommendations)} />
           <Tile color={semantic.intelligence} label="bekleyen karar" value={String(summary.pending)} />
           <Tile label="kazandı · kaybetti">
             <Text numberOfLines={1} style={styles.tileValue}>
@@ -429,7 +460,7 @@ export function RebuildDecisionLog() {
         </View>
         {visible.length ? (
           <TutorialTarget id="super-first-card">
-            <DecisionTable onOpen={openDecision} onSort={(column) => setTableSort((current) => nextLogSort(current, column))} records={visible} sort={tableSort} />
+            <DecisionTable labels={labels} onOpen={openDecision} onSort={(column) => setTableSort((current) => nextLogSort(current, column))} records={visible} sort={tableSort} />
           </TutorialTarget>
         ) : empty}
         <Text style={styles.tableNote}>Sütun başlığı: sırala (varsayılan en yeni karar) · satır: karar sayfası · seçim oranı karar anında donmuştur</Text>
@@ -445,6 +476,7 @@ export function RebuildDecisionLog() {
       <View style={styles.phoneHead}>
         {filters}
         {scope}
+        {cohortPicker}
       </View>
       <LocalTabPager
         activeKey={tab}
@@ -462,7 +494,7 @@ export function RebuildDecisionLog() {
               ListFooterComponent={<View style={styles.footer}>{details}</View>}
               ListHeaderComponent={
                 <SummaryCard
-                  label={`${days} GÜN · ${page === "STAR" ? starMetricLabel(starFilter).toLocaleUpperCase("tr-TR") : "TÜMÜ"}`}
+                  label={`${days} GÜN · ${cohortName.toLocaleUpperCase("tr-TR")} · ${page === "STAR" ? starMetricLabel(starFilter).toLocaleUpperCase("tr-TR") : "TÜMÜ"}`}
                   summary={pageSummary}
                 />
               }
@@ -474,10 +506,10 @@ export function RebuildDecisionLog() {
               renderItem={({ item, index }) =>
                 page === tab && index === 0 ? (
                   <TutorialTarget id="super-first-card">
-                    <RebuildDecisionCard onPress={() => openDecision(item)} record={item} />
+                    <RebuildDecisionCard cohortLabel={labels.get(item.decisionId)} onPress={() => openDecision(item)} record={item} />
                   </TutorialTarget>
                 ) : (
-                  <RebuildDecisionCard onPress={() => openDecision(item)} record={item} />
+                  <RebuildDecisionCard cohortLabel={labels.get(item.decisionId)} onPress={() => openDecision(item)} record={item} />
                 )
               }
               showsVerticalScrollIndicator={false}
@@ -488,6 +520,12 @@ export function RebuildDecisionLog() {
       />
     </View>
   );
+}
+
+/** Each record's cohort name, so the shared log can tag it. */
+function cohortLabels(report: RebuildCohortsReport | undefined): ReadonlyMap<string, string> {
+  const names = new Map((report?.cohorts ?? []).map((item) => [item.id, item.label]));
+  return new Map((report?.recommendations ?? []).map((record) => [record.decisionId, names.get(record.cohortId) ?? ""]));
 }
 
 function CardGap() {
@@ -611,6 +649,8 @@ const styles = StyleSheet.create({
   detailsTitle: { color: colors.text, ...typeScale.identity, fontWeight: "700" },
   detailsCaption: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0 },
   tiles: { flexDirection: "row", gap: spacing.md },
+  cohorts: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing.sm },
+  cohortsLabel: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0 },
   tile: { flex: 1, minWidth: 0, gap: 2, paddingHorizontal: 18, paddingVertical: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.borderSoft },
   tileValue: { color: colors.text, ...typeScale.metric, fontSize: 32, lineHeight: 36, fontWeight: "800" },
   tileDot: { color: colors.textMuted },

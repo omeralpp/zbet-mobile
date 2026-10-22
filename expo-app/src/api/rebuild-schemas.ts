@@ -38,14 +38,33 @@ const aggregate = z.strictObject({ recommendations: count, matches: count, settl
   net: decimal, risk: count, totalRisk: count, roi: z.number().finite().nullable(), hitRate: z.number().min(0).max(1).nullable(), evidenceNote: z.literal("PILOT_MATCH_CLUSTERED"),
   uncertainty: z.strictObject({ method: z.literal("MATCH_CLUSTER_BOOTSTRAP"), lower: z.number().finite(), upper: z.number().finite(), samples: count }).nullable(), byMatch: z.array(matchRisk) });
 const threshold = z.strictObject({ settled: count, matches: count, days: count, requiredSettled: count, requiredMatches: count, requiredDays: z.literal(2), reviewAvailable: z.boolean() });
-export const rebuildReportSchema = z.strictObject({ contractVersion: z.literal("btb-rebuild-report.v1"), modelRegime: z.literal("BTB_RB1_20261018"), asOf: timestamp,
-  timeZone: z.literal("Europe/Istanbul"), availability: z.enum(["AVAILABLE", "UNAVAILABLE"]), reason: z.string(), accounting: z.literal("ONE_HYPOTHETICAL_UNIT_AT_FIRST_QUOTE"), actualBetsAssumed: z.literal(false),
-  periods: z.array(aggregate.extend({ days: z.union([z.literal(7), z.literal(30)]), from: z.string(), through: z.string(),
-    byStar: z.array(aggregate.extend({ stars: count })), byMarket: z.array(aggregate.extend({ market: z.string() })) })),
-  recommendations: z.array(rebuildRecommendationSchema),
-  learning: z.strictObject({ analysisOnly: z.literal(true), autoPromotion: z.literal(false), overall: threshold, byMarket: z.array(threshold.extend({ market: z.string() })),
-    prospective: z.strictObject({ state: z.literal("FROZEN_CANDIDATE_REGISTRATION_REQUIRED"), requiredSettled: z.literal(50), requiredMatches: z.literal(20), requiredDays: z.literal(2) }), note: z.string() }).nullable() });
+const reportPeriod = aggregate.extend({ days: z.union([z.literal(7), z.literal(30)]), from: z.string(), through: z.string(),
+  byStar: z.array(aggregate.extend({ stars: count })), byMarket: z.array(aggregate.extend({ market: z.string() })) });
+const reportLearning = z.strictObject({ analysisOnly: z.literal(true), autoPromotion: z.literal(false), overall: threshold, byMarket: z.array(threshold.extend({ market: z.string() })),
+  prospective: z.strictObject({ state: z.literal("FROZEN_CANDIDATE_REGISTRATION_REQUIRED"), requiredSettled: z.literal(50), requiredMatches: z.literal(20), requiredDays: z.literal(2) }), note: z.string() }).nullable();
+const reportHead = { modelRegime: z.literal("BTB_RB1_20261018"), asOf: timestamp, timeZone: z.literal("Europe/Istanbul"),
+  availability: z.enum(["AVAILABLE", "UNAVAILABLE"]), reason: z.string(), accounting: z.literal("ONE_HYPOTHETICAL_UNIT_AT_FIRST_QUOTE"), actualBetsAssumed: z.literal(false) };
+export const rebuildReportSchema = z.strictObject({ contractVersion: z.literal("btb-rebuild-report.v1"), ...reportHead,
+  periods: z.array(reportPeriod), recommendations: z.array(rebuildRecommendationSchema), learning: reportLearning });
+/**
+ * v2: one log of every accepted policy cohort's decisions, each tagged with
+ * its cohort; periods and learning stay per cohort and are never merged.
+ */
+const cohortId = z.string().regex(/^[A-F0-9]{64}$/);
+export const rebuildCohortsReportSchema = z.strictObject({ contractVersion: z.literal("btb-rebuild-report.v2"), ...reportHead,
+  cohorts: z.array(z.strictObject({ id: cohortId, label: z.string().min(1), current: z.boolean(), firstDecisionAt: timestamp.nullable(),
+    periods: z.array(reportPeriod), learning: reportLearning })),
+  recommendations: z.array(rebuildRecommendationSchema.extend({ cohortId })) }).superRefine((value, ctx) => {
+  const ids = new Set(value.cohorts.map((c) => c.id));
+  if (ids.size !== value.cohorts.length) ctx.addIssue({ code: "custom", message: "Duplicate report cohort" });
+  if (value.cohorts.filter((c) => c.current).length > 1) ctx.addIssue({ code: "custom", message: "More than one current cohort" });
+  if (value.recommendations.some((r) => !ids.has(r.cohortId))) ctx.addIssue({ code: "custom", message: "Recommendation outside a reported cohort" });
+  if (new Set(value.recommendations.map((r) => r.decisionId)).size !== value.recommendations.length)
+    ctx.addIssue({ code: "custom", message: "Duplicate recommendation identity" });
+});
 export type RebuildMatch = z.infer<typeof rebuildMatchSchema>;
 export type RebuildSummary = z.infer<typeof rebuildSummarySchema>;
 export type RebuildRecommendation = z.infer<typeof rebuildRecommendationSchema>;
+export type RebuildCohortsReport = z.infer<typeof rebuildCohortsReportSchema>;
+export type RebuildCohort = RebuildCohortsReport["cohorts"][number];
 export type RebuildReport = z.infer<typeof rebuildReportSchema>;

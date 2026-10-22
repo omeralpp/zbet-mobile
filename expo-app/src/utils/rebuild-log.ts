@@ -7,7 +7,7 @@
  * point); it never re-derives a result, a unit or a match count, because
  * records of one match can sit in different star rows.
  */
-import type { RebuildRecommendation, RebuildReport } from "@/src/api/rebuild-schemas";
+import type { RebuildCohortsReport, RebuildRecommendation, RebuildReport } from "@/src/api/rebuild-schemas";
 import { rebuildCalendarDay } from "./rebuild-current";
 import { formatSupport } from "./rebuild-display";
 
@@ -146,4 +146,32 @@ export function teamInitials(name: string): string {
     .filter(Boolean);
   const letters = words.length > 1 ? `${words[0]![0]}${words[1]![0]}` : (words[0] ?? "").slice(0, 2);
   return letters.toLocaleUpperCase("tr-TR") || "—";
+}
+
+/**
+ * One policy cohort of a v2 report as a v1-shaped report: that cohort's own
+ * periods and learning and only its records. Cohorts are never merged.
+ */
+export function cohortReport(report: RebuildCohortsReport, cohortId: string | null): RebuildReport | null {
+  const cohort = report.cohorts.find((item) => item.id === cohortId);
+  if (!cohort) return null;
+  return {
+    contractVersion: "btb-rebuild-report.v1", modelRegime: report.modelRegime, asOf: report.asOf, timeZone: report.timeZone,
+    availability: report.availability, reason: report.reason, accounting: report.accounting, actualBetsAssumed: report.actualBetsAssumed,
+    periods: cohort.periods,
+    recommendations: report.recommendations.filter((record) => record.cohortId === cohort.id).map(({ cohortId: _cohort, ...record }) => record),
+    learning: cohort.learning
+  };
+}
+
+/**
+ * The cohort whose summary opens first: the current one when it already has a
+ * decision in the period, otherwise the cohort of the newest decision there.
+ */
+export function defaultCohortId(report: RebuildCohortsReport, days: 7 | 30): string | null {
+  const current = report.cohorts.find((cohort) => cohort.current) ?? null;
+  const inPeriod = (id: string) => (report.cohorts.find((cohort) => cohort.id === id)?.periods.find((period) => period.days === days)?.recommendations ?? 0) > 0;
+  if (current && inPeriod(current.id)) return current.id;
+  const newest = [...report.recommendations].filter((record) => inPeriod(record.cohortId)).sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))[0];
+  return newest?.cohortId ?? current?.id ?? report.cohorts[0]?.id ?? null;
 }

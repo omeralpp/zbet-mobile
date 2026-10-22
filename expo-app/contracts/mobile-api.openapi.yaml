@@ -84,6 +84,19 @@ paths:
             application/json:
               schema: { $ref: "./btb-rebuild-report.schema.json" }
         default: { $ref: "#/components/responses/Error" }
+  /v1/btb/rebuild/v2/report:
+    get:
+      operationId: getRebuildCohortsReport
+      description: Every accepted RB1 policy cohort's first publications of the last 30 Istanbul days in one list, each tagged with its cohort; 7/30-day periods and review thresholds stay per cohort and are never merged.
+      parameters:
+        - $ref: "#/components/parameters/RebuildVersion"
+      responses:
+        "200":
+          description: RB1 only. A record outside its reported cohorts, a duplicate cohort or two current cohorts fail closed.
+          content:
+            application/json:
+              schema: { $ref: "./btb-rebuild-report-v2.schema.json" }
+        default: { $ref: "#/components/responses/Error" }
   /v1/dashboard:
     get:
       operationId: getDashboard

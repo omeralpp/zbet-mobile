@@ -13,7 +13,7 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent
 } from "react-native";
-import { matchPeriodScoreQuery, matchQuery, rebuildMatchQuery, rebuildReportQuery } from "@/src/api/queries";
+import { matchPeriodScoreQuery, matchQuery, rebuildCohortsReportQuery, rebuildMatchQuery } from "@/src/api/queries";
 import type { RebuildRecommendation } from "@/src/api/rebuild-schemas";
 import { ListPerforation, ResultPill, TicketSeam, toneColor } from "@/src/components/DecisionTicket";
 import { PitchMarkings } from "@/src/components/PitchMarkings";
@@ -108,7 +108,8 @@ export function RebuildDecisionView({ decisionId, matchKey: matchParam, onEdgeSw
   const scrollRef = useRef<ScrollView | null>(null);
   const scrollOffset = useRef(0);
   const { order, reorderVisible } = useModuleLayout("superDetail");
-  const report = useQuery(rebuildReportQuery);
+  // v2 lists every accepted cohort, so an older cohort's decision still opens.
+  const report = useQuery(rebuildCohortsReportQuery);
   const fromReport = report.data?.recommendations.find((item) => item.decisionId === decisionId);
   const matchKey = matchParam || fromReport?.matchKey || "";
   const rebuild = useQuery(rebuildMatchQuery(matchKey));

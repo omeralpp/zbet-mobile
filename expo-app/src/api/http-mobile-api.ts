@@ -33,7 +33,7 @@ import {
   totoProgramSchema
 } from "./schemas";
 import { MobileApiError, type MobileApi } from "./mobile-api";
-import { rebuildMatchSchema, rebuildReportSchema } from "./rebuild-schemas";
+import { rebuildCohortsReportSchema, rebuildMatchSchema, rebuildReportSchema } from "./rebuild-schemas";
 import { rebuildPressureHistorySchema, rebuildStatisticsSchema, rebuildPoolPathSchema } from "./rebuild-statistics-schemas";
 
 const requestTimeoutMs = 15_000;
@@ -146,6 +146,8 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
     getRebuildMatch: (key, signal) => request(`/v1/btb/rebuild/v1/matches/${encodeURIComponent(key)}`, rebuildMatchSchema,
       { headers: { "X-BTB-Rebuild": "btb-rebuild.v1" } }, signal),
     getRebuildReport: signal => request("/v1/btb/rebuild/v1/report", rebuildReportSchema,
+      { headers: { "X-BTB-Rebuild": "btb-rebuild.v1" } }, signal),
+    getRebuildCohortsReport: signal => request("/v1/btb/rebuild/v2/report", rebuildCohortsReportSchema,
       { headers: { "X-BTB-Rebuild": "btb-rebuild.v1" } }, signal),
     getRebuildStatistics: (key, signal) => request(`/v1/btb/rebuild/v1/matches/${encodeURIComponent(key)}/statistics`, rebuildStatisticsSchema,
       { headers: { "X-BTB-Rebuild": "btb-rebuild.v1" } }, signal),

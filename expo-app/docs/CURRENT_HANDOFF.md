@@ -1,11 +1,24 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-22
-Mod: `77A_DELIVERY_APPROVED / NATIVE_VALIDATION_IN_PROGRESS`
-Delivery: `OWNER_ONLY_DEV_PILOT / 6e6dcd9 PAIR AWAITING_BOTH_CLIENT_SMOKE`
+Mod: `77A_DELIVERED / SUPER_V2_LOCAL`
+Delivery: `OWNER_ONLY_DEV_PILOT / 71c06cb PAIR INSTALLED+PUBLISHED, AWAITING_BOTH_CLIENT_SMOKE`
 Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
 Previous checkpoint preserved verbatim in
 `handoff_archive/CURRENT_HANDOFF_before_RB1_2026-10-20.md`.
+
+## Super karar günlüğü v2 (Claude, 2026-10-22 gece) — yerel, yayın onayı bekliyor
+
+71c06cb çifti kuruldu (APK) ve web yayımlandı (`20261022T190733Z-71c06cb`, sahip kurulumu
+doğruladı; Android teslim makbuzu yazıldı); iki smoke açık. Super günlüğü yalnız güncel
+77A kohortunu gösterdiği için bugünkü 178 kararları görünmüyordu (NXT-OBS-189). Sahip
+kararı: liste tüm kohortlar + sürüm etiketi, özet seçilen sürüm için ayrı. BFF
+`/v1/btb/rebuild/v2/report` (`btb-rebuild-report.v2`, kohort başına dönem/öğrenme, kayıt başına
+`cohortId`), istemci `rebuildCohortsReportQuery`, `cohortReport`/`defaultCohortId`, `Özet
+sürümü` seçicisi ve karar sayfası v2. v1 yanıtı değişmedi; eski istemciler çalışır. Gerçek
+SAP verisiyle (6 karar: 178×4, 10A×2) web geniş/telefon önizlemesi doğrulandı (geçici
+önizleme yaması geri alındı). 653 istemci + 32 araç testi, BFF 681 test. Yayın: commit/push,
+BFF yeniden başlatma (Process ortamı User'dan tazelenmeli), eş APK/web — her biri onaylı.
 
 ## Pending completion batch — 22 October evening
 

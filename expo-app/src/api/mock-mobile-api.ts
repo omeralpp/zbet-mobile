@@ -35,7 +35,7 @@ import {
   mockTeamForm
 } from "./mock-data";
 import { MobileApiError, type MobileApi } from "./mobile-api";
-import { rebuildMatchSchema, rebuildReportSchema } from "./rebuild-schemas";
+import { rebuildCohortsReportSchema, rebuildMatchSchema, rebuildReportSchema } from "./rebuild-schemas";
 import { rebuildPressureHistorySchema, rebuildStatisticsSchema, rebuildPoolPathSchema } from "./rebuild-statistics-schemas";
 import { decisionContextSchema, type AnalysisContext, type MatchJourney } from "./schemas";
 import { previewJinxSignal, previewSelectionReading } from "../mascot/jinx-assessment";
@@ -86,6 +86,11 @@ export const mockMobileApi: MobileApi = {
     await mockDelay(signal);
     return rebuildReportSchema.parse({ contractVersion: "btb-rebuild-report.v1", modelRegime: "BTB_RB1_20261018", asOf: new Date().toISOString(), timeZone: "Europe/Istanbul",
       availability: "UNAVAILABLE", reason: "DUMMY_NOT_PUBLISHED", accounting: "ONE_HYPOTHETICAL_UNIT_AT_FIRST_QUOTE", actualBetsAssumed: false, periods: [], recommendations: [], learning: null });
+  },
+  async getRebuildCohortsReport(signal) {
+    await mockDelay(signal);
+    return rebuildCohortsReportSchema.parse({ contractVersion: "btb-rebuild-report.v2", modelRegime: "BTB_RB1_20261018", asOf: new Date().toISOString(), timeZone: "Europe/Istanbul",
+      availability: "UNAVAILABLE", reason: "DUMMY_NOT_PUBLISHED", accounting: "ONE_HYPOTHETICAL_UNIT_AT_FIRST_QUOTE", actualBetsAssumed: false, cohorts: [], recommendations: [] });
   },
   // Sample data publishes no RB1 facts, so both RB1 match reads are honestly
   // unavailable here, like the decision and report above.
