@@ -1,13 +1,20 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-22
-Mod: `77A_DELIVERED / SUPER_V2_LOCAL`
-Delivery: `OWNER_ONLY_DEV_PILOT / 71c06cb PAIR INSTALLED+PUBLISHED, AWAITING_BOTH_CLIENT_SMOKE`
+Mod: `77A_DELIVERED / SUPER_V2_RELEASED`
+Delivery: `OWNER_ONLY_DEV_PILOT / 43d2e7d PAIR INSTALLED+PUBLISHED, AWAITING_BOTH_CLIENT_SMOKE`
 Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
 Previous checkpoint preserved verbatim in
 `handoff_archive/CURRENT_HANDOFF_before_RB1_2026-10-20.md`.
 
-## Super karar günlüğü v2 (Claude, 2026-10-22 gece) — yerel, yayın onayı bekliyor
+## Super karar günlüğü v2 (Claude, 2026-10-22 gece) — yayımlandı, smoke bekliyor
+
+Çift `43d2e7d`: APK `8C62A260…` Drive'a özel teslim edildi, sahip kurdu ("Kurdum sorun yok");
+web `20261022T195402Z-43d2e7d` yayımlandı, sunulan paket doğrulandı. BFF `12899644` (v2 üst düzey
+özet) ve `d36cedc` (havuz yolu kur tipi `"1"` düzeltmesi; canlı 3/4 maçta havuz yolu geldi).
+71c06cb ve aa517ba çiftleri bu çiftle geçersiz; Bournemouth–Milan havuz reddi TASK-0179'da.
+Kapanış: iki smoke → kabul makbuzu → `client-release.mjs complete`.
+
 
 71c06cb çifti kuruldu (APK) ve web yayımlandı (`20261022T190733Z-71c06cb`, sahip kurulumu
 doğruladı; Android teslim makbuzu yazıldı); iki smoke açık. Super günlüğü yalnız güncel
