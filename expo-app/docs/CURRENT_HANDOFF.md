@@ -2,18 +2,21 @@
 
 Son güncelleme: 2026-10-22
 Mod: `77A_DELIVERED / SUPER_V2_RELEASED`
-Delivery: `OWNER_ONLY_DEV_PILOT / 43d2e7d PAIR INSTALLED+PUBLISHED, AWAITING_BOTH_CLIENT_SMOKE`
+Delivery: `OWNER_ONLY_DEV_PILOT / 43d2e7d PAIR COMPLETE (both smokes passed 2026-10-22)`
 Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
 Previous checkpoint preserved verbatim in
 `handoff_archive/CURRENT_HANDOFF_before_RB1_2026-10-20.md`.
 
-## Super karar günlüğü v2 (Claude, 2026-10-22 gece) — yayımlandı, smoke bekliyor
+## Super karar günlüğü v2 (Claude, 2026-10-22 gece) — tamamlandı
+
+Sahip iki yüzeyi doğruladı (23:09, "web de ve android de ... doğru görünüyor"); kabul makbuzu
+`.codex-artifacts/client-43d2e7d-acceptance.json`, `client-release.mjs complete` → COMPLETE
+(`client-43d2e7d-completed.json`). Bu çift 6e6dcd9/71c06cb/aa517ba'nın yerini alır.
 
 Çift `43d2e7d`: APK `8C62A260…` Drive'a özel teslim edildi, sahip kurdu ("Kurdum sorun yok");
 web `20261022T195402Z-43d2e7d` yayımlandı, sunulan paket doğrulandı. BFF `12899644` (v2 üst düzey
 özet) ve `d36cedc` (havuz yolu kur tipi `"1"` düzeltmesi; canlı 3/4 maçta havuz yolu geldi).
 71c06cb ve aa517ba çiftleri bu çiftle geçersiz; Bournemouth–Milan havuz reddi TASK-0179'da.
-Kapanış: iki smoke → kabul makbuzu → `client-release.mjs complete`.
 
 
 71c06cb çifti kuruldu (APK) ve web yayımlandı (`20261022T190733Z-71c06cb`, sahip kurulumu
