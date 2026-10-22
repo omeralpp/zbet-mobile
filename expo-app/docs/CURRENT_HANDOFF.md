@@ -2,7 +2,7 @@
 
 Son güncelleme: 2026-10-22
 Mod: `OBSERVATION`
-Delivery: `OWNER_ONLY_DEV_PILOT / f6e18b3 PAIR AWAITING_BOTH_CLIENT_SMOKE`
+Delivery: `OWNER_ONLY_DEV_PILOT / 6e6dcd9 PAIR AWAITING_BOTH_CLIENT_SMOKE`
 Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
 Previous checkpoint preserved verbatim in
 `handoff_archive/CURRENT_HANDOFF_before_RB1_2026-10-20.md`.
@@ -70,7 +70,7 @@ kimlikli readback doğrulandı, sahip kurdu ("kurdum"; ADB iddiası yok). Web
 `client-release.mjs complete` bekler. `473d4f2` çifti web smoke'u olmadan bu çiftle
 değiştirildi (tamamlanmadı); kurtarma çifti `a00b743`.
 
-## Maçın yolu ve RB1 istatistik batch'i (Claude, 2026-10-22) — yerel
+## Maçın yolu ve RB1 istatistik batch'i (Claude, 2026-10-22) — yayımlandı, smoke bekliyor
 
 Sahip v45 Maçın yolu panolarını onayladı; Codex 76A backend teslimini bitirip
 kullanım sınırına takıldı, sahip işi buradan tamamlamayı istedi. Codex'in yarım
@@ -79,8 +79,17 @@ kalan 76A kayıtları push edildi (`BTB Logs` b626236, `zbet-cap` 46c4cdc,
 Baskı grafiği `btb-pressure-history.v1` ile iki yüzeyde; Maçın yolu Jinx'in
 altında ayrı kart, RB1 havuz yolu sunulmadığı için çizgi yerine tek not.
 Ayrıntı `MATCH_PATH_STATISTICS_BATCH_2026-10-22.md` (NXT-OBS-183). Biten maçta
-`TEYİT BEKLENİYOR` metni NXT-OBS-184 olarak kayıtlı, değiştirilmedi. Commit/push
-ve yeni APK+web çifti ayrı onay ister; `f6e18b3` çifti hâlâ smoke bekliyor.
+`TEYİT BEKLENİYOR` metni NXT-OBS-184 olarak kayıtlı, değiştirilmedi. Sahip onayıyla
+(`Commit, push ve yeni APK+web`) `master` `6e6dcd9c7e1adafbf240b0b2d32004344517aa7b`
+(TASK-0177 notu `btb-codex` 3372fd3) ve çift:
+[Private APK](https://drive.google.com/file/d/1VDTeTzhIEYhHXyMUw701LlzOHvh8WvJS/view?usp=drivesdk)
+`btb-mobile-next-arm64-yol-6e6dcd9.apk`, 50439837 bytes, ARM64, SHA256
+`F38B946EB3A555317CFC4D45BF6B08CB11B2BE49623FCC6DAEBB80A1ECD79DBB`; imza/ABI ve
+kimlikli readback doğrulandı, sahip kurdu ("Kurdum"; ADB iddiası yok). Web
+`20261022T094314Z-6e6dcd9` yayımlandı (yerel probe ve Access kapısı geçti); batch
+`client-6e6dcd9c7e1adafbf240b0b2d32004344517aa7b-F38B946EB3A5-D36C439C6949`
+`AWAITING_BOTH_CLIENT_SMOKE`. `f6e18b3` çifti smoke olmadan bununla değiştirildi
+(tamamlanmadı); kurtarma çifti `a00b743`.
 
 ## Önceki kabul edilmiş çift (a00b743, kurtarma için)
 
@@ -152,13 +161,11 @@ describes the agent's rejected deletion attempt, not the owner's later actions.
 
 ## Exact next steps
 
-Close the `f6e18b3` batch: the owner's Android and published-web smokes, then
+Close the `6e6dcd9` batch: the owner's Android and published-web smokes, then
 the owner acceptance receipt and `client-release.mjs complete`; these close
-NXT-OBS-181/182. `473d4f2` was superseded before its web smoke and stays
-incomplete. Expo Doctor's `expo-router` 57.0.29 drift is a separate decision.
-Then the local Maçın yolu / RB1 statistics batch (TASK-0177): checks, commit/push
-and a new paired APK+web release under their approvals; both smokes close
-TASK-0177 and NXT-OBS-183.
+TASK-0177 and NXT-OBS-181/182/183. `473d4f2` and `f6e18b3` were superseded
+before their smokes and stay incomplete. NXT-OBS-184 needs an owner decision.
+Expo Doctor's `expo-router` 57.0.29 drift is a separate decision.
 Keep backend decisions, frozen first facts, result accounting and Jinx evidence
 meaning unchanged unless the owner separately approves a model change.
 Every future client release still requires a new clean pushed common commit,
