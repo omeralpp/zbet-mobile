@@ -149,29 +149,16 @@ export function teamInitials(name: string): string {
 }
 
 /**
- * One policy cohort of a v2 report as a v1-shaped report: that cohort's own
- * periods and learning and only its records. Cohorts are never merged.
+ * A v2 report as the v1 shape the Super screens render: every listed record
+ * with the backend's all-cohort periods and learning (owner decision
+ * 2026-10-22). Nothing is summed on the client.
  */
-export function cohortReport(report: RebuildCohortsReport, cohortId: string | null): RebuildReport | null {
-  const cohort = report.cohorts.find((item) => item.id === cohortId);
-  if (!cohort) return null;
+export function combinedReport(report: RebuildCohortsReport): RebuildReport {
   return {
     contractVersion: "btb-rebuild-report.v1", modelRegime: report.modelRegime, asOf: report.asOf, timeZone: report.timeZone,
     availability: report.availability, reason: report.reason, accounting: report.accounting, actualBetsAssumed: report.actualBetsAssumed,
-    periods: cohort.periods,
-    recommendations: report.recommendations.filter((record) => record.cohortId === cohort.id).map(({ cohortId: _cohort, ...record }) => record),
-    learning: cohort.learning
+    periods: report.periods,
+    recommendations: report.recommendations.map(({ cohortId: _cohort, ...record }) => record),
+    learning: report.learning
   };
-}
-
-/**
- * The cohort whose summary opens first: the current one when it already has a
- * decision in the period, otherwise the cohort of the newest decision there.
- */
-export function defaultCohortId(report: RebuildCohortsReport, days: 7 | 30): string | null {
-  const current = report.cohorts.find((cohort) => cohort.current) ?? null;
-  const inPeriod = (id: string) => (report.cohorts.find((cohort) => cohort.id === id)?.periods.find((period) => period.days === days)?.recommendations ?? 0) > 0;
-  if (current && inPeriod(current.id)) return current.id;
-  const newest = [...report.recommendations].filter((record) => inPeriod(record.cohortId)).sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))[0];
-  return newest?.cohortId ?? current?.id ?? report.cohorts[0]?.id ?? null;
 }

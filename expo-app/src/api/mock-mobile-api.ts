@@ -90,7 +90,7 @@ export const mockMobileApi: MobileApi = {
   async getRebuildCohortsReport(signal) {
     await mockDelay(signal);
     return rebuildCohortsReportSchema.parse({ contractVersion: "btb-rebuild-report.v2", modelRegime: "BTB_RB1_20261018", asOf: new Date().toISOString(), timeZone: "Europe/Istanbul",
-      availability: "UNAVAILABLE", reason: "DUMMY_NOT_PUBLISHED", accounting: "ONE_HYPOTHETICAL_UNIT_AT_FIRST_QUOTE", actualBetsAssumed: false, cohorts: [], recommendations: [] });
+      availability: "UNAVAILABLE", reason: "DUMMY_NOT_PUBLISHED", accounting: "ONE_HYPOTHETICAL_UNIT_AT_FIRST_QUOTE", actualBetsAssumed: false, periods: [], learning: null, cohorts: [], recommendations: [] });
   },
   // Sample data publishes no RB1 facts, so both RB1 match reads are honestly
   // unavailable here, like the decision and report above.

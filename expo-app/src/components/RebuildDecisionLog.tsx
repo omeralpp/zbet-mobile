@@ -14,8 +14,7 @@ import { formatSelection } from "@/src/utils/format";
 import { rebuildReason } from "@/src/utils/rebuild-current";
 import { formatQuote, formatReportRange, formatUnits, resultPresentation, unitsTone } from "@/src/utils/rebuild-display";
 import {
-  cohortReport,
-  defaultCohortId,
+  combinedReport,
   defaultLogSort,
   evidenceLine,
   filterLog,
@@ -258,9 +257,9 @@ function Tile({ value, label, color, children }: { value?: string; label: string
  * Karar günlüğü on RB1 data, in the v40 board's layout: every published
  * record of the report's 7 or 30 Istanbul days, filtered by star floor or
  * pending result. The list spans every accepted policy cohort, each record
- * tagged with its cohort; the summary, tiles and "Rapor ayrıntısı" are one
- * chosen cohort's own figures (a star scope adds its per-star rows), never
- * merged across cohorts (owner decision 2026-10-22).
+ * tagged with its cohort; the summary, tiles and "Rapor ayrıntısı" are the
+ * backend's figures over all of them (a star scope adds its per-star rows;
+ * owner decision 2026-10-22).
  */
 export function RebuildDecisionLog() {
   const query = useQuery(rebuildCohortsReportQuery);
@@ -276,11 +275,8 @@ export function RebuildDecisionLog() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [starSort, setStarSort] = useState<SuperStarSort>("DEFAULT");
   const [tableSort, setTableSort] = useState<LogSort>(defaultLogSort);
-  const [cohortChoice, setCohortChoice] = useState<string | null>(null);
   const full = query.data;
-  const cohortId = full ? (full.cohorts.some((item) => item.id === cohortChoice) ? cohortChoice : defaultCohortId(full, days)) : null;
-  const cohort = full?.cohorts.find((item) => item.id === cohortId) ?? null;
-  const report = full ? cohortReport(full, cohortId) : null;
+  const report = useMemo(() => (full ? combinedReport(full) : null), [full]);
   const period = report?.periods.find((item) => item.days === days);
   const available = !query.isError && full?.availability === "AVAILABLE" && period ? period : null;
   const labels = useMemo(() => cohortLabels(full), [full]);
@@ -374,27 +370,6 @@ export function RebuildDecisionLog() {
     </View>
   );
 
-  const pickable = full ? full.cohorts.filter((item) => item.current || (item.periods.find((entry) => entry.days === days)?.recommendations ?? 0) > 0) : [];
-  const cohortPicker = pickable.length > 1 ? (
-    <View accessibilityLabel="Özet sürümü" style={styles.cohorts}>
-      <Text style={styles.cohortsLabel}>Özet sürümü</Text>
-      {pickable.map((item) => (
-        <FilterChip
-          count={item.periods.find((entry) => entry.days === days)?.recommendations ?? 0}
-          key={item.id}
-          label={item.label}
-          onPress={() => {
-            closeMenus();
-            setCohortChoice(item.id);
-            setDetailsOpen(false);
-          }}
-          selected={item.id === cohortId}
-        />
-      ))}
-    </View>
-  ) : null;
-  const cohortName = cohort?.label ?? "";
-
   if (!available || !report) {
     return (
       <View style={[styles.stack, styles.phoneHead]}>
@@ -445,9 +420,8 @@ export function RebuildDecisionLog() {
           {filters}
           {scope}
         </View>
-        {cohortPicker}
         <View style={styles.tiles}>
-          <Tile label={`karar · ${cohortName}`} value={String(summary.recommendations)} />
+          <Tile label={`karar · ${formatReportRange(available.from, available.through)}`} value={String(summary.recommendations)} />
           <Tile color={semantic.intelligence} label="bekleyen karar" value={String(summary.pending)} />
           <Tile label="kazandı · kaybetti">
             <Text numberOfLines={1} style={styles.tileValue}>
@@ -476,7 +450,6 @@ export function RebuildDecisionLog() {
       <View style={styles.phoneHead}>
         {filters}
         {scope}
-        {cohortPicker}
       </View>
       <LocalTabPager
         activeKey={tab}
@@ -494,7 +467,7 @@ export function RebuildDecisionLog() {
               ListFooterComponent={<View style={styles.footer}>{details}</View>}
               ListHeaderComponent={
                 <SummaryCard
-                  label={`${days} GÜN · ${cohortName.toLocaleUpperCase("tr-TR")} · ${page === "STAR" ? starMetricLabel(starFilter).toLocaleUpperCase("tr-TR") : "TÜMÜ"}`}
+                  label={`${days} GÜN · ${page === "STAR" ? starMetricLabel(starFilter).toLocaleUpperCase("tr-TR") : "TÜMÜ"}`}
                   summary={pageSummary}
                 />
               }
@@ -649,8 +622,6 @@ const styles = StyleSheet.create({
   detailsTitle: { color: colors.text, ...typeScale.identity, fontWeight: "700" },
   detailsCaption: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0 },
   tiles: { flexDirection: "row", gap: spacing.md },
-  cohorts: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing.sm },
-  cohortsLabel: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0 },
   tile: { flex: 1, minWidth: 0, gap: 2, paddingHorizontal: 18, paddingVertical: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.borderSoft },
   tileValue: { color: colors.text, ...typeScale.metric, fontSize: 32, lineHeight: 36, fontWeight: "800" },
   tileDot: { color: colors.textMuted },

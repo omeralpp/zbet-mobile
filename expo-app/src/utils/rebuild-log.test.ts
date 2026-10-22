@@ -3,8 +3,7 @@ import test from "node:test";
 import { rebuildCohortsReportSchema, type RebuildCohortsReport, type RebuildRecommendation } from "@/src/api/rebuild-schemas";
 import {
   addDecimals,
-  cohortReport,
-  defaultCohortId,
+  combinedReport,
   defaultLogSort,
   evidenceLine,
   filterLog,
@@ -159,41 +158,36 @@ test("initials take two words, or two letters of one word", () => {
 
 const NEW = "A".repeat(64);
 const OLD = "B".repeat(64);
-function cohortsReport(currentCount: number): RebuildCohortsReport {
-  const emptyPeriod = { ...period, recommendations: currentCount, wins: 0, losses: 0, pending: currentCount, byStar: [], byMarket: [] };
+function cohortsReport(): RebuildCohortsReport {
+  const emptyPeriod = { ...period, recommendations: 1, wins: 0, losses: 0, pending: 1, byStar: [], byMarket: [] };
   return rebuildCohortsReportSchema.parse({
     contractVersion: "btb-rebuild-report.v2", modelRegime: "BTB_RB1_20261018", asOf: "2026-10-21T20:00:00Z", timeZone: "Europe/Istanbul",
     availability: "AVAILABLE", reason: "", accounting: "ONE_HYPOTHETICAL_UNIT_AT_FIRST_QUOTE", actualBetsAssumed: false,
+    periods: [period], learning: null,
     cohorts: [
-      { id: NEW, label: "77A · havuz yolu", current: true, firstDecisionAt: currentCount ? "2026-10-21T19:00:00Z" : null, periods: [emptyPeriod], learning: null },
+      { id: NEW, label: "77A · havuz yolu", current: true, firstDecisionAt: "2026-10-21T19:00:00Z", periods: [emptyPeriod], learning: null },
       { id: OLD, label: "178 · kırmızı kart", current: false, firstDecisionAt: "2026-10-21T10:00:00Z", periods: [period], learning: null }
     ],
     recommendations: [
-      ...(currentCount ? [{ ...record({ id: "A1", publishedAt: "2026-10-21T19:00:00Z" }), cohortId: NEW }] : []),
+      { ...record({ id: "A1", publishedAt: "2026-10-21T19:00:00Z" }), cohortId: NEW },
       { ...record({ id: "B1", publishedAt: "2026-10-21T10:00:00Z" }), cohortId: OLD },
       { ...record({ id: "B2", publishedAt: "2026-10-21T11:00:00Z" }), cohortId: OLD }
     ]
   });
 }
 
-test("a cohort report keeps only that cohort's records, periods and learning", () => {
-  const full = cohortsReport(1);
-  const old = cohortReport(full, OLD);
-  assert.equal(old?.contractVersion, "btb-rebuild-report.v1");
-  assert.deepEqual(old?.recommendations.map((r) => r.decisionId.slice(0, 2)), ["B1", "B2"]);
-  assert.equal(old?.periods[0]?.recommendations, 4);
-  assert.equal("cohortId" in (old?.recommendations[0] ?? {}), false);
-  assert.equal(cohortReport(full, "C".repeat(64)), null);
-  assert.equal(periodRecords(full, period).length, 3);
-});
-
-test("the summary opens on the current cohort only when it has a decision in the period", () => {
-  assert.equal(defaultCohortId(cohortsReport(1), 7), NEW);
-  assert.equal(defaultCohortId(cohortsReport(0), 7), OLD);
+test("the combined report lists every cohort's records with the backend's all-cohort periods", () => {
+  const full = cohortsReport();
+  const combined = combinedReport(full);
+  assert.equal(combined.contractVersion, "btb-rebuild-report.v1");
+  assert.equal(combined.recommendations.length, 3);
+  assert.equal("cohortId" in (combined.recommendations[0] ?? {}), false);
+  assert.equal(combined.periods[0]?.recommendations, period.recommendations);
+  assert.deepEqual(periodRecords(combined, period).map((r) => r.decisionId.slice(0, 2)), ["A1", "B2", "B1"]);
 });
 
 test("the v2 contract rejects a record outside its reported cohorts or two current cohorts", () => {
-  const full = cohortsReport(1);
+  const full = cohortsReport();
   assert.throws(() => rebuildCohortsReportSchema.parse({ ...full, recommendations: [{ ...full.recommendations[0], cohortId: "C".repeat(64) }] }));
   assert.throws(() => rebuildCohortsReportSchema.parse({ ...full, cohorts: full.cohorts.map((c) => ({ ...c, current: true })) }));
 });

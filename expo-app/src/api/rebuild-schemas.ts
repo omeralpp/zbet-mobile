@@ -48,10 +48,12 @@ export const rebuildReportSchema = z.strictObject({ contractVersion: z.literal("
   periods: z.array(reportPeriod), recommendations: z.array(rebuildRecommendationSchema), learning: reportLearning });
 /**
  * v2: one log of every accepted policy cohort's decisions, each tagged with
- * its cohort; periods and learning stay per cohort and are never merged.
+ * its cohort. Top-level periods and learning summarize all of them (owner
+ * decision 2026-10-22); each cohort keeps its own figures too.
  */
 const cohortId = z.string().regex(/^[A-F0-9]{64}$/);
 export const rebuildCohortsReportSchema = z.strictObject({ contractVersion: z.literal("btb-rebuild-report.v2"), ...reportHead,
+  periods: z.array(reportPeriod), learning: reportLearning,
   cohorts: z.array(z.strictObject({ id: cohortId, label: z.string().min(1), current: z.boolean(), firstDecisionAt: timestamp.nullable(),
     periods: z.array(reportPeriod), learning: reportLearning })),
   recommendations: z.array(rebuildRecommendationSchema.extend({ cohortId })) }).superRefine((value, ctx) => {

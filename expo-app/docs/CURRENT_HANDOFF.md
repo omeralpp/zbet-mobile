@@ -12,7 +12,7 @@ Previous checkpoint preserved verbatim in
 71c06cb çifti kuruldu (APK) ve web yayımlandı (`20261022T190733Z-71c06cb`, sahip kurulumu
 doğruladı; Android teslim makbuzu yazıldı); iki smoke açık. Super günlüğü yalnız güncel
 77A kohortunu gösterdiği için bugünkü 178 kararları görünmüyordu (NXT-OBS-189). Sahip
-kararı: liste tüm kohortlar + sürüm etiketi, özet seçilen sürüm için ayrı. BFF
+kararı (son hali): liste tüm kohortlar + sürüm etiketi, özet de tüm kararlardan (BFF üst düzey `periods`); `Özet sürümü` seçicisi geri alındı, `aa517ba` APK'sı kurulmadan geçersiz kaldı. BFF
 `/v1/btb/rebuild/v2/report` (`btb-rebuild-report.v2`, kohort başına dönem/öğrenme, kayıt başına
 `cohortId`), istemci `rebuildCohortsReportQuery`, `cohortReport`/`defaultCohortId`, `Özet
 sürümü` seçicisi ve karar sayfası v2. v1 yanıtı değişmedi; eski istemciler çalışır. Gerçek
