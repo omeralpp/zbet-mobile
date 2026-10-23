@@ -1,5 +1,9 @@
 # Latest selection in the match hero — local batch, 23 October 2026
 
+Final status: DELIVERED / BOTH CLIENT SMOKES PASSED (2026-10-23), source
+`b501352`. See [completion evidence](evidence/HERO_SELECTION_RELEASE_2026-10-23.json).
+The local-development and approval-wait descriptions below are historical.
+
 Owner approved local implementation and Android/web tests through the popup
 “Son seçimi ve iki oranı üst alanda birleştir”. This replaces the previously
 approved separate last-publication card. No commit, push or release is approved.

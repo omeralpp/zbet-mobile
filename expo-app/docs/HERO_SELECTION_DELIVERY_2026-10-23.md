@@ -1,9 +1,12 @@
 # Latest-selection and historical-name delivery — 23 October 2026
 
-Status: READY_FOR_OWNER_DELIVERY_APPROVAL. The owner accepted the local web
-appearance and recovered historical names and asked for this package. No Git
-stage/commit/push, running BFF restart, final APK creation/signing/distribution
-or public web publication has been performed for this batch.
+Final status: COMPLETE, both owner client smokes passed on 2026-10-23.
+Client source `b501352`; BFF runtime code `99ac116`; published web
+`20261023T120240Z-b501352`. See
+[verified completion evidence](evidence/HERO_SELECTION_RELEASE_2026-10-23.json).
+The review boundary and proposed execution below are preserved as the approved
+plan; all listed delivery steps have now completed under owner approval
+`call_da007188163d4bc4839487e866db64f1`.
 
 ## Reviewed behavior
 

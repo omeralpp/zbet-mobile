@@ -1,26 +1,27 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-23
-Mod: `77A_DELIVERED / SUPER_V2_RELEASED`
-Delivery: `OWNER_ONLY_DEV_PILOT / 43d2e7d PAIR COMPLETE (both smokes passed 2026-10-22)`
+Mod: `LATEST_SELECTION_AND_HISTORICAL_NAMES_DELIVERED`
+Delivery: `OWNER_ONLY_DEV_PILOT / b501352 PAIR COMPLETE (both smokes passed 2026-10-23)`
 Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
-Local, unreleased (2026-10-23): owner-approved hero/Jinx/Overview/Live consolidation
-keeps last publications and first facts separate from current eligibility/prices.
-Active-star counts expire on the same parent clock as their cards. The owner
-subsequently approved the seven-day fix too: all display/report consumers use
-v2. BFF has an opt-in quote snapshot/expiry extension; old clients are unchanged.
-See [local batch](HERO_SELECTION_BATCH_2026-10-23.md). Commit/push, BFF restart
-and paired APK/web delivery are not approved for this batch.
-Owner order (2026-10-23): review the local web preview first; wait for web
-acceptance before final APK creation/signing. See the web-review-first section
-in `COORDINATED_CLIENT_RELEASE.md`. Published 43d2e7d remains unchanged.
-The owner accepted the local web and recovered historical names on 2026-10-23
-and requested the delivery package. See `HERO_SELECTION_DELIVERY_2026-10-23.md`
-for the pending combined Git/BFF/paired-release approval. This preview acceptance
-is not final APK installation or public-web smoke evidence. See also
-`DESIGN_PARITY_REVIEW_2026-10-23.md`. Crest reuse is fixed locally. Follow-up
-historical-name BFF decoding recovered all seven examined decisions from frozen
-evidence (706 tests); no SAP change/backfill. Runtime delivery is still pending.
+Released from clean pushed client `b501352158a5ea9b9749868ebcad8f4c9e70e44f`:
+last-selection hero/Jinx/Overview/Live, frozen first facts versus fresh current
+quotes, active-only counters/filters, shared v2 totals, crest reset and recovered
+historical names. BFF runtime code is `99ac116be61d1265bab640d63e2a02310fe10f39`;
+later BFF commits contain delivery records only. SAP/model identities unchanged.
+Web: `20261023T120240Z-b501352`. APK SHA256 `C0028E150084…`; web tree
+`881B19580AAD…`. Full hashes and actual owner receipts:
+[release evidence](evidence/HERO_SELECTION_RELEASE_2026-10-23.json).
+The APK was privately delivered, downloaded/hash-verified and installed; the
+owner confirmed Android and published-web checks. `client-release.mjs complete`
+returned COMPLETE. Previous accepted pair `43d2e7d` is retained; rollback keeps
+its own approval gate. No open delivery action remains in this batch.
+See [delivery plan](HERO_SELECTION_DELIVERY_2026-10-23.md) and
+[local implementation](HERO_SELECTION_BATCH_2026-10-23.md). Checks: 670 client,
+32 tooling, 706 BFF tests, Doctor 20/20, clean web export and signed ARM64 build.
+Owner order remains web preview/acceptance before final APK work; final public
+web follows exact APK installation, per `COORDINATED_CLIENT_RELEASE.md`.
+The historical sections below describe earlier checkpoints, not current gates.
 Previous checkpoint preserved verbatim in
 `handoff_archive/CURRENT_HANDOFF_before_RB1_2026-10-20.md`.
 

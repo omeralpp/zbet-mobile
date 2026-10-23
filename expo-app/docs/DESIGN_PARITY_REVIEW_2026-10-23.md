@@ -1,5 +1,10 @@
 # Accepted design comparison — 23 October 2026
 
+Final status: owner accepted the design and recovered names, then confirmed the
+installed APK and published web from `b501352`. Paired release is COMPLETE; see
+[completion evidence](evidence/HERO_SELECTION_RELEASE_2026-10-23.json).
+The preview limitations and approval waits below describe the earlier review.
+
 Owner requested comparison with Claude's latest accepted design before another
 web review; APK creation remains on hold. Reference is the accepted 43d2e7d
 pair, its deployed web receipt `20261022T195402Z-43d2e7d`, v40/v45 implementation

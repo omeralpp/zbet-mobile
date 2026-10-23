@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "completedAtUtc": "2026-10-23T12:09:50.3158204Z",
+  "approval": {
+    "questionCall": "call_da007188163d4bc4839487e866db64f1",
+    "scope": "Reviewed two-repository Git, existing BFF runtime and coordinated ARM64 APK/web delivery plus completion receipts"
+  },
+  "pair": {
+    "schemaVersion": 1,
+    "batchId": "client-b501352158a5ea9b9749868ebcad8f4c9e70e44f-C0028E150084-881B19580AAD",
+    "sourceSha": "b501352158a5ea9b9749868ebcad8f4c9e70e44f",
+    "sourceTree": "073bedb472e8127849d04302429ca9462e3ee068",
+    "android": {
+      "sha256": "C0028E15008438C6334CBC3E2F9F890B057C486E718570D54DCD0B750CDEED98",
+      "bytes": 50461225,
+      "architecture": "arm64-v8a"
+    },
+    "web": {
+      "treeSha256": "881B19580AADF819A015AA1555BEC80ED0B652242CCBC516D946F1D82FF1FB5B"
+    },
+    "status": "COMPLETE",
+    "releaseComplete": true
+  },
+  "androidDelivery": {
+    "schemaVersion": 1,
+    "batchId": "client-b501352158a5ea9b9749868ebcad8f4c9e70e44f-C0028E150084-881B19580AAD",
+    "sourceSha": "b501352158a5ea9b9749868ebcad8f4c9e70e44f",
+    "apkSha256": "C0028E15008438C6334CBC3E2F9F890B057C486E718570D54DCD0B750CDEED98",
+    "bytes": 50461225,
+    "installedApkSha256": "C0028E15008438C6334CBC3E2F9F890B057C486E718570D54DCD0B750CDEED98",
+    "privateOwnerOnly": true,
+    "remoteReadbackVerified": true,
+    "signatureVerified": true,
+    "abiVerified": true,
+    "installedVerified": true,
+    "evidence": "Owner response call_e770f72f5c424ca6add5f0d0099a76a6: Kurdum — Android kontrolleri sorunsuz; exact APK link named b501352 and verified Drive receipt.",
+    "confirmedAtUtc": "2026-10-23T12:02:29.5055127Z"
+  },
+  "publication": {
+    "publishedAtUtc": "2026-10-23T12:03:48.8535577Z",
+    "hostname": "app.surklase.com",
+    "release": "20261023T120240Z-b501352",
+    "sourceSha": "b501352158a5ea9b9749868ebcad8f4c9e70e44f",
+    "treeSha256": "1AD9CB4B9E8B1D106FAE32A5545089D589DFA6CF678888175DA06AB02FE9808D",
+    "localProbe": {
+      "hostname": "app.surklase.com",
+      "shell": 200,
+      "shellIsHtml": true,
+      "csp": true,
+      "deepLink": 200,
+      "apiWithoutAccess": 401,
+      "ok": true
+    },
+    "publicGate": {
+      "status": 302,
+      "location": "https://black-cake-3e41.cloudflareaccess.com/cdn-cgi/access/login/app.surklase.com",
+      "protected": true
+    },
+    "pairedBatchId": "client-b501352158a5ea9b9749868ebcad8f4c9e70e44f-C0028E150084-881B19580AAD",
+    "androidSha256": "C0028E15008438C6334CBC3E2F9F890B057C486E718570D54DCD0B750CDEED98",
+    "pairedWebTreeSha256": "881B19580AADF819A015AA1555BEC80ED0B652242CCBC516D946F1D82FF1FB5B",
+    "productionDeployment": false,
+    "apkDistributed": true,
+    "releaseComplete": false,
+    "status": "AWAITING_BOTH_CLIENT_SMOKE"
+  },
+  "acceptance": {
+    "schemaVersion": 1,
+    "batchId": "client-b501352158a5ea9b9749868ebcad8f4c9e70e44f-C0028E150084-881B19580AAD",
+    "sourceSha": "b501352158a5ea9b9749868ebcad8f4c9e70e44f",
+    "apkSha256": "C0028E15008438C6334CBC3E2F9F890B057C486E718570D54DCD0B750CDEED98",
+    "webTreeSha256": "881B19580AADF819A015AA1555BEC80ED0B652242CCBC516D946F1D82FF1FB5B",
+    "androidSmokePassed": true,
+    "webSmokePassed": true,
+    "evidence": "Android exact-APK installation and checks: call_e770f72f5c424ca6add5f0d0099a76a6, Kurdum — Android kontrolleri sorunsuz. Published web checks: call_4318550cee214d3ba79cc2e54467b1ac, Web de sorunsuz — Teslimatı kapat.",
+    "confirmedAtUtc": "2026-10-23T12:07:57.3060062Z"
+  },
+  "runtimeSmoke": {
+    "at": "2026-10-23T12:04:22.8782222Z",
+    "release": "20261023T120240Z-b501352",
+    "sourceSha": "b501352158a5ea9b9749868ebcad8f4c9e70e44f",
+    "servedEntry": "_expo/static/js/web/index-787317a1a51bdc2e46ca42541517e703.js",
+    "servedSha256": "342AD8C8F6574E0E4CC6FD6789475D4AFB0334D977C1DAF90C081015DC5E63A1",
+    "servedBundleMatches": true,
+    "publicAccessProtected": true,
+    "apiAndDashboard": "HTTP_200",
+    "unresolvedHistoricalNames": 0,
+    "sevenDay": {
+      "recommendations": 8,
+      "wins": 5,
+      "losses": 3,
+      "net": "-1.04"
+    },
+    "ownerAndroidSmoke": true,
+    "ownerWebSmoke": "PASSED_OWNER_CONFIRMATION_AFTER_TECHNICAL_CHECK"
+  },
+  "bffRuntimeCodeSha": "99ac116be61d1265bab640d63e2a02310fe10f39",
+  "previousPair": "43d2e7d",
+  "previousPairRetained": true,
+  "sapChanged": false,
+  "modelChanged": false,
+  "checks": {
+    "lint": "PASS",
+    "webExportAndSecretScan": "PASS",
+    "bffTests": 706,
+    "doctor": "20/20",
+    "signedArm64Build": "PASS",
+    "toolingTests": 32,
+    "clientTests": 670,
+    "typecheck": "PASS"
+  },
+  "apkUrl": "https://drive.google.com/file/d/1TOno0PjiOlhnzlBxLhExEMVYOjFWqOeX/view?usp=drivesdk"
+}
