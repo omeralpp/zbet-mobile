@@ -1,10 +1,10 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-23
-Mod: `QUICK_POLISH_VALIDATED / RELEASE_APPROVAL_PENDING`
-Delivery: `OWNER_ONLY_DEV_PILOT / b501352 PAIR COMPLETE (both smokes passed 2026-10-23)`
+Mod: `JURY_REFINEMENT_PAIR_COMPLETE / OWNER_ACCEPTED`
+Delivery: `OWNER_ONLY_DEV_PILOT / 26f491c PAIR COMPLETE (both smokes passed 2026-10-23)`
 Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
-Local batch: NXT-OBS-200..213, owner authorised 2026-10-23; see
+Released batch: NXT-OBS-200..215, owner authorised 2026-10-23; see
 `JURY_REFINEMENT_BATCH_2026-10-23.md`. Today, verified period-specific scores,
 pressure clarity, compact statistics and shared Android/web UX refinements.
 Pressure (203): owner selected five-minute rolling activity; native pressure
@@ -25,22 +25,30 @@ Clock (213): opt-in source label preserves 45+/90+/added minutes; source status
 Numeric elapsed/model/settlement are unchanged. Source 105′/06 and real preview
 confirm UZATMA; exact screenshot-era zero input was not reproduced.
 Client type/lint, 694 tests + 32 tooling, BFF tests/build and Doctor 20/20 pass;
-Android bundle and verified edge web export pass. Candidate preview is
-`http://127.0.0.1:4186/super`; existing pilot runtime was not restarted.
-Native Android and paired owner acceptance are tracked by TASK-0180 (review
-2026-10-24); no connected adb target. This is local work, not a delivered pair.
+Android bundle, signed ARM64 APK and verified edge web export pass. Client source
+`26f491cc53d08aa3e43f6dabe587f047b14688e6`, BFF runtime code
+`35ed90c8c1b6a84a3dc0b8c049e62ae5e1075361`; pilot restart and local/public health pass.
+Web `20261023T195703Z-26f491c`, source-clean paired APK SHA256 `461D8558E13C…`,
+web tree `A5670B0BCCAC…`. Exact private APK delivery, downloaded hash and installation
+verified. Owner confirmed Android opening/main screens and refreshed web
+Canlı/Super/Toto. `client-release.mjs complete` returned COMPLETE; TASK-0180 closes.
+Full receipts: [release evidence](evidence/JURY_REFINEMENT_RELEASE_2026-10-23.json).
+Previous accepted b501352 and 43d2e7d pairs remain retained.
 Owner accepted the 87/100 design score and requested quick fixes before release.
-Publication intent is recorded; separate Git, BFF restart and final APK signing
-approvals and acceptance of the updated web preview are still pending. No SAP
-write is proposed. See `JURY_REFINEMENT_DELIVERY_2026-10-23.md`.
+Updated web/Git/runtime/signing/coordinated delivery approval:
+`call_5dc8a83a133c41129e06ab43ed23f18d`. No SAP write or model tuning occurred.
+See `JURY_REFINEMENT_DELIVERY_2026-10-23.md`.
 Quick polish (215): Toto header wraps at 320 px; root web pager avoids moving
 offsets on resize (Android retains swipe); unavailable report totals are unknown
 and last verified publications retain frozen facts without active eligibility.
 Chart headlines name the recorded window, and duplicate decision copy is removed.
-Browser resize/search and available/unavailable/recovery checks pass. Native
-Android remains unverified. The original 87 jury score is not silently re-scored.
+Browser resize/search and available/unavailable/recovery checks pass. Owner phone
+basic smoke passed; TalkBack, system text scaling and broader native performance
+remain unverified. The original 87 jury score is not silently re-scored. Reports
+can return TRANSACTION_RECONCILIATION_REQUIRED; source availability is distinct
+from schema acceptance. No stale data becomes active to hide this limitation.
 
-Released from clean pushed client `b501352158a5ea9b9749868ebcad8f4c9e70e44f`:
+Previous accepted release, retained for recovery: client `b501352158a5ea9b9749868ebcad8f4c9e70e44f`:
 last-selection hero/Jinx/Overview/Live, frozen first facts versus fresh current
 quotes, active-only counters/filters, shared v2 totals, crest reset and recovered
 historical names. BFF runtime code is `99ac116be61d1265bab640d63e2a02310fe10f39`;

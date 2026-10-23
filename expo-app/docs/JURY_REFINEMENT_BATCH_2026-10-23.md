@@ -1,6 +1,12 @@
 # Android and web refinement batch — 23 October 2026
 
-Status: LOCAL_VALIDATED / NATIVE_AND_OWNER_ACCEPTANCE_PENDING. Owner explicitly authorised starting
+Final status: COMPLETE, source `26f491c`, after exact APK installation and both
+owner smokes on 2026-10-23. Web `20261023T195703Z-26f491c`; BFF code `35ed90c`.
+See [paired release evidence](evidence/JURY_REFINEMENT_RELEASE_2026-10-23.json).
+Owner accepted the dated 87 score; TalkBack/text scaling and source cadence
+remain follow-ups. Earlier phase statements below are historical checkpoints.
+
+Initial status: LOCAL_VALIDATED / NATIVE_AND_OWNER_ACCEPTANCE_PENDING. Owner explicitly authorised starting
 the consolidated improvements after observation collection. Frozen scope:
 NXT-OBS-200..213 and JURY_DESIGN_REVIEW_2026-10-23.md. Existing unrelated work
 is preserved. Targets: Today, period-correct historical scores, pressure cause

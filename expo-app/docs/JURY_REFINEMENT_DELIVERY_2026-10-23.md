@@ -1,8 +1,20 @@
 # Jury refinement release — 23 October 2026
 
-Status: LOCAL_VALIDATED / UPDATED_WEB_ACCEPTANCE_AND_EXECUTION_GATES_PENDING.
-The owner accepted 87/100 and requested quick fixes followed by publication.
-This plan makes that request reviewable; no release action has run.
+Final status: COMPLETE after both owner smokes on 2026-10-23. Client source
+`26f491c`; BFF runtime code `35ed90c`; web `20261023T195703Z-26f491c`.
+See [verified release evidence](evidence/JURY_REFINEMENT_RELEASE_2026-10-23.json).
+The owner accepted 87/100 and quick polish, then explicitly approved this plan
+in `call_5dc8a83a133c41129e06ab43ed23f18d`. The proposed boundary below is
+preserved as the reviewed plan; all seven delivery steps completed.
+
+APK was privately uploaded through the connected Google Drive plugin to the
+same verified owner-only BTB APK folder because rclone configuration was absent.
+Signature/ARM64, permissions, exact downloaded bytes/hash and owner installation
+were verified. Owner Android smoke: `call_cbd7059794b04f20b7d33de56813efe3`;
+published-web smoke: `call_412fd6cb85754af48e4961d9c5cc2cac`.
+Paired completion gate returned COMPLETE. Prior accepted pairs remain retained.
+The pilot still intermittently reports TRANSACTION_RECONCILIATION_REQUIRED;
+source availability remains an observation, not hidden by this release.
 
 ## Reviewed behavior and source
 

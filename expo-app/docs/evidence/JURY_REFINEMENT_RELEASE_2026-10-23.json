@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "completedAtUtc": "2026-10-23T20:02:05.3982988Z",
+  "approval": {
+    "questionCall": "call_5dc8a83a133c41129e06ab43ed23f18d",
+    "scope": "Reviewed three-repository Git, existing pilot BFF restart, same-source signed ARM64 APK/private delivery and companion web publication plus bounded completion evidence"
+  },
+  "pair": {
+    "schemaVersion": 1,
+    "batchId": "client-26f491cc53d08aa3e43f6dabe587f047b14688e6-461D8558E13C-A5670B0BCCAC",
+    "sourceSha": "26f491cc53d08aa3e43f6dabe587f047b14688e6",
+    "sourceTree": "41da2b522f7ccbb8cb7551591eca8233b6efd7d0",
+    "android": {
+      "sha256": "461D8558E13C74EF17CA78A5AFFC13213A9ACB16F62AECDD569E18832EAC61DB",
+      "bytes": 50485041,
+      "architecture": "arm64-v8a"
+    },
+    "web": {
+      "treeSha256": "A5670B0BCCACB91A9D2AAEE83E627FFB5BB732C286BFF2D9C0F6AAB7F2226369"
+    },
+    "status": "COMPLETE",
+    "releaseComplete": true
+  },
+  "androidDelivery": {
+    "schemaVersion": 1,
+    "batchId": "client-26f491cc53d08aa3e43f6dabe587f047b14688e6-461D8558E13C-A5670B0BCCAC",
+    "sourceSha": "26f491cc53d08aa3e43f6dabe587f047b14688e6",
+    "apkSha256": "461D8558E13C74EF17CA78A5AFFC13213A9ACB16F62AECDD569E18832EAC61DB",
+    "bytes": 50485041,
+    "installedApkSha256": "461D8558E13C74EF17CA78A5AFFC13213A9ACB16F62AECDD569E18832EAC61DB",
+    "privateOwnerOnly": true,
+    "remoteReadbackVerified": true,
+    "signatureVerified": true,
+    "abiVerified": true,
+    "installedVerified": true,
+    "evidence": "Owner response call_cbd7059794b04f20b7d33de56813efe3: Kurdum; açılış ve temel ekranlar sorunsuz. Question named exact 26f491c APK and verified private Drive link.",
+    "confirmedAtUtc": "2026-10-23T19:56:52.9274166Z"
+  },
+  "privateDriveDelivery": {
+    "schemaVersion": 1,
+    "deliveredAtUtc": "2026-10-23T19:54:47.2429168Z",
+    "apk": "btb-mobile-next-jury-20261023-26f491c.apk",
+    "bytes": 50485041,
+    "sha256": "461D8558E13C74EF17CA78A5AFFC13213A9ACB16F62AECDD569E18832EAC61DB",
+    "sourceSha": "26f491cc53d08aa3e43f6dabe587f047b14688e6",
+    "architecture": "arm64-v8a",
+    "certificateSha256": "FAC61745DC0903786FB9EDE62A962B399F7348F0BB6F899B8332667591033B9C",
+    "signatureVerified": true,
+    "abiVerified": true,
+    "drive": {
+      "transport": "Google Drive connector",
+      "folder": "BTB APK",
+      "folderId": "1zD0mLb9Bqf9SoJmxqhvkuYDsrQ_MMNSv",
+      "fileId": "1LmzsE07DJ9956KhB8xggTV5pba6sqvT9",
+      "url": "https://drive.google.com/file/d/1LmzsE07DJ9956KhB8xggTV5pba6sqvT9/view?usp=drivesdk",
+      "permissions": [
+        {
+          "type": "user",
+          "role": "owner"
+        }
+      ]
+    },
+    "privateOwnerOnly": true,
+    "remoteReadbackVerified": true,
+    "readbackBytes": 50485041,
+    "readbackSha256": "461D8558E13C74EF17CA78A5AFFC13213A9ACB16F62AECDD569E18832EAC61DB",
+    "installedVerified": true,
+    "transportNote": "Existing rclone configuration unavailable. Same verified private folder through Google Drive connector; raw authenticated download/hash readback completed."
+  },
+  "webPublication": {
+    "publishedAtUtc": "2026-10-23T19:57:51.8377344Z",
+    "hostname": "app.surklase.com",
+    "release": "20261023T195703Z-26f491c",
+    "sourceSha": "26f491cc53d08aa3e43f6dabe587f047b14688e6",
+    "treeSha256": "336F4E9DF299A7616E3B77F5226966BBA60980DE435D2B4918D21F41CC1AA1C2",
+    "localProbe": {
+      "hostname": "app.surklase.com",
+      "shell": 200,
+      "shellIsHtml": true,
+      "csp": true,
+      "deepLink": 200,
+      "apiWithoutAccess": 401,
+      "ok": true
+    },
+    "publicGate": {
+      "status": 302,
+      "location": "https://black-cake-3e41.cloudflareaccess.com/cdn-cgi/access/login/app.surklase.com",
+      "protected": true
+    },
+    "pairedBatchId": "client-26f491cc53d08aa3e43f6dabe587f047b14688e6-461D8558E13C-A5670B0BCCAC",
+    "androidSha256": "461D8558E13C74EF17CA78A5AFFC13213A9ACB16F62AECDD569E18832EAC61DB",
+    "pairedWebTreeSha256": "A5670B0BCCACB91A9D2AAEE83E627FFB5BB732C286BFF2D9C0F6AAB7F2226369",
+    "productionDeployment": false,
+    "apkDistributed": true,
+    "releaseComplete": false,
+    "status": "AWAITING_BOTH_CLIENT_SMOKE"
+  },
+  "ownerAcceptance": {
+    "schemaVersion": 1,
+    "batchId": "client-26f491cc53d08aa3e43f6dabe587f047b14688e6-461D8558E13C-A5670B0BCCAC",
+    "sourceSha": "26f491cc53d08aa3e43f6dabe587f047b14688e6",
+    "apkSha256": "461D8558E13C74EF17CA78A5AFFC13213A9ACB16F62AECDD569E18832EAC61DB",
+    "webTreeSha256": "A5670B0BCCACB91A9D2AAEE83E627FFB5BB732C286BFF2D9C0F6AAB7F2226369",
+    "androidSmokePassed": true,
+    "webSmokePassed": true,
+    "evidence": "Android owner response call_cbd7059794b04f20b7d33de56813efe3: Kurdum; açılış ve temel ekranlar sorunsuz. Published-web owner response call_412fd6cb85754af48e4961d9c5cc2cac: Web ekranları da sorunsuz; question requested refreshed Canlı/Super/Toto checks. Exact source26f491c pair; served asset hash verified and protected public gate passed.",
+    "confirmedAtUtc": "2026-10-23T20:00:02.98481Z"
+  },
+  "servedEntrySha256": "86AED7D4E777AED69237D2AC3CE4FAE411176F8A43C60AF2FA2595BB7E48B2D6",
+  "bffRuntimeCodeSha": "35ed90c8c1b6a84a3dc0b8c049e62ae5e1075361",
+  "previousAcceptedPair": {
+    "sourceSha": "b501352158a5ea9b9749868ebcad8f4c9e70e44f",
+    "webRelease": "20261023T120240Z-b501352",
+    "retained": true
+  },
+  "checks": {
+    "clientTests": 694,
+    "toolingTests": 32,
+    "typeLintBrand": "PASS",
+    "bffTestsBuild": "PASS",
+    "doctor": "20/20",
+    "androidSignatureAbi": "PASS",
+    "webAssetAndAccess": "PASS",
+    "androidOwnerSmoke": "PASS",
+    "webOwnerSmoke": "PASS"
+  },
+  "platformException": "Root web page swiping/animation disabled to preserve responsive offsets; tabs/rail substitute. Android swipes retained.",
+  "limits": [
+    "Dated jury score remains87, owner accepted; no 90+ re-score.",
+    "Owner phone opening/main-screen smoke passed; TalkBack, system text scaling and broader native performance unverified.",
+    "Reports intermittently return TRANSACTION_RECONCILIATION_REQUIRED; source availability distinct from contract pass.",
+    "No model/star weights, SAP writes or production deployment. Live pressure/star learning gates remain separate."
+  ]
+}

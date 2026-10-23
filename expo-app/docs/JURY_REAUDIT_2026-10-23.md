@@ -1,5 +1,10 @@
 # Design jury re-audit — 23 October 2026
 
+Delivery follow-up: owner accepted the 87 score, quick polish and coordinated
+release. Exact APK installation and Android/web basic smokes passed; paired
+release `26f491c` is COMPLETE. [Evidence](evidence/JURY_REFINEMENT_RELEASE_2026-10-23.json).
+The dated score/scope below remains unchanged; no native accessibility re-score.
+
 **Verdict: 87/100 overall; the 90+ target has not been reached.**
 Mobile responsive layout: **86/100, provisional**. Desktop web: **88/100**.
 Native Android is not scored as verified: the new candidate has no physical
