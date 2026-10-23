@@ -13,6 +13,7 @@ import {
   View
 } from "react-native";
 import { matchInsightsQuery, matchesQuery } from "@/src/api/queries";
+import { usePublishedSelections } from "@/src/api/use-published-selections";
 import { DecisionFilterChip } from "@/src/components/DecisionFilterChip";
 import { MatchCard } from "@/src/components/MatchCard";
 import { useRebuildClock } from "@/src/components/RebuildEvidencePanel";
@@ -127,7 +128,7 @@ function LiveSwitch({
 }
 
 export default function LiveScreen() {
-  const now = useRebuildClock();
+  const clock = useRebuildClock();
   const params = useLocalSearchParams<{
     filter?: string | string[];
     scope?: string | string[];
@@ -152,6 +153,10 @@ export default function LiveScreen() {
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const query = useQuery(matchesQuery);
+  // A newly received quote can postdate the previous one-second clock tick.
+  // Use its actual client receipt time, never treating a future quote as fresh.
+  const now = Math.max(clock,query.dataUpdatedAt);
+  const publications = usePublishedSelections(query.data);
   const insightsQuery = useQuery(matchInsightsQuery);
   const pinnedEligibleKeys = useMemo(
     () => (query.data ?? []).map((match) => match.key),
@@ -185,15 +190,15 @@ export default function LiveScreen() {
       FIXTURE: source.filter((match) =>
         matchLiveTab(match, "FIXTURE", starFilter, now)
       ).length,
-      STAR: source.filter((match) => matchLiveTab(match, "STAR", starFilter, now)).length
+      STAR: source.filter((match) => matchLiveTab(match, "STAR", starFilter, now, publications.records, publications.unavailable)).length
     };
-  }, [query.data, starFilter, now]);
+  }, [query.data, starFilter, now, publications.records, publications.unavailable]);
   const sectionsByTab = useMemo(() => {
     const source = query.data ?? [];
     return localTabs.reduce(
       (result, pageTab) => {
         const needle = normalizeSearchText(search);
-        const pageMatches = source.filter(match => matchLiveTab(match, pageTab, starFilter, now));
+        const pageMatches = source.filter(match => matchLiveTab(match, pageTab, starFilter, now, publications.records, publications.unavailable));
         if (needle) {
           const found = pageMatches.map((match, index) => ({ match, index,
             score: searchTextScore(`${match.homeTeam} ${match.awayTeam} ${match.league}`, needle) }))
@@ -215,7 +220,7 @@ export default function LiveScreen() {
         ReturnType<typeof groupMatchesByKickoff>
       >
     );
-  }, [pinnedKeys, query.data, starFilter, search, now]);
+  }, [pinnedKeys, query.data, starFilter, search, now, publications.records, publications.unavailable]);
   const insightMap = useMemo(
     () =>
       new Map(
@@ -275,7 +280,7 @@ export default function LiveScreen() {
           />
           <DecisionFilterChip
             active={tab === "STAR"}
-            count={tabCounts.STAR}
+            {...(!publications.pending && !publications.unavailable ? {count:tabCounts.STAR} : {})}
             onActivate={() =>
               router.setParams({ scope: "STAR", decision: starFilter })
             }
@@ -299,7 +304,7 @@ export default function LiveScreen() {
         </View>
         {search ? <Pressable accessibilityRole="button" accessibilityLabel="Maç aramasını temizle" onPress={() => setSearch("")} style={styles.clearSearch}><Text style={styles.clearSearchText}>Temizle</Text></Pressable> : null}</View>
       {query.data ? <Text accessibilityLiveRegion="polite" style={[styles.resultCount, splitLayout && styles.resultCountWide]}>
-        {tabCounts[tab]} maç bu kapsamda · {(sectionsByTab[tab] ?? []).reduce((count, section) => count + section.data.length, 0)} sonuç
+        {tab === "STAR" && publications.pending ? "Seçim kayıtları yükleniyor…" : tab === "STAR" && publications.unavailable ? "Seçim kayıtları doğrulanamıyor" : `${tabCounts[tab]} maç bu kapsamda · ${(sectionsByTab[tab] ?? []).reduce((count, section) => count + section.data.length, 0)} sonuç`}
       </Text> : null}
       </View>
 
@@ -340,7 +345,9 @@ export default function LiveScreen() {
               numColumns={grid.columns}
               {...(grid.rowStyle ? { columnWrapperStyle: grid.rowStyle } : {})}
               ListEmptyComponent={
-                <EmptyState
+                pageTab === "STAR" && publications.pending ? <LoadingState label="Seçim kayıtları yükleniyor" />
+                : pageTab === "STAR" && publications.unavailable ? <ErrorState error={publications.query.error} message="Aktif seçimler doğrulanamadı." onRetry={() => publications.query.refetch()} />
+                : <EmptyState
                   kind="NO_LIVE_MATCH"
                   message={
                     pageTab === "FIXTURE"
@@ -375,9 +382,9 @@ export default function LiveScreen() {
                 <RefreshControl
                   colors={[semantic.live]}
                   onRefresh={() =>
-                    Promise.all([query.refetch(), insightsQuery.refetch()])
+                    Promise.all([query.refetch(), insightsQuery.refetch(), ...(query.data?.some(match=>match.rebuild) ? [publications.query.refetch()] : [])])
                   }
-                  refreshing={query.isRefetching || insightsQuery.isRefetching}
+                  refreshing={query.isRefetching || insightsQuery.isRefetching || publications.query.isRefetching}
                   tintColor={semantic.live}
                 />
               }

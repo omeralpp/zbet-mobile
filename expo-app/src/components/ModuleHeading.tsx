@@ -30,7 +30,7 @@ export function ModuleHeading({
   return (
     <View style={styles.container}>
       <View style={styles.copy}>
-        <Text style={styles.eyebrow}>{eyebrow}</Text>
+        {eyebrow && !title.toLocaleLowerCase("tr-TR").includes(eyebrow.toLocaleLowerCase("tr-TR")) ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
         <View style={styles.titleContent}>
           {leading ?? null}
           <Text accessibilityRole="header" role="heading" aria-level={2} style={styles.title}>{title}</Text>
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: spacing.sm,
     marginBottom: spacing.md,
-    marginTop: spacing.xxl
+    marginTop: spacing.lg
   },
   copy: {
     flex: 1,

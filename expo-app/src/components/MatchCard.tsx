@@ -1,7 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { rebuildCohortsReportQuery } from "@/src/api/queries";
+import { usePublishedSelections } from "@/src/api/use-published-selections";
 import { usePathname, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { MatchInsight, MatchSummary } from "@/src/api/schemas";
@@ -135,27 +133,17 @@ export function MatchCard({
   const localNow = useRebuildClock(clock === undefined);
   const now = clock ?? localNow;
   // All cards share one report/cache; no per-card history network request.
-  const publications = useQuery({ ...rebuildCohortsReportQuery, enabled: Boolean(sourceMatch.rebuild) });
-  const attemptedPublication = useRef<string | null>(null);
-  const currentId = sourceMatch.rebuild?.current?.decisionId;
-  const hasCurrentPublication = publications.data?.recommendations.some(record=>record.decisionId===currentId);
-  const refreshPublications = publications.refetch;
-  useEffect(() => {
-    // A new notification/current identity need not wait for the 30 s report
-    // poll. Retry only once per identity; concurrent cards share one fetch.
-    if (currentId && publications.isSuccess && !hasCurrentPublication && attemptedPublication.current !== currentId) {
-      attemptedPublication.current = currentId;
-      void refreshPublications({cancelRefetch:false});
-    }
-  }, [currentId, hasCurrentPublication, publications.isSuccess, refreshPublications]);
-  const hero = rebuildCardHero(sourceMatch, publications.data?.recommendations ?? [], now);
-  const active = activeMatch(sourceMatch, now);
+  const publications = usePublishedSelections([sourceMatch]);
+  const hero = rebuildCardHero(sourceMatch, publications.records, now, publications.unavailable);
+  const active = activeMatch(sourceMatch, now, publications.records, publications.unavailable);
   const match = hero ? { ...active, selectedOdd: hero.record.market, rating: hero.record.stars,
     liveRate: Number(hero.record.quote), currentRate: hero.currentQuote ? Number(hero.currentQuote) : null }
     : sourceMatch.rebuild ? { ...active, selectedOdd: "", rating: 0, liveRate: null, currentRate: null } : active;
-  const emptySelection = sourceMatch.rebuild && currentRebuild(sourceMatch.rebuild, now) ? "Seçim kaydı bekleniyor" : "Şu anda seçim yok";
+  const emptySelection = sourceMatch.rebuild && publications.pending ? "Seçim kaydı yükleniyor"
+    : sourceMatch.rebuild && publications.unavailable ? "Seçim kaydı doğrulanamıyor"
+    : sourceMatch.rebuild && currentRebuild(sourceMatch.rebuild, now) ? "Seçim kaydı bekleniyor" : "Şu anda seçim yok";
   const live = match.status === "LIVE" || match.status === "HALF_TIME";
-  const minuteProgress = deriveMatchMinuteProgress(match.status, match.elapsed);
+  const minuteProgress = deriveMatchMinuteProgress(match.status, match.elapsed, match.clock);
   const kickoff = formatFixtureDateTime(match.matchDate, match.matchTime);
   const currentMarket = hero ? {value: formatRate(match.currentRate), label: hero.quoteLabel} : formatCurrentMarketRate(
     match.currentRate,

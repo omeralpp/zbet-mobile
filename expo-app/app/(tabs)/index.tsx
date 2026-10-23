@@ -21,9 +21,10 @@ import { SectionHeader } from "@/src/components/SectionHeader";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import { TotoProgramCard } from "@/src/components/TotoProgramCard";
-import { dashboardQuery, matchInsightsQuery } from "@/src/api/queries";
+import { dashboardQuery, matchInsightsQuery, matchesQuery } from "@/src/api/queries";
+import { usePublishedSelections } from "@/src/api/use-published-selections";
 import { RecentRecommendations, useRebuildWeek, useRebuildClock } from "@/src/components/RebuildEvidencePanel";
-import { activeMatch, activeStarCounts } from "@/src/utils/rebuild-cards";
+import { activeMatch, activeStarCounts, publishedStarCounts } from "@/src/utils/rebuild-cards";
 import { formatRatio, formatUnits, unitsTone } from "@/src/utils/rebuild-display";
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
@@ -41,10 +42,16 @@ import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { formatTodayEyebrow } from "@/src/utils/format";
 
 export default function DashboardScreen() {
-  const now = useRebuildClock();
+  const clock = useRebuildClock();
   const router = useRouter();
   const { filter: liveStarFilter } = useLiveStarFilter();
   const query = useQuery(dashboardQuery);
+  const hasRebuild = query.data?.liveStarSelections !== undefined || !!query.data?.featuredMatches.some(match=>match.rebuild);
+  // Share the Live screen's complete snapshot cache; featured matches alone
+  // are capped and cannot supply a truthful star count.
+  const snapshots = useQuery({...matchesQuery,enabled:hasRebuild});
+  const now = Math.max(clock,snapshots.dataUpdatedAt);
+  const publications = usePublishedSelections(hasRebuild ? snapshots.data ?? query.data?.featuredMatches : undefined);
   const insights = useQuery(matchInsightsQuery);
   const breakpoint = useBreakpoint();
   // Desktop (v40 W-Özet): four separate figure tiles with Jinx as the fourth,
@@ -66,9 +73,15 @@ export default function DashboardScreen() {
   );
 
   const dashboard = query.data;
-  const starCounts = dashboard ? activeStarCounts(dashboard, now) : null;
-  const featuredMatches = [...(dashboard?.featuredMatches ?? [])].sort((a,b) => activeMatch(b,now).rating - activeMatch(a,now).rating);
-  const featuredMode = dashboard?.featuredMatchMode === "SELECTED_LIVE" && !featuredMatches.some(match=>activeMatch(match,now).selectedOdd)
+  const selectionUnavailable = publications.unavailable || snapshots.isError;
+  const starCounts = hasRebuild ? snapshots.isPending || publications.pending || selectionUnavailable ? null
+    : publishedStarCounts(snapshots.data ?? [],publications.records,now)
+    : dashboard ? activeStarCounts(dashboard,now) : null;
+  const activeSelection = (match: NonNullable<typeof dashboard>["featuredMatches"][number]) => activeMatch(match,now,publications.records,selectionUnavailable);
+  const selectedMatches = hasRebuild ? (snapshots.data ?? []).filter(match=>["LIVE","HALF_TIME"].includes(match.status) && activeSelection(match).selectedOdd)
+    .sort((a,b)=>activeSelection(b).rating-activeSelection(a).rating).slice(0,3) : [];
+  const featuredMatches = selectedMatches.length ? selectedMatches : [...(dashboard?.featuredMatches ?? [])].sort((a,b)=>activeSelection(b).rating-activeSelection(a).rating);
+  const featuredMode = selectedMatches.length ? "SELECTED_LIVE" : dashboard?.featuredMatchMode === "SELECTED_LIVE" && !featuredMatches.some(match=>activeSelection(match).selectedOdd)
     ? "PRESSURE_LIVE" : dashboard?.featuredMatchMode ?? "EMPTY";
   const week = useRebuildWeek();
   const featuredTitle = {
@@ -102,7 +115,7 @@ export default function DashboardScreen() {
     />,
     <MetricTile
       accent={colors.gold}
-      detail="canlı maç filtresi"
+      detail={hasRebuild && !starCounts ? selectionUnavailable ? "kayıtlar doğrulanamıyor" : "kayıtlar yükleniyor" : "canlı maç filtresi"}
       icon="star"
       key="stars"
       label={starMetricLabel(liveStarFilter)}
@@ -112,9 +125,7 @@ export default function DashboardScreen() {
           params: { scope: "STAR", decision: liveStarFilter }
         } as never)
       }
-      value={String(
-        liveStarMetricCount(starCounts ?? dashboard.liveStarCounts, liveStarFilter)
-      )}
+      value={starCounts ? String(liveStarMetricCount(starCounts,liveStarFilter)) : "—"}
     />,
     // The rebuild's own seven-day result at the original quote, one
     // hypothetical unit per recommendation; the full report and its caveats
@@ -174,7 +185,7 @@ export default function DashboardScreen() {
     )
   };
 
-  if (dashboard?.featuredMatches.length) {
+  if (featuredMatches.length) {
     moduleNodes.featured = (
       <>
         <SectionHeader
@@ -238,15 +249,15 @@ export default function DashboardScreen() {
         refreshControl: (
           <RefreshControl
             colors={[colors.green]}
-            onRefresh={() => query.refetch()}
-            refreshing={query.isRefetching}
+            onRefresh={() => Promise.all([query.refetch(),insights.refetch(),...(hasRebuild ? [snapshots.refetch(),publications.query.refetch()] : [])])}
+            refreshing={query.isRefetching || (hasRebuild && (snapshots.isRefetching || publications.query.isRefetching))}
             tintColor={colors.green}
           />
         )
       }}
     >
       {!dashboard ? query.isLoading ? <LoadingState label="Maç ve program özeti hazırlanıyor" /> : <ErrorState error={query.error} onRetry={() => { void query.refetch(); }} /> : query.isError ? <Text accessibilityRole="alert" style={styles.scopeNote}>Özet yenilenemedi; son alınan maç ve program verileri gösteriliyor.</Text> : null}
-      {dashboard && dashboard.featuredMatchMode !== "SELECTED_LIVE" ? <Text style={styles.selectionNotice}>
+      {dashboard && featuredMode !== "SELECTED_LIVE" ? <Text style={styles.selectionNotice}>
         Şu an öne çıkan canlı BTB seçimi yok.
       </Text> : null}
       <ReorderableModuleList

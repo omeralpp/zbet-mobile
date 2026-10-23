@@ -3,7 +3,7 @@ import test from "node:test";
 import fixture from "../api/fixtures/btb-rebuild-v1.json";
 import { rebuildMatchSchema, rebuildQuotesSchema } from "../api/rebuild-schemas";
 import { mockMatchSummaries, mockDashboard } from "../api/mock-data";
-import { activeMatch, activeStarCounts, rebuildCardHero } from "./rebuild-cards";
+import { activeMatch, activeStarCounts, publishedStarCounts, rebuildCardHero } from "./rebuild-cards";
 import { displayedDecision, rebuildHero, requestedDecision } from "./rebuild-hero";
 import { publishedExplanation } from "./rebuild-presentation";
 import { matchLiveTab } from "./live-match-tabs";
@@ -37,7 +37,7 @@ test("list cards retain first facts while active filtering and all counts expire
   assert.equal(hero.currentQuote,null);
 });
 
-test("an inactive card has its own fresh price without entering active-star counts", () => {
+test("a playable last selection enters star filters and counts even after native eligibility ends", () => {
   const { match, history, now } = setup();
   match.rebuild.current = null;
   match.rebuild.availability = "WAITING_DATA";
@@ -46,7 +46,78 @@ test("an inactive card has its own fresh price without entering active-star coun
   candidate.quote = "1.45";
   assert.equal(rebuildCardHero(match,history,now)!.currentQuote,"1.45");
   assert.equal(rebuildCardHero(match,history,now)!.active,false);
+  assert.equal(rebuildCardHero(match,history,now)!.playable,true);
+  assert.equal(rebuildCardHero(match,history,now)!.stateLabel,"SEÇİM AKTİF");
   assert.equal(matchLiveTab(match,"STAR","STAR_1_PLUS",now),false);
+  assert.equal(matchLiveTab(match,"STAR","STAR_3_PLUS",now,history),true);
+  assert.equal(matchLiveTab(match,"STAR","STAR_4_PLUS",now,history),false);
+  assert.equal(activeMatch(match,now,history).rating,3);
+  assert.equal(activeMatch(match,now,history).currentRate,1.45);
+  assert.equal(publishedStarCounts([match],history,now).STAR_3,1);
+});
+
+test("published stars stay frozen when the native current stars change",()=>{
+  const {match,history,now}=setup();
+  match.rebuild.current!.stars=5;
+  assert.equal(activeMatch(match,now,history).rating,3);
+  assert.equal(matchLiveTab(match,"STAR","STAR_4_PLUS",now,history),false);
+  assert.equal(publishedStarCounts([match,match],history,now).ALL,1);
+  assert.equal(publishedStarCounts([match],history,now).STAR_5,0);
+});
+
+test("retained last-verified history stays visible but cannot reactivate while its report is unavailable",()=>{
+  const {match,history,now}=setup();
+  const hero=rebuildCardHero(match,history,now,true)!;
+  assert.equal(hero.record.decisionId,history[0]!.decisionId);
+  assert.equal(hero.record.quote,history[0]!.quote);
+  assert.equal(hero.record.stars,history[0]!.stars);
+  assert.equal(hero.currentQuote,null);
+  assert.equal(hero.playable,false);
+  assert.equal(hero.stateLabel,"PİYASA DOĞRULANIYOR");
+  assert.equal(publishedStarCounts([match],history,now,true).ALL,0);
+  assert.equal(matchLiveTab(match,"STAR","STAR_1_PLUS",now,history,true),false);
+});
+
+test("expiry, refresh and availability use the same last-selection rule for filters and counts",()=>{
+  const {match,history,now}=setup();
+  const check=(at:number,expected:boolean,error=false)=>{
+    assert.equal(matchLiveTab(match,"STAR","STAR_1_PLUS",at,history,error),expected);
+    assert.equal(!!activeMatch(match,at,history,error).selectedOdd,expected);
+    assert.equal(publishedStarCounts([match],history,at,error).ALL,expected?1:0);
+  };
+  check(now,true); check(now+15_000,true); check(now+15_001,false); check(now,false,true);
+  match.rebuildQuotes.asOf=new Date(now+20_000).toISOString();
+  match.rebuildQuotes.candidates.find(c=>c.market===history[0]!.market)!.quoteAt=match.rebuildQuotes.asOf;
+  check(now+20_000,true);
+  assert.equal(matchLiveTab(match,"STAR","STAR_1_PLUS",now+20_000,[]),false);
+});
+
+test("closed, decided, unknown and settled selections never enter last-selection star filters",()=>{
+  for(const reason of ["QUOTE_CLOSED","MARKET_ALREADY_DECIDED","PERIOD_CONTEXT_INVALID"] as const){
+    const {match,history,now}=setup();
+    const candidate=match.rebuildQuotes.candidates.find(c=>c.market===history[0]!.market)!;
+    candidate.admitted=false; candidate.reason=reason;
+    assert.equal(matchLiveTab(match,"STAR","STAR_1_PLUS",now,history),false,reason);
+    assert.equal(publishedStarCounts([match],history,now).ALL,0,reason);
+  }
+  for(const state of ["WIN","LOSS","VOID","UNRESOLVED"] as const){
+    const {match,history,now}=setup(); history[0]!.result.state=state;
+    assert.equal(matchLiveTab(match,"STAR","STAR_1_PLUS",now,history),false,state);
+  }
+  const {match,history,now}=setup();
+  assert.equal(matchLiveTab({...match,status:"HALF_TIME"},"STAR","STAR_1_PLUS",now,history),true);
+  assert.equal(publishedStarCounts([{...match,status:"FINISHED"}],history,now).ALL,0);
+});
+
+test("a newer publication replaces the earlier market rather than reviving an old playable selection",()=>{
+  const {match,history,now}=setup();
+  const next={...history[0]!,decisionId:"A".repeat(32),publishedAt:match.rebuild.asOf,market:"MsX",stars:2 as const};
+  const candidate=match.rebuildQuotes.candidates.find(c=>c.market===next.market)!;
+  candidate.admitted=false; candidate.reason="QUOTE_CLOSED";
+  assert.equal(publishedStarCounts([match],[...history,next],now).ALL,0);
+  candidate.admitted=true; candidate.reason="ADMITTED";candidate.quote="1.67";candidate.quoteAt=match.rebuild.asOf;
+  assert.equal(publishedStarCounts([match],[...history,next],now).STAR_2,1);
+  assert.equal(matchLiveTab(match,"STAR","STAR_3_PLUS",now,[...history,next]),false);
 });
 
 test("wrong-fixture and duplicate quote packets cannot price the last selection", () => {
@@ -54,6 +125,7 @@ test("wrong-fixture and duplicate quote packets cannot price the last selection"
   match.rebuild.current = null; match.rebuild.availability = "WAITING_DATA";
   match.rebuildQuotes.matchKey = "other";
   assert.equal(rebuildCardHero(match,history,now)!.currentQuote,null);
+  assert.equal(publishedStarCounts([match],history,now).ALL,0);
   const packet = {...match.rebuildQuotes,candidates:[...match.rebuildQuotes.candidates,match.rebuildQuotes.candidates[0]!]};
   assert.equal(rebuildQuotesSchema.safeParse(packet).success,false);
 });
@@ -63,6 +135,9 @@ test("older BFFs can provide their validated active quote, never an inactive fal
   const {rebuildQuotes:_quotes,...older}=match;
   assert.equal(rebuildCardHero(older,history,now)!.currentQuote,match.rebuild.current!.quote);
   assert.equal(rebuildCardHero(older,history,now+16_000)!.currentQuote,null);
+  assert.equal(publishedStarCounts([older],history,now).ALL,1);
+  match.rebuildQuotes.matchKey="other";
+  assert.equal(publishedStarCounts([match],history,now).ALL,0);
 });
 
 test("decision panels default to the latest publication but preserve explicit historical and push targets", () => {

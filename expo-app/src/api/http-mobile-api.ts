@@ -37,7 +37,7 @@ import { rebuildCohortsReportSchema, rebuildMatchSchema, rebuildReportSchema } f
 import { rebuildPressureHistorySchema, rebuildStatisticsSchema, rebuildPoolPathSchema } from "./rebuild-statistics-schemas";
 
 const requestTimeoutMs = 15_000;
-const decisionContextHeaders = { "X-BTB-Decision-Context": "decision-context.v3", "X-BTB-Rebuild": "btb-rebuild.v1", "X-BTB-Selection-Display": "btb-selection-display.v1" };
+const decisionContextHeaders = { "X-BTB-Decision-Context": "decision-context.v3", "X-BTB-Rebuild": "btb-rebuild.v1", "X-BTB-Selection-Display": "btb-selection-display.v1", "X-BTB-Match-Clock":"match-clock.v1" };
 
 export function createHttpMobileApi(baseUrl: string): MobileApi {
   async function request<T>(
@@ -148,13 +148,13 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
     getRebuildReport: signal => request("/v1/btb/rebuild/v1/report", rebuildReportSchema,
       { headers: { "X-BTB-Rebuild": "btb-rebuild.v1" } }, signal),
     getRebuildCohortsReport: signal => request("/v1/btb/rebuild/v2/report", rebuildCohortsReportSchema,
-      { headers: { "X-BTB-Rebuild": "btb-rebuild.v1" } }, signal),
+      { headers: { "X-BTB-Rebuild": "btb-rebuild.v1", "X-BTB-Report-Periods": "today.v1" } }, signal),
     getRebuildStatistics: (key, signal) => request(`/v1/btb/rebuild/v1/matches/${encodeURIComponent(key)}/statistics`, rebuildStatisticsSchema,
       { headers: { "X-BTB-Rebuild": "btb-rebuild.v1" } }, signal),
     getRebuildPressureHistory: (key, signal) => request(`/v1/btb/rebuild/v1/matches/${encodeURIComponent(key)}/pressure-history`, rebuildPressureHistorySchema,
-      { headers: { "X-BTB-Rebuild": "btb-rebuild.v1" } }, signal),
+      { headers: { "X-BTB-Rebuild": "btb-rebuild.v1", "X-BTB-Pressure-Activity": "rolling-5m.v1" } }, signal),
     getRebuildPoolPath: (key, signal) => request(`/v1/btb/rebuild/v1/matches/${encodeURIComponent(key)}/pool-path`, rebuildPoolPathSchema,
-      { headers: { "X-BTB-Rebuild": "btb-rebuild.v1" } }, signal),
+      { headers: { "X-BTB-Rebuild": "btb-rebuild.v1", "X-BTB-Pool-Distribution": "score-distribution.v1" } }, signal),
     getDashboard: (signal) =>
       request("/v1/dashboard", dashboardSchema, { headers: decisionContextHeaders }, signal),
     getMatches: (signal) =>

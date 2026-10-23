@@ -3,7 +3,7 @@ import test from "node:test";
 import { mockMatches, mockRetainedJourney } from "../api/mock-data";
 import { decisionContextSchema, type MatchDetail, type MatchJourney, type MatchJourneyPoint } from "../api/schemas";
 import { readFile } from "node:fs/promises";
-import { edgeSafeLabel, pressureGoalGroups, pressureHeadline, pressureLeader, pressureSeries } from "./pressure-chart";
+import { edgeSafeLabel, pressureGoalAnnotation, pressureGoalGroups, pressureHeadline, pressureLeader, pressureSeries } from "./pressure-chart";
 
 test("nearby goals share a label without losing minutes or team", () => {
   const goals = [{key:"a",minute:2,side:"HOME" as const},{key:"b",minute:3,side:"HOME" as const},{key:"c",minute:3,side:"AWAY" as const},{key:"d",minute:88,side:"HOME" as const}];
@@ -13,6 +13,39 @@ test("nearby goals share a label without losing minutes or team", () => {
     assert.deepEqual(groups[0]!.goals.map(goal => goal.minute),[2,3]);
     assert.equal(groups[1]!.side,"AWAY");
     assert.deepEqual(goals.map(goal => goal.minute),[2,3,3,88]);
+  }
+});
+
+test("an observed score update cannot be labelled as a confirmed provider goal",()=>{
+  const groups=pressureGoalGroups([{key:"observed:a",minute:56,side:"HOME",kind:"SCORE_UPDATE"},
+    {key:"provider:b",minute:57,side:"HOME",kind:"GOAL"}],minute=>minute*4);
+  assert.equal(groups.length,2);
+  assert.equal(groups[0]!.goals[0]!.kind,"SCORE_UPDATE");
+  assert.equal(groups[1]!.goals[0]!.kind,"GOAL");
+});
+
+test("gold emphasis requires an explicit goal, never an observed or untyped score change",()=>{
+  const goal={key:"event:a",minute:30,side:"HOME" as const,kind:"GOAL" as const};
+  assert.equal(pressureGoalAnnotation([goal]).confirmed,true);
+  assert.equal(pressureGoalAnnotation([goal]).text,"30′ gol");
+  assert.equal(pressureGoalAnnotation([{...goal,kind:"SCORE_UPDATE"}]).confirmed,false);
+  const {kind:_kind,...untyped}=goal;
+  assert.equal(pressureGoalAnnotation([untyped]).confirmed,false);
+  assert.equal(pressureGoalAnnotation([goal,{...goal,kind:"SCORE_UPDATE"}]).confirmed,false);
+  assert.equal(pressureGoalAnnotation([]).confirmed,false);
+});
+
+test("a shared goal label retains both exact event minutes without changing inputs",()=>{
+  const goals=[{key:"a",minute:88,side:"AWAY" as const,kind:"GOAL" as const},
+    {key:"b",minute:90,side:"AWAY" as const,kind:"GOAL" as const}];
+  const before=structuredClone(goals);
+  const annotation=pressureGoalAnnotation(goals);
+  assert.equal(annotation.text,"88′–90′ · 2 gol");
+  assert.deepEqual(goals,before);
+  for(const width of [160,320,900]){
+    const label=edgeSafeLabel(width-8,8,width-8,annotation.width,annotation.gap);
+    assert.equal(label.anchor,"end");
+    assert.ok(label.x-annotation.width>=8);
   }
 });
 

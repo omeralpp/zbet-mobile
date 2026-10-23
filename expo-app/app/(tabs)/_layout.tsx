@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import TopTabs from "expo-router/js-top-tabs";
-import { StyleSheet, useWindowDimensions } from "react-native";
+import { Platform, StyleSheet, useWindowDimensions } from "react-native";
 import { BottomTabBar } from "@/src/navigation/BottomTabBar";
 import { useReducedMotion } from "@/src/theme/use-reduced-motion";
 import { colors } from "@/src/theme/theme";
@@ -8,23 +8,26 @@ import { colors } from "@/src/theme/theme";
 export default function TabLayout() {
   const { width } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
+  // Web changes destinations through its tabs/rail. Avoid retaining a moving
+  // swipe offset across responsive width changes; Android keeps native swipes.
+  const animatePages = Platform.OS !== "web" && !reduceMotion;
   const initialLayout = useMemo(() => ({ width }), [width]);
 
   return (
     <TopTabs
-      animationEnabled={!reduceMotion}
+      animationEnabled={animatePages}
       initialLayout={initialLayout}
       keyboardDismissMode="on-drag"
       lazy={false}
       overScrollMode="never"
       sceneContainerStyle={styles.scene}
       screenOptions={{
-        animationEnabled: !reduceMotion,
+        animationEnabled: animatePages,
         lazy: false,
         sceneStyle: styles.scene,
-        swipeEnabled: !reduceMotion
+        swipeEnabled: animatePages
       }}
-      swipeEnabled={!reduceMotion}
+      swipeEnabled={animatePages}
       tabBar={BottomTabBar}
       tabBarPosition="bottom"
     >

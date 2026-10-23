@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { matchPeriodScoreQuery, matchQuery, rebuildCohortsReportQuery, rebuildMatchQuery } from "@/src/api/queries";
 import type { RebuildRecommendation } from "@/src/api/rebuild-schemas";
+import type { MatchSummary } from "@/src/api/schemas";
 import { ListPerforation, ResultPill, TicketSeam, toneColor } from "@/src/components/DecisionTicket";
 import { PitchMarkings } from "@/src/components/PitchMarkings";
 import { RatingStars } from "@/src/components/RatingStars";
@@ -31,7 +32,7 @@ import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { colors, iconSizes, interaction, semantic, shadows, spacing, typeScale } from "@/src/theme/theme";
-import { formatFixtureDateTime, formatSelection } from "@/src/utils/format";
+import { formatElapsed, formatFixtureDateTime, formatSelection } from "@/src/utils/format";
 import { formatDecimal, formatQuote, formatScore, formatSupport, formatUnits, resultPresentation, unitsTone } from "@/src/utils/rebuild-display";
 import { publishedParts } from "@/src/utils/rebuild-log";
 import { publishedExplanation } from "@/src/utils/rebuild-presentation";
@@ -82,10 +83,10 @@ function CapBar({ label, value }: { label: string; value: number }) {
 }
 
 /** The current match state below the seam: live score, final score, or not started. */
-function currentState(match: { status: string; homeScore: number; awayScore: number; elapsed: number } | undefined) {
+function currentState(match: Pick<MatchSummary,"status"|"homeScore"|"awayScore"|"elapsed"|"clock"> | undefined) {
   if (!match) return { score: "—", label: "maç durumu bekleniyor", live: false };
   if (match.status === "LIVE" || match.status === "HALF_TIME") {
-    return { score: `${match.homeScore}–${match.awayScore}`, label: match.status === "HALF_TIME" ? "devre arası" : `${match.elapsed}′ canlı`, live: true };
+    return { score: `${match.homeScore}–${match.awayScore}`, label: match.status === "HALF_TIME" ? "devre arası" : `${formatElapsed(match.status,match.elapsed,match.clock)} canlı`, live: true };
   }
   if (match.status === "NOT_STARTED") return { score: "—", label: "başlamadı", live: false };
   return { score: `${match.homeScore}–${match.awayScore}`, label: "maç sonucu", live: false };

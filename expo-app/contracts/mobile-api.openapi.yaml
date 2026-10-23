@@ -45,9 +45,13 @@ paths:
   /v1/btb/rebuild/v1/matches/{key}/pressure-history:
     get:
       operationId: getRebuildPressureHistory
-      description: Persisted verified RB1 pressure intervals and observations. Not full-match coverage; the expected-score pool path is not exposed.
+      description: Persisted verified RB1 pressure intervals and observations. Optional five-minute activity is display-only, never a selection input. Not full-match coverage.
       parameters:
         - $ref: "#/components/parameters/Key"
+        - in: header
+          name: X-BTB-Pressure-Activity
+          schema: { type: string, enum: [rolling-5m.v1] }
+          description: Opt into a separate acquisition-time activity estimate. Absent preserves the native history response.
       responses:
         "200":
           description: Historical series only; break the curve where connects is false.
@@ -61,6 +65,7 @@ paths:
       description: Verified fixed-half reference survival. Display only; never a winning probability or a substitute for pressure history.
       parameters:
         - $ref: "#/components/parameters/Key"
+        - $ref: "#/components/parameters/PoolDistributionVersion"
       responses:
         "200":
           description: Retained reference counts and explicit connection boundaries; no backfill or full-match coverage claim.
@@ -87,9 +92,10 @@ paths:
   /v1/btb/rebuild/v2/report:
     get:
       operationId: getRebuildCohortsReport
-      description: Every accepted RB1 policy cohort's first publications of the last 30 Istanbul days in one list, each tagged with its cohort; 7/30-day periods and review thresholds stay per cohort and are never merged.
+      description: Every accepted RB1 policy cohort's first publications of the last 30 Istanbul days in one list, each tagged with its cohort. Top-level periods summarize all listed cohorts; cohort learning stays separate. Default periods are 7/30 days. Opt in to an additional Today period with X-BTB-Report-Periods, using Istanbul midnight and backend accounting.
       parameters:
         - $ref: "#/components/parameters/RebuildVersion"
+        - $ref: "#/components/parameters/ReportPeriodsVersion"
       responses:
         "200":
           description: RB1 only. A record outside its reported cohorts, a duplicate cohort or two current cohorts fail closed.
@@ -101,6 +107,7 @@ paths:
     get:
       operationId: getDashboard
       parameters:
+        - $ref: "#/components/parameters/MatchClockVersion"
         - $ref: "#/components/parameters/RebuildVersion"
         - $ref: "#/components/parameters/SelectionDisplayVersion"
       responses:
@@ -116,6 +123,7 @@ paths:
     get:
       operationId: getMatches
       parameters:
+        - $ref: "#/components/parameters/MatchClockVersion"
         - $ref: "#/components/parameters/DecisionContextVersion"
         - $ref: "#/components/parameters/RebuildVersion"
         - $ref: "#/components/parameters/SelectionDisplayVersion"
@@ -134,6 +142,7 @@ paths:
     get:
       operationId: getMatch
       parameters:
+        - $ref: "#/components/parameters/MatchClockVersion"
         - $ref: "#/components/parameters/Key"
         - $ref: "#/components/parameters/DecisionContextVersion"
         - in: header
@@ -307,6 +316,7 @@ paths:
         shared provider measurement time. Supplemental reader failures are null.
         This endpoint never invokes Jinx generation.
       parameters:
+        - $ref: "#/components/parameters/MatchClockVersion"
         - $ref: "#/components/parameters/Key"
         - $ref: "#/components/parameters/DecisionContextVersion"
         - in: header
@@ -564,6 +574,24 @@ components:
         domain), audience tag, RS256 signature, expiry and an allowlisted email.
         Grants read scope only: device routes answer 403.
   parameters:
+    MatchClockVersion:
+      name: X-BTB-Match-Clock
+      in: header
+      required: false
+      description: Preserves provider added-time notation and SAP lifecycle as an optional display-only clock on dashboard/list/detail/analysis-context. Absent leaves old strict payloads unchanged. Response echoes this version and varies by the header; unsupported values return 400.
+      schema: { type: string, enum: [match-clock.v1] }
+    ReportPeriodsVersion:
+      name: X-BTB-Report-Periods
+      in: header
+      required: false
+      description: Adds days=1 to v2 combined and per-cohort periods. Absent preserves installed clients' 7/30-day response shape. Does not change learning, frozen facts or accounting. Response varies by this header.
+      schema: { type: string, enum: [today.v1] }
+    PoolDistributionVersion:
+      name: X-BTB-Pool-Distribution
+      in: header
+      required: false
+      description: Includes nullable scoreDistribution from the latest verified display pool. period=1H means historical half-time outcomes; 2H means full-time outcomes. Counts and shares are display-only reference frequencies, not win probabilities. Absent preserves the original response shape.
+      schema: { type: string, enum: [score-distribution.v1] }
     SelectionDisplayVersion:
       name: X-BTB-Selection-Display
       in: header
@@ -657,6 +685,15 @@ components:
         homeScore: { type: integer, minimum: 0 }
         awayScore: { type: integer, minimum: 0 }
         elapsed: { type: integer, minimum: 0 }
+        clock:
+          type: object
+          additionalProperties: false
+          description: Display-only source clock, opt-in X-BTB-Match-Clock match-clock.v1; lifecycle and numeric elapsed are unchanged.
+          required: [contractVersion, period, label]
+          properties:
+            contractVersion: { const: match-clock.v1 }
+            period: { type: string, enum: [NOT_STARTED, 1H, HT, 2H, FT, ET, PENALTIES, NOT_PLAYED] }
+            label: { type: [string, "null"], pattern: '^\d{1,3}(?:\+\d{0,2})?$' }
         status: { $ref: "#/components/schemas/MatchStatus" }
         selectedOdd: { type: string }
         rating: { type: integer, minimum: 0, maximum: 5 }

@@ -14,7 +14,9 @@ test("main tabs use a native, eagerly painted pager with a fixed bottom bar", ()
   assert.match(layout, /tabBarPosition="bottom"/);
   assert.match(layout, /lazy=\{false\}/);
   assert.match(layout, /tabBar=\{BottomTabBar\}/);
-  assert.match(layout, /swipeEnabled=\{!reduceMotion\}/);
+  assert.match(layout, /const animatePages = Platform\.OS !== "web" && !reduceMotion/);
+  assert.match(layout, /swipeEnabled=\{animatePages\}/);
+  assert.match(layout, /animationEnabled=\{animatePages\}/);
 });
 
 test("pager scene and stack share the BTB background token", () => {

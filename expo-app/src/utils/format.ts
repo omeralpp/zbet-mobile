@@ -60,9 +60,9 @@ export function formatPercentage(value: number): string {
   }).format(value);
 }
 
-export function formatElapsed(status: MatchStatus, elapsed: number): string {
+export function formatElapsed(status: MatchStatus, elapsed: number, clock?: {label:string|null;period:string}): string {
   if (status === "LIVE") {
-    return `${elapsed}'`;
+    return clock?.period === "PENALTIES" ? "PENALTILAR" : clock ? clock.label === null ? "—" : `${clock.label}'` : `${elapsed}'`;
   }
   if (status === "HALF_TIME") {
     return "DEVRE";

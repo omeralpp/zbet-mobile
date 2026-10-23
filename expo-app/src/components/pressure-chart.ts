@@ -7,13 +7,22 @@ import type { MatchDetail, MatchJourney } from "@/src/api/schemas";
  */
 export type PressureSample = { key: string; minute: number; home: number; away: number };
 export type PressureLeader = "HOME" | "AWAY" | "BALANCED" | "NONE";
-export type PressureGoal = { key: string; minute: number; side: "HOME" | "AWAY" };
+export type PressureGoal = { key: string; minute: number; side: "HOME" | "AWAY"; kind?: "GOAL" | "SCORE_UPDATE" };
+
+/** Only explicit provider goals receive the gold event overlay. */
+export function pressureGoalAnnotation(goals: readonly PressureGoal[]) {
+  const confirmed = goals.length > 0 && goals.every(goal=>goal.kind === "GOAL");
+  const first = goals[0], last = goals.at(-1);
+  const text = confirmed && first && last ? goals.length === 1 ? `${first.minute}′ gol` : `${first.minute}′–${last.minute}′ · ${goals.length} gol`
+    : `${goals.length > 1 ? `${goals.length} ` : ""}${first?.kind === "SCORE_UPDATE" ? "skor" : "gol"}`;
+  return {confirmed,text,width:Math.max(36,text.length*6.2),gap:confirmed?12:8};
+}
 
 /** Nearby goals share one label, while their original minutes remain explicit. */
 export function pressureGoalGroups(goals: readonly PressureGoal[], x: (minute: number) => number, gap = 48) {
   const groups: { key: string; side: PressureGoal["side"]; minute: number; goals: PressureGoal[] }[] = [];
   for (const goal of [...goals].sort((a, b) => a.minute - b.minute || a.key.localeCompare(b.key))) {
-    const previous = groups.findLast(group => group.side === goal.side);
+    const previous = groups.findLast(group => group.side === goal.side && group.goals[0]?.kind === goal.kind);
     if (previous && x(goal.minute) - x(previous.goals.at(-1)!.minute) < gap) {
       previous.goals.push(goal);
       previous.minute = previous.goals.reduce((sum, item) => sum + item.minute, 0) / previous.goals.length;

@@ -19,6 +19,7 @@ export interface PressureInterval {
   estimated: boolean;
   connects: boolean;
   score: string;
+  windowStartMinute?: number;
 }
 
 export function pressureIntervals(history: RebuildPressureHistory | undefined): PressureInterval[] {
@@ -34,6 +35,16 @@ export function pressureIntervals(history: RebuildPressureHistory | undefined): 
     estimated: sample.estimated,
     connects: sample.connects,
     score: `${sample.homeScore}–${sample.awayScore}`
+  }));
+}
+
+/** A column is the delivered five-minute activity estimate ending at that minute. */
+export function activityIntervals(history: RebuildPressureHistory | undefined): PressureInterval[] {
+  if (!history || !["AVAILABLE", "PARTIAL"].includes(history.availability) || history.activity?.availability !== "AVAILABLE") return [];
+  return history.activity.points.filter(point=>point.reason === "AVAILABLE" && point.home !== null && point.away !== null).map(point=>({
+    key: point.captureId, startMinute: Math.max(0,point.minute - 1), endMinute: point.minute,
+    home: point.home!, away: point.away!, homeText: formatDecimal(String(point.home)), awayText: formatDecimal(String(point.away)),
+    estimated: true, connects: point.connects, score: "", windowStartMinute: history.observations.find(o=>o.captureId === point.baselineCaptureId)?.minute ?? point.minute - 5
   }));
 }
 
@@ -63,7 +74,7 @@ export function latestIntervalReading(intervals: readonly PressureInterval[], te
   const { leader } = pressureLeader(latest.home, latest.away);
   const headline = leader === "HOME" ? `${teams.homeTeam} baskın` : leader === "AWAY" ? `${teams.awayTeam} baskın`
     : leader === "BALANCED" ? "Dengede" : "Belirgin baskı yok";
-  return { range: `${latest.startMinute}–${latest.endMinute}′`, leader, headline, homeText: latest.homeText, awayText: latest.awayText };
+  return { range: `${latest.windowStartMinute ?? latest.startMinute}–${latest.endMinute}′`, leader, headline, homeText: latest.homeText, awayText: latest.awayText };
 }
 
 export type ObservedChange = { key: string; minute: number; side: "HOME" | "AWAY"; kind: "GOAL" | "RED_CARD" | "CORRECTION"; score: string };

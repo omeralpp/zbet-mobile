@@ -7,7 +7,8 @@ import { scheduleOnRN } from "react-native-worklets";
 import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Rect, Stop, Text as SvgText } from "react-native-svg";
 import type { MatchDetail } from "@/src/api/schemas";
 import { colors, fontFamilies, iconSizes, numericFont, radii, semantic, spacing, textFont, typeScale } from "@/src/theme/theme";
-import { formatSelection } from "@/src/utils/format";
+import { formatElapsed, formatSelection } from "@/src/utils/format";
+import { matchPeriodLabel } from "@/src/utils/match-period";
 import { formatQuote, formatUnits, resultPresentation, unitsTone } from "@/src/utils/rebuild-display";
 import { ResultPill, toneColor } from "./DecisionTicket";
 import { JourneyEventGlyph, journeySvgAccessibility } from "./JourneyEventIcon";
@@ -79,7 +80,7 @@ function placeChips(model: PathModel, g: Geometry, chipWidth: number) {
 }
 
 function statusPill(match: MatchDetail) {
-  if (match.status === "LIVE") return { label: `CANLI · ${match.elapsed}′`, live: true };
+  if (match.status === "LIVE") return { label: `${match.clock?.period === "ET" ? matchPeriodLabel(match) : "CANLI"} · ${formatElapsed(match.status,match.elapsed,match.clock)}`, live: true };
   if (match.status === "HALF_TIME") return { label: "DEVRE ARASI", live: true };
   if (match.status === "NOT_STARTED") return { label: "BAŞLAMADI", live: false };
   return { label: "MAÇ TAMAMLANDI", live: false };

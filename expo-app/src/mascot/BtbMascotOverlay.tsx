@@ -210,13 +210,13 @@ export function BtbMascotOverlay() {
     const timer = setTimeout(() => { sleepingRef.current = true; setSleeping(true); }, jinxSleepDelayMs);
     return () => clearTimeout(timer);
   }, [activityVersion, ambient, appActive, dragging, guideActive, moodBubble, open, pathname, sleeping]);
-  // The comment speaks once per change in the seven-day figures.
+  // The Overview already shows daily figures inline. Automatic changes stay
+  // quiet so the floating comment cannot cover filters; open it from the menu.
   useEffect(() => {
     if (!dailyMoodSignature || !dailyQuip || dailyMoodSignature === presentedMoodSignature || showGreeting || sleeping
       || dragging || open || guideActive || !appActive || !ambient) return;
     const timer = setTimeout(() => {
       setPresentedMoodSignature(dailyMoodSignature);
-      setMoodBubble(true);
       setActivityVersion(current => current + 1);
     }, 360);
     return () => clearTimeout(timer);
@@ -355,7 +355,7 @@ export function BtbMascotOverlay() {
       { key: "super", icon: "star-outline", label: "Super", path: "/super", onPress: () => router.replace("/super") },
       { key: "toto", icon: "ticket-outline", label: "Toto", path: "/toto", onPress: () => router.replace("/toto") },
       // Replays the daily comment on demand; the presentation effect does the rest.
-      { key: "daily", icon: "message-text-outline", label: "Günlük yorum", gold: true, onPress: () => setPresentedMoodSignature(null) }
+      { key: "daily", icon: "message-text-outline", label: "Günlük yorum", gold: true, onPress: () => setMoodBubble(true) }
     ],
     [liveCount, router]
   );

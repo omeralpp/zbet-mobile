@@ -143,6 +143,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
     gap: spacing.md
   },
@@ -155,7 +156,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceStrong
   },
   headerCopy: {
-    flex: 1
+    flex: 1,
+    minWidth: 140
   },
   title: {
     color: colors.text,
@@ -181,6 +183,7 @@ const styles = StyleSheet.create({
   },
   statusStack: {
     alignItems: "flex-end",
+    marginLeft: "auto",
     flexShrink: 0,
     gap: spacing.xs
   },

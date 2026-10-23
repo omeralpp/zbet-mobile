@@ -1,4 +1,5 @@
 import type { MatchSummary } from "@/src/api/schemas";
+import type { RebuildRecommendation } from "@/src/api/rebuild-schemas";
 import { activeMatch } from "./rebuild-cards";
 import {
   matchDecisionFilter,
@@ -61,6 +62,8 @@ export function matchLiveTab(
   tab: LiveMatchTab,
   starFilter: StarDecisionFilter,
   now: number = Date.now(),
+  records?: readonly RebuildRecommendation[],
+  selectionError = false,
 ): boolean {
   switch (tab) {
     case "LIVE":
@@ -85,6 +88,6 @@ export function matchLiveTab(
       return now - kickoff < FIXTURE_STALE_TOLERANCE_MS;
     }
     case "STAR":
-      return (match.status === "LIVE" || match.status === "HALF_TIME") && matchDecisionFilter(activeMatch(match, now), starFilter);
+      return (match.status === "LIVE" || match.status === "HALF_TIME") && matchDecisionFilter(activeMatch(match, now, records, selectionError), starFilter);
   }
 }

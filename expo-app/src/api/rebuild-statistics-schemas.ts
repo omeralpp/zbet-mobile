@@ -72,6 +72,30 @@ const historyObservation = z.strictObject({
   minute: count, phase, homeScore: count, awayScore: count, homeRedCards: count, awayRedCards: count, method: pressureMethod
 });
 
+const activityPoint = z.strictObject({
+  captureId: z.string().min(1), minute: count.max(150), phase,
+  observedAt: timestamp, baselineCaptureId: z.string().nullable(), startsAt: timestamp.nullable(), endsAt: timestamp.nullable(),
+  home: z.number().finite().nonnegative().nullable(), away: z.number().finite().nonnegative().nullable(),
+  reason: z.string(), connects: z.boolean()
+}).superRefine((point, ctx) => {
+  const available = point.reason === "AVAILABLE";
+  if (available ? point.home === null || point.away === null || !point.baselineCaptureId || !point.startsAt || !point.endsAt ||
+    point.endsAt !== point.observedAt || Date.parse(point.endsAt) - Date.parse(point.startsAt) < 270_000 ||
+    Date.parse(point.endsAt) - Date.parse(point.startsAt) > 330_000
+    : point.home !== null || point.away !== null || point.startsAt !== null || point.endsAt !== null || point.baselineCaptureId !== null || point.connects)
+    ctx.addIssue({code:"custom",message:"Activity value and source window disagree"});
+});
+export const rebuildPressureActivitySchema = z.strictObject({
+  contractVersion: z.literal("btb-pressure-activity.v1"), method: z.literal("OBSERVED_ROLLING_5M_BASE_V1"),
+  windowMinutes: z.literal(5), units: z.literal("WEIGHTED_ACTIVITY_PER_MINUTE"),
+  displayOnly: z.literal(true), affectsSelection: z.literal(false), estimated: z.literal(true),
+  availability: z.enum(["AVAILABLE", "UNAVAILABLE"]), reason: z.string(), points: z.array(activityPoint).max(600)
+}).superRefine((value,ctx) => {
+  if ((value.availability === "AVAILABLE") !== value.points.some(p=>p.reason === "AVAILABLE") ||
+    new Set(value.points.map(p=>p.captureId)).size !== value.points.length)
+    ctx.addIssue({code:"custom",message:"Activity availability or identities disagree"});
+});
+
 export const rebuildPressureHistorySchema = z.strictObject({
   contractVersion: z.literal("btb-pressure-history.v1"), modelRegime: z.literal("BTB_RB1_20261018"),
   matchKey: z.string(), asOf: timestamp,
@@ -79,7 +103,16 @@ export const rebuildPressureHistorySchema = z.strictObject({
   source: z.literal("VERIFIED_RB1_HISTORY"), historical: z.literal(true),
   coverage: z.literal("PERSISTED_VERIFIED_INTERVALS_ONLY"), fullMatchCoverageProven: z.boolean(),
   samples: z.array(historySample), observations: z.array(historyObservation),
-  poolPath: z.strictObject({ availability: z.enum(["AVAILABLE", "UNAVAILABLE"]), reason: z.string() })
+  poolPath: z.strictObject({ availability: z.enum(["AVAILABLE", "UNAVAILABLE"]), reason: z.string() }),
+  activity: rebuildPressureActivitySchema.nullable().optional()
+}).superRefine((history,ctx)=>{
+  if (!history.activity) return;
+  const observations = new Map(history.observations.map(o=>[o.captureId,o]));
+  if (history.activity.points.some(point=>{
+    const endpoint=observations.get(point.captureId),baseline=point.baselineCaptureId ? observations.get(point.baselineCaptureId) : null;
+    return !endpoint || endpoint.minute !== point.minute || endpoint.phase !== point.phase || endpoint.observedAt !== point.observedAt ||
+      (point.reason === "AVAILABLE" && (!baseline || baseline.phase !== point.phase || baseline.observedAt !== point.startsAt));
+  })) ctx.addIssue({code:"custom",message:"Activity is not linked to the recorded observations"});
 });
 
 export type RebuildStatistics = z.infer<typeof rebuildStatisticsSchema>;
@@ -95,6 +128,16 @@ export const rebuildPoolPathSchema = z.strictObject({
   source: z.literal("VERIFIED_RB1_OBSERVATION_POOLS"), label: z.literal("Havuzda kalan pay"),
   unit: z.literal("SURVIVING_REFERENCE_SHARE"), winningProbability: z.literal(false), historical: z.literal(true),
   fullMatchCoverageProven: z.literal(false),
+  scoreDistribution: z.strictObject({
+    period: z.enum(["1H", "2H"]), captureId: z.string().min(1), observedAt: timestamp, minute: count,
+    homeScore: count, awayScore: count, total: count.positive().max(5000), winningProbability: z.literal(false),
+    rows: z.array(z.strictObject({ score: z.string().min(1), count: count.positive(), share: z.number().positive().max(1) }))
+  }).superRefine((value, ctx) => {
+    if (value.rows.reduce((sum, row) => sum + row.count, 0) !== value.total ||
+      value.rows.some(row => Math.abs(row.share - row.count / value.total) > 1e-10) ||
+      new Set(value.rows.map(row => row.score)).size !== value.rows.length)
+      ctx.addIssue({ code: "custom", message: "Score distribution counts and shares disagree" });
+  }).nullable().optional(),
   points: z.array(z.strictObject({
     captureId: z.string().min(1), baselineCaptureId: z.string().min(1), baselineAt: timestamp,
     observedAt: timestamp, observedAtExact: exactTime, minute: count, phase, policySha: sha, producerSha: sha,

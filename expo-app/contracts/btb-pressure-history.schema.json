@@ -352,6 +352,175 @@
         "reason"
       ],
       "additionalProperties": false
+    },
+    "activity": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "contractVersion": {
+              "type": "string",
+              "const": "btb-pressure-activity.v1"
+            },
+            "method": {
+              "type": "string",
+              "const": "OBSERVED_ROLLING_5M_BASE_V1"
+            },
+            "windowMinutes": {
+              "type": "number",
+              "const": 5
+            },
+            "units": {
+              "type": "string",
+              "const": "WEIGHTED_ACTIVITY_PER_MINUTE"
+            },
+            "displayOnly": {
+              "type": "boolean",
+              "const": true
+            },
+            "affectsSelection": {
+              "type": "boolean",
+              "const": false
+            },
+            "estimated": {
+              "type": "boolean",
+              "const": true
+            },
+            "availability": {
+              "type": "string",
+              "enum": [
+                "AVAILABLE",
+                "UNAVAILABLE"
+              ]
+            },
+            "reason": {
+              "type": "string"
+            },
+            "points": {
+              "maxItems": 600,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "captureId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minute": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 150
+                  },
+                  "phase": {
+                    "type": "string",
+                    "enum": [
+                      "1H",
+                      "2H"
+                    ]
+                  },
+                  "observedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                  },
+                  "baselineCaptureId": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "startsAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "endsAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "home": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "away": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "connects": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "captureId",
+                  "minute",
+                  "phase",
+                  "observedAt",
+                  "baselineCaptureId",
+                  "startsAt",
+                  "endsAt",
+                  "home",
+                  "away",
+                  "reason",
+                  "connects"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "contractVersion",
+            "method",
+            "windowMinutes",
+            "units",
+            "displayOnly",
+            "affectsSelection",
+            "estimated",
+            "availability",
+            "reason",
+            "points"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "required": [

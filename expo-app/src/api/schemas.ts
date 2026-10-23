@@ -114,6 +114,12 @@ export const matchStatusSchema = z.enum([
   "NOT_PLAYED"
 ]);
 
+export const matchClockSchema = z.strictObject({
+  contractVersion:z.literal("match-clock.v1"),
+  period:z.enum(["NOT_STARTED","1H","HT","2H","FT","ET","PENALTIES","NOT_PLAYED"]),
+  label:z.string().regex(/^\d{1,3}(?:\+\d{0,2})?$/).nullable()
+});
+
 export const matchSummarySchema = z.strictObject({
   key: z.string().min(1),
   id: z.number().int().positive(),
@@ -127,6 +133,7 @@ export const matchSummarySchema = z.strictObject({
   homeScore: z.number().int().nonnegative(),
   awayScore: z.number().int().nonnegative(),
   elapsed: z.number().int().nonnegative(),
+  clock: matchClockSchema.optional(),
   status: matchStatusSchema,
   selectedOdd: z.string(),
   rating: z.number().int().min(0).max(5),

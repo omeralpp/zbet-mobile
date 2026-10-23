@@ -101,6 +101,7 @@ export function CollapsibleModule({
   return (
     <View>
       <Pressable
+        accessibilityLabel={title}
         accessibilityHint={
           isCollapsed ? "Modülü açar" : "Modülü kapatır"
         }

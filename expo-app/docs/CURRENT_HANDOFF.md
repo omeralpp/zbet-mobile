@@ -1,9 +1,45 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-23
-Mod: `LATEST_SELECTION_AND_HISTORICAL_NAMES_DELIVERED`
+Mod: `QUICK_POLISH_VALIDATED / RELEASE_APPROVAL_PENDING`
 Delivery: `OWNER_ONLY_DEV_PILOT / b501352 PAIR COMPLETE (both smokes passed 2026-10-23)`
 Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
+Local batch: NXT-OBS-200..213, owner authorised 2026-10-23; see
+`JURY_REFINEMENT_BATCH_2026-10-23.md`. Today, verified period-specific scores,
+pressure clarity, compact statistics and shared Android/web UX refinements.
+Pressure (203): owner selected five-minute rolling activity; native pressure
+remains selectable. Rounded columns, balance strip, now marker and compact
+native details are shared. Possession (211) was reintroduced as current context
+in chart/Jinx only, with no weight in activity, selections or stars. Missing
+windows remain gaps. Confirmed goals have gold full-height event markers,
+football icons and grouped minute labels; score updates never imply goals.
+Owner requests clarification pop-ups in Turkish.
+Published-selection status now separates verified playability from native
+recommendation eligibility: open/undecided is active; expired quote is pending
+verification, not proof of inactivity. Owner extended star filters/counts (212)
+to the same latest verified playable publication, with frozen stars. Overview
+uses the complete Live snapshot cache, not its three featured rows. Native
+model eligibility is unchanged; source cadence remains an open follow-up.
+Clock (213): opt-in source label preserves 45+/90+/added minutes; source status
+06 displays UZATMA and 07 PENALTILAR. Missing clocks never imply kick-off zero.
+Numeric elapsed/model/settlement are unchanged. Source 105′/06 and real preview
+confirm UZATMA; exact screenshot-era zero input was not reproduced.
+Client type/lint, 694 tests + 32 tooling, BFF tests/build and Doctor 20/20 pass;
+Android bundle and verified edge web export pass. Candidate preview is
+`http://127.0.0.1:4186/super`; existing pilot runtime was not restarted.
+Native Android and paired owner acceptance are tracked by TASK-0180 (review
+2026-10-24); no connected adb target. This is local work, not a delivered pair.
+Owner accepted the 87/100 design score and requested quick fixes before release.
+Publication intent is recorded; separate Git, BFF restart and final APK signing
+approvals and acceptance of the updated web preview are still pending. No SAP
+write is proposed. See `JURY_REFINEMENT_DELIVERY_2026-10-23.md`.
+Quick polish (215): Toto header wraps at 320 px; root web pager avoids moving
+offsets on resize (Android retains swipe); unavailable report totals are unknown
+and last verified publications retain frozen facts without active eligibility.
+Chart headlines name the recorded window, and duplicate decision copy is removed.
+Browser resize/search and available/unavailable/recovery checks pass. Native
+Android remains unverified. The original 87 jury score is not silently re-scored.
+
 Released from clean pushed client `b501352158a5ea9b9749868ebcad8f4c9e70e44f`:
 last-selection hero/Jinx/Overview/Live, frozen first facts versus fresh current
 quotes, active-only counters/filters, shared v2 totals, crest reset and recovered

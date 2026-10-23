@@ -33,11 +33,11 @@ export function ComparisonRow({
   const format = (value: number | null) => (value === null ? "—" : `${(formatter ?? String)(value)}${suffix}`);
 
   return (
-    <View style={styles.comparison}>
+    <View accessible accessibilityLabel={`${label}, ev sahibi ${homeText ?? format(home)}, deplasman ${awayText ?? format(away)}${note ? `. ${note}` : ""}`} style={styles.comparison}>
       <View style={styles.comparisonLabels}>
         <Text style={styles.statValue}>{homeText ?? format(home)}</Text>
         <Text style={styles.statLabel}>{label}</Text>
-        <Text style={styles.statValue}>{awayText ?? format(away)}</Text>
+        <Text style={[styles.statValue, styles.awayValue]}>{awayText ?? format(away)}</Text>
       </View>
       {home !== null && away !== null ? <View style={styles.dualBar}>
         <View style={styles.homeTrack}>
@@ -54,7 +54,7 @@ export function ComparisonRow({
 
 const styles = StyleSheet.create({
   comparison: {
-    gap: spacing.sm
+    gap: 6
   },
   comparisonLabels: {
     flexDirection: "row",
@@ -64,16 +64,21 @@ const styles = StyleSheet.create({
   statValue: {
     ...numericFont("800"),
     color: colors.text,
-    width: 54,
-    fontSize: 14
+    minWidth: 42,
+    maxWidth: "28%",
+    flexShrink: 1,
+    fontSize: 16
   },
   statLabel: {
     ...textFont("700"),
     color: colors.textMuted,
     flex: 1,
     textAlign: "center",
-    fontSize: 11
+    fontSize: 13,
+    lineHeight: 19,
+    paddingHorizontal: spacing.sm
   },
+  awayValue: { textAlign: "right" },
   dualBar: {
     flexDirection: "row",
     gap: spacing.xs

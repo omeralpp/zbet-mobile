@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -39,7 +39,7 @@ import { EmptyState, LoadingState } from "./StateView";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 import { TeamLogo } from "./TeamLogo";
 
-type Days = 7 | 30;
+type Days = 1 | 7 | 30;
 
 const localTabs = ["ALL", "STAR"] as const;
 
@@ -59,19 +59,19 @@ function PeriodMenu({ days, open, onOpenChange, onChange }: { days: Days; open: 
   return (
     <View style={[styles.periodWrapper, open && styles.periodWrapperOpen]}>
       <Pressable
-        accessibilityLabel={`Dönem: son ${days} gün`}
+        accessibilityLabel={days === 1 ? "Dönem: bugün, İstanbul saati" : `Dönem: son ${days} gün`}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
         onPress={() => onOpenChange(!open)}
         style={({ pressed, hovered }) => [styles.periodButton, hovered && styles.hover, pressed && styles.pressed]}
       >
         <MaterialCommunityIcons color={semantic.intelligence} name="calendar-blank-outline" size={iconSizes.small} />
-        <Text style={styles.periodText}>{days} gün</Text>
+        <Text style={styles.periodText}>{days === 1 ? "Bugün" : `${days} gün`}</Text>
         <MaterialCommunityIcons color={semantic.intelligence} name={open ? "chevron-up" : "chevron-down"} size={iconSizes.inline} />
       </Pressable>
       {open ? (
         <View accessibilityRole="menu" style={styles.periodMenu}>
-          {([7, 30] as const).map((option) => {
+          {([1, 7, 30] as const).map((option) => {
             const selected = option === days;
             return (
               <Pressable
@@ -84,7 +84,7 @@ function PeriodMenu({ days, open, onOpenChange, onChange }: { days: Days; open: 
                 }}
                 style={({ pressed }) => [styles.periodOption, selected && styles.periodOptionSelected, pressed && styles.pressed]}
               >
-                <Text style={[styles.periodOptionText, selected && styles.periodOptionTextSelected]}>Son {option} gün</Text>
+                <Text style={[styles.periodOptionText, selected && styles.periodOptionTextSelected]}>{option === 1 ? "Bugün" : `Son ${option} gün`}</Text>
                 {selected ? <MaterialCommunityIcons color={colors.onAction} name="check" size={iconSizes.inline} /> : null}
               </Pressable>
             );
@@ -134,7 +134,8 @@ export function RebuildDecisionCard({ record, onPress, cohortLabel }: { record: 
         <TeamLogo name={record.awayTeam} size="compact" />
         <Text numberOfLines={1} style={styles.team}>{record.awayTeam}</Text>
       </View>
-      <Text style={styles.meta}>{published.day} · {published.time} · {evidenceLine(record)}{cohortLabel ? ` · ${cohortLabel}` : ""}</Text>
+      <Text style={styles.meta}>{published.day} · {published.time}{cohortLabel ? ` · Sürüm ${cohortLabel}` : ""}</Text>
+      <Text style={styles.evidenceMeta}>{evidenceLine(record)}</Text>
       <View style={styles.cardFoot}>
         <View style={styles.cardMarket}>
           <Text style={styles.market}>{formatSelection(record.market)}</Text>
@@ -211,8 +212,8 @@ function DecisionTable({ records, labels, sort, onSort, onOpen }: { records: rea
               <Text style={styles.cellMeta}>{published.day}</Text>
             </View>
             <View role="cell" style={[styles.tableCell, styles.stackCell, { flex: 2.4 }]}>
-              <Text numberOfLines={1} style={styles.cellStrong}>{record.homeTeam} – {record.awayTeam}</Text>
-              <Text numberOfLines={1} style={styles.cellMeta}>karar anında {record.homeScore}–{record.awayScore}{labels.get(record.decisionId) ? ` · ${labels.get(record.decisionId)}` : ""}</Text>
+              <Text style={styles.cellStrong}>{record.homeTeam} – {record.awayTeam}</Text>
+              <Text style={styles.cellMeta}>karar anında {record.homeScore}–{record.awayScore}{labels.get(record.decisionId) ? ` · ${labels.get(record.decisionId)}` : ""}</Text>
             </View>
             <View role="cell" style={[styles.tableCell, styles.alignRight, { flex: 0.5 }]}>
               <Text style={styles.cellNumber}>{record.minute}′</Text>
@@ -227,7 +228,7 @@ function DecisionTable({ records, labels, sort, onSort, onOpen }: { records: rea
               <Text style={styles.cellNumber}>{formatQuote(record.quote)}</Text>
             </View>
             <View role="cell" style={[styles.tableCell, { flex: 1.6 }]}>
-              <Text numberOfLines={1} style={styles.cellMeta}>{evidenceLine(record)}</Text>
+              <Text style={styles.cellMeta}>{evidenceLine(record)}</Text>
             </View>
             <View role="cell" style={[styles.tableCell, styles.alignCenter, { flex: 1 }]}>
               <ListPerforation height={28} />
@@ -275,6 +276,14 @@ export function RebuildDecisionLog() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [starSort, setStarSort] = useState<SuperStarSort>("DEFAULT");
   const [tableSort, setTableSort] = useState<LogSort>(defaultLogSort);
+  useEffect(() => {
+    if (Platform.OS !== "web" || (!starMenuOpen && !periodOpen)) return;
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { setPeriodOpen(false); setStarMenuOpen(false); }
+    };
+    document.addEventListener("keydown", dismiss);
+    return () => document.removeEventListener("keydown", dismiss);
+  }, [periodOpen, starMenuOpen]);
   const full = query.data;
   const report = useMemo(() => (full ? combinedReport(full) : null), [full]);
   const period = report?.periods.find((item) => item.days === days);
@@ -308,7 +317,7 @@ export function RebuildDecisionLog() {
     <TutorialTarget id="super-filters">
       <View style={styles.filters}>
         <FilterChip
-          count={counts.all}
+          {...(available ? {count:counts.all} : {})}
           label="Tümü"
           onPress={() => {
             closeMenus();
@@ -318,7 +327,7 @@ export function RebuildDecisionLog() {
         />
         <DecisionFilterChip
           active={tab === "STAR"}
-          count={counts.star}
+          {...(available ? {count:counts.star} : {})}
           onActivate={() => setTab("STAR")}
           onChange={(value) => {
             setStarFilter(value);
@@ -337,7 +346,7 @@ export function RebuildDecisionLog() {
           value={starFilter}
         />
         <FilterChip
-          count={counts.pending}
+          {...(available ? {count:counts.pending} : {})}
           dot={semantic.intelligence}
           label="Bekliyor"
           onPress={() => {
@@ -353,7 +362,7 @@ export function RebuildDecisionLog() {
   const scope = (
     <View style={styles.scopeRow}>
       <Text style={styles.scopeText}>
-        {available ? `${formatReportRange(available.from, available.through)} · ${visible.length} karar` : "Rapor bekleniyor"}
+        {available ? `${formatReportRange(available.from, available.through)} · ${visible.length} karar${days === 1 ? " · İstanbul" : ""}` : query.isError || full?.availability === "UNAVAILABLE" ? "Rapor doğrulanamadı · kayıt sayısı bilinmiyor" : "Rapor bekleniyor"}
       </Text>
       <PeriodMenu
         days={days}
@@ -377,7 +386,7 @@ export function RebuildDecisionLog() {
         {scope}
         <Card>
           <View style={styles.waiting}>
-            <TonePill dot label={query.isError ? "VERİ ALINAMADI" : "RAPOR BEKLENİYOR"} tone={query.isError ? "neutral" : "warning"} />
+            <TonePill dot label={query.isError || full?.availability === "UNAVAILABLE" ? "RAPOR DOĞRULANAMADI" : "RAPOR BEKLENİYOR"} tone={query.isError ? "neutral" : "warning"} />
             <Text style={styles.waitingText}>{query.isError ? "Veri alınamadı" : rebuildReason(full?.reason)}</Text>
             <Action icon="refresh" onPress={() => { void query.refetch(); }} title="Yenile" />
           </View>
@@ -467,7 +476,7 @@ export function RebuildDecisionLog() {
               ListFooterComponent={<View style={styles.footer}>{details}</View>}
               ListHeaderComponent={
                 <SummaryCard
-                  label={`${days} GÜN · ${page === "STAR" ? starMetricLabel(starFilter).toLocaleUpperCase("tr-TR") : "TÜMÜ"}`}
+                  label={`${days === 1 ? "BUGÜN" : `${days} GÜN`} · ${page === "STAR" ? starMetricLabel(starFilter).toLocaleUpperCase("tr-TR") : "TÜMÜ"}`}
                   summary={pageSummary}
                 />
               }
@@ -533,6 +542,7 @@ const styles = StyleSheet.create({
   wideScroll: { flex: 1 },
   wideContent: { gap: spacing.md, paddingBottom: spacing.xxl },
   flexCopy: { flex: 1, minWidth: 0 },
+  evidenceMeta: { ...typeScale.label, color: colors.textMuted, lineHeight: 19 },
   hover: { backgroundColor: colors.surfaceStrong },
   pressed: { opacity: 0.72 },
   rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },

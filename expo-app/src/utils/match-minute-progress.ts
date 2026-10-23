@@ -1,4 +1,5 @@
-import type { MatchStatus } from "@/src/api/schemas";
+import type { MatchStatus, MatchSummary } from "@/src/api/schemas";
+import { formatElapsed } from "./format";
 
 export type MatchMinuteProgress = {
   label: string;
@@ -9,7 +10,8 @@ export type MatchMinuteProgress = {
 
 export function deriveMatchMinuteProgress(
   status: MatchStatus,
-  elapsed: number
+  elapsed: number,
+  clock?: MatchSummary["clock"]
 ): MatchMinuteProgress {
   // NOT_PLAYED joins NOT_STARTED here: a postponed or cancelled match has no
   // minute to show, and any elapsed value SAP still carries on the row would
@@ -31,7 +33,7 @@ export function deriveMatchMinuteProgress(
     status === "HALF_TIME" ? " · DEVRE" : status === "FINISHED" ? " · MS" : "";
 
   return {
-    label: `${minute}'${suffix}`,
+    label: status === "LIVE" && clock ? `${formatElapsed(status,minute,clock)}${clock.period === "ET" ? " · UZATMA" : ""}` : `${minute}'${suffix}`,
     minute,
     ratio: Math.min(1, minute / 90),
     visible: true

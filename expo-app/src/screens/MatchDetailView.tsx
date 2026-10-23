@@ -31,6 +31,8 @@ import { RebuildDecisionModule, RebuildJinxCard, useRebuildClock } from "@/src/c
 import { ResultPill } from "@/src/components/DecisionTicket";
 import { currentRebuild } from "@/src/utils/rebuild-current";
 import { rebuildHero } from "@/src/utils/rebuild-hero";
+import { possessionContext } from "@/src/utils/rebuild-possession";
+import { matchPeriodLabel } from "@/src/utils/match-period";
 import { formatQuote } from "@/src/utils/rebuild-display";
 import { rebuildPresentation } from "@/src/utils/rebuild-presentation";
 import { analysisNeedsRefresh } from "@/src/mascot/jinx-assessment";
@@ -51,6 +53,7 @@ import { buildMatchPath } from "@/src/components/match-path-model";
 import { PressureChart } from "@/src/components/PressureChart";
 import { RebuildPressureChart } from "@/src/components/RebuildPressureChart";
 import { RebuildStatisticsPanel } from "@/src/components/RebuildStatisticsPanel";
+import { HistoricalScoreDistribution } from "@/src/components/HistoricalScoreDistribution";
 import { TeamFormCard } from "@/src/components/TeamFormCard";
 import { LiveContextFreshness } from "@/src/components/LiveContextNotice";
 import { StandingsModule } from "@/src/components/StandingsModule";
@@ -90,7 +93,6 @@ import {
 import { deriveLiveRateTrend } from "@/src/utils/live-card-indicators";
 import { matchPressureSide } from "@/src/utils/match-pressure";
 import { latestIntervalReading, observedHalfTimeScore, pressureIntervals } from "@/src/utils/rebuild-pressure";
-import { formatHistoricalFraction, historicalFractionWidth } from "@/src/utils/statistical-geometry";
 
 /**
  * The evidence chips under "Maçın kanıtları", in the v40 board's words. Maçın
@@ -346,7 +348,6 @@ export function MatchDetailView({
   const heroFirstRate = isRebuild ? Number(hero?.record.quote ?? NaN) : match.liveRate;
   const heroCurrentRate = isRebuild ? hero?.currentQuote ? Number(hero.currentQuote) : null : match.currentRate;
   const pressure = matchPressureSide(match);
-  const phase = match.status === "LIVE" ? (match.elapsed > 45 ? "2. YARI" : "1. YARI") : null;
   const live = match.status === "LIVE" || match.status === "HALF_TIME";
   const insight = insightQuery.data;
   const leagueContext = leagueContextQuery.data;
@@ -391,7 +392,12 @@ export function MatchDetailView({
   // Maçın yolu: provider events, RB1 observations and published records on one
   // axis. RB1 exposes no pool path, so only a non-RB1 journey can draw a line.
   const history = pressureHistory.data?.matchKey === key ? pressureHistory.data : undefined;
-  const statistics = rebuildStatistics.data?.matchKey === key ? rebuildStatistics.data : undefined;
+  const statistics = !rebuildStatistics.isError && rebuildStatistics.data?.matchKey === key ? rebuildStatistics.data : undefined;
+  const possession = possessionContext(statistics, match, now);
+  const observedPhase = statistics?.phase ?? history?.observations.at(-1)?.phase;
+  // Minute 46 can still be first-half added time. Prefer recorded phase;
+  // without it, the ambiguous interval around half-time gets no inferred label.
+  const phase = matchPeriodLabel(match,observedPhase);
   const intervals = pressureIntervals(history);
   const liveTimeline = liveContext.data?.matchKey && liveContext.data.matchKey !== key ? undefined : liveContext.data;
   const legacyPath = !isRebuild && matchPathEnabled;
@@ -411,7 +417,8 @@ export function MatchDetailView({
   const analysisText = analysisSignal?.stateNormality != null
     ? `Son ölçüm · normallik %${Math.round(analysisSignal.stateNormality * 100)} · ${analysisSignal.cohortSize} benzer maç` : null;
   const pressureGoals = pathModel.moments.flatMap((moment) =>
-    moment.kind === "GOAL" && moment.side ? [{ key: moment.key, minute: moment.minute, side: moment.side }] : []);
+    moment.kind === "GOAL" && moment.side ? [{ key: moment.key, minute: moment.minute, side: moment.side,
+      kind: moment.key.startsWith("observed:") ? "SCORE_UPDATE" as const : "GOAL" as const }] : []);
 
   // Only modules that currently have data are rendered; the persisted order
   // still holds a slot for the rest so they return where the user left them.
@@ -425,7 +432,7 @@ export function MatchDetailView({
     // NXT-OBS-175: the two sides' pressure over the match, as its own chart.
     pressure: (
       <LiveDetailPanel eyebrow="BASKI" id="pressure" title="Baskı grafiği">
-        {isRebuild ? <RebuildPressureChart goals={pressureGoals} history={history} isError={pressureHistory.isError}
+        {isRebuild ? <RebuildPressureChart now={now} goals={pressureGoals} history={history} isError={pressureHistory.isError}
           isLoading={pressureHistory.isLoading} match={match} statistics={statistics} /> : <PressureChart journey={journey.data} match={match} />}
       </LiveDetailPanel>
     ),
@@ -440,7 +447,7 @@ export function MatchDetailView({
     ),
     statistics: (
       <LiveDetailPanel eyebrow="SAHA" id="statistics" title="Canlı saha dengesi">
-        {isRebuild ? <RebuildStatisticsPanel isError={rebuildStatistics.isError} isLoading={rebuildStatistics.isLoading} statistics={statistics} /> : <View style={styles.statsCard}>
+        {isRebuild ? <RebuildStatisticsPanel key={key} homeTeam={match.homeTeam} awayTeam={match.awayTeam} isError={rebuildStatistics.isError} isLoading={rebuildStatistics.isLoading} statistics={statistics} /> : <View style={styles.statsCard}>
           <SurfaceMaterial radius={radii.lg} />
           <ComparisonRow
             away={match.awayBallPossession}
@@ -488,34 +495,7 @@ export function MatchDetailView({
         id="scoreDistribution"
         title="Tarihsel skor dağılımı"
       >
-        <View style={styles.distributionCard}>
-          <SurfaceMaterial radius={radii.lg} />
-          {match.scoreDistribution.length ? (
-            <>
-            {match.scoreDistribution.map((row) => {
-              const width = historicalFractionWidth(row.probability);
-              return (
-              <View key={row.score} style={styles.distributionRow}>
-                <Text style={styles.distributionScore}>{row.score}</Text>
-                <View style={styles.probabilityTrack}>
-                  {width !== null ? <View
-                    style={[
-                      styles.probabilityFill,
-                      { width }
-                    ]}
-                  /> : null}
-                </View>
-                <Text style={styles.probability}>
-                  {formatHistoricalFraction(row.probability)}
-                </Text>
-              </View>
-            );
-            })}
-            </>
-          ) : (
-            <Text style={styles.emptyText}>Skor dağılımı henüz oluşmadı.</Text>
-          )}
-        </View>
+        <HistoricalScoreDistribution key={key} allowLegacy={!isRebuild} match={{ ...match, phase: observedPhase }} now={now} pool={isRebuild && !poolPath.isError && poolPath.data?.matchKey === key ? poolPath.data : undefined} />
       </LiveDetailPanel>
     )
   };
@@ -598,9 +578,7 @@ export function MatchDetailView({
       {embedded ? null : (
         <Stack.Screen
           options={{
-            title: compactHeader
-              ? `${match.homeTeam} – ${match.awayTeam}`
-              : "Maç detayı",
+            title: "Maç detayı",
             // Desktop already carries the shell's Yenile button.
             ...(wideWeb ? {} : {
               headerRight: () => (
@@ -628,8 +606,8 @@ export function MatchDetailView({
       contentStyle={styles.screen}
       scrollRef={scrollRef}
       fixedHeader={compactHeader ? <View style={styles.fixedHeader}>
-        <Text numberOfLines={1} style={styles.fixedTitle}>{match.homeTeam} – {match.awayTeam}</Text>
-        <Text style={styles.fixedValue}>{match.homeScore}–{match.awayScore} · {formatElapsed(match.status, match.elapsed)} · {formatSelection(heroMarket) || "Seçim yok"}{hero ? ` · ${hero.stateLabel}` : ""} · {currentMarket.value}</Text>
+        <Text style={styles.fixedTitle}>{match.homeTeam} – {match.awayTeam}</Text>
+        <Text style={styles.fixedValue}>{match.homeScore}–{match.awayScore} · {formatElapsed(match.status, match.elapsed, match.clock)} · {formatSelection(heroMarket) || "Seçim yok"}{hero ? ` · ${hero.stateLabel}` : ""} · {currentMarket.value}</Text>
       </View> : null}
       scrollProps={{
         alwaysBounceVertical: true,
@@ -651,7 +629,7 @@ export function MatchDetailView({
     >
       <View collapsable={false} ref={contentTopRef}>
       <TutorialTarget id="match-summary" radius={radii.xl}>
-        <View style={styles.scoreHero}>
+        <View style={[styles.scoreHero, wideWeb && styles.scoreHeroWide]}>
         <SurfaceMaterial
           {...(live ? { accent: semantic.live } : {})}
           radius={radii.xl}
@@ -671,11 +649,11 @@ export function MatchDetailView({
           <View style={[styles.elapsedPill, live && styles.elapsedPillLive]}>
             {live ? <LiveDot /> : null}
             <Text style={[styles.elapsed, live && styles.elapsedLive]}>
-              {formatElapsed(match.status, match.elapsed)}{phase ? ` · ${phase}` : ""}
+              {formatElapsed(match.status, match.elapsed, match.clock)}{phase ? ` · ${phase}` : ""}
             </Text>
           </View>
         </View>
-        <View style={styles.scoreRow}>
+        <View style={[styles.scoreRow, wideWeb && styles.scoreRowWide]}>
           <View style={styles.teamBlock}>
             <TeamHeroName
               name={match.homeTeam}
@@ -723,11 +701,11 @@ export function MatchDetailView({
           {...(live ? { accent: semantic.live } : {})}
           style={styles.heroDivider}
         />
-        <Text style={styles.verdictEyebrow}>
+        <Text style={[styles.verdictEyebrow, wideWeb && styles.verdictRowWide]}>
           {hero ? `SON BTB SEÇİMİ · ${hero.record.minute}′ · ${hero.stateLabel}` : match.rebuild ? rebuildPresentation({status:match.status,summary:rebuildMatch.data ?? match.rebuild,now,
             redUnknown:rebuildMatch.data?.candidates.some(candidate => candidate.reason === "RED_CARD_UNKNOWN")}).label : `BTB SEÇİMİ${match.decisionMinute !== null && heroMarket ? ` · ${match.decisionMinute}′` : ""}`}
         </Text>
-        <View style={styles.verdictRow}>
+        <View style={[styles.verdictRow, wideWeb && styles.verdictRowWide]}>
           <View style={[styles.verdictCell, styles.verdictCellWide]}>
             <Text numberOfLines={2} style={styles.selection}>
               {formatSelection(heroMarket) || "Şu anda seçim yok"}
@@ -741,13 +719,13 @@ export function MatchDetailView({
               />
             ) : null}
           </View>
-          <View style={[styles.verdictCell, styles.verdictCellEnd]}>
+          {heroMarket ? <View style={[styles.verdictCell, styles.verdictCellEnd]}>
             <Text style={styles.verdictValue}>
               {isRebuild ? formatQuote(hero?.record.quote) : formatRate(match.liveRate)}
             </Text>
             <Text style={styles.verdictLabel}>seçim oranı</Text>
-          </View>
-          <View style={[styles.verdictCell, styles.verdictCellEnd]}>
+          </View> : null}
+          {heroMarket ? <View style={[styles.verdictCell, styles.verdictCellEnd]}>
             <View style={styles.movementRow}>
               <MaterialCommunityIcons
                 color={movement.color}
@@ -764,7 +742,7 @@ export function MatchDetailView({
               </ChangeEmphasis>
             </View>
             <Text style={styles.verdictLabel}>{currentMarket.label}</Text>
-          </View>
+          </View> : null}
         </View>
         {hero ? <View style={styles.heroRecordFooter}>
           <ResultPill state={hero.record.result.state} />
@@ -777,7 +755,7 @@ export function MatchDetailView({
       </TutorialTarget>
       </View>
 
-      {query.data?.rebuild ? <RebuildJinxCard matchKey={key} matchStatus={match.status} /> : intelligence ? <JinxAssessmentCard context={context.data} assessment={jinx.data}
+      {query.data?.rebuild ? <RebuildJinxCard matchKey={key} matchStatus={match.status} possession={possession} /> : intelligence ? <JinxAssessmentCard context={context.data} assessment={jinx.data}
         pending={jinx.isPending && jinx.variables?.matchKey === key}
         error={jinx.isError && jinx.variables?.matchKey === key} onAsk={() => void askJinx()} /> : null}
 
@@ -879,6 +857,9 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     ...shadows.card
   },
+  scoreHeroWide: { paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
+  scoreRowWide: { width: "100%", maxWidth: 760, alignSelf: "center", marginVertical: spacing.xs },
+  verdictRowWide: { width: "100%", maxWidth: 880, alignSelf: "center" },
   leagueRow: {
     flexDirection: "row",
     alignItems: "center",
