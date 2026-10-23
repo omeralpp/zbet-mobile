@@ -10,17 +10,21 @@ import {
   type TeamLogoSize
 } from "@/src/utils/team-logo";
 
-export function TeamLogo({
-  participantId,
-  size,
-  name
-}: {
+interface TeamLogoProps {
   participantId?: string | null | undefined;
   size?: TeamLogoSize | undefined;
-  /** Team name; a team without a crest then shows its initials (owner decision 2026-10-21, replaces NXT-OBS-103's BTB mark). */
+  /** A team without a crest shows its initials (owner decision 2026-10-21). */
   name?: string | undefined;
-}) {
-  const url = getTeamLogoUrl(participantId);
+}
+
+export function TeamLogo(props: TeamLogoProps) {
+  const url = getTeamLogoUrl(props.participantId);
+  // Live detail reuses this component when the selected match changes. A
+  // failed/placeholder crest belongs to its URL, never the next participant.
+  return <TeamLogoImage key={url ?? "missing"} {...props} url={url} />;
+}
+
+function TeamLogoImage({ size, name, url }: TeamLogoProps & { url: string | null }) {
   const [failed, setFailed] = useState(false);
   const box = resolveTeamLogoSize(size);
 

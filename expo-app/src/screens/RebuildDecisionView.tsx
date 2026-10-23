@@ -34,6 +34,7 @@ import { colors, iconSizes, interaction, semantic, shadows, spacing, typeScale }
 import { formatFixtureDateTime, formatSelection } from "@/src/utils/format";
 import { formatDecimal, formatQuote, formatScore, formatSupport, formatUnits, resultPresentation, unitsTone } from "@/src/utils/rebuild-display";
 import { publishedParts } from "@/src/utils/rebuild-log";
+import { publishedExplanation } from "@/src/utils/rebuild-presentation";
 
 const capLabel: Record<string, string> = { sample: "Havuz", direction: "Yön", timing: "Ölçüm zamanı", xg: "xG kapsamı", time_goals: "Dakika / gereken gol" };
 
@@ -166,14 +167,11 @@ export function RebuildDecisionView({ decisionId, matchKey: matchParam, onEdgeSw
   const tone = record.result.net === null ? "neutral" : unitsTone(record.result.net);
   const halfTime = record.minute > 45 && periodScore.data?.halfTimeScore ? `İY ${periodScore.data.halfTimeScore.homeScore}–${periodScore.data.halfTimeScore.awayScore}` : null;
   const support = formatSupport(record.poolWins, record.poolTotal);
-  const isCurrent = rebuild.data?.jinx.decisionId === record.decisionId;
   const lastVote = record.votes.at(-1);
   const voteHome = lastVote ? Number(lastVote.home) : 0;
   const voteAway = lastVote ? Number(lastVote.away) : 0;
   const history = rebuild.data?.history ?? [record];
-  const statement = isCurrent && rebuild.data
-    ? rebuild.data.jinx.summary
-    : `${record.votesSupport}/${record.votesUsed} baskı teyidi ve ${support.counts} havuz desteği bu kararı destekliyor; yön çelişkisi ${record.directionConflict ? "var" : "yok"}.`;
+  const statement = publishedExplanation(record);
 
   const sections: Record<SuperDetailModuleId, ReactNode> = {
     decisionSummary: (

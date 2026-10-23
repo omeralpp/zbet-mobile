@@ -37,7 +37,7 @@ import { rebuildCohortsReportSchema, rebuildMatchSchema, rebuildReportSchema } f
 import { rebuildPressureHistorySchema, rebuildStatisticsSchema, rebuildPoolPathSchema } from "./rebuild-statistics-schemas";
 
 const requestTimeoutMs = 15_000;
-const decisionContextHeaders = { "X-BTB-Decision-Context": "decision-context.v3", "X-BTB-Rebuild": "btb-rebuild.v1" };
+const decisionContextHeaders = { "X-BTB-Decision-Context": "decision-context.v3", "X-BTB-Rebuild": "btb-rebuild.v1", "X-BTB-Selection-Display": "btb-selection-display.v1" };
 
 export function createHttpMobileApi(baseUrl: string): MobileApi {
   async function request<T>(

@@ -1,7 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { z } from "zod";
-import { rebuildSummarySchema, rebuildMatchSchema, rebuildReportSchema, rebuildCohortsReportSchema } from "../src/api/rebuild-schemas";
+import { rebuildSummarySchema, rebuildMatchSchema, rebuildReportSchema, rebuildCohortsReportSchema, rebuildQuotesSchema } from "../src/api/rebuild-schemas";
 import { rebuildPressureHistorySchema, rebuildStatisticsSchema, rebuildPoolPathSchema } from "../src/api/rebuild-statistics-schemas";
 
 // Runtime refinements also check links and frozen facts; JSON Schema describes
@@ -11,6 +11,7 @@ for (const [name, schema] of Object.entries({
   "btb-rebuild-match": rebuildMatchSchema,
   "btb-rebuild-report": rebuildReportSchema,
   "btb-rebuild-report-v2": rebuildCohortsReportSchema,
+  "btb-market-quotes": rebuildQuotesSchema,
   "btb-match-statistics": rebuildStatisticsSchema,
   "btb-pressure-history": rebuildPressureHistorySchema,
   "btb-pool-path": rebuildPoolPathSchema

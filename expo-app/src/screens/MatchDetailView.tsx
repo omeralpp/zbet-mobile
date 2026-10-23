@@ -27,8 +27,11 @@ import type { AnalysisContext } from "@/src/api/schemas";
 import { JinxAssessmentCard } from "@/src/components/JinxAssessmentCard";
 import { pressureSide } from "@/src/components/MatchCard";
 import { PitchMarkings } from "@/src/components/PitchMarkings";
-import { RebuildDecisionModule, RebuildJinxCard, LastPublishedRecommendation, useRebuildClock } from "@/src/components/RebuildEvidencePanel";
+import { RebuildDecisionModule, RebuildJinxCard, useRebuildClock } from "@/src/components/RebuildEvidencePanel";
+import { ResultPill } from "@/src/components/DecisionTicket";
 import { currentRebuild } from "@/src/utils/rebuild-current";
+import { rebuildHero } from "@/src/utils/rebuild-hero";
+import { formatQuote } from "@/src/utils/rebuild-display";
 import { rebuildPresentation } from "@/src/utils/rebuild-presentation";
 import { analysisNeedsRefresh } from "@/src/mascot/jinx-assessment";
 import { useJinxAnalyticalSurface } from "@/src/mascot/JinxPreferencesProvider";
@@ -337,23 +340,24 @@ export function MatchDetailView({
 
   const match = query.data.rebuild && !currentRebuild(query.data.rebuild, now)
     ? { ...query.data, selectedOdd: "", rating: 0, liveRate: null, currentRate: null } : query.data;
-  const current = match.rebuild ? currentRebuild(match.rebuild, now) : null;
-  const currentMinute = current
-    ? rebuildMatch.data?.history.find((record) => record.decisionId === current.decisionId)?.minute ?? null
-    : match.rebuild ? null : match.decisionMinute;
+  const hero = isRebuild ? rebuildHero({ data: rebuildMatch.data, matchKey: key, status: match.status, now, error: rebuildMatch.isError }) : null;
+  const heroMarket = isRebuild ? hero?.record.market ?? "" : match.selectedOdd;
+  const heroStars = isRebuild ? hero?.record.stars ?? 0 : match.rating;
+  const heroFirstRate = isRebuild ? Number(hero?.record.quote ?? NaN) : match.liveRate;
+  const heroCurrentRate = isRebuild ? hero?.currentQuote ? Number(hero.currentQuote) : null : match.currentRate;
   const pressure = matchPressureSide(match);
   const phase = match.status === "LIVE" ? (match.elapsed > 45 ? "2. YARI" : "1. YARI") : null;
   const live = match.status === "LIVE" || match.status === "HALF_TIME";
   const insight = insightQuery.data;
   const leagueContext = leagueContextQuery.data;
-  const currentMarket = formatCurrentMarketRate(
-    match.currentRate,
-    match.selectedOdd,
+  const currentMarket = isRebuild ? { value: formatQuote(hero?.currentQuote), label: hero?.quoteLabel ?? "Güncel oran bekleniyor" } : formatCurrentMarketRate(
+    heroCurrentRate,
+    heroMarket,
     "güncel oran"
   );
   // Reuses the list card's trend derivation, so Match Detail and the Live list
   // can never disagree about which way an odd moved.
-  const trend = deriveLiveRateTrend(match.liveRate, match.currentRate);
+  const trend = deriveLiveRateTrend(Number.isFinite(heroFirstRate) ? heroFirstRate : null, heroCurrentRate);
   const movement = {
     UP: {
       icon: "trending-up" as const,
@@ -625,7 +629,7 @@ export function MatchDetailView({
       scrollRef={scrollRef}
       fixedHeader={compactHeader ? <View style={styles.fixedHeader}>
         <Text numberOfLines={1} style={styles.fixedTitle}>{match.homeTeam} – {match.awayTeam}</Text>
-        <Text style={styles.fixedValue}>{match.homeScore}–{match.awayScore} · {formatElapsed(match.status, match.elapsed)} · {formatSelection(match.selectedOdd) || "Seçim yok"} · {currentMarket.value}</Text>
+        <Text style={styles.fixedValue}>{match.homeScore}–{match.awayScore} · {formatElapsed(match.status, match.elapsed)} · {formatSelection(heroMarket) || "Seçim yok"}{hero ? ` · ${hero.stateLabel}` : ""} · {currentMarket.value}</Text>
       </View> : null}
       scrollProps={{
         alwaysBounceVertical: true,
@@ -720,26 +724,26 @@ export function MatchDetailView({
           style={styles.heroDivider}
         />
         <Text style={styles.verdictEyebrow}>
-          {match.rebuild && !match.selectedOdd ? rebuildPresentation({status:match.status,summary:rebuildMatch.data ?? match.rebuild,now,
-            redUnknown:rebuildMatch.data?.candidates.some(candidate => candidate.reason === "RED_CARD_UNKNOWN")}).label : `BTB SEÇİMİ${currentMinute !== null && match.selectedOdd ? ` · ${currentMinute}′` : ""}`}
+          {hero ? `SON BTB SEÇİMİ · ${hero.record.minute}′ · ${hero.stateLabel}` : match.rebuild ? rebuildPresentation({status:match.status,summary:rebuildMatch.data ?? match.rebuild,now,
+            redUnknown:rebuildMatch.data?.candidates.some(candidate => candidate.reason === "RED_CARD_UNKNOWN")}).label : `BTB SEÇİMİ${match.decisionMinute !== null && heroMarket ? ` · ${match.decisionMinute}′` : ""}`}
         </Text>
         <View style={styles.verdictRow}>
           <View style={[styles.verdictCell, styles.verdictCellWide]}>
             <Text numberOfLines={2} style={styles.selection}>
-              {formatSelection(match.selectedOdd) || "Şu anda seçim yok"}
+              {formatSelection(heroMarket) || "Şu anda seçim yok"}
             </Text>
             {/* The rebuild's stars measure consistency and evidence quality,
                 so the board's meter carries that name rather than "BTB rating". */}
-            {match.selectedOdd ? (
+            {heroMarket ? (
               <SignalMeter
-                {...(match.rebuild ? { label: `Kanıt kalitesi · ${Math.min(5, match.rating)}/5` } : {})}
-                rating={match.rating}
+                {...(match.rebuild ? { label: `İlk kanıt kalitesi · ${Math.min(5, heroStars)}/5` } : {})}
+                rating={heroStars}
               />
             ) : null}
           </View>
           <View style={[styles.verdictCell, styles.verdictCellEnd]}>
             <Text style={styles.verdictValue}>
-              {formatRate(match.liveRate)}
+              {isRebuild ? formatQuote(hero?.record.quote) : formatRate(match.liveRate)}
             </Text>
             <Text style={styles.verdictLabel}>seçim oranı</Text>
           </View>
@@ -752,7 +756,7 @@ export function MatchDetailView({
               />
               <ChangeEmphasis token={currentMarket.value}>
                 <Text
-                  accessibilityLabel={`${currentMarket.value} - ${movement.label}`}
+                  accessibilityLabel={`${currentMarket.value} · ${currentMarket.label}${heroCurrentRate !== null ? ` · ${movement.label}` : ""}`}
                   style={[styles.verdictValue, { color: movement.color }]}
                 >
                   {currentMarket.value}
@@ -762,12 +766,17 @@ export function MatchDetailView({
             <Text style={styles.verdictLabel}>{currentMarket.label}</Text>
           </View>
         </View>
+        {hero ? <View style={styles.heroRecordFooter}>
+          <ResultPill state={hero.record.result.state} />
+          <Pressable accessibilityRole="button" accessibilityLabel="Son BTB karar kaydını aç" onPress={() => openDecision(hero.record.decisionId)} style={styles.heroRecordAction}>
+            <Text style={styles.resetText}>Karar kaydını aç</Text>
+            <MaterialCommunityIcons color={semantic.intelligence} name="chevron-right" size={iconSizes.inline} />
+          </Pressable>
+        </View> : null}
         </View>
       </TutorialTarget>
       </View>
 
-      {isRebuild && !current && !currentRebuild(rebuildMatch.data,now) && rebuildMatch.data?.history.at(-1) ? <LastPublishedRecommendation
-        record={rebuildMatch.data.history.at(-1)!} onOpen={()=>openDecision(rebuildMatch.data!.history.at(-1)!.decisionId)} /> : null}
       {query.data?.rebuild ? <RebuildJinxCard matchKey={key} matchStatus={match.status} /> : intelligence ? <JinxAssessmentCard context={context.data} assessment={jinx.data}
         pending={jinx.isPending && jinx.variables?.matchKey === key}
         error={jinx.isError && jinx.variables?.matchKey === key} onAsk={() => void askJinx()} /> : null}
@@ -993,6 +1002,8 @@ const styles = StyleSheet.create({
     ...typeScale.eyebrow,
     marginBottom: spacing.sm
   },
+  heroRecordFooter: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: spacing.sm, marginTop: spacing.sm },
+  heroRecordAction: { flexDirection: "row", alignItems: "center", minHeight: 44, gap: spacing.xs },
   rowTools: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: spacing.sm },
   resetAction: { minHeight: 48, justifyContent: "center" },
   evidenceTitle: { color: colors.text, ...typeScale.identity, fontWeight: "700", fontSize: 17, lineHeight: 22 },
@@ -1027,7 +1038,8 @@ const styles = StyleSheet.create({
     minWidth: 0
   },
   verdictCellEnd: {
-    alignItems: "flex-end"
+    alignItems: "flex-end",
+    maxWidth: "30%"
   },
   movementRow: {
     flexDirection: "row",
@@ -1040,7 +1052,8 @@ const styles = StyleSheet.create({
   },
   verdictLabel: {
     color: colors.textSubtle,
-    ...typeScale.label
+    ...typeScale.label,
+    textAlign: "right"
   },
   selection: {
     color: colors.text,

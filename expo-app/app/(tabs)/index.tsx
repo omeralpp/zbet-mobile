@@ -22,7 +22,8 @@ import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import { TotoProgramCard } from "@/src/components/TotoProgramCard";
 import { dashboardQuery, matchInsightsQuery } from "@/src/api/queries";
-import { RecentRecommendations, useRebuildWeek } from "@/src/components/RebuildEvidencePanel";
+import { RecentRecommendations, useRebuildWeek, useRebuildClock } from "@/src/components/RebuildEvidencePanel";
+import { activeMatch, activeStarCounts } from "@/src/utils/rebuild-cards";
 import { formatRatio, formatUnits, unitsTone } from "@/src/utils/rebuild-display";
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
@@ -40,6 +41,7 @@ import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { formatTodayEyebrow } from "@/src/utils/format";
 
 export default function DashboardScreen() {
+  const now = useRebuildClock();
   const router = useRouter();
   const { filter: liveStarFilter } = useLiveStarFilter();
   const query = useQuery(dashboardQuery);
@@ -64,13 +66,17 @@ export default function DashboardScreen() {
   );
 
   const dashboard = query.data;
+  const starCounts = dashboard ? activeStarCounts(dashboard, now) : null;
+  const featuredMatches = [...(dashboard?.featuredMatches ?? [])].sort((a,b) => activeMatch(b,now).rating - activeMatch(a,now).rating);
+  const featuredMode = dashboard?.featuredMatchMode === "SELECTED_LIVE" && !featuredMatches.some(match=>activeMatch(match,now).selectedOdd)
+    ? "PRESSURE_LIVE" : dashboard?.featuredMatchMode ?? "EMPTY";
   const week = useRebuildWeek();
   const featuredTitle = {
     SELECTED_LIVE: "Öne çıkan canlı maçlar",
     PRESSURE_LIVE: "Takipteki canlı maçlar",
     UPCOMING: "Sıradaki maçlar",
     EMPTY: "Maç görünümü"
-  }[dashboard?.featuredMatchMode ?? "EMPTY"];
+  }[featuredMode];
   const featuredCaption =
     dashboard?.featuredMatchMode === "UPCOMING"
       ? "Başlama zamanı en yakın aktif fikstürler"
@@ -107,7 +113,7 @@ export default function DashboardScreen() {
         } as never)
       }
       value={String(
-        liveStarMetricCount(dashboard.liveStarCounts, liveStarFilter)
+        liveStarMetricCount(starCounts ?? dashboard.liveStarCounts, liveStarFilter)
       )}
     />,
     // The rebuild's own seven-day result at the original quote, one
@@ -177,13 +183,13 @@ export default function DashboardScreen() {
           onAction={() => router.push("/live" as never)}
           title={featuredTitle}
         />
-        {dashboard.featuredMatches.map((match, index) =>
+        {featuredMatches.map((match, index) =>
           index === 0 ? (
             <TutorialTarget id="home-featured" key={match.key}>
-              <MatchCard compact horizontal={wideWeb} insight={insightMap.get(match.key)} match={match} />
+              <MatchCard clock={now} compact horizontal={wideWeb} insight={insightMap.get(match.key)} match={match} />
             </TutorialTarget>
           ) : (
-            <MatchCard compact horizontal={wideWeb} insight={insightMap.get(match.key)} key={match.key} match={match} />
+            <MatchCard clock={now} compact horizontal={wideWeb} insight={insightMap.get(match.key)} key={match.key} match={match} />
           )
         )}
       </>

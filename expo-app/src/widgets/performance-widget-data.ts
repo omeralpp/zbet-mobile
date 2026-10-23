@@ -7,9 +7,9 @@ import type {
   BtbWidgetPayload,
   WidgetInputData
 } from "./widget-payload";
-import type { RebuildReport } from "@/src/api/rebuild-schemas";
+import type { RebuildReport, RebuildCohortsReport } from "@/src/api/rebuild-schemas";
 
-export function buildRebuildWidgetPayload(report: RebuildReport, filter: StarDecisionFilter, programs: TotoProgram[] = []): BtbWidgetPayload {
+export function buildRebuildWidgetPayload(report: RebuildReport | RebuildCohortsReport, filter: StarDecisionFilter, programs: TotoProgram[] = []): BtbWidgetPayload {
   const minimum = starFilterMinRating(filter), period = report.periods.find(p => p.days === 7);
   const buckets = period?.byStar.filter(b => b.stars >= minimum) || [];
   const settled = buckets.reduce((sum, b) => sum + b.settled, 0);

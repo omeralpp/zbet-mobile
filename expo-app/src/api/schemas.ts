@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { rebuildSummarySchema } from "./rebuild-schemas";
+import { rebuildSummarySchema, rebuildQuotesSchema } from "./rebuild-schemas";
 
 const isoDateTime = z.string().min(1);
 const finiteNumber = z.number().finite();
@@ -139,6 +139,7 @@ export const matchSummarySchema = z.strictObject({
   pressureSnapshotAt: isoDateTime.nullable().optional(),
   decisionContext: decisionContextSchema.optional(),
   rebuild: rebuildSummarySchema.optional(),
+  rebuildQuotes: rebuildQuotesSchema.nullable().optional(),
   lastUpdatedAt: isoDateTime
 });
 
@@ -358,6 +359,7 @@ export const totoProgramSchema = z.strictObject({
 export const dashboardSchema = z.strictObject({
   generatedAt: isoDateTime,
   liveMatchCount: z.number().int().nonnegative(),
+  liveStarSelections: z.array(z.strictObject({matchKey:z.string(),stars:z.number().int().min(1).max(5),validUntil:z.string().datetime().nullable()})).optional(),
   highStarLiveCount: z.number().int().nonnegative(),
   liveStarCounts: z.strictObject({
     ALL: z.number().int().nonnegative(),

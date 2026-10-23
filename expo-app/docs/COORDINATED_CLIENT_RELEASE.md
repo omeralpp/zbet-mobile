@@ -6,6 +6,20 @@ Every release, including a platform-only change, uses one clean pushed
 intended UX difference; they never excuse omitting the companion artifact.
 Shared client behavior and the Mobile BFF contract must remain compatible.
 
+## Web review first (owner decision, 2026-10-23)
+
+Prepare and show the web preview before spending time on the final APK build.
+Wait for the owner's web acceptance before building/signing the APK; APK work
+is the final artifact preparation step. Reuse the accepted client source for
+both artifacts; a later functional change requires renewed web review.
+
+A local development preview may use uncommitted source and must be labelled as
+such. It is not a published release, paired verification or Android acceptance.
+Commit/push, BFF restart, signing/distribution and Cloudflare publication retain
+their explicit approvals. Final release verification and both smoke receipts
+remain required. The existing publication tool still requires the verified APK
+and installation receipt; web preview acceptance does not fabricate either.
+
 ## Preparation and authorization
 
 1. Implement and test the change on both surfaces. Run the proportional core,

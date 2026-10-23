@@ -1,4 +1,5 @@
 import type { MatchSummary } from "@/src/api/schemas";
+import { activeMatch } from "./rebuild-cards";
 import {
   matchDecisionFilter,
   type StarDecisionFilter
@@ -84,6 +85,6 @@ export function matchLiveTab(
       return now - kickoff < FIXTURE_STALE_TOLERANCE_MS;
     }
     case "STAR":
-      return matchDecisionFilter(match, starFilter);
+      return (match.status === "LIVE" || match.status === "HALF_TIME") && matchDecisionFilter(activeMatch(match, now), starFilter);
   }
 }

@@ -1,4 +1,7 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { rebuildCohortsReportQuery } from "@/src/api/queries";
 import { usePathname, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { MatchInsight, MatchSummary } from "@/src/api/schemas";
@@ -32,6 +35,7 @@ import { TeamLogo } from "./TeamLogo";
 import { useRebuildClock } from "./RebuildEvidencePanel";
 import { rebuildPresentation } from "@/src/utils/rebuild-presentation";
 import { currentRebuild } from "@/src/utils/rebuild-current";
+import { activeMatch, rebuildCardHero } from "@/src/utils/rebuild-cards";
 
 /**
  * Home pressure is drawn in intelligence blue and away pressure in orange, the
@@ -105,6 +109,7 @@ export function MatchCard({
   horizontal = false,
   insight,
   match: sourceMatch,
+  clock,
   onTogglePinned,
   pinned = false,
   onSelect,
@@ -117,6 +122,8 @@ export function MatchCard({
   horizontal?: boolean;
   insight?: MatchInsight | undefined;
   match: MatchSummary;
+  /** Parent clock keeps expiry, star filters and visible cards in one render. */
+  clock?: number;
   onTogglePinned?: (() => void) | undefined;
   pinned?: boolean;
   /** Desktop split view: select the match into the side pane instead of navigating. */
@@ -125,13 +132,32 @@ export function MatchCard({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const now = useRebuildClock();
-  const match = sourceMatch.rebuild && !currentRebuild(sourceMatch.rebuild, now)
-    ? { ...sourceMatch, selectedOdd: "", rating: 0, liveRate: null, currentRate: null } : sourceMatch;
+  const localNow = useRebuildClock(clock === undefined);
+  const now = clock ?? localNow;
+  // All cards share one report/cache; no per-card history network request.
+  const publications = useQuery({ ...rebuildCohortsReportQuery, enabled: Boolean(sourceMatch.rebuild) });
+  const attemptedPublication = useRef<string | null>(null);
+  const currentId = sourceMatch.rebuild?.current?.decisionId;
+  const hasCurrentPublication = publications.data?.recommendations.some(record=>record.decisionId===currentId);
+  const refreshPublications = publications.refetch;
+  useEffect(() => {
+    // A new notification/current identity need not wait for the 30 s report
+    // poll. Retry only once per identity; concurrent cards share one fetch.
+    if (currentId && publications.isSuccess && !hasCurrentPublication && attemptedPublication.current !== currentId) {
+      attemptedPublication.current = currentId;
+      void refreshPublications({cancelRefetch:false});
+    }
+  }, [currentId, hasCurrentPublication, publications.isSuccess, refreshPublications]);
+  const hero = rebuildCardHero(sourceMatch, publications.data?.recommendations ?? [], now);
+  const active = activeMatch(sourceMatch, now);
+  const match = hero ? { ...active, selectedOdd: hero.record.market, rating: hero.record.stars,
+    liveRate: Number(hero.record.quote), currentRate: hero.currentQuote ? Number(hero.currentQuote) : null }
+    : sourceMatch.rebuild ? { ...active, selectedOdd: "", rating: 0, liveRate: null, currentRate: null } : active;
+  const emptySelection = sourceMatch.rebuild && currentRebuild(sourceMatch.rebuild, now) ? "Seçim kaydı bekleniyor" : "Şu anda seçim yok";
   const live = match.status === "LIVE" || match.status === "HALF_TIME";
   const minuteProgress = deriveMatchMinuteProgress(match.status, match.elapsed);
   const kickoff = formatFixtureDateTime(match.matchDate, match.matchTime);
-  const currentMarket = formatCurrentMarketRate(
+  const currentMarket = hero ? {value: formatRate(match.currentRate), label: hero.quoteLabel} : formatCurrentMarketRate(
     match.currentRate,
     match.selectedOdd,
     "canlı oran"
@@ -159,7 +185,7 @@ export function MatchCard({
   // v40 board names the current selection plainly; an RB1 match without one
   // says it is waiting for confirmation. The stars keep their meaning in the
   // spoken label (consistency and evidence quality).
-  const eyebrow = match.rebuild && !match.selectedOdd ? rebuildPresentation({status:match.status,summary:match.rebuild,now}).label : "BTB SEÇİMİ";
+  const eyebrow = hero ? `SON SEÇİM · ${hero.record.minute}′ · ${hero.stateLabel}` : match.rebuild && !match.selectedOdd ? rebuildPresentation({status:match.status,summary:match.rebuild,now}).label : "BTB SEÇİMİ";
   const starsSpoken = match.rebuild ? "tutarlılık ve kanıt kalitesi" : "BTB rating";
   const rateSpoken = `${currentMarket.label} ${currentMarket.value}, ${
     rateTrend === "UP"
@@ -252,9 +278,9 @@ export function MatchCard({
 
       {horizontal ? (
         <View style={styles.sidePanel}>
-          <Text numberOfLines={1} style={styles.decisionEyebrow}>{eyebrow}</Text>
+          <Text numberOfLines={2} style={styles.decisionEyebrow}>{eyebrow}</Text>
           <Text numberOfLines={2} style={styles.sideOdd}>
-            {formatSelection(match.selectedOdd) || "Şu anda seçim yok"}
+            {formatSelection(match.selectedOdd) || emptySelection}
           </Text>
           <View style={styles.sideFoot}>
             {match.selectedOdd ? (
@@ -264,37 +290,44 @@ export function MatchCard({
             ) : <View />}
             {footer.showsRate ? (
               <View accessibilityLabel={`${match.selectedOdd ? `Seçim oranı ${formatRate(match.liveRate)}, ` : ""}${rateSpoken}`} style={styles.compactRates}>
-                {match.selectedOdd ? <Text style={styles.compactRate}>{formatRate(match.liveRate)}</Text> : null}
+                {match.selectedOdd ? <View style={styles.compactRateColumn}><Text style={styles.compactRate}>{formatRate(match.liveRate)}</Text><Text style={styles.compactRateLabel}>seçim oranı</Text></View> : null}
+                <View style={styles.compactRateColumn}>
                 <ChangeEmphasis style={styles.rateHeadline} token={currentMarket.value}>
                   {trendGlyph}
                   <Text style={[styles.compactRate, { color: rateTrendColor }]}>{currentMarket.value}</Text>
                 </ChangeEmphasis>
+                <Text style={styles.compactRateLabel}>{currentMarket.label}</Text>
+                </View>
               </View>
             ) : null}
           </View>
         </View>
       ) : compact ? (
         <View style={styles.compactDecision}>
+          {hero ? <Text numberOfLines={2} style={styles.decisionEyebrow}>{eyebrow}</Text> : null}
           <View accessibilityLabel={match.selectedOdd ? `${formatSelection(match.selectedOdd)}, ${match.rating} yıldız, ${starsSpoken}` : undefined} style={[styles.compactDecisionCopy, dense && styles.compactDecisionInline]}>
             <Text numberOfLines={1} style={styles.compactOdd}>
-              {formatSelection(match.selectedOdd) || "Şu anda seçim yok"}
+              {formatSelection(match.selectedOdd) || emptySelection}
             </Text>
             {match.selectedOdd ? <RatingStars rating={match.rating} size={12} /> : null}
           </View>
           {footer.showsRate ? (
             <View accessibilityLabel={`${match.selectedOdd ? `Seçim oranı ${formatRate(match.liveRate)}, ` : ""}${rateSpoken}`} style={styles.compactRates}>
-              {match.selectedOdd ? <Text style={styles.compactRate}>{formatRate(match.liveRate)}</Text> : null}
+              {match.selectedOdd ? <View style={styles.compactRateColumn}><Text style={styles.compactRate}>{formatRate(match.liveRate)}</Text><Text style={styles.compactRateLabel}>seçim oranı</Text></View> : null}
+              <View style={styles.compactRateColumn}>
               <ChangeEmphasis style={styles.rateHeadline} token={currentMarket.value}>
                 {trendGlyph}
                 <Text style={[styles.compactRate, { color: rateTrendColor }]}>{currentMarket.value}</Text>
               </ChangeEmphasis>
+              <Text style={styles.compactRateLabel}>{currentMarket.label}</Text>
+              </View>
             </View>
           ) : null}
         </View>
       ) : (
         <View style={styles.decisionPanel}>
           <View style={styles.decisionHeader}>
-            <Text numberOfLines={1} style={styles.decisionEyebrow}>{eyebrow}</Text>
+            <Text numberOfLines={2} style={styles.decisionEyebrow}>{eyebrow}</Text>
             {match.selectedOdd ? (
               <View accessibilityLabel={`${match.rating} / 5 yıldız, ${starsSpoken}`} accessible>
                 <RatingStars rating={match.rating} size={13} />
@@ -302,7 +335,7 @@ export function MatchCard({
             ) : null}
           </View>
           <Text style={styles.odd}>
-            {formatSelection(match.selectedOdd) || "Şu anda seçim yok"}
+            {formatSelection(match.selectedOdd) || emptySelection}
           </Text>
           {footer.showsRate ? (
             <View style={styles.rateRow}>
@@ -584,16 +617,15 @@ const styles = StyleSheet.create({
     letterSpacing: 0
   },
   compactDecision: {
-    alignItems: "center",
+    alignItems: "stretch",
     borderTopColor: colors.border,
     borderTopWidth: 1,
-    flexDirection: "row",
+    flexDirection: "column",
     gap: spacing.sm,
     paddingTop: spacing.sm,
     marginTop: 2
   },
   compactDecisionCopy: {
-    flex: 1,
     minWidth: 0
   },
   // Desktop list row (v40 W-Canlı): the market with its stars on one line.
@@ -631,8 +663,8 @@ const styles = StyleSheet.create({
     lineHeight: 20
   },
   sideFoot: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: "column",
+    alignItems: "stretch",
     justifyContent: "space-between",
     gap: spacing.sm
   },
@@ -644,10 +676,15 @@ const styles = StyleSheet.create({
     lineHeight: 19
   },
   compactRates: {
-    alignItems: "center",
+    maxWidth: "100%",
+    alignItems: "flex-end",
     flexDirection: "row",
-    gap: 6
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+    gap: 12
   },
+  compactRateColumn: { alignItems: "flex-end", minWidth: 0, flexShrink: 1, maxWidth: "48%", gap: 3 },
+  compactRateLabel: { color: colors.textSubtle, ...typeScale.label, textAlign: "right" },
   compactRate: {
     color: colors.text,
     ...typeScale.metric,

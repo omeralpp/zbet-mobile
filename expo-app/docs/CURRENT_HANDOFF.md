@@ -1,9 +1,26 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-10-22
+Son güncelleme: 2026-10-23
 Mod: `77A_DELIVERED / SUPER_V2_RELEASED`
 Delivery: `OWNER_ONLY_DEV_PILOT / 43d2e7d PAIR COMPLETE (both smokes passed 2026-10-22)`
 Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
+Local, unreleased (2026-10-23): owner-approved hero/Jinx/Overview/Live consolidation
+keeps last publications and first facts separate from current eligibility/prices.
+Active-star counts expire on the same parent clock as their cards. The owner
+subsequently approved the seven-day fix too: all display/report consumers use
+v2. BFF has an opt-in quote snapshot/expiry extension; old clients are unchanged.
+See [local batch](HERO_SELECTION_BATCH_2026-10-23.md). Commit/push, BFF restart
+and paired APK/web delivery are not approved for this batch.
+Owner order (2026-10-23): review the local web preview first; wait for web
+acceptance before final APK creation/signing. See the web-review-first section
+in `COORDINATED_CLIENT_RELEASE.md`. Published 43d2e7d remains unchanged.
+The owner accepted the local web and recovered historical names on 2026-10-23
+and requested the delivery package. See `HERO_SELECTION_DELIVERY_2026-10-23.md`
+for the pending combined Git/BFF/paired-release approval. This preview acceptance
+is not final APK installation or public-web smoke evidence. See also
+`DESIGN_PARITY_REVIEW_2026-10-23.md`. Crest reuse is fixed locally. Follow-up
+historical-name BFF decoding recovered all seven examined decisions from frozen
+evidence (706 tests); no SAP change/backfill. Runtime delivery is still pending.
 Previous checkpoint preserved verbatim in
 `handoff_archive/CURRENT_HANDOFF_before_RB1_2026-10-20.md`.
 

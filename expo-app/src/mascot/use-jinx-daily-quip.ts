@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { rebuildReportQuery } from "@/src/api/queries";
+import { rebuildCohortsReportQuery } from "@/src/api/queries";
 import { jinxWeekQuip } from "./jinx-week";
 
 /**
@@ -9,7 +9,7 @@ import { jinxWeekQuip } from "./jinx-week";
  * A3 daily Super figures and their mood are retired.
  */
 export function useJinxDailyQuip() {
-  const report = useQuery(rebuildReportQuery);
+  const report = useQuery(rebuildCohortsReportQuery);
   const period = !report.isError && report.data?.availability === "AVAILABLE"
     ? report.data.periods.find((item) => item.days === 7)
     : undefined;

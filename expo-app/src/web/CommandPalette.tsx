@@ -3,7 +3,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { matchesQuery, rebuildReportQuery, totoProgramsQuery } from "@/src/api/queries";
+import { matchesQuery, rebuildCohortsReportQuery, totoProgramsQuery } from "@/src/api/queries";
 import { colors, iconSizes, radii, semantic, spacing, typeScale } from "@/src/theme/theme";
 import { buildPaletteItems, searchPalette, type PaletteItem, type PaletteKind } from "./command-palette";
 
@@ -38,7 +38,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
     () =>
       buildPaletteItems({
         matches: queryClient.getQueryData(matchesQuery.queryKey) ?? [],
-        recommendations: queryClient.getQueryData(rebuildReportQuery.queryKey)?.recommendations ?? [],
+        recommendations: queryClient.getQueryData(rebuildCohortsReportQuery.queryKey)?.recommendations ?? [],
         totoPrograms: queryClient.getQueryData(totoProgramsQuery.queryKey) ?? []
       }),
     [queryClient]

@@ -1,6 +1,11 @@
-import type { RebuildSummary, RebuildMatch } from "../api/rebuild-schemas";
+import type { RebuildSummary, RebuildMatch, RebuildRecommendation } from "../api/rebuild-schemas";
+import { formatSelection } from "./format";
 import { currentRebuild, rebuildReason } from "./rebuild-current";
 import { formatScore } from "./rebuild-display";
+
+export function publishedExplanation(record: RebuildRecommendation) {
+  return `${record.minute}′ · ${formatSelection(record.market)} için kaydedilmiş karar: ${record.votesSupport}/${record.votesUsed} baskı teyidi, ${record.poolWins}/${record.poolTotal} havuz desteği; yön çelişkisi ${record.directionConflict ? "var" : "yok"}. Bu kanıt karar anına aittir.`;
+}
 
 export function candidateFacts(candidate: RebuildMatch["candidates"][number]) {
   const score = candidate.consistencyScore === null ? "Puan hesaplanmadı" : `Puan ${formatScore(candidate.consistencyScore)}`;

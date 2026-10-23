@@ -15,6 +15,7 @@ import {
 import { matchInsightsQuery, matchesQuery } from "@/src/api/queries";
 import { DecisionFilterChip } from "@/src/components/DecisionFilterChip";
 import { MatchCard } from "@/src/components/MatchCard";
+import { useRebuildClock } from "@/src/components/RebuildEvidencePanel";
 import { LocalTabPager } from "@/src/components/LocalTabPager";
 import { Screen } from "@/src/components/Screen";
 import { isAtLeast } from "@/src/layout/breakpoints";
@@ -126,6 +127,7 @@ function LiveSwitch({
 }
 
 export default function LiveScreen() {
+  const now = useRebuildClock();
   const params = useLocalSearchParams<{
     filter?: string | string[];
     scope?: string | string[];
@@ -179,19 +181,19 @@ export default function LiveScreen() {
   const tabCounts = useMemo(() => {
     const source = query.data ?? [];
     return {
-      LIVE: source.filter((match) => matchLiveTab(match, "LIVE", starFilter)).length,
+      LIVE: source.filter((match) => matchLiveTab(match, "LIVE", starFilter, now)).length,
       FIXTURE: source.filter((match) =>
-        matchLiveTab(match, "FIXTURE", starFilter)
+        matchLiveTab(match, "FIXTURE", starFilter, now)
       ).length,
-      STAR: source.filter((match) => matchLiveTab(match, "STAR", starFilter)).length
+      STAR: source.filter((match) => matchLiveTab(match, "STAR", starFilter, now)).length
     };
-  }, [query.data, starFilter]);
+  }, [query.data, starFilter, now]);
   const sectionsByTab = useMemo(() => {
     const source = query.data ?? [];
     return localTabs.reduce(
       (result, pageTab) => {
         const needle = normalizeSearchText(search);
-        const pageMatches = source.filter(match => matchLiveTab(match, pageTab, starFilter));
+        const pageMatches = source.filter(match => matchLiveTab(match, pageTab, starFilter, now));
         if (needle) {
           const found = pageMatches.map((match, index) => ({ match, index,
             score: searchTextScore(`${match.homeTeam} ${match.awayTeam} ${match.league}`, needle) }))
@@ -213,7 +215,7 @@ export default function LiveScreen() {
         ReturnType<typeof groupMatchesByKickoff>
       >
     );
-  }, [pinnedKeys, query.data, starFilter, search]);
+  }, [pinnedKeys, query.data, starFilter, search, now]);
   const insightMap = useMemo(
     () =>
       new Map(
@@ -392,6 +394,7 @@ export default function LiveScreen() {
                     matchIndex === 0 ? (
                       <TutorialTarget id="live-first-card" key={match.key}>
                         <MatchCard
+                          clock={now}
                           compact={splitLayout}
                           dense={splitLayout}
                           insight={insightMap.get(match.key)}
@@ -408,6 +411,7 @@ export default function LiveScreen() {
                       </TutorialTarget>
                     ) : (
                       <MatchCard
+                        clock={now}
                         compact={splitLayout}
                           dense={splitLayout}
                         insight={insightMap.get(match.key)}

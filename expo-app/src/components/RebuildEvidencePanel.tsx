@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { rebuildMatchQuery, rebuildReportQuery } from "@/src/api/queries";
+import { rebuildMatchQuery, rebuildCohortsReportQuery } from "@/src/api/queries";
 import type { RebuildRecommendation, RebuildReport } from "@/src/api/rebuild-schemas";
 import { currentRebuild, rebuildReason } from "@/src/utils/rebuild-current";
-import { candidateFacts, rebuildPresentation } from "@/src/utils/rebuild-presentation";
+import { rebuildHero, displayedDecision, requestedDecision } from "@/src/utils/rebuild-hero";
+import { candidateFacts, rebuildPresentation, publishedExplanation } from "@/src/utils/rebuild-presentation";
 import {
   formatDecimal,
   formatQuote,
@@ -26,9 +27,9 @@ import { SurfaceMaterial } from "./SurfaceMaterial";
 import { RatingStars } from "./RatingStars";
 import { ListPerforation, ResultPill, TicketFigure, TicketSeam, TonePill, toneColor } from "./DecisionTicket";
 
-export function useRebuildClock() {
+export function useRebuildClock(enabled = true) {
   const [now, setNow] = useState(() => Date.now());
-  useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
+  useEffect(() => { if (!enabled) return; const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, [enabled]);
   return now;
 }
 const capLabel: Record<string, string> = { sample: "Havuz", direction: "Yön", timing: "Ölçüm zamanı", xg: "xG kapsamı", time_goals: "Dakika / gereken gol" };
@@ -58,20 +59,6 @@ export function Action({ title, onPress, icon, busy = false }: { title: string; 
       {icon && icon !== "refresh" ? <MaterialCommunityIcons color={semantic.intelligence} name={icon} size={iconSizes.inline} /> : null}
     </Pressable>
   );
-}
-
-export function LastPublishedRecommendation({record,onOpen}:{record:RebuildRecommendation;onOpen:()=>void}) {
-  return <Card>
-    <View style={styles.rowBetween}>
-      <Text accessibilityRole="header" aria-level={2} style={styles.candidateMarket}>Son yayımlanan öneri · {record.minute}′</Text>
-      <TonePill label="ŞU ANDA AKTİF DEĞİL" tone="neutral" />
-    </View>
-    <Text style={styles.evidenceNumber}>{formatSelection(record.market)} · {record.stars} yıldız</Text>
-    <Text style={styles.candidateFacts}>İlk oran {formatQuote(record.quote)} · karar skoru {record.homeScore}–{record.awayScore}</Text>
-    <Text style={styles.caption}>Geçmiş karar kaydıdır; güncel ve oynanabilir seçim anlamına gelmez. İlk oran ve yıldız korunur.</Text>
-    <ResultPill state={record.result.state} />
-    <Action title="Karar kaydını aç" icon="chevron-right" onPress={onOpen} />
-  </Card>;
 }
 
 /** Winning share of the reference pool, drawn as sample support. */
@@ -269,20 +256,23 @@ function JinxChip({ label, value, accent }: { label: string; value: string; acce
 export function RebuildJinxCard({ matchKey, matchStatus = "LIVE" }: { matchKey: string; matchStatus?: string }) {
   const query = useQuery(rebuildMatchQuery(matchKey)), now = useRebuildClock();
   const [showCandidates, setShowCandidates] = useState(false);
-  const data = query.data, current = !query.isError ? currentRebuild(data, now) : null;
-  const record = current ? data?.history.find(h => h.decisionId === current.decisionId) : undefined;
+  const params = useLocalSearchParams<{decision?:string | string[]}>();
+  const requested = requestedDecision(params.decision);
+  const data = query.data;
+  const hero = rebuildHero({data, matchKey, status: matchStatus, now, error: query.isError, decisionId: requested});
+  const record = hero?.record;
   const state = rebuildPresentation({ status: matchStatus, summary: data, now, error: query.isError,
     redUnknown: data?.candidates.some(candidate => candidate.reason === "RED_CARD_UNKNOWN") });
-  const text = current ? data?.jinx.summary : state.text;
+  const text = record ? publishedExplanation(record) : requested ? "İncelenen karar kaydı doğrulanamadı." : state.text;
   const support = record ? formatSupport(record.poolWins, record.poolTotal) : null;
   return (
     <View style={styles.jinxCard}>
-      <SurfaceMaterial accent={current ? semantic.intelligence : undefined} radius={20} />
+      <SurfaceMaterial accent={hero?.active ? semantic.intelligence : undefined} radius={20} />
       <View style={styles.jinxHead}>
         <Image accessible={false} resizeMode="contain" source={jinxFace} style={styles.jinxAvatar} />
         <View style={styles.jinxIdentity}>
           <Text accessibilityRole="header" aria-level={2} style={styles.jinxTitle}>Jinx</Text>
-          <TonePill label={state.label} tone={state.tone} />
+          <TonePill label={hero?.stateLabel ?? state.label} tone={hero?.active ? "positive" : state.tone} />
         </View>
         <Pressable
           accessibilityLabel="Jinx değerlendirmesini yenile"
@@ -297,8 +287,9 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE" }: { matchKey: 
       </View>
       <View style={styles.jinxSpeech}>
         <Text accessibilityLiveRegion="polite" style={styles.jinxSpeechText}>{text}</Text>
+        {record ? <Text style={styles.caption}>{!hero?.active && currentRebuild(data, now) ? "Son öneri şu anda aktif değil; güncel değerlendirmede farklı seçim var." : state.text}</Text> : null}
       </View>
-      {support && current && record ? (
+      {support && record ? (
         <>
           <View accessible accessibilityLabel={`Havuz desteği ${support.share}, ${support.counts}`} style={styles.jinxFigure}>
             <Text style={styles.jinxFigureValue}>{support.share}</Text>
@@ -306,13 +297,14 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE" }: { matchKey: 
           </View>
           <View style={styles.jinxChips}>
             <JinxChip label="Havuz" value={support.counts} />
-            <JinxChip label="Piyasa" value={formatQuote(current.quote)} />
-            <JinxChip accent={semantic.intelligence} label="Baskı" value={`${record.votesSupport}/${record.votesUsed} teyit`} />
+            <JinxChip label="İlk oran" value={formatQuote(record.quote)} />
+            <JinxChip label={hero?.quoteLabel ?? "Güncel oran bekleniyor"} value={formatQuote(hero?.currentQuote)} />
+            <JinxChip accent={semantic.intelligence} label="Karar baskısı" value={`${record.votesSupport}/${record.votesUsed} teyit`} />
           </View>
         </>
       ) : null}
       <View style={styles.jinxFoot}>
-        <Text style={styles.jinxTime}>{asOfTime(data?.asOf)} <Text style={styles.jinxTimeLabel}>· {query.isError ? "güncel değil" : "güncel"}</Text></Text>
+        <Text style={styles.jinxTime}>{asOfTime(data?.asOf)} <Text style={styles.jinxTimeLabel}>· {query.isError ? "yenilenemedi" : "son okuma"}</Text></Text>
         <Pressable
           accessibilityRole="button"
           accessibilityState={{ expanded: showCandidates }}
@@ -328,7 +320,7 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE" }: { matchKey: 
           <Text style={styles.caption}>Diğer adaylar ve elenme nedenleri · yayımlanmış birimlerden ayrı tutulur; bahis önerisi değildir.</Text>
           <Text style={styles.caption}>Erken elenen pazarda sonraki ölçütler hesaplanmamış olabilir. Hesaplanmayan değerler sıfır değildir; son kayıtlı değerlendirme gösterilir.</Text>
           {data?.candidates.length ? data.candidates.map(c => {
-            const status = c.selected ? { label: current ? "EN İYİ ADAY" : "SON HESABIN LİDERİ", tone: "positive" as const } : c.admitted ? { label: "UYGUN, SEÇİLMEDİ", tone: "pending" as const } : { label: "ELENDİ", tone: "neutral" as const };
+            const status = c.selected ? { label: !query.isError && currentRebuild(data, now) ? "EN İYİ ADAY" : "SON HESABIN LİDERİ", tone: "positive" as const } : c.admitted ? { label: "UYGUN, SEÇİLMEDİ", tone: "pending" as const } : { label: "ELENDİ", tone: "neutral" as const };
             return (
               <View key={c.market} style={styles.candidate}>
                 <View style={styles.rowBetween}>
@@ -356,11 +348,11 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE" }: { matchKey: 
 export function RebuildDecisionModule({ matchKey }: { matchKey: string }) {
   const query = useQuery(rebuildMatchQuery(matchKey)), now = useRebuildClock();
   const params = useLocalSearchParams<{ decision?: string | string[] }>();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<{matchKey:string;decisionId:string} | null>(null);
   const [width, setWidth] = useState(0);
   const data = query.data, current = !query.isError ? currentRebuild(data, now) : null;
-  const requested = typeof params.decision === "string" ? params.decision : null;
-  const selected = data?.history.find(h => h.decisionId === (selectedId || requested || current?.decisionId));
+  const requested = requestedDecision(params.decision);
+  const selected = data ? displayedDecision(data.history, matchKey, (selectedId?.matchKey === matchKey ? selectedId.decisionId : null) || requested) : null;
   const wide = width >= 560;
   return (
     <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)} style={styles.stack}>
@@ -385,7 +377,7 @@ export function RebuildDecisionModule({ matchKey }: { matchKey: string }) {
         {data?.history.length ? data.history.map(record => (
           <RecommendationRow
             key={record.decisionId}
-            onPress={() => setSelectedId(record.decisionId)}
+            onPress={() => setSelectedId({matchKey,decisionId:record.decisionId})}
             record={record}
             selected={record.decisionId === selected?.decisionId}
             showTeams={false}
@@ -503,7 +495,7 @@ export function RebuildReportDetails({ report, period }: { report: RebuildReport
  * A row opens the record's Super kararı page.
  */
 export function RecentRecommendations({ limit = 3 }: { limit?: number }) {
-  const query = useQuery(rebuildReportQuery), router = useRouter();
+  const query = useQuery(rebuildCohortsReportQuery), router = useRouter();
   const records = query.data?.availability === "AVAILABLE" ? [...query.data.recommendations]
     .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)).slice(0, limit) : [];
   return (
@@ -525,7 +517,7 @@ export function RecentRecommendations({ limit = 3 }: { limit?: number }) {
 
 /** Seven-day figures for the Overview strip; undefined while unavailable. */
 export function useRebuildWeek() {
-  const query = useQuery(rebuildReportQuery);
+  const query = useQuery(rebuildCohortsReportQuery);
   const period = !query.isError && query.data?.availability === "AVAILABLE" ? query.data.periods.find(p => p.days === 7) : undefined;
   return { period, loading: query.isLoading, recommendations: query.data?.recommendations ?? [] };
 }

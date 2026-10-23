@@ -12,6 +12,7 @@ export function rebuildReason(reason: string | undefined) {
     NO_SELECTION: "Bu değerlendirmede uygun seçim yok.", WAITING_CONFIRMATION: "Baskı teyidi için yeterli aralık bekleniyor.",
     RED_CARD_UNKNOWN: "Kart verisi bekleniyor; bu bilgi doğrulanana kadar öneri üretilemiyor.",
     QUOTE_STALE: "Son oran ölçümünün geçerlilik süresi doldu; yeni oran bekleniyor.",
+    ENDPOINT_STALE: "Son maç veya baskı ölçümü güncel değil; yeni ölçüm bekleniyor.",
     CONFIRMATION_PENDING: "İki destekleyici baskı aralığı bekleniyor.", PRESSURE_FAILED: "Son baskı ölçümleri seçimi desteklemiyor.",
     LEADER_FAILED: "Lider skorlardan biri bu seçimi desteklemiyor.", SCORE_FAILED: "Tutarlılık puanı öneri eşiğinin altında.",
     SECOND_HALF_REQUIRED: "İkinci yarı bekleniyor.", MARKET_ALREADY_DECIDED: "Bu bahis mevcut skorla zaten sonuçlanmış.",

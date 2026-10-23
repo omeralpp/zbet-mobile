@@ -10,7 +10,7 @@ export async function refreshPerformanceWidgetFromApi(
   filterOverride?: StarDecisionFilter
 ): Promise<boolean> {
   const [report, storedFilter, programs] = await Promise.all([
-    mobileApi.getRebuildReport(),
+    mobileApi.getRebuildCohortsReport(),
     filterOverride ? Promise.resolve(filterOverride) : readSuperStarFilter(),
     mobileApi.getTotoPrograms().catch(() => [])
   ]);

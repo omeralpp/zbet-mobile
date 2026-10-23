@@ -100,6 +100,9 @@ paths:
   /v1/dashboard:
     get:
       operationId: getDashboard
+      parameters:
+        - $ref: "#/components/parameters/RebuildVersion"
+        - $ref: "#/components/parameters/SelectionDisplayVersion"
       responses:
         "200":
           description: Mobile dashboard snapshot.
@@ -114,6 +117,8 @@ paths:
       operationId: getMatches
       parameters:
         - $ref: "#/components/parameters/DecisionContextVersion"
+        - $ref: "#/components/parameters/RebuildVersion"
+        - $ref: "#/components/parameters/SelectionDisplayVersion"
       responses:
         "200":
           description: Current BTB match state.
@@ -559,6 +564,12 @@ components:
         domain), audience tag, RS256 signature, expiry and an allowlisted email.
         Grants read scope only: device routes answer 403.
   parameters:
+    SelectionDisplayVersion:
+      name: X-BTB-Selection-Display
+      in: header
+      required: false
+      description: With X-BTB-Rebuild, opts dashboard and match lists into recorded current-cycle market quotes and expiry metadata. No historical recommendation becomes active. Responses vary by this header; old clients receive no additional fields.
+      schema: { type: string, enum: [btb-selection-display.v1] }
     RebuildVersion:
       name: X-BTB-Rebuild
       in: header
@@ -630,6 +641,10 @@ components:
       properties:
         rebuild:
           $ref: "./btb-rebuild-summary.schema.json"
+        rebuildQuotes:
+          oneOf:
+            - $ref: "./btb-market-quotes.schema.json"
+            - type: "null"
         key: { type: string, minLength: 1 }
         id: { type: integer, minimum: 1 }
         matchDate: { type: string, minLength: 1 }
@@ -1093,6 +1108,17 @@ components:
         - recentSuper
       properties:
         generatedAt: { type: string, format: date-time }
+        liveStarSelections:
+          type: array
+          description: Only with SelectionDisplayVersion. Active live selections at snapshot time; clients expire each entry using validUntil. Historical stars never enter this list.
+          items:
+            type: object
+            additionalProperties: false
+            required: [matchKey, stars, validUntil]
+            properties:
+              matchKey: { type: string }
+              stars: { type: integer, minimum: 1, maximum: 5 }
+              validUntil: { type: [string, "null"], format: date-time }
         liveMatchCount: { type: integer, minimum: 0 }
         highStarLiveCount: { type: integer, minimum: 0 }
         liveStarCounts:
