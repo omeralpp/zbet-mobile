@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import decision from "./fixtures/btb-rebuild-v1.json";
 import report from "./fixtures/btb-rebuild-report-v1.json";
-import { rebuildMatchSchema, rebuildReportSchema } from "./rebuild-schemas";
+import { rebuildMatchSchema, rebuildReportSchema, rebuildQuotesSchema } from "./rebuild-schemas";
 import { currentRebuild, rebuildCalendarDay } from "../utils/rebuild-current";
 import { buildRebuildWidgetPayload } from "../widgets/performance-widget-data";
 import { buildWidgetPayload } from "../widgets/widget-payload";
@@ -19,10 +19,19 @@ test("unsupported contracts, missing first records and duplicate identities fail
   for (const value of [{ ...decision, contractVersion: "unknown" }, { ...decision, history: [] }, { ...decision, history: [...decision.history, ...decision.history] },
     { ...decision, history: [{ ...decision.history[0], stars: 0 }] }]) assert.equal(rebuildMatchSchema.safeParse(value).success, false);
 });
-test("a cached recommendation expires on both surfaces even when the network cannot refresh", () => {
+test("native model admission retains its expiry independently of display playability", () => {
   const parsed = rebuildMatchSchema.parse(decision), now = Date.parse(parsed.asOf);
   assert.ok(currentRebuild(parsed, now)); assert.equal(currentRebuild(parsed, now + 20_000), null);
   assert.equal(currentRebuild({ ...parsed, availability: "WAITING_DATA", current: null }, now), null);
+});
+
+test("display v2 requires explicit market state while preserving v1 quote payloads",()=>{
+  const quote={market:"Ms1",admitted:false,reason:"PRESSURE_FAILED",quote:"1.75",quoteAt:decision.asOf};
+  const packet={contractVersion:"btb-market-quotes.v2",matchKey:decision.matchKey,asOf:decision.asOf,candidates:[quote]};
+  assert.equal(rebuildQuotesSchema.safeParse(packet).success,false);
+  for(const marketOpen of [true,false,null])
+    assert.equal(rebuildQuotesSchema.safeParse({...packet,candidates:[{...quote,marketOpen}]}).success,true);
+  assert.equal(rebuildQuotesSchema.safeParse({...packet,contractVersion:"btb-market-quotes.v1"}).success,true);
 });
 test("the report and displayed history use the same Istanbul calendar boundary", () => {
   assert.equal(rebuildCalendarDay("2026-10-13T21:00:00Z"), "2026-10-14");

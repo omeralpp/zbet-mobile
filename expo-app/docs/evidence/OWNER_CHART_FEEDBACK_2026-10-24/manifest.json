@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-24",
+  "source": "OWNER_ATTACHED_SCREENSHOTS",
+  "screenDates": "Owner reports yesterday and this morning; screenshots visibly include 23 and 24 October",
+  "appBuild": "NOT_VERIFIED_FROM_SCREENSHOTS",
+  "status": "OBSERVATION_ONLY",
+  "screenshots": [
+    {
+      "image": "01-overview.png",
+      "originalPath": "C:\\Users\\omera\\AppData\\Local\\Temp\\codex-clipboard-fa49ab3c-8edc-4e51-945c-113d10bc0dce.png",
+      "sha256": "F49EF8B5DF5C3706A5A01B86E32886DA5DDAFCB1A6C68D713E5D311623265193",
+      "bytes": 279487
+    },
+    {
+      "image": "02-live-match-path.png",
+      "originalPath": "C:\\Users\\omera\\AppData\\Local\\Temp\\codex-clipboard-da455409-389f-4243-851e-f37cc25f1efd.png",
+      "sha256": "8CBA64FAB5BE8E3DEF7A99A259552946E3C33C0252BA41F4514B30E39BCCCF31",
+      "bytes": 478281
+    },
+    {
+      "image": "03-native-pressure-score-distribution.png",
+      "originalPath": "C:\\Users\\omera\\AppData\\Local\\Temp\\codex-clipboard-27590897-0325-4e17-ab44-43ba8728ffa2.png",
+      "sha256": "89E8769ECDF5DCE0D6BF3C460C8FE24162A787277AA1244876F4DAADF7D426EB",
+      "bytes": 369100
+    },
+    {
+      "image": "04-provider-casertana-bari.png",
+      "originalPath": "C:\\Users\\omera\\AppData\\Local\\Temp\\codex-clipboard-cc23ae42-c84f-4114-9eb0-439456890c25.png",
+      "sha256": "B2D1F49AD3DFF9AFC8548022C0EB7D84E77398240E0A1C6A5D32B92B7C7FA23E",
+      "bytes": 134851
+    },
+    {
+      "image": "05-five-minute-gap.png",
+      "originalPath": "C:\\Users\\omera\\AppData\\Local\\Temp\\codex-clipboard-b210f87c-1430-4456-96aa-e8c836815185.png",
+      "sha256": "B2E74056E0C69135FAD56D007C56301DA25EDEF121A2A0D14AE70825F1FE4603",
+      "bytes": 376404
+    },
+    {
+      "image": "06-match-path-context.png",
+      "originalPath": "C:\\Users\\omera\\AppData\\Local\\Temp\\codex-clipboard-67628afb-9a13-4c11-b560-65f1b4348744.png",
+      "sha256": "D504909E3D217E5146E981ADD8F6C1DF88A67E300F05C9D7968CF7BA2A583212",
+      "bytes": 408418
+    }
+  ]
+}

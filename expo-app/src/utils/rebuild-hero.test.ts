@@ -24,14 +24,15 @@ test("the hero keeps the published price and stars even when the current evaluat
   assert.equal(hero.active, true);
 });
 
-test("expiry hides the current price and active status, but never erases the published selection", () => {
+test("model expiry does not hide an open market's price or published selection", () => {
   const { input, now, first } = setup();
   const hero = rebuildHero({ ...input, now: now + 15_001 })!;
   assert.equal(hero.record.decisionId, first.decisionId);
   assert.equal(hero.record.quote, first.quote);
   assert.equal(hero.active, false);
-  assert.equal(hero.currentQuote, null);
-  assert.equal(hero.quoteLabel, "Güncel oran bekleniyor");
+  assert.equal(hero.currentQuote, "2.25");
+  assert.equal(hero.playable, true);
+  assert.equal(hero.quoteLabel, "güncel oran");
 });
 
 test("a published selection stays playable with an open undecided market despite lost model eligibility", () => {
@@ -50,31 +51,46 @@ test("a published selection stays playable with an open undecided market despite
   assert.equal(hero.currentQuote, "2.25");
 });
 
-test("quote expiry means verification pending, never proof of market closure", () => {
+test("elapsed wall time alone never expires a playable published selection", () => {
   const { input, now } = setup();
   const before = rebuildHero({ ...input, now: now + 15_000 })!;
   assert.equal(before.playable, true);
-  const after = rebuildHero({ ...input, now: now + 15_001 })!;
-  assert.equal(after.playable, false);
-  assert.equal(after.stateLabel, "PİYASA DOĞRULANIYOR");
-  assert.equal(after.stateTone, "warning");
-  assert.match(after.stateText, /seçim kaydı korunuyor/);
-  assert.equal(after.currentQuote, null);
+  for (const age of [15_001,60_000,300_000]) {
+    const after = rebuildHero({ ...input, now: now + age })!;
+    assert.equal(after.playable, true);
+    assert.equal(after.stateLabel, "SEÇİM AKTİF");
+    assert.equal(after.currentQuote, "2.25");
+  }
 });
 
-test("a new verified quote restores playability without a new recommendation or pressure vote", () => {
+test("a new quote updates the price without requiring a new publication or pressure vote", () => {
   const { input, now, data, candidate, first } = setup();
   data.current = null;
   data.availability = "WAITING_DATA";
   candidate.admitted = false;
   candidate.reason = "PRESSURE_FAILED";
-  assert.equal(rebuildHero({ ...input, now: now + 60_000 })!.playable, false);
+  assert.equal(rebuildHero({ ...input, now: now + 60_000 })!.playable, true);
   data.asOf = candidate.quoteAt = new Date(now + 60_000).toISOString();
+  candidate.quote = "2.50";
   const renewed = rebuildHero({ ...input, now: now + 60_000 })!;
   assert.equal(renewed.playable, true);
   assert.equal(renewed.active, false); // not a new model admission
   assert.equal(renewed.record.decisionId, first.decisionId);
   assert.equal(renewed.record.quote, first.quote);
+  assert.equal(renewed.currentQuote, "2.50");
+});
+
+test("explicit native market state separates playable bets from model-only rejections",()=>{
+  const {input,data,candidate}=setup();
+  data.current=null;data.availability="WAITING_DATA";candidate.admitted=false;
+  candidate.reason="PRICE_CEILING";candidate.marketOpen=true;
+  assert.equal(rebuildHero(input)!.playable,true);
+  candidate.marketOpen=null;
+  assert.equal(rebuildHero(input)!.playable,false);
+  candidate.marketOpen=false;
+  assert.equal(rebuildHero(input)!.playable,false);
+  candidate.marketOpen=true;candidate.quote=null;
+  assert.equal(rebuildHero(input)!.playable,false);
 });
 
 test("quote-only early exits do not prove that the outcome is still undecided", () => {

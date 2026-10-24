@@ -1587,6 +1587,16 @@
               }
             ]
           },
+          "marketOpen": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "consistencyScore": {
             "anyOf": [
               {

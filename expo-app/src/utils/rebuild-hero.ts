@@ -31,7 +31,7 @@ export function displayedDecision(records: readonly RebuildRecommendation[], mat
 }
 
 type HeroData = RebuildSummary & { history: readonly RebuildRecommendation[];
-  candidates: readonly Pick<RebuildMatch["candidates"][number], "market" | "admitted" | "reason" | "quote" | "quoteAt">[] };
+  candidates: readonly Pick<RebuildMatch["candidates"][number], "market" | "admitted" | "reason" | "quote" | "quoteAt" | "marketOpen">[] };
 
 /** Recommendation eligibility and the published selection's playability are separate. */
 export function rebuildHero({ data, matchKey, status, now, error = false, decisionId = null }: {
@@ -50,25 +50,28 @@ export function rebuildHero({ data, matchKey, status, now, error = false, decisi
   const candidate = matches.length === 1 ? matches[0] : undefined;
   const pending = record.result.state === "PENDING";
   const resolved = !pending && record.result.state !== "UNRESOLVED";
-  const closed = candidate && /^(QUOTE_CLOSED|MARKET_CLOSED)$/.test(candidate.reason);
+  const closed = candidate && (candidate.marketOpen === false || /^(QUOTE_CLOSED|MARKET_CLOSED)$/.test(candidate.reason));
   const decided = candidate?.reason === "MARKET_ALREADY_DECIDED";
   const quoteTime = Date.parse(candidate?.quoteAt ?? "");
   const price = Number(candidate?.quote);
-  const freshQuote = !error && live && !resolved && !closed && !decided && data.availability !== "UNAVAILABLE" && data.availability !== "NOT_STARTED" &&
-    candidate && (candidate.admitted || pricedReasons.has(candidate.reason)) &&
+  // The latest supplied market state and price determine display playability.
+  // Model quote expiry is retained in `active`, never used as a UI countdown.
+  const usableQuote = !error && live && !resolved && !closed && !decided && data.availability !== "UNAVAILABLE" && data.availability !== "NOT_STARTED" &&
+    candidate && (candidate.marketOpen === true || candidate.admitted || pricedReasons.has(candidate.reason)) &&
     Number.isFinite(price) && price > 1 && Number.isFinite(quoteTime) &&
-    quoteTime <= Date.parse(data.asOf) && now >= quoteTime && now - quoteTime <= 15_000;
-  const currentQuote = freshQuote ? candidate.quote : null;
+    quoteTime <= Date.parse(data.asOf) && now >= quoteTime;
+  const currentQuote = usableQuote ? candidate.quote : null;
   const quoteLabel = status === "FINISHED" ? "Maç tamamlandı" : status === "NOT_PLAYED" ? "Maç oynanmadı"
     : resolved || decided ? "Bahis sonuçlandı" : currentQuote ? "güncel oran" : closed ? "Oran kapalı" : "Güncel oran bekleniyor";
-  const playable = !!currentQuote && pending && !!candidate && (candidate.admitted || undecidedReasons.has(candidate.reason));
+  const playable = !!currentQuote && pending && !!candidate && (candidate.marketOpen === true ||
+    (candidate.marketOpen === undefined && (candidate.admitted || undecidedReasons.has(candidate.reason))));
   const state = status === "FINISHED" ? { label: "MAÇ TAMAMLANDI", text: "Maç tamamlandı; kararın sonucu kayıtta korunuyor.", tone: "neutral" as const }
     : status === "NOT_PLAYED" ? { label: "MAÇ OYNANMADI", text: "Maç oynanmadı; karar kaydı korunuyor.", tone: "neutral" as const }
     : resolved ? { label: "BAHİS SONUÇLANDI", text: "Bu seçim sonuçlandı; sonuç karar kaydında gösteriliyor.", tone: "neutral" as const }
     : error ? { label: "PİYASA DOĞRULANIYOR", text: "Güncel piyasa verisi alınamadı; seçim kaydı korunuyor.", tone: "warning" as const }
     : !live ? { label: "MAÇ DURUMU DOĞRULANIYOR", text: "Canlı maç durumu doğrulanmadan seçim aktif gösterilmez.", tone: "warning" as const }
-    : closed ? { label: "ORAN KAPALI", text: "Son kontrolde piyasa kapalı; yeniden açılması bekleniyor.", tone: "warning" as const }
     : decided ? { label: "BAHİS SONUÇLANDI", text: "Skor durumuna göre bu piyasanın sonucu belli oldu.", tone: "neutral" as const }
+    : closed ? { label: "ORAN KAPALI", text: "Son kontrolde piyasa kapalı; yeniden açılması bekleniyor.", tone: "warning" as const }
     : playable ? { label: "SEÇİM AKTİF", text: "Oran açık · seçim henüz sonuçlanmadı.", tone: "positive" as const }
     : record.result.state === "UNRESOLVED" ? { label: "SONUÇ DOĞRULANIYOR", text: "Bu kararın sonucu doğrulanıyor; seçim kaydı korunuyor.", tone: "warning" as const }
     : active ? { label: "GÜNCEL SEÇİM", text: "Güncel seçim doğrulandı.", tone: "positive" as const }

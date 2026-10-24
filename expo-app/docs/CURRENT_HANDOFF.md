@@ -1,9 +1,37 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-10-23
-Mod: `JURY_REFINEMENT_PAIR_COMPLETE / OWNER_ACCEPTED`
+Son güncelleme: 2026-10-24
+Mod: `LOCAL_VALIDATED / ACTIVE_MARKET_CLOCK_RELEASE_PENDING`
 Delivery: `OWNER_ONLY_DEV_PILOT / 26f491c PAIR COMPLETE (both smokes passed 2026-10-23)`
 Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
+Latest owner-directed local batch: Overview and Live share published-star
+thresholds and open-market/current-price playability without a 15-second UI
+cutoff. BFF display v2 supplies native market state; model admission stays
+unchanged. Numeric added-time display is implemented on both clients/BFF.
+Active SAP source confirms a bare-plus rejection path; the bounded runtime
+status projection fix is local only, with no DDIC/model-parser change.
+Core Mobile gate/Doctor, 728 BFF tests/build, ABAP lint/names, Android bundle,
+verified edge web export and synthetic desktop/phone browser checks pass.
+SAP candidate native syntax/Unit/activation, physical Android/published smoke
+and coordinated release remain pending. No commit/push or external change.
+[Batch, source evidence and gates](ACTIVE_MARKET_CLOCK_BATCH_2026-10-24.md).
+
+24 October local cutover completed: NXT-OBS-217/218 implemented in shared
+Android/web components. Goals use darker scoring-side football markers and
+lines confined to their own half. Historical counts/shares remain fixed in a
+labeled per-period reference; unreachable outcomes are muted, corrections
+restore them, and the current match clock prevents cross-period comparisons.
+NXT-OBS-216 remains unconfirmed; activity/pressure/model calculations unchanged.
+Type/lint/client+tooling tests, Expo Doctor, final Android Hermes bundle and
+verified edge web export pass. Synthetic browser checks pass at desktop and
+390px phone widths in dark/light themes; goal/correction and period reset pass.
+No physical Android or published-client smoke is claimed for this local batch.
+NXT-OBS-219 tracks paired delivery/acceptance; no release approval was given.
+Chart sources/docs remain uncommitted; accepted runtime/client pair unchanged.
+[Batch and checks](CHART_FEEDBACK_BATCH_2026-10-24.md),
+[evidence](evidence/CHART_FEEDBACK_LOCAL_2026-10-24/validation.json),
+[owner screenshots and scope](OWNER_CHART_FEEDBACK_2026-10-24.md).
+
 Released batch: NXT-OBS-200..215, owner authorised 2026-10-23; see
 `JURY_REFINEMENT_BATCH_2026-10-23.md`. Today, verified period-specific scores,
 pressure clarity, compact statistics and shared Android/web UX refinements.
@@ -11,8 +39,9 @@ Pressure (203): owner selected five-minute rolling activity; native pressure
 remains selectable. Rounded columns, balance strip, now marker and compact
 native details are shared. Possession (211) was reintroduced as current context
 in chart/Jinx only, with no weight in activity, selections or stars. Missing
-windows remain gaps. Confirmed goals have gold full-height event markers,
-football icons and grouped minute labels; score updates never imply goals.
+windows remain gaps. The released pair has gold full-height goal markers; the
+newer local chart batch above replaces them prospectively. Score updates never
+imply goals.
 Owner requests clarification pop-ups in Turkish.
 Published-selection status now separates verified playability from native
 recommendation eligibility: open/undecided is active; expired quote is pending

@@ -105,7 +105,7 @@ export function RebuildPressureChart({ match, history, statistics, goals, isLoad
     </View>;
   }
 
-  const spoken = `Baskı grafiği. ${rolling ? `${intervals.length} beş dakikalık hareketlilik sütunu, tahmini; seçim hesabına katılmaz.` : `${intervals.length} doğrulanmış aralık.`} ${reading ? `Son kayıt ${reading.range}: ${headline}.` : ""}${confirmedGoals.length ? ` Altın çizgiler gol olaylarıdır: ${confirmedGoals.map(goal=>`${goal.minute}. dakika ${goal.side === "HOME" ? match.homeTeam : match.awayTeam}`).join(", ")}. Baskı değeri değildir.` : ""}${isError ? " Son okuma yenilenemedi; kayıtlı geçmiş." : ""}`;
+  const spoken = `Baskı grafiği. ${rolling ? `${intervals.length} beş dakikalık hareketlilik sütunu, tahmini; seçim hesabına katılmaz.` : `${intervals.length} doğrulanmış aralık.`} ${reading ? `Son kayıt ${reading.range}: ${headline}.` : ""}${confirmedGoals.length ? ` Takım rengindeki top işaretleri gol olaylarıdır: ${confirmedGoals.map(goal=>`${goal.minute}. dakika ${goal.side === "HOME" ? match.homeTeam : match.awayTeam}`).join(", ")}. Baskı değeri değildir.` : ""}${isError ? " Son okuma yenilenemedi; kayıtlı geçmiş." : ""}`;
   return <View style={styles.card}>
     <SurfaceMaterial radius={radii.lg} />
     {modeSwitch}
@@ -149,7 +149,7 @@ export function RebuildPressureChart({ match, history, statistics, goals, isLoad
           <Line x1={x(currentMinute)} x2={x(currentMinute)} y1={TOP - 5} y2={PLOT_BOTTOM + 7} stroke={colors.teal} strokeWidth={1.25} strokeDasharray="2 3" />
           <SvgText x={timeLabel.x} y={PLOT_BOTTOM + 30} textAnchor={timeLabel.anchor} fill={colors.teal} {...svgLabel}>{match.status === "HALF_TIME" ? "devre" : "şimdi"}</SvgText>
         </G> : null}
-        <PressureGoalMarkers goals={goals} x={x} left={LEFT} right={LEFT+plotWidth} top={TOP} bottom={PLOT_BOTTOM} mid={mid} homeY={HOME_GOAL_Y} awayY={AWAY_GOAL_Y} />
+        <PressureGoalMarkers goals={goals} x={x} left={LEFT} right={LEFT+plotWidth} mid={mid} homeY={HOME_GOAL_Y} awayY={AWAY_GOAL_Y} />
       </Svg>
       {/* Native Text: Android SVG mis-measures the fallback prime when centred. */}
       {axisMinutes.map((minute) => {
@@ -161,7 +161,7 @@ export function RebuildPressureChart({ match, history, statistics, goals, isLoad
     <Text style={styles.coverage}>
       {!intervals.length ? "Baskı ölçümü yok · kaydedilmiş gol olayları gösteriliyor." : rolling ? "Her sütun son 5 dakikayı gösterir · boşluklarda pencere doğrulanamadı. Seçim hesabına katılmaz." : `${intervals.length} doğrulanmış aralık${allEstimated ? " · tahmini ölçüm" : ""} · boşluklarda ölçüm yok.`}
     </Text>
-    {confirmedGoals.length ? <Text style={styles.meta}>Altın çizgi: gol olayı</Text> : null}
+    {confirmedGoals.length ? <Text style={styles.meta}>Top işareti: gol · ev mavi, deplasman turuncu</Text> : null}
     {currentBlock ? <>
       <Pressable accessibilityRole="button" accessibilityState={{expanded:showDetails}} onPress={()=>setShowDetails(!showDetails)} style={styles.detailsToggle}>
         <Text style={styles.detailsLabel}>{showDetails ? "BTB baskı ölçümünü gizle −" : "BTB baskı ölçümü +"}</Text>

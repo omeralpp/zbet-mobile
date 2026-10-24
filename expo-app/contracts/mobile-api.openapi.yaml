@@ -19,6 +19,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/Key"
         - $ref: "#/components/parameters/RebuildVersion"
+        - $ref: "#/components/parameters/SelectionDisplayVersion"
       responses:
         "200":
           description: Canonical decision evidence; missing or stale evidence has no active current selection.
@@ -596,8 +597,8 @@ components:
       name: X-BTB-Selection-Display
       in: header
       required: false
-      description: With X-BTB-Rebuild, opts dashboard and match lists into recorded current-cycle market quotes and expiry metadata. No historical recommendation becomes active. Responses vary by this header; old clients receive no additional fields.
-      schema: { type: string, enum: [btb-selection-display.v1] }
+      description: With X-BTB-Rebuild, opts dashboard and match lists into recorded current-cycle market quotes. v2 also exposes nullable native marketOpen on list quotes and detail candidates, independently of model admission/expiry. Display playability uses the latest pending publication, open market and supplied price, without a 15-second UI cutoff. Unavailable evidence stays unknown. v1 and absent-header shapes are preserved. Responses vary by this header.
+      schema: { type: string, enum: [btb-selection-display.v1, btb-selection-display.v2] }
     RebuildVersion:
       name: X-BTB-Rebuild
       in: header

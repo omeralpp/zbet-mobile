@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-24",
+  "status": "LOCAL_BATCH_VALIDATED_NOT_RELEASED",
+  "authorization": "Owner: Mobile cutover next; routed to btb next cutover start",
+  "baseCommit": "1413c91f05591fbb751c11796efebf635b944ab7",
+  "sourceDirty": true,
+  "scope": [
+    "NXT-OBS-217",
+    "NXT-OBS-218"
+  ],
+  "unconfirmed": [
+    "NXT-OBS-216"
+  ],
+  "deliveryGate": "NXT-OBS-219",
+  "sourceFileSha256": {
+    "src/components/HistoricalScoreDistribution.tsx": "529941950C6F5B0AE7049A9CBF93F7CB1DB14978896A82EA3269C79F37B8B0FB",
+    "src/components/PressureGoalMarkers.tsx": "5E8580DFC55BF39E0AEB7BFC825D2EA24E026D1402180C0E0E46754252FED075",
+    "src/components/RebuildPressureChart.tsx": "FC3EE8A899EE1D34A48CDCA6E8DA6D112009E06E6642D874233B0DD61614BBAF",
+    "src/components/pressure-chart.ts": "97D7A6DF8A8E917B416FFDCFCB387718384C28D00989662A0B93CA0F10D198AE",
+    "src/components/pressure-chart.test.ts": "CAF40E788BB027E354F9E4761AF3D30F85B577D7B63466C90C2BF440093B68BA",
+    "src/utils/historical-score-view.ts": "06BCE21AF6DAEBDF711B6CA260B8C433685C7D7D7AA75B83A9AF3F0AA18B43C1",
+    "src/utils/historical-score-view.test.ts": "CD665AEB4803EFD1A61EEB76EF9CBCFBCC2E5DEF5EF34DE374A8EA7F517954D3"
+  },
+  "checks": {
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "clientTests": "PASS",
+    "toolingTests": "PASS",
+    "brandCheck": "PASS",
+    "expoDoctor": "PASS",
+    "androidHermesBundle": "PASS",
+    "edgeWebExport": "PASS",
+    "edgeEmbeddedConfigAndSecretScan": "PASS",
+    "browserErrors": 0,
+    "browserData": "SYNTHETIC_LOCAL_HARNESS",
+    "browserViewports": [
+      "desktop default 1280x720",
+      "phone 390x844"
+    ],
+    "themes": [
+      "dark",
+      "light"
+    ],
+    "scenarios": [
+      "activity and native pressure modes",
+      "home/away goal lines confined to own half",
+      "close goal grouping and event minute labels",
+      "non-goal score-update distinction",
+      "unreachable 1-1/1-2 after 2-1 with unchanged percentages",
+      "score correction reactivation",
+      "period reference reset"
+    ],
+    "clockPrecedence": "PASS regression: current 2H clock overrides stale 1H observation"
+  },
+  "android": {
+    "path": ".codex-artifacts/chart-feedback-android-final/_expo/static/js/android/index-0eb133ae2d0d0e86a5722c61ace10f29.hbc",
+    "sha256": "C4C73D19F7554F35DA0C091A7E53868E5C543ACED2CEEA8E85AFB25B4D6ED29B"
+  },
+  "web": {
+    "receiptPath": ".codex-artifacts/chart-feedback-edge-final/web-build-receipt.json",
+    "receiptSha256": "78C4FCC7E6935BBA4F545ED233EC31E66583A30BEF9427535B66CCBD0E79FEEF",
+    "sourceSha": "1413c91f05591fbb751c11796efebf635b944ab7",
+    "treeSha256": "4120686032BF134055178E3CF8E0CF0753AC4CB3B18C38FDAF87232D161FAE0D",
+    "runtimeMode": "edge",
+    "sourceDirty": true
+  },
+  "screenshots": {
+    "dark-desktop-final.png": "8633E3B4BFE4E372BB48ADB0615234DFACCC93A18DA9211915EC4B8523774EF6",
+    "light-phone.png": "9741E15C6A674B21A2E6DC46EAE4C5852B24E31A11C4B4AE725D34E420231312"
+  },
+  "previewRouteRestored": true,
+  "previewHarnessInProductionSource": false,
+  "physicalAndroidSmoke": false,
+  "publishedClientSmoke": false,
+  "commitPush": false,
+  "signingDistributionPublication": false,
+  "sapBffRuntimeModelChange": false,
+  "acceptedRecoveryPair": "26f491c"
+}

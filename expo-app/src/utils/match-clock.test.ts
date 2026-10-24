@@ -5,11 +5,11 @@ import { formatElapsed } from "./format";
 import { deriveMatchMinuteProgress } from "./match-minute-progress";
 import { matchPeriodLabel } from "./match-period";
 
-test("first and second-half added-time labels retain the plus and never become zero",()=>{
+test("added-time labels display numeric minutes on both surfaces, including older BFF plus labels",()=>{
   for(const [label,elapsed,period,phase] of [["45+",45,"1H","1. YARI"],["90+",90,"2H","2. YARI"],["45+2",47,"1H","1. YARI"],["90+4",94,"2H","2. YARI"]] as const){
     const clock=matchClockSchema.parse({contractVersion:"match-clock.v1",label,period});
-    assert.equal(formatElapsed("LIVE",elapsed,clock),`${label}'`);
-    assert.equal(deriveMatchMinuteProgress("LIVE",elapsed,clock).label,`${label}'`);
+    assert.equal(formatElapsed("LIVE",elapsed,clock),`${elapsed}'`);
+    assert.equal(deriveMatchMinuteProgress("LIVE",elapsed,clock).label,`${elapsed}'`);
     assert.equal(matchPeriodLabel({status:"LIVE",elapsed,clock},"2H"),phase);
   }
 });

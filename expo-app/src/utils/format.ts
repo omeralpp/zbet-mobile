@@ -62,7 +62,10 @@ export function formatPercentage(value: number): string {
 
 export function formatElapsed(status: MatchStatus, elapsed: number, clock?: {label:string|null;period:string}): string {
   if (status === "LIVE") {
-    return clock?.period === "PENALTIES" ? "PENALTILAR" : clock ? clock.label === null ? "—" : `${clock.label}'` : `${elapsed}'`;
+    if (clock?.period === "PENALTIES") return "PENALTILAR";
+    if (!clock) return `${elapsed}'`;
+    const parts = /^(\d{1,3})(?:\+(\d{1,2})?)?$/.exec(clock.label?.trim().replace(/\s*\+\s*/g,"+") ?? "");
+    return parts ? `${Number(parts[1]) + Number(parts[2] || 0)}'` : "—";
   }
   if (status === "HALF_TIME") {
     return "DEVRE";

@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-24",
+  "scope": "LOCAL_ONLY",
+  "clientSurfaces": [
+    "Android",
+    "web"
+  ],
+  "sourceDirty": true,
+  "androidBundleSha256": "FE82F816435A5C64219398D923AD37FA12A63823DE54697D6A84F33B35E112D2",
+  "webTreeSha256": "153D5C2103CC601E003D52F2659E4B0D24D451122BE0AF669EB36AC22079EAE7",
+  "coreMobileGate": "PASS",
+  "bffTests": 728,
+  "bffProductionBuild": "PASS",
+  "abapLint": "0 issues",
+  "sapNameCheck": "PASS",
+  "sapEvidenceMode": "DIRECT_ADT_ODATA_FALLBACK_NOT_MCP",
+  "sapMutation": false,
+  "candidateNativeAbapUnit": "NOT_RUN",
+  "browser": {
+    "synthetic": true,
+    "actualScreens": [
+      "Overview",
+      "Live"
+    ],
+    "phoneViewport": "390x844",
+    "quoteAge": "over five minutes",
+    "openMarketIncluded": true,
+    "fourStarThresholdExcludesThreeStars": true,
+    "closedMissingPriceSettledExcluded": true,
+    "numericClocks": [
+      "45",
+      "90"
+    ],
+    "consoleErrors": 0
+  },
+  "signedRelease": false,
+  "publishedWeb": false,
+  "physicalAndroidSmoke": "NOT_RUN",
+  "acceptedPair": "26f491c"
+}

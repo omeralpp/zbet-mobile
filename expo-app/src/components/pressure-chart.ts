@@ -9,7 +9,12 @@ export type PressureSample = { key: string; minute: number; home: number; away: 
 export type PressureLeader = "HOME" | "AWAY" | "BALANCED" | "NONE";
 export type PressureGoal = { key: string; minute: number; side: "HOME" | "AWAY"; kind?: "GOAL" | "SCORE_UPDATE" };
 
-/** Only explicit provider goals receive the gold event overlay. */
+/** Darker scoring-side ink distinguishes events from measured pressure bars. */
+export function pressureGoalInk(color: string) {
+  return `#${color.replace(/^#/, "").match(/.{2}/g)!.map(value => Math.round(parseInt(value, 16) * 0.78).toString(16).padStart(2, "0")).join("")}`;
+}
+
+/** Only explicit provider goals receive a football event marker. */
 export function pressureGoalAnnotation(goals: readonly PressureGoal[]) {
   const confirmed = goals.length > 0 && goals.every(goal=>goal.kind === "GOAL");
   const first = goals[0], last = goals.at(-1);

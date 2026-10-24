@@ -12,13 +12,16 @@ export const rebuildSummarySchema = z.strictObject({ contractVersion: z.literal(
 });
 const vote = z.strictObject({ startsAt: timestamp, endsAt: timestamp, supports: z.boolean(), estimated: z.boolean(), home: decimal, away: decimal, total: decimal });
 const candidate = z.strictObject({ market: z.string(), admitted: z.boolean(), selected: z.boolean(), reason: z.string(), quote: decimal.nullable(), quoteAt: timestamp.nullable(),
+  marketOpen: z.boolean().nullable().optional(),
   consistencyScore: decimal.nullable(), stars: z.number().int().min(0).max(5), poolWins: count, poolTotal: count, votesSupport: count, votesUsed: count,
   directionConflict: z.boolean(), dissent: z.boolean(), votes: z.array(vote).max(3),
   caps: z.strictObject({ sample: count, direction: count, timing: count, xg: count, time_goals: count }) });
-export const rebuildQuotesSchema = z.strictObject({ contractVersion: z.literal("btb-market-quotes.v1"), matchKey: z.string(), asOf: timestamp,
-  candidates: z.array(candidate.pick({market:true,admitted:true,reason:true,quote:true,quoteAt:true})).max(19) }).superRefine((value, ctx) => {
+export const rebuildQuotesSchema = z.strictObject({ contractVersion: z.enum(["btb-market-quotes.v1", "btb-market-quotes.v2"]), matchKey: z.string(), asOf: timestamp,
+  candidates: z.array(candidate.pick({market:true,admitted:true,reason:true,quote:true,quoteAt:true,marketOpen:true})).max(19) }).superRefine((value, ctx) => {
   if (new Set(value.candidates.map(item=>item.market)).size !== value.candidates.length)
     ctx.addIssue({code:"custom",message:"Duplicate market quote"});
+  if (value.contractVersion === "btb-market-quotes.v2" && value.candidates.some(item=>item.marketOpen === undefined))
+    ctx.addIssue({code:"custom",message:"Market state is required for display v2"});
 });
 export const rebuildRecommendationSchema = candidate.extend({ decisionId: uuid, previousDecisionId: uuid.nullable(), episodeId: uuid, stars: z.number().int().min(1).max(5),
   matchKey: z.string(), homeTeam: z.string(), awayTeam: z.string(),

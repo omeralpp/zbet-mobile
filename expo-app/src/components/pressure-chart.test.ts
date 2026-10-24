@@ -24,7 +24,7 @@ test("an observed score update cannot be labelled as a confirmed provider goal",
   assert.equal(groups[1]!.goals[0]!.kind,"GOAL");
 });
 
-test("gold emphasis requires an explicit goal, never an observed or untyped score change",()=>{
+test("football emphasis requires an explicit goal, never an observed or untyped score change",()=>{
   const goal={key:"event:a",minute:30,side:"HOME" as const,kind:"GOAL" as const};
   assert.equal(pressureGoalAnnotation([goal]).confirmed,true);
   assert.equal(pressureGoalAnnotation([goal]).text,"30′ gol");

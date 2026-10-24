@@ -18,13 +18,14 @@ import { MetricStrip, MetricTile } from "@/src/components/MetricCard";
 import { toneColor } from "@/src/components/DecisionTicket";
 import { Screen } from "@/src/components/Screen";
 import { SectionHeader } from "@/src/components/SectionHeader";
-import { ErrorState, LoadingState } from "@/src/components/StateView";
+import { EmptyState, ErrorState, LoadingState } from "@/src/components/StateView";
 import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import { TotoProgramCard } from "@/src/components/TotoProgramCard";
 import { dashboardQuery, matchInsightsQuery, matchesQuery } from "@/src/api/queries";
 import { usePublishedSelections } from "@/src/api/use-published-selections";
 import { RecentRecommendations, useRebuildWeek, useRebuildClock } from "@/src/components/RebuildEvidencePanel";
 import { activeMatch, activeStarCounts, publishedStarCounts } from "@/src/utils/rebuild-cards";
+import { overviewLiveSelections } from "@/src/utils/overview-live-selections";
 import { formatRatio, formatUnits, unitsTone } from "@/src/utils/rebuild-display";
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
@@ -78,19 +79,19 @@ export default function DashboardScreen() {
     : publishedStarCounts(snapshots.data ?? [],publications.records,now)
     : dashboard ? activeStarCounts(dashboard,now) : null;
   const activeSelection = (match: NonNullable<typeof dashboard>["featuredMatches"][number]) => activeMatch(match,now,publications.records,selectionUnavailable);
-  const selectedMatches = hasRebuild ? (snapshots.data ?? []).filter(match=>["LIVE","HALF_TIME"].includes(match.status) && activeSelection(match).selectedOdd)
-    .sort((a,b)=>activeSelection(b).rating-activeSelection(a).rating).slice(0,3) : [];
-  const featuredMatches = selectedMatches.length ? selectedMatches : [...(dashboard?.featuredMatches ?? [])].sort((a,b)=>activeSelection(b).rating-activeSelection(a).rating);
+  const hasLiveMatches = hasRebuild && (snapshots.data ?? []).some(match=>["LIVE","HALF_TIME"].includes(match.status));
+  const selectedMatches = overviewLiveSelections(snapshots.data ?? [],publications.records,liveStarFilter,now,selectionUnavailable).slice(0,3);
+  const featuredMatches = hasLiveMatches ? selectedMatches : [...(dashboard?.featuredMatches ?? [])].sort((a,b)=>activeSelection(b).rating-activeSelection(a).rating);
   const featuredMode = selectedMatches.length ? "SELECTED_LIVE" : dashboard?.featuredMatchMode === "SELECTED_LIVE" && !featuredMatches.some(match=>activeSelection(match).selectedOdd)
     ? "PRESSURE_LIVE" : dashboard?.featuredMatchMode ?? "EMPTY";
   const week = useRebuildWeek();
-  const featuredTitle = {
+  const featuredTitle = hasLiveMatches ? "Takipteki canlı maçlar" : {
     SELECTED_LIVE: "Öne çıkan canlı maçlar",
     PRESSURE_LIVE: "Takipteki canlı maçlar",
     UPCOMING: "Sıradaki maçlar",
     EMPTY: "Maç görünümü"
   }[featuredMode];
-  const featuredCaption =
+  const featuredCaption = hasLiveMatches ? `${starMetricLabel(liveStarFilter)} · seçim ve güncel oran` :
     dashboard?.featuredMatchMode === "UPCOMING"
       ? "Başlama zamanı en yakın aktif fikstürler"
       : "Skor, seçim ve güncel oran";
@@ -185,15 +186,18 @@ export default function DashboardScreen() {
     )
   };
 
-  if (featuredMatches.length) {
+  if (featuredMatches.length || hasLiveMatches) {
     moduleNodes.featured = (
       <>
         <SectionHeader
           actionLabel="Tümünü gör"
           caption={featuredCaption}
-          onAction={() => router.push("/live" as never)}
+          onAction={() => router.push(hasLiveMatches ? {pathname:"/live",params:{scope:"STAR",decision:liveStarFilter}} as never : "/live" as never)}
           title={featuredTitle}
         />
+        {hasLiveMatches && !featuredMatches.length ? <EmptyState kind="NO_DECISION"
+          title={publications.pending ? "Seçimler yükleniyor" : selectionUnavailable ? "Seçimler doğrulanamıyor" : "Filtreye uygun aktif seçim yok"}
+          message="Seçilen yıldız eşiğinde, piyasası açık ve güncel oranı bulunan son seçimler burada gösterilir." /> : null}
         {featuredMatches.map((match, index) =>
           index === 0 ? (
             <TutorialTarget id="home-featured" key={match.key}>

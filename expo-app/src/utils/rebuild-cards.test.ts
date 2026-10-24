@@ -7,6 +7,7 @@ import { activeMatch, activeStarCounts, publishedStarCounts, rebuildCardHero } f
 import { displayedDecision, rebuildHero, requestedDecision } from "./rebuild-hero";
 import { publishedExplanation } from "./rebuild-presentation";
 import { matchLiveTab } from "./live-match-tabs";
+import { overviewLiveSelections } from "./overview-live-selections";
 
 function setup() {
   const data = rebuildMatchSchema.parse(structuredClone(fixture));
@@ -21,7 +22,7 @@ function setup() {
   return { data, history, match, now };
 }
 
-test("list cards retain first facts while active filtering and all counts expire on the same clock", () => {
+test("published cards and star views stay playable after native model expiry", () => {
   const { match, history, now } = setup();
   const dashboard = { ...mockDashboard, liveStarSelections: [{matchKey:match.key,stars:3,validUntil:match.rebuild.current!.validUntil}] };
   assert.equal(activeStarCounts(dashboard,now).ALL,1);
@@ -30,11 +31,15 @@ test("list cards retain first facts while active filtering and all counts expire
   assert.equal(activeStarCounts(dashboard,later).ALL,0);
   assert.equal(activeMatch(match,later).selectedOdd,"");
   assert.equal(matchLiveTab(match,"STAR","STAR_1_PLUS",later),false);
+  assert.equal(matchLiveTab(match,"STAR","STAR_3_PLUS",later,history),true);
+  assert.equal(publishedStarCounts([match],history,later).STAR_3,1);
+  assert.equal(overviewLiveSelections([match],history,"STAR_3_PLUS",later).length,1);
   const hero = rebuildCardHero(match,history,later)!;
   assert.equal(hero.record.quote,history[0]!.quote);
   assert.equal(hero.record.stars,3);
   assert.equal(hero.active,false);
-  assert.equal(hero.currentQuote,null);
+  assert.equal(hero.currentQuote,"2.25");
+  assert.equal(hero.playable,true);
 });
 
 test("a playable last selection enters star filters and counts even after native eligibility ends", () => {
@@ -78,18 +83,36 @@ test("retained last-verified history stays visible but cannot reactivate while i
   assert.equal(matchLiveTab(match,"STAR","STAR_1_PLUS",now,history,true),false);
 });
 
-test("expiry, refresh and availability use the same last-selection rule for filters and counts",()=>{
+test("market updates and availability, not wall time, control filters and counts",()=>{
   const {match,history,now}=setup();
   const check=(at:number,expected:boolean,error=false)=>{
     assert.equal(matchLiveTab(match,"STAR","STAR_1_PLUS",at,history,error),expected);
     assert.equal(!!activeMatch(match,at,history,error).selectedOdd,expected);
     assert.equal(publishedStarCounts([match],history,at,error).ALL,expected?1:0);
   };
-  check(now,true); check(now+15_000,true); check(now+15_001,false); check(now,false,true);
+  check(now,true); check(now+15_000,true); check(now+15_001,true); check(now+300_000,true); check(now,false,true);
   match.rebuildQuotes.asOf=new Date(now+20_000).toISOString();
   match.rebuildQuotes.candidates.find(c=>c.market===history[0]!.market)!.quoteAt=match.rebuildQuotes.asOf;
   check(now+20_000,true);
+  const candidate=match.rebuildQuotes.candidates.find(c=>c.market===history[0]!.market)!;
+  candidate.reason="QUOTE_CLOSED";candidate.admitted=false;
+  check(now+20_000,false);
+  candidate.reason="PRESSURE_FAILED";
+  check(now+20_000,true);
   assert.equal(matchLiveTab(match,"STAR","STAR_1_PLUS",now+20_000,[]),false);
+});
+
+test("Overview follows the selected Live star threshold across open, closed and settled last publications",()=>{
+  const {match,history,now}=setup();
+  const later=now+300_000;
+  assert.deepEqual(overviewLiveSelections([match,match],history,"STAR_3_PLUS",later).map(m=>m.key),[match.key]);
+  assert.equal(overviewLiveSelections([match],history,"STAR_4_PLUS",later).length,0);
+  assert.equal(overviewLiveSelections([match],history,"STAR_3_PLUS",later,true).length,0);
+  const candidate=match.rebuildQuotes.candidates.find(c=>c.market===history[0]!.market)!;
+  candidate.reason="QUOTE_CLOSED";
+  assert.equal(overviewLiveSelections([match],history,"STAR_3_PLUS",later).length,0);
+  candidate.reason="ADMITTED";history[0]!.result.state="WIN";
+  assert.equal(overviewLiveSelections([match],history,"STAR_3_PLUS",later).length,0);
 });
 
 test("closed, decided, unknown and settled selections never enter last-selection star filters",()=>{

@@ -61,9 +61,11 @@ NXT-OBS-169..179 (TASK-0162 wheel lock, Mobile pressure display, palette, explan
 | NXT-OBS-207 | 2026-10-23 | Jury: desktop composition | Shared desktop/phone composition; TASK-0180. | MEDIUM | DELIVERED / OWNER_ACCEPTED |
 | NXT-OBS-208 | 2026-10-23 | Jury: metadata and names | Separated journal metadata, full-name access/wrapping. TASK-0180. | MEDIUM | DELIVERED / OWNER_ACCEPTED |
 | NXT-OBS-209 | 2026-10-23 | Jury: overlay/accessibility checks | Overlay/Escape pass; native accessibility follow-up in jury audit. | MEDIUM | DELIVERED / OWNER_ACCEPTED |
-| NXT-OBS-210 | 2026-10-23 | Selection becomes inactive almost immediately | Playability/eligibility separated; expiry means verification pending. Native 15s retained; source cadence open. Batch report; TASK-0180. | HIGH | DELIVERED / SOURCE_CADENCE_OPEN |
+| NXT-OBS-210 | 2026-10-23 | Last-selection activity | Owner 24 Oct: no display TTL; open market + price. Native cadence remains open. ACTIVE_MARKET_CLOCK_BATCH_2026-10-24.md. | HIGH | LOCAL_VALIDATED |
 | NXT-OBS-211 | 2026-10-23 | Possession supporting context | Chart/Jinx context only; no scoring, star or activity weight. Batch report; TASK-0180. | MEDIUM | DELIVERED / OWNER_ACCEPTED |
-| NXT-OBS-212 | 2026-10-23 | Active last selections in star filters | Playable publications/frozen stars; shared filters/counters. TASK-0180. | HIGH | DELIVERED / OWNER_ACCEPTED |
-| NXT-OBS-213 | 2026-10-23 | Added-time clock and period | Source clock notation and ET/penalty labels; TASK-0180. | HIGH | DELIVERED / OWNER_ACCEPTED |
+| NXT-OBS-212 | 2026-10-23 | Active star filters | Overview/Live share published-star threshold and market state; batch 210. | HIGH | LOCAL_VALIDATED |
+| NXT-OBS-213 | 2026-10-23 | Clock | Numeric 45/90; bare-plus SAP display patch local only. Batch 210. | HIGH | SAP_ACTIVATION_PENDING |
 | NXT-OBS-214 | 2026-10-23 | Jury: 87/100 | Owner accepted; follow-up 215. TASK-0180. | HIGH | OWNER_ACCEPTED |
 | NXT-OBS-215 | 2026-10-23 | Quick polish | Toto/resize/report/history/chart fixes: JURY_REAUDIT_2026-10-23.md. 694+32 checks pass; TASK-0180. | HIGH | DELIVERED / OWNER_ACCEPTED |
+| NXT-OBS-216 | 2026-10-24 | Activity | Later data seen; unconfirmed. | LOW | UNCONFIRMED |
+| NXT-OBS-219 | 2026-10-24 | Charts | 217/218 locally validated; paired delivery/smokes pending. | MEDIUM | OPEN |
