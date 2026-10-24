@@ -1,6 +1,6 @@
 # Mobile request intake — 24 October 2026
 
-Mode: LOCAL_IMPLEMENTATION. Intake closed by the owner's "bu kadar bu iki
+Mode: COMPLETE / OWNER_ACCEPTED. Intake closed by the owner's "bu kadar bu iki
 talebi yapalım" on 24 October. Both requests are implemented as TASK-0188;
 local validation is recorded in `UNIFIED_MATCH_TIMELINE_BATCH_2026-10-24.md`.
 Owner later accepted the design and approved paired delivery/publication,
@@ -19,7 +19,7 @@ Removing a visible section alone does not establish fewer SAP reads. Preserve
 aggregate accounting, evidence verification, required statistical inputs and
 decision history; this request authorises no deletion of stored SAP evidence.
 
-Status: IMPLEMENTED_LOCALLY / DELIVERY_PENDING. The shared UI omits the section;
+Status: DELIVERED / OWNER_ACCEPTED (3f53834 paired release). The UI omits the section;
 the client's versioned opt-in omits all nested `byMatch` arrays from the wire.
 Internal match-cluster statistics and verified decision history remain intact.
 
@@ -43,5 +43,5 @@ Visual integration must not silently blend different measurement windows or
 change backend pressure calculations, selection rules or stars. Any such
 business-model change would require its own explicit scope/approval.
 
-Status: DESIGN_ACCEPTED / DELIVERY_PENDING. The coordinated Android/web release
-is approved; exact installation and both owner smoke receipts remain outstanding.
+Status: DELIVERED / OWNER_ACCEPTED. Exact APK installation and both owner smokes
+passed; paired completion is in `UNIFIED_MATCH_TIMELINE_DELIVERY_2026-10-24.md`.

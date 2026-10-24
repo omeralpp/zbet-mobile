@@ -70,4 +70,4 @@ NXT-OBS-169..179 (TASK-0162 wheel lock, Mobile pressure display, palette, explan
 | NXT-OBS-214 | 2026-10-23 | Jury: 87/100 | Owner accepted; follow-up 215. TASK-0180. | HIGH | OWNER_ACCEPTED |
 | NXT-OBS-215 | 2026-10-23 | Quick polish | Toto/resize/report/history/chart fixes: JURY_REAUDIT_2026-10-23.md. 694+32 checks pass; TASK-0180. | HIGH | DELIVERED / OWNER_ACCEPTED |
 | NXT-OBS-216 | 2026-10-24 | Activity | Later data seen; unconfirmed. | LOW | UNCONFIRMED |
-| NXT-OBS-221/222 | 2026-10-24 | Owner batch | Match breakdown removed; single activity/journey chart. TASK-0188; [batch](UNIFIED_MATCH_TIMELINE_BATCH_2026-10-24.md). | MEDIUM | LOCAL_VALIDATED / DELIVERY_PENDING |
+| NXT-OBS-221/222 | 2026-10-24 | Owner batch | Match breakdown removed; single activity/journey. TASK-0188; [delivery](UNIFIED_MATCH_TIMELINE_DELIVERY_2026-10-24.md). | MEDIUM | DELIVERED / OWNER_ACCEPTED |

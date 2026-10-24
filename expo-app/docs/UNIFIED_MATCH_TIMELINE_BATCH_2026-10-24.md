@@ -51,13 +51,14 @@ removing `byMatch` and request `asOf`. Source verification reads are unchanged;
 internal match clustering is still required for uncertainty. Decision-history
 growth/pagination is a separate scope, not solved by hiding the breakdown.
 
-## Pending delivery
+## Completed delivery
 
-No new native APK was built, signed, installed or accepted. Browser phone-width
-checks do not establish Android touch/TalkBack/performance acceptance. Use
-the same clean pushed Mobile commit for the approved coordinated
-Android/web release, verify artifact hashes, privately deliver/install the APK
-before publishing its matching web build, then collect both owner smokes.
-Deploy the opt-in BFF contract under the owner's separate approval; a new client against
-the currently running old BFF remains compatible but still receives the larger
-payload. TASK-0188 remains open for delivery/acceptance.
+The signed ARM64 APK and verified web export were built from clean pushed
+`3f53834349f5def29ecb0b2932e2fb3593f027f0`. BFF `6910629` is active in DEV.
+Signature/ABI, owner-only Drive permissions and downloaded SHA-256 passed.
+Owner confirmed exact APK installation and basic Android smoke before web
+publication; matching web smoke then passed. `client-release.mjs complete`
+returned COMPLETE. TASK-0188 and NXT-OBS-221/222 close. Broader native
+TalkBack/performance acceptance was not asserted. Previous a5dca4a client pair
+and 310a57a BFF remain retained. See
+`UNIFIED_MATCH_TIMELINE_DELIVERY_2026-10-24.md` for exact receipts/hashes.

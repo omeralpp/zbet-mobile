@@ -1,26 +1,27 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-24
-Mod: `TASK-0188 RELEASE_APPROVED / DELIVERY_PENDING`
-Delivery: `OWNER_ONLY_DEV_PILOT / a5dca4a PAIR COMPLETE (both smokes passed 2026-10-24)`
+Mod: `OBSERVATION / TASK-0188 PAIR COMPLETE`
+Delivery: `OWNER_ONLY_DEV_PILOT / 3f53834 PAIR COMPLETE (both smokes passed 2026-10-24)`
 Maintenance: TASK-0187 DONE; BFF `310a57a` is pushed and rolled out with owner approval.
 Same-source 48-decision report: 723→86 reads, exact totals; 20 local checks pass.
 Local/public health and v1/v2/Live API pass; owner confirmed Android and web
 on 24 October ("Both Android and web work"). Global reconciliation and the
 accepted client pair stay unchanged.
 [Implementation/rollout](REPORT_AVAILABILITY_IMPLEMENTATION_2026-10-24.md).
-New local batch: owner closed intake and requested both changes. TASK-0188
-removes report match breakdowns and joins rolling activity/pool share/events
-on one journey axis for Android/web. No pressure/model calculation changes.
-Client gate/Android bundle/verified web export and BFF gate/build pass; browser
-desktop/phone checks pass. Actual new APK/device acceptance remains pending.
-49-decision comparison: 194,855→120,731 JSON bytes (-38%), every other field
-equal except request time; SAP verification reads stay unchanged. Owner accepted
-the design and approved paired web/APK signing/delivery/publication, bounded
-Mobile/CAP/tooling commit/push and BFF DEV rollout. Delivery is not yet complete.
-[Scope, checks and limitations](UNIFIED_MATCH_TIMELINE_BATCH_2026-10-24.md).
+TASK-0188 COMPLETE: report match breakdowns removed; rolling activity/pool/events
+share one journey axis on Android/web. No pressure/model calculation changes.
+Client gate/Android bundle/web export and BFF gate/build pass. Source `3f53834`,
+BFF `6910629` pushed/active; signed ARM64 APK `42FD999D6479…`, paired web tree
+`117DC5918A54…`, web `20261024T193040Z-3f53834`. Owner-only Drive readback and
+installation verified before web publication; owner confirmed both basic smokes.
+`client-release.mjs complete` passed. Broader TalkBack/performance unverified.
+49-decision report: 194,855→120,731 bytes (-38%), totals equal; SAP reads unchanged.
+Previous `a5dca4a` pair/BFF `310a57a` retained. No further release authorized.
+[Batch](UNIFIED_MATCH_TIMELINE_BATCH_2026-10-24.md),
+[delivery and receipts](UNIFIED_MATCH_TIMELINE_DELIVERY_2026-10-24.md).
 Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
-Latest owner-approved released batch: Overview and Live share published-star
+Previous owner-approved released batch: Overview and Live share published-star
 thresholds and open-market/current-price playability without a 15-second UI
 cutoff. BFF display v2 supplies native market state; model admission stays
 unchanged. Numeric added-time display is implemented on both clients/BFF.
