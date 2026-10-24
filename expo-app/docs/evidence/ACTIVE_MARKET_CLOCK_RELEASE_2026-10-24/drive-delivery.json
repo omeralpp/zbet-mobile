@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "artifact": "btb-mobile-next-a5dca4a-arm64-pilot.apk",
+  "sourceSha": "a5dca4a936ee3b36b3738f2e8265bdec38447e21",
+  "sha256": "26A03241F010E897CB504D7C4472E73C934CA6249847D71F26B137F44F52E66B",
+  "bytes": 50489473,
+  "architecture": "arm64-v8a",
+  "signatureVerified": true,
+  "abiVerified": true,
+  "privateOwnerOnly": true,
+  "remoteReadbackVerified": true,
+  "drive": {
+    "fileId": "1M5iHcauLN85ZpmnOPJd4qMsur4whI-_I",
+    "folderId": "1zD0mLb9Bqf9SoJmxqhvkuYDsrQ_MMNSv",
+    "url": "https://drive.google.com/file/d/1M5iHcauLN85ZpmnOPJd4qMsur4whI-_I/view?usp=drivesdk",
+    "shared": false,
+    "permissionRole": "owner"
+  },
+  "deliveryMethod": "connected Google Drive plugin; rclone remote absent",
+  "installedVerified": true,
+  "releaseComplete": true
+}

@@ -1,0 +1,16 @@
+{
+  "localStatus": 200,
+  "publicStatus": 200,
+  "selectionDisplayAcknowledged": "btb-selection-display.v2",
+  "publicAcknowledged": "btb-selection-display.v2",
+  "matches": 151,
+  "live": 25,
+  "quotePackets": 29,
+  "packetVersions": [
+    "btb-market-quotes.v2"
+  ],
+  "knownOpen": 21,
+  "knownClosed": 0,
+  "legacyHasExtraFields": false,
+  "bffSource": "12c3b9203e00220e5faf972b36b7dfbb2ef66ef1"
+}

@@ -1,5 +1,9 @@
 # Chart feedback local batch — 24 October 2026
 
+Subsequent paired delivery: COMPLETE in client `a5dca4a` on 24 October; see
+[release receipts](ACTIVE_MARKET_CLOCK_DELIVERY_2026-10-24.md). The local
+validation checkpoint below is retained as originally reviewed.
+
 Authorization: owner command `Mobile cutover next`, routed through `btb next cutover start`. Frozen scope: NXT-OBS-217 and 218, Android and desktop web together. NXT-OBS-216 remains unconfirmed and its activity calculations/gaps stay unchanged. The previously accepted `26f491c` Android/web pair remains the recovery pair.
 
 Plan:

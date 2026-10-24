@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-24",
+  "status": "COMPLETE",
+  "scope": "OWNER_ONLY_DEV_PILOT",
+  "approval": "Owner Approve after reviewed local batch and pending release steps",
+  "client": {
+    "schemaVersion": 1,
+    "batchId": "client-a5dca4a936ee3b36b3738f2e8265bdec38447e21-26A03241F010-153D5C2103CC",
+    "sourceSha": "a5dca4a936ee3b36b3738f2e8265bdec38447e21",
+    "sourceTree": "66fde46662e63ca674c04dc0397cf803729df01c",
+    "android": {
+      "sha256": "26A03241F010E897CB504D7C4472E73C934CA6249847D71F26B137F44F52E66B",
+      "bytes": 50489473,
+      "architecture": "arm64-v8a"
+    },
+    "web": {
+      "treeSha256": "153D5C2103CC601E003D52F2659E4B0D24D451122BE0AF669EB36AC22079EAE7"
+    },
+    "status": "COMPLETE",
+    "releaseComplete": true
+  },
+  "bff": {
+    "sourceSha": "12c3b9203e00220e5faf972b36b7dfbb2ef66ef1",
+    "testsPassed": 728,
+    "productionBuild": "PASS",
+    "localAndPublicContractSmoke": "PASS",
+    "oldPayloadCompatibility": "PASS"
+  },
+  "sap": {
+    "sourceSha": "cd63dcafde974096e81ee675958c072f3b6b127c",
+    "preflightCandidate": "d80e498bacd955fe828ad527b75c1aa56cb80422",
+    "status": "passed",
+    "importStatus": "imported",
+    "nativeSyntax": {
+      "capped": false,
+      "checkedComponents": [
+        "src/zbet_cl_rb_runtime.clas.abap",
+        "src/zbet_cl_rb_runtime.clas.testclasses.abap"
+      ],
+      "checkedObjects": [
+        "CLAS:ZBET_CL_RB_RUNTIME"
+      ],
+      "complete": true,
+      "findings": [],
+      "totalFindings": 0
+    },
+    "activeReadback": {
+      "src/zbet_cl_rb_runtime.clas.abap": "d3df7556d2343fa32521af785e2c326a88f2237c66f9851b65aacffd954ecdb4",
+      "src/zbet_cl_rb_runtime.clas.testclasses.abap": "b00f2621ced56f69777e983b04674821071e35fa1b289ef5a8745b5b32dbe248",
+      "src/zbet_cl_rb_runtime.clas.xml": "bb20e885bc8362254f8ac10ee32a3fd415ed0abdfe4934f045fd8f0a382debe3"
+    },
+    "runtimeUnit": {
+      "eligible": 21,
+      "executed": 21,
+      "failed": 0
+    },
+    "stateUnit": {
+      "eligible": 17,
+      "executed": 17,
+      "failed": 0
+    },
+    "atc": {
+      "newPriority1": 0,
+      "inheritedPriority2": 1
+    },
+    "evidenceMode": "Canonical abapGit guarded import, shared native ADT validation; source/metadata fallback, not MCP object evidence",
+    "transportReleased": false
+  },
+  "web": {
+    "release": "20261024T123643Z-a5dca4a",
+    "url": "https://app.surklase.com",
+    "servedEntrySha256": "E08E12832CA58D3950EAD656878431A5107088021B6542910885A34EF5A526C5",
+    "accessProtected": true
+  },
+  "drive": {
+    "fileId": "1M5iHcauLN85ZpmnOPJd4qMsur4whI-_I",
+    "url": "https://drive.google.com/file/d/1M5iHcauLN85ZpmnOPJd4qMsur4whI-_I/view?usp=drivesdk",
+    "ownerOnly": true,
+    "downloadedHashAndSizeVerified": true
+  },
+  "ownerSmoke": {
+    "android": "Installed; Overview and Live open normally",
+    "web": "Yes, Overview and Live load normally",
+    "bothPassed": true,
+    "scope": "basic screen smoke; no new feature-gesture/TalkBack assertion"
+  },
+  "task": "TASK-0184 DONE",
+  "followUp": "TASK-0185: next real bare-plus live source case; read-only review 2026-10-25",
+  "recovery": "Previous accepted 26f491c APK/web pair retained; b501352 and 43d2e7d recovery APKs retained",
+  "artifacts": "ACTIVE_MARKET_CLOCK_RELEASE_2026-10-24/"
+}

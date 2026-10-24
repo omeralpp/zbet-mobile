@@ -1,5 +1,9 @@
 # Active last selections and numeric clocks — local batch
 
+Subsequent delivery: COMPLETE on 24 October; see
+[paired delivery and native activation](ACTIVE_MARKET_CLOCK_DELIVERY_2026-10-24.md).
+The local validation checkpoint below is retained as originally reviewed.
+
 Owner instruction, 24 October 2026: Overview's tracked live matches and Live's
 star filter use the latest selection's published stars and current supplied
 odds while its market remains open. Do not remove it after 15 seconds. Display

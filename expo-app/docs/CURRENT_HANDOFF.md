@@ -1,22 +1,32 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-24
-Mod: `LOCAL_VALIDATED / ACTIVE_MARKET_CLOCK_RELEASE_PENDING`
-Delivery: `OWNER_ONLY_DEV_PILOT / 26f491c PAIR COMPLETE (both smokes passed 2026-10-23)`
+Mod: `OBSERVATION / ACTIVE_MARKET_CLOCK_PAIR_COMPLETE`
+Delivery: `OWNER_ONLY_DEV_PILOT / a5dca4a PAIR COMPLETE (both smokes passed 2026-10-24)`
 Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
-Latest owner-directed local batch: Overview and Live share published-star
+Latest owner-approved released batch: Overview and Live share published-star
 thresholds and open-market/current-price playability without a 15-second UI
 cutoff. BFF display v2 supplies native market state; model admission stays
 unchanged. Numeric added-time display is implemented on both clients/BFF.
 Active SAP source confirms a bare-plus rejection path; the bounded runtime
-status projection fix is local only, with no DDIC/model-parser change.
+status projection fix is active in DEV, with no DDIC/model-parser change.
 Core Mobile gate/Doctor, 728 BFF tests/build, ABAP lint/names, Android bundle,
 verified edge web export and synthetic desktop/phone browser checks pass.
-SAP candidate native syntax/Unit/activation, physical Android/published smoke
-and coordinated release remain pending. No commit/push or external change.
-[Batch, source evidence and gates](ACTIVE_MARKET_CLOCK_BATCH_2026-10-24.md).
+SAP native syntax/readback and 21 runtime + 17 state tests pass; no new P1,
+one inherited P2 warning. SAP `cd63dca`, BFF code `12c3b92`, client source
+`a5dca4a936ee3b36b3738f2e8265bdec38447e21` are pushed; SAP aligned to main.
+APK `26A03241F010…`, web tree `153D5C2103CC…`, published web
+`20261024T123643Z-a5dca4a`. Private Drive owner-only permissions/downloaded hash,
+pilot signature/ARM64 and owner installation are verified. Owner confirmed
+Overview/Live on Android and refreshed web. Paired completion gate is COMPLETE;
+TASK-0184 DONE. Exact feature gestures/TalkBack were not separately reaccepted.
+[Delivery and full receipts](ACTIVE_MARKET_CLOCK_DELIVERY_2026-10-24.md),
+[release evidence](evidence/ACTIVE_MARKET_CLOCK_RELEASE_2026-10-24.json).
+Previous accepted `26f491c` pair remains retained. New live bare-plus source
+observation is TASK-0185 (next read-only review 2026-10-25), not a release blocker.
+Native source cadence remains with BTB's existing evidence gates; no model tuning.
 
-24 October local cutover completed: NXT-OBS-217/218 implemented in shared
+24 October chart cutover delivered in the same pair: NXT-OBS-217/218 use shared
 Android/web components. Goals use darker scoring-side football markers and
 lines confined to their own half. Historical counts/shares remain fixed in a
 labeled per-period reference; unreachable outcomes are muted, corrections
@@ -25,14 +35,13 @@ NXT-OBS-216 remains unconfirmed; activity/pressure/model calculations unchanged.
 Type/lint/client+tooling tests, Expo Doctor, final Android Hermes bundle and
 verified edge web export pass. Synthetic browser checks pass at desktop and
 390px phone widths in dark/light themes; goal/correction and period reset pass.
-No physical Android or published-client smoke is claimed for this local batch.
-NXT-OBS-219 tracks paired delivery/acceptance; no release approval was given.
-Chart sources/docs remain uncommitted; accepted runtime/client pair unchanged.
+NXT-OBS-219 delivery is closed by the paired receipts above. The original local
+validation evidence remains historical; all functional source is committed.
 [Batch and checks](CHART_FEEDBACK_BATCH_2026-10-24.md),
 [evidence](evidence/CHART_FEEDBACK_LOCAL_2026-10-24/validation.json),
 [owner screenshots and scope](OWNER_CHART_FEEDBACK_2026-10-24.md).
 
-Released batch: NXT-OBS-200..215, owner authorised 2026-10-23; see
+Previous released batch: NXT-OBS-200..215, owner authorised 2026-10-23; see
 `JURY_REFINEMENT_BATCH_2026-10-23.md`. Today, verified period-specific scores,
 pressure clarity, compact statistics and shared Android/web UX refinements.
 Pressure (203): owner selected five-minute rolling activity; native pressure
@@ -40,7 +49,7 @@ remains selectable. Rounded columns, balance strip, now marker and compact
 native details are shared. Possession (211) was reintroduced as current context
 in chart/Jinx only, with no weight in activity, selections or stars. Missing
 windows remain gaps. The released pair has gold full-height goal markers; the
-newer local chart batch above replaces them prospectively. Score updates never
+newer accepted chart batch above replaces them. Score updates never
 imply goals.
 Owner requests clarification pop-ups in Turkish.
 Published-selection status now separates verified playability from native

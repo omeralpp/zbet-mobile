@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "batchId": "client-a5dca4a936ee3b36b3738f2e8265bdec38447e21-26A03241F010-153D5C2103CC",
+  "sourceSha": "a5dca4a936ee3b36b3738f2e8265bdec38447e21",
+  "apkSha256": "26A03241F010E897CB504D7C4472E73C934CA6249847D71F26B137F44F52E66B",
+  "bytes": 50489473,
+  "privateOwnerOnly": true,
+  "remoteReadbackVerified": true,
+  "signatureVerified": true,
+  "abiVerified": true,
+  "installedVerified": true,
+  "evidence": "Owner response on 2026-10-24 to exact delivered a5dca4a APK: Installed; Overview and Live open normally. Private upload, authenticated remote SHA256/size, pilot signature and ABI verified.",
+  "installedApkSha256": "26A03241F010E897CB504D7C4472E73C934CA6249847D71F26B137F44F52E66B"
+}
