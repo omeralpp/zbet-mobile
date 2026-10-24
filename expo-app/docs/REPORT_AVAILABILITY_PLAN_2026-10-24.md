@@ -1,7 +1,7 @@
 # Report availability repair plan
 
 24 October 2026. TASK-0187 / NXT-OBS-220, owner `btb-mobile`.
-Status: local validation and approved DEV BFF rollout complete; owner client checks pending.
+Status: COMPLETE; approved DEV rollout and both actual owner client checks passed.
 See [implementation and receipts](REPORT_AVAILABILITY_IMPLEMENTATION_2026-10-24.md).
 Baseline: [diagnosis](REPORT_AVAILABILITY_DIAGNOSIS_2026-10-24.md).
 
@@ -95,4 +95,4 @@ approval covering both deliveries and both smoke receipts.
 
 The subsequent owner messages authorised local implementation, then “Approve”
 authorised the reviewed Git and DEV BFF rollout gates. Both are executed;
-actual Android/web owner smoke receipts remain pending. No SAP/client release.
+owner confirmed "Both Android and web work" on 24 October. No SAP/client release.

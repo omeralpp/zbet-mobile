@@ -3,10 +3,11 @@
 Son güncelleme: 2026-10-24
 Mod: `OBSERVATION / ACTIVE_MARKET_CLOCK_PAIR_COMPLETE`
 Delivery: `OWNER_ONLY_DEV_PILOT / a5dca4a PAIR COMPLETE (both smokes passed 2026-10-24)`
-Maintenance: TASK-0187 BFF `310a57a` is pushed and rolled out with owner approval.
+Maintenance: TASK-0187 DONE; BFF `310a57a` is pushed and rolled out with owner approval.
 Same-source 48-decision report: 723→86 reads, exact totals; 20 local checks pass.
-Local/public health and v1/v2/Live API pass; both actual owner client smokes
-pending. Global reconciliation and the accepted client pair stay unchanged.
+Local/public health and v1/v2/Live API pass; owner confirmed Android and web
+on 24 October ("Both Android and web work"). Global reconciliation and the
+accepted client pair stay unchanged.
 [Implementation/rollout](REPORT_AVAILABILITY_IMPLEMENTATION_2026-10-24.md).
 Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
 Latest owner-approved released batch: Overview and Live share published-star

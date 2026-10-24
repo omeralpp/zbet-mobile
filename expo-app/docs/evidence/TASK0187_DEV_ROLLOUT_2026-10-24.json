@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "task": "TASK-0187",
   "date": "2026-10-24",
-  "status": "BFF_ROLLED_OUT_OWNER_SMOKES_PENDING",
+  "status": "COMPLETE",
   "scope": "OWNER_ONLY_DEV_PILOT",
   "approval": "Owner Approve after the reviewed local patch and explicit commit/push plus DEV BFF rollout gate",
   "bff": {
@@ -93,8 +93,8 @@
     "acceptedPairSource": "a5dca4a936ee3b36b3738f2e8265bdec38447e21",
     "newApkBuilt": false,
     "newWebPublished": false,
-    "androidOwnerSmoke": "PENDING",
-    "webOwnerSmoke": "PENDING"
+    "androidOwnerSmoke": "PASSED",
+    "webOwnerSmoke": "PASSED"
   },
   "sapWrites": false,
   "secretsRecorded": false,
@@ -102,5 +102,13 @@
     "revision": "12c3b9203e00220e5faf972b36b7dfbb2ef66ef1",
     "requiresControlledRecovery": true
   },
-  "localValidation": "TASK0187_LOCAL_VALIDATION_2026-10-24.json"
+  "localValidation": "TASK0187_LOCAL_VALIDATION_2026-10-24.json",
+  "ownerAcceptance": {
+    "date": "2026-10-24",
+    "evidenceType": "DIRECT_OWNER_REPLY",
+    "question": "Please refresh both the installed Android app and app.surklase.com, then check Overview, Live and Super. Have the verification warnings cleared on both?",
+    "answer": "Both Android and web work",
+    "androidAccepted": true,
+    "publishedWebAccepted": true
+  }
 }

@@ -3,8 +3,9 @@
 24 October 2026. Owner authorised local work with “çalışmaya başla” / “devam et”,
 then approved the reviewed commit/push and DEV BFF rollout with “Approve”.
 BFF `310a57a52a7997932edd90bfe3874fb0ace4591d` is clean, pushed and running in
-the owner-only DEV pilot. The accepted Android/web pair remains unchanged;
-actual owner checks on both clients are pending.
+the owner-only DEV pilot. Owner confirmed both actual Android and published-web
+checks on 24 October: "Both Android and web work". TASK-0187 is complete;
+the accepted Android/web pair remains unchanged.
 
 ## Result and implementation
 
@@ -116,8 +117,10 @@ web hostname still redirects anonymous access to its existing Access gate.
 The restarted runtime emitted the new bounded semantic report log.
 See [rollout receipt](evidence/TASK0187_DEV_ROLLOUT_2026-10-24.json).
 
-Actual installed-Android and published-web owner smoke checks remain pending;
-they were requested after rollout. No new APK/web artifact is needed for the
-unchanged client contract. No SAP write or client publication occurred.
-TASK-0187 stays open until both owner receipts exist. The previous BFF revision
-and existing client pair remain retained for controlled recovery.
+Actual installed-Android and published-web owner smoke checks both passed on
+24 October. The owner answered "Both Android and web work" after the explicit
+request to refresh both clients and check Overview, Live and Super. The rollout
+receipt records this direct acceptance. TASK-0187 and NXT-OBS-220 are closed.
+No new APK/web artifact was needed for the unchanged client contract. No SAP
+write or client publication occurred. The previous BFF revision and existing
+client pair remain retained for controlled recovery.
