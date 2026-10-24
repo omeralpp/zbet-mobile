@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-24",
+  "task": "TASK-0188",
+  "status": "LOCAL_VALIDATED_DELIVERY_PENDING",
+  "mobileGate": "PASS: type/lint/unit/tooling/brand/doctor/Android JS bundle/verified edge web export",
+  "bffGate": "PASS: registered tests and production build",
+  "browser": [
+    "desktop dark/light",
+    "390px phone dark/light",
+    "320px no page overflow",
+    "activity and frozen event selection",
+    "report stars/markets retained; match section absent"
+  ],
+  "payload": {
+    "availability": "AVAILABLE",
+    "decisions": 49,
+    "fullBytes": 194855,
+    "summaryBytes": 120731,
+    "reductionPercent": 38,
+    "allOtherFieldsEqual": true,
+    "sourceReadsReduced": false
+  },
+  "pressureModelChanged": false,
+  "sapWrites": false,
+  "pilotChanged": false,
+  "nativeDeviceSmoke": "PENDING new APK",
+  "releaseApproved": false,
+  "screenshot": "task0188-desktop-final.png"
+}

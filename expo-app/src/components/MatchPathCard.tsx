@@ -14,6 +14,9 @@ import { ResultPill, toneColor } from "./DecisionTicket";
 import { JourneyEventGlyph, journeySvgAccessibility } from "./JourneyEventIcon";
 import { journeyDragIntent } from "./journey-interaction";
 import type { PathModel, PathMoment } from "./match-path-model";
+import type { PressureInterval } from "@/src/utils/rebuild-pressure";
+import { activityAt, activityHeadline, activityMoment } from "./match-path-activity";
+import { MatchActivityBars, MatchActivitySummary } from "./MatchActivityTrack";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 import { TeamLogo } from "./TeamLogo";
 
@@ -28,24 +31,25 @@ import { TeamLogo } from "./TeamLogo";
 const RIB = 16, HOME = 60, PT = 88, LANE_GAP = 30, BTB_GAP = 44, AXIS_GAP = 30;
 const bands = [{ label: "Olağan", from: 0.7, to: 1 }, { label: "Sıra dışı", from: 0.3, to: 0.7 }, { label: "Sürpriz", from: 0, to: 0.3 }];
 
-type Geometry = { width: number; height: number; gutter: number; plotWidth: number; plotHeight: number; away: number; btb: number; axis: number; x: (minute: number) => number; y: (level: number) => number };
+type Geometry = { width: number; height: number; gutter: number; plotWidth: number; plotHeight: number; poolTop: number; pressureMid: number; away: number; btb: number; axis: number; x: (minute: number) => number; y: (level: number) => number };
 
-function geometry(width: number, wide: boolean, model: PathModel): Geometry {
+function geometry(width: number, wide: boolean, model: PathModel, integrated: boolean): Geometry {
   const gutter = wide ? 118 : 40, right = wide ? 20 : 12;
   const plotWidth = Math.max(120, width - gutter - right);
   const plotHeight = model.lineNotice ? (wide ? 84 : 96) : wide ? 120 : 96;
-  const away = PT + plotHeight + LANE_GAP, btb = away + BTB_GAP, axis = btb + AXIS_GAP;
+  const poolTop = integrated ? 252 : PT;
+  const away = poolTop + plotHeight + LANE_GAP, btb = away + BTB_GAP, axis = btb + AXIS_GAP;
   return {
-    width, height: axis + 24, gutter, plotWidth, plotHeight, away, btb, axis,
+    width, height: axis + 24, gutter, plotWidth, plotHeight, poolTop, pressureMid: 158, away, btb, axis,
     x: (minute) => gutter + Math.min(Math.max(minute, 0), model.maxMinute) / model.maxMinute * plotWidth,
-    y: (level) => PT + (1 - level) * plotHeight
+    y: (level) => poolTop + (1 - level) * plotHeight
   };
 }
 
 function laneY(moment: PathMoment, g: Geometry, model: PathModel) {
   if (moment.kind === "GOAL" || moment.kind === "RED_CARD") return moment.side === "AWAY" ? g.away : HOME;
   if (moment.kind === "BTB") return g.btb;
-  if (moment.kind === "POOL") return PT;
+  if (moment.kind === "POOL") return g.poolTop;
   const last = model.line.at(-1);
   return last ? g.y(last.level) : g.axis;
 }
@@ -65,7 +69,10 @@ function groupMarks(moments: readonly PathMoment[], g: Geometry, model: PathMode
 /** Score chips keep their order and never overlap; each still points at its minute. */
 function placeChips(model: PathModel, g: Geometry, chipWidth: number) {
   const left = g.gutter, right = g.gutter + g.plotWidth;
-  const placed = model.chips.map((chip, index) => {
+  const capacity = Math.max(2, Math.floor((g.plotWidth + 4) / (chipWidth + 4)));
+  const visible = model.chips.length <= capacity ? model.chips : model.chips.filter((_, index) =>
+    index === 0 || index === model.chips.length - 1 || index % Math.ceil((model.chips.length - 1) / (capacity - 1)) === 0);
+  const placed = visible.map((chip, index) => {
     const at = g.x(chip.minute);
     return { ...chip, at, left: index === 0 ? at : at - chipWidth / 2 };
   });
@@ -86,7 +93,7 @@ function statusPill(match: MatchDetail) {
   return { label: "MAÇ TAMAMLANDI", live: false };
 }
 
-const kindLabel: Record<PathMoment["kind"], string> = { GOAL: "Gol", RED_CARD: "Kırmızı kart", BTB: "BTB kararı", POOL: "Devre", LATEST: "Son kayıt" };
+const kindLabel: Record<PathMoment["kind"], string> = { GOAL: "Gol", RED_CARD: "Kırmızı kart", BTB: "BTB kararı", POOL: "Devre", LATEST: "Son kayıt", ACTIVITY: "Hareketlilik" };
 
 function MomentGlyph({ moment, size }: { moment: PathMoment; size: number }) {
   if (moment.kind === "BTB") return <Svg width={size} height={size} viewBox="0 0 24 24" {...journeySvgAccessibility}><JourneyEventGlyph kind="SUPER" color={colors.gold} /></Svg>;
@@ -96,8 +103,9 @@ function MomentGlyph({ moment, size }: { moment: PathMoment; size: number }) {
   return <Svg width={size} height={size} viewBox="0 0 24 24" {...journeySvgAccessibility}><JourneyEventGlyph kind="GOAL" color={colors.text} /></Svg>;
 }
 
-function SelectedMoment({ moment, match, model, showBack, onBack, onDecisionPress }: {
+function SelectedMoment({ moment, match, model, showBack, onBack, onDecisionPress, activityReading }: {
   moment: PathMoment | undefined; match: MatchDetail; model: PathModel; showBack: boolean; onBack: () => void; onDecisionPress: (decisionId: string) => void;
+  activityReading?: PressureInterval | null | undefined;
 }) {
   if (!moment) {
     return <View style={styles.panel}><Text style={styles.panelEmpty}>{model.headline}</Text></View>;
@@ -105,6 +113,7 @@ function SelectedMoment({ moment, match, model, showBack, onBack, onDecisionPres
   const record = moment.record;
   const side = moment.side === "HOME" ? match.homeTeam : moment.side === "AWAY" ? match.awayTeam : null;
   const title = moment.kind === "BTB" && record ? formatSelection(record.market) || record.market
+    : moment.kind === "ACTIVITY" ? "Son 5 dakikalık hareketlilik"
     : moment.kind === "LATEST" ? (moment.railSub || "Son kayıt")
       : moment.kind === "POOL" ? "İkinci yarı havuzu"
         : [moment.railTitle.split(" · ")[1], side].filter(Boolean).join(" · ");
@@ -137,6 +146,12 @@ function SelectedMoment({ moment, match, model, showBack, onBack, onDecisionPres
         <Text style={styles.ticketNote}>Yıldız tutarlılık ve kanıt kalitesini gösterir; kazanma olasılığı değildir.</Text>
       </View> : null}
       {moment.lines.map((line) => <Text key={line} style={styles.panelLine}>{line}</Text>)}
+      {activityReading !== undefined && moment.kind !== "ACTIVITY" && moment.kind !== "LATEST" ? <View style={styles.selectedActivity}>
+        <Text style={styles.eyebrow}>BU ANDAKİ HAREKETLİLİK</Text>
+        <Text style={styles.panelLine}>{activityHeadline(activityReading, match)}</Text>
+        {activityReading ? <Text style={styles.panelLine}>{match.homeTeam} {activityReading.homeText} · {match.awayTeam} {activityReading.awayText}</Text> : null}
+        <Text style={styles.ticketNote}>Tahmini 5 dakikalık pencere; BTB kararının baskı ölçümü değildir.</Text>
+      </View> : null}
       {record ? <Pressable accessibilityHint="Super kararını açar" accessibilityRole="button" onPress={() => onDecisionPress(record.decisionId)}
         style={({ hovered, pressed }) => [styles.openDecision, hovered && styles.hover, pressed && styles.pressed]}>
         <Text style={styles.openDecisionText}>Super kararını aç ›</Text>
@@ -145,7 +160,7 @@ function SelectedMoment({ moment, match, model, showBack, onBack, onDecisionPres
   );
 }
 
-export function MatchPathCard({ match, model, synthetic, analysisText, collapsed, onToggleCollapse, onDecisionPress, wide, footer }: {
+export function MatchPathCard({ match, model, synthetic, analysisText, collapsed, onToggleCollapse, onDecisionPress, wide, footer, activity }: {
   match: MatchDetail;
   model: PathModel;
   /** The legacy line came from a synthetic sample (shows ÖRNEK VERİ). */
@@ -157,6 +172,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
   onDecisionPress: (decisionId: string) => void;
   wide: boolean;
   footer?: ReactNode;
+  activity?: { intervals: readonly PressureInterval[]; failed: boolean; loading: boolean };
 }) {
   const [width, setWidth] = useState(wide ? 740 : 330);
   // Chart and panel sit side by side only where the card itself is wide enough;
@@ -164,11 +180,15 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
   const [cardWidth, setCardWidth] = useState(0);
   const sideBySide = wide && cardWidth >= 820;
   const [picked, setPicked] = useState<string | null>(null);
+  const [cursor, setCursor] = useState<number | null>(null);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [analysisOpen, setAnalysisOpen] = useState(false);
-  const selectedKey = picked && model.moments.some((moment) => moment.key === picked) ? picked : model.defaultKey;
-  const selected = model.moments.find((moment) => moment.key === selectedKey);
-  const g = useMemo(() => geometry(width, wide, model), [width, wide, model]);
+  const selectedKey = cursor !== null ? `activity:${cursor}` : picked && model.moments.some((moment) => moment.key === picked) ? picked : model.defaultKey;
+  const selected = cursor !== null && activity ? activityMoment(activity.intervals, cursor, match) : model.moments.find((moment) => moment.key === selectedKey);
+  const chartModel = useMemo(() => activity ? { ...model, maxMinute: Math.max(model.maxMinute, ...activity.intervals.map(point => point.endMinute)) } : model, [activity, model]);
+  const g = useMemo(() => geometry(width, wide && width >= 620, chartModel, Boolean(activity)), [width, wide, chartModel, activity]);
+  const lineInk = activity ? colors.teal : colors.blue;
+  const chooseMoment = useCallback((key: string) => { setCursor(null); setPicked(key); }, []);
   const groups = useMemo(() => groupMarks(model.moments, g, model, wide ? 34 : 28), [g, model, wide]);
   const chipWidth = wide ? 44 : 38;
   const chips = useMemo(() => placeChips(model, g, chipWidth), [model, g, chipWidth]);
@@ -176,7 +196,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
   const hasLine = !model.lineNotice;
   const lineD = hasLine ? model.line.map((vertex,index) => `${index === 0 || vertex.connects === false ? "M" : "L"} ${g.x(vertex.minute).toFixed(1)} ${g.y(vertex.level).toFixed(1)}`).join(" ") : "";
   const first = model.line[0], last = model.line.at(-1);
-  const areaD = hasLine && first && last ? `${lineD} L ${g.x(last.minute).toFixed(1)} ${PT + g.plotHeight} L ${g.x(first.minute).toFixed(1)} ${PT + g.plotHeight} Z` : "";
+  const areaD = hasLine && first && last ? `${lineD} L ${g.x(last.minute).toFixed(1)} ${g.poolTop + g.plotHeight} L ${g.x(first.minute).toFixed(1)} ${g.poolTop + g.plotHeight} Z` : "";
   // Without a line the live pill sits on the axis; the minutes it would cover
   // are left out, since the pill itself states the current minute.
   const pillX = !hasLine && model.nowMinute !== null ? g.x(model.nowMinute) : null;
@@ -189,9 +209,9 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
     const text = hasLine && model.referenceMinute !== null ? `${model.halfTimeLabel} · yeni havuz` : model.halfTimeLabel;
     const width = text.length * 7 + 6, at = g.x(45);
     const taken = (from: number, to: number) => groups.some((group) => group.cy === HOME && group.cx + 16 > from && group.cx - 16 < to);
-    if (!taken(at, at + width + 5)) return { text, width, left: at + 5, top: PT - 18, alignEnd: false };
-    if (!taken(at - width - 5, at)) return { text, width, left: at - width - 5, top: PT - 18, alignEnd: true };
-    return { text, width, left: at + 5, top: PT + g.plotHeight + 1, alignEnd: false };
+    if (!taken(at, at + width + 5)) return { text, width, left: at + 5, top: g.poolTop - 18, alignEnd: false };
+    if (!taken(at - width - 5, at)) return { text, width, left: at - width - 5, top: g.poolTop - 18, alignEnd: true };
+    return { text, width, left: at + 5, top: g.poolTop + g.plotHeight + 1, alignEnd: false };
   })();
 
   const nearest = useCallback((px: number, py: number | null) => {
@@ -204,9 +224,15 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
       Math.abs(g.x(moment.minute) - px) < Math.abs(g.x(best.minute) - px) ? moment : best).key;
   }, [g, groups, model.moments]);
   const pickAt = useCallback((px: number, py: number | null) => {
+    const hit = py === null ? null : groups.find(group => Math.abs(group.cx - px) <= 22 && Math.abs(group.cy - py) <= 24);
+    if (hit) { chooseMoment(hit.lead.key); return; }
+    if (activity && (py === null || py >= 100 && py <= 218)) {
+      setCursor(Math.round(Math.max(0, Math.min(chartModel.nowMinute ?? chartModel.maxMinute, (px - g.gutter) / g.plotWidth * chartModel.maxMinute))));
+      return;
+    }
     const key = nearest(px, py);
-    if (key) setPicked(key);
-  }, [nearest]);
+    if (key) chooseMoment(key);
+  }, [nearest, activity, groups, g, chartModel, chooseMoment]);
 
   // One gesture canvas owns physical input: a horizontal drag walks the
   // moments, a tap picks the mark under it; vertical movement scrolls the page.
@@ -240,6 +266,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
         <View collapsable={false} style={{ height: g.height }} testID="match-path-canvas">
           <Svg width={g.width} height={g.height} {...journeySvgAccessibility}>
             <Defs><LinearGradient id="matchPathFill" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor={colors.blue} stopOpacity={0.3} /><Stop offset="1" stopColor={colors.blue} stopOpacity={0.02} /></LinearGradient></Defs>
+            {activity ? <MatchActivityBars intervals={activity.intervals} x={g.x} left={g.gutter} right={g.gutter + g.plotWidth} mid={g.pressureMid} height={108} /> : null}
             {hasLine && model.poolShare ? [0,0.5,1].map(level => <G key={level}>
               <Line x1={g.gutter} x2={g.gutter+g.plotWidth} y1={g.y(level)} y2={g.y(level)} stroke={colors.borderSoft} strokeDasharray="3 4" />
               <SvgText x={g.gutter+4} y={g.y(level)+(level===1?12:-4)} fill={colors.textMuted} fontSize={11} fontFamily={fontFamilies.text}>%{Math.round(level*100)}</SvgText>
@@ -248,12 +275,12 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
                 fill={index === 0 ? colors.blue : index === 1 ? colors.gold : colors.violet} opacity={index === 1 ? 0.05 : 0.08} />
               {wide ? <SvgText x={g.gutter - 8} y={(g.y(band.from) + g.y(band.to)) / 2 + 4} textAnchor="end" fill={colors.textMuted} fontSize={12} fontFamily={fontFamilies.text}>{band.label}</SvgText>
                 : <SvgText x={g.gutter + g.plotWidth - 4} y={g.y(band.to) + 13} textAnchor="end" fill={colors.textMuted} fontSize={11} fontFamily={fontFamilies.text}>{band.label}</SvgText>}
-            </G>) : <Rect x={g.gutter} y={PT + 6} width={g.plotWidth} height={g.plotHeight - 12} rx={12} fill={colors.surface} stroke={colors.borderSoft} strokeDasharray="4 5" />}
+            </G>) : <Rect x={g.gutter} y={g.poolTop + 6} width={g.plotWidth} height={g.plotHeight - 12} rx={12} fill={colors.surface} stroke={colors.borderSoft} strokeDasharray="4 5" />}
             {hasLine ? <>
               {!model.poolShare ? <Path d={areaD} fill="url(#matchPathFill)" /> : null}
-              <Path d={lineD} fill="none" stroke={colors.blue} strokeOpacity={0.12} strokeWidth={9} strokeLinejoin="round" />
-              <Path d={lineD} fill="none" stroke={colors.blue} strokeWidth={3} strokeLinejoin="round" strokeLinecap="round" />
-              {model.poolShare ? model.line.map((point,index)=><Circle key={index} cx={g.x(point.minute)} cy={g.y(point.level)} r={3} fill={colors.blue} />) : null}
+              <Path d={lineD} fill="none" stroke={lineInk} strokeOpacity={0.12} strokeWidth={9} strokeLinejoin="round" />
+              <Path d={lineD} fill="none" stroke={lineInk} strokeWidth={3} strokeLinejoin="round" strokeLinecap="round" />
+              {model.poolShare ? model.line.map((point,index)=><Circle key={index} cx={g.x(point.minute)} cy={g.y(point.level)} r={3} fill={lineInk} />) : null}
             </> : null}
             <Line x1={g.gutter} x2={g.gutter + g.plotWidth} y1={RIB} y2={RIB} stroke={colors.borderSoft} strokeWidth={2} />
             <Line x1={g.gutter} x2={g.gutter + g.plotWidth} y1={HOME} y2={HOME} stroke={colors.borderSoft} />
@@ -264,14 +291,14 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
             {groups.map((group) => {
               // Guides link a mark to the plot; around the notice they stop at its edge.
               const inset = model.lineNotice ? 6 : 0;
-              const top = group.cy === HOME ? HOME + 16 : PT + (inset ? g.plotHeight - inset : 0);
-              const bottom = group.cy === HOME ? PT + (inset || g.plotHeight) : group.cy - 18;
+              const top = activity ? group.cy === HOME ? HOME + 16 : g.pressureMid : group.cy === HOME ? HOME + 16 : g.poolTop + (inset ? g.plotHeight - inset : 0);
+              const bottom = activity ? group.cy === HOME ? g.pressureMid : 212 : group.cy === HOME ? g.poolTop + (inset || g.plotHeight) : group.cy - 18;
               const ink = group.lead.kind === "BTB" ? colors.gold : group.lead.kind === "RED_CARD" ? colors.red : colors.text;
-              return group.lead.kind === "LATEST" || group.lead.kind === "POOL" || bottom <= top ? null
+              return group.lead.kind === "LATEST" || group.lead.kind === "POOL" || activity && group.lead.kind === "BTB" || bottom <= top ? null
                 : <Line key={`guide:${group.lead.key}`} x1={group.cx} x2={group.cx} y1={top} y2={bottom} stroke={ink} strokeOpacity={0.3} />;
             })}
             {selected ? <Line x1={g.x(selected.minute)} x2={g.x(selected.minute)} y1={RIB + 14} y2={g.axis} stroke={colors.text} strokeOpacity={0.55} strokeWidth={1.5} strokeDasharray="3 3" /> : null}
-            {model.nowMinute !== null ? <Line x1={g.x(model.nowMinute)} x2={g.x(model.nowMinute)} y1={PT} y2={g.axis} stroke={semantic.live} strokeOpacity={0.6} strokeWidth={2} /> : null}
+            {model.nowMinute !== null ? <Line x1={g.x(model.nowMinute)} x2={g.x(model.nowMinute)} y1={activity ? 100 : g.poolTop} y2={g.axis} stroke={semantic.live} strokeOpacity={0.6} strokeWidth={2} /> : null}
             {chips.map((chip) => <Line key={`tick:${chip.key}`} x1={chip.at} x2={chip.at} y1={RIB - 3} y2={RIB + 3} stroke={colors.textMuted} />)}
           </Svg>
 
@@ -299,8 +326,12 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
             <View style={styles.btbBadge}><Svg width={14} height={14} viewBox="0 0 24 24" {...journeySvgAccessibility}><JourneyEventGlyph kind="SUPER" color={colors.gold} /></Svg></View>
             {wide ? <Text style={styles.gutterName}>BTB</Text> : null}
           </View>
-          {hasLine && wide ? <Text pointerEvents="none" style={[styles.lineLabel, { top: PT - 18 }]}>{model.poolShare ? "HAVUZDA KALAN PAY" : "HAVUZ UYUMU"}</Text> : null}
-          {model.lineNotice ? <View pointerEvents="none" style={[styles.notice, { left: g.gutter + 1, width: g.plotWidth - 2, top: PT + 7, height: g.plotHeight - 14 }]}>
+          {activity ? <Text pointerEvents="none" style={[styles.lineLabel, { top: 82, left: g.gutter, color: colors.textMuted }]}>HAREKETLİLİK · SON 5 DK</Text> : null}
+          {activity && !activity.intervals.length ? <View pointerEvents="none" style={[styles.notice, { left: g.gutter + 1, width: g.plotWidth - 2, top: 108, height: 100 }]}>
+            <Text style={styles.noticeTitle}>Hareketlilik penceresi yok</Text><Text style={styles.noticeBody}>Eksik ölçümler boş bırakılır.</Text>
+          </View> : null}
+          {hasLine && (wide || activity) ? <Text pointerEvents="none" style={[styles.lineLabel, { top: g.poolTop - 18, ...(activity ? { left: g.gutter, color: lineInk } : {}) }]}>{model.poolShare ? "HAVUZDA KALAN PAY" : "HAVUZ UYUMU"}</Text> : null}
+          {model.lineNotice ? <View pointerEvents="none" style={[styles.notice, { left: g.gutter + 1, width: g.plotWidth - 2, top: g.poolTop + 7, height: g.plotHeight - 14 }]}>
             <Text style={styles.noticeTitle}>{model.lineNotice.title}</Text>
             <Text style={styles.noticeBody}>{model.lineNotice.body}</Text>
           </View> : null}
@@ -311,11 +342,11 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
             const count = group.members.length;
             const label = count > 1 ? `${count} an: ${group.members.map((member) => member.label).join("; ")}` : lead.label;
             const tone = lead.record ? toneColor[resultPresentation[lead.record.result.state].tone] : colors.gold;
-            const atAxis = lead.kind === "LATEST" && !hasLine;
+            const atAxis = lead.kind === "LATEST" && !hasLine && !activity;
             // A ticket or the live pill is wider than a glyph; its target grows with it.
             const markWidth = lead.kind === "BTB" ? (wide ? 88 : 76) : atAxis ? 76 : 44;
             return <Pressable key={lead.key} accessibilityLabel={label} accessibilityRole="button" accessibilityState={{ selected: active }}
-              onPress={() => setPicked(lead.key)} pointerEvents="none"
+              onPress={() => chooseMoment(lead.key)} pointerEvents="none"
               style={[styles.mark, { left: group.cx - markWidth / 2, width: markWidth, top: (atAxis ? g.axis : group.cy) - 22 }]}>
               {lead.kind === "BTB" && lead.record ? <View style={[styles.ticketMark, { borderColor: tone }, active && styles.ticketMarkActive]}>
                 <Text numberOfLines={1} style={styles.ticketMarkStars}>{"★".repeat(lead.record.stars)}<Text style={styles.ticketStarsOff}>{"★".repeat(5 - lead.record.stars)}</Text></Text>
@@ -339,7 +370,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
   );
 
   return (
-    <View onLayout={(event) => setCardWidth(event.nativeEvent.layout.width)} style={styles.card}>
+    <View testID="match-path-card" onLayout={(event) => setCardWidth(event.nativeEvent.layout.width)} style={styles.card}>
       <SurfaceMaterial radius={radii.xl} />
       <View style={styles.accent} />
       <View style={styles.header}>
@@ -366,13 +397,15 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
       </View>
 
       {collapsed ? null : <>
+        {activity ? <MatchActivitySummary intervals={activity.intervals} match={match} failed={activity.failed} loading={activity.loading} /> : null}
         <View style={[styles.body, sideBySide && styles.bodyWide]}>
           <View style={sideBySide ? styles.chartColumn : undefined}>
             {chart}
             <Text style={styles.hint}>{Platform.OS === "web" ? "Bir işarete tıkla ya da grafikte sürükleyerek gez." : "↔ Grafikte sürükle · işarete dokun · ↑↓ sayfa kayar"}</Text>
           </View>
           <View style={sideBySide ? styles.panelColumn : undefined}>
-            <SelectedMoment match={match} model={model} moment={selected} onBack={() => setPicked("latest")}
+            <SelectedMoment match={match} model={model} moment={selected} onBack={() => chooseMoment("latest")}
+              activityReading={activity ? activityAt(activity.intervals, selected?.minute ?? 0) : undefined}
               onDecisionPress={onDecisionPress} showBack={model.nowMinute !== null && selectedKey !== "latest"} />
           </View>
         </View>
@@ -382,7 +415,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
           {model.moments.map((moment) => {
             const active = moment.key === selectedKey;
             return <Pressable key={moment.key} accessibilityLabel={moment.label} accessibilityRole="button" accessibilityState={{ selected: active }}
-              onPress={() => setPicked(moment.key)}
+              onPress={() => chooseMoment(moment.key)}
               style={({ hovered, pressed }) => [styles.railItem, wide && styles.railItemWide, active && styles.railItemActive, hovered && styles.hover, pressed && styles.pressed]}>
               <View style={[styles.railIcon, moment.kind === "BTB" && { backgroundColor: colors.goldSoft },
                 moment.kind === "RED_CARD" && { backgroundColor: colors.redSoft }, moment.kind === "LATEST" && { backgroundColor: semantic.liveSoft }]}>
@@ -410,6 +443,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
         </View>
         {rulesOpen ? <Text style={styles.rules}>
           Üstteki şerit her golün yeni skorunu kendi dakikasında gösterir. Ev sahibinin olayları üst, deplasmanın olayları alt şeritte.
+          {activity ? " Mavi ve turuncu sütunlar son 5 dakikanın tahmini hareketliliğidir; eksik pencereler boştur ve bu değerler BTB seçim hesabına katılmaz. Sütunlara dokunarak veya sürükleyerek o dakikayı incele. Havuz çizgisinin yüzde ölçeği ayrıdır; aynı zaman eksenini paylaşırlar." : null}
           {hasLine && model.poolShare ? " Mavi çizgi yarının ilk geçerli referans havuzunda güncel skorla uyumlu kalan paydır; kazanma olasılığı değildir. Devrede veya kaynak değişiminde çizgi kesilir. Yalnız kayıtlı havuzlar gösterilir." : hasLine ? " Mavi çizgi maçın havuzla uyumudur; devrede havuz değişir ve çizgi basamak yapar." : " Havuz çizgisi yalnız kaynak sunduğunda çizilir."}
           {" "}Altın fişler BTB kararlarıdır: dakika, yıldız, donmuş seçim oranı ve sonucun rengi. Yıldız tutarlılık ve kanıt kalitesidir.
         </Text> : null}
@@ -420,6 +454,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
 }
 
 const styles = StyleSheet.create({
+  selectedActivity: { gap: 5, paddingTop: spacing.md, marginTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.borderSoft },
   card: { borderRadius: radii.xl, borderWidth: 1, borderColor: colors.borderSoft, padding: spacing.lg, gap: spacing.md, overflow: "hidden" },
   accent: { position: "absolute", left: 20, top: -1, width: 72, height: 2, borderRadius: 2, backgroundColor: colors.blue },
   header: { flexDirection: "row", alignItems: "center", gap: spacing.md, flexWrap: "wrap" },

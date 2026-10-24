@@ -21,7 +21,8 @@ test("RB1 binds statistics and pressure history and never draws a legacy pool li
   const source = await read("../screens/MatchDetailView.tsx");
   assert.ok(source.includes('rebuildStatisticsQuery(isRebuild ? key : "")'));
   assert.ok(source.includes('rebuildPressureHistoryQuery(isRebuild ? key : "")'));
-  assert.ok(source.includes("<RebuildPressureChart"));
+  assert.ok(!source.includes("<RebuildPressureChart"));
+  assert.ok(source.includes("activity: { intervals"));
   assert.ok(source.includes("<RebuildStatisticsPanel"));
   assert.ok(source.includes("const legacyPath = !isRebuild && matchPathEnabled;"));
   assert.ok(source.includes("journeyPoints: legacyPath && journey.data?.matchKey === key ? journey.data.points : []"));
@@ -29,7 +30,7 @@ test("RB1 binds statistics and pressure history and never draws a legacy pool li
 
 test("the new card and panels keep the published type floor and renderable weights", async () => {
   const { minimumFontSize, renderableWeights } = await import("../theme/typography");
-  for (const file of ["./MatchPathCard.tsx", "./RebuildPressureChart.tsx", "./RebuildStatisticsPanel.tsx", "./ComparisonRow.tsx"]) {
+  for (const file of ["./MatchPathCard.tsx", "./MatchActivityTrack.tsx", "./RebuildStatisticsPanel.tsx", "./ComparisonRow.tsx"]) {
     const source = await read(file);
     const sizes = [...source.matchAll(/fontSize[:=]\s*\{?\s*(\d+)/g)].map((match) => Number(match[1]));
     assert.deepEqual(sizes.filter((size) => size < minimumFontSize), [], `${file} renders below ${minimumFontSize}pt`);

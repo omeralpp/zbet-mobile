@@ -1,7 +1,7 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-24
-Mod: `OBSERVATION / ACTIVE_MARKET_CLOCK_PAIR_COMPLETE`
+Mod: `TASK-0188 RELEASE_APPROVED / DELIVERY_PENDING`
 Delivery: `OWNER_ONLY_DEV_PILOT / a5dca4a PAIR COMPLETE (both smokes passed 2026-10-24)`
 Maintenance: TASK-0187 DONE; BFF `310a57a` is pushed and rolled out with owner approval.
 Same-source 48-decision report: 723→86 reads, exact totals; 20 local checks pass.
@@ -9,6 +9,16 @@ Local/public health and v1/v2/Live API pass; owner confirmed Android and web
 on 24 October ("Both Android and web work"). Global reconciliation and the
 accepted client pair stay unchanged.
 [Implementation/rollout](REPORT_AVAILABILITY_IMPLEMENTATION_2026-10-24.md).
+New local batch: owner closed intake and requested both changes. TASK-0188
+removes report match breakdowns and joins rolling activity/pool share/events
+on one journey axis for Android/web. No pressure/model calculation changes.
+Client gate/Android bundle/verified web export and BFF gate/build pass; browser
+desktop/phone checks pass. Actual new APK/device acceptance remains pending.
+49-decision comparison: 194,855→120,731 JSON bytes (-38%), every other field
+equal except request time; SAP verification reads stay unchanged. Owner accepted
+the design and approved paired web/APK signing/delivery/publication, bounded
+Mobile/CAP/tooling commit/push and BFF DEV rollout. Delivery is not yet complete.
+[Scope, checks and limitations](UNIFIED_MATCH_TIMELINE_BATCH_2026-10-24.md).
 Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
 Latest owner-approved released batch: Overview and Live share published-star
 thresholds and open-market/current-price playability without a 15-second UI

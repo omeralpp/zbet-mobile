@@ -19,7 +19,7 @@ import { journeyVertices } from "./journey-story";
  * the provider has no event for it, and say that their minute is the first
  * observation of the new state.
  */
-export type PathMomentKind = "GOAL" | "RED_CARD" | "BTB" | "POOL" | "LATEST";
+export type PathMomentKind = "GOAL" | "RED_CARD" | "BTB" | "POOL" | "LATEST" | "ACTIVITY";
 export type PathSide = "HOME" | "AWAY";
 
 export interface PathMoment {
@@ -64,6 +64,7 @@ export interface PathInput {
   journeyPoints: readonly MatchJourneyPoint[];
   halfTimeScore: string | null;
   latestReading: IntervalReading | null;
+  latestReadingKind?: "ACTIVITY";
   poolPath?: RebuildPoolPath | undefined;
 }
 
@@ -187,14 +188,14 @@ export function buildMatchPath(input: PathInput): PathModel {
       label: `Son kayıt, ${nowMinute}. dakika, skor ${score}`, score, record: null,
       lines: [
         latestLevel !== undefined ? describeLevel(latestLevel) : null,
-        reading ? `Son baskı aralığı ${reading.range} · ${reading.headline} (ev ${reading.homeText} · deplasman ${reading.awayText})`
-          : input.isRebuild ? "Bu maç için kayıtlı baskı aralığı yok." : null,
+        reading ? `${input.latestReadingKind === "ACTIVITY" ? "Son hareketlilik penceresi" : "Son baskı aralığı"} ${reading.range} · ${input.latestReadingKind === "ACTIVITY" ? reading.headline.replace("baskın", "daha hareketli") : reading.headline} (ev ${reading.homeText} · deplasman ${reading.awayText})`
+          : input.isRebuild ? input.latestReadingKind === "ACTIVITY" ? "Doğrulanmış 5 dakikalık hareketlilik penceresi yok." : "Bu maç için kayıtlı baskı aralığı yok." : null,
         lastObserved ? `Son doğrulanmış gözlem ${lastObserved.minute}′.` : null
       ].filter((text): text is string => Boolean(text))
     });
   }
 
-  const order: Record<PathMomentKind, number> = { POOL: 0, GOAL: 1, RED_CARD: 2, BTB: 3, LATEST: 4 };
+  const order: Record<PathMomentKind, number> = { POOL: 0, GOAL: 1, RED_CARD: 2, BTB: 3, LATEST: 4, ACTIVITY: 5 };
   moments.sort((a, b) => a.minute - b.minute || order[a.kind] - order[b.kind]);
 
   const finalScore = `${input.match.homeScore}–${input.match.awayScore}`;

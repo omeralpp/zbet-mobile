@@ -16,7 +16,6 @@ import {
   formatScore,
   formatSupport,
   formatUnits,
-  matchLabel,
   outcomeSegments,
   resultPresentation,
   unitsTone
@@ -470,12 +469,11 @@ export function RebuildReportDetails({ report, period }: { report: RebuildReport
         <Text style={styles.noteText}>Her öneri seçim oranıyla varsayımsal 1 birimdir. Aynı maçtaki öneriler bağımsız maç sayılmaz.</Text>
       </View>
       <Text style={styles.noteText}>{period.uncertainty ? `Maç bazlı keşif aralığı: ${formatRatio(period.uncertainty.lower)} — ${formatRatio(period.uncertainty.upper)}; küçük örneklemde kanıt sınırlıdır.` : "Belirsizlik hesabı için farklı maç kanıtı yetersiz."}</Text>
-      <Action icon={expanded ? "chevron-up" : "chevron-down"} onPress={() => setExpanded(!expanded)} title={expanded ? "Kırılımları gizle" : "Yıldız / pazar / maç kırılımları"} />
+      <Action icon={expanded ? "chevron-up" : "chevron-down"} onPress={() => setExpanded(!expanded)} title={expanded ? "Kırılımları gizle" : "Yıldız / pazar kırılımları"} />
       {expanded ? (
         <View style={styles.stackTight}>
           <BreakdownTable rows={period.byStar.map(s => ({ key: String(s.stars), label: <RatingStars rating={s.stars} size={12} />, settled: s.settled, net: s.net }))} title="YILDIZA GÖRE" />
           <BreakdownTable rows={period.byMarket.map(m => ({ key: m.market, label: formatSelection(m.market), settled: m.settled, net: m.net }))} title="PAZARA GÖRE" />
-          <BreakdownTable rows={period.byMatch.map(m => ({ key: m.matchKey, label: matchLabel(m.matchKey, report.recommendations), settled: m.settled, net: m.net, extra: `${m.recommendations} öneri · risk ${m.totalRisk}` }))} title="MAÇA GÖRE" />
           {report.learning ? (
             <View style={styles.learning}>
               <Text style={styles.eyebrowMuted}>ÖĞRENME İNCELEMESİ</Text>

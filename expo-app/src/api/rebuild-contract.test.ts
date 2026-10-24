@@ -15,6 +15,15 @@ test("the exact BFF DTO is accepted by the shared Android/web contract without p
   assert.equal(parsed.current?.quote, "2.25"); assert.equal(parsed.jinx.source, "BACKEND");
   const period = rebuildReportSchema.parse(report).periods[0]; assert.ok(period); assert.equal(period.roi, null);
 });
+
+test("summary reports may omit match rows without losing the required accounting or uncertainty", () => {
+  const compact = JSON.parse(JSON.stringify(report, (key, value) => key === "byMatch" ? undefined : value));
+  const parsed = rebuildReportSchema.parse(compact);
+  assert.equal(parsed.periods[0]?.byMatch, undefined);
+  assert.deepEqual(parsed.periods.map(p => p.net), rebuildReportSchema.parse(report).periods.map(p => p.net));
+  delete compact.periods[0].uncertainty;
+  assert.equal(rebuildReportSchema.safeParse(compact).success, false);
+});
 test("unsupported contracts, missing first records and duplicate identities fail closed", () => {
   for (const value of [{ ...decision, contractVersion: "unknown" }, { ...decision, history: [] }, { ...decision, history: [...decision.history, ...decision.history] },
     { ...decision, history: [{ ...decision.history[0], stars: 0 }] }]) assert.equal(rebuildMatchSchema.safeParse(value).success, false);

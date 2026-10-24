@@ -51,7 +51,7 @@ import { latestMatchPathSignal } from "@/src/components/match-analysis-events";
 import { MatchPathCard } from "@/src/components/MatchPathCard";
 import { buildMatchPath } from "@/src/components/match-path-model";
 import { PressureChart } from "@/src/components/PressureChart";
-import { RebuildPressureChart } from "@/src/components/RebuildPressureChart";
+import { matchActivity } from "@/src/components/match-path-activity";
 import { RebuildStatisticsPanel } from "@/src/components/RebuildStatisticsPanel";
 import { HistoricalScoreDistribution } from "@/src/components/HistoricalScoreDistribution";
 import { TeamFormCard } from "@/src/components/TeamFormCard";
@@ -92,7 +92,7 @@ import {
 } from "@/src/utils/format";
 import { deriveLiveRateTrend } from "@/src/utils/live-card-indicators";
 import { matchPressureSide } from "@/src/utils/match-pressure";
-import { latestIntervalReading, observedHalfTimeScore, pressureIntervals } from "@/src/utils/rebuild-pressure";
+import { latestIntervalReading, observedHalfTimeScore } from "@/src/utils/rebuild-pressure";
 
 /**
  * The evidence chips under "Maçın kanıtları", in the v40 board's words. Maçın
@@ -398,7 +398,7 @@ export function MatchDetailView({
   // Minute 46 can still be first-half added time. Prefer recorded phase;
   // without it, the ambiguous interval around half-time gets no inferred label.
   const phase = matchPeriodLabel(match,observedPhase);
-  const intervals = pressureIntervals(history);
+  const intervals = matchActivity(history, match);
   const liveTimeline = liveContext.data?.matchKey && liveContext.data.matchKey !== key ? undefined : liveContext.data;
   const legacyPath = !isRebuild && matchPathEnabled;
   const halfTime = periodScoreQuery.data?.halfTimeScore;
@@ -411,14 +411,12 @@ export function MatchDetailView({
     records: isRebuild ? rebuildMatch.data?.history ?? [] : [],
     journeyPoints: legacyPath && journey.data?.matchKey === key ? journey.data.points : [],
     halfTimeScore: halfTime ? `${halfTime.homeScore}–${halfTime.awayScore}` : observedHalfTimeScore(history?.observations ?? []),
-    latestReading: latestIntervalReading(intervals, match)
+    latestReading: latestIntervalReading(intervals, match),
+    latestReadingKind: "ACTIVITY"
   });
   const analysisSignal = legacyPath ? latestMatchPathSignal(matchPath.data?.matchKey === key ? matchPath.data : undefined) : undefined;
   const analysisText = analysisSignal?.stateNormality != null
     ? `Son ölçüm · normallik %${Math.round(analysisSignal.stateNormality * 100)} · ${analysisSignal.cohortSize} benzer maç` : null;
-  const pressureGoals = pathModel.moments.flatMap((moment) =>
-    moment.kind === "GOAL" && moment.side ? [{ key: moment.key, minute: moment.minute, side: moment.side,
-      kind: moment.key.startsWith("observed:") ? "SCORE_UPDATE" as const : "GOAL" as const }] : []);
 
   // Only modules that currently have data are rendered; the persisted order
   // still holds a slot for the rest so they return where the user left them.
@@ -430,12 +428,11 @@ export function MatchDetailView({
 
   const moduleNodes: Partial<Record<LiveDetailModuleId, ReactNode>> = {
     // NXT-OBS-175: the two sides' pressure over the match, as its own chart.
-    pressure: (
+    pressure: !isRebuild ? (
       <LiveDetailPanel eyebrow="BASKI" id="pressure" title="Baskı grafiği">
-        {isRebuild ? <RebuildPressureChart now={now} goals={pressureGoals} history={history} isError={pressureHistory.isError}
-          isLoading={pressureHistory.isLoading} match={match} statistics={statistics} /> : <PressureChart journey={journey.data} match={match} />}
+        <PressureChart journey={journey.data} match={match} />
       </LiveDetailPanel>
-    ),
+    ) : null,
     odds: (
       <LiveDetailPanel eyebrow="PİYASA" id="odds" title="Oran sonuçları">
         <RatioResultsChart
@@ -761,6 +758,7 @@ export function MatchDetailView({
 
       <View collapsable={false} ref={(node) => { moduleRefs.current.set("matchPath", node); }}>
         <MatchPathCard
+          {...(isRebuild ? { activity: { intervals, failed: pressureHistory.isError, loading: pressureHistory.isLoading } } : {})}
           analysisText={analysisText}
           collapsed={collapsed.includes("matchPath")}
           footer={<LiveContextFreshness

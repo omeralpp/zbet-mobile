@@ -44,7 +44,7 @@ export const rebuildMatchSchema = rebuildSummarySchema.safeExtend({ history: z.a
 const matchRisk = z.strictObject({ matchKey: z.string(), recommendations: count, totalRisk: count, settled: count, net: decimal });
 const aggregate = z.strictObject({ recommendations: count, matches: count, settled: count, wins: count, losses: count, voids: count, pending: count, unresolved: count,
   net: decimal, risk: count, totalRisk: count, roi: z.number().finite().nullable(), hitRate: z.number().min(0).max(1).nullable(), evidenceNote: z.literal("PILOT_MATCH_CLUSTERED"),
-  uncertainty: z.strictObject({ method: z.literal("MATCH_CLUSTER_BOOTSTRAP"), lower: z.number().finite(), upper: z.number().finite(), samples: count }).nullable(), byMatch: z.array(matchRisk) });
+  uncertainty: z.strictObject({ method: z.literal("MATCH_CLUSTER_BOOTSTRAP"), lower: z.number().finite(), upper: z.number().finite(), samples: count }).nullable(), byMatch: z.array(matchRisk).optional() });
 const threshold = z.strictObject({ settled: count, matches: count, days: count, requiredSettled: count, requiredMatches: count, requiredDays: z.literal(2), reviewAvailable: z.boolean() });
 const reportPeriod = aggregate.extend({ days: z.union([z.literal(1), z.literal(7), z.literal(30)]), from: z.string(), through: z.string(),
   byStar: z.array(aggregate.extend({ stars: count })), byMarket: z.array(aggregate.extend({ market: z.string() })) });

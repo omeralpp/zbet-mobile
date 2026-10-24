@@ -410,7 +410,7 @@ export function RebuildDecisionLog() {
       >
         <View style={styles.flexCopy}>
           <Text style={styles.detailsTitle}>Rapor ayrıntısı</Text>
-          <Text style={styles.detailsCaption}>ROI, isabet, risk ve yıldız / pazar / maç kırılımları</Text>
+          <Text style={styles.detailsCaption}>ROI, isabet, risk ve yıldız / pazar kırılımları</Text>
         </View>
         <MaterialCommunityIcons color={semantic.intelligence} name={detailsOpen ? "chevron-up" : "chevron-down"} size={iconSizes.control} />
       </Pressable>
