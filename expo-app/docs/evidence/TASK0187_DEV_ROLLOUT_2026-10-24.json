@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "task": "TASK-0187",
+  "date": "2026-10-24",
+  "status": "BFF_ROLLED_OUT_OWNER_SMOKES_PENDING",
+  "scope": "OWNER_ONLY_DEV_PILOT",
+  "approval": "Owner Approve after the reviewed local patch and explicit commit/push plus DEV BFF rollout gate",
+  "bff": {
+    "previousRevision": "12c3b9203e00220e5faf972b36b7dfbb2ef66ef1",
+    "deployedRevision": "310a57a52a7997932edd90bfe3874fb0ace4591d",
+    "branch": "main",
+    "pushed": true,
+    "workingTreeClean": true,
+    "previousProcessId": 19116,
+    "authMode": "pilot",
+    "healthConfigurationParity": true,
+    "newSemanticReportLoggingObserved": true
+  },
+  "startup": {
+    "initialAttempt": "FAILED_MISSING_PROCESS_ONLY_AUTH_MODE",
+    "recovery": "Registered launcher rerun with -AuthMode pilot matching previous health; no auth/config secret change",
+    "finalLocalReady": true,
+    "finalPublicReady": true
+  },
+  "checks": [
+    {
+      "origin": "http://127.0.0.1:4004",
+      "route": "/auth/callback",
+      "status": 200,
+      "ms": 20
+    },
+    {
+      "origin": "http://127.0.0.1:4004",
+      "route": "/v1/btb/rebuild/v2/report",
+      "status": 200,
+      "ms": 3756,
+      "availability": "AVAILABLE",
+      "reason": "",
+      "decisions": 48
+    },
+    {
+      "origin": "http://127.0.0.1:4004",
+      "route": "/v1/btb/rebuild/v1/report",
+      "status": 200,
+      "ms": 2904,
+      "availability": "AVAILABLE",
+      "reason": "",
+      "decisions": 42
+    },
+    {
+      "origin": "http://127.0.0.1:4004",
+      "route": "/v1/btb/matches",
+      "status": 200,
+      "ms": 1157,
+      "matches": 39
+    },
+    {
+      "origin": "https://api.surklase.com",
+      "route": "/auth/callback",
+      "status": 200,
+      "ms": 280
+    },
+    {
+      "origin": "https://api.surklase.com",
+      "route": "/v1/btb/rebuild/v2/report",
+      "status": 200,
+      "ms": 3888,
+      "availability": "AVAILABLE",
+      "reason": "",
+      "decisions": 48
+    },
+    {
+      "origin": "https://api.surklase.com",
+      "route": "/v1/btb/rebuild/v1/report",
+      "status": 200,
+      "ms": 3109,
+      "availability": "AVAILABLE",
+      "reason": "",
+      "decisions": 42
+    },
+    {
+      "origin": "https://api.surklase.com",
+      "route": "/v1/btb/matches",
+      "status": 200,
+      "ms": 1193,
+      "matches": 39
+    }
+  ],
+  "webAccessProtected": true,
+  "anonymousWebStatus": 302,
+  "client": {
+    "sourceChanged": false,
+    "acceptedPairSource": "a5dca4a936ee3b36b3738f2e8265bdec38447e21",
+    "newApkBuilt": false,
+    "newWebPublished": false,
+    "androidOwnerSmoke": "PENDING",
+    "webOwnerSmoke": "PENDING"
+  },
+  "sapWrites": false,
+  "secretsRecorded": false,
+  "rollback": {
+    "revision": "12c3b9203e00220e5faf972b36b7dfbb2ef66ef1",
+    "requiresControlledRecovery": true
+  },
+  "localValidation": "TASK0187_LOCAL_VALIDATION_2026-10-24.json"
+}

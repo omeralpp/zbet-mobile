@@ -1,0 +1,374 @@
+{
+  "schemaVersion": 1,
+  "task": "TASK-0187",
+  "date": "2026-10-24",
+  "status": "LOCAL_VALIDATED_DELIVERY_PENDING",
+  "scope": "OWNER_ONLY_DEV_PILOT",
+  "evidenceMode": "DIRECT_ADT_ODATA_FALLBACK_NOT_MCP",
+  "comparison": {
+    "checkedAt": "2026-10-24T17:49:52.806Z",
+    "mode": "DIRECT_ODATA_FALLBACK_AND_MEMORY_ONLY_FROZEN_REPLAY",
+    "baselineLive": {
+      "availability": "AVAILABLE",
+      "reason": "",
+      "decisions": 48,
+      "requests": 723,
+      "wireBytes": 13950121,
+      "ms": 3404
+    },
+    "replay": [
+      {
+        "name": "legacy",
+        "requests": 723,
+        "wireBytes": 13885280,
+        "ms": 836,
+        "decisions": 48
+      },
+      {
+        "name": "batched",
+        "requests": 86,
+        "wireBytes": 13767021,
+        "ms": 1762,
+        "decisions": 48
+      }
+    ],
+    "exactReportParity": true,
+    "requestReduction": 0.8810511756569848,
+    "frozenEntityCounts": {
+      "RebuildContexts": 42,
+      "RebuildOpportunities": 48,
+      "RebuildResults": 95,
+      "RebuildCaptures": 143,
+      "RebuildParts": 12484,
+      "RebuildAttempts": 0
+    }
+  },
+  "normalRefreshWindow": {
+    "intervalMs": 30000,
+    "summary": {
+      "count": 20,
+      "unavailable": 0,
+      "httpFailures": 0,
+      "p95": 3675,
+      "max": 4278
+    },
+    "samples": [
+      {
+        "index": 1,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 2780,
+        "sapRequests": 86,
+        "decisions": 48
+      },
+      {
+        "index": 2,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 2976,
+        "sapRequests": 86,
+        "decisions": 48
+      },
+      {
+        "index": 3,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 4278,
+        "sapRequests": 87,
+        "decisions": 48
+      },
+      {
+        "index": 4,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 2921,
+        "sapRequests": 86,
+        "decisions": 48
+      },
+      {
+        "index": 5,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 2966,
+        "sapRequests": 86,
+        "decisions": 48
+      },
+      {
+        "index": 6,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 2999,
+        "sapRequests": 86,
+        "decisions": 48
+      },
+      {
+        "index": 7,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 3017,
+        "sapRequests": 86,
+        "decisions": 48
+      },
+      {
+        "index": 8,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 3003,
+        "sapRequests": 86,
+        "decisions": 48
+      },
+      {
+        "index": 9,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 2990,
+        "sapRequests": 86,
+        "decisions": 48
+      },
+      {
+        "index": 10,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 2967,
+        "sapRequests": 86,
+        "decisions": 48
+      },
+      {
+        "index": 11,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 3675,
+        "sapRequests": 86,
+        "decisions": 48
+      },
+      {
+        "index": 12,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 3454,
+        "sapRequests": 86,
+        "decisions": 48
+      },
+      {
+        "index": 13,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 2956,
+        "sapRequests": 86,
+        "decisions": 48
+      },
+      {
+        "index": 14,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 2880,
+        "sapRequests": 86,
+        "decisions": 48
+      },
+      {
+        "index": 15,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 2938,
+        "sapRequests": 86,
+        "decisions": 48
+      },
+      {
+        "index": 16,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 3638,
+        "sapRequests": 86,
+        "decisions": 48
+      },
+      {
+        "index": 17,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 2891,
+        "sapRequests": 86,
+        "decisions": 48
+      },
+      {
+        "index": 18,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 2951,
+        "sapRequests": 86,
+        "decisions": 48
+      },
+      {
+        "index": 19,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 3083,
+        "sapRequests": 86,
+        "decisions": 48
+      },
+      {
+        "index": 20,
+        "status": 200,
+        "availability": "AVAILABLE",
+        "reason": "",
+        "ms": 3058,
+        "sapRequests": 86,
+        "decisions": 48
+      }
+    ]
+  },
+  "browser": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "overview": {
+        "unavailable": false,
+        "loaded": true
+      },
+      "journal": {
+        "unavailable": false,
+        "loaded": true,
+        "hasDecisions": true
+      },
+      "recovery": true,
+      "pageErrors": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "overview": {
+        "unavailable": false,
+        "loaded": true
+      },
+      "journal": {
+        "unavailable": false,
+        "loaded": true,
+        "hasDecisions": true
+      },
+      "recovery": true,
+      "pageErrors": []
+    }
+  ],
+  "liveAndPressure": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "liveLoaded": true,
+      "liveSelectionWarning": false,
+      "bothPressureModes": true,
+      "extraHistoryReadsOnToggle": 0
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "liveLoaded": true,
+      "liveSelectionWarning": false,
+      "bothPressureModes": true,
+      "extraHistoryReadsOnToggle": 0
+    }
+  ],
+  "sharedClientSchemas": [
+    {
+      "route": "/v1/btb/rebuild/v2/report",
+      "status": 200,
+      "schemaAccepted": true,
+      "availability": "AVAILABLE"
+    },
+    {
+      "route": "/v1/btb/rebuild/v1/report",
+      "status": 200,
+      "schemaAccepted": true,
+      "availability": "AVAILABLE"
+    },
+    {
+      "route": "/v1/btb/rebuild/v1/matches/2026-10-24%3A3338014%3A19%3A00%3A00",
+      "status": 200,
+      "schemaAccepted": true,
+      "availability": "WAITING_DATA"
+    },
+    {
+      "route": "/v1/btb/rebuild/v1/matches/2026-10-24%3A3338014%3A19%3A00%3A00/pressure-history",
+      "status": 200,
+      "schemaAccepted": true,
+      "availability": "AVAILABLE"
+    },
+    {
+      "route": "/v1/btb/rebuild/v1/matches/2026-10-24%3A3338014%3A19%3A00%3A00/statistics",
+      "status": 200,
+      "schemaAccepted": true,
+      "availability": "UNAVAILABLE"
+    },
+    {
+      "route": "/v1/btb/rebuild/v1/matches/2026-10-24%3A3338014%3A19%3A00%3A00/pool-path",
+      "status": 200,
+      "schemaAccepted": true,
+      "availability": "AVAILABLE"
+    },
+    {
+      "route": "/v1/btb/matches",
+      "status": 200,
+      "schemaAccepted": true,
+      "availability": null
+    },
+    {
+      "route": "/v1/dashboard",
+      "status": 200,
+      "schemaAccepted": true,
+      "availability": null
+    }
+  ],
+  "checks": {
+    "fullBffTests": "PASS",
+    "productionBuild": "PASS",
+    "newRegressions": 15,
+    "existingEdgeWebVerification": "PASS",
+    "secretScan": "PASS",
+    "diffCheck": "PASS"
+  },
+  "sourceHashes": {
+    "srv/mobile-bff/rebuild-capture-reader.js": "9D7A793754ED4D4475DB19F38379B50BA84F0AA1C549E3716C2C4ADF2D0CDFF1",
+    "srv/mobile-bff/rebuild-provider.js": "EA9CDF6E296A6450F14C47B96970F6AA4D027C372338E95AAAC40DC2A1BBAE04",
+    "srv/mobile-bff/rebuild-report-snapshot.js": "B1B7F90B06618863BD7A08027085C9A42CA9A1471580E0BE191CC45D7FE577D6",
+    "srv/mobile-bff/rebuild-read-operation.js": "874D99FFB1FA2EDE13720126D76D30F72887262EA814D75E6E16285EE49B2D8D",
+    "srv/mobile-bff/router.js": "DA733C438E185A052DAC301769F84DBB165B26305DAB8AE429EA55948F5BF81C",
+    "test/fixtures/rebuild-fixture.js": "F6BB7983F0540DD69C961FEDAC2E388A6A16E3443563877369C7ECA0B2077796",
+    "test/fixtures/odata-filter.js": "579737E7F5CF886AA19520AD51CF9D553DDD53DEB960A7D79888A49945F5E87A",
+    "test/rebuild-report-availability.test.js": "49C2C19AC2D860815325DEAF3249667037125B06C51845775667E439BEDB2810"
+  },
+  "delivery": {
+    "clientSourceChanged": false,
+    "clientPair": "a5dca4a936ee3b36b3738f2e8265bdec38447e21",
+    "pilotRuntimeChanged": false,
+    "sapWrites": false,
+    "committed": false,
+    "pushed": false,
+    "actualAndroidSmoke": "PENDING_APPROVED_BFF_ROLLOUT",
+    "publishedWebSmoke": "PENDING_APPROVED_BFF_ROLLOUT"
+  }
+}

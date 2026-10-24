@@ -66,3 +66,4 @@ NXT-OBS-169..179 (TASK-0162 wheel lock, Mobile pressure display, palette, explan
 | NXT-OBS-214 | 2026-10-23 | Jury: 87/100 | Owner accepted; follow-up 215. TASK-0180. | HIGH | OWNER_ACCEPTED |
 | NXT-OBS-215 | 2026-10-23 | Quick polish | Toto/resize/report/history/chart fixes: JURY_REAUDIT_2026-10-23.md. 694+32 checks pass; TASK-0180. | HIGH | DELIVERED / OWNER_ACCEPTED |
 | NXT-OBS-216 | 2026-10-24 | Activity | Later data seen; unconfirmed. | LOW | UNCONFIRMED |
+| NXT-OBS-220 | 2026-10-24 | Shared report availability | TASK-0187: BFF `310a57a` pushed/DEV rollout approved and done; APIs pass. Same 48-decision source: 723→86 reads, exact totals; global guard retained. [Receipts](REPORT_AVAILABILITY_IMPLEMENTATION_2026-10-24.md). | HIGH | BFF_DEPLOYED / OWNER_SMOKES_PENDING |
