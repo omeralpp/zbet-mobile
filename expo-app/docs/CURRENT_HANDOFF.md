@@ -35,8 +35,10 @@ Previously accepted pair retained for recovery: client
 web tree 73932E418099…, release 20261025T073559Z-3f3b5fd.
 Both prior owner smokes and all closed milestones remain historical.
 [Prior paired delivery](MATCH_JOURNEY_UX_DELIVERY_2026-10-25.md).
-TASK-0185 remains the separate native added-time observation; its owner/evidence
-schedule is unchanged. TASK-0190/0153/0150 probability work stays owner-deferred.
+Owner closeout 2026-10-25: TASK-0185's delivered display fix is CLOSED with the
+unobserved native bare-plus case explicitly accepted; no recurring checks.
+Reopen on an owner report or concrete recurrence. TASK-0190/0153/0150 probability
+requests are retired without implementation/success credit; plans remain.
 No source/model/SAP change or new publication is authorized by this closure.
 Workspace: C:/dev/btb-cdoex; owner: BTB Mobile Next - Aktif.
 
