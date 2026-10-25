@@ -1,7 +1,7 @@
 # Maçın yolu UX — 25 October 2026
 
-Owner: BTB Mobile Next. Status: Android installed/accepted and matching web published;
-paired batch remains incomplete pending the owner's web smoke.
+Owner: BTB Mobile Next. Status: COMPLETE — Android installed/accepted, matching
+web published/accepted, and canonical paired-release completion passed.
 Baseline: delivered client pair `3f53834`. The owner's request covers only this
 section's UX on Android and desktop web. The subsequent owner approval below
 authorizes its bounded Git and paired pilot delivery steps.
@@ -59,5 +59,7 @@ Access-policy change or production deployment.
 Both final artifacts were built/verified from clean pushed `3f3b5fd`. Private
 delivery/readback passed; the owner confirmed APK installation/basic smoke before
 matching web publication. Served-byte, protection and health checks passed.
-Next step: obtain the owner's refreshed web smoke and complete the exact batch.
-The previous accepted pair is retained. [Delivery](MATCH_JOURNEY_UX_DELIVERY_2026-10-25.md).
+The owner then supplied a real-match web screenshot and confirmed that it looked
+correct and could be closed. Both basic client smokes and `client-release.mjs
+complete` passed on 25 October. The previous accepted pair is retained; no further
+release is authorized by this closure. [Delivery](MATCH_JOURNEY_UX_DELIVERY_2026-10-25.md).

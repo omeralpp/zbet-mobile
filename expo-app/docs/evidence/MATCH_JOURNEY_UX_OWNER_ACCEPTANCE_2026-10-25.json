@@ -5,7 +5,8 @@
   "apkSha256": "4C452CEDF278CC48334D1843ABC2C4FAF8C5B96C71FA0D69E25FC6EC85A06A0B",
   "webTreeSha256": "73932E41809960240EA6776F6AD4A528C9F361E35683CDD487D6B962CE196AB8",
   "androidSmokePassed": true,
-  "webSmokePassed": false,
-  "releaseComplete": false,
-  "evidence": "Owner confirmed the exact privately delivered APK installation/basic smoke on 2026-10-25: Onaylıyorum web I yayınla APK sorunsuz. The published web owner's smoke has not yet been observed."
+  "webSmokePassed": true,
+  "status": "BOTH_CLIENT_SMOKES_PASSED",
+  "evidence": "Owner confirmed the exact privately delivered APK installation/basic smoke on 2026-10-25: Onaylıyorum web I yayınla APK sorunsuz. After publication and the web-check request, the owner supplied the published Talleres-Df. Justicia Maçın yolu screenshot and confirmed: sorunsuz görünüyor kapatabilirsin. This is basic Android/web acceptance; broader native TalkBack/performance is not asserted.",
+  "webScreenshotEvidence": "Workspace .codex-artifacts/match-journey-ux-20261025-owner-web.png; original attachment codex-clipboard-295ed442-04a2-4ff2-ac2b-82053547277b.png"
 }

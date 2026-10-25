@@ -1,8 +1,8 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-25
-Mod: `UX WEB PUBLISHED / OWNER WEB SMOKE PENDING`
-Delivery: `OWNER_ONLY_DEV_PILOT / 3f3b5fd PAIR INCOMPLETE (Android confirmed; web smoke pending)`
+Mod: `OBSERVATION / MATCH JOURNEY UX PAIR COMPLETE`
+Delivery: `OWNER_ONLY_DEV_PILOT / 3f3b5fd PAIR COMPLETE (both owner smokes passed 2026-10-25)`
 Maçın yolu redesign is delivered from clean pushed source `3f3b5fd6af931e6f285ea82f50a55bce72e1915b`.
 Android APK `4C452CEDF278…` passed signature/ARM64 and owner-only Drive download
 hash checks. Owner confirmed installation/basic smoke before web publication.
@@ -10,9 +10,11 @@ Matching web tree `73932E418099…`, release `20261025T073559Z-3f3b5fd`, is publ
 served JS bytes, shell/deep-link/CSP, public Access302 and health parity pass.
 Core/Doctor/Android bundle/web export and synthetic browser checks passed before
 release. The phone chart remains below selected details. Backend/model/data
-behavior is unchanged. Await the owner's refreshed published-web smoke, then
-complete the batch with exact source/hashes. Broader TalkBack/performance remains
-unverified. Previous accepted 3f53834 pair is retained. [Delivery and receipts](MATCH_JOURNEY_UX_DELIVERY_2026-10-25.md).
+behavior is unchanged. Owner confirmed the published web with a real-match
+screenshot and "sorunsuz görünüyor kapatabilirsin". `client-release.mjs complete`
+passed with exact source/hashes and both owner smokes. Broader TalkBack/performance
+remains unverified. Previous accepted 3f53834 pair is retained; this closure
+authorizes no further release. [Delivery and receipts](MATCH_JOURNEY_UX_DELIVERY_2026-10-25.md).
 Maintenance: TASK-0187 DONE; BFF `310a57a` is pushed and rolled out with owner approval.
 Same-source 48-decision report: 723→86 reads, exact totals; 20 local checks pass.
 Local/public health and v1/v2/Live API pass; owner confirmed Android and web

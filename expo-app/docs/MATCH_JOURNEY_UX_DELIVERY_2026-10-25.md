@@ -1,8 +1,8 @@
 # Maçın yolu pilot delivery — 25 October 2026
 
-Status: **INCOMPLETE — awaiting the owner's published-web smoke**.
-Android installation and basic acceptance are confirmed; web publication and
-technical verification passed. This is an owner-only DEV/pilot release.
+Status: **COMPLETE — both owner client smokes and canonical completion passed**.
+Android installation/basic acceptance, matching web publication and technical
+verification passed. This is an owner-only DEV/pilot release.
 
 - Shared clean pushed client source: `3f3b5fd6af931e6f285ea82f50a55bce72e1915b`.
 - APK: `btb-mobile-next-3f3b5fd-arm64-pilot.apk`, 50,491,257 bytes.
@@ -33,13 +33,17 @@ No BFF code rollout, access-policy change, SAP/model write or production release
 
 Durable receipts in `docs/evidence/` have prefix `MATCH_JOURNEY_UX_` and date
 `2026-10-25`: `PAIR`, `ANDROID_DELIVERY`, `WEB_PUBLICATION`, `SERVED_WEB`, and
-`OWNER_ACCEPTANCE`. The pair's original PREPARED and publisher's pending-smoke
-statuses are retained as historical verification records. The current owner
-acceptance has Android=true, web=false; no completed-batch receipt is claimed.
+`OWNER_ACCEPTANCE`, plus `COMPLETE`. The original preparation, Android-delivery
+checkpoint and publisher's pending-smoke statuses are retained as historical
+verification records. The current owner acceptance has Android=true, web=true;
+`MATCH_JOURNEY_UX_COMPLETE_2026-10-25.json` is the authoritative COMPLETE receipt.
 
-Next: refresh the published web app and obtain the owner's actual usability
-confirmation. Record that result, then run `scripts/client-release.mjs complete`
-with the receipts, published root and explicit `--source-sha` above. Later
-documentation-only commits do not change this delivered artifact source.
+After publication, the owner supplied the actual Talleres–Df. Justicia web
+screenshot and confirmed "sorunsuz görünüyor kapatabilirsin". The screenshot is
+preserved locally as `.codex-artifacts/match-journey-ux-20261025-owner-web.png`.
+The exact-source `scripts/client-release.mjs complete` command returned COMPLETE
+with both client smokes, delivery/publication receipts and artifact hashes matched.
+Later documentation-only commits do not change this delivered artifact source.
 Previous accepted `3f53834` APK/web release `20261024T193040Z-3f53834` remains
-retained for coordinated recovery. [Implementation](MATCH_JOURNEY_UX_2026-10-25.md).
+retained for coordinated recovery. No further delivery is authorized by closure.
+[Implementation](MATCH_JOURNEY_UX_2026-10-25.md).
