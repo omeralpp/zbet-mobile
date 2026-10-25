@@ -1,8 +1,18 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-10-24
-Mod: `OBSERVATION / TASK-0188 PAIR COMPLETE`
+Son güncelleme: 2026-10-25
+Mod: `UX PAIRED RELEASE AUTHORIZED / TASK-0188 PAIR COMPLETE`
 Delivery: `OWNER_ONLY_DEV_PILOT / 3f53834 PAIR COMPLETE (both smokes passed 2026-10-24)`
+Pending local candidate: the owner's 25 October "Maçın yolu only" redesign is
+implemented in the shared Android/web component. Event navigation, selected
+details and chart hierarchy are refined; backend/model/data behavior is unchanged.
+Client quality gate, Doctor, Android JS bundle, verified web export and synthetic
+browser checks pass. Owner approved the design on 25 October after the phone
+chart placement clarification, then explicitly approved bounded Mobile commit/push,
+APK build/signing/private delivery and matching web publication. Release preparation
+is in progress; the 3f53834 pair remains the accepted baseline. New APK installation
+must precede web publication; both client smokes are still required. Native device/
+TalkBack smoke remains unverified. [Scope and evidence](MATCH_JOURNEY_UX_2026-10-25.md).
 Maintenance: TASK-0187 DONE; BFF `310a57a` is pushed and rolled out with owner approval.
 Same-source 48-decision report: 723→86 reads, exact totals; 20 local checks pass.
 Local/public health and v1/v2/Live API pass; owner confirmed Android and web

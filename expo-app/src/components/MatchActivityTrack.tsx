@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import { G, Line, Rect } from "react-native-svg";
 import type { PressureInterval } from "@/src/utils/rebuild-pressure";
-import { colors, radii, spacing, textFont, typeScale } from "@/src/theme/theme";
+import { colors, numericFont, radii, spacing, textFont, typeScale } from "@/src/theme/theme";
 import { activityHeadline } from "./match-path-activity";
 
 /** Uses the journey's x function, cursor and axis; not a second chart. */
@@ -35,20 +35,22 @@ export function MatchActivitySummary({ intervals, match, failed, loading }: {
     <View style={styles.copy}>
       <Text style={styles.eyebrow}>MAÇIN RİTMİ · SON 5 DAKİKA</Text>
       <Text style={styles.headline}>{last ? activityHeadline(last, match) : loading ? "Hareketlilik yükleniyor…" : "Henüz doğrulanmış hareketlilik penceresi yok."}</Text>
-      <Text style={styles.note}>{failed ? "Yenileme başarısız · kayıtlı geçmiş. " : ""}Tahmini hareketlilik · boşluklar eksik ölçüm · seçim hesabına katılmaz.</Text>
+      <Text style={styles.note}>{failed ? "Yenileme başarısız · kayıtlı geçmiş. " : ""}Tahmini hareketlilik · seçim hesabına katılmaz.</Text>
     </View>
     <View style={styles.teams}>
-      <Text style={[styles.team, { color: colors.blue }]}>▲ {match.homeTeam}{last ? ` · ${last.homeText}` : ""}</Text>
-      <Text style={[styles.team, { color: colors.orange }]}>▼ {match.awayTeam}{last ? ` · ${last.awayText}` : ""}</Text>
+      <View style={[styles.team, { borderLeftColor: colors.blue }]}><Text style={styles.teamLabel}>{match.homeTeam}</Text><Text style={[styles.teamValue, { color: colors.blue }]}>{last?.homeText ?? "—"}</Text></View>
+      <View style={[styles.team, { borderLeftColor: colors.orange }]}><Text style={styles.teamLabel}>{match.awayTeam}</Text><Text style={[styles.teamValue, { color: colors.orange }]}>{last?.awayText ?? "—"}</Text></View>
     </View>
   </View>;
 }
 const styles = StyleSheet.create({
-  summary: { borderRadius: radii.md, backgroundColor: colors.background, padding: spacing.md, gap: spacing.sm, flexDirection: "row", flexWrap: "wrap", alignItems: "center" },
+  summary: { flex: 1, borderRadius: radii.md, backgroundColor: colors.background, padding: spacing.md, gap: spacing.md, flexDirection: "row", flexWrap: "wrap", alignItems: "center" },
   copy: { flex: 1, minWidth: 180, gap: 4 },
   eyebrow: { ...typeScale.eyebrow, color: colors.textMuted },
   headline: { ...textFont("700"), fontSize: 16, lineHeight: 21, color: colors.text },
   note: { ...typeScale.label, color: colors.textMuted },
-  teams: { gap: 6, flexShrink: 1 },
-  team: { ...typeScale.label, fontWeight: "700" }
+  teams: { flexDirection: "row", gap: spacing.lg, flexShrink: 1, flexWrap: "wrap" },
+  team: { paddingLeft: spacing.sm, borderLeftWidth: 2, gap: 6, maxWidth: 160, flexDirection: "row", alignItems: "center", flexWrap: "wrap" },
+  teamLabel: { ...typeScale.label, color: colors.textMuted },
+  teamValue: { ...numericFont("700"), fontSize: 24, lineHeight: 28 }
 });

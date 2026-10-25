@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -13,6 +13,7 @@ import { formatQuote, formatUnits, resultPresentation, unitsTone } from "@/src/u
 import { ResultPill, toneColor } from "./DecisionTicket";
 import { JourneyEventGlyph, journeySvgAccessibility } from "./JourneyEventIcon";
 import { journeyDragIntent } from "./journey-interaction";
+import { journeyNavigation } from "./match-path-navigation";
 import type { PathModel, PathMoment } from "./match-path-model";
 import type { PressureInterval } from "@/src/utils/rebuild-pressure";
 import { activityAt, activityHeadline, activityMoment } from "./match-path-activity";
@@ -26,7 +27,8 @@ import { TeamLogo } from "./TeamLogo";
  * ribbon, the home lane above and the away lane below, the pool-alignment
  * line or its one honest notice, and BTB's decisions as tickets. Every mark
  * is a 44 pt target; the selected moment opens beside the chart on desktop and
- * under it on a phone, and the rail below lists every moment in order.
+ * above it on a phone, directly after the event navigator. The rail lists
+ * every moment in order, including individually selectable grouped marks.
  */
 const RIB = 16, HOME = 60, PT = 88, LANE_GAP = 30, BTB_GAP = 44, AXIS_GAP = 30;
 const bands = [{ label: "Olağan", from: 0.7, to: 1 }, { label: "Sıra dışı", from: 0.3, to: 0.7 }, { label: "Sürpriz", from: 0, to: 0.3 }];
@@ -36,11 +38,11 @@ type Geometry = { width: number; height: number; gutter: number; plotWidth: numb
 function geometry(width: number, wide: boolean, model: PathModel, integrated: boolean): Geometry {
   const gutter = wide ? 118 : 40, right = wide ? 20 : 12;
   const plotWidth = Math.max(120, width - gutter - right);
-  const plotHeight = model.lineNotice ? (wide ? 84 : 96) : wide ? 120 : 96;
-  const poolTop = integrated ? 252 : PT;
+  const plotHeight = model.lineNotice ? 84 : wide ? 100 : 80;
+  const poolTop = integrated ? 226 : PT;
   const away = poolTop + plotHeight + LANE_GAP, btb = away + BTB_GAP, axis = btb + AXIS_GAP;
   return {
-    width, height: axis + 24, gutter, plotWidth, plotHeight, poolTop, pressureMid: 158, away, btb, axis,
+    width, height: axis + 24, gutter, plotWidth, plotHeight, poolTop, pressureMid: 148, away, btb, axis,
     x: (minute) => gutter + Math.min(Math.max(minute, 0), model.maxMinute) / model.maxMinute * plotWidth,
     y: (level) => poolTop + (1 - level) * plotHeight
   };
@@ -60,7 +62,11 @@ function groupMarks(moments: readonly PathMoment[], g: Geometry, model: PathMode
   for (const moment of moments) {
     const cx = g.x(moment.minute), cy = laneY(moment, g, model);
     const previous = [...groups].reverse().find((group) => group.cy === cy);
-    if (previous && cx - previous.cx < gap) previous.members.push(moment);
+    const requiredGap = moment.kind === "BTB" ? Math.max(gap, 88) : gap;
+    if (previous && cx - previous.cx < requiredGap) {
+      previous.members.push(moment);
+      previous.cx = (g.x(previous.lead.minute) + cx) / 2;
+    }
     else groups.push({ lead: moment, members: [moment], cx, cy });
   }
   return groups;
@@ -96,6 +102,7 @@ function statusPill(match: MatchDetail) {
 const kindLabel: Record<PathMoment["kind"], string> = { GOAL: "Gol", RED_CARD: "Kırmızı kart", BTB: "BTB kararı", POOL: "Devre", LATEST: "Son kayıt", ACTIVITY: "Hareketlilik" };
 
 function MomentGlyph({ moment, size }: { moment: PathMoment; size: number }) {
+  if (moment.kind === "ACTIVITY") return <MaterialCommunityIcons name="pulse" color={colors.blue} size={size} />;
   if (moment.kind === "BTB") return <Svg width={size} height={size} viewBox="0 0 24 24" {...journeySvgAccessibility}><JourneyEventGlyph kind="SUPER" color={colors.gold} /></Svg>;
   if (moment.kind === "RED_CARD") return <View style={[styles.cardGlyph, { width: size * 0.5, height: size * 0.7 }]} />;
   if (moment.kind === "POOL") return <View style={[styles.poolGlyph, { width: size * 0.42, height: size * 0.42 }]} />;
@@ -118,15 +125,18 @@ function SelectedMoment({ moment, match, model, showBack, onBack, onDecisionPres
       : moment.kind === "POOL" ? "İkinci yarı havuzu"
         : [moment.railTitle.split(" · ")[1], side].filter(Boolean).join(" · ");
   return (
-    <View accessibilityLiveRegion="polite" style={styles.panel}>
+    <View accessibilityLiveRegion="polite" style={styles.panel} testID="journey-selected-moment">
       <View style={styles.panelTop}>
-        <Text style={styles.eyebrow}>SEÇİLİ AN · {kindLabel[moment.kind].toLocaleUpperCase("tr-TR")}</Text>
+        <View style={styles.momentKind}><MomentGlyph moment={moment} size={16} /><Text style={styles.eyebrow}>{kindLabel[moment.kind].toLocaleUpperCase("tr-TR")}</Text></View>
         {showBack ? <Pressable accessibilityRole="button" onPress={onBack} style={({ hovered }) => [styles.backAction, hovered && styles.hover]}>
           <Text style={styles.backText}>Son kayda dön</Text>
         </Pressable> : null}
       </View>
       <View style={styles.panelHead}>
-        <Text style={styles.panelBig}>{moment.minute}′{moment.score ? ` · ${moment.score}` : ""}</Text>
+        <View style={styles.momentHeadline}>
+          <Text style={styles.panelBig}>{moment.minute}<Text style={styles.minutePrime}>′</Text></Text>
+          {moment.score ? <View style={styles.scoreAtMoment}><Text style={styles.scoreAtMomentValue}>{moment.score}</Text><Text style={styles.ticketLabel}>o andaki skor</Text></View> : null}
+        </View>
         <Text style={styles.panelTitle}>{title}</Text>
       </View>
       {record ? <View style={styles.ticket}>
@@ -143,9 +153,9 @@ function SelectedMoment({ moment, match, model, showBack, onBack, onDecisionPres
             <Text style={styles.ticketLabel}>birim · varsayımsal</Text>
           </View>
         </View>
-        <Text style={styles.ticketNote}>Yıldız tutarlılık ve kanıt kalitesini gösterir; kazanma olasılığı değildir.</Text>
+        <Text style={styles.ticketNote}>Oran ve yıldız karar anında sabittir. Yıldız tutarlılık ve kanıt kalitesidir; kazanma olasılığı değildir.</Text>
       </View> : null}
-      {moment.lines.map((line) => <Text key={line} style={styles.panelLine}>{line}</Text>)}
+      {!record ? moment.lines.filter(line => line !== title).map((line) => <Text key={line} style={styles.panelLine}>{line}</Text>) : null}
       {activityReading !== undefined && moment.kind !== "ACTIVITY" && moment.kind !== "LATEST" ? <View style={styles.selectedActivity}>
         <Text style={styles.eyebrow}>BU ANDAKİ HAREKETLİLİK</Text>
         <Text style={styles.panelLine}>{activityHeadline(activityReading, match)}</Text>
@@ -154,7 +164,7 @@ function SelectedMoment({ moment, match, model, showBack, onBack, onDecisionPres
       </View> : null}
       {record ? <Pressable accessibilityHint="Super kararını açar" accessibilityRole="button" onPress={() => onDecisionPress(record.decisionId)}
         style={({ hovered, pressed }) => [styles.openDecision, hovered && styles.hover, pressed && styles.pressed]}>
-        <Text style={styles.openDecisionText}>Super kararını aç ›</Text>
+        <Text style={styles.openDecisionText}>Kararın ayrıntıları</Text><MaterialCommunityIcons name="arrow-top-right" color={colors.blue} size={18} />
       </Pressable> : null}
     </View>
   );
@@ -183,13 +193,22 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
   const [cursor, setCursor] = useState<number | null>(null);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [analysisOpen, setAnalysisOpen] = useState(false);
+  const railRef = useRef<ScrollView>(null);
+  const railPositions = useRef<Record<string, number>>({});
   const selectedKey = cursor !== null ? `activity:${cursor}` : picked && model.moments.some((moment) => moment.key === picked) ? picked : model.defaultKey;
   const selected = cursor !== null && activity ? activityMoment(activity.intervals, cursor, match) : model.moments.find((moment) => moment.key === selectedKey);
   const chartModel = useMemo(() => activity ? { ...model, maxMinute: Math.max(model.maxMinute, ...activity.intervals.map(point => point.endMinute)) } : model, [activity, model]);
   const g = useMemo(() => geometry(width, wide && width >= 620, chartModel, Boolean(activity)), [width, wide, chartModel, activity]);
   const lineInk = activity ? colors.teal : colors.blue;
   const chooseMoment = useCallback((key: string) => { setCursor(null); setPicked(key); }, []);
-  const groups = useMemo(() => groupMarks(model.moments, g, model, wide ? 34 : 28), [g, model, wide]);
+  useEffect(() => {
+    if (selectedKey && railPositions.current[selectedKey] !== undefined) {
+      railRef.current?.scrollTo({ x: Math.max(0, railPositions.current[selectedKey]! - 12), animated: false });
+    }
+  }, [selectedKey]);
+  const { index: selectedIndex, previous, next } = journeyNavigation(model.moments, selectedKey, selected?.minute);
+  const decisionCount = model.moments.filter(moment => moment.kind === "BTB").length;
+  const groups = useMemo(() => groupMarks(model.moments, g, model, 48), [g, model]);
   const chipWidth = wide ? 44 : 38;
   const chips = useMemo(() => placeChips(model, g, chipWidth), [model, g, chipWidth]);
   const status = statusPill(match);
@@ -201,7 +220,8 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
   // are left out, since the pill itself states the current minute.
   const pillX = !hasLine && model.nowMinute !== null ? g.x(model.nowMinute) : null;
   const ticks = (wide ? [0, 15, 30, 45, 60, 75, 90] : [0, 30, 45, 60, 90])
-    .filter((minute) => minute <= model.maxMinute && (pillX === null || Math.abs(g.x(minute) - pillX) > 52));
+    .filter((minute) => minute <= model.maxMinute && (pillX === null || Math.abs(g.x(minute) - pillX) > 52)
+      && (!selected || Math.abs(g.x(minute) - g.x(selected.minute)) > 34));
   // The half-time label takes the side of the divider that no home mark uses,
   // and drops under the plot only when both sides are taken.
   const halfTime = (() => {
@@ -262,11 +282,19 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
 
   const chart = (
     <View style={styles.chartBox} onLayout={(event) => setWidth(Math.max(240, event.nativeEvent.layout.width))}>
+      <View style={styles.chartHeading}>
+        <View style={styles.chartHeadingCopy}><Text style={styles.chartTitle}>Zaman çizgisi</Text><Text style={styles.chartCaption}>{activity ? "Olaylar, hareketlilik ve havuz · tek eksen" : "Olaylar ve havuz · tek eksen"}</Text></View>
+        {activity ? <View style={styles.teamKeys}>
+          <View style={styles.teamKey}><View style={[styles.teamDot, { backgroundColor: colors.blue }]} /><Text numberOfLines={1} style={styles.teamKeyText}>{match.homeTeam}</Text></View>
+          <View style={styles.teamKey}><View style={[styles.teamDot, { backgroundColor: colors.orange }]} /><Text numberOfLines={1} style={styles.teamKeyText}>{match.awayTeam}</Text></View>
+        </View> : null}
+      </View>
       <GestureDetector gesture={gesture} touchAction="pan-y">
         <View collapsable={false} style={{ height: g.height }} testID="match-path-canvas">
           <Svg width={g.width} height={g.height} {...journeySvgAccessibility}>
             <Defs><LinearGradient id="matchPathFill" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor={colors.blue} stopOpacity={0.3} /><Stop offset="1" stopColor={colors.blue} stopOpacity={0.02} /></LinearGradient></Defs>
-            {activity ? <MatchActivityBars intervals={activity.intervals} x={g.x} left={g.gutter} right={g.gutter + g.plotWidth} mid={g.pressureMid} height={108} /> : null}
+            {selected ? <Rect x={Math.max(g.gutter, g.x(selected.minute) - 20)} y={32} width={Math.min(40, g.gutter + g.plotWidth - Math.max(g.gutter, g.x(selected.minute) - 20))} height={g.axis - 32} fill={colors.blue} opacity={0.045} /> : null}
+            {activity ? <MatchActivityBars intervals={activity.intervals} x={g.x} left={g.gutter} right={g.gutter + g.plotWidth} mid={g.pressureMid} height={96} /> : null}
             {hasLine && model.poolShare ? [0,0.5,1].map(level => <G key={level}>
               <Line x1={g.gutter} x2={g.gutter+g.plotWidth} y1={g.y(level)} y2={g.y(level)} stroke={colors.borderSoft} strokeDasharray="3 4" />
               <SvgText x={g.gutter+4} y={g.y(level)+(level===1?12:-4)} fill={colors.textMuted} fontSize={11} fontFamily={fontFamilies.text}>%{Math.round(level*100)}</SvgText>
@@ -280,7 +308,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
               {!model.poolShare ? <Path d={areaD} fill="url(#matchPathFill)" /> : null}
               <Path d={lineD} fill="none" stroke={lineInk} strokeOpacity={0.12} strokeWidth={9} strokeLinejoin="round" />
               <Path d={lineD} fill="none" stroke={lineInk} strokeWidth={3} strokeLinejoin="round" strokeLinecap="round" />
-              {model.poolShare ? model.line.map((point,index)=><Circle key={index} cx={g.x(point.minute)} cy={g.y(point.level)} r={3} fill={lineInk} />) : null}
+              {model.poolShare ? model.line.filter((point, index) => index === 0 || index === model.line.length - 1 || point.level !== model.line[index - 1]?.level || point.connects === false).map((point,index)=><Circle key={index} cx={g.x(point.minute)} cy={g.y(point.level)} r={3.5} fill={lineInk} />) : null}
             </> : null}
             <Line x1={g.gutter} x2={g.gutter + g.plotWidth} y1={RIB} y2={RIB} stroke={colors.borderSoft} strokeWidth={2} />
             <Line x1={g.gutter} x2={g.gutter + g.plotWidth} y1={HOME} y2={HOME} stroke={colors.borderSoft} />
@@ -297,7 +325,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
               return group.lead.kind === "LATEST" || group.lead.kind === "POOL" || activity && group.lead.kind === "BTB" || bottom <= top ? null
                 : <Line key={`guide:${group.lead.key}`} x1={group.cx} x2={group.cx} y1={top} y2={bottom} stroke={ink} strokeOpacity={0.3} />;
             })}
-            {selected ? <Line x1={g.x(selected.minute)} x2={g.x(selected.minute)} y1={RIB + 14} y2={g.axis} stroke={colors.text} strokeOpacity={0.55} strokeWidth={1.5} strokeDasharray="3 3" /> : null}
+            {selected ? <Line x1={g.x(selected.minute)} x2={g.x(selected.minute)} y1={RIB + 14} y2={g.axis} stroke={colors.blue} strokeOpacity={0.8} strokeWidth={1.5} strokeDasharray="3 4" /> : null}
             {model.nowMinute !== null ? <Line x1={g.x(model.nowMinute)} x2={g.x(model.nowMinute)} y1={activity ? 100 : g.poolTop} y2={g.axis} stroke={semantic.live} strokeOpacity={0.6} strokeWidth={2} /> : null}
             {chips.map((chip) => <Line key={`tick:${chip.key}`} x1={chip.at} x2={chip.at} y1={RIB - 3} y2={RIB + 3} stroke={colors.textMuted} />)}
           </Svg>
@@ -309,22 +337,23 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
             return <Text key={`tick:${minute}`} numberOfLines={1} pointerEvents="none"
               style={[styles.tick, { left: g.x(minute) - 40 * anchor, top: g.axis + 5, textAlign: anchor === 0 ? "left" : anchor === 1 ? "right" : "center" }]}>{minute}′</Text>;
           })}
+          {selected ? <View pointerEvents="none" style={[styles.cursorPill, { left: Math.max(g.gutter, Math.min(g.x(selected.minute) - 22, g.gutter + g.plotWidth - 44)), top: g.axis - 1 }]}><Text style={styles.cursorPillText}>{selected.minute}′</Text></View> : null}
           {chips.map((chip) => <View key={chip.key} pointerEvents="none" style={[styles.chip, { left: chip.left, width: chipWidth }, chip.current && styles.chipCurrent]}>
             <Text style={[styles.chipText, chip.current && styles.chipTextCurrent]}>{chip.label}</Text>
           </View>)}
           {halfTime ? <Text numberOfLines={1} pointerEvents="none" style={[styles.halfTime, { left: halfTime.left, top: halfTime.top, width: halfTime.width },
             halfTime.alignEnd && styles.alignEndText]}>{halfTime.text}</Text> : null}
           <View pointerEvents="none" style={[styles.gutter, { top: HOME - 15, width: g.gutter - 6 }]}>
-            <TeamLogo name={match.homeTeam} participantId={match.homeParticipantId} size={wide ? "standard" : "compact"} />
-            {wide ? <Text numberOfLines={1} style={styles.gutterName}>{match.homeTeam}</Text> : null}
+            <TeamLogo name={match.homeTeam} participantId={match.homeParticipantId} size={g.gutter > 40 ? "standard" : "compact"} />
+            {g.gutter > 40 ? <Text numberOfLines={1} style={styles.gutterName}>{match.homeTeam}</Text> : null}
           </View>
           <View pointerEvents="none" style={[styles.gutter, { top: g.away - 15, width: g.gutter - 6 }]}>
-            <TeamLogo name={match.awayTeam} participantId={match.awayParticipantId} size={wide ? "standard" : "compact"} />
-            {wide ? <Text numberOfLines={1} style={styles.gutterName}>{match.awayTeam}</Text> : null}
+            <TeamLogo name={match.awayTeam} participantId={match.awayParticipantId} size={g.gutter > 40 ? "standard" : "compact"} />
+            {g.gutter > 40 ? <Text numberOfLines={1} style={styles.gutterName}>{match.awayTeam}</Text> : null}
           </View>
           <View pointerEvents="none" style={[styles.gutter, { top: g.btb - 13 }]}>
             <View style={styles.btbBadge}><Svg width={14} height={14} viewBox="0 0 24 24" {...journeySvgAccessibility}><JourneyEventGlyph kind="SUPER" color={colors.gold} /></Svg></View>
-            {wide ? <Text style={styles.gutterName}>BTB</Text> : null}
+            {g.gutter > 40 ? <Text style={styles.gutterName}>BTB</Text> : null}
           </View>
           {activity ? <Text pointerEvents="none" style={[styles.lineLabel, { top: 82, left: g.gutter, color: colors.textMuted }]}>HAREKETLİLİK · SON 5 DK</Text> : null}
           {activity && !activity.intervals.length ? <View pointerEvents="none" style={[styles.notice, { left: g.gutter + 1, width: g.plotWidth - 2, top: 108, height: 100 }]}>
@@ -341,7 +370,8 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
             const active = group.members.some((member) => member.key === selectedKey);
             const count = group.members.length;
             const label = count > 1 ? `${count} an: ${group.members.map((member) => member.label).join("; ")}` : lead.label;
-            const tone = lead.record ? toneColor[resultPresentation[lead.record.result.state].tone] : colors.gold;
+            const tone = count > 1 ? colors.gold : lead.record ? toneColor[resultPresentation[lead.record.result.state].tone] : colors.gold;
+            const minuteLabel = count > 1 ? `${lead.minute}–${group.members.at(-1)!.minute}′` : `${lead.minute}′`;
             const atAxis = lead.kind === "LATEST" && !hasLine && !activity;
             // A ticket or the live pill is wider than a glyph; its target grows with it.
             const markWidth = lead.kind === "BTB" ? (wide ? 88 : 76) : atAxis ? 76 : 44;
@@ -349,8 +379,8 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
               onPress={() => chooseMoment(lead.key)} pointerEvents="none"
               style={[styles.mark, { left: group.cx - markWidth / 2, width: markWidth, top: (atAxis ? g.axis : group.cy) - 22 }]}>
               {lead.kind === "BTB" && lead.record ? <View style={[styles.ticketMark, { borderColor: tone }, active && styles.ticketMarkActive]}>
-                <Text numberOfLines={1} style={styles.ticketMarkStars}>{"★".repeat(lead.record.stars)}<Text style={styles.ticketStarsOff}>{"★".repeat(5 - lead.record.stars)}</Text></Text>
-                <Text numberOfLines={1} style={styles.ticketMarkText}>{lead.minute}′{wide ? ` · ${formatQuote(lead.record.quote)}` : ""}</Text>
+                <Text numberOfLines={1} style={styles.ticketMarkStars}>{count > 1 ? "BTB" : <>{"★".repeat(lead.record.stars)}<Text style={styles.ticketStarsOff}>{"★".repeat(5 - lead.record.stars)}</Text></>}</Text>
+                <Text numberOfLines={1} style={styles.ticketMarkText}>{minuteLabel}{wide && count === 1 ? ` · ${formatQuote(lead.record.quote)}` : ""}</Text>
               </View> : lead.kind === "LATEST" ? (atAxis
                 ? <View style={[styles.nowPill, active && styles.markActive]}><Text numberOfLines={1} style={styles.nowText}>{lead.minute}′ canlı</Text></View>
                 : <View style={[styles.latestDot, active && styles.markActive]} />)
@@ -360,7 +390,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
                 <Svg width={wide ? 18 : 16} height={wide ? 18 : 16} viewBox="0 0 24 24" {...journeySvgAccessibility}><JourneyEventGlyph kind="GOAL" color={colors.text} /></Svg>
               </View>}
               {lead.kind === "GOAL" || lead.kind === "RED_CARD" ? <Text style={[styles.markMinute, lead.side === "AWAY" ? styles.markMinuteBelow : styles.markMinuteAbove,
-                lead.kind === "RED_CARD" && { color: colors.red }]}>{lead.minute}′</Text> : null}
+                lead.kind === "RED_CARD" && { color: colors.red }]}>{minuteLabel}</Text> : null}
               {count > 1 ? <View style={styles.countBadge}><Text style={styles.countText}>{count}</Text></View> : null}
             </Pressable>;
           })}
@@ -369,26 +399,24 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
     </View>
   );
 
+  const detailPanel = <SelectedMoment match={match} model={model} moment={selected} onBack={() => chooseMoment("latest")}
+    activityReading={activity ? activityAt(activity.intervals, selected?.minute ?? 0) : undefined}
+    onDecisionPress={onDecisionPress} showBack={model.nowMinute !== null && selectedKey !== "latest"} />;
+
   return (
     <View testID="match-path-card" onLayout={(event) => setCardWidth(event.nativeEvent.layout.width)} style={styles.card}>
       <SurfaceMaterial radius={radii.xl} />
       <View style={styles.accent} />
       <View style={styles.header}>
-        <View style={styles.icon}><MaterialCommunityIcons color={colors.blue} name="chart-timeline-variant" size={22} /></View>
         <View style={styles.headerCopy}>
+          {sideBySide ? <Text style={styles.sectionLabel}>MAÇIN HİKÂYESİ</Text> : null}
           <View style={styles.titleRow}>
             <Text accessibilityRole="header" aria-level={2} style={styles.title}>Maçın yolu</Text>
             <View style={[styles.statusPill, status.live && styles.statusLive]}><Text style={[styles.statusText, status.live && styles.statusTextLive]}>{status.label}</Text></View>
             {synthetic && hasLine ? <View style={styles.samplePill}><Text style={styles.sampleText}>ÖRNEK VERİ</Text></View> : null}
           </View>
-          {collapsed ? null : <Text style={styles.lede}>{model.headline}</Text>}
+          {collapsed ? null : <Text style={styles.lede}>{sideBySide ? "Maçı değiştiren anları keşfet." : model.headline}</Text>}
         </View>
-        {wide && !collapsed ? <View style={styles.legend}>
-          <View style={styles.legendItem}><Svg width={16} height={16} viewBox="0 0 24 24" {...journeySvgAccessibility}><JourneyEventGlyph kind="GOAL" color={colors.text} /></Svg><Text style={styles.legendText}>Gol</Text></View>
-          <View style={styles.legendItem}><View style={styles.legendCard} /><Text style={styles.legendText}>Kırmızı kart</Text></View>
-          <View style={styles.legendItem}><Svg width={16} height={16} viewBox="0 0 24 24" {...journeySvgAccessibility}><JourneyEventGlyph kind="SUPER" color={colors.gold} /></Svg><Text style={styles.legendText}>BTB kararı</Text></View>
-          <View style={styles.legendItem}><View style={styles.legendDivider} /><Text style={styles.legendText}>Devre</Text></View>
-        </View> : null}
         <Pressable accessibilityLabel={collapsed ? "Maçın yolu bölümünü aç" : "Maçın yolu bölümünü daralt"} accessibilityRole="button"
           accessibilityState={{ expanded: !collapsed }} onPress={onToggleCollapse}
           style={({ hovered, pressed }) => [styles.collapse, hovered && styles.hover, pressed && styles.pressed]}>
@@ -397,37 +425,46 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
       </View>
 
       {collapsed ? null : <>
-        {activity ? <MatchActivitySummary intervals={activity.intervals} match={match} failed={activity.failed} loading={activity.loading} /> : null}
+        <View style={[styles.overview, sideBySide && styles.overviewWide]}>
+          {activity ? <View style={styles.rhythmColumn}><MatchActivitySummary intervals={activity.intervals} match={match} failed={activity.failed} loading={activity.loading} /></View> : null}
+          {sideBySide ? <View style={[styles.poolSummary, !!activity && styles.poolSummaryWide]}>
+            <View style={styles.poolSummaryIcon}><MaterialCommunityIcons name="chart-line" color={hasLine ? lineInk : colors.textMuted} size={20} /></View>
+            <View style={styles.summaryCopy}><Text style={styles.sectionLabel}>{model.poolShare ? "REFERANS HAVUZU" : "HAVUZ UYUMU"}</Text><Text style={styles.poolHeadline}>{model.headline}</Text><Text style={styles.chartCaption}>{model.poolShare ? "Örneklem desteği · kazanma olasılığı değil" : "Yalnızca kayıtlı havuz ölçümleri"}</Text></View>
+          </View> : null}
+        </View>
+
+        <View style={styles.navigator}>
+          <View style={styles.navigatorHeading}>
+            <View style={styles.navigatorCopy}><Text style={styles.chartTitle}>Önemli anlar</Text><Text style={styles.chartCaption}>{model.moments.length} kayıt · {decisionCount} BTB kararı</Text></View>
+            <View style={styles.navigation}>
+              <Text style={styles.navigationCount}>{selectedIndex >= 0 ? `${selectedIndex + 1} / ${model.moments.length}` : selected ? `${selected.minute}′` : "—"}</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel="Önceki an" accessibilityState={{ disabled: !previous }} disabled={!previous} onPress={() => previous && chooseMoment(previous.key)} style={({ hovered, pressed }) => [styles.navButton, !previous && styles.disabled, hovered && styles.hover, pressed && styles.pressed]}><MaterialCommunityIcons name="chevron-left" color={colors.text} size={22} /></Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel="Sonraki an" accessibilityState={{ disabled: !next }} disabled={!next} onPress={() => next && chooseMoment(next.key)} style={({ hovered, pressed }) => [styles.navButton, !next && styles.disabled, hovered && styles.hover, pressed && styles.pressed]}><MaterialCommunityIcons name="chevron-right" color={colors.text} size={22} /></Pressable>
+            </View>
+          </View>
+          {model.moments.length ? <ScrollView ref={railRef} accessibilityLabel="Maçın anları" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}
+            onContentSizeChange={() => { if (selectedKey && railPositions.current[selectedKey] !== undefined) railRef.current?.scrollTo({ x: Math.max(0, railPositions.current[selectedKey]! - 12), animated: false }); }}>
+            {model.moments.map((moment) => {
+              const active = moment.key === selectedKey;
+              return <Pressable key={moment.key} accessibilityLabel={moment.label} accessibilityRole="button" accessibilityState={{ selected: active }}
+                onLayout={(event) => { const x = event.nativeEvent.layout.x; railPositions.current[moment.key] = x; if (active) railRef.current?.scrollTo({ x: Math.max(0, x - 12), animated: false }); }} onPress={() => chooseMoment(moment.key)}
+                style={({ hovered, pressed }) => [styles.railItem, wide && styles.railItemWide, active && styles.railItemActive, hovered && styles.hover, pressed && styles.pressed]}>
+                <View style={[styles.railIcon, moment.kind === "BTB" && { backgroundColor: colors.goldSoft }, moment.kind === "RED_CARD" && { backgroundColor: colors.redSoft }, moment.kind === "LATEST" && { backgroundColor: semantic.liveSoft }]}><MomentGlyph moment={moment} size={18} /></View>
+                <View style={styles.railCopy}><Text numberOfLines={1} style={styles.railTitle}>{moment.railTitle}</Text><Text numberOfLines={1} style={styles.railSub}>{moment.railSub}</Text></View>
+                {active ? <View style={styles.railSelectedDot} /> : null}
+              </Pressable>;
+            })}
+          </ScrollView> : <Text style={styles.lede}>İlk kayıt geldiğinde maçın hikâyesi burada başlayacak.</Text>}
+        </View>
+
+        {!sideBySide ? detailPanel : null}
         <View style={[styles.body, sideBySide && styles.bodyWide]}>
           <View style={sideBySide ? styles.chartColumn : undefined}>
             {chart}
-            <Text style={styles.hint}>{Platform.OS === "web" ? "Bir işarete tıkla ya da grafikte sürükleyerek gez." : "↔ Grafikte sürükle · işarete dokun · ↑↓ sayfa kayar"}</Text>
+            <View style={styles.chartFootnote}><MaterialCommunityIcons name="gesture-swipe-horizontal" color={colors.textMuted} size={16} /><Text style={styles.hint}>{Platform.OS === "web" ? "Bir an seç veya grafikte sürükleyerek keşfet." : "Bir ana dokun veya yatay sürükle · dikey kaydırarak devam et"}</Text></View>
           </View>
-          <View style={sideBySide ? styles.panelColumn : undefined}>
-            <SelectedMoment match={match} model={model} moment={selected} onBack={() => chooseMoment("latest")}
-              activityReading={activity ? activityAt(activity.intervals, selected?.minute ?? 0) : undefined}
-              onDecisionPress={onDecisionPress} showBack={model.nowMinute !== null && selectedKey !== "latest"} />
-          </View>
+          {sideBySide ? <View style={styles.panelColumn}>{detailPanel}</View> : null}
         </View>
-
-        {model.moments.length ? <ScrollView accessibilityLabel="Maçın anları" horizontal showsHorizontalScrollIndicator={Platform.OS === "web"}
-          contentContainerStyle={styles.rail}>
-          {model.moments.map((moment) => {
-            const active = moment.key === selectedKey;
-            return <Pressable key={moment.key} accessibilityLabel={moment.label} accessibilityRole="button" accessibilityState={{ selected: active }}
-              onPress={() => chooseMoment(moment.key)}
-              style={({ hovered, pressed }) => [styles.railItem, wide && styles.railItemWide, active && styles.railItemActive, hovered && styles.hover, pressed && styles.pressed]}>
-              <View style={[styles.railIcon, moment.kind === "BTB" && { backgroundColor: colors.goldSoft },
-                moment.kind === "RED_CARD" && { backgroundColor: colors.redSoft }, moment.kind === "LATEST" && { backgroundColor: semantic.liveSoft }]}>
-                <MomentGlyph moment={moment} size={18} />
-              </View>
-              <View style={styles.railCopy}>
-                <Text numberOfLines={1} style={styles.railTitle}>{moment.railTitle}</Text>
-                <Text numberOfLines={1} style={styles.railSub}>{moment.railSub}</Text>
-              </View>
-            </Pressable>;
-          })}
-        </ScrollView> : null}
 
         <View style={[styles.footer, wide && styles.footerWide]}>
           {analysisText ? <Pressable accessibilityRole="button" accessibilityState={{ expanded: analysisOpen }} onPress={() => setAnalysisOpen(!analysisOpen)}
@@ -437,16 +474,21 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
           </Pressable> : null}
           <Pressable accessibilityRole="button" accessibilityState={{ expanded: rulesOpen }} onPress={() => setRulesOpen(!rulesOpen)}
             style={({ hovered }) => [styles.disclosure, wide && styles.disclosureWide, hovered && styles.hover]}>
-            <View style={styles.disclosureCopy}><Text style={styles.disclosureTitle}>Nasıl okunur?</Text><Text style={styles.disclosureMeta}>{model.moments.length} an</Text></View>
+            <MaterialCommunityIcons name="information-outline" color={colors.textMuted} size={18} /><View style={styles.disclosureCopy}><Text style={styles.disclosureTitle}>Bu hikâyeyi nasıl okumalı?</Text><Text style={styles.disclosureMeta}>Renkler, işaretler ve verinin sınırları</Text></View>
             <Text style={styles.disclosureSign}>{rulesOpen ? "−" : "+"}</Text>
           </Pressable>
         </View>
-        {rulesOpen ? <Text style={styles.rules}>
+        {rulesOpen ? <View style={styles.rulesBox}><View style={styles.legend}>
+          <View style={styles.legendItem}><Svg width={16} height={16} viewBox="0 0 24 24" {...journeySvgAccessibility}><JourneyEventGlyph kind="GOAL" color={colors.text} /></Svg><Text style={styles.legendText}>Gol</Text></View>
+          <View style={styles.legendItem}><View style={styles.legendCard} /><Text style={styles.legendText}>Kırmızı kart</Text></View>
+          <View style={styles.legendItem}><Svg width={16} height={16} viewBox="0 0 24 24" {...journeySvgAccessibility}><JourneyEventGlyph kind="SUPER" color={colors.gold} /></Svg><Text style={styles.legendText}>BTB kararı</Text></View>
+          <View style={styles.legendItem}><View style={styles.legendDivider} /><Text style={styles.legendText}>Devre</Text></View>
+        </View><Text style={styles.rules}>
           Üstteki şerit her golün yeni skorunu kendi dakikasında gösterir. Ev sahibinin olayları üst, deplasmanın olayları alt şeritte.
           {activity ? " Mavi ve turuncu sütunlar son 5 dakikanın tahmini hareketliliğidir; eksik pencereler boştur ve bu değerler BTB seçim hesabına katılmaz. Sütunlara dokunarak veya sürükleyerek o dakikayı incele. Havuz çizgisinin yüzde ölçeği ayrıdır; aynı zaman eksenini paylaşırlar." : null}
-          {hasLine && model.poolShare ? " Mavi çizgi yarının ilk geçerli referans havuzunda güncel skorla uyumlu kalan paydır; kazanma olasılığı değildir. Devrede veya kaynak değişiminde çizgi kesilir. Yalnız kayıtlı havuzlar gösterilir." : hasLine ? " Mavi çizgi maçın havuzla uyumudur; devrede havuz değişir ve çizgi basamak yapar." : " Havuz çizgisi yalnız kaynak sunduğunda çizilir."}
+          {hasLine && model.poolShare ? ` ${activity ? "Turkuaz" : "Mavi"} çizgi yarının ilk geçerli referans havuzunda güncel skorla uyumlu kalan paydır; kazanma olasılığı değildir. Devrede veya kaynak değişiminde çizgi kesilir. Yalnız kayıtlı havuzlar gösterilir.` : hasLine ? " Mavi çizgi maçın havuzla uyumudur; devrede havuz değişir ve çizgi basamak yapar." : " Havuz çizgisi yalnız kaynak sunduğunda çizilir."}
           {" "}Altın fişler BTB kararlarıdır: dakika, yıldız, donmuş seçim oranı ve sonucun rengi. Yıldız tutarlılık ve kanıt kalitesidir.
-        </Text> : null}
+        </Text></View> : null}
         {footer}
       </>}
     </View>
@@ -454,14 +496,47 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
 }
 
 const styles = StyleSheet.create({
+  sectionLabel: { ...textFont("700"), fontSize: 11, lineHeight: 16, letterSpacing: 1.5, color: colors.textMuted },
+  overview: { gap: spacing.md },
+  overviewWide: { flexDirection: "row", alignItems: "stretch" },
+  rhythmColumn: { flex: 1, minWidth: 0 },
+  poolSummary: { flexDirection: "row", alignItems: "center", gap: spacing.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radii.md, backgroundColor: colors.background },
+  poolSummaryWide: { flex: 0.7, padding: spacing.md },
+  poolSummaryIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.surfaceStrong, alignItems: "center", justifyContent: "center" },
+  summaryCopy: { flex: 1, minWidth: 0, gap: 3 },
+  poolHeadline: { ...textFont("700"), fontSize: 14, lineHeight: 21, color: colors.text },
+  navigator: { gap: spacing.sm },
+  navigatorHeading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
+  navigatorCopy: { flex: 1, gap: 2 },
+  navigation: { flexDirection: "row", alignItems: "center", gap: 6 },
+  navigationCount: { ...numericFont("500"), fontSize: 16, color: colors.textMuted, marginRight: 6 },
+  navButton: { width: 44, height: 44, borderRadius: 14, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.borderSoft, alignItems: "center", justifyContent: "center" },
+  disabled: { opacity: 0.3 },
+  railSelectedDot: { position: "absolute", bottom: 0, left: 16, right: 16, height: 2, backgroundColor: colors.blue, borderRadius: 2 },
+  chartHeading: { paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.sm, gap: spacing.sm, flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" },
+  chartHeadingCopy: { gap: 3 },
+  chartTitle: { ...textFont("700"), fontSize: 14, lineHeight: 20, color: colors.text },
+  chartCaption: { ...textFont("400"), fontSize: 12, lineHeight: 17, color: colors.textMuted },
+  teamKeys: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md, flexShrink: 1 },
+  teamKey: { flexDirection: "row", alignItems: "center", gap: 5, maxWidth: 160 },
+  teamDot: { width: 7, height: 7, borderRadius: 4 },
+  teamKeyText: { ...textFont("700"), fontSize: 11, lineHeight: 16, color: colors.textMuted, flexShrink: 1 },
+  chartFootnote: { flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingHorizontal: 4, paddingTop: spacing.sm },
+  cursorPill: { position: "absolute", width: 44, minHeight: 24, borderRadius: 8, backgroundColor: colors.blue, alignItems: "center", justifyContent: "center" },
+  cursorPillText: { ...numericFont("700"), fontSize: 14, color: colors.background },
+  momentKind: { flexDirection: "row", alignItems: "center", gap: spacing.sm, flexShrink: 1 },
+  momentHeadline: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.md },
+  minutePrime: { color: colors.blue },
+  scoreAtMoment: { alignItems: "flex-end", gap: 2 },
+  scoreAtMomentValue: { ...numericFont("700"), fontSize: 26, lineHeight: 30, color: colors.text },
+  rulesBox: { borderRadius: radii.md, backgroundColor: colors.background, padding: spacing.md, gap: spacing.md },
   selectedActivity: { gap: 5, paddingTop: spacing.md, marginTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.borderSoft },
-  card: { borderRadius: radii.xl, borderWidth: 1, borderColor: colors.borderSoft, padding: spacing.lg, gap: spacing.md, overflow: "hidden" },
+  card: { borderRadius: radii.xl, borderWidth: 1, borderColor: colors.borderSoft, padding: spacing.lg, gap: spacing.lg, overflow: "hidden" },
   accent: { position: "absolute", left: 20, top: -1, width: 72, height: 2, borderRadius: 2, backgroundColor: colors.blue },
   header: { flexDirection: "row", alignItems: "center", gap: spacing.md, flexWrap: "wrap" },
-  icon: { width: 44, height: 44, borderRadius: 14, backgroundColor: colors.blueSoft, alignItems: "center", justifyContent: "center" },
-  headerCopy: { flex: 1, minWidth: 180, gap: 2 },
+  headerCopy: { flex: 1, minWidth: 180, gap: 5 },
   titleRow: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: spacing.sm },
-  title: { ...typeScale.moduleTitle, color: colors.text },
+  title: { ...textFont("800"), fontSize: 26, lineHeight: 34, letterSpacing: -0.7, color: colors.text },
   statusPill: { borderRadius: radii.round, backgroundColor: colors.surfaceStrong, paddingHorizontal: 9, paddingVertical: 3 },
   statusLive: { backgroundColor: semantic.liveSoft },
   statusText: { ...typeScale.eyebrow, color: colors.textMuted },
@@ -480,7 +555,7 @@ const styles = StyleSheet.create({
   chartColumn: { flex: 1, minWidth: 0, gap: spacing.sm },
   panelColumn: { width: 300 },
   chartBox: { borderRadius: radii.lg, borderWidth: 1, borderColor: colors.borderSoft, backgroundColor: colors.background, overflow: "hidden" },
-  hint: { ...typeScale.label, color: colors.textMuted, marginTop: spacing.xs },
+  hint: { ...typeScale.label, color: colors.textMuted, flex: 1 },
   chip: { position: "absolute", top: RIB - 12, height: 24, borderRadius: 8, borderWidth: 1, borderColor: colors.borderSoft, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center" },
   chipCurrent: { backgroundColor: colors.text, borderColor: colors.text },
   chipText: { ...numericFont("700"), fontSize: 14, color: colors.text },
@@ -514,31 +589,31 @@ const styles = StyleSheet.create({
   ticketMarkText: { ...numericFont("700"), fontSize: 13, lineHeight: 15, color: colors.text },
   countBadge: { position: "absolute", top: 2, right: 2, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: colors.blue, alignItems: "center", justifyContent: "center", paddingHorizontal: 3 },
   countText: { ...numericFont("800"), fontSize: 11, color: colors.background },
-  panel: { flex: 1, gap: spacing.sm, padding: spacing.md, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.borderSoft, backgroundColor: colors.surface },
+  panel: { flex: 1, gap: spacing.md, padding: spacing.lg, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.borderSoft, backgroundColor: colors.background },
   panelEmpty: { ...typeScale.bodyCompact, color: colors.textMuted },
   panelTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
   eyebrow: { ...typeScale.eyebrow, color: colors.textMuted, flexShrink: 1 },
   backAction: { minHeight: 36, borderRadius: 10, backgroundColor: colors.blueSoft, paddingHorizontal: 10, justifyContent: "center" },
   backText: { ...textFont("700"), fontSize: 12, color: colors.blue },
-  panelHead: { gap: 2 },
-  panelBig: { ...numericFont("700"), fontSize: 28, lineHeight: 30, color: colors.text },
+  panelHead: { gap: spacing.sm },
+  panelBig: { ...numericFont("700"), fontSize: 48, lineHeight: 52, color: colors.text },
   panelTitle: { ...textFont("700"), fontSize: 16, lineHeight: 22, color: colors.text },
   panelLine: { ...typeScale.bodyCompact, color: colors.text },
-  ticket: { gap: spacing.sm, padding: spacing.md, borderRadius: radii.md, borderWidth: 1, borderColor: colors.borderSoft, backgroundColor: colors.background },
+  ticket: { gap: spacing.md, padding: spacing.md, borderRadius: radii.md, backgroundColor: colors.surface },
   ticketRow: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: spacing.sm },
   ticketStars: { fontSize: 15, letterSpacing: 1.5, color: colors.gold },
   ticketStarsOff: { color: colors.borderSoft },
-  ticketFigure: { ...numericFont("700"), fontSize: 22, lineHeight: 24, color: colors.text },
+  ticketFigure: { ...numericFont("700"), fontSize: 28, lineHeight: 32, color: colors.text },
   ticketLabel: { ...typeScale.label, color: colors.textMuted },
   ticketNote: { ...typeScale.label, color: colors.textMuted },
   alignEnd: { alignItems: "flex-end" },
-  openDecision: { minHeight: 44, borderRadius: radii.md, borderWidth: 1, borderColor: colors.borderSoft, alignItems: "center", justifyContent: "center", marginTop: "auto" },
+  openDecision: { minHeight: 48, borderRadius: radii.md, backgroundColor: colors.blueSoft, flexDirection: "row", gap: spacing.sm, alignItems: "center", justifyContent: "center", marginTop: "auto" },
   openDecisionText: { ...textFont("700"), fontSize: 14, color: colors.blue },
   rail: { gap: spacing.sm, paddingVertical: 2 },
-  railItem: { width: 156, minHeight: 56, flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingHorizontal: 10, paddingVertical: 8,
+  railItem: { width: 172, minHeight: 60, flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingHorizontal: 12, paddingVertical: 8,
     borderRadius: radii.md, borderWidth: 1, borderColor: colors.borderSoft, backgroundColor: colors.background },
-  railItemWide: { width: 186, minHeight: 60 },
-  railItemActive: { borderColor: colors.text, borderWidth: 1.5, backgroundColor: colors.surfaceStrong },
+  railItemWide: { width: 196, minHeight: 60 },
+  railItemActive: { borderColor: colors.blue, backgroundColor: colors.blueSoft },
   railIcon: { width: 30, height: 30, borderRadius: 10, backgroundColor: colors.surfaceStrong, alignItems: "center", justifyContent: "center" },
   cardGlyph: { borderRadius: 2, backgroundColor: colors.red },
   poolGlyph: { borderRadius: 2, backgroundColor: colors.bronze, transform: [{ rotate: "45deg" }] },
@@ -548,10 +623,10 @@ const styles = StyleSheet.create({
   railSub: { ...textFont("400"), fontSize: 12, lineHeight: 16, color: colors.textMuted },
   footer: { gap: spacing.sm, borderTopWidth: 1, borderColor: colors.borderSoft, paddingTop: spacing.md },
   footerWide: { flexDirection: "row", flexWrap: "wrap" },
-  disclosure: { minHeight: 48, flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingHorizontal: spacing.md, borderRadius: radii.md, borderWidth: 1, borderColor: colors.borderSoft },
+  disclosure: { minHeight: 48, flexDirection: "row", alignItems: "center", gap: spacing.md, paddingHorizontal: 4, paddingVertical: 6 },
   disclosureWide: { flex: 1, minWidth: 280 },
   disclosureCopy: { flex: 1, gap: 1 },
-  disclosureTitle: { ...textFont("700"), fontSize: 14, color: colors.blue },
+  disclosureTitle: { ...textFont("700"), fontSize: 13, color: colors.textMuted },
   disclosureMeta: { ...typeScale.label, color: colors.textMuted },
   disclosureSign: { ...textFont("700"), fontSize: 18, color: colors.blue },
   rules: { ...typeScale.bodyCompact, color: colors.textMuted },
