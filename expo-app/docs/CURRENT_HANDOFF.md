@@ -1,7 +1,7 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-25
-Mod: `BFF_ACTIVE / TASK-0189 CLIENT_RELEASE_PENDING`
+Mod: `OBSERVATION / TASK-0189 PAIRED_RELEASE_COMPLETE`
 TASK-0189 Jinx RB1 explainer is locally implemented on shared Android/web source:
 Gemini orders five server-written facts only; legacy prose/quip/pilot-signal
 paths are retired. BFF 672 tests/build; Mobile check (665+32 tests), Doctor,
@@ -13,148 +13,37 @@ launcher with unchanged runtime configuration; prospective collection stays off.
 Local/public health, v1/v2 reports and Live API pass. Real Gemini HTTP200 plus
 one public cache hit return LIVE; the shared contract proves exact server
 sentences and frozen-record binding. Anonymous API401 and web Access302 pass.
-No connected device, new APK distribution, web publication or owner smoke
-acceptance is claimed. Client implementation source is 80c4833; the latest
-clean documentation commit and rollout receipt are recorded in the task/run
-register. Next gate: separately approved final release signing/preparation,
-then the coordinated private APK/web delivery gates. The cutover stays open.
+Released client source is clean/pushed 57e27c219530fa449dd66f769cdff613d94d7a2b
+(functional implementation 80c4833). Signed ARM64 APK F0828E2B1948…,
+50,467,469 bytes, passed pilot-certificate/ABI and owner-only Drive readback
+checks. Owner explicitly confirmed installation and working app/Jinx Refresh.
+Matching web tree CED99092AA3B… was published as 20261025T124608Z-57e27c2
+after installation, under the separate coordinated delivery approval.
+Shell/deep-link/CSP/API401, Access302 and local/public BFF health pass;
+prospective collection remains disabled. Owner confirmed refreshed desktop
+web and Jinx Refresh. Native Gemini-ordering and desktop rule-based screenshots
+are retained; broader TalkBack/performance is not newly accepted.
+client-release.mjs complete passed with both actual owner smokes and exact
+source/hashes. TASK-0189 is DONE; the cutover returns to observation.
+Later handoff-only commits do not change the released artifact source.
+Latest receipts and task/run closure live in btb-codex/docs/evidence/
+client-release-57e27c2-COMPLETE-2026-10-25.json and TASK0189_OWNER_SMOKE_2026-10-25.json.
 [Scope, evidence and remaining gates](JINX_AI_EXPLAINER_BATCH_2026-10-25.md).
 
-Previously accepted delivery (retained while TASK-0189 awaits approval):
-Delivery: `OWNER_ONLY_DEV_PILOT / 3f3b5fd PAIR COMPLETE (both owner smokes passed 2026-10-25)`
-Maçın yolu redesign is delivered from clean pushed source `3f3b5fd6af931e6f285ea82f50a55bce72e1915b`.
-Android APK `4C452CEDF278…` passed signature/ARM64 and owner-only Drive download
-hash checks. Owner confirmed installation/basic smoke before web publication.
-Matching web tree `73932E418099…`, release `20261025T073559Z-3f3b5fd`, is published;
-served JS bytes, shell/deep-link/CSP, public Access302 and health parity pass.
-Core/Doctor/Android bundle/web export and synthetic browser checks passed before
-release. The phone chart remains below selected details. Backend/model/data
-behavior is unchanged. Owner confirmed the published web with a real-match
-screenshot and "sorunsuz görünüyor kapatabilirsin". `client-release.mjs complete`
-passed with exact source/hashes and both owner smokes. Broader TalkBack/performance
-remains unverified. Previous accepted 3f53834 pair is retained; this closure
-authorizes no further release. [Delivery and receipts](MATCH_JOURNEY_UX_DELIVERY_2026-10-25.md).
-Maintenance: TASK-0187 DONE; BFF `310a57a` is pushed and rolled out with owner approval.
-Same-source 48-decision report: 723→86 reads, exact totals; 20 local checks pass.
-Local/public health and v1/v2/Live API pass; owner confirmed Android and web
-on 24 October ("Both Android and web work"). Global reconciliation and the
-accepted client pair stay unchanged.
-[Implementation/rollout](REPORT_AVAILABILITY_IMPLEMENTATION_2026-10-24.md).
-TASK-0188 COMPLETE: report match breakdowns removed; rolling activity/pool/events
-share one journey axis on Android/web. No pressure/model calculation changes.
-Client gate/Android bundle/web export and BFF gate/build pass. Source `3f53834`,
-BFF `6910629` pushed/active; signed ARM64 APK `42FD999D6479…`, paired web tree
-`117DC5918A54…`, web `20261024T193040Z-3f53834`. Owner-only Drive readback and
-installation verified before web publication; owner confirmed both basic smokes.
-`client-release.mjs complete` passed. Broader TalkBack/performance unverified.
-49-decision report: 194,855→120,731 bytes (-38%), totals equal; SAP reads unchanged.
-Previous `a5dca4a` pair/BFF `310a57a` retained. No further release authorized.
-[Batch](UNIFIED_MATCH_TIMELINE_BATCH_2026-10-24.md),
-[delivery and receipts](UNIFIED_MATCH_TIMELINE_DELIVERY_2026-10-24.md).
-Workspace: `C:/dev/btb-cdoex`; Mobile owner: `BTB Mobile Next - Aktif`.
-Previous owner-approved released batch: Overview and Live share published-star
-thresholds and open-market/current-price playability without a 15-second UI
-cutoff. BFF display v2 supplies native market state; model admission stays
-unchanged. Numeric added-time display is implemented on both clients/BFF.
-Active SAP source confirms a bare-plus rejection path; the bounded runtime
-status projection fix is active in DEV, with no DDIC/model-parser change.
-Core Mobile gate/Doctor, 728 BFF tests/build, ABAP lint/names, Android bundle,
-verified edge web export and synthetic desktop/phone browser checks pass.
-SAP native syntax/readback and 21 runtime + 17 state tests pass; no new P1,
-one inherited P2 warning. SAP `cd63dca`, BFF code `12c3b92`, client source
-`a5dca4a936ee3b36b3738f2e8265bdec38447e21` are pushed; SAP aligned to main.
-APK `26A03241F010…`, web tree `153D5C2103CC…`, published web
-`20261024T123643Z-a5dca4a`. Private Drive owner-only permissions/downloaded hash,
-pilot signature/ARM64 and owner installation are verified. Owner confirmed
-Overview/Live on Android and refreshed web. Paired completion gate is COMPLETE;
-TASK-0184 DONE. Exact feature gestures/TalkBack were not separately reaccepted.
-[Delivery and full receipts](ACTIVE_MARKET_CLOCK_DELIVERY_2026-10-24.md),
-[release evidence](evidence/ACTIVE_MARKET_CLOCK_RELEASE_2026-10-24.json).
-Previous accepted `26f491c` pair remains retained. New live bare-plus source
-observation is TASK-0185 (next read-only review 2026-10-25), not a release blocker.
-Native source cadence remains with BTB's existing evidence gates; no model tuning.
+Previously accepted pair retained for recovery: client
+3f3b5fd6af931e6f285ea82f50a55bce72e1915b, APK 4C452CEDF278…,
+web tree 73932E418099…, release 20261025T073559Z-3f3b5fd.
+Both prior owner smokes and all closed milestones remain historical.
+[Prior paired delivery](MATCH_JOURNEY_UX_DELIVERY_2026-10-25.md).
+TASK-0185 remains the separate native added-time observation; its owner/evidence
+schedule is unchanged. TASK-0190/0153/0150 probability work stays owner-deferred.
+No source/model/SAP change or new publication is authorized by this closure.
+Workspace: C:/dev/btb-cdoex; owner: BTB Mobile Next - Aktif.
 
-24 October chart cutover delivered in the same pair: NXT-OBS-217/218 use shared
-Android/web components. Goals use darker scoring-side football markers and
-lines confined to their own half. Historical counts/shares remain fixed in a
-labeled per-period reference; unreachable outcomes are muted, corrections
-restore them, and the current match clock prevents cross-period comparisons.
-NXT-OBS-216 remains unconfirmed; activity/pressure/model calculations unchanged.
-Type/lint/client+tooling tests, Expo Doctor, final Android Hermes bundle and
-verified edge web export pass. Synthetic browser checks pass at desktop and
-390px phone widths in dark/light themes; goal/correction and period reset pass.
-NXT-OBS-219 delivery is closed by the paired receipts above. The original local
-validation evidence remains historical; all functional source is committed.
-[Batch and checks](CHART_FEEDBACK_BATCH_2026-10-24.md),
-[evidence](evidence/CHART_FEEDBACK_LOCAL_2026-10-24/validation.json),
-[owner screenshots and scope](OWNER_CHART_FEEDBACK_2026-10-24.md).
-
-Previous released batch: NXT-OBS-200..215, owner authorised 2026-10-23; see
-`JURY_REFINEMENT_BATCH_2026-10-23.md`. Today, verified period-specific scores,
-pressure clarity, compact statistics and shared Android/web UX refinements.
-Pressure (203): owner selected five-minute rolling activity; native pressure
-remains selectable. Rounded columns, balance strip, now marker and compact
-native details are shared. Possession (211) was reintroduced as current context
-in chart/Jinx only, with no weight in activity, selections or stars. Missing
-windows remain gaps. The released pair has gold full-height goal markers; the
-newer accepted chart batch above replaces them. Score updates never
-imply goals.
-Owner requests clarification pop-ups in Turkish.
-Published-selection status now separates verified playability from native
-recommendation eligibility: open/undecided is active; expired quote is pending
-verification, not proof of inactivity. Owner extended star filters/counts (212)
-to the same latest verified playable publication, with frozen stars. Overview
-uses the complete Live snapshot cache, not its three featured rows. Native
-model eligibility is unchanged; source cadence remains an open follow-up.
-Clock (213): opt-in source label preserves 45+/90+/added minutes; source status
-06 displays UZATMA and 07 PENALTILAR. Missing clocks never imply kick-off zero.
-Numeric elapsed/model/settlement are unchanged. Source 105′/06 and real preview
-confirm UZATMA; exact screenshot-era zero input was not reproduced.
-Client type/lint, 694 tests + 32 tooling, BFF tests/build and Doctor 20/20 pass;
-Android bundle, signed ARM64 APK and verified edge web export pass. Client source
-`26f491cc53d08aa3e43f6dabe587f047b14688e6`, BFF runtime code
-`35ed90c8c1b6a84a3dc0b8c049e62ae5e1075361`; pilot restart and local/public health pass.
-Web `20261023T195703Z-26f491c`, source-clean paired APK SHA256 `461D8558E13C…`,
-web tree `A5670B0BCCAC…`. Exact private APK delivery, downloaded hash and installation
-verified. Owner confirmed Android opening/main screens and refreshed web
-Canlı/Super/Toto. `client-release.mjs complete` returned COMPLETE; TASK-0180 closes.
-Full receipts: [release evidence](evidence/JURY_REFINEMENT_RELEASE_2026-10-23.json).
-Previous accepted b501352 and 43d2e7d pairs remain retained.
-Owner accepted the 87/100 design score and requested quick fixes before release.
-Updated web/Git/runtime/signing/coordinated delivery approval:
-`call_5dc8a83a133c41129e06ab43ed23f18d`. No SAP write or model tuning occurred.
-See `JURY_REFINEMENT_DELIVERY_2026-10-23.md`.
-Quick polish (215): Toto header wraps at 320 px; root web pager avoids moving
-offsets on resize (Android retains swipe); unavailable report totals are unknown
-and last verified publications retain frozen facts without active eligibility.
-Chart headlines name the recorded window, and duplicate decision copy is removed.
-Browser resize/search and available/unavailable/recovery checks pass. Owner phone
-basic smoke passed; TalkBack, system text scaling and broader native performance
-remain unverified. The original 87 jury score is not silently re-scored. Reports
-can return TRANSACTION_RECONCILIATION_REQUIRED; source availability is distinct
-from schema acceptance. No stale data becomes active to hide this limitation.
-
-Previous accepted release, retained for recovery: client `b501352158a5ea9b9749868ebcad8f4c9e70e44f`:
-last-selection hero/Jinx/Overview/Live, frozen first facts versus fresh current
-quotes, active-only counters/filters, shared v2 totals, crest reset and recovered
-historical names. BFF runtime code is `99ac116be61d1265bab640d63e2a02310fe10f39`;
-later BFF commits contain delivery records only. SAP/model identities unchanged.
-Web: `20261023T120240Z-b501352`. APK SHA256 `C0028E150084…`; web tree
-`881B19580AAD…`. Full hashes and actual owner receipts:
-[release evidence](evidence/HERO_SELECTION_RELEASE_2026-10-23.json).
-The APK was privately delivered, downloaded/hash-verified and installed; the
-owner confirmed Android and published-web checks. `client-release.mjs complete`
-returned COMPLETE. Previous accepted pair `43d2e7d` is retained; rollback keeps
-its own approval gate. No open delivery action remains in this batch.
-See [delivery plan](HERO_SELECTION_DELIVERY_2026-10-23.md) and
-[local implementation](HERO_SELECTION_BATCH_2026-10-23.md). Checks: 670 client,
-32 tooling, 706 BFF tests, Doctor 20/20, clean web export and signed ARM64 build.
-Owner order remains web preview/acceptance before final APK work; final public
-web follows exact APK installation, per `COORDINATED_CLIENT_RELEASE.md`.
-The historical sections below describe earlier checkpoints, not current gates.
-Previous checkpoint preserved verbatim in
-`handoff_archive/CURRENT_HANDOFF_before_RB1_2026-10-20.md`.
-
+The complete prior handoff, including accepted 3f53834/a5dca4a/26f491c/b501352
+pairs, older checks and open limitations, is preserved verbatim in
+[the pre-release checkpoint](handoff_archive/CURRENT_HANDOFF_before_TASK0189_release_2026-10-25.md).
+The historical sections below and their evidence remain unchanged.
 ## Super karar günlüğü v2 (Claude, 2026-10-22 gece) — tamamlandı
 
 Sahip iki yüzeyi doğruladı (23:09, "web de ve android de ... doğru görünüyor"); kabul makbuzu

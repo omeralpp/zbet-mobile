@@ -1,7 +1,7 @@
 # TASK-0189 — Jinx RB1 açıklayıcı yerel batch
 
 Tarih: 2026-10-25. Sahip: BTB Mobile Next - Aktif.
-Durum: LOCAL_AND_BFF_RUNTIME_VALIDATED / CLIENT_RELEASE_PENDING.
+Durum: PAIRED_RELEASE_COMPLETE / TASK-0189 DONE / OBSERVATION.
 Kapsam: [Aşama A planı](JINX_AI_EXPLAINER_PLAN_2026-10-24.md).
 Başlatma: sahibin btb next cutover start ve aynı mesajdaki Android build talebi.
 
@@ -97,7 +97,7 @@ Kalıcı makbuz: btb-codex/docs/evidence/TASK0189_BFF_ROLLOUT_2026-10-25.json.
 Buradaki gerçek Gemini API kanıtı, üstteki sentetik browser kanıtından
 ayrıdır; yeni Android/web sahibi kabulünün yerine geçmez.
 
-## Bekleyen kapılar
+## Eşleşik teslim ve kapanış — 2026-10-25
 
 Yerel doğrulama baselines: Mobile 429f89a, BFF 6910629 ve btb-codex a116c8a.
 Sahip 2026-10-25 tarihinde bu üç reponun incelenen dosyaları için commit/push
@@ -106,15 +106,41 @@ kaydında ve docs/evidence/TASK0189_GIT_CHECKPOINT_2026-10-25.json içinde tutul
 BTB Logs'taki Aşama B belgesi önceki plan oturumundan kalan ayrı değişikliktir;
 bu batch onu ilerletmez veya commit kapsamına almaz.
 
-1. İncelenen Mobile/BFF/görev-run/handoff dosyaları için scoped Git onayı alındı;
-   kapanışta temiz çalışma ağaçları ve uzak commit eşitliği doğrulanır.
-2. BFF restart ve gerçek API smoke yukarıdaki makbuzla tamamlandı.
-3. Temiz, push edilmiş ortak Mobile commit'inden final APK ve eş web için
-   gerekli ayrı final build/sign hazırlık onayı, ardından iki yüzeyi kapsayan
-   teslim-yayın onayı.
-   client-release.mjs hash doğrulaması, özel APK teslimi/kurulumu, sonra web
-   yayını ve iki gerçek smoke zorunludur.
+Sahip final ARM64 build/imza hazırlığını, ardından özel APK teslimi ile
+kurulumdan sonraki eş web yayınını ayrı adımlarda açıkça onayladı.
+İki artifact temiz/push edilmiş 57e27c219530fa449dd66f769cdff613d94d7a2b
+kaynağından üretildi; sonraki handoff commit'i teslim kaynağını değiştirmez.
 
-TASK-0189 IN_PROGRESS; cutover run yerel doğrulama checkpoint'inde açıktır.
-Kabul edilmiş 3f3b5fd Android/web çifti korunur. Production, SAP veya model
-değişikliği onayı yoktur.
+- APK: btb-mobile-next-arm64-jinx-task0189-57e27c2.apk; 50.467.469 bayt;
+  SHA-256 F0828E2B19488E6DD28C6787B135BD1FF09DB8A406F459F79D7D0A3F24D107F0.
+  Pilot sertifikası, yalnız ARM64 native kitaplıklar ve gömülü pilot/LIVE
+  ayarları doğrulandı. Mevcut owner-only BTB APK Drive klasörüne özel teslim
+  edildi; indirilen tam dosyanın baytı ve özeti birebir eşleşti.
+- Web: CED99092AA3B0E0A5CC9893CB6CBEF30040A5E23E3955B0AF8D728F4D66DE06B;
+  yayın 20261025T124608Z-57e27c2. Shell/deep-link/CSP başarılı, Access'siz
+  API 401 ve public web Access 302; yeni runtime yerel/public health başarılı.
+  Yayın aracının denetimli tek BFF restart'ı aynı 358801e kaynağını korudu;
+  auth pilot, web/SAP configured ve prospective collection disabled kaldı.
+- Sahip tam APK sorusuna "Installed; app and Jinx Refresh work" dedi.
+  Ardından eş web sorusuna "Web app and Jinx Refresh work" yanıtını verdi.
+  Android ekranı Gemini sıralamasını; desktop ekranı kurallı açıklamayı,
+  havuz desteği uyarısını ve ayrı güncel saha bağlamını gösterir.
+  Bu kabul maç açma/manuel Jinx yenileme kapsamındadır; TalkBack veya geniş
+  cihaz performansı kabulü çıkarılmaz.
+
+client-release.mjs complete gerçek teslim, kurulum, yayın ve iki sahip smoke
+makbuzunu aynı batch/kaynak/hash ile doğruladı: COMPLETE / releaseComplete=true.
+Kalıcı kayıtlar btb-codex/docs/evidence/ altında:
+client-release-57e27c2-COMPLETE-2026-10-25.json,
+TASK0189_ANDROID_DELIVERY_2026-10-25.json,
+TASK0189_WEB_PUBLICATION_2026-10-25.json ve TASK0189_OWNER_SMOKE_2026-10-25.json.
+İki gerçek ekran görüntüsü de aynı dizinde korunur.
+
+Final ve önceki kabul edilmiş APK/web çifti korunurken, özeti birebir
+doğrulanan bu batch'e ait debug APK ile indirilen geçici APK kopyası Geri
+Dönüşüm Kutusu'na taşındı. Kaynak, kalıcı makbuz ve kullanıcı dosyası silinmedi.
+
+TASK-0189 DONE; btb next cutover start sonlandı. Observation moduna dönüldü.
+Önceki kabul edilmiş 3f3b5fd Android/web çifti geri dönüş için korunur.
+TASK-0190 / 0153 / 0150 olasılık şeridi owner-deferred BLOCKED kalır.
+Production, SAP veya model değişikliği yapılmadı; yeni yayın yetkisi çıkarılmaz.
