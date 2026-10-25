@@ -1,17 +1,23 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-25
-Mod: `LOCAL_VALIDATED / TASK-0189 GIT_APPROVED_DELIVERY_PENDING`
+Mod: `BFF_ACTIVE / TASK-0189 CLIENT_RELEASE_PENDING`
 TASK-0189 Jinx RB1 explainer is locally implemented on shared Android/web source:
 Gemini orders five server-written facts only; legacy prose/quip/pilot-signal
 paths are retired. BFF 672 tests/build; Mobile check (665+32 tests), Doctor,
 Android bundle, verified web export and ARM64 debug compile pass.
 Synthetic desktop/phone-width ordering, keyboard refresh and fallback pass.
-No connected device, actual Gemini call or new owner acceptance is claimed.
-Owner approved the reviewed Mobile/BFF/tooling commit/push on 2026-10-25.
-The task/run register records the pushed source checkpoint. No active BFF
-restart or APK/web publication is approved; the cutover run stays open.
-After the approved Git checkpoint, the next gate is an exact-SHA DEV BFF restart.
+Owner approved scoped Git, then continued the named DEV BFF restart step.
+BFF 358801e7fb21539460ce026c5ef5f559f9c3d87c is active from the registered
+launcher with unchanged runtime configuration; prospective collection stays off.
+Local/public health, v1/v2 reports and Live API pass. Real Gemini HTTP200 plus
+one public cache hit return LIVE; the shared contract proves exact server
+sentences and frozen-record binding. Anonymous API401 and web Access302 pass.
+No connected device, new APK distribution, web publication or owner smoke
+acceptance is claimed. Client implementation source is 80c4833; the latest
+clean documentation commit and rollout receipt are recorded in the task/run
+register. Next gate: separately approved final release signing/preparation,
+then the coordinated private APK/web delivery gates. The cutover stays open.
 [Scope, evidence and remaining gates](JINX_AI_EXPLAINER_BATCH_2026-10-25.md).
 
 Previously accepted delivery (retained while TASK-0189 awaits approval):

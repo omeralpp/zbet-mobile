@@ -1,7 +1,7 @@
 # TASK-0189 — Jinx RB1 açıklayıcı yerel batch
 
 Tarih: 2026-10-25. Sahip: BTB Mobile Next - Aktif.
-Durum: LOCAL_VALIDATED / GIT_APPROVED_DELIVERY_PENDING.
+Durum: LOCAL_AND_BFF_RUNTIME_VALIDATED / CLIENT_RELEASE_PENDING.
 Kapsam: [Aşama A planı](JINX_AI_EXPLAINER_PLAN_2026-10-24.md).
 Başlatma: sahibin btb next cutover start ve aynı mesajdaki Android build talebi.
 
@@ -75,6 +75,28 @@ Yerel debug APK: .codex-artifacts/btb-mobile-next-arm64-debug.apk,
 3B798C9ED72F0220C0471817C3941DC9986092865DC2FDC4144EEFBBEF00A19C.
 Bu debug çıktısı final imzalı pilot teslim çifti değildir ve Git'e girmez.
 
+## DEV BFF aktivasyonu — 2026-10-25
+
+Sahibin scoped Git onayından sonra, adı ve SHA'sı açıklanmış BFF restart
+adımına verdiği Continue yanıtıyla yalnız owner-only DEV runtime ilerletildi.
+Kaynak: 358801e7fb21539460ce026c5ef5f559f9c3d87c; temiz/push edilmiş ağaç,
+doğrulanan standalone process ve kayıtlı BTB Mobile BFF görevi kullanıldı.
+Auth, web, SAP bağlantısı, cihaz kayıt/bildirim ve live-context durumları
+baseline ile aynı; prospective collection kapalı.
+
+Yerel v1 raporu AVAILABLE (55), public v2 raporu AVAILABLE (61), dört kabul
+edilmiş cohort ve önceki donmuş kayıt korunuyor; baseline 60'tı, arada yeni
+normal kayıt gelmiş. Bu rakamlar başarı/ROI değerlendirmesi değildir.
+Live API 105 maçla v3 ACK verdi. Gerçek Jinx yerelde 1737 ms, public'te
+828 ms ile LIVE döndü; 5 olgunun metni ve karar anahtarı ortak istemci
+sözleşmesiyle birebir doğrulandı. Sağlayıcı telemetrisi: 1 çağrı / 1 HTTP200,
+2 LIVE yanıt / 1 cache hit. Ham model metni veya kimlik bilgisi kaydedilmedi.
+Anonymous API 401 ve mevcut web Access 302; APK/web yayını yapılmadı.
+
+Kalıcı makbuz: btb-codex/docs/evidence/TASK0189_BFF_ROLLOUT_2026-10-25.json.
+Buradaki gerçek Gemini API kanıtı, üstteki sentetik browser kanıtından
+ayrıdır; yeni Android/web sahibi kabulünün yerine geçmez.
+
 ## Bekleyen kapılar
 
 Yerel doğrulama baselines: Mobile 429f89a, BFF 6910629 ve btb-codex a116c8a.
@@ -86,10 +108,10 @@ bu batch onu ilerletmez veya commit kapsamına almaz.
 
 1. İncelenen Mobile/BFF/görev-run/handoff dosyaları için scoped Git onayı alındı;
    kapanışta temiz çalışma ağaçları ve uzak commit eşitliği doğrulanır.
-2. Temiz, push edilmiş BFF SHA'sıyla ayrı owner-only DEV restart onayı ve
-   gerçek API smoke. Çalışan pilot BFF değiştirilmedi.
+2. BFF restart ve gerçek API smoke yukarıdaki makbuzla tamamlandı.
 3. Temiz, push edilmiş ortak Mobile commit'inden final APK ve eş web için
-   gerekli ayrı build/sign/iki yüzeyi kapsayan teslim-yayın onayı.
+   gerekli ayrı final build/sign hazırlık onayı, ardından iki yüzeyi kapsayan
+   teslim-yayın onayı.
    client-release.mjs hash doğrulaması, özel APK teslimi/kurulumu, sonra web
    yayını ve iki gerçek smoke zorunludur.
 

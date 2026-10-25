@@ -2,7 +2,7 @@
 
 Plan tarihi: 2026-10-24. Güncel koda karşı doğrulama: 2026-10-25.
 Sahip: BTB Mobile Next - Aktif / btb-mobile. Görev: TASK-0189, P2, IN_PROGRESS, REVERSIBLE_CHANGE.
-Durum: 2026-10-25 yerel uygulama ve doğrulama tamam; scoped Git onaylı, teslim onayları bekliyor.
+Durum: 2026-10-25 yerel uygulama ve DEV BFF aktivasyonu doğrulandı; final imza/hazırlık ve teslim onayları bekliyor.
 Planın ilk kayıt oturumu yalnızca belge ve görev kaydı üretti.
 [Uygulama ve doğrulama checkpoint'i](JINX_AI_EXPLAINER_BATCH_2026-10-25.md).
 
