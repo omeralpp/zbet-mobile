@@ -285,28 +285,6 @@ paths:
                 type: object
         default:
           $ref: "#/components/responses/Error"
-  /v1/jinx/quip:
-    post:
-      operationId: getJinxQuip
-      description: >-
-        Mascot bubble wording for the given mood. Read scope only; it writes
-        nothing and falls back to the deterministic repertoire when no wording
-        provider is configured. Shape: `jinxQuipSchema` in src/api/schemas.ts.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        "200":
-          description: One quip.
-          content:
-            application/json:
-              schema:
-                type: object
-        default:
-          $ref: "#/components/responses/Error"
   /v1/btb/matches/{key}/analysis-context:
     get:
       operationId: getMatchAnalysisContext
@@ -334,40 +312,78 @@ paths:
           $ref: "#/components/responses/Error"
   /v1/btb/matches/{key}/jinx-outlook:
     get:
-      operationId: getMatchJinxOutlook
-      description: >-
-        V1/V2 retain their informative-only behavior for installed clients.
-        V3 returns a short policy-backed FAVORABLE/UNFAVORABLE/WAIT assessment
-        for an existing displayed selection and server-held analysis snapshot.
-        No approved value policy is registered in the current runtime: V3 waits
-        with the specific reason and makes no provider call for that wait.
-        V4 (owner decision 2026-10-18) is V3 plus the uncalibrated pilot
-        `signal` JINX_LEAN_PILOT_V1: the BTB pool share as confidence and a
-        FAVORABLE/NEUTRAL/UNFAVORABLE lean against the current price's implied
-        share, moved one step by the current or last measured interval
-        pressure. The policy verdict keeps the V3 rules.
+      operationId: getRebuildJinxExplanation
+      description: Gemini returns only a permutation of fact IDs. Deterministic sentences survive provider failures. No
+        probability, lean or betting recommendation.
       parameters:
-        - $ref: "#/components/parameters/Key"
-        - $ref: "#/components/parameters/DecisionContextVersion"
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: X-BTB-Rebuild
+          required: true
+          schema:
+            type: string
+            enum:
+              - btb-rebuild.v1
         - in: header
           name: X-BTB-Jinx-Version
+          required: true
+          schema:
+            type: string
+            enum:
+              - jinx-rb1-explainer.v1
+        - in: header
+          name: X-BTB-Decision-Context
           required: false
           schema:
             type: string
-            enum: [jinx-match-outlook.v1, jinx-match-outlook.v2, jinx-match-outlook.v3, jinx-match-outlook.v4]
+            enum: [decision-context.v2, decision-context.v3]
         - in: header
-          name: X-BTB-Analysis-Snapshot
-          schema: { type: string }
-          description: Required for V3 and V4; snapshot must belong to the same subject and match. Missing or expired snapshots return 409 ANALYSIS_SNAPSHOT_EXPIRED.
+          name: X-BTB-Jinx-Decision
+          required: false
+          schema:
+            type: string
+            pattern: ^[0-9A-F]{32}$
+        - in: header
+          name: X-BTB-Selection-Display
+          required: false
+          schema:
+            type: string
+            enum:
+              - btb-selection-display.v2
       responses:
         "200":
-          description: Informative match outlook with uncertainty and freshness.
+          description: Bound frozen decision facts, optionally ordered by Gemini
+          headers:
+            X-BTB-Decision-Context:
+              description: Echoes the optional supported request context version.
+              schema: { type: string, enum: [decision-context.v2, decision-context.v3] }
+            X-BTB-Rebuild:
+              schema:
+                type: string
+                enum:
+                  - btb-rebuild.v1
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                  - no-store
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/JinxMatchOutlook"
-        default:
-          $ref: "#/components/responses/Error"
+                $ref: "#/components/schemas/JinxRb1Explanation"
+        "400":
+          description: Missing or unsupported contract version or invalid decision identity
+        "401":
+          description: Unauthenticated
+        "403":
+          description: Read scope required
+        "503":
+          description: Canonical RB1 provider unavailable
+      summary: Order server-written frozen RB1 decision facts
   /v1/btb/match-insights:
     get:
       operationId: getMatchInsights
@@ -1473,20 +1489,86 @@ components:
           maxItems: 40
           items: { $ref: "#/components/schemas/MatchPathPoint" }
         capturedAt: { type: [string, "null"], format: date-time }
-    JinxOutlookSignal:
+    JinxRb1Explanation:
       type: object
-      required: [signalKey, label, direction, strength]
+      additionalProperties: false
+      required:
+        - contractVersion
+        - matchKey
+        - asOf
+        - decisionId
+        - evidenceKey
+        - origin
+        - availability
+        - reasonCode
+        - facts
       properties:
-        signalKey: { type: string, minLength: 1 }
-        label: { type: string, minLength: 1 }
-        direction: { type: string, enum: [SUPPORTING, OPPOSING, NEUTRAL] }
-        strength: { type: string, enum: [WEAK, MODERATE, STRONG] }
-    JinxMatchOutlook:
-      oneOf:
-        - $ref: "#/components/schemas/JinxMatchOutlookV1"
-        - $ref: "#/components/schemas/JinxMatchOutlookV2"
-        - $ref: "#/components/schemas/JinxMatchOutlookV3"
-        - $ref: "#/components/schemas/JinxMatchOutlookV4"
+        contractVersion:
+          type: string
+          enum:
+            - jinx-rb1-explainer.v1
+        matchKey:
+          type: string
+          minLength: 1
+        asOf:
+          type: string
+          format: date-time
+        decisionId:
+          type:
+            - string
+            - "null"
+          pattern: ^[0-9A-F]{32}$
+        evidenceKey:
+          type:
+            - string
+            - "null"
+          minLength: 1
+          maxLength: 1500
+        origin:
+          type: string
+          enum:
+            - LIVE
+            - DETERMINISTIC
+        availability:
+          type: string
+          enum:
+            - OK
+            - UNAVAILABLE
+        reasonCode:
+          enum:
+            - null
+            - DISABLED
+            - NO_DECISION
+            - REBUILD_UNAVAILABLE
+            - INVALID_EVIDENCE
+            - LOCAL_SPACING
+            - LOCAL_HOURLY_CAP
+            - PROVIDER_FAILURE
+            - VALIDATION_REJECTED
+            - EVIDENCE_STALE
+        facts:
+          type: array
+          maxItems: 5
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - id
+              - text
+            properties:
+              id:
+                type: string
+                enum:
+                  - DECISION
+                  - PRESSURE
+                  - POOL
+                  - DIRECTION
+                  - SCORE
+              text:
+                type: string
+                minLength: 1
+                maxLength: 500
+
     AnalysisContext:
       type: object
       required: [contractVersion, matchKey, snapshotId, evidenceRevision, selectionKey, acquiredAt, expiresAt, sources, sourceAvailability, valueEvidence]
@@ -1536,140 +1618,3 @@ components:
               anyOf: [{ $ref: "#/components/schemas/MatchPathContext" }, { type: "null" }]
             matchJourney:
               anyOf: [{ $ref: "#/components/schemas/MatchJourney" }, { type: "null" }]
-    JinxMatchOutlookV3:
-      type: object
-      additionalProperties: false
-      required: [contractVersion, matchKey, snapshotId, evidenceRevision, selectionKey, evaluatedAt, expiresAt, verdict, reasonCode, shortReason, riskNote, evidence, sourceAvailability, explanationOrigin, value]
-      properties:
-        contractVersion: { const: jinx-match-outlook.v3 }
-        matchKey: { type: string }
-        snapshotId: { type: string }
-        evidenceRevision: { type: string }
-        selectionKey: { type: string }
-        evaluatedAt: { type: string, format: date-time }
-        expiresAt: { type: string, format: date-time }
-        verdict: { type: string, enum: [FAVORABLE, UNFAVORABLE, WAIT] }
-        reasonCode:
-          type: string
-          enum: [MATCH_NOT_LIVE, LIVE_NOT_VERIFIED, NO_SELECTION, CONTEXT_CONFLICT, POLICY_UNAVAILABLE, VALUE_UNAVAILABLE, MARKET_UNAVAILABLE, STATE_MISMATCH, EVIDENCE_STALE, VALUE_POSITIVE, VALUE_NEGATIVE]
-        shortReason: { type: string, minLength: 1, maxLength: 240 }
-        riskNote: { type: [string, "null"], maxLength: 120 }
-        explanationOrigin: { type: string, enum: [LIVE, DETERMINISTIC] }
-        sourceAvailability: { type: object, additionalProperties: { type: string } }
-        evidence:
-          type: array
-          maxItems: 2
-          items:
-            type: object
-            additionalProperties: false
-            required: [id, source, text]
-            properties:
-              id: { type: string }
-              source: { type: string }
-              text: { type: string, maxLength: 2500 }
-        value:
-          type: [object, "null"]
-          description: Null for WAIT. Otherwise approved probability/odds, fairPrice, expectedValue, minimumExpectedValue, policyId, modelVersion, validationRef and both measurement timestamps; verdict must match the value criterion.
-    JinxMatchOutlookV4:
-      type: object
-      additionalProperties: false
-      description: V3 fields and verdict rules, a 320-character shortReason, no missing-value riskNote, and the pilot signal.
-      required: [contractVersion, matchKey, snapshotId, evidenceRevision, selectionKey, evaluatedAt, expiresAt, verdict, reasonCode, shortReason, riskNote, evidence, sourceAvailability, explanationOrigin, value, signal]
-      properties:
-        contractVersion: { const: jinx-match-outlook.v4 }
-        matchKey: { type: string }
-        snapshotId: { type: string }
-        evidenceRevision: { type: string }
-        selectionKey: { type: string }
-        evaluatedAt: { type: string, format: date-time }
-        expiresAt: { type: string, format: date-time }
-        verdict: { $ref: "#/components/schemas/JinxMatchOutlookV3/properties/verdict" }
-        reasonCode: { $ref: "#/components/schemas/JinxMatchOutlookV3/properties/reasonCode" }
-        shortReason: { type: string, minLength: 1, maxLength: 320 }
-        riskNote: { type: [string, "null"], maxLength: 120 }
-        explanationOrigin: { type: string, enum: [LIVE, DETERMINISTIC] }
-        sourceAvailability: { type: object, additionalProperties: { type: string } }
-        evidence: { $ref: "#/components/schemas/JinxMatchOutlookV3/properties/evidence" }
-        value: { $ref: "#/components/schemas/JinxMatchOutlookV3/properties/value" }
-        signal:
-          type: [object, "null"]
-          additionalProperties: false
-          required: [policyId, basis, confidence, odds, impliedProbability, edge, lean, pressure]
-          description: Null for stale, conflicting, not-live, settled or confidence-less snapshots. impliedProbability = 1/odds and edge = confidence - impliedProbability; odds, impliedProbability, edge and lean are null together when no current price exists.
-          properties:
-            policyId: { const: JINX_LEAN_PILOT_V1 }
-            basis: { const: POOL_SHARE_UNCALIBRATED }
-            confidence: { type: number, exclusiveMinimum: 0, maximum: 1 }
-            odds: { type: [number, "null"], exclusiveMinimum: 1 }
-            impliedProbability: { type: [number, "null"], exclusiveMinimum: 0, exclusiveMaximum: 1 }
-            edge: { type: [number, "null"], exclusiveMinimum: -1, exclusiveMaximum: 1 }
-            lean: { type: [string, "null"], enum: [FAVORABLE, NEUTRAL, UNFAVORABLE, null] }
-            pressure:
-              type: [object, "null"]
-              additionalProperties: false
-              required: [homeShare, leader, effect, source, minute]
-              properties:
-                homeShare: { type: [number, "null"], minimum: 0, maximum: 1 }
-                leader: { type: string, enum: [HOME, AWAY, BALANCED, NONE] }
-                effect: { type: string, enum: [FOR, AGAINST, NEUTRAL] }
-                source: { type: string, enum: [CURRENT, LAST_INTERVAL], description: "CURRENT: fresh current interval (<= 240 s); LAST_INTERVAL: latest measured journey interval (<= 10 min)" }
-                minute: { type: [integer, "null"], minimum: 0, maximum: 150, description: Match minute of a LAST_INTERVAL sample; null for CURRENT }
-    JinxMatchOutlookV2:
-      allOf:
-        - $ref: "#/components/schemas/JinxMatchOutlookBase"
-        - type: object
-          required: [sections]
-          properties:
-            contractVersion: { const: jinx-match-outlook.v2 }
-            body: { type: "null" }
-            sections:
-              type: array
-              maxItems: 3
-              description: Empty when unavailable; otherwise SUPPORTING, LIMITING, WATCH in that order.
-              items:
-                type: object
-                additionalProperties: false
-                required: [kind, body]
-                properties:
-                  kind: { type: string, enum: [SUPPORTING, LIMITING, WATCH] }
-                  body: { type: string, minLength: 1, maxLength: 2500 }
-    JinxMatchOutlookV1:
-      allOf:
-        - $ref: "#/components/schemas/JinxMatchOutlookBase"
-        - type: object
-          properties:
-            contractVersion: { const: jinx-match-outlook.v1 }
-    JinxMatchOutlookBase:
-      type: object
-      description: >-
-        Informative only. Must carry no recommendation, no certainty about the
-        future, and no model, Super or rating vocabulary; the client refuses
-        such wording again before rendering.
-      required:
-        - contractVersion
-        - origin
-        - availability
-        - headline
-        - body
-        - confidence
-        - uncertaintyNote
-        - signals
-      properties:
-        matchKey: { type: [string, "null"] }
-        contractVersion: { type: string, enum: [jinx-match-outlook.v1, jinx-match-outlook.v2] }
-        origin: { $ref: "#/components/schemas/IntelligenceOrigin" }
-        availability: { type: string, enum: [OK, DEGRADED, UNAVAILABLE] }
-        headline: { type: [string, "null"] }
-        body: { type: [string, "null"] }
-        confidence: { type: [number, "null"], minimum: 0, maximum: 1 }
-        uncertaintyNote: { type: [string, "null"] }
-        signals:
-          type: [array, "null"]
-          maxItems: 8
-          items: { $ref: "#/components/schemas/JinxOutlookSignal" }
-        freshness:
-          type: object
-          properties:
-            capturedAt: { type: [string, "null"], format: date-time }
-            ageSeconds: { type: [number, "null"] }
-            stale: { type: boolean }

@@ -673,7 +673,7 @@ export function mockLiveContext(key: string, state: MockLiveContextState) {
  * carries `origin: "SYNTHETIC"`, and the surfaces that render them are required
  * to say so. These exist so the three M15 surfaces can be built and verified
  * against the shape the real engines will serve - TASK-0044 under M9 for the
- * match path, TASK-0011 under M11 for the Jinx reading - without waiting for
+ * match path - without waiting for
  * either engine and without ever showing an invented number as evidence.
  *
  * As with live context, state is chosen by match id so one preview session
@@ -969,89 +969,5 @@ export function mockMatchPath(key: string, state: MockIntelligenceState) {
     availability: "UNAVAILABLE",
     initialCohortSize: 0,
     points: null
-  };
-}
-
-export function mockJinxOutlook(key: string, state: MockIntelligenceState) {
-  const base = {
-    matchKey: key,
-    contractVersion: "jinx-match-outlook.v1" as const,
-    origin: "SYNTHETIC" as const
-  };
-
-  if (state === "POPULATED") {
-    return {
-      ...base,
-      availability: "OK",
-      headline: "Ev sahibi baskısı sürüyor, maç dengesini henüz kaybetmedi.",
-      body:
-        "Ev sahibi topu daha çok elinde tutuyor ve ceza sahasına daha sık " +
-        "giriyor. Deplasman ise kontratakta net iki pozisyon buldu, yani " +
-        "üstünlük sahada göründüğü kadar tek yönlü değil.",
-      confidence: 0.58,
-      uncertaintyNote:
-        "Bu okuma yalnız maç içi göstergelere bakar; kadro, sakatlık ve " +
-        "hakem kararları görünmüyor.",
-      signals: [
-        {
-          signalKey: "possession",
-          label: "Ev sahibi topa daha çok sahip",
-          direction: "SUPPORTING",
-          strength: "MODERATE"
-        },
-        {
-          signalKey: "counter",
-          label: "Deplasman kontratakta etkili",
-          direction: "OPPOSING",
-          strength: "MODERATE"
-        },
-        {
-          signalKey: "cards",
-          label: "Kart tablosu dengeli",
-          direction: "NEUTRAL",
-          strength: "WEAK"
-        }
-      ],
-      freshness: {
-        capturedAt: "2026-09-02T09:00:00.000Z",
-        ageSeconds: 35,
-        stale: false
-      }
-    };
-  }
-
-  if (state === "LOW_SAMPLE" || state === "PARTIAL") {
-    // An outlook produced from partial material, saying so. Different from
-    // having no outlook at all.
-    return {
-      ...base,
-      availability: "DEGRADED",
-      headline: "Maçın yalnız bir bölümünü görebiliyorum.",
-      body: null,
-      confidence: 0.22,
-      uncertaintyNote:
-        "Elimdeki veri eksik; bu satır bir okuma değil, yalnız görebildiğim " +
-        "kadarının özeti.",
-      signals: [
-        {
-          signalKey: "tempo",
-          label: "Tempo düşük",
-          direction: "NEUTRAL",
-          strength: "WEAK"
-        }
-      ],
-      freshness: { ageSeconds: 900, stale: true }
-    };
-  }
-
-  return {
-    ...base,
-    availability: "UNAVAILABLE",
-    headline: null,
-    body: null,
-    confidence: null,
-    uncertaintyNote: null,
-    signals: null,
-    freshness: { stale: true }
   };
 }

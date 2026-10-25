@@ -1,6 +1,5 @@
 import {
   analysisContextSchema,
-  jinxAssessmentSchema,
   liveContextSchema,
   dashboardSchema,
   matchDetailSchema,
@@ -8,7 +7,6 @@ import {
   matchInsightSchema,
   matchLeagueContextSchema,
   matchListSchema,
-  jinxMatchOutlookSchema,
   matchPathContextSchema,
   periodScoreContextSchema,
   superLogDetailSchema,
@@ -30,17 +28,14 @@ import {
   mockLiveContext,
   mockLiveContextState,
   mockIntelligenceState,
-  mockJinxOutlook,
   mockMatchPath,
   mockTeamForm
 } from "./mock-data";
 import { MobileApiError, type MobileApi } from "./mobile-api";
 import { rebuildCohortsReportSchema, rebuildMatchSchema, rebuildReportSchema } from "./rebuild-schemas";
 import { rebuildPressureHistorySchema, rebuildStatisticsSchema, rebuildPoolPathSchema } from "./rebuild-statistics-schemas";
-import { decisionContextSchema, type AnalysisContext, type MatchJourney } from "./schemas";
-import { previewJinxSignal, previewSelectionReading } from "../mascot/jinx-assessment";
+import { decisionContextSchema, type MatchJourney } from "./schemas";
 
-const analysisSnapshots = new Map<string, AnalysisContext>();
 
 /** Preview-only interval pressure, so mock builds can show the Baskı grafiği. */
 function withPreviewPressure(journey: MatchJourney): MatchJourney {
@@ -135,21 +130,13 @@ export const mockMobileApi: MobileApi = {
       acquiredAt, expiresAt: new Date(Date.now() + 120000).toISOString(), sources,
       sourceAvailability: Object.fromEntries(Object.keys(sources).map((name) => [name, "SYNTHETIC"])),
       valueEvidence: null });
-    if (analysisSnapshots.size >= 128) analysisSnapshots.delete(analysisSnapshots.keys().next().value!);
-    analysisSnapshots.set(packet.snapshotId, packet);
     return packet;
   },
-  async getMatchJinxAssessment(key, snapshotId, signal) {
+  async getRebuildJinxExplanation(key, _decisionId, signal) {
     await mockDelay(signal);
-    const packet = analysisSnapshots.get(snapshotId);
-    if (!packet || packet.matchKey !== key || Date.parse(packet.expiresAt) <= Date.now())
-      throw new MobileApiError("Maç verisini yenileyip tekrar sor.", 409, "ANALYSIS_SNAPSHOT_EXPIRED");
-    return jinxAssessmentSchema.parse({ contractVersion: "jinx-match-outlook.v4", matchKey: key,
-      snapshotId, evidenceRevision: packet.evidenceRevision, selectionKey: packet.selectionKey,
-      evaluatedAt: new Date().toISOString(), expiresAt: packet.expiresAt, verdict: "WAIT",
-      reasonCode: "POLICY_UNAVAILABLE", shortReason: previewSelectionReading(packet),
-      riskNote: "Örnek veri.", evidence: [], value: null, signal: previewJinxSignal(packet),
-      sourceAvailability: packet.sourceAvailability, explanationOrigin: "DETERMINISTIC" });
+    return { contractVersion: "jinx-rb1-explainer.v1", matchKey: key,
+      asOf: new Date().toISOString(), decisionId: null, evidenceKey: null, origin: "DETERMINISTIC",
+      availability: "UNAVAILABLE", reasonCode: "NO_DECISION", facts: [] };
   },
   async getDashboard(signal) {
     await mockDelay(signal);
@@ -254,13 +241,6 @@ export const mockMobileApi: MobileApi = {
     );
   },
 
-  async getMatchJinxOutlook(key, signal) {
-    await mockDelay(signal);
-    return jinxMatchOutlookSchema.parse(
-      mockJinxOutlook(key, mockIntelligenceState(key))
-    );
-  },
-
   async getMatchSuperLogs(key, signal) {
     await mockDelay(signal);
     return superLogListSchema.parse(
@@ -360,12 +340,6 @@ export const mockMobileApi: MobileApi = {
       );
     }
     return totoProgramSchema.parse(clone(program));
-  },
-
-  async getJinxQuip(_mood, signal) {
-    await mockDelay(signal);
-    // The mock never invents wording; callers keep their deterministic line.
-    return { enabled: false, source: "DISABLED", body: null };
   },
 
   async registerDevice(_token, _platform, _installationId, signal) {

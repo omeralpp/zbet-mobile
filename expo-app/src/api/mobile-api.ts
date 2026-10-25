@@ -1,10 +1,7 @@
+import type { JinxRb1Explanation } from "./jinx-rb1-schema";
 import type {
   AnalysisContext,
-  JinxAssessment,
   Dashboard,
-  JinxMatchOutlook,
-  JinxQuipRequest,
-  JinxQuipResponse,
   LiveContext,
   MatchPathContext,
   MatchJourney,
@@ -30,7 +27,7 @@ export interface MobileApi {
   getRebuildPressureHistory(key: string, signal?: AbortSignal): Promise<RebuildPressureHistory>;
   getRebuildPoolPath(key: string, signal?: AbortSignal): Promise<RebuildPoolPath>;
   getMatchAnalysisContext(key: string, signal?: AbortSignal): Promise<AnalysisContext>;
-  getMatchJinxAssessment(key: string, snapshotId: string, signal?: AbortSignal): Promise<JinxAssessment>;
+  getRebuildJinxExplanation(key: string, decisionId?: string, signal?: AbortSignal): Promise<JinxRb1Explanation>;
   getDashboard(signal?: AbortSignal): Promise<Dashboard>;
   getMatches(signal?: AbortSignal): Promise<MatchSummary[]>;
   getMatchInsights(signal?: AbortSignal): Promise<MatchInsight[]>;
@@ -65,16 +62,6 @@ export interface MobileApi {
    */
   getMatchPath(key: string, signal?: AbortSignal): Promise<MatchPathContext>;
   getMatchJourney(key: string, signal?: AbortSignal): Promise<MatchJourney>;
-  /**
-   * Informative Jinx reading of one match (M15 / TASK-0046).
-   *
-   * User-triggered rather than ambient, so it is never fetched until asked for.
-   * Real centralized analysis is TASK-0011 under M11.
-   */
-  getMatchJinxOutlook(
-    key: string,
-    signal?: AbortSignal
-  ): Promise<JinxMatchOutlook>;
   getMatchSuperLogs(key: string, signal?: AbortSignal): Promise<SuperLog[]>;
   getSuperLogs(signal?: AbortSignal): Promise<SuperLog[]>;
   getSuperKpis(signal?: AbortSignal): Promise<SuperKpis>;
@@ -89,10 +76,6 @@ export interface MobileApi {
     version: number,
     signal?: AbortSignal
   ): Promise<TotoProgram>;
-  getJinxQuip(
-    mood: JinxQuipRequest,
-    signal?: AbortSignal
-  ): Promise<JinxQuipResponse>;
   registerDevice(
     token: string,
     platform: "android" | "ios",

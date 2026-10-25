@@ -46,8 +46,6 @@ export const queryKeys = {
   matchTeamForm: (key: string) => ["matches", key, "teamForm"] as const,
   matchPath: (key: string) => ["matches", key, "matchPath"] as const,
   matchJourney: (key: string) => ["matches", key, "matchJourney"] as const,
-  matchJinxOutlook: (key: string) =>
-    ["matches", key, "jinxOutlook"] as const,
   totoPrograms: ["totoPrograms"] as const,
   totoProgram: (gcNo: number, version: number) =>
     ["totoPrograms", gcNo, version] as const
@@ -157,25 +155,6 @@ export function matchJourneyQuery(key: string) {
     queryKey: queryKeys.matchJourney(key),
     queryFn: ({ signal }) => mobileApi.getMatchJourney(key, signal),
     staleTime: 15_000, enabled: Boolean(key), retry: 1
-  });
-}
-
-/**
- * The Jinx outlook is asked for, never ambient.
- *
- * `enabled` is driven by the caller's own asked-state rather than by the key
- * alone, so opening Match Detail costs nothing until the user requests a
- * reading. It is not retried: a reading that could not be produced is an
- * answer, and silently trying again would make the surface feel like it is
- * thinking when it is not.
- */
-export function matchJinxOutlookQuery(key: string, asked: boolean, selectionKey = "") {
-  return queryOptions({
-    queryKey: [...queryKeys.matchJinxOutlook(key), selectionKey],
-    queryFn: ({ signal }) => mobileApi.getMatchJinxOutlook(key, signal),
-    staleTime: 60_000,
-    enabled: Boolean(key) && asked,
-    retry: false
   });
 }
 

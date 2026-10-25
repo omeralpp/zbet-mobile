@@ -29,8 +29,7 @@ function resolveMobileApi(): MobileApi {
   const httpApi = createHttpMobileApi(runtimeConfig.mobileApiUrl);
   return withSyntheticIntelligence(httpApi, {
     teamForm: runtimeConfig.teamFormIntelligence === "SYNTHETIC",
-    matchPath: runtimeConfig.matchPathIntelligence === "SYNTHETIC",
-    jinxOutlook: runtimeConfig.mobileIntelligence === "SYNTHETIC"
+    matchPath: runtimeConfig.matchPathIntelligence === "SYNTHETIC"
   });
 }
 

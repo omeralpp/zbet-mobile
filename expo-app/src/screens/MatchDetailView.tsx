@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useCallback, useRef, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Stack, useFocusEffect, useRouter } from "expo-router";
 import {
@@ -22,9 +22,6 @@ import {
   rebuildPoolPathQuery,
   rebuildStatisticsQuery
 } from "@/src/api/queries";
-import { mobileApi } from "@/src/api";
-import type { AnalysisContext } from "@/src/api/schemas";
-import { JinxAssessmentCard } from "@/src/components/JinxAssessmentCard";
 import { pressureSide } from "@/src/components/MatchCard";
 import { PitchMarkings } from "@/src/components/PitchMarkings";
 import { RebuildDecisionModule, RebuildJinxCard, useRebuildClock } from "@/src/components/RebuildEvidencePanel";
@@ -35,7 +32,6 @@ import { possessionContext } from "@/src/utils/rebuild-possession";
 import { matchPeriodLabel } from "@/src/utils/match-period";
 import { formatQuote } from "@/src/utils/rebuild-display";
 import { rebuildPresentation } from "@/src/utils/rebuild-presentation";
-import { analysisNeedsRefresh } from "@/src/mascot/jinx-assessment";
 import { useJinxAnalyticalSurface } from "@/src/mascot/JinxPreferencesProvider";
 import { ChangeEmphasis } from "@/src/components/ChangeEmphasis";
 import { LiveDot } from "@/src/components/LiveDot";
@@ -277,29 +273,11 @@ export function MatchDetailView({
     void pressureHistory.refetch();
     void poolPath.refetch();
   };
-  const intelligence = mountsIntelligenceSurfaces(runtimeConfig.mobileIntelligence) && !query.data?.rebuild;
   const teamFormEnabled = mountsIntelligenceSurfaces(runtimeConfig.teamFormIntelligence);
   const teamForm = sourceView(context.data?.sources.teamForm);
   const journey = sourceView(context.data?.sources.matchJourney);
   const matchPath = sourceView(context.data?.sources.matchPath);
-  const jinx = useMutation({ mutationFn: (packet: AnalysisContext) =>
-    mobileApi.getMatchJinxAssessment(packet.matchKey, packet.snapshotId), retry: false });
-  const askJinx = async () => {
-    let packet = context.data;
-    if (analysisNeedsRefresh(packet, jinx.error)) packet = (await context.refetch()).data;
-    if (packet) jinx.mutate(packet);
-  };
-  // NXT-OBS-178: Jinx gives its confidence on arrival for a live selection,
-  // once per opened match; later readings stay on the Yenile button.
-  const autoAskedKey = useRef<string | null>(null);
-  const askOnArrival = jinx.mutate;
-  useEffect(() => {
-    const packet = context.data;
-    if (!intelligence || !packet || packet.matchKey !== key || autoAskedKey.current === key) return;
-    if (!["LIVE", "HALF_TIME"].includes(packet.sources.matchDetail.status) || !packet.selectionKey) return;
-    autoAskedKey.current = key;
-    askOnArrival(packet);
-  }, [askOnArrival, context.data, intelligence, key]);
+
   // A chip opens its module if it is closed, then brings it under the header.
   // Window positions keep this independent of how the list lays modules out.
   const jumpToModule = (id: LiveDetailModuleId) => {
@@ -752,9 +730,7 @@ export function MatchDetailView({
       </TutorialTarget>
       </View>
 
-      {query.data?.rebuild ? <RebuildJinxCard matchKey={key} matchStatus={match.status} possession={possession} /> : intelligence ? <JinxAssessmentCard context={context.data} assessment={jinx.data}
-        pending={jinx.isPending && jinx.variables?.matchKey === key}
-        error={jinx.isError && jinx.variables?.matchKey === key} onAsk={() => void askJinx()} /> : null}
+      {query.data?.rebuild ? <RebuildJinxCard matchKey={key} matchStatus={match.status} possession={possession} /> : null}
 
       <View collapsable={false} ref={(node) => { moduleRefs.current.set("matchPath", node); }}>
         <MatchPathCard

@@ -1,0 +1,61 @@
+{
+  "task": "TASK-0189",
+  "date": "2026-10-25",
+  "state": "LOCAL_VALIDATED_DELIVERY_PENDING",
+  "baselines": {
+    "bff": "6910629e27f248a3697739ad94baebc55a211951",
+    "mobile": "429f89a3307196cbe5023bfbb8acadeafe4d20a8"
+  },
+  "sourceDirty": true,
+  "bffTests": {
+    "passed": 672,
+    "failed": 0
+  },
+  "clientTests": {
+    "passed": 665,
+    "failed": 0
+  },
+  "toolingTests": {
+    "passed": 32,
+    "failed": 0
+  },
+  "doctorChecks": 20,
+  "web": {
+    "mode": "edge",
+    "scannedFiles": 5,
+    "verify": "PASS",
+    "export": "PASS"
+  },
+  "android": {
+    "physicalDeviceConnected": false,
+    "sha256": "3B798C9ED72F0220C0471817C3941DC9986092865DC2FDC4144EEFBBEF00A19C",
+    "installed": false,
+    "bundle": "PASS",
+    "bytes": 94877318,
+    "abi": "arm64-v8a",
+    "nativeBuild": "assembleDebug",
+    "distributed": false
+  },
+  "browser": {
+    "actualGeminiCall": false,
+    "callsBeforeRefresh": 0,
+    "provider": "injected synthetic test double",
+    "phone": {
+      "horizontalOverflow": false,
+      "height": 844,
+      "rejectedProseFallback": "PASS",
+      "untrustedTextVisible": false,
+      "width": 390
+    },
+    "desktop": {
+      "height": 720,
+      "keyboardEnter": "PASS",
+      "manualOrdering": "PASS",
+      "width": 1280
+    }
+  },
+  "activeBffRestarted": false,
+  "published": false,
+  "commitPushApproved": false,
+  "probabilityLaneReopened": false
+}

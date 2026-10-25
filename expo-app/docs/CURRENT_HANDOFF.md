@@ -1,7 +1,20 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-25
-Mod: `OBSERVATION / MATCH JOURNEY UX PAIR COMPLETE`
+Mod: `LOCAL_VALIDATED / TASK-0189 GIT_APPROVED_DELIVERY_PENDING`
+TASK-0189 Jinx RB1 explainer is locally implemented on shared Android/web source:
+Gemini orders five server-written facts only; legacy prose/quip/pilot-signal
+paths are retired. BFF 672 tests/build; Mobile check (665+32 tests), Doctor,
+Android bundle, verified web export and ARM64 debug compile pass.
+Synthetic desktop/phone-width ordering, keyboard refresh and fallback pass.
+No connected device, actual Gemini call or new owner acceptance is claimed.
+Owner approved the reviewed Mobile/BFF/tooling commit/push on 2026-10-25.
+The task/run register records the pushed source checkpoint. No active BFF
+restart or APK/web publication is approved; the cutover run stays open.
+After the approved Git checkpoint, the next gate is an exact-SHA DEV BFF restart.
+[Scope, evidence and remaining gates](JINX_AI_EXPLAINER_BATCH_2026-10-25.md).
+
+Previously accepted delivery (retained while TASK-0189 awaits approval):
 Delivery: `OWNER_ONLY_DEV_PILOT / 3f3b5fd PAIR COMPLETE (both owner smokes passed 2026-10-25)`
 Maçın yolu redesign is delivered from clean pushed source `3f3b5fd6af931e6f285ea82f50a55bce72e1915b`.
 Android APK `4C452CEDF278…` passed signature/ARM64 and owner-only Drive download

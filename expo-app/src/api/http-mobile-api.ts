@@ -1,3 +1,4 @@
+import { jinxRb1ExplanationSchema } from "./jinx-rb1-schema";
 import { z, type ZodType } from "zod";
 import {
   browserReloadHost,
@@ -13,14 +14,11 @@ import { assertDecisionContextResponse } from "./decision-context-http";
 import {
   dashboardSchema,
   analysisContextSchema,
-  jinxAssessmentV4Schema,
   matchDetailSchema,
   matchInsightListSchema,
   matchInsightSchema,
   matchLeagueContextSchema,
   matchListSchema,
-  jinxMatchOutlookSchema,
-  jinxQuipSchema,
   liveContextSchema,
   matchPathContextSchema,
   matchJourneySchema,
@@ -224,17 +222,12 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
         ...(runtimeConfig.matchPathIntelligence === "LIVE" ? ["journey"] : []),
         ...(runtimeConfig.teamFormIntelligence === "LIVE" ? ["form"] : [])
       ].join(",") } }, signal),
-    getMatchJinxAssessment: (key, snapshotId, signal) => request(
-      `/v1/btb/matches/${encodeURIComponent(key)}/jinx-outlook`, jinxAssessmentV4Schema,
-      { headers: { ...decisionContextHeaders, "X-BTB-Jinx-Version": "jinx-match-outlook.v4",
-        "X-BTB-Analysis-Snapshot": snapshotId } }, signal),
-    getMatchJinxOutlook: (key, signal) =>
-      request(
-        `/v1/btb/matches/${encodeURIComponent(key)}/jinx-outlook`,
-        jinxMatchOutlookSchema,
-        { headers: { ...decisionContextHeaders, "X-BTB-Jinx-Version": "jinx-match-outlook.v2" } },
-        signal
-      ),
+    getRebuildJinxExplanation: (key, decisionId, signal) =>
+      request("/v1/btb/matches/" + encodeURIComponent(key) + "/jinx-outlook",
+        jinxRb1ExplanationSchema, { headers: { ...decisionContextHeaders,
+          "X-BTB-Jinx-Version": "jinx-rb1-explainer.v1",
+          ...(decisionId ? { "X-BTB-Jinx-Decision": decisionId } : {}) } }, signal),
+
     getMatchSuperLogs: (key, signal) =>
       request(
         `/v1/btb/matches/${encodeURIComponent(key)}/super-logs`,
@@ -267,13 +260,6 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
         `/v1/toto/programs/${gcNo}/${version}`,
         totoProgramSchema,
         {},
-        signal
-      ),
-    getJinxQuip: (mood, signal) =>
-      request(
-        "/v1/jinx/quip",
-        jinxQuipSchema,
-        { method: "POST", body: JSON.stringify(mood) },
         signal
       ),
     registerDevice: async (token, platform, installationId, signal) => {

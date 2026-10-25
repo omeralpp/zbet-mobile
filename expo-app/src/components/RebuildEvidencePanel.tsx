@@ -1,5 +1,7 @@
+import { mobileApi } from "@/src/api";
+import { currentRb1Explanation } from "@/src/utils/rebuild-jinx";
 import { useEffect, useState, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
@@ -260,12 +262,21 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession }: 
   const [showCandidates, setShowCandidates] = useState(false);
   const params = useLocalSearchParams<{decision?:string | string[]}>();
   const requested = requestedDecision(params.decision);
+  const explanation = useMutation({ retry: false, mutationFn: async () => {
+    const fresh = await query.refetch();
+    if (fresh.isError || !fresh.data) throw new Error("RB1 evidence unavailable");
+    const freshHero = rebuildHero({ data: fresh.data, matchKey, status: matchStatus, now, error: false, decisionId: requested });
+    return mobileApi.getRebuildJinxExplanation(matchKey, freshHero?.record?.decisionId);
+  } });
   const data = query.data;
   const hero = rebuildHero({data, matchKey, status: matchStatus, now, error: query.isError, decisionId: requested});
   const record = hero?.record;
   const state = rebuildPresentation({ status: matchStatus, summary: data, now, error: query.isError,
     redUnknown: data?.candidates.some(candidate => candidate.reason === "RED_CARD_UNKNOWN") });
   const text = record ? publishedExplanation(record) : requested ? "İncelenen karar kaydı doğrulanamadı." : state.text;
+  const ordered = currentRb1Explanation(explanation.isError || explanation.isPending ? null : explanation.data, record, matchKey, query.isError);
+  const explanationText = ordered ? ordered.facts.map(fact => fact.text).join(" ") : text;
+  const refreshing = query.isFetching || explanation.isPending;
   const support = record ? formatSupport(record.poolWins, record.poolTotal) : null;
   return (
     <View style={styles.jinxCard}>
@@ -279,17 +290,21 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession }: 
         <Pressable
           accessibilityLabel="Jinx değerlendirmesini yenile"
           accessibilityRole="button"
-          accessibilityState={{ busy: query.isFetching }}
-          onPress={() => { void query.refetch(); }}
+          accessibilityState={{ busy: refreshing }}
+          disabled={explanation.isPending}
+          onPress={() => explanation.mutate()}
           style={({ pressed, hovered }) => [styles.jinxRefresh, hovered && styles.actionHover, pressed && styles.pressed]}
         >
           <MaterialCommunityIcons color={colors.text} name="refresh" size={iconSizes.small} />
-          <Text style={styles.jinxRefreshText}>{query.isFetching ? "Yenileniyor…" : "Yenile"}</Text>
+          <Text style={styles.jinxRefreshText}>{refreshing ? "Yenileniyor…" : "Yenile"}</Text>
         </Pressable>
       </View>
       <View style={[styles.jinxBody, wide && styles.jinxBodyWide]}>
       <View style={[styles.jinxSpeech, wide && styles.jinxSpeechWide]}>
-        <Text accessibilityLiveRegion="polite" style={styles.jinxSpeechText}>{text}</Text>
+        <Text accessibilityLiveRegion="polite" style={styles.jinxSpeechText}>{explanationText}</Text>
+        {explanation.isSuccess || explanation.isError ? <Text style={styles.caption}>
+          {ordered?.origin === "LIVE" ? "Gemini sıralaması · karar anındaki kanıt" : "Kurallı açıklama"}
+        </Text> : null}
         {record ? <Text style={styles.caption}>{hero?.stateText ?? state.text}</Text> : null}
         {possession ? <Text style={styles.caption}>Ek saha bilgisi · {possession.label}. Seçim kanıtından ayrıdır.</Text> : null}
       </View>

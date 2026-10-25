@@ -258,7 +258,6 @@ test("keeps the checked-in OpenAPI document parseable and route-complete", async
       "/v1/dashboard",
       "/v1/devices",
       "/v1/devices/{installationId}",
-      "/v1/jinx/quip",
       "/v1/super/logs",
       "/v1/super/kpis",
       "/v1/super/logs/{key}",

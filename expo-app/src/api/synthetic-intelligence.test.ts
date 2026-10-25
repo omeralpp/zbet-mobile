@@ -63,7 +63,7 @@ test("different keys generally hash apart", () => {
 });
 
 /* ---------------------------------------------------------------- *
- * The wrapper substitutes exactly three routes and nothing else
+ * The wrapper substitutes form and path routes and nothing else
  * ---------------------------------------------------------------- */
 
 function baseApi(): MobileApi {
@@ -71,6 +71,7 @@ function baseApi(): MobileApi {
     throw new Error(`${name} should have been passed through`);
   };
   return {
+    getRebuildJinxExplanation: unexpected("getRebuildJinxExplanation"),
     getDashboard: unexpected("getDashboard"),
     getMatches: unexpected("getMatches"),
     getMatchInsights: unexpected("getMatchInsights"),
@@ -81,7 +82,6 @@ function baseApi(): MobileApi {
     getMatchLiveContext: unexpected("getMatchLiveContext"),
     getMatchTeamForm: unexpected("getMatchTeamForm"),
     getMatchPath: unexpected("getMatchPath"),
-    getMatchJinxOutlook: unexpected("getMatchJinxOutlook"),
     getMatchSuperLogs: unexpected("getMatchSuperLogs"),
     getSuperLogs: unexpected("getSuperLogs"),
     getSuperKpis: unexpected("getSuperKpis"),
@@ -89,36 +89,32 @@ function baseApi(): MobileApi {
     getSuperLogPeriodScore: unexpected("getSuperLogPeriodScore"),
     getTotoPrograms: unexpected("getTotoPrograms"),
     getTotoProgram: unexpected("getTotoProgram"),
-    getJinxQuip: unexpected("getJinxQuip"),
     registerDevice: unexpected("registerDevice"),
     unregisterDevice: unexpected("unregisterDevice")
   } as unknown as MobileApi;
 }
 
-test("the three M15 reads are answered without touching the base API", async () => {
+test("form and path reads are answered without touching the base API", async () => {
   const api = withSyntheticIntelligence(baseApi());
   const key = realKeys[0] ?? "";
   await api.getMatchTeamForm(key);
   await api.getMatchPath(key);
-  await api.getMatchJinxOutlook(key);
 });
 
 test("live Team Form passes through unchanged while other surfaces stay synthetic", async () => {
   const base = baseApi();
   base.getMatchTeamForm = async () => { throw new Error("live route unavailable"); };
-  const api = withSyntheticIntelligence(base, { teamForm: false, matchPath: true, jinxOutlook: true });
+  const api = withSyntheticIntelligence(base, { teamForm: false, matchPath: true });
   assert.equal(api.getMatchTeamForm, base.getMatchTeamForm);
   await assert.rejects(api.getMatchTeamForm(realKeys[0] ?? ""), /live route unavailable/);
   assert.equal((await api.getMatchPath(realKeys[0] ?? "")).origin, "SYNTHETIC");
-  assert.equal((await api.getMatchJinxOutlook(realKeys[0] ?? "")).origin, "SYNTHETIC");
 });
 
 test("all-live selection replaces none of the API methods", () => {
   const base = baseApi();
-  const api = withSyntheticIntelligence(base, { teamForm: false, matchPath: false, jinxOutlook: false });
+  const api = withSyntheticIntelligence(base, { teamForm: false, matchPath: false });
   assert.equal(api.getMatchTeamForm, base.getMatchTeamForm);
   assert.equal(api.getMatchPath, base.getMatchPath);
-  assert.equal(api.getMatchJinxOutlook, base.getMatchJinxOutlook);
 });
 
 test("real Match Journey reaches the base API and never falls back to samples on failure", async () => {
@@ -128,12 +124,11 @@ test("real Match Journey reaches the base API and never falls back to samples on
     requestedKey = key;
     throw new Error("journey service unavailable");
   };
-  const api = withSyntheticIntelligence(base, { teamForm: false, matchPath: false, jinxOutlook: true });
+  const api = withSyntheticIntelligence(base, { teamForm: false, matchPath: false });
   const key = realKeys[0] ?? "";
   assert.equal(api.getMatchPath, base.getMatchPath);
   await assert.rejects(api.getMatchPath(key), /journey service unavailable/);
   assert.equal(requestedKey, key);
-  assert.equal((await api.getMatchJinxOutlook(key)).origin, "SYNTHETIC");
 });
 
 test("every other route is passed straight through", () => {
@@ -156,14 +151,12 @@ test("every payload the wrapper serves is marked SYNTHETIC", async () => {
   // This is the property that lets fixtures reach a real device at all.
   const api = withSyntheticIntelligence(baseApi());
   for (const key of realKeys) {
-    const [form, path, outlook] = await Promise.all([
+    const [form, path] = await Promise.all([
       api.getMatchTeamForm(key),
-      api.getMatchPath(key),
-      api.getMatchJinxOutlook(key)
+      api.getMatchPath(key)
     ]);
     assert.equal(form.origin, "SYNTHETIC");
     assert.equal(path.origin, "SYNTHETIC");
-    assert.equal(outlook.origin, "SYNTHETIC");
     assert.notEqual(form.origin, "LIVE");
   }
 });
@@ -177,7 +170,5 @@ test("every payload the wrapper serves satisfies its own contract", async () => 
     assert.equal(path.contractVersion, "match-path.v1");
     const form = await api.getMatchTeamForm(key);
     assert.equal(form.contractVersion, "team-form.v1");
-    const outlook = await api.getMatchJinxOutlook(key);
-    assert.equal(outlook.contractVersion, "jinx-match-outlook.v1");
   }
 });

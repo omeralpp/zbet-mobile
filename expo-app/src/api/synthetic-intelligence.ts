@@ -1,24 +1,18 @@
 import {
   analysisContextSchema,
-  jinxAssessmentSchema,
-  jinxMatchOutlookSchema,
   matchPathContextSchema,
   teamFormContextSchema
 } from "./schemas";
 import {
-  mockJinxOutlook,
   mockMatchPath,
   mockRetainedJourney,
   mockTeamForm,
   type MockIntelligenceState
 } from "./mock-data";
 import type { MobileApi } from "./mobile-api";
-import { MobileApiError } from "./mobile-api";
-import type { AnalysisContext } from "./schemas";
-import { previewJinxSignal, previewSelectionReading } from "../mascot/jinx-assessment";
 
 /**
- * Serves the three M15 routes from the built-in fixtures while every other
+ * Serves form and match-path data from built-in fixtures while every other
  * route keeps using the real API.
  *
  * This exists so the surfaces can be reviewed on a real device before the BFF
@@ -75,7 +69,7 @@ export function syntheticStateForKey(key: string): MockIntelligenceState {
 }
 
 /**
- * Wraps an API so only the three M15 reads are answered from fixtures.
+ * Wraps form, match-path and their shared screen context with preview fixtures.
  *
  * Every other method is passed through untouched by spreading the base first,
  * so a route added to `MobileApi` later cannot accidentally start returning
@@ -83,10 +77,9 @@ export function syntheticStateForKey(key: string): MockIntelligenceState {
  */
 export function withSyntheticIntelligence(
   base: MobileApi,
-  features = { teamForm: true, matchPath: true, jinxOutlook: true }
+  features = { teamForm: true, matchPath: true }
 ): MobileApi {
-  const synthetic = features.teamForm || features.matchPath || features.jinxOutlook;
-  const contexts = new Map<string, AnalysisContext>();
+  const synthetic = features.teamForm || features.matchPath;
   return {
     ...base,
     ...(synthetic ? {
@@ -99,54 +92,21 @@ export function withSyntheticIntelligence(
         const sourceAvailability = { ...packet.sourceAvailability,
           ...(features.teamForm ? { teamForm: "SYNTHETIC" } : {}),
           ...(features.matchPath ? { matchPath: "SYNTHETIC", matchJourney: "SYNTHETIC" } : {}) };
-        const snapshot = analysisContextSchema.parse({ ...packet, sources, sourceAvailability,
-          snapshotId: `synthetic-${packet.snapshotId}`, valueEvidence: null,
-          evidenceRevision: `${packet.evidenceRevision}:synthetic:${JSON.stringify(sources)}` });
-        if (contexts.size >= 128) contexts.delete(contexts.keys().next().value!);
-        contexts.set(snapshot.snapshotId, snapshot);
-        return snapshot;
-      },
-      async getMatchJinxAssessment(key: string, snapshotId: string) {
-        const packet = contexts.get(snapshotId);
-        if (!packet || packet.matchKey !== key || Date.parse(packet.expiresAt) <= Date.now())
-          throw new MobileApiError("Maç verisini yenileyip tekrar sor.", 409, "ANALYSIS_SNAPSHOT_EXPIRED");
-        return jinxAssessmentSchema.parse({ contractVersion: "jinx-match-outlook.v4", matchKey: key,
-          snapshotId, evidenceRevision: packet.evidenceRevision, selectionKey: packet.selectionKey,
-          evaluatedAt: new Date().toISOString(), expiresAt: packet.expiresAt, verdict: "WAIT",
-          reasonCode: "VALUE_UNAVAILABLE", shortReason: previewSelectionReading(packet),
-          riskNote: "Önizleme verisi.", evidence: [], value: null, signal: previewJinxSignal(packet),
-          sourceAvailability: packet.sourceAvailability, explanationOrigin: "DETERMINISTIC" });
+        return analysisContextSchema.parse({ ...packet, sources, sourceAvailability,
+          snapshotId: "synthetic-" + packet.snapshotId, valueEvidence: null,
+          evidenceRevision: packet.evidenceRevision + ":synthetic:" + JSON.stringify(sources) });
       }
     } : {}),
-    ...(features.teamForm
-      ? {
-          async getMatchTeamForm(key: string) {
-            return teamFormContextSchema.parse(
-              mockTeamForm(key, syntheticStateForKey(key))
-            );
-          }
-        }
-      : {}),
-    ...(features.matchPath
-      ? {
-          async getMatchJourney(key: string) {
-            return mockRetainedJourney(key);
-          },
-          async getMatchPath(key: string) {
-            return matchPathContextSchema.parse(
-              mockMatchPath(key, syntheticStateForKey(key))
-            );
-          }
-        }
-      : {}),
-    ...(features.jinxOutlook
-      ? {
-          async getMatchJinxOutlook(key: string) {
-            return jinxMatchOutlookSchema.parse(
-              mockJinxOutlook(key, syntheticStateForKey(key))
-            );
-          }
-        }
-      : {})
+    ...(features.teamForm ? {
+      async getMatchTeamForm(key: string) {
+        return teamFormContextSchema.parse(mockTeamForm(key, syntheticStateForKey(key)));
+      }
+    } : {}),
+    ...(features.matchPath ? {
+      async getMatchJourney(key: string) { return mockRetainedJourney(key); },
+      async getMatchPath(key: string) {
+        return matchPathContextSchema.parse(mockMatchPath(key, syntheticStateForKey(key)));
+      }
+    } : {})
   };
 }
