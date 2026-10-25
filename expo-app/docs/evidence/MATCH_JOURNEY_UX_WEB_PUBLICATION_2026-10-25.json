@@ -1,0 +1,28 @@
+{
+  "publishedAtUtc": "2026-10-25T07:36:26.4906227Z",
+  "hostname": "app.surklase.com",
+  "release": "20261025T073559Z-3f3b5fd",
+  "sourceSha": "3f3b5fd6af931e6f285ea82f50a55bce72e1915b",
+  "treeSha256": "2DD5DA5545CCD865AF7D865AD852233307FC36D8975E0D18503CEA2C148634AE",
+  "localProbe": {
+    "hostname": "app.surklase.com",
+    "shell": 200,
+    "shellIsHtml": true,
+    "csp": true,
+    "deepLink": 200,
+    "apiWithoutAccess": 401,
+    "ok": true
+  },
+  "publicGate": {
+    "status": 302,
+    "location": "https://black-cake-3e41.cloudflareaccess.com/cdn-cgi/access/login/app.surklase.com",
+    "protected": true
+  },
+  "pairedBatchId": "client-3f3b5fd6af931e6f285ea82f50a55bce72e1915b-4C452CEDF278-73932E418099",
+  "androidSha256": "4C452CEDF278CC48334D1843ABC2C4FAF8C5B96C71FA0D69E25FC6EC85A06A0B",
+  "pairedWebTreeSha256": "73932E41809960240EA6776F6AD4A528C9F361E35683CDD487D6B962CE196AB8",
+  "productionDeployment": false,
+  "apkDistributed": true,
+  "releaseComplete": false,
+  "status": "AWAITING_BOTH_CLIENT_SMOKE"
+}

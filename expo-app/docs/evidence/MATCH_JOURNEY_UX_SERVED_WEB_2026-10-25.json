@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-25",
+  "sourceSha": "3f3b5fd6af931e6f285ea82f50a55bce72e1915b",
+  "release": "20261025T073559Z-3f3b5fd",
+  "shell": 200,
+  "deepLink": 200,
+  "servedScriptBytesMatch": true,
+  "healthConfigurationParity": true,
+  "scripts": [
+    {
+      "route": "/_expo/static/js/web/index-d1b11ba2408b4baf24c9597cc7eff513.js",
+      "sha256": "A97468A694B90DEBE14650D0C8D9CE1804E22F84048FB7D0057ED58AD968DDBF"
+    }
+  ]
+}

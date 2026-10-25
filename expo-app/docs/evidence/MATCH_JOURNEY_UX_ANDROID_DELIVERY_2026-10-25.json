@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "recordedOn": "2026-10-25",
+  "batchId": "client-3f3b5fd6af931e6f285ea82f50a55bce72e1915b-4C452CEDF278-73932E418099",
+  "sourceSha": "3f3b5fd6af931e6f285ea82f50a55bce72e1915b",
+  "artifact": "btb-mobile-next-3f3b5fd-arm64-pilot.apk",
+  "apkSha256": "4C452CEDF278CC48334D1843ABC2C4FAF8C5B96C71FA0D69E25FC6EC85A06A0B",
+  "bytes": 50491257,
+  "architecture": "arm64-v8a",
+  "signatureVerified": true,
+  "abiVerified": true,
+  "privateOwnerOnly": true,
+  "remoteReadbackVerified": true,
+  "installedVerified": true,
+  "installedApkSha256": "4C452CEDF278CC48334D1843ABC2C4FAF8C5B96C71FA0D69E25FC6EC85A06A0B",
+  "androidSmokePassed": true,
+  "releaseComplete": false,
+  "status": "ANDROID_INSTALLED_WEB_PUBLISHED_AWAITING_WEB_SMOKE",
+  "drive": {
+    "url": "https://drive.google.com/file/d/1eAO9sCNDPxfc2dZfQN_mWtPJdmNvsyK3/view?usp=drivesdk",
+    "fileId": "1eAO9sCNDPxfc2dZfQN_mWtPJdmNvsyK3",
+    "folderId": "1zD0mLb9Bqf9SoJmxqhvkuYDsrQ_MMNSv",
+    "shared": false,
+    "permissions": [{ "type": "user", "role": "owner" }]
+  },
+  "deliveryMethod": "Connected Google Drive plugin; owner-only metadata and complete authenticated download SHA-256/size verification",
+  "evidence": "Pilot signature/ARM64 verification, client-release PREPARED pair, connected Drive owner-only metadata, and complete authenticated readback all passed. On 2026-10-25 the owner replied to the exact private 3f3b5fd APK link and installation/basic-smoke request: Onaylıyorum web I yayınla APK sorunsuz. This confirms installation and basic Android acceptance; broader TalkBack/performance is not asserted.",
+  "pairedWebTreeSha256": "73932E41809960240EA6776F6AD4A528C9F361E35683CDD487D6B962CE196AB8",
+  "webPublicationDryRunPassed": true,
+  "approval": "Owner explicitly approved bounded commit/push, APK build/signing/private delivery and matching web publication: Onaylıyorum tüm adimlari",
+  "previousPair": {
+    "sourceSha": "3f53834349f5def29ecb0b2932e2fb3593f027f0",
+    "apkSha256": "42FD999D6479415E5E142372187239AD176E567659B3C4618891422048011BAB",
+    "webTreeSha256": "117DC5918A54A961AD9A08A5F7A11EA8C5714884F9A1C54CAD128667EE40FFB1",
+    "webRelease": "20261024T193040Z-3f53834",
+    "retainedVerified": true
+  },
+  "nextSteps": [
+    "Obtain the owner's refreshed published-web smoke; technical publication, served-byte and protection/health checks passed.",
+    "Record the actual web result in MATCH_JOURNEY_UX_OWNER_ACCEPTANCE_2026-10-25.json, then complete the pair with scripts/client-release.mjs complete using --source-sha 3f3b5fd6af931e6f285ea82f50a55bce72e1915b.",
+    "Update the Mobile handoff and commit/push the bounded completion documentation after both client smokes pass."
+  ]
+}

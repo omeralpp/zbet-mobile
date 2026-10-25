@@ -1,18 +1,18 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-25
-Mod: `UX PAIRED RELEASE AUTHORIZED / TASK-0188 PAIR COMPLETE`
-Delivery: `OWNER_ONLY_DEV_PILOT / 3f53834 PAIR COMPLETE (both smokes passed 2026-10-24)`
-Pending local candidate: the owner's 25 October "Maçın yolu only" redesign is
-implemented in the shared Android/web component. Event navigation, selected
-details and chart hierarchy are refined; backend/model/data behavior is unchanged.
-Client quality gate, Doctor, Android JS bundle, verified web export and synthetic
-browser checks pass. Owner approved the design on 25 October after the phone
-chart placement clarification, then explicitly approved bounded Mobile commit/push,
-APK build/signing/private delivery and matching web publication. Release preparation
-is in progress; the 3f53834 pair remains the accepted baseline. New APK installation
-must precede web publication; both client smokes are still required. Native device/
-TalkBack smoke remains unverified. [Scope and evidence](MATCH_JOURNEY_UX_2026-10-25.md).
+Mod: `UX WEB PUBLISHED / OWNER WEB SMOKE PENDING`
+Delivery: `OWNER_ONLY_DEV_PILOT / 3f3b5fd PAIR INCOMPLETE (Android confirmed; web smoke pending)`
+Maçın yolu redesign is delivered from clean pushed source `3f3b5fd6af931e6f285ea82f50a55bce72e1915b`.
+Android APK `4C452CEDF278…` passed signature/ARM64 and owner-only Drive download
+hash checks. Owner confirmed installation/basic smoke before web publication.
+Matching web tree `73932E418099…`, release `20261025T073559Z-3f3b5fd`, is published;
+served JS bytes, shell/deep-link/CSP, public Access302 and health parity pass.
+Core/Doctor/Android bundle/web export and synthetic browser checks passed before
+release. The phone chart remains below selected details. Backend/model/data
+behavior is unchanged. Await the owner's refreshed published-web smoke, then
+complete the batch with exact source/hashes. Broader TalkBack/performance remains
+unverified. Previous accepted 3f53834 pair is retained. [Delivery and receipts](MATCH_JOURNEY_UX_DELIVERY_2026-10-25.md).
 Maintenance: TASK-0187 DONE; BFF `310a57a` is pushed and rolled out with owner approval.
 Same-source 48-decision report: 723→86 reads, exact totals; 20 local checks pass.
 Local/public health and v1/v2/Live API pass; owner confirmed Android and web

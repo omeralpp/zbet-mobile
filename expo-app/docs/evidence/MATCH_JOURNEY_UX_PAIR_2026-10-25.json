@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "batchId": "client-3f3b5fd6af931e6f285ea82f50a55bce72e1915b-4C452CEDF278-73932E418099",
+  "sourceSha": "3f3b5fd6af931e6f285ea82f50a55bce72e1915b",
+  "sourceTree": "8aa9a5af42f4393b05cb14415cad15f13ea681d8",
+  "android": {
+    "sha256": "4C452CEDF278CC48334D1843ABC2C4FAF8C5B96C71FA0D69E25FC6EC85A06A0B",
+    "bytes": 50491257,
+    "architecture": "arm64-v8a"
+  },
+  "web": {
+    "treeSha256": "73932E41809960240EA6776F6AD4A528C9F361E35683CDD487D6B962CE196AB8"
+  },
+  "status": "PREPARED",
+  "releaseComplete": false
+}

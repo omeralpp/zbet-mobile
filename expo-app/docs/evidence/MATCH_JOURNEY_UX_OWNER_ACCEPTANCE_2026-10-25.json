@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "batchId": "client-3f3b5fd6af931e6f285ea82f50a55bce72e1915b-4C452CEDF278-73932E418099",
+  "sourceSha": "3f3b5fd6af931e6f285ea82f50a55bce72e1915b",
+  "apkSha256": "4C452CEDF278CC48334D1843ABC2C4FAF8C5B96C71FA0D69E25FC6EC85A06A0B",
+  "webTreeSha256": "73932E41809960240EA6776F6AD4A528C9F361E35683CDD487D6B962CE196AB8",
+  "androidSmokePassed": true,
+  "webSmokePassed": false,
+  "releaseComplete": false,
+  "evidence": "Owner confirmed the exact privately delivered APK installation/basic smoke on 2026-10-25: Onaylıyorum web I yayınla APK sorunsuz. The published web owner's smoke has not yet been observed."
+}
