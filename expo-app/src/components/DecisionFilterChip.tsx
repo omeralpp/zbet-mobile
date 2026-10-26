@@ -43,7 +43,7 @@ export function DecisionFilterChip({
   onActivate: () => void;
   onOpenChange: (open: boolean) => void;
   onChange: (value: StarDecisionFilter) => void;
-  sortValue?: SuperStarSort;
+  sortValue?: SuperStarSort | null;
   onSortChange?: (value: SuperStarSort) => void;
 }) {
   const triggerRef = useRef<View>(null);
@@ -143,7 +143,7 @@ export function DecisionFilterChip({
               }
             ]}
           >
-          {sortValue && onSortChange ? (
+          {sortValue !== undefined && onSortChange ? (
             <Text style={styles.sectionLabel}>Yıldız filtresi</Text>
           ) : null}
           {starFilterOptions.map((option) => (
@@ -171,7 +171,7 @@ export function DecisionFilterChip({
               </Text>
             </Pressable>
           ))}
-          {sortValue && onSortChange ? (
+          {sortValue !== undefined && onSortChange ? (
             <>
               <View style={styles.divider} />
               <Text style={styles.sectionLabel}>Sıralama</Text>

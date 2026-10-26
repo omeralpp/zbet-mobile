@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -8,14 +9,18 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
-  View
+  View,
+  useWindowDimensions
 } from "react-native";
 import type { TotoPrediction } from "@/src/api/schemas";
 import { totoProgramQuery } from "@/src/api/queries";
 import { ModuleHeading } from "@/src/components/ModuleHeading";
+import { FilterChip } from "@/src/components/FilterChip";
+import { Action } from "@/src/components/RebuildEvidencePanel";
+import { totoStatusColor } from "@/src/components/TotoProgramCard";
 import { Screen } from "@/src/components/Screen";
 import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
-import { ErrorState, LoadingState } from "@/src/components/StateView";
+import { EmptyState, ErrorState, LoadingState } from "@/src/components/StateView";
 import {
   buildBilyonerMatchUrl,
   buildBilyonerTotoUrl
@@ -39,9 +44,15 @@ import {
 } from "@/src/utils/format";
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
-import { summarizeTotoResults } from "@/src/utils/toto-results";
+import { filterTotoResults, summarizeTotoResults, type TotoResultFilter } from "@/src/utils/toto-results";
 import { TotoCouponGrid } from "@/src/web/TotoCouponGrid";
-import { totoProgramTone } from "@/src/utils/toto-status";
+
+const resultFilters: { value: TotoResultFilter; label: string }[] = [
+  { value: "ALL", label: "Tümü" },
+  { value: "OPEN", label: "Bekliyor" },
+  { value: "MISS", label: "Kapsam dışı" },
+  { value: "COVERAGE", label: "Kapsamada" }
+];
 
 function predictionResultPresentation(result: TotoPrediction["result"]): {
   color: string;
@@ -92,13 +103,22 @@ export default function TotoProgramDetailScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace("/");
+      router.replace("/toto");
     }
   };
   const query = useQuery(totoProgramQuery(gcNo, version));
-  // Desktop (≥1200 px, platform exception): summary beside a coupon grid.
+  const [resultFilter, setResultFilter] = useState<TotoResultFilter>("ALL");
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = async () => {
+    setRefreshing(true);
+    try { await query.refetch(); } finally { setRefreshing(false); }
+  };
+  // Desktop has a coupon grid; split only when both columns have room.
   const breakpoint = useBreakpoint();
+  const { width } = useWindowDimensions();
   const desktop = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
+  const split = desktop && width >= 1360;
+  const inlineMetrics = desktop ? !split : width >= 375;
 
   if (query.isLoading) {
     return (
@@ -125,17 +145,11 @@ export default function TotoProgramDetailScreen() {
   }
 
   const program = query.data;
-  const statusTone = totoProgramTone(program.status);
-  const statusColor =
-    statusTone === "LIVE"
-      ? semantic.live
-      : statusTone === "OPEN"
-        ? semantic.intelligence
-        : statusTone === "PROBLEM"
-          ? semantic.negative
-          : colors.textMuted;
+  const statusColor = totoStatusColor(program.status);
   const resultSummary = summarizeTotoResults(program.predictions);
   const resultTotal = resultSummary.total || program.fixtures.length;
+  const visiblePredictions = filterTotoResults(program.predictions, resultFilter);
+  const number = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 });
 
   return (
     <Screen
@@ -148,16 +162,16 @@ export default function TotoProgramDetailScreen() {
         refreshControl: (
           <RefreshControl
             colors={[colors.green]}
-            onRefresh={() => query.refetch()}
-            refreshing={query.isRefetching}
+            onRefresh={() => { void refresh(); }}
+            refreshing={refreshing}
             tintColor={colors.green}
           />
         )
       }}
     >
-      <View style={desktop ? styles.desktopColumns : undefined}>
-      <View style={desktop ? styles.summaryColumn : undefined}>
-      <View style={styles.hero}>
+      <View style={split ? styles.desktopColumns : undefined}>
+      <View style={split ? styles.summaryColumn : desktop ? styles.summaryOverview : undefined}>
+      <View style={[styles.hero, desktop && !split && styles.overviewCard]}>
         <SurfaceMaterial radius={radii.xl} />
         <Text style={styles.eyebrow}>{program.weekText}</Text>
         <Text style={styles.title}>Program {program.gcNo}</Text>
@@ -169,25 +183,26 @@ export default function TotoProgramDetailScreen() {
           </Text>
         </View>
         <View style={styles.metrics}>
-          <View>
-            <Text style={styles.metricValue}>{program.columns}</Text>
+          <View style={[styles.metric, inlineMetrics && styles.overviewMetric]}>
+            <Text style={styles.metricValue}>{number.format(program.columns)}</Text>
             <Text style={styles.metricLabel}>kolon</Text>
           </View>
-          <View>
-            <Text style={styles.metricValue}>{new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 }).format(program.cost)}</Text>
+          <View style={[styles.metric, inlineMetrics && styles.overviewMetric]}>
+            <Text style={styles.metricValue}>{number.format(program.cost)}</Text>
             <Text style={styles.metricLabel}>maliyet</Text>
           </View>
-          <View>
+          <View style={[styles.metric, inlineMetrics && styles.overviewMetric]}>
             <Text style={styles.metricValue}>{program.mainHits ?? "—"}</Text>
             <Text style={styles.metricLabel}>ana isabet</Text>
           </View>
-          <View>
+          <View style={[styles.metric, inlineMetrics && styles.overviewMetric]}>
             <Text style={styles.metricValue}>
               {program.coverageHits ?? "—"}
             </Text>
             <Text style={styles.metricLabel}>kapsama</Text>
           </View>
         </View>
+        <Text style={styles.contextNote}>Kapsama = ana isabet + kupondaki diğer isabetler. Kupon kazancı değildir. Maliyet birimi kaynakta belirtilmiyor.</Text>
         <Text style={styles.distribution}>
           {program.singleCount} tek · {program.doubleCount} çift ·{" "}
           {program.tripleCount} üçlü
@@ -198,7 +213,7 @@ export default function TotoProgramDetailScreen() {
       </View>
 
       {resultTotal > 0 ? (
-        <View style={styles.resultProgressCard}>
+        <View style={[styles.resultProgressCard, desktop && !split && styles.overviewCard]}>
           <View style={styles.resultProgressHeader}>
             <Text style={styles.resultProgressTitle}>Sonuçlar</Text>
             <Text style={styles.resultProgressValue}>
@@ -258,31 +273,10 @@ export default function TotoProgramDetailScreen() {
               <Text style={[styles.resultMetric, { color: colors.red }]}>
                 {resultSummary.misses} kapsam dışı
               </Text>
+              <Text style={[styles.resultMetric, { color: semantic.intelligence }]}>{resultSummary.open} bekliyor</Text>
             </View>
           ) : null}
-          <View style={styles.resultLegend}>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: colors.green }]} />
-              <Text style={styles.legendText}>Ana tahmin</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: colors.gold }]} />
-              <Text style={styles.legendText}>Kuponda</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: colors.red }]} />
-              <Text style={styles.legendText}>Kapsam dışı</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View
-                style={[
-                  styles.legendDot,
-                  { backgroundColor: colors.textSubtle }
-                ]}
-              />
-              <Text style={styles.legendText}>Bekliyor</Text>
-            </View>
-          </View>
+          {resultFilter !== "ALL" ? <Text style={styles.contextNote}>Programın tamamı · aşağıdaki filtreler yalnızca maç listesini daraltır.</Text> : null}
           {program.status === "RESULTED" && program.theoreticalPrize !== null ? (
             <View style={styles.prizeRow}>
               <View style={styles.prizeCopy}>
@@ -307,13 +301,24 @@ export default function TotoProgramDetailScreen() {
         eyebrow="KUPON"
         title={program.predictions.length ? "Tahminler" : "Aktif fikstür"}
       />
-      {program.predictions.length && desktop ? (
+      {program.predictions.length > 0 ? <View style={styles.listControls}>
+        <View style={styles.filters}>
+          {resultFilters.map(option => <FilterChip key={option.value} label={option.label} count={filterTotoResults(program.predictions, option.value).length} selected={resultFilter === option.value} onPress={() => setResultFilter(option.value)} />)}
+        </View>
+        <Text accessibilityLiveRegion="polite" style={styles.contextNote}>{visiblePredictions.length} / {program.predictions.length} maç · {resultFilters.find(option => option.value === resultFilter)?.label}</Text>
+      </View> : null}
+      {program.predictions.length > 0 && visiblePredictions.length === 0 ? (
+        <View style={styles.listControls}>
+          <EmptyState title="Bu filtrede maç yok" message="Programın tüm maçlarına dönerek diğer sonuçları inceleyebilirsin." />
+          <Action icon="chevron-right" title="Tüm maçları göster" onPress={() => setResultFilter("ALL")} />
+        </View>
+      ) : program.predictions.length && desktop ? (
         <TotoCouponGrid
           onOpen={openBilyoner}
-          predictions={program.predictions}
+          predictions={visiblePredictions}
           presentResult={predictionResultPresentation}
         />
-      ) : program.predictions.length ? program.predictions.map((prediction) => {
+      ) : program.predictions.length ? visiblePredictions.map((prediction) => {
         const presentation = predictionResultPresentation(prediction.result);
         return (
           <Pressable
@@ -326,9 +331,11 @@ export default function TotoProgramDetailScreen() {
             onPress={() => openBilyoner(prediction.eventId)}
             style={({ pressed }) => [
               styles.predictionCard,
+              styles.predictionStack,
               pressed && styles.pressed
             ]}
           >
+            <View style={styles.predictionHeader}>
             <View style={styles.matchNo}>
               <Text style={styles.matchNoText}>{prediction.matchNo}</Text>
             </View>
@@ -344,8 +351,13 @@ export default function TotoProgramDetailScreen() {
                 · Güven {formatPercentage(prediction.confidence)}
               </Text>
             </View>
+            </View>
+            <View style={styles.predictionBottom}>
+            <View style={styles.pickReadout}>
+              <Text style={styles.metricLabel}>Ana tahmin <Text style={styles.pick}>{prediction.mainPick}</Text></Text>
+              <Text style={styles.metricLabel}>Kapsama <Text style={styles.pick}>{prediction.coverage}</Text></Text>
+            </View>
             <View style={styles.pickBlock}>
-              <Text style={styles.pick}>{prediction.coverage}</Text>
               <Text style={[styles.result, { color: presentation.color }]}>
                 {presentation.label}
               </Text>
@@ -361,6 +373,8 @@ export default function TotoProgramDetailScreen() {
                 </Text>
               ) : null}
             </View>
+            </View>
+            {prediction.eventId ? <Text style={styles.externalHint}>Bilyoner&apos;de aç ↗</Text> : null}
           </Pressable>
         );
       }) : program.fixtures.length ? (
@@ -397,7 +411,7 @@ export default function TotoProgramDetailScreen() {
         ))
       ) : (
         <Text style={styles.emptyFixtures}>
-          Aktif programın fikstür satırları henüz hazırlanmadı.
+          Bu program için fikstür bilgisi henüz yok.
         </Text>
       )}
       </View>
@@ -439,10 +453,22 @@ const styles = StyleSheet.create({
     gap: spacing.xxl
   },
   summaryColumn: {
-    flexBasis: 400,
+    flexBasis: 320,
     flexGrow: 0,
     flexShrink: 0
   },
+  summaryOverview: { flexDirection: "row", alignItems: "flex-start", gap: spacing.lg, marginBottom: spacing.lg },
+  overviewCard: { flex: 1, minWidth: 0, marginTop: 0 },
+  metric: { flexBasis: "44%", flexGrow: 1, minWidth: 0 },
+  overviewMetric: { flexBasis: "20%", minWidth: 60 },
+  contextNote: { color: colors.textMuted, ...typeScale.label, lineHeight: 18, marginTop: spacing.sm },
+  listControls: { gap: spacing.sm, marginBottom: spacing.md },
+  filters: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  predictionStack: { flexDirection: "column", alignItems: "stretch" },
+  predictionHeader: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  predictionBottom: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: spacing.sm },
+  pickReadout: { flex: 1, minWidth: 0, gap: spacing.xs },
+  externalHint: { ...typeScale.label, color: semantic.intelligence, alignSelf: "flex-end" },
   couponColumn: {
     flex: 1,
     minWidth: 0
@@ -526,7 +552,7 @@ const styles = StyleSheet.create({
   },
   resultProgressValue: {
     ...numericFont("800"),
-    color: colors.green,
+    color: colors.text,
     fontSize: 14
   },
   resultProgressTrack: {

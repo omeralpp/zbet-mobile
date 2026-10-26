@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FlatList, RefreshControl, StyleSheet, View } from "react-native";
+import { FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { totoProgramsQuery } from "@/src/api/queries";
 import type { TotoProgram } from "@/src/api/schemas";
 import { FilterChip } from "@/src/components/FilterChip";
@@ -12,7 +12,8 @@ import {
 } from "@/src/components/StateView";
 import { TotoProgramCard, totoStatusColor } from "@/src/components/TotoProgramCard";
 import { useCardGrid } from "@/src/layout/use-card-grid";
-import { colors, spacing } from "@/src/theme/theme";
+import { colors, spacing, typeScale } from "@/src/theme/theme";
+import { Action } from "@/src/components/RebuildEvidencePanel";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 
 type StatusFilter = "ALL" | TotoProgram["status"];
@@ -29,6 +30,11 @@ export default function TotoScreen() {
   const query = useQuery(totoProgramsQuery);
   const grid = useCardGrid();
   const [filter, setFilter] = useState<StatusFilter>("ALL");
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = async () => {
+    setRefreshing(true);
+    try { await query.refetch(); } finally { setRefreshing(false); }
+  };
   const programs = useMemo(() => query.data ?? [], [query.data]);
   const counts = useMemo(() => {
     const result: Record<TotoProgram["status"], number> = { ACTIVE: 0, WAITING_RESULT: 0, RESULTED: 0, ERROR: 0 };
@@ -45,7 +51,7 @@ export default function TotoScreen() {
       contentStyle={styles.screen}
       eyebrow="SPOR TOTO"
       scroll={false}
-      subtitle="Program, kolon ve kapsama Toto'ya özeldir; Super sonuçlarıyla karışmaz."
+      subtitle="Programı aç, kolon planını ve sonuçları incele."
       title="Programlar"
       wide
     >
@@ -88,16 +94,20 @@ export default function TotoScreen() {
           numColumns={grid.columns}
           {...(grid.rowStyle ? { columnWrapperStyle: grid.rowStyle } : {})}
           ListEmptyComponent={
-            <EmptyState
-              message={filter === "ALL" ? "Henüz mobil görünümde bir Toto programı yok." : "Bu durumda bir Toto programı yok."}
-              title="Program yok"
-            />
+            <View style={styles.empty}>
+              <EmptyState
+                message={filter === "ALL" ? "Programlar hazır olduğunda burada görünür." : "Diğer durumdaki programları görmek için filtreyi temizleyebilirsin."}
+                title={filter === "ALL" ? "Henüz program yok" : filter === "WAITING_RESULT" ? "Sonuç bekleyen program yok" : filter === "RESULTED" ? "Sonuçlanmış program yok" : filter === "ERROR" ? "Hatalı program yok" : "Aktif program yok"}
+              />
+              {filter !== "ALL" && programs.length > 0 ? <Action icon="chevron-right" onPress={() => setFilter("ALL")} title="Tüm programları göster" /> : null}
+            </View>
           }
+          ListHeaderComponent={programs.length > 0 ? <Text style={styles.contextNote}>Kapsama isabeti kupon kazancı değildir. Maliyet birimi kaynakta belirtilmiyor.</Text> : null}
           refreshControl={
             <RefreshControl
               colors={[colors.green]}
-              onRefresh={() => query.refetch()}
-              refreshing={query.isRefetching}
+              onRefresh={() => { void refresh(); }}
+              refreshing={refreshing}
               tintColor={colors.green}
             />
           }
@@ -105,10 +115,10 @@ export default function TotoScreen() {
             <View style={grid.cellStyle}>
               {index === 0 ? (
                 <TutorialTarget id="toto-first-card">
-                  <TotoProgramCard program={item} />
+                  <TotoProgramCard program={item} showContextNote={false} />
                 </TutorialTarget>
               ) : (
-                <TotoProgramCard program={item} />
+                <TotoProgramCard program={item} showContextNote={false} />
               )}
             </View>
           )}
@@ -131,5 +141,7 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingBottom: 112
-  }
+  },
+  contextNote: { ...typeScale.bodyCompact, color: colors.textMuted, marginBottom: spacing.md },
+  empty: { gap: spacing.sm }
 });

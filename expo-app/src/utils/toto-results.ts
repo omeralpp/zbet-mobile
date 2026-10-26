@@ -1,5 +1,14 @@
 import type { TotoPrediction } from "@/src/api/schemas";
 
+export type TotoResultFilter = "ALL" | "OPEN" | "COVERAGE" | "MISS";
+
+/** Filter the existing result DTOs only; coverage includes main hits. */
+export function filterTotoResults(predictions: readonly TotoPrediction[], filter: TotoResultFilter): TotoPrediction[] {
+  return predictions.filter((prediction) => filter === "ALL" || (filter === "COVERAGE"
+    ? prediction.result === "MAIN_HIT" || prediction.result === "COVERED"
+    : prediction.result === filter));
+}
+
 export function summarizeTotoResults(predictions: TotoPrediction[]) {
   const mainHits = predictions.filter(
     (prediction) => prediction.result === "MAIN_HIT"

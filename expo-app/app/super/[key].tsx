@@ -23,7 +23,7 @@ export default function SuperDecisionScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace("/");
+      router.replace("/super");
     }
   };
   if (!rebuildDecisionId.test(key)) {

@@ -1,7 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { TotoPrediction } from "@/src/api/schemas";
-import { summarizeTotoResults } from "./toto-results";
+import { filterTotoResults, summarizeTotoResults } from "./toto-results";
+
+test("coverage filter includes main hits and covered-only rows, without changing the full summary", () => {
+  const predictions = ["MAIN_HIT", "COVERED", "MISS", "OPEN"].map((result, index) => ({ matchNo: index + 1, result })) as TotoPrediction[];
+  assert.deepEqual(filterTotoResults(predictions, "COVERAGE").map(row => row.matchNo), [1, 2]);
+  assert.deepEqual(filterTotoResults(predictions, "OPEN").map(row => row.matchNo), [4]);
+  assert.deepEqual(filterTotoResults(predictions, "MISS").map(row => row.matchNo), [3]);
+  assert.equal(filterTotoResults(predictions, "ALL").length, 4);
+  assert.equal(summarizeTotoResults(predictions).settled, 3);
+  assert.equal(predictions.length, 4);
+});
 
 test("Toto sonuç özeti sonuçlanma ile isabeti birbirine karıştırmaz", () => {
   const predictions = [

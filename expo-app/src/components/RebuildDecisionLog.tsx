@@ -9,7 +9,7 @@ import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { useSuperStarFilter } from "@/src/preferences/SuperStarFilterProvider";
 import { colors, iconSizes, interaction, radii, semantic, shadows, spacing, typeScale } from "@/src/theme/theme";
-import { starFilterMinRating, starMetricLabel, type SuperStarSort } from "@/src/utils/decision-filters";
+import { starFilterMinRating, starMetricLabel } from "@/src/utils/decision-filters";
 import { formatSelection } from "@/src/utils/format";
 import { rebuildReason } from "@/src/utils/rebuild-current";
 import { formatQuote, formatReportRange, formatUnits, resultPresentation, unitsTone } from "@/src/utils/rebuild-display";
@@ -42,10 +42,6 @@ import { TeamLogo } from "./TeamLogo";
 type Days = 1 | 7 | 30;
 
 const localTabs = ["ALL", "STAR"] as const;
-
-function starSortToLog(sort: SuperStarSort): LogSort {
-  return sort === "RATING_DESC" ? { column: "stars", direction: "desc" } : sort === "RATING_ASC" ? { column: "stars", direction: "asc" } : defaultLogSort;
-}
 
 /** Opens a record's Super kararı page; the match key lets it load the match. */
 function useOpenDecision() {
@@ -274,8 +270,12 @@ export function RebuildDecisionLog() {
   const [starMenuOpen, setStarMenuOpen] = useState(false);
   const [periodOpen, setPeriodOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [starSort, setStarSort] = useState<SuperStarSort>("DEFAULT");
   const [tableSort, setTableSort] = useState<LogSort>(defaultLogSort);
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = async () => {
+    setRefreshing(true);
+    try { await query.refetch(); } finally { setRefreshing(false); }
+  };
   useEffect(() => {
     if (Platform.OS !== "web" || (!starMenuOpen && !periodOpen)) return;
     const dismiss = (event: KeyboardEvent) => {
@@ -294,11 +294,11 @@ export function RebuildDecisionLog() {
   const counts = {
     all: records.length,
     star: filterLog(records, { minStars, pendingOnly: false }).length,
-    pending: filterLog(records, { minStars: null, pendingOnly: true }).length
+    pending: filterLog(records, { minStars: tab === "STAR" ? minStars : null, pendingOnly: true }).length
   };
   const visible = sortLog(
     filterLog(records, { minStars: tab === "STAR" ? minStars : null, pendingOnly }),
-    wide ? tableSort : starSortToLog(starSort)
+    tableSort
   );
   const closeMenus = () => {
     setStarMenuOpen(false);
@@ -322,8 +322,9 @@ export function RebuildDecisionLog() {
           onPress={() => {
             closeMenus();
             setTab("ALL");
+            setPendingOnly(false);
           }}
-          selected={tab === "ALL"}
+          selected={tab === "ALL" && !pendingOnly}
         />
         <DecisionFilterChip
           active={tab === "STAR"}
@@ -340,9 +341,9 @@ export function RebuildDecisionLog() {
             setStarMenuOpen(open);
             if (open) setPeriodOpen(false);
           }}
-          onSortChange={setStarSort}
+          onSortChange={(value) => setTableSort(value === "DEFAULT" ? defaultLogSort : { column: "stars", direction: value === "RATING_ASC" ? "asc" : "desc" })}
           open={starMenuOpen}
-          sortValue={starSort}
+          sortValue={tableSort.column === "stars" ? tableSort.direction === "asc" ? "RATING_ASC" : "RATING_DESC" : tableSort.column === "publishedAt" && tableSort.direction === "desc" ? "DEFAULT" : null}
           value={starFilter}
         />
         <FilterChip
@@ -362,7 +363,7 @@ export function RebuildDecisionLog() {
   const scope = (
     <View style={styles.scopeRow}>
       <Text style={styles.scopeText}>
-        {available ? `${formatReportRange(available.from, available.through)} · ${visible.length} karar${days === 1 ? " · İstanbul" : ""}` : query.isError || full?.availability === "UNAVAILABLE" ? "Rapor doğrulanamadı · kayıt sayısı bilinmiyor" : "Rapor bekleniyor"}
+        {available ? `${formatReportRange(available.from, available.through)} · ${visible.length} / ${records.length} karar${tab === "STAR" ? ` · ${starMetricLabel(starFilter)}` : ""}${pendingOnly ? " · bekliyor" : ""}${days === 1 ? " · İstanbul" : ""}` : query.isError || full?.availability === "UNAVAILABLE" ? "Rapor doğrulanamadı · kayıt sayısı bilinmiyor" : "Rapor bekleniyor"}
       </Text>
       <PeriodMenu
         days={days}
@@ -397,9 +398,22 @@ export function RebuildDecisionLog() {
 
   const summary = logSummary(available, tab === "STAR" ? minStars : null);
   const netTone = unitsTone(summary.net);
-  const empty = records.length === 0
-    ? <EmptyState kind="NO_DECISION" message="BTB bir öneri yayımladığında seçim oranıyla burada görünür." title="Bu dönemde öneri yok" />
-    : <EmptyState kind="NO_DECISION" message="Bu filtreye uyan yayımlanmış öneri yok." title="Karar yok" />;
+  const empty = (
+    <View style={styles.empty}>
+      <EmptyState
+        kind="NO_DECISION"
+        message={records.length === 0 ? "Başka bir dönem seçerek geçmiş kararları inceleyebilirsin." : "Filtreleri temizleyerek bu dönemin tüm kararlarını görebilirsin."}
+        title={records.length === 0 ? "Bu dönemde öneri yok" : pendingOnly ? "Bu filtrede bekleyen karar yok" : "Bu yıldız aralığında karar yok"}
+      />
+      {records.length > 0 ? <Action icon="chevron-right" onPress={() => { closeMenus(); setTab("ALL"); setPendingOnly(false); }} title="Tüm kararları göster" /> : days !== 30 ? <Action icon="chevron-right" onPress={() => { closeMenus(); setDays(30); }} title="Son 30 günü göster" /> : null}
+    </View>
+  );
+  const summaryContext = (
+    <Text style={styles.tableNote}>
+      {`Dönem özeti · ${tab === "STAR" ? starMetricLabel(starFilter) : "tüm yıldızlar"}. Karar başına 1 varsayımsal birim.`}
+      {pendingOnly ? " Bekliyor filtresi yalnızca listeyi daraltır; özet tüm sonuçları içerir." : ""}
+    </Text>
+  );
   const details = (
     <Card>
       <Pressable
@@ -422,13 +436,14 @@ export function RebuildDecisionLog() {
     return (
       <ScrollView
         contentContainerStyle={styles.wideContent}
-        refreshControl={<RefreshControl colors={[colors.gold]} onRefresh={() => { void query.refetch(); }} refreshing={query.isRefetching} tintColor={colors.gold} />}
+        refreshControl={<RefreshControl colors={[colors.gold]} onRefresh={() => { void refresh(); }} refreshing={refreshing} tintColor={colors.gold} />}
         style={styles.wideScroll}
       >
         <View style={styles.wideToolbar}>
           {filters}
           {scope}
         </View>
+        {summaryContext}
         <View style={styles.tiles}>
           <Tile label={`karar · ${formatReportRange(available.from, available.through)}`} value={String(summary.recommendations)} />
           <Tile color={semantic.intelligence} label="bekleyen karar" value={String(summary.pending)} />
@@ -468,23 +483,26 @@ export function RebuildDecisionLog() {
         }}
         renderPage={(page) => {
           const pageSummary = logSummary(available, page === "STAR" ? minStars : null);
-          const pageRecords = sortLog(filterLog(records, { minStars: page === "STAR" ? minStars : null, pendingOnly }), starSortToLog(starSort));
+          const pageRecords = sortLog(filterLog(records, { minStars: page === "STAR" ? minStars : null, pendingOnly }), tableSort);
           return (
             <FlatList
               ItemSeparatorComponent={CardGap}
               ListEmptyComponent={empty}
               ListFooterComponent={<View style={styles.footer}>{details}</View>}
               ListHeaderComponent={
-                <SummaryCard
-                  label={`${days === 1 ? "BUGÜN" : `${days} GÜN`} · ${page === "STAR" ? starMetricLabel(starFilter).toLocaleUpperCase("tr-TR") : "TÜMÜ"}`}
-                  summary={pageSummary}
-                />
+                <View style={styles.summaryHeader}>
+                  <SummaryCard
+                    label={`${days === 1 ? "BUGÜN" : `${days} GÜN`} · ${page === "STAR" ? starMetricLabel(starFilter).toLocaleUpperCase("tr-TR") : "TÜMÜ"}`}
+                    summary={pageSummary}
+                  />
+                  <Text style={styles.tableNote}>Karar başına 1 varsayımsal birim.{pendingOnly ? " Özet tüm sonuçları, liste yalnızca bekleyenleri içerir." : ""}</Text>
+                </View>
               }
               contentContainerStyle={styles.pageList}
               data={pageRecords}
               keyExtractor={(record) => record.decisionId}
               onScrollBeginDrag={closeMenus}
-              refreshControl={<RefreshControl colors={[colors.gold]} onRefresh={() => { void query.refetch(); }} refreshing={query.isRefetching} tintColor={colors.gold} />}
+              refreshControl={<RefreshControl colors={[colors.gold]} onRefresh={() => { void refresh(); }} refreshing={refreshing} tintColor={colors.gold} />}
               renderItem={({ item, index }) =>
                 page === tab && index === 0 ? (
                   <TutorialTarget id="super-first-card">
@@ -534,6 +552,8 @@ function SummaryCard({ label, summary }: { label: string; summary: LogSummary })
 
 const styles = StyleSheet.create({
   stack: { gap: spacing.md, width: "100%" },
+  empty: { gap: spacing.sm, alignItems: "stretch" },
+  summaryHeader: { gap: spacing.xs, marginBottom: spacing.md },
   phone: { flex: 1 },
   phoneHead: { gap: spacing.md, paddingBottom: spacing.md, zIndex: 20 },
   pageList: { paddingBottom: 112 },

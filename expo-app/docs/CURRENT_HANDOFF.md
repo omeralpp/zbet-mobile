@@ -1,7 +1,22 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-26
-Mod: `OBSERVATION / PAIRED_RELEASE_COMPLETE`
+Mod: `OWNER_ACCEPTED_PREVIEW / APPROVED_RELEASE_PREPARATION`
+Owner requested Super/Toto list and detail UX on shared Android/web code:
+NXT-OBS-226..229. Local heuristic scores: Super list/detail7.5→8.5, Toto
+list/detail7→8.5. Shared sorting, explicit summary/filter scope, recovery,
+compact Toto history, result filters, coupon legend, readable mobile picks and
+unplayed-match display repair. Type/lint, 672+32 tests, Android JS bundle,
+verified edge web and synthetic browser checks pass. Owner accepted the concrete
+four-screen preview on 26 October ("Onaylıyorum") and approved scoped commit/push
+and coordinated pilot delivery: final APK signing/private delivery, then companion
+web publication after actual installation. Actual delivery/smokes remain pending.
+[Lists](SUPER_TOTO_UX_REVIEW_2026-10-26.md),
+[details and previews](SUPER_TOTO_DETAIL_UX_REVIEW_2026-10-26.md).
+The new approval is specific to this four-screen batch; no production is authorized.
+
+## Current accepted pair — 3279a25
+
 Combined client UX source `3279a25db729c9e6f7234f6a08998bad5a162d77` is clean,
 pushed and delivered: direct pilot entry (NXT-OBS-223), Summary (224), Live and
 focused web resize repair (225 / TASK-0180). The owner approved preview, scoped

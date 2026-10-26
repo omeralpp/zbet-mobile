@@ -30,7 +30,7 @@ export function totoStatusColor(status: TotoProgram["status"]): string {
         : colors.textMuted;
 }
 
-export function TotoProgramCard({ program }: { program: TotoProgram }) {
+export function TotoProgramCard({ program, showContextNote = true }: { program: TotoProgram; showContextNote?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const capacity = Math.min(
@@ -39,16 +39,17 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
   );
   const tone = totoProgramTone(program.status);
   const statusColor = totoStatusColor(program.status);
-  // Only a program that can still change earns the accent. A resulted one is
-  // history and recedes, exactly as a settled decision row does.
+  // Current programs and errors earn an accent; completed history recedes.
   const inPlay = tone === "LIVE" || tone === "OPEN";
+  const highlighted = inPlay || tone === "PROBLEM";
+  const number = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 });
 
   // The theoretical prize lives in the program itself (v40 board); the card
   // stays the program's columns, cost and coverage.
   return (
     <Pressable
       accessibilityHint="Toto program detayını açar"
-      accessibilityLabel={`Program ${program.gcNo}, ${program.weekText}`}
+      accessibilityLabel={`Program ${program.gcNo}, ${program.weekText}, ${formatProgramStatus(program.status)}, ${program.columns} kolon, maliyet ${number.format(program.cost)}, maliyet birimi belirtilmedi, ana isabet ${program.mainHits ?? "bilinmiyor"}, kapsama isabet ${program.coverageHits ?? "bilinmiyor"}`}
       accessibilityRole="button"
       onPress={() =>
         router.push({
@@ -60,16 +61,16 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
           }
         } as never)
       }
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      style={({ pressed, hovered }) => [styles.card, hovered && styles.hover, pressed && styles.pressed]}
     >
       <SurfaceMaterial
-        {...(inPlay ? { accent: statusColor } : {})}
+        {...(highlighted ? { accent: statusColor } : {})}
         radius={20}
       />
       <View style={styles.header}>
         <View style={styles.icon}>
           <MaterialCommunityIcons
-            color={inPlay ? statusColor : colors.textMuted}
+            color={highlighted ? statusColor : colors.textMuted}
             name="ticket-confirmation-outline"
             size={iconSizes.control}
           />
@@ -80,10 +81,10 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
         </View>
         <View style={styles.statusStack}>
           <View
-            style={[styles.statusPill, inPlay ? { backgroundColor: `${statusColor}24` } : null]}
+            style={[styles.statusPill, highlighted ? { backgroundColor: `${statusColor}24` } : null]}
           >
-            {inPlay ? <View style={[styles.statusDot, { backgroundColor: statusColor }]} /> : null}
-            <Text style={[styles.status, { color: inPlay ? statusColor : colors.text }]}>
+            {highlighted ? <View style={[styles.statusDot, { backgroundColor: statusColor }]} /> : null}
+            <Text style={[styles.status, { color: highlighted ? statusColor : colors.text }]}>
               {formatProgramStatus(program.status).toLocaleUpperCase("tr-TR")}
             </Text>
           </View>
@@ -92,11 +93,11 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
 
       <View style={styles.metrics}>
         <View style={styles.metric}>
-          <Text style={styles.metricValue}>{program.columns}</Text>
+          <Text style={styles.metricValue}>{number.format(program.columns)}</Text>
           <Text style={styles.metricLabel}>kolon</Text>
         </View>
         <View style={styles.metric}>
-          <Text style={styles.metricValue}>{new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 }).format(program.cost)}</Text>
+          <Text style={styles.metricValue}>{number.format(program.cost)}</Text>
           <Text style={styles.metricLabel}>maliyet</Text>
         </View>
         <View style={styles.metric}>
@@ -104,25 +105,29 @@ export function TotoProgramCard({ program }: { program: TotoProgram }) {
             {program.coverageHits ?? "—"}
           </Text>
           <Text style={styles.metricLabel}>kapsama isabet</Text>
+          <Text style={styles.metricLabel}>Ana: {program.mainHits ?? "—"}</Text>
         </View>
       </View>
 
-      <Text style={styles.contextNote}>Kapsama isabeti, kuponun kazandığı anlamına gelmez. Maliyet birimi belirtilmedi.</Text>
+      {showContextNote ? <Text style={styles.contextNote}>Kapsama isabeti kupon kazancı değildir. Maliyet birimi kaynakta belirtilmiyor.</Text> : null}
 
-      <View style={styles.capacityBlock}>
+      {inPlay ? <View style={styles.capacityBlock}>
         <View style={styles.track}>
           <View style={[styles.fill, { width: `${capacity * 100}%` }]} />
         </View>
         <View style={styles.capacityRow}>
           <Text style={styles.capacityLabel}>Kolon kapasitesi</Text>
           <Text style={styles.capacityValue}>
-            {program.columns} / {program.maxColumns}
+            {number.format(program.columns)} / {number.format(program.maxColumns)}
           </Text>
         </View>
-      </View>
+      </View> : null}
       <View style={styles.open}>
-        <Text style={styles.openText}>Programı aç</Text>
-        <MaterialCommunityIcons color={semantic.intelligence} name="chevron-right" size={iconSizes.small} />
+        {program.status === "ACTIVE" && program.columns === 0 ? <Text style={styles.planNote}>Henüz kolon planı yok</Text> : null}
+        <View style={styles.openAction}>
+          <Text style={styles.openText}>{program.status === "RESULTED" ? "Sonuçları incele" : program.status === "ACTIVE" ? "Programı incele" : "Detayı aç"}</Text>
+          <MaterialCommunityIcons color={semantic.intelligence} name="chevron-right" size={iconSizes.small} />
+        </View>
       </View>
     </Pressable>
   );
@@ -141,6 +146,7 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.76
   },
+  hover: { borderColor: semantic.intelligence },
   header: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -249,10 +255,13 @@ const styles = StyleSheet.create({
   },
   open: {
     alignItems: "center",
-    alignSelf: "flex-end",
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
     flexDirection: "row",
-    gap: 2
+    gap: spacing.sm
   },
+  openAction: { flexDirection: "row", alignItems: "center", gap: 2 },
+  planNote: { ...typeScale.label, color: colors.textMuted, marginRight: "auto" },
   openText: {
     color: semantic.intelligence,
     ...typeScale.bodyCompact,

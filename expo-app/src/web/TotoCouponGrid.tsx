@@ -22,6 +22,13 @@ export function TotoCouponGrid({
   onOpen: (eventId: number | null) => void;
 }) {
   return (
+    <View>
+      <View style={styles.legend}>
+        <View style={styles.legendItem}><View style={[styles.legendCell, styles.cellMain]} /><Text style={styles.meta}>Ana tahmin</Text></View>
+        <View style={styles.legendItem}><View style={[styles.legendCell, styles.cellCovered]} /><Text style={styles.meta}>Kapsama</Text></View>
+        <View style={styles.legendItem}><View style={[styles.legendCell, styles.cellActual]} /><Text style={styles.meta}>Gerçekleşen sonuç</Text></View>
+      </View>
+      <Text style={styles.externalHint}>Maç adı: Bilyoner&apos;de aç ↗</Text>
     <View role="table" aria-label="Toto kuponu" style={styles.table}>
       <View role="row" style={[styles.row, styles.headerRow]}>
         <Text role="columnheader" style={[styles.headerText, styles.no]}>#</Text>
@@ -85,10 +92,15 @@ export function TotoCouponGrid({
         );
       })}
     </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  legend: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md, marginBottom: spacing.md },
+  legendItem: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  legendCell: { width: 14, height: 14, borderRadius: 3, borderWidth: 1.5, borderColor: "transparent" },
+  externalHint: { ...typeScale.meta, color: semantic.intelligence, marginBottom: spacing.sm },
   table: {
     backgroundColor: colors.backgroundElevated,
     borderColor: colors.borderSoft,

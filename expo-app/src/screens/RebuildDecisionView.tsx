@@ -15,13 +15,13 @@ import {
 } from "react-native";
 import { matchPeriodScoreQuery, matchQuery, rebuildCohortsReportQuery, rebuildMatchQuery } from "@/src/api/queries";
 import type { RebuildRecommendation } from "@/src/api/rebuild-schemas";
-import type { MatchSummary } from "@/src/api/schemas";
 import { ListPerforation, ResultPill, TicketSeam, toneColor } from "@/src/components/DecisionTicket";
 import { PitchMarkings } from "@/src/components/PitchMarkings";
 import { RatingStars } from "@/src/components/RatingStars";
 import { Screen } from "@/src/components/Screen";
 import { SignalMeter } from "@/src/components/SignalMeter";
-import { EmptyState, LoadingState } from "@/src/components/StateView";
+import { EmptyState, ErrorState, LoadingState } from "@/src/components/StateView";
+import { Action } from "@/src/components/RebuildEvidencePanel";
 import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import { TeamLogo } from "@/src/components/TeamLogo";
 import { CollapsibleModule } from "@/src/layout/CollapsibleModule";
@@ -32,7 +32,8 @@ import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { colors, iconSizes, interaction, semantic, shadows, spacing, typeScale } from "@/src/theme/theme";
-import { formatElapsed, formatFixtureDateTime, formatSelection } from "@/src/utils/format";
+import { formatFixtureDateTime, formatSelection } from "@/src/utils/format";
+import { decisionMatchState } from "@/src/utils/decision-match-state";
 import { formatDecimal, formatQuote, formatScore, formatSupport, formatUnits, resultPresentation, unitsTone } from "@/src/utils/rebuild-display";
 import { publishedParts } from "@/src/utils/rebuild-log";
 import { publishedExplanation } from "@/src/utils/rebuild-presentation";
@@ -82,16 +83,6 @@ function CapBar({ label, value }: { label: string; value: number }) {
   );
 }
 
-/** The current match state below the seam: live score, final score, or not started. */
-function currentState(match: Pick<MatchSummary,"status"|"homeScore"|"awayScore"|"elapsed"|"clock"> | undefined) {
-  if (!match) return { score: "—", label: "maç durumu bekleniyor", live: false };
-  if (match.status === "LIVE" || match.status === "HALF_TIME") {
-    return { score: `${match.homeScore}–${match.awayScore}`, label: match.status === "HALF_TIME" ? "devre arası" : `${formatElapsed(match.status,match.elapsed,match.clock)} canlı`, live: true };
-  }
-  if (match.status === "NOT_STARTED") return { score: "—", label: "başlamadı", live: false };
-  return { score: `${match.homeScore}–${match.awayScore}`, label: "maç sonucu", live: false };
-}
-
 /**
  * Super kararı for one RB1 published record, in the v40 board's layout: the
  * frozen decision (minute, score, market, stars, selection quote) above the
@@ -107,6 +98,7 @@ export function RebuildDecisionView({ decisionId, matchKey: matchParam, onEdgeSw
   const [compactHeader, setCompactHeader] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [reordering, setReordering] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const scrollRef = useRef<ScrollView | null>(null);
   const scrollOffset = useRef(0);
   const { order, reorderVisible } = useModuleLayout("superDetail");
@@ -125,7 +117,11 @@ export function RebuildDecisionView({ decisionId, matchKey: matchParam, onEdgeSw
     setCompactHeader((current) => (current === next ? current : next));
   }, []);
   // A manual refetch ignores `enabled`, so the match reads wait for a key.
-  const refresh = () => Promise.all([report.refetch(), ...(matchKey ? [rebuild.refetch(), match.refetch(), periodScore.refetch()] : [])]);
+  const refresh = async () => {
+    setRefreshing(true);
+    try { await Promise.all([report.refetch(), ...(matchKey ? [rebuild.refetch(), match.refetch(), periodScore.refetch()] : [])]); }
+    finally { setRefreshing(false); }
+  };
   const openMatch = () => {
     if (matchKey) router.push({ pathname: "/match/[key]", params: { key: matchKey, decision: decisionId } } as never);
   };
@@ -158,13 +154,15 @@ export function RebuildDecisionView({ decisionId, matchKey: matchParam, onEdgeSw
     return (
       <Screen edgeSwipeBack onEdgeSwipeBack={onEdgeSwipeBack}>
         {header}
-        <EmptyState kind="NO_DECISION" message="Bu karar son 30 günlük raporda ya da maçın kayıtlarında bulunamadı." title="Karar bulunamadı" />
+        {report.isError || rebuild.isError ? <ErrorState error={report.error ?? rebuild.error} onRetry={() => { void refresh(); }} /> : <EmptyState kind="NO_DECISION" message="Bu karar son 30 günlük raporda ya da maçın kayıtlarında bulunamadı." title="Karar bulunamadı" />}
+        <Action icon="chevron-right" onPress={() => router.replace("/super")} title="Karar günlüğüne dön" />
       </Screen>
     );
   }
 
   const detail = match.data;
-  const now = currentState(detail);
+  const now = decisionMatchState(detail, match.isLoading);
+  const published = publishedParts(record.publishedAt);
   const tone = record.result.net === null ? "neutral" : unitsTone(record.result.net);
   const halfTime = record.minute > 45 && periodScore.data?.halfTimeScore ? `İY ${periodScore.data.halfTimeScore.homeScore}–${periodScore.data.halfTimeScore.awayScore}` : null;
   const support = formatSupport(record.poolWins, record.poolTotal);
@@ -182,8 +180,9 @@ export function RebuildDecisionView({ decisionId, matchKey: matchParam, onEdgeSw
           <Text style={styles.bigValue}>{formatScore(record.consistencyScore)}</Text>
           <Text style={styles.bigLabel}>tutarlılık puanı</Text>
         </View>
+        <Text style={styles.contextNote}>Tutarlılık ve yıldızlar kararın kanıtını özetler; kazanma olasılığı değildir.</Text>
         <View style={styles.tiles}>
-          <Tile label={`havuz desteği · ${support.counts}`} value={support.share} />
+          <Tile label={`havuz desteği · ${support.share}`} value={support.counts} />
           <Tile label="baskı teyidi" value={`${record.votesSupport}/${record.votesUsed}`} />
         </View>
         <Pressable
@@ -339,6 +338,7 @@ export function RebuildDecisionView({ decisionId, matchKey: matchParam, onEdgeSw
   const decision = (
     <View style={[styles.band, wide && styles.bandWide]}>
       <Text style={styles.eyebrowBronze}>KARAR ANI · {record.minute}′</Text>
+      <Text style={styles.bandLabel}>{published.day} · {published.time} · İstanbul · kayıtlı karar</Text>
       <View style={styles.bandRow}>
         <View>
           <Text style={styles.score}>{record.homeScore}–{record.awayScore}</Text>
@@ -376,6 +376,7 @@ export function RebuildDecisionView({ decisionId, matchKey: matchParam, onEdgeSw
             ) : null}
           </View>
           <Text style={styles.bandLabel}>{now.label}</Text>
+          {matchKey ? <Text style={styles.disclosureText}>Maç detayını aç</Text> : null}
         </Pressable>
         <View style={styles.bandEnd}>
           <Text style={[styles.price, { color: tone === "neutral" ? colors.textMuted : toneColor[tone] }]}>{formatUnits(record.result.net)}</Text>
@@ -401,7 +402,7 @@ export function RebuildDecisionView({ decisionId, matchKey: matchParam, onEdgeSw
             <RefreshControl
               colors={[colors.gold]}
               onRefresh={() => { void refresh(); }}
-              refreshing={report.isRefetching || rebuild.isRefetching || match.isRefetching}
+              refreshing={refreshing}
               tintColor={colors.gold}
             />
           )
@@ -432,6 +433,7 @@ export function RebuildDecisionView({ decisionId, matchKey: matchParam, onEdgeSw
             )}
           </View>
         </TutorialTarget>
+        {match.isError ? <Text accessibilityRole="alert" style={styles.contextNote}>Güncel maç bilgisi yenilenemedi. Yukarıdaki karar ve kanıtlar kayıt anına aittir; yeniden deneyebilirsin.</Text> : null}
         {wide ? (
           <View style={styles.grid}>
             {items.map((item) => (
@@ -534,6 +536,7 @@ const styles = StyleSheet.create({
   capValue: { minWidth: 40, textAlign: "right", color: colors.text, ...typeScale.metricCompact },
   note: { flexDirection: "row", alignItems: "flex-start", gap: spacing.sm },
   noteText: { flex: 1, color: colors.textMuted, ...typeScale.label, letterSpacing: 0, lineHeight: 18 },
+  contextNote: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0, lineHeight: 18 },
   historyRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, minHeight: 60, paddingVertical: 8, borderRadius: 12, marginHorizontal: -8, paddingHorizontal: 8 },
   historySelected: { backgroundColor: semantic.intelligenceSoft },
   historyCopy: { flex: 1, minWidth: 0, gap: 4 },
