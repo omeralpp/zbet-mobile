@@ -1,31 +1,37 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-26
-Mod: `COMBINED_CLIENT_UX_RELEASE_PREPARATION / OWNER_APPROVED`
-Combined client UX release requested on 26 October: direct pilot entry
-(NXT-OBS-223), Summary and Live. All local checks and both exports pass; pilot
-bootstrap preview shows the main app without its former welcome button.
-Owner explicitly accepted the combined preview and approved scoped Git/push,
-final ARM64 APK build/signing and private delivery. Both publications are approved.
-No device is connected; actual APK installation must precede web publication.
-[Combined candidate, previews and release steps](COMBINED_CLIENT_UX_RELEASE_2026-10-26.md).
+Mod: `WEB_PUBLISHED / ANDROID_ACCEPTED / OWNER_WEB_SMOKE_PENDING`
+Combined client UX source `3279a25db729c9e6f7234f6a08998bad5a162d77` is clean,
+pushed and delivered: direct pilot entry (NXT-OBS-223), Summary (224), Live and
+focused web resize repair (225 / TASK-0180). The owner approved preview, scoped
+Git/push, APK signing/private delivery and both publications.
 
-Live UX NXT-OBS-225 is implemented locally: recovery states, scope counts, stable
-search and manual refresh, plus a confirmed JURY-R02 focused-resize recurrence
-repair in the web-only tab viewport. TASK-0180 is reopened for the new repair;
-its prior accepted pair remains historical. Browser checks, type/lint, 669+32
-tests, Android bundle and verified edge web export pass; unchanged Doctor 20/20
-is reused. Native smoke and coordinated delivery remain pending.
-[Live review](LIVE_UX_REVIEW_2026-10-26.md).
-The owner accepted the local Summary preview on 26 October; delivery is pending.
+Signed ARM64 APK `E7CF451CE293B06FED5249A2602F9A5670B01C883438184DD145F9C32C6D54AC`,
+50,476,069 bytes, passed pilot certificate/ABI, private Drive owner-only metadata
+and authenticated download/hash readback. Owner confirmed exact installation
+and Android basic smoke on 26 October: “APK sorunsuz devam et”. This is owner
+evidence; no adb/hash-on-device or broad accessibility claim.
 
-Owner-authorized Summary UX improvements (NXT-OBS-224) are local and uncommitted:
-state-specific selection/recovery UI, visible hypothetical unit, metric cues,
-full manual refresh scope and two-column desktop composition. Core checks,
-synthetic browser smokes, Android bundle and verified edge web export pass. Native smoke and
-coordinated delivery remain pending. NXT-OBS-223 is now implemented in the
-combined release candidate above. [Summary review and previews](SUMMARY_UX_REVIEW_2026-10-26.md).
-The delivered TASK-0189 pair below is unchanged.
+Matching paired web tree `AA91DA90DFE6C02E9C3BA6C3788FD2D0DE50B5DC6CE9851D3BFC57CD9C79E2C1`
+was published as `20261026T091317Z-3279a25` after installation. Shell/deep-link/CSP,
+unauthorized API401, Access302, local/public BFF health and served-entry hash
+pass. Publisher restarted the unchanged BFF to switch web roots. User prospective
+collection setting remains false; no model/SAP/credential or Access-policy change.
+
+The remaining gate is the owner's published-web smoke. TASK-0180 remains
+IN_PROGRESS and the batch is not COMPLETE until that reply and the matching
+`client-release.mjs complete` receipt. Approval remains active; no reapproval is
+needed for this batch. Later handoff-only commits do not alter released source.
+Receipts: `btb-codex/docs/evidence/client-release-3279a25-*2026-10-26.json`.
+[Combined release report](COMBINED_CLIENT_UX_RELEASE_2026-10-26.md).
+Core validation: type/lint, 669+32 tests, both exports, final ARM64 build and
+synthetic browser state/resize checks pass; unchanged Doctor20/20 reused.
+
+Prior accepted pair retained for recovery: source `57e27c2`, APK `F0828E2B1948…`,
+paired web tree `CED99092AA3B…`, release `20261025T124608Z-57e27c2`.
+
+## Previous accepted pair — TASK-0189 (historical)
 
 TASK-0189 Jinx RB1 explainer is locally implemented on shared Android/web source:
 Gemini orders five server-written facts only; legacy prose/quip/pilot-signal

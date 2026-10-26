@@ -1,7 +1,8 @@
 # Summary UX review — 2026-10-26
 
 Owner: BTB Mobile Next - Aktif. Scope: shared Android/web Summary screen.
-Status: LOCAL_VALIDATED; native device smoke and delivery pending. No publication.
+Status: DELIVERED; Android basic smoke accepted, published-web owner smoke pending.
+Published in the [combined 3279a25 pair](COMBINED_CLIENT_UX_RELEASE_2026-10-26.md).
 Owner accepted the local preview on 2026-10-26 (approval and “Güzel olmuş”). This
 is local design acceptance, not a new Android installation or publication receipt.
 

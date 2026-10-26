@@ -1,7 +1,8 @@
 # Live UX review — 2026-10-26
 
 Owner: BTB Mobile Next - Aktif. NXT-OBS-225; recurring JURY-R02 / TASK-0180.
-Status: LOCAL_VALIDATED; native smoke and delivery pending. No publication.
+Status: DELIVERED; Android basic smoke accepted, published-web owner smoke pending.
+Published in the [combined 3279a25 pair](COMBINED_CLIENT_UX_RELEASE_2026-10-26.md).
 
 The owner accepted the Summary preview and explicitly requested the same expert
 assessment and meaningful local implementation for Live on Android and web.
