@@ -20,7 +20,9 @@ export function resolveImmediateAuthStatus(
     return "preview";
   }
   if (authMode === "pilot") {
-    return "unauthenticated";
+    // The pilot key still authorizes every API request. The former entry
+    // button only opened the app shell; it did not establish an identity.
+    return "authenticated";
   }
   // Cloudflare Access has already authenticated the owner before the page
   // loaded; there is no in-app sign-in step to show.

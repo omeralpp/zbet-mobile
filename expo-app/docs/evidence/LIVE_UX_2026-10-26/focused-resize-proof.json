@@ -1,0 +1,102 @@
+{
+  "routes": [
+    {
+      "route": "Toto",
+      "visible": true
+    },
+    {
+      "route": "Daha Fazla",
+      "visible": true
+    },
+    {
+      "route": "Özet",
+      "visible": true
+    },
+    {
+      "route": "Canlı",
+      "visible": true
+    }
+  ],
+  "transitions": [
+    {
+      "clipOffsets": [
+        0,
+        0
+      ],
+      "focused": true,
+      "headingX": 272,
+      "search": "molde",
+      "width": 1440
+    },
+    {
+      "clipOffsets": [
+        0,
+        0
+      ],
+      "focused": true,
+      "headingX": 24,
+      "search": "molde",
+      "width": 390
+    },
+    {
+      "clipOffsets": [
+        0,
+        0
+      ],
+      "focused": true,
+      "headingX": 24,
+      "search": "molde",
+      "width": 320
+    },
+    {
+      "clipOffsets": [
+        0,
+        0
+      ],
+      "focused": true,
+      "headingX": 100,
+      "search": "molde",
+      "width": 768
+    },
+    {
+      "clipOffsets": [
+        0,
+        0
+      ],
+      "focused": true,
+      "headingX": 272,
+      "search": "molde",
+      "width": 1440
+    },
+    {
+      "clipOffsets": [
+        0,
+        0
+      ],
+      "focused": true,
+      "headingX": 24,
+      "search": "molde",
+      "width": 390
+    },
+    {
+      "clipOffsets": [
+        0,
+        0
+      ],
+      "focused": true,
+      "headingX": 24,
+      "search": "molde",
+      "width": 320
+    },
+    {
+      "clipOffsets": [
+        0,
+        0
+      ],
+      "focused": true,
+      "headingX": 272,
+      "search": "molde",
+      "width": 1440
+    }
+  ]
+}

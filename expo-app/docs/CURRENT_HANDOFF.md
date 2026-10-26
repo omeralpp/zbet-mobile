@@ -1,7 +1,32 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-10-25
-Mod: `OBSERVATION / TASK-0189 PAIRED_RELEASE_COMPLETE`
+Son güncelleme: 2026-10-26
+Mod: `COMBINED_CLIENT_UX_RELEASE_PREPARATION / OWNER_APPROVED`
+Combined client UX release requested on 26 October: direct pilot entry
+(NXT-OBS-223), Summary and Live. All local checks and both exports pass; pilot
+bootstrap preview shows the main app without its former welcome button.
+Owner explicitly accepted the combined preview and approved scoped Git/push,
+final ARM64 APK build/signing and private delivery. Both publications are approved.
+No device is connected; actual APK installation must precede web publication.
+[Combined candidate, previews and release steps](COMBINED_CLIENT_UX_RELEASE_2026-10-26.md).
+
+Live UX NXT-OBS-225 is implemented locally: recovery states, scope counts, stable
+search and manual refresh, plus a confirmed JURY-R02 focused-resize recurrence
+repair in the web-only tab viewport. TASK-0180 is reopened for the new repair;
+its prior accepted pair remains historical. Browser checks, type/lint, 669+32
+tests, Android bundle and verified edge web export pass; unchanged Doctor 20/20
+is reused. Native smoke and coordinated delivery remain pending.
+[Live review](LIVE_UX_REVIEW_2026-10-26.md).
+The owner accepted the local Summary preview on 26 October; delivery is pending.
+
+Owner-authorized Summary UX improvements (NXT-OBS-224) are local and uncommitted:
+state-specific selection/recovery UI, visible hypothetical unit, metric cues,
+full manual refresh scope and two-column desktop composition. Core checks,
+synthetic browser smokes, Android bundle and verified edge web export pass. Native smoke and
+coordinated delivery remain pending. NXT-OBS-223 is now implemented in the
+combined release candidate above. [Summary review and previews](SUMMARY_UX_REVIEW_2026-10-26.md).
+The delivered TASK-0189 pair below is unchanged.
+
 TASK-0189 Jinx RB1 explainer is locally implemented on shared Android/web source:
 Gemini orders five server-written facts only; legacy prose/quip/pilot-signal
 paths are retired. BFF 672 tests/build; Mobile check (665+32 tests), Doctor,

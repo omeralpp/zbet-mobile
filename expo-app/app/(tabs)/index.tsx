@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
@@ -18,7 +18,7 @@ import { MetricStrip, MetricTile } from "@/src/components/MetricCard";
 import { toneColor } from "@/src/components/DecisionTicket";
 import { Screen } from "@/src/components/Screen";
 import { SectionHeader } from "@/src/components/SectionHeader";
-import { EmptyState, ErrorState, LoadingState } from "@/src/components/StateView";
+import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import { TotoProgramCard } from "@/src/components/TotoProgramCard";
 import { dashboardQuery, matchInsightsQuery, matchesQuery } from "@/src/api/queries";
@@ -34,7 +34,8 @@ import type { OverviewModuleId } from "@/src/layout/module-registry";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { JinxDailyComment } from "@/src/mascot/JinxDailyComment";
 import { useLiveStarFilter } from "@/src/preferences/LiveStarFilterProvider";
-import { colors, iconSizes, radii, semantic, spacing, typeScale, textFont } from "@/src/theme/theme";
+import { colors, iconSizes, interaction, radii, semantic, spacing, typeScale } from "@/src/theme/theme";
+import { canRefreshScreenQuery } from "@/src/web/refresh-data";
 import {
   liveStarMetricCount,
   starMetricLabel
@@ -45,6 +46,7 @@ import { formatTodayEyebrow } from "@/src/utils/format";
 export default function DashboardScreen() {
   const clock = useRebuildClock();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { filter: liveStarFilter } = useLiveStarFilter();
   const query = useQuery(dashboardQuery);
   const hasRebuild = query.data?.liveStarSelections !== undefined || !!query.data?.featuredMatches.some(match=>match.rebuild);
@@ -59,6 +61,25 @@ export default function DashboardScreen() {
   // and each featured match as one horizontal row.
   const wideWeb = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
   const [reordering, setReordering] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshFailed, setRefreshFailed] = useState(false);
+  const refreshRunning = useRef(false);
+  const refresh = useCallback(async () => {
+    if (refreshRunning.current) return;
+    refreshRunning.current = true;
+    setRefreshing(true);
+    setRefreshFailed(false);
+    try {
+      // Use the same scope as the header refresh: figures, Jinx and recent
+      // decisions all share the report, which the old pull gesture omitted.
+      await queryClient.refetchQueries({ type: "active", predicate: item => canRefreshScreenQuery(item.queryKey) }, { throwOnError: true });
+    } catch {
+      setRefreshFailed(true);
+    } finally {
+      refreshRunning.current = false;
+      setRefreshing(false);
+    }
+  }, [queryClient]);
   const scrollRef = useRef<ScrollView | null>(null);
   const scrollOffset = useRef(0);
   const { order, reorderVisible, reset } = useModuleLayout("overview");
@@ -80,18 +101,20 @@ export default function DashboardScreen() {
     : dashboard ? activeStarCounts(dashboard,now) : null;
   const activeSelection = (match: NonNullable<typeof dashboard>["featuredMatches"][number]) => activeMatch(match,now,publications.records,selectionUnavailable);
   const hasLiveMatches = hasRebuild && (snapshots.data ?? []).some(match=>["LIVE","HALF_TIME"].includes(match.status));
+  const selectionsLoading = hasRebuild && (snapshots.isPending || publications.pending);
+  const showLiveSelections = hasRebuild && (hasLiveMatches || selectionsLoading || selectionUnavailable);
   const selectedMatches = overviewLiveSelections(snapshots.data ?? [],publications.records,liveStarFilter,now,selectionUnavailable).slice(0,3);
-  const featuredMatches = hasLiveMatches ? selectedMatches : [...(dashboard?.featuredMatches ?? [])].sort((a,b)=>activeSelection(b).rating-activeSelection(a).rating);
+  const featuredMatches = showLiveSelections ? selectedMatches : [...(dashboard?.featuredMatches ?? [])].sort((a,b)=>activeSelection(b).rating-activeSelection(a).rating);
   const featuredMode = selectedMatches.length ? "SELECTED_LIVE" : dashboard?.featuredMatchMode === "SELECTED_LIVE" && !featuredMatches.some(match=>activeSelection(match).selectedOdd)
     ? "PRESSURE_LIVE" : dashboard?.featuredMatchMode ?? "EMPTY";
   const week = useRebuildWeek();
-  const featuredTitle = hasLiveMatches ? "Takipteki canlı maçlar" : {
+  const featuredTitle = showLiveSelections ? "Canlı BTB seçimleri" : {
     SELECTED_LIVE: "Öne çıkan canlı maçlar",
     PRESSURE_LIVE: "Takipteki canlı maçlar",
     UPCOMING: "Sıradaki maçlar",
     EMPTY: "Maç görünümü"
   }[featuredMode];
-  const featuredCaption = hasLiveMatches ? `${starMetricLabel(liveStarFilter)} · seçim ve güncel oran` :
+  const featuredCaption = showLiveSelections ? `${starMetricLabel(liveStarFilter)} · güncel oranı bulunan son seçimler` :
     dashboard?.featuredMatchMode === "UPCOMING"
       ? "Başlama zamanı en yakın aktif fikstürler"
       : "Skor, seçim ve güncel oran";
@@ -102,7 +125,8 @@ export default function DashboardScreen() {
       // The live-match counter used loss red. It counts matches in
       // progress and says nothing about how they are going.
       accent={semantic.live}
-      detail="aktif takip"
+      accessibilityHint="Devam eden tüm maçları açar"
+      detail="tüm canlı maçlar"
       icon="access-point"
       key="live"
       label="Canlı maç"
@@ -116,7 +140,8 @@ export default function DashboardScreen() {
     />,
     <MetricTile
       accent={colors.gold}
-      detail={hasRebuild && !starCounts ? selectionUnavailable ? "kayıtlar doğrulanamıyor" : "kayıtlar yükleniyor" : "canlı maç filtresi"}
+      accessibilityHint="Seçili yıldız eşiğindeki canlı BTB seçimlerini açar"
+      detail={hasRebuild && !starCounts ? selectionsLoading ? "seçimler yükleniyor" : "doğrulanamıyor" : "aktif BTB seçimi"}
       icon="star"
       key="stars"
       label={starMetricLabel(liveStarFilter)}
@@ -134,6 +159,7 @@ export default function DashboardScreen() {
     <TutorialTarget id="home-super-metric" key="week" style={wideWeb ? styles.metricTarget : styles.stripTarget}>
       <MetricTile
         accent={week.period ? toneColor[weekTone] : semantic.neutral}
+        accessibilityHint="Tüm Super kararlarını ve sonuç raporunu açar"
         accessibilityLabel={week.period
           ? `BTB son 7 gün, varsayımsal birim ${formatUnits(week.period.net)}; ${week.period.wins} kazandı, ${week.period.losses} kaybetti; ROI ${formatRatio(week.period.roi)}`
           : "BTB son 7 gün: rapor bekleniyor"}
@@ -144,6 +170,7 @@ export default function DashboardScreen() {
             : `${week.period.wins} kazandı · ${week.period.losses} kaybetti`}
         icon="chart-line"
         label="BTB · 7 gün"
+        valueCaption="varsayımsal birim"
         onPress={() => router.push("/super" as never)}
         value={week.period ? formatUnits(week.period.net) : "—"}
         valueColor={week.period && weekTone !== "neutral" ? toneColor[weekTone] : undefined}
@@ -179,25 +206,48 @@ export default function DashboardScreen() {
           actionLabel="Tüm kararlar"
           caption="En yeni kararlar"
           onAction={() => router.push("/super" as never)}
-          title="Son Super hareketleri"
+          title="Son Super kararları"
         />
         <RecentRecommendations />
       </>
     )
   };
 
-  if (featuredMatches.length || hasLiveMatches) {
+  if (dashboard) {
     moduleNodes.featured = (
       <>
         <SectionHeader
-          actionLabel="Tümünü gör"
+          actionLabel={showLiveSelections ? "Seçimleri gör" : featuredMode === "UPCOMING" ? "Fikstürü gör" : "Maçları gör"}
           caption={featuredCaption}
-          onAction={() => router.push(hasLiveMatches ? {pathname:"/live",params:{scope:"STAR",decision:liveStarFilter}} as never : "/live" as never)}
+          onAction={() => router.push(showLiveSelections ? {pathname:"/live",params:{scope:"STAR",decision:liveStarFilter}} as never :
+            {pathname:"/live",params:{scope:featuredMode === "UPCOMING" ? "FIXTURE" : "LIVE"}} as never)}
           title={featuredTitle}
         />
-        {hasLiveMatches && !featuredMatches.length ? <EmptyState kind="NO_DECISION"
-          title={publications.pending ? "Seçimler yükleniyor" : selectionUnavailable ? "Seçimler doğrulanamıyor" : "Filtreye uygun aktif seçim yok"}
-          message="Seçilen yıldız eşiğinde, piyasası açık ve güncel oranı bulunan son seçimler burada gösterilir." /> : null}
+        {!featuredMatches.length ? (
+          <View accessibilityLiveRegion="polite" style={styles.selectionState}>
+            <SurfaceMaterial radius={18} />
+            <MaterialCommunityIcons color={selectionUnavailable && !selectionsLoading ? semantic.warning : semantic.intelligence}
+              name={selectionsLoading ? "progress-clock" : selectionUnavailable ? "cloud-alert-outline" : "soccer-field"} size={iconSizes.control} />
+            <Text accessibilityRole="header" aria-level={3} style={styles.stateTitle}>
+              {selectionsLoading ? "Seçimler yükleniyor" : selectionUnavailable ? "Seçimler doğrulanamıyor" : hasLiveMatches
+                ? `${starMetricLabel(liveStarFilter)} için aktif seçim yok` : "Şu anda canlı maç yok"}
+            </Text>
+            <Text style={styles.stateMessage}>
+              {selectionsLoading ? "Maçlar ve son yayımlanan kararlar kontrol ediliyor." : selectionUnavailable
+                ? "Veriler alınamadığı için aktif seçim sayısı gösterilemiyor. Canlı maçları yine de inceleyebilirsin." : hasLiveMatches
+                  ? "Canlı maçlar devam ediyor. Bu yıldız eşiğinde, güncel oranı bulunan bir seçim yok."
+                  : "Yeni maçlar başladığında burada görünecek. Sıradaki maçlar için fikstürü açabilirsin."}
+            </Text>
+            {selectionsLoading ? null : (
+              <Pressable accessibilityRole="button" accessibilityLabel={hasLiveMatches || selectionUnavailable ? "Tüm canlı maçları gör" : "Fikstürü gör"}
+                onPress={() => router.push({pathname:"/live",params:{scope:hasLiveMatches || selectionUnavailable ? "LIVE" : "FIXTURE"}} as never)}
+                style={({ pressed, hovered }) => [styles.stateAction, hovered && styles.stateActionHover, pressed && { opacity: 0.78 }]}>
+                <Text style={styles.stateActionText}>{hasLiveMatches || selectionUnavailable ? "Tüm canlı maçları gör" : "Fikstürü gör"}</Text>
+                <MaterialCommunityIcons accessible={false} color={colors.blue} name="arrow-right" size={iconSizes.inline} />
+              </Pressable>
+            )}
+          </View>
+        ) : null}
         {featuredMatches.map((match, index) =>
           index === 0 ? (
             <TutorialTarget id="home-featured" key={match.key}>
@@ -253,19 +303,17 @@ export default function DashboardScreen() {
         refreshControl: (
           <RefreshControl
             colors={[colors.green]}
-            onRefresh={() => Promise.all([query.refetch(),insights.refetch(),...(hasRebuild ? [snapshots.refetch(),publications.query.refetch()] : [])])}
-            refreshing={query.isRefetching || (hasRebuild && (snapshots.isRefetching || publications.query.isRefetching))}
+            onRefresh={() => void refresh()}
+            refreshing={refreshing}
             tintColor={colors.green}
           />
         )
       }}
     >
-      {!dashboard ? query.isLoading ? <LoadingState label="Maç ve program özeti hazırlanıyor" /> : <ErrorState error={query.error} onRetry={() => { void query.refetch(); }} /> : query.isError ? <Text accessibilityRole="alert" style={styles.scopeNote}>Özet yenilenemedi; son alınan maç ve program verileri gösteriliyor.</Text> : null}
-      {dashboard && featuredMode !== "SELECTED_LIVE" ? <Text style={styles.selectionNotice}>
-        Şu an öne çıkan canlı BTB seçimi yok.
-      </Text> : null}
+      {!dashboard ? query.isLoading ? <LoadingState label="Maç ve program özeti hazırlanıyor" /> : <ErrorState error={query.error} onRetry={() => { void refresh(); }} /> : query.isError || refreshFailed ? <Text accessibilityRole="alert" style={styles.scopeNote}>Bazı özet verileri yenilenemedi. İlgili bölümde son durum gösteriliyor.</Text> : null}
       <ReorderableModuleList
         items={moduleItems}
+        maxColumns={2}
         onDragStateChange={setReordering}
         onReorder={(from, to) =>
           reorderVisible(
@@ -292,7 +340,13 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  selectionNotice: { ...textFont("400"), color: colors.textMuted, fontSize: 14, lineHeight: 21, marginBottom: spacing.md },
+  selectionState: { gap: spacing.sm, padding: spacing.lg, borderRadius: 18, borderWidth: 1, borderColor: colors.borderSoft },
+  stateTitle: { ...typeScale.body, color: colors.text, fontWeight: "700" },
+  stateMessage: { ...typeScale.bodyCompact, color: colors.textMuted },
+  stateAction: { minHeight: interaction.minTouchTarget, flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: spacing.sm,
+    paddingHorizontal: spacing.md, marginTop: spacing.xs, borderRadius: radii.round, backgroundColor: colors.blueSoft },
+  stateActionHover: { opacity: 0.85 },
+  stateActionText: { ...typeScale.bodyCompact, color: colors.blue, fontWeight: "700" },
   content: {
     paddingTop: spacing.md
   },

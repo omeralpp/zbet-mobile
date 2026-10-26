@@ -28,8 +28,10 @@ type MetricTileProps = {
   value: string;
   /** Colour of the figure itself, only when the figure is a judgement. */
   valueColor?: string | undefined;
+  valueCaption?: string | undefined;
   detail?: string | undefined;
   accessibilityLabel?: string | undefined;
+  accessibilityHint?: string | undefined;
   onPress?: (() => void) | undefined;
 };
 
@@ -44,18 +46,24 @@ export function MetricTile({
   label,
   value,
   valueColor,
+  valueCaption,
   detail,
   accessibilityLabel,
+  accessibilityHint,
   onPress
 }: MetricTileProps) {
   const { width } = useWindowDimensions();
   const roomy = Platform.OS === "web" && isAtLeast(resolveBreakpoint(width), "medium");
   const content = (
     <>
-      <MaterialCommunityIcons color={accent} name={icon} size={iconSizes.inline} />
+      <View style={styles.iconRow}>
+        <MaterialCommunityIcons color={accent} name={icon} size={iconSizes.inline} />
+        {onPress ? <MaterialCommunityIcons accessible={false} color={colors.textMuted} name="chevron-right" size={iconSizes.inline} /> : null}
+      </View>
       <Text numberOfLines={1} style={[styles.value, roomy && styles.valueRoomy, valueColor ? { color: valueColor } : null]}>
         {value}
       </Text>
+      {valueCaption ? <Text style={styles.detail}>{valueCaption}</Text> : null}
       <Text style={styles.label}>{label}</Text>
       {detail ? <Text style={styles.detail}>{detail}</Text> : null}
     </>
@@ -65,8 +73,8 @@ export function MetricTile({
   }
   return (
     <Pressable
-      accessibilityHint={`${label} ekranını açar`}
-      accessibilityLabel={accessibilityLabel ?? `${label}: ${value}`}
+      accessibilityHint={accessibilityHint ?? `${label} ekranını açar`}
+      accessibilityLabel={accessibilityLabel ?? `${label}: ${value}${valueCaption ? ` ${valueCaption}` : ""}`}
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed, hovered }) => [styles.tile, hovered && styles.hovered, pressed && styles.pressed]}
@@ -114,6 +122,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: 14,
     borderRadius: 18
+  },
+  iconRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
   },
   hovered: {
     backgroundColor: colors.surfaceStrong

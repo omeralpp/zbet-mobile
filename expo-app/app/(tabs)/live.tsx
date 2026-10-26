@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import {
@@ -19,6 +19,7 @@ import { MatchCard } from "@/src/components/MatchCard";
 import { useRebuildClock } from "@/src/components/RebuildEvidencePanel";
 import { LocalTabPager } from "@/src/components/LocalTabPager";
 import { Screen } from "@/src/components/Screen";
+import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { useCardGrid, type CardGrid } from "@/src/layout/use-card-grid";
@@ -27,7 +28,6 @@ import { useLiveStarFilter } from "@/src/preferences/LiveStarFilterProvider";
 import { usePinnedMatches } from "@/src/preferences/use-pinned-matches";
 import { splitPinnedMatches } from "@/src/preferences/pinned-matches";
 import {
-  EmptyState,
   ErrorState,
   LoadingState
 } from "@/src/components/StateView";
@@ -41,7 +41,8 @@ import {
   typeScale
 } from "@/src/theme/theme";
 import {
-  isStarDecisionFilter
+  isStarDecisionFilter,
+  starMetricLabel
 } from "@/src/utils/decision-filters";
 import {
   matchLiveTab,
@@ -50,6 +51,8 @@ import {
 } from "@/src/utils/live-match-tabs";
 import { groupMatchesByKickoff } from "@/src/utils/match-groups";
 import { normalizeSearchText, searchTextScore } from "@/src/utils/search";
+import { liveEmptyKind, type LiveEmptyKind } from "@/src/utils/live-list-state";
+import { canRefreshScreenQuery } from "@/src/web/refresh-data";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { formatTodayEyebrow } from "@/src/utils/format";
 
@@ -87,8 +90,8 @@ function LiveSwitch({
 }: {
   /** The star view selects neither half; the star chip shows it instead. */
   tab: LiveMatchTab;
-  fixtureCount: number;
-  liveCount: number;
+  fixtureCount: number | null;
+  liveCount: number | null;
   onChange: (active: boolean) => void;
 }) {
   const segments = [
@@ -101,7 +104,7 @@ function LiveSwitch({
         const selected = segment.live ? tab === "LIVE" : tab === "FIXTURE";
         return (
           <Pressable
-            accessibilityLabel={`${segment.label}, ${segment.count ?? fixtureCount} maç`}
+            accessibilityLabel={`${segment.label}, ${(segment.live ? liveCount : fixtureCount) === null ? "maç sayısı henüz doğrulanmadı" : `${segment.live ? liveCount : fixtureCount} maç`}`}
             accessibilityRole="tab"
             accessibilityState={{ selected }}
             key={segment.label}
@@ -118,13 +121,59 @@ function LiveSwitch({
           >
             {segment.live ? <View style={[styles.segmentDot, !selected && styles.segmentDotIdle]} /> : null}
             <Text style={[styles.liveSwitchLabel, selected && (segment.live ? styles.liveSwitchLabelActive : styles.liveSwitchLabelSelected)]}>
-              {segment.count === null ? segment.label : `${segment.label} · ${segment.count}`}
+              {segment.live ? `${segment.label} · ${segment.count ?? "—"}` : segment.label}
             </Text>
           </Pressable>
         );
       })}
     </View>
   );
+}
+
+function LiveListEmpty({ kind, filterLabel, hasLiveMatches, hasFixtures, onClear, onLive, onFixture, onRetry }: {
+  kind: LiveEmptyKind;
+  filterLabel: string;
+  hasLiveMatches: boolean;
+  hasFixtures: boolean;
+  onClear: () => void;
+  onLive: () => void;
+  onFixture: () => void;
+  onRetry: () => void;
+}) {
+  if (kind === "LOADING") return <LoadingState label="Seçim kayıtları yükleniyor" />;
+  const content = {
+    SEARCH: { title: "Bu kapsamda eşleşme yok", message: "Takım veya lig adını kontrol edebilir, aramayı temizleyebilir ya da üstten başka bir kapsam seçebilirsin.", action: "Aramayı temizle", onPress: onClear },
+    UNAVAILABLE: { title: "Seçimler doğrulanamıyor", message: "Seçim kayıtları alınamadığı için aktif seçim sayısı bilinmiyor. Canlı maçları ayrı olarak inceleyebilirsin.", action: "Tekrar dene", onPress: onRetry },
+    NO_SELECTION: { title: `${filterLabel} için aktif seçim yok`, message: hasLiveMatches
+      ? "Bu yıldız eşiğinde, güncel oranı bulunan bir BTB seçimi yok. Tüm canlı maçları izlemeye devam edebilirsin."
+      : "Bu yıldız eşiğinde aktif seçim yok. Şu anda devam eden canlı maç da bulunmuyor.",
+      action: hasLiveMatches ? "Tüm canlı maçları gör" : hasFixtures ? "Fikstürü gör" : "Yenile", onPress: hasLiveMatches ? onLive : hasFixtures ? onFixture : onRetry },
+    NO_FIXTURE: { title: "Fikstürde maç yok", message: hasLiveMatches
+      ? "Bu kapsam, yaklaşan ve oynanmayacağı bildirilen maçları gösterir. Devam eden maçlar Canlı bölümündedir."
+      : "Yaklaşan veya oynanmayacağı bildirilen bir maç bulunmuyor. Liste otomatik yenilenir; şimdi yeniden kontrol edebilirsin.",
+      action: hasLiveMatches ? "Canlı maçlara geç" : "Yenile", onPress: hasLiveMatches ? onLive : onRetry },
+    NO_LIVE: { title: "Şu anda canlı maç yok", message: hasFixtures
+      ? "Yeni maçlar başladığında burada görünecek. Sıradaki maçları fikstürden inceleyebilirsin."
+      : "Yeni maçlar başladığında burada görünecek. Liste otomatik yenilenir; şimdi yeniden kontrol edebilirsin.",
+      action: hasFixtures ? "Fikstürü gör" : "Yenile", onPress: hasFixtures ? onFixture : onRetry }
+  }[kind];
+  return <View accessibilityLiveRegion="polite" style={styles.emptyCard}>
+    <SurfaceMaterial radius={18} />
+    <MaterialCommunityIcons accessible={false} color={kind === "UNAVAILABLE" ? semantic.warning : colors.blue}
+      name={kind === "SEARCH" ? "magnify" : kind === "UNAVAILABLE" ? "cloud-alert-outline" : "soccer-field"} size={iconSizes.control} />
+    <Text accessibilityRole="header" aria-level={2} style={styles.emptyTitle}>{content.title}</Text>
+    <Text style={styles.emptyMessage}>{content.message}</Text>
+    <View style={styles.emptyActions}>
+      <Pressable accessibilityRole="button" accessibilityLabel={content.action} onPress={content.onPress}
+        style={({ pressed }) => [styles.emptyAction, pressed && styles.segmentPressed]}>
+        <Text style={styles.emptyActionText}>{content.action}</Text>
+        <MaterialCommunityIcons accessible={false} color={colors.blue} name={kind === "UNAVAILABLE" ? "refresh" : "arrow-right"} size={iconSizes.inline} />
+      </Pressable>
+      {kind === "UNAVAILABLE" && (hasLiveMatches || hasFixtures) ? <Pressable accessibilityRole="button" onPress={hasLiveMatches ? onLive : onFixture} style={styles.emptySecondaryAction}>
+        <Text style={styles.emptyActionText}>{hasLiveMatches ? "Tüm canlı maçları gör" : "Fikstürü gör"}</Text>
+      </Pressable> : null}
+    </View>
+  </View>;
 }
 
 export default function LiveScreen() {
@@ -135,6 +184,24 @@ export default function LiveScreen() {
     decision?: string | string[];
   }>();
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshFailed, setRefreshFailed] = useState(false);
+  const refreshRunning = useRef(false);
+  const refresh = useCallback(async () => {
+    if (refreshRunning.current) return;
+    refreshRunning.current = true;
+    setRefreshing(true);
+    setRefreshFailed(false);
+    try {
+      await queryClient.refetchQueries({type:"active",predicate:item=>canRefreshScreenQuery(item.queryKey)}, {throwOnError:true});
+    } catch {
+      setRefreshFailed(true);
+    } finally {
+      refreshRunning.current = false;
+      setRefreshing(false);
+    }
+  }, [queryClient]);
   const { filter: persistedStarFilter, setFilter: setPersistedStarFilter } =
     useLiveStarFilter();
   const routeStarFilter = firstParam(params.decision);
@@ -152,11 +219,13 @@ export default function LiveScreen() {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const hasSearch = normalizeSearchText(search).length > 0;
   const query = useQuery(matchesQuery);
   // A newly received quote can postdate the previous one-second clock tick.
   // Use its actual client receipt time, never treating a future quote as fresh.
   const now = Math.max(clock,query.dataUpdatedAt);
   const publications = usePublishedSelections(query.data);
+  const countsKnown = query.data !== undefined && !query.isError;
   const insightsQuery = useQuery(matchInsightsQuery);
   const pinnedEligibleKeys = useMemo(
     () => (query.data ?? []).map((match) => match.key),
@@ -235,6 +304,12 @@ export default function LiveScreen() {
     return selectedKey && keys.includes(selectedKey) ? selectedKey : keys[0] ?? null;
   }, [sectionsByTab, selectedKey, tab]);
   const detailExpanded = splitLayout && Boolean(paneKey) && expandedKey === paneKey;
+  const showSplit = splitLayout && paneKey !== null;
+  const visibleCount = (sectionsByTab[tab] ?? []).reduce((count, section) => count + section.data.length, 0);
+  const changeTab = (nextTab: LiveMatchTab) => {
+    setDecisionOpen(false);
+    router.setParams({scope:nextTab,decision:nextTab === "STAR" ? starFilter : undefined,filter:undefined});
+  };
 
   useEffect(() => {
     if (Platform.OS !== "web" || !detailExpanded) return;
@@ -267,8 +342,8 @@ export default function LiveScreen() {
         <View style={styles.filters}>
           <LiveSwitch
             tab={tab}
-            fixtureCount={tabCounts.FIXTURE}
-            liveCount={tabCounts.LIVE}
+            fixtureCount={countsKnown ? tabCounts.FIXTURE : null}
+            liveCount={countsKnown ? tabCounts.LIVE : null}
             onChange={(enabled) => {
               setDecisionOpen(false);
               router.setParams({
@@ -280,7 +355,7 @@ export default function LiveScreen() {
           />
           <DecisionFilterChip
             active={tab === "STAR"}
-            {...(!publications.pending && !publications.unavailable ? {count:tabCounts.STAR} : {})}
+            {...(countsKnown && !publications.pending && !publications.unavailable ? {count:tabCounts.STAR} : {})}
             onActivate={() =>
               router.setParams({ scope: "STAR", decision: starFilter })
             }
@@ -298,15 +373,22 @@ export default function LiveScreen() {
       <View style={[styles.searchRow, splitLayout && styles.searchRowWide]}>
         <View style={styles.searchField}>
           <MaterialCommunityIcons color={colors.textMuted} name="magnify" size={iconSizes.inline} />
-          <TextInput accessibilityLabel="Takım veya lig ara" placeholder="Takım veya lig ara"
+          <TextInput accessibilityLabel="Takım veya lig ara" accessibilityHint={Platform.OS === "web" ? "Yalnız seçili kapsamın maçlarında arar. Escape aramayı temizler." : "Yalnız seçili kapsamın maçlarında arar."} placeholder="Takım veya lig ara"
             placeholderTextColor={colors.textMuted} value={search} onChangeText={setSearch}
+            onKeyPress={event => { if (event.nativeEvent.key === "Escape" && search) { event.stopPropagation(); setSearch(""); } }}
             autoCorrect={false} autoCapitalize="none" style={styles.search} />
+          {search ? <Pressable accessibilityRole="button" accessibilityLabel="Maç aramasını temizle" onPress={() => setSearch("")} style={styles.clearSearch}>
+            <MaterialCommunityIcons accessible={false} color={colors.blue} name="close" size={iconSizes.inline} />
+          </Pressable> : null}
         </View>
-        {search ? <Pressable accessibilityRole="button" accessibilityLabel="Maç aramasını temizle" onPress={() => setSearch("")} style={styles.clearSearch}><Text style={styles.clearSearchText}>Temizle</Text></Pressable> : null}</View>
+      </View>
       {query.data ? <Text accessibilityLiveRegion="polite" style={[styles.resultCount, splitLayout && styles.resultCountWide]}>
-        {tab === "STAR" && publications.pending ? "Seçim kayıtları yükleniyor…" : tab === "STAR" && publications.unavailable ? "Seçim kayıtları doğrulanamıyor" : `${tabCounts[tab]} maç bu kapsamda · ${(sectionsByTab[tab] ?? []).reduce((count, section) => count + section.data.length, 0)} sonuç`}
+        {!countsKnown ? "Maç listesi doğrulanamıyor" : tab === "STAR" && publications.pending ? "Seçim kayıtları yükleniyor…" : tab === "STAR" && publications.unavailable ? "Seçim kayıtları doğrulanamıyor" :
+          `${tab === "STAR" ? starMetricLabel(starFilter) : tab === "FIXTURE" ? "Fikstür" : "Canlı"} · ${hasSearch ? `${visibleCount} / ${tabCounts[tab]} eşleşme` : `${tabCounts[tab]} maç`}`}
       </Text> : null}
       </View>
+
+      {refreshFailed && !query.isError ? <Text accessibilityRole="alert" style={styles.refreshNote}>Bazı veriler yenilenemedi. Son alınan bilgiler gösteriliyor.</Text> : null}
 
       {query.isLoading ? (
         <LoadingState label="Canlı maçlar hazırlanıyor" />
@@ -318,11 +400,11 @@ export default function LiveScreen() {
               ? query.error.message
               : "Maçlar alınamadı."
           }
-          onRetry={() => query.refetch()}
+          onRetry={() => void refresh()}
         />
       ) : (
-        <View style={splitLayout ? styles.split : styles.single}>
-        <View style={[splitLayout ? styles.splitList : styles.single, splitLayout && detailExpanded && styles.hiddenList]}>
+        <View style={showSplit ? styles.split : styles.single}>
+        <View style={[showSplit ? styles.splitList : styles.single, detailExpanded && styles.hiddenList]}>
         <LocalTabPager
           activeKey={tab}
           onSelect={(nextTab) => {
@@ -345,20 +427,14 @@ export default function LiveScreen() {
               numColumns={grid.columns}
               {...(grid.rowStyle ? { columnWrapperStyle: grid.rowStyle } : {})}
               ListEmptyComponent={
-                pageTab === "STAR" && publications.pending ? <LoadingState label="Seçim kayıtları yükleniyor" />
-                : pageTab === "STAR" && publications.unavailable ? <ErrorState error={publications.query.error} message="Aktif seçimler doğrulanamadı." onRetry={() => publications.query.refetch()} />
-                : <EmptyState
-                  kind="NO_LIVE_MATCH"
-                  message={
-                    pageTab === "FIXTURE"
-                      ? "Yakında başlayacak planlı bir maç bulunmuyor."
-                      : pageTab === "STAR" && !search ? "Seçilen yıldız filtresinde BTB seçimi yok. Canlı maçları izlemeye devam edebilirsin." : "Bu arama veya filtreye uyan bir maç bulunmuyor."
-                  }
-                  title={
-                    pageTab === "FIXTURE"
-                      ? "Yaklaşan maç yok"
-                      : "Maç yok"
-                  }
+                <LiveListEmpty kind={liveEmptyKind(pageTab,hasSearch,publications.pending,publications.unavailable)}
+                  filterLabel={starMetricLabel(starFilter)}
+                  hasLiveMatches={tabCounts.LIVE > 0}
+                  hasFixtures={tabCounts.FIXTURE > 0}
+                  onClear={() => setSearch("")}
+                  onLive={() => changeTab("LIVE")}
+                  onFixture={() => changeTab("FIXTURE")}
+                  onRetry={() => { void refresh(); }}
                 />
               }
               ListFooterComponent={
@@ -381,10 +457,8 @@ export default function LiveScreen() {
               refreshControl={
                 <RefreshControl
                   colors={[semantic.live]}
-                  onRefresh={() =>
-                    Promise.all([query.refetch(), insightsQuery.refetch(), ...(query.data?.some(match=>match.rebuild) ? [publications.query.refetch()] : [])])
-                  }
-                  refreshing={query.isRefetching || insightsQuery.isRefetching || publications.query.isRefetching}
+                  onRefresh={() => void refresh()}
+                  refreshing={refreshing}
                   tintColor={semantic.live}
                 />
               }
@@ -444,7 +518,7 @@ export default function LiveScreen() {
           tabs={localTabs}
         />
         </View>
-        {splitLayout ? (
+        {showSplit ? (
           <View style={[styles.splitDetail, detailExpanded && styles.expandedDetail]}>
             {paneKey ? <View style={styles.detailActions}>
               <Pressable accessibilityRole="button" accessibilityLabel={detailExpanded ? "Maç detayını küçült, maç listesine dön" : "Maç detayını büyüt"}
@@ -454,15 +528,7 @@ export default function LiveScreen() {
                 <Text style={styles.expandText}>{detailExpanded ? "Küçült · listeye dön" : "Detayı büyüt"}</Text>
               </Pressable>
             </View> : null}
-            {paneKey ? (
-              <MatchDetailView embedded expanded={detailExpanded} key={paneKey} matchKey={paneKey} />
-            ) : (
-              <EmptyState
-                kind="NO_LIVE_MATCH"
-                message="Soldaki listeden bir maç seçildiğinde detayı burada açılır."
-                title="Maç seçilmedi"
-              />
-            )}
+            <MatchDetailView embedded expanded={detailExpanded} key={paneKey} matchKey={paneKey!} />
           </View>
         ) : null}
         </View>
@@ -479,6 +545,15 @@ const singleColumnGrid: CardGrid = {
 };
 
 const styles = StyleSheet.create({
+  emptyCard: { alignSelf: "center", width: "100%", maxWidth: 680, gap: spacing.md, padding: spacing.xl, borderWidth: 1, borderColor: colors.borderSoft, borderRadius: 18 },
+  emptyTitle: { ...typeScale.decision, color: colors.text },
+  emptyMessage: { ...typeScale.bodyCompact, color: colors.textMuted },
+  emptyActions: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing.sm },
+  emptyAction: { minHeight: interaction.minTouchTarget, flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: spacing.sm,
+    paddingHorizontal: spacing.md, backgroundColor: colors.blueSoft, borderRadius: radii.round },
+  emptyActionText: { ...typeScale.bodyCompact, color: colors.blue, fontWeight: "700" },
+  emptySecondaryAction: { minHeight: interaction.minTouchTarget, paddingHorizontal: spacing.sm, justifyContent: "center" },
+  refreshNote: { ...typeScale.bodyCompact, color: semantic.warning, marginBottom: spacing.md },
   hiddenList: { display: "none" },
   expandedDetail: { borderLeftWidth: 0 },
   detailActions: { alignItems: "flex-end", paddingBottom: spacing.sm },
@@ -489,13 +564,12 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.border, borderRadius: 14, backgroundColor: colors.backgroundElevated,
     paddingLeft: 14 },
   search: { flex: 1, minWidth: 0, minHeight: 46, color: colors.text, ...typeScale.body, paddingRight: spacing.md },
-  clearSearch: { minHeight: 48, justifyContent: "center", paddingHorizontal: spacing.sm },
-  clearSearchText: { ...typeScale.bodyCompact, color: colors.blue, fontWeight: "700" },
+  clearSearch: { width: interaction.minTouchTarget, minHeight: interaction.minTouchTarget, justifyContent: "center", alignItems: "center", borderRadius: radii.round },
   resultCount: { ...typeScale.meta, color: colors.textMuted, marginBottom: spacing.md },
   toolbarWide: { flexDirection: "row", alignItems: "center", gap: spacing.md, marginBottom: spacing.lg, zIndex: 10 },
   filterTargetWide: { marginBottom: 0 },
   searchRowWide: { flex: 1, marginBottom: 0 },
-  resultCountWide: { marginBottom: 0 },
+  resultCountWide: { marginBottom: 0, width: 180, flexShrink: 0, textAlign: "right" },
   listEnd: { flexDirection: "row", alignItems: "center", gap: spacing.md, marginTop: spacing.sm, marginBottom: spacing.lg },
   listEndLine: { flex: 1, height: 1, backgroundColor: colors.border },
   listEndText: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0 },

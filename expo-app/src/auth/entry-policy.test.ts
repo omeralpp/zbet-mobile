@@ -5,8 +5,9 @@ import {
   resolveImmediateAuthStatus
 } from "./entry-policy";
 
-test("requires the branded entry screen before pilot access", () => {
-  assert.equal(resolveImmediateAuthStatus("pilot"), "unauthenticated");
+test("opens the pilot app directly while retaining the separate OAuth bootstrap", () => {
+  assert.equal(resolveImmediateAuthStatus("pilot"), "authenticated");
+  assert.equal(resolveImmediateAuthStatus("oauth"), null);
   assert.equal(
     resolveAuthEntryPresentation("pilot").buttonText,
     "Pilot uygulamasına gir"
