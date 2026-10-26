@@ -1,12 +1,12 @@
 # Live UX review — 2026-10-26
 
 Owner: BTB Mobile Next - Aktif. NXT-OBS-225; recurring JURY-R02 / TASK-0180.
-Status: DELIVERED; Android basic smoke accepted, published-web owner smoke pending.
+Status: COMPLETE; Android and published-web owner basic smokes accepted; paired completion gate passed.
 Published in the [combined 3279a25 pair](COMBINED_CLIENT_UX_RELEASE_2026-10-26.md).
 
 The owner accepted the Summary preview and explicitly requested the same expert
 assessment and meaningful local implementation for Live on Android and web.
-NXT-OBS-223 welcome-screen removal remains queued for the later batch.
+NXT-OBS-223 welcome-screen removal shipped in the same accepted pair.
 
 ## Assessment and changes
 

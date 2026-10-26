@@ -1,7 +1,7 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-26
-Mod: `WEB_PUBLISHED / ANDROID_ACCEPTED / OWNER_WEB_SMOKE_PENDING`
+Mod: `OBSERVATION / PAIRED_RELEASE_COMPLETE`
 Combined client UX source `3279a25db729c9e6f7234f6a08998bad5a162d77` is clean,
 pushed and delivered: direct pilot entry (NXT-OBS-223), Summary (224), Live and
 focused web resize repair (225 / TASK-0180). The owner approved preview, scoped
@@ -19,10 +19,12 @@ unauthorized API401, Access302, local/public BFF health and served-entry hash
 pass. Publisher restarted the unchanged BFF to switch web roots. User prospective
 collection setting remains false; no model/SAP/credential or Access-policy change.
 
-The remaining gate is the owner's published-web smoke. TASK-0180 remains
-IN_PROGRESS and the batch is not COMPLETE until that reply and the matching
-`client-release.mjs complete` receipt. Approval remains active; no reapproval is
-needed for this batch. Later handoff-only commits do not alter released source.
+Owner confirmed published-web smoke on 26 October: “Web kontrolu sorunsuz commit
+ve push ile işlemi tamamla”. Both owner smokes are accepted and the exact pair
+passed `client-release.mjs complete`; TASK-0180 is DONE with no known remaining
+defect. Completion receipt: `client-release-3279a25-COMPLETE-2026-10-26.json`.
+Later handoff-only commits do not alter released source. No recurring wait is
+retained; reopen the original task on concrete recurrence.
 Receipts: `btb-codex/docs/evidence/client-release-3279a25-*2026-10-26.json`.
 [Combined release report](COMBINED_CLIENT_UX_RELEASE_2026-10-26.md).
 Core validation: type/lint, 669+32 tests, both exports, final ARM64 build and

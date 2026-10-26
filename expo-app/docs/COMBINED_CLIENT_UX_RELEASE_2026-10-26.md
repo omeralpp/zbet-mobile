@@ -2,7 +2,7 @@
 
 Scope: NXT-OBS-223 direct pilot entry, NXT-OBS-224 Summary UX, NXT-OBS-225 Live UX
 and the web focused-resize repair. Owner: BTB Mobile Next - Aktif.
-Status: WEB_PUBLISHED / ANDROID_ACCEPTED / OWNER_WEB_SMOKE_PENDING.
+Status: COMPLETE / BOTH_OWNER_SMOKES_ACCEPTED.
 
 The owner requested removal of the pilot welcome screen followed by publication
 of all these changes. Android and web publication intent is explicit. This does
@@ -11,8 +11,9 @@ The owner subsequently explicitly approved the presented combined preview,
 scoped `zbet-mobile` and `btb-codex` commit/push, ARM64 APK build/signing and
 private delivery on 26 October. The existing Android/web publication approval
 remains in force. Owner confirmed exact installation and Android basic smoke:
-“APK sorunsuz devam et”. The companion web is published; its owner smoke is the
-only remaining acceptance item before the paired completion gate.
+“APK sorunsuz devam et”. The owner also confirmed published-web smoke:
+“Web kontrolu sorunsuz commit ve push ile işlemi tamamla”. The exact paired
+completion gate passed; TASK-0180 is DONE.
 
 ## Delivered pair
 
@@ -28,8 +29,8 @@ Batch: `client-3279a25db729c9e6f7234f6a08998bad5a162d77-E7CF451CE293-AA91DA90DFE
   installation. Local/public health, shell/deep-link/CSP, API401, Access302 and
   served entry bytes pass. Served entry SHA-256 is
   `ED7929E1C044266AE90B41404497B9E12C8D56736F2280ACD79499C337B96CD8`.
-- Android owner smoke passed; published-web owner smoke is unobserved. Retain
-  TASK-0180 and batch completion as pending. Durable receipts:
+- Android and published-web owner smokes passed. The matching completion receipt
+  is `client-release-3279a25-COMPLETE-2026-10-26.json`. Durable receipts:
   `btb-codex/docs/evidence/client-release-3279a25-*2026-10-26.json`.
 
 ## Reviewable candidate
@@ -63,7 +64,7 @@ performance or native orientation coverage.
 See [Summary review](SUMMARY_UX_REVIEW_2026-10-26.md) and
 [Live review, comparisons and resize proof](LIVE_UX_REVIEW_2026-10-26.md).
 
-## Approved sequence (steps 1–4 delivered; step 5 pending)
+## Approved sequence (all five steps complete)
 
 1. Accept the combined preview and explicitly approve scoped commit/push in
    `zbet-mobile` (client, tests, documentation and retained preview evidence)
@@ -78,7 +79,7 @@ See [Summary review](SUMMARY_UX_REVIEW_2026-10-26.md) and
 4. After installation, run the publisher dry run, publish the companion web
    under the owner's publication approval, and verify local/public gates.
 5. Record actual Android and published-web smokes; only matching receipts can
-   complete the coordinated batch. TASK-0180 stays open until that work closes.
+   complete the coordinated batch. Both passed; TASK-0180 is closed.
 
 The previous completed pair remains the recovery baseline: client source
 `57e27c219530fa449dd66f769cdff613d94d7a2b`, APK `F0828E2B1948…`, web tree
