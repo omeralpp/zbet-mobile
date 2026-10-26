@@ -2,7 +2,7 @@
 
 Owner: BTB Mobile Next - Aktif. NXT-OBS-228/229. Extension of the local
 [Super/Toto list batch](SUPER_TOTO_UX_REVIEW_2026-10-26.md).
-Status: OWNER_ACCEPTED_PREVIEW / APPROVED_RELEASE_PREPARATION.
+Status: COMPLETE / BOTH_OWNER_SMOKES_ACCEPTED.
 
 The owner requested the same expert review and meaningful improvements on the
 two detail pages, followed by a later combined commit/publication phase.
@@ -12,6 +12,17 @@ Owner subsequently accepted the concrete four-screen preview and next release
 phase on 26 October ("Onaylıyorum"). Scoped commit/push, final signed pilot APK
 and private delivery plus companion web publication are approved. Actual APK
 installation before web publication and both owner smokes remain required.
+
+Delivered source `67b72ac9b5dd8d55db097be85f773a35429405c1`: signed/private APK
+`9A250D4B51578FB4DEC29D686A27DDC34090D0985BA792D7B377C629DF87CB20`, 50,487,329 bytes;
+matching paired web tree `5BFE99C72B1B11CC9A5737200E80EC6117BAEF1D01B1F0F9F99AB36F8019166E`.
+Owner accepted APK installation/basic smoke (“Kurulum tamamlandı sorun yok”).
+Web published afterwards as `20261026T163408Z-67b72ac`; technical publication
+checks passed. Owner confirmed published web: “Web works correctly”. Matching
+`client-release.mjs complete` passed; TASK-0193 is DONE. Completion receipt:
+`client-release-67b72ac-COMPLETE-2026-10-26.json`. Durable receipts/checkpoint
+are in `btb-codex/docs/evidence/client-release-67b72ac-*2026-10-26.json` and
+`SUPER_TOTO_RELEASE_67b72ac_2026-10-26.md`.
 
 | Page | Before | Local candidate | Main benefit |
 | --- | --- | --- | --- |
@@ -86,10 +97,10 @@ rest of the batch. All existing external routes and result DTOs are retained.
   and keyboard evidence disclosure, genuine missing-record recovery, active
   fixture fallback and Toto light/dark themes. Both pages had no document
   overflow at 320 px.
-- No connected-device installation, TalkBack, orientation or performance claim.
+- Android installation/basic smoke is owner-attested. No adb, TalkBack,
+  orientation or performance claim.
   No SAP, BFF, API schema, model, prediction or coupon-planning changes.
-- All four list/detail pages remain one local Android/web batch on parent
-  `4bb945b`. Commit/push, final APK signing/private delivery, installation before
-  web publication, and both owner smokes remain the next coordinated phase.
-  No new external release action is inferred from the earlier completed batch.
-  The accepted `3279a25` pair and previous recovery pair are preserved.
+- All four list/detail pages shipped in one Android/web batch. Both actual owner
+  smokes and the matching completion gate passed. TASK-0193 is closed;
+  the accepted `3279a25` pair and previous recovery pair are preserved. Registered
+  publication restarted the unchanged BFF; User prospective setting remains false.

@@ -1,7 +1,7 @@
 # Super and Toto UX review — 2026-10-26
 
 Owner: BTB Mobile Next - Aktif. NXT-OBS-226 (Super), NXT-OBS-227 (Toto).
-Status: OWNER_ACCEPTED_PREVIEW / APPROVED_RELEASE_PREPARATION.
+Status: COMPLETE / BOTH_OWNER_SMOKES_ACCEPTED.
 Baseline: released client source `3279a25`; working-tree parent `4bb945b`.
 
 The owner subsequently extended this same local batch to
@@ -10,6 +10,12 @@ validation is 672+32 passing tests and both exports; initial list-only checks
 below remain historical evidence of that step. Owner accepted all four previews
 and approved scoped Git and coordinated pilot delivery on 26 October. Actual
 installation and client smokes are not inferred from that approval.
+
+The `67b72ac` pair is now delivered: owner confirmed APK installation/basic smoke,
+then matching web release `20261026T163408Z-67b72ac` was published and technical
+checks passed. Owner then confirmed published web; matching paired completion
+passed and TASK-0193 closed. See the detail
+review and `btb-codex/docs/evidence/SUPER_TOTO_RELEASE_67b72ac_2026-10-26.md`.
 
 The owner requested an expert assessment and implementation of changes with a
 material benefit, supplying desktop screenshots of both screens. Scores below
@@ -83,10 +89,10 @@ polling continues without a pull-to-refresh animation.
 - Android receives the same components and filters; desktop's table is replaced
   by the existing native cards/pager. No device was connected: installation,
   TalkBack, native gesture/orientation and performance checks are not claimed.
-- No commit/push, signing, private delivery, web publication or BFF restart for
-  this new batch. The accepted `3279a25` APK/web pair and previous recovery pair
-  remain intact. A future release needs scoped approvals and the coordinated
-  Android/web delivery gates; earlier approvals covered the completed prior batch.
+- Scoped commit/push, final APK signing/private delivery and matching web
+  publication are delivered under the new approval. Both owner smokes and the
+  matching completion gate passed. The registered publisher restarted the
+  unchanged BFF. Accepted `3279a25` and the previous recovery pair remain retained.
 
 No backend, API schema, SAP, Super selection or Toto prediction/coupon behavior
 was changed. Preview data and review scores establish no betting performance.

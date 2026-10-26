@@ -1,21 +1,33 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-26
-Mod: `OWNER_ACCEPTED_PREVIEW / APPROVED_RELEASE_PREPARATION`
-Owner requested Super/Toto list and detail UX on shared Android/web code:
-NXT-OBS-226..229. Local heuristic scores: Super list/detail7.5→8.5, Toto
-list/detail7→8.5. Shared sorting, explicit summary/filter scope, recovery,
-compact Toto history, result filters, coupon legend, readable mobile picks and
-unplayed-match display repair. Type/lint, 672+32 tests, Android JS bundle,
-verified edge web and synthetic browser checks pass. Owner accepted the concrete
-four-screen preview on 26 October ("Onaylıyorum") and approved scoped commit/push
-and coordinated pilot delivery: final APK signing/private delivery, then companion
-web publication after actual installation. Actual delivery/smokes remain pending.
-[Lists](SUPER_TOTO_UX_REVIEW_2026-10-26.md),
-[details and previews](SUPER_TOTO_DETAIL_UX_REVIEW_2026-10-26.md).
-The new approval is specific to this four-screen batch; no production is authorized.
+Mod: `OBSERVATION / PAIRED_RELEASE_COMPLETE`
+Super/Toto lists and details (NXT-OBS-226..229) shipped from clean pushed source
+`67b72ac9b5dd8d55db097be85f773a35429405c1`. Owner accepted preview and approved
+scoped Git/push, pilot APK signing/private delivery and companion web publication.
+Shared sorting, scoped summaries, recovery, compact history, result filters,
+coupon legend, readable mobile picks and unplayed-match display repair are delivered.
 
-## Current accepted pair — 3279a25
+Signed ARM64 APK `9A250D4B51578FB4DEC29D686A27DDC34090D0985BA792D7B377C629DF87CB20`,
+50,487,329 bytes, passed signature/ABI and private Drive authenticated hash readback.
+Owner confirmed installation/basic Android smoke: “Kurulum tamamlandı sorun yok”.
+This is owner evidence, not adb/hash-on-device or exhaustive accessibility testing.
+
+Matching web tree `5BFE99C72B1B11CC9A5737200E80EC6117BAEF1D01B1F0F9F99AB36F8019166E`
+was published after installation as `20261026T163408Z-67b72ac`. Served-entry hash,
+shell/deep-link/CSP, API401, Access302 and local/public BFF health pass. Registered
+publisher restarted the unchanged BFF; User prospective setting stays false.
+Owner also confirmed published-web smoke: “Web works correctly”. The exact pair
+passed `client-release.mjs complete`; TASK-0193 is DONE with no known remaining
+defect. Completion: `client-release-67b72ac-COMPLETE-2026-10-26.json`. No recurring
+wait remains; reopen the original task on a concrete recurrence.
+Later documentation commits do not change the released source. Evidence:
+`btb-codex/docs/evidence/client-release-67b72ac-*2026-10-26.json` and
+`SUPER_TOTO_RELEASE_67b72ac_2026-10-26.md`. [Lists](SUPER_TOTO_UX_REVIEW_2026-10-26.md),
+[details](SUPER_TOTO_DETAIL_UX_REVIEW_2026-10-26.md). Type/lint, 672+32 tests,
+both exports and synthetic browser checks pass; unchanged Doctor20/20 reused.
+
+## Previous accepted pair — 3279a25 (retained)
 
 Combined client UX source `3279a25db729c9e6f7234f6a08998bad5a162d77` is clean,
 pushed and delivered: direct pilot entry (NXT-OBS-223), Summary (224), Live and
