@@ -1,7 +1,33 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-10-26
-Mod: `OBSERVATION / PAIRED_RELEASE_COMPLETE`
+Son güncelleme: 2026-10-27
+Mod: `PAIRED_RELEASE_APPROVED / PREVIOUS_PAIR_RETAINED`
+
+## Current local batch — match evidence UX (NXT-OBS-230)
+
+Owner directly authorized UX assessment and local improvements to all five
+Maçın Kanıtları subsections on Android and web. Shared components, truthful
+loading/error/empty states, readable markets/units/sample counts, comparison
+bars and the desktop evidence layout are updated. Browser testing also found
+and repaired keyboard disclosure activation; pointer drag/hold guards remain.
+Local validation passed: type/lint/brand, 677 client +32 tooling tests, Android
+preview bundle/secret scan and canonical verified edge web export. Synthetic
+actual-screen checks cover 320/390/1440 px, six data states, Enter/Space,
+expansion, null vs zero and unchanged historical shares. Final visual polish
+keeps unreachable labels on one line. Heuristic score 5.8→8.3/10; no user-study
+or physical-device acceptance is claimed. [Review and previews](MATCH_EVIDENCE_UX_REVIEW_2026-10-27.md).
+Owner accepted the web/UX preview and explicitly selected **Commit, push, and
+release both Android and web** on 27 October. Approval covers scoped Git and
+the coordinated pilot APK build/signing/private delivery plus companion web
+publication after exact APK installation. Freeze this tested source for both
+artifacts. Installation and both owner smokes remain unobserved; never mark the
+pair complete before them. Track actual hashes/delivery/publication in
+`btb-codex/docs/evidence/match-evidence-release-*2026-10-27*` while this client
+checkout is frozen. No BFF source/SAP/model change. The accepted pair below
+remains the active/recovery source until coordinated delivery is complete.
+
+## Current accepted pair — 67b72ac (unchanged)
+
 Super/Toto lists and details (NXT-OBS-226..229) shipped from clean pushed source
 `67b72ac9b5dd8d55db097be85f773a35429405c1`. Owner accepted preview and approved
 scoped Git/push, pilot APK signing/private delivery and companion web publication.

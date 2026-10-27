@@ -103,3 +103,14 @@ export function shouldTogglePanel(gesture: PanelPressGesture): boolean {
     Math.abs(gesture.endY - gesture.startY) <= moduleReorderActivationSlop
   );
 }
+
+/** Keyboard and assistive activation have no pointer gesture to reject. */
+export function shouldTogglePanelActivation(
+  started: { startedAt: number; startX?: number; startY?: number } | null,
+  ended: { endedAt: number; endX?: number; endY?: number }
+): boolean {
+  if (!started || [started.startX, started.startY, ended.endX, ended.endY]
+    .some(value => typeof value !== "number" || !Number.isFinite(value))) return true;
+  return shouldTogglePanel({ startedAt: started.startedAt, endedAt: ended.endedAt,
+    startX: started.startX!, startY: started.startY!, endX: ended.endX!, endY: ended.endY! });
+}

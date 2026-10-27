@@ -24,6 +24,7 @@ import {
 } from "@/src/utils/rebuild-display";
 import { colors, iconSizes, interaction, radii, semantic, shadows, spacing, typeScale } from "@/src/theme/theme";
 import { formatSelection } from "@/src/utils/format";
+import { decisionEvidenceStatus } from "@/src/utils/decision-evidence-view";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 import { RatingStars } from "./RatingStars";
 import { ListPerforation, ResultPill, TicketFigure, TicketSeam, TonePill, toneColor } from "./DecisionTicket";
@@ -375,8 +376,24 @@ export function RebuildDecisionModule({ matchKey }: { matchKey: string }) {
   const requested = requestedDecision(params.decision);
   const selected = data ? displayedDecision(data.history, matchKey, (selectedId?.matchKey === matchKey ? selectedId.decisionId : null) || requested) : null;
   const wide = width >= 560;
+  const status = decisionEvidenceStatus(data, query.isLoading, query.isError);
+  if (status.kind !== "READY") {
+    return <Card>
+      <View style={styles.decisionStateHead}>
+        <MaterialCommunityIcons color={status.kind === "ERROR" ? colors.gold : semantic.intelligence} name={status.kind === "LOADING" ? "timer-sand" : status.kind === "ERROR" ? "cloud-alert-outline" : "clipboard-text-outline"} size={24} />
+        <View style={styles.decisionStateCopy}>
+          <Text style={styles.evidenceText}>{status.title}</Text>
+          <Text style={styles.recordNote}>{status.detail}</Text>
+        </View>
+      </View>
+      <Text style={styles.recordNote}>{status.count === 0 ? "Bu bölüm, yalnız yayımlanmış önerilerin karar anındaki kanıtlarını gösterir. Diğer maç verilerini aşağıdaki bölümlerde inceleyebilirsin." : "Kayıtlar alınmadan öneri sayısı gösterilmez."}</Text>
+      {data ? <Text style={styles.caption}>Son kayıt kontrolü · {asOfTime(data.asOf)}</Text> : null}
+      {status.kind !== "LOADING" ? <Action icon="refresh" title="Karar kayıtlarını yenile" busy={query.isFetching} onPress={() => { void query.refetch(); }} /> : null}
+    </Card>;
+  }
   return (
     <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)} style={styles.stack}>
+      {query.isError ? <Card><Text style={styles.recordNote}>Güncelleme alınamadı; son alınan kayıtlar gösteriliyor.</Text><Action title="Yeniden dene" icon="refresh" busy={query.isFetching} onPress={() => { void query.refetch(); }} /></Card> : null}
       {selected ? (
         <>
           <RecommendationTicket record={selected} wide={wide} />
@@ -388,8 +405,9 @@ export function RebuildDecisionModule({ matchKey }: { matchKey: string }) {
       <Card padded={false}>
         <View style={styles.listHead}>
           <Text style={styles.eyebrowMuted}>MAÇ BOYUNCA ÖNERİLER</Text>
-          <Text style={styles.listCount}>{data?.history.length ?? 0}</Text>
+          <Text style={styles.listCount}>{status.count}</Text>
         </View>
+        <Text style={styles.decisionListNote}>Karar anındaki oran ve yıldızlar · son kontrol {asOfTime(data?.asOf)}</Text>
         {data?.history.length ? data.history.map(record => (
           <RecommendationRow
             key={record.decisionId}
@@ -539,6 +557,9 @@ export function useRebuildWeek() {
 
 const styles = StyleSheet.create({
   stack: { gap: spacing.md, width: "100%" },
+  decisionStateHead: { flexDirection: "row", alignItems: "flex-start", gap: spacing.md },
+  decisionStateCopy: { flex: 1, minWidth: 0, gap: spacing.xs },
+  decisionListNote: { ...typeScale.label, color: colors.textMuted, paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
   stackTight: { gap: spacing.lg },
   card: { borderRadius: 20, borderWidth: 1, borderColor: colors.borderSoft, ...shadows.card },
   cardBody: { padding: spacing.lg, gap: spacing.md },

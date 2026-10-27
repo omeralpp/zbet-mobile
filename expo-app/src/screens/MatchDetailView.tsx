@@ -422,7 +422,7 @@ export function MatchDetailView({
     ),
     statistics: (
       <LiveDetailPanel eyebrow="SAHA" id="statistics" title="Canlı saha dengesi">
-        {isRebuild ? <RebuildStatisticsPanel key={key} homeTeam={match.homeTeam} awayTeam={match.awayTeam} isError={rebuildStatistics.isError} isLoading={rebuildStatistics.isLoading} statistics={statistics} /> : <View style={styles.statsCard}>
+        {isRebuild ? <RebuildStatisticsPanel key={key} homeTeam={match.homeTeam} awayTeam={match.awayTeam} isError={rebuildStatistics.isError} isLoading={rebuildStatistics.isLoading} statistics={statistics} onRetry={() => { void rebuildStatistics.refetch(); }} isRefreshing={rebuildStatistics.isFetching} /> : <View style={styles.statsCard}>
           <SurfaceMaterial radius={radii.lg} />
           <ComparisonRow
             away={match.awayBallPossession}
@@ -540,6 +540,7 @@ export function MatchDetailView({
     .filter((id): id is LiveDetailModuleId => Boolean(moduleNodes[id as LiveDetailModuleId]))
     .map((id) => ({
       id,
+      fullWidth: id === "decision",
       node: (
         <View collapsable={false} ref={(node) => { moduleRefs.current.set(id, node); }}>
           {moduleNodes[id]}
@@ -759,28 +760,33 @@ export function MatchDetailView({
         </Pressable>
       </View>
       {visibleChips.length ? (
+        <>
+        <Text style={styles.evidenceHelp}>Bir bölüme git</Text>
         <ScrollView
           contentContainerStyle={styles.chipRow}
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.chipScroll}
         >
-          {visibleChips.map((chip, index) => (
+          {visibleChips.map((chip) => (
             <Pressable
+              accessibilityLabel={`${chip.label} bölümüne git`}
               accessibilityHint={`${chip.label} bölümüne gider`}
               accessibilityRole="button"
               key={chip.id}
               onPress={() => jumpToModule(chip.id)}
-              style={({ pressed, hovered }) => [styles.chip, index === 0 && styles.chipLead, hovered && styles.chipHover, pressed && styles.chipPressed]}
+              style={({ pressed, hovered }) => [styles.chip, hovered && styles.chipHover, pressed && styles.chipPressed]}
             >
-              <Text style={[styles.chipText, index === 0 && styles.chipTextLead]}>{chip.label}</Text>
+              <Text style={styles.chipText}>{chip.label}</Text>
+              <MaterialCommunityIcons color={colors.textMuted} name="arrow-down" size={14} />
             </Pressable>
           ))}
         </ScrollView>
+        </>
       ) : null}
       <ReorderableModuleList
         items={moduleItems}
-        {...(embedded && !expanded ? { maxColumns: 1 } : {})}
+        maxColumns={embedded && !expanded ? 1 : 2}
         onDragStateChange={setReordering}
         onReorder={(from, to) =>
           reorderVisible(
@@ -959,7 +965,8 @@ const styles = StyleSheet.create({
   },
   heroRecordFooter: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: spacing.sm, marginTop: spacing.sm },
   heroRecordAction: { flexDirection: "row", alignItems: "center", minHeight: 44, gap: spacing.xs },
-  rowTools: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: spacing.sm },
+  rowTools: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, alignItems: "center", justifyContent: "space-between", marginTop: spacing.sm },
+  evidenceHelp: { ...typeScale.label, color: colors.textMuted },
   resetAction: { minHeight: 48, justifyContent: "center" },
   evidenceTitle: { color: colors.text, ...typeScale.identity, fontWeight: "700", fontSize: 17, lineHeight: 22 },
   resetText: { color: semantic.intelligence, ...typeScale.bodyCompact, fontWeight: "700" },
@@ -968,6 +975,9 @@ const styles = StyleSheet.create({
   chipRow: { gap: spacing.sm, paddingHorizontal: spacing.lg },
   chip: {
     minHeight: 44,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
     justifyContent: "center",
     paddingHorizontal: 16,
     borderRadius: radii.round,
@@ -975,11 +985,9 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surface
   },
-  chipLead: { borderColor: colors.actionFill, backgroundColor: colors.greenSoft },
   chipHover: { backgroundColor: colors.surfaceStrong },
   chipPressed: { opacity: 0.72 },
   chipText: { color: colors.text, ...typeScale.bodyCompact, fontWeight: "700" },
-  chipTextLead: { color: colors.actionFill },
   verdictRow: {
     flexDirection: "row",
     alignItems: "flex-end",
@@ -1068,9 +1076,11 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginTop: spacing.xxl
   },
-  // The board's outlined full-width link out, not a primary action.
+  // Secondary external action; content-sized on both clients.
   bilyonerAction: {
-    minHeight: 56,
+    minHeight: 48,
+    alignSelf: "flex-start",
+    paddingHorizontal: spacing.lg,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

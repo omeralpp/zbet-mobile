@@ -11,7 +11,7 @@ import { ModuleHeading } from "@/src/components/ModuleHeading";
 import { motionDuration } from "@/src/theme/motion";
 import { colors, iconSizes, spacing } from "@/src/theme/theme";
 import { useReducedMotion } from "@/src/theme/use-reduced-motion";
-import { shouldTogglePanel } from "./module-collapse";
+import { shouldTogglePanelActivation } from "./module-collapse";
 import { useModuleCollapse } from "./module-collapse-store";
 import type { ModuleLayoutSurface } from "./module-layout";
 
@@ -80,17 +80,11 @@ export function CollapsibleModule({
   const handlePress = (event: GestureResponderEvent) => {
     const started = press.current;
     press.current = null;
-    if (!started) {
-      return;
-    }
     if (
-      !shouldTogglePanel({
+      !shouldTogglePanelActivation(started, {
         endedAt: Date.now(),
         endX: event.nativeEvent.pageX,
-        endY: event.nativeEvent.pageY,
-        startedAt: started.startedAt,
-        startX: started.startX,
-        startY: started.startY
+        endY: event.nativeEvent.pageY
       })
     ) {
       return;
@@ -107,6 +101,7 @@ export function CollapsibleModule({
         }
         accessibilityRole="button"
         accessibilityState={{ expanded: !isCollapsed }}
+        aria-expanded={!isCollapsed}
         onPress={handlePress}
         onPressIn={handlePressIn}
         // A closed panel is only its header, so the heading's own bottom margin

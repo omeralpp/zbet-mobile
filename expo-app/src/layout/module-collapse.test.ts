@@ -4,6 +4,7 @@ import {
   moduleCollapseStorageKey,
   reconcileCollapsedModules,
   shouldTogglePanel,
+  shouldTogglePanelActivation,
   toggleCollapsedModule
 } from "./module-collapse";
 import {
@@ -183,4 +184,16 @@ test("travel within the slop still counts as a tap", () => {
     }),
     true
   );
+});
+
+test("keyboard and assistive activation open panels without pointer coordinates", () => {
+  assert.equal(shouldTogglePanelActivation(null, { endedAt: 1_100 }), true);
+  assert.equal(shouldTogglePanelActivation({ startedAt: 1_000 }, { endedAt: 1_100 }), true);
+});
+
+test("coordinate-free activation does not weaken drag and long-press guards", () => {
+  const start = { startedAt: 1_000, startX: 100, startY: 200 };
+  assert.equal(shouldTogglePanelActivation(start, { endedAt: 1_100, endX: 100, endY: 200 }), true);
+  assert.equal(shouldTogglePanelActivation(start, { endedAt: 1_100, endX: 150, endY: 200 }), false);
+  assert.equal(shouldTogglePanelActivation(start, { endedAt: 1_000 + moduleReorderActivationDelayMs, endX: 100, endY: 200 }), false);
 });

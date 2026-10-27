@@ -80,6 +80,7 @@ export function TeamFormCard({
     <View style={styles.card}>
       <SurfaceMaterial radius={radii.lg} />
       <View style={styles.header}>
+        <Text style={styles.intro}>Yakın dönem takım karşılaştırması</Text>
         <OriginBadge origin={context?.origin} />
       </View>
 
@@ -87,21 +88,31 @@ export function TeamFormCard({
         <RecordBlock
           align="flex-start"
           order="OLDEST_FIRST"
+          sideLabel="Ev sahibi"
           side={context?.home ?? null}
           team={homeTeam}
         />
         <RecordBlock
           align="flex-end"
           order="OLDEST_FIRST"
+          sideLabel="Deplasman"
           side={context?.away ?? null}
           team={awayTeam}
         />
       </View>
 
-      {rows.map((row) => (
-        <FormRow key={row.key} row={row} />
-      ))}
+      <View style={styles.legend}>
+        <Text style={styles.legendText}>{formReadingOrderCaption.OLDEST_FIRST}</Text>
+        <Text style={styles.legendText}>G: Galibiyet · B: Beraberlik · M: Mağlubiyet</Text>
+      </View>
 
+      <View style={styles.rows}>
+        {rows.map((row) => (
+          <FormRow key={row.key} awayTeam={awayTeam} homeTeam={homeTeam} row={row} />
+        ))}
+      </View>
+
+      <Text style={styles.contextNote}>Saha puanı: ev sahibi iç sahada, deplasman takımı dış sahada.</Text>
       <CaveatLine text={smallSampleNotice(context)} />
     </View>
   );
@@ -111,21 +122,26 @@ function RecordBlock({
   align,
   order,
   side,
+  sideLabel,
   team
 }: {
   align: "flex-start" | "flex-end";
   order: FormReadingOrder;
   side: TeamFormSide | null;
+  sideLabel: "Ev sahibi" | "Deplasman";
   team: string;
 }) {
   const recent = formResultsInReadingOrder(side, order);
   return (
     <View
-      accessibilityLabel={describeSideForAccessibility(side, team, order)}
+      accessibilityLabel={`${sideLabel}, ${describeSideForAccessibility(side, team, order)}`}
       accessible
       style={[styles.recordBlock, { alignItems: align }]}
     >
-      <Text numberOfLines={1} style={styles.recordTeam}>
+      <Text style={[styles.sideLabel, { color: sideLabel === "Ev sahibi" ? colors.blue : colors.orange }]}>
+        {sideLabel}
+      </Text>
+      <Text numberOfLines={2} style={[styles.recordTeam, align === "flex-end" && styles.awayText]}>
         {team}
       </Text>
       {recent?.length ? (
@@ -141,9 +157,8 @@ function RecordBlock({
               );
             })}
           </View>
-          <Text style={styles.recordSample}>{formReadingOrderCaption[order]}</Text>
         </>
-      ) : null}
+      ) : side && side.matchesSampled > 0 ? <Text style={styles.recordSample}>Sonuç sırası paylaşılmadı</Text> : null}
       <Text style={styles.recordValue}>
         {side ? formRecord(side) : "—"}
       </Text>
@@ -157,34 +172,41 @@ function RecordBlock({
 /**
  * One comparison row.
  *
- * The dual bar is the same relative-share treatment the live statistics module
- * uses, so form and live stats read as one language rather than two charts that
- * happen to sit on the same screen. A side with no value gets no bar, which
- * leaves a one-sided row visibly one-sided.
+ * Team colours and explicit names keep each numeric value attributable. Bars
+ * preserve the existing relative-share arithmetic; a missing value never
+ * becomes a zero or an invented advantage.
  */
-function FormRow({ row }: { row: TeamFormRow }) {
+function FormRow({ awayTeam, homeTeam, row }: { awayTeam: string; homeTeam: string; row: TeamFormRow }) {
   const widths = comparisonWidths(row);
   const homeWidth: `${number}%` = `${widths.home}%`;
   const awayWidth: `${number}%` = `${widths.away}%`;
+  const homeValue = formatRowValue(row.home, row.format).replace(".", ",");
+  const awayValue = formatRowValue(row.away, row.format).replace(".", ",");
+  const unit = row.format === "RATE"
+    ? row.key === "formPpg" || row.key === "venuePpg" ? "puan / maç" : "gol / maç"
+    : row.format === "PERCENT" ? "maçların yüzdesi" : "son maçtan beri";
 
   return (
-    <View style={styles.row}>
+    <View
+      accessible
+      accessibilityLabel={`${row.label}, ${unit}. ${homeTeam}: ${homeValue}. ${awayTeam}: ${awayValue}.${row.lowerIsBetter ? " Düşük değer daha iyi." : ""}`}
+      style={styles.row}
+    >
       <View style={styles.rowLabels}>
-        <Text style={styles.rowValue}>
-          {formatRowValue(row.home, row.format)}
+        <Text style={[styles.rowValue, styles.homeText]}>
+          {homeValue}
         </Text>
-        <Text style={styles.rowLabel}>{row.label}</Text>
-        <Text style={styles.rowValue}>
-          {formatRowValue(row.away, row.format)}
+        <View style={styles.rowHeading}>
+          <Text style={styles.rowLabel}>{row.label}</Text>
+          <Text style={styles.rowUnit}>{unit}{row.lowerIsBetter ? " · düşük daha iyi" : ""}</Text>
+        </View>
+        <Text style={[styles.rowValue, styles.awayValue]}>
+          {awayValue}
         </Text>
       </View>
-      <View style={styles.dualBar}>
-        <View style={styles.homeTrack}>
-          <View style={[styles.homeBar, { width: homeWidth }]} />
-        </View>
-        <View style={styles.awayTrack}>
-          <View style={[styles.awayBar, { width: awayWidth }]} />
-        </View>
+      <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.dualBar}>
+        <View style={[styles.homeBar, { width: homeWidth }]} />
+        <View style={[styles.awayBar, { width: awayWidth }]} />
       </View>
     </View>
   );
@@ -198,7 +220,11 @@ const styles = StyleSheet.create({
     padding: spacing.lg
   },
   header: {
-    flexDirection: "row"
+    gap: spacing.sm
+  },
+  intro: {
+    ...typeScale.bodyCompact,
+    color: colors.textMuted
   },
   records: {
     flexDirection: "row",
@@ -207,6 +233,7 @@ const styles = StyleSheet.create({
   },
   recordBlock: {
     flex: 1,
+    minWidth: 0,
     gap: 2
   },
   resultStrip: {
@@ -231,7 +258,11 @@ const styles = StyleSheet.create({
     fontSize: 11
   },
   recordTeam: {
-    color: colors.textMuted,
+    color: colors.text,
+    ...typeScale.identity,
+    fontWeight: "700"
+  },
+  sideLabel: {
     ...typeScale.label
   },
   recordValue: {
@@ -244,8 +275,20 @@ const styles = StyleSheet.create({
     color: colors.textSubtle,
     ...typeScale.label
   },
+  legend: {
+    gap: 2
+  },
+  legendText: {
+    ...typeScale.label,
+    color: colors.textMuted
+  },
+  rows: {
+    borderTopColor: colors.borderSoft,
+    borderTopWidth: 1
+  },
   row: {
-    gap: spacing.xs
+    gap: spacing.sm,
+    paddingVertical: spacing.sm
   },
   rowLabels: {
     alignItems: "center",
@@ -255,34 +298,53 @@ const styles = StyleSheet.create({
   rowValue: {
     ...numericFont("800"),
     color: colors.text,
-    fontSize: 13,
-    minWidth: 56
+    fontSize: 17,
+    minWidth: 50,
+    flexShrink: 0
+  },
+  homeText: {
+    color: colors.blue
+  },
+  awayValue: {
+    color: colors.orange,
+    textAlign: "right"
+  },
+  awayText: {
+    textAlign: "right"
+  },
+  rowHeading: {
+    flex: 1,
+    minWidth: 0,
+    gap: 1,
+    paddingHorizontal: spacing.xs
   },
   rowLabel: {
     color: colors.textMuted,
-    flexShrink: 1,
     textAlign: "center",
     ...typeScale.label
   },
+  rowUnit: {
+    ...typeScale.label,
+    color: colors.textSubtle,
+    textAlign: "center"
+  },
   dualBar: {
     flexDirection: "row",
-    gap: 3
-  },
-  homeTrack: {
-    alignItems: "flex-end",
-    flex: 1
-  },
-  awayTrack: {
-    flex: 1
+    backgroundColor: colors.borderSoft,
+    borderRadius: 3,
+    overflow: "hidden",
+    height: 5
   },
   homeBar: {
-    backgroundColor: semantic.intelligence,
-    borderRadius: 2,
-    height: 4
+    backgroundColor: colors.blue,
+    height: 5
   },
   awayBar: {
-    backgroundColor: colors.bronze,
-    borderRadius: 2,
-    height: 4
+    backgroundColor: colors.orange,
+    height: 5
+  },
+  contextNote: {
+    ...typeScale.label,
+    color: colors.textMuted
   }
 });

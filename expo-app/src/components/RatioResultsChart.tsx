@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import type {
   MatchDetail,
   MatchMarketRate,
@@ -6,6 +7,7 @@ import type {
 } from "@/src/api/schemas";
 import {
   colors,
+  interaction,
   radii,
   semantic,
   spacing,
@@ -14,6 +16,7 @@ import {
 import { SurfaceMaterial } from "./SurfaceMaterial";
 import { ratioMarketRateDisplay } from "./ratio-market-rate";
 import { formatHistoricalFraction, historicalFractionWidth } from "@/src/utils/statistical-geometry";
+import { formatSelection } from "@/src/utils/format";
 
 type RatioPhase = NonNullable<MatchDetail["ratioPhase"]>;
 
@@ -27,7 +30,7 @@ const phaseDefinitions: {
   {
     key: "KICK_OFF",
     field: "kickOff",
-    label: "Kick-Off",
+    label: "Maç önü",
     color: semantic.intelligence,
     softColor: semantic.intelligenceSoft
   },
@@ -64,17 +67,21 @@ export function RatioResultsChart({
   phase: MatchDetail["ratioPhase"];
   rows: RatioResult[];
 }) {
+  const [expanded, setExpanded] = useState(false);
   const phases = phase ? visiblePhases(phase, rows) : [];
   const activePhase = phaseDefinitions.find((item) => item.key === phase);
+  // Preserve source order and shares. A zero is evidence; a missing phase is not.
+  const availableRows = rows.filter((row) => phases.some((item) => row[item.field] !== null));
+  const visibleRows = expanded ? availableRows : availableRows.slice(0, 6);
 
   return (
     <View style={styles.card}>
       <SurfaceMaterial radius={radii.lg} />
       <View style={styles.header}>
         <View style={styles.headerCopy}>
-          <Text style={styles.title}>Geçmiş sonuç eşleşmesi</Text>
+          <Text style={styles.title}>Tarihsel pazar payları</Text>
           <Text style={styles.caption}>
-            Benzer oran ve skor koşullarındaki sonuç yüzdeleri
+            Benzer oran ve skor koşullarındaki geçmiş kayıtlar.
           </Text>
         </View>
         {activePhase ? (
@@ -94,33 +101,34 @@ export function RatioResultsChart({
         ) : null}
       </View>
 
-      {rows.length && phases.length ? (
+      {availableRows.length && phases.length ? (
         <>
-          <View style={styles.legend}>
-            {phases.map((item) => (
-              <View key={item.key} style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: item.color }]} />
-                <Text style={styles.legendText}>{item.label}</Text>
-              </View>
-            ))}
+          <View style={styles.summary}>
+            <Text style={styles.meta}>{visibleRows.length} / {availableRows.length} pazar</Text>
+            <Text style={styles.meta}>Tarihsel pay · kazanma olasılığı değildir.</Text>
           </View>
           <View style={styles.rows}>
-            {rows.map((row) => {
+            {visibleRows.map((row) => {
               const marketRate = marketRates.find(
                 (rate) =>
                   rate.sort === row.sort && rate.betType === row.betType
               );
               const rateDisplay = ratioMarketRateDisplay(marketRate, phase);
+              const label = formatSelection(row.betType);
+              const shares = phases.flatMap((item) => row[item.field] === null ? [] :
+                [`${item.label} ${formatHistoricalFraction(row[item.field]! / 100)}`]).join(", ");
               return (
                 <View
-                  accessibilityLabel={`${row.betType} geçmiş sonuç yüzdeleri, ${rateDisplay.accessibilityText}`}
+                  accessible
+                  accessibilityLabel={`${label}, ${shares}; ${rateDisplay.accessibilityText}`}
                   key={`${row.sort}:${row.betType}`}
                   style={styles.row}
                 >
                   <View style={styles.rowHeader}>
-                    <Text numberOfLines={1} style={styles.betType}>
-                      {row.betType}
-                    </Text>
+                    <View style={styles.marketIdentity}>
+                      <Text style={styles.betType}>{label}</Text>
+                      {label !== row.betType ? <Text style={styles.marketCode}>{row.betType}</Text> : null}
+                    </View>
                     <View style={styles.marketRate}>
                       <Text style={styles.marketRateLabel}>
                         {rateDisplay.label}
@@ -128,6 +136,7 @@ export function RatioResultsChart({
                       <Text
                         style={[
                           styles.marketRateValue,
+                          rateDisplay.label !== "Canlı oran" && styles.referenceRate,
                           rateDisplay.isClosed && styles.marketRateClosed
                         ]}
                       >
@@ -145,6 +154,7 @@ export function RatioResultsChart({
                       if (width === null) return null;
                       return (
                         <View key={item.key} style={styles.barLine}>
+                          {phases.length > 1 ? <Text style={styles.phaseLabel}>{item.label}</Text> : null}
                           <View style={styles.track}>
                             <View
                               style={[
@@ -162,6 +172,15 @@ export function RatioResultsChart({
               );
             })}
           </View>
+          {availableRows.length > 6 ? <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded }}
+            aria-expanded={expanded}
+            onPress={() => setExpanded(!expanded)}
+            style={styles.action}
+          >
+            <Text style={styles.link}>{expanded ? "İlk 6 pazarı göster" : `Tüm ${availableRows.length} pazarı göster`}</Text>
+          </Pressable> : null}
         </>
       ) : (
         <Text style={styles.empty}>
@@ -182,10 +201,12 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: spacing.md
+    gap: spacing.md,
+    flexWrap: "wrap"
   },
   headerCopy: {
-    flex: 1
+    flex: 1,
+    minWidth: 140
   },
   title: {
     color: colors.text,
@@ -205,50 +226,56 @@ const styles = StyleSheet.create({
   phasePillText: {
     ...typeScale.micro
   },
-  legend: {
+  summary: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.md,
-    marginTop: spacing.lg
+    justifyContent: "space-between",
+    gap: spacing.sm,
+    marginTop: spacing.md
   },
-  legendItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs
-  },
-  legendDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4
-  },
-  legendText: {
+  meta: {
     color: colors.textMuted,
-    ...typeScale.micro
+    ...typeScale.label
   },
   rows: {
     gap: spacing.md,
     marginTop: spacing.lg
   },
   row: {
-    gap: spacing.sm
+    gap: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSoft,
+    paddingTop: spacing.md
   },
   rowHeader: {
-    alignItems: "center",
+    alignItems: "flex-start",
     flexDirection: "row",
-    justifyContent: "space-between"
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: spacing.sm
+  },
+  marketIdentity: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 120,
+    minWidth: 0,
+    gap: 2
   },
   betType: {
     color: colors.text,
     ...typeScale.identityCompact
   },
+  marketCode: { ...typeScale.micro, color: colors.textSubtle },
   marketRate: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: spacing.xs
+    alignItems: "flex-end",
+    flexShrink: 1,
+    maxWidth: "100%",
+    gap: 2
   },
   marketRateLabel: {
     color: colors.textSubtle,
-    ...typeScale.label
+    ...typeScale.label,
+    textAlign: "right"
   },
   marketRateValue: {
     color: semantic.live,
@@ -257,6 +284,7 @@ const styles = StyleSheet.create({
   marketRateClosed: {
     color: colors.textMuted
   },
+  referenceRate: { color: colors.text },
   bars: {
     flex: 1,
     gap: 4
@@ -278,12 +306,15 @@ const styles = StyleSheet.create({
     borderRadius: radii.round
   },
   value: {
-    color: colors.textMuted,
-    minWidth: 48,
+    color: colors.text,
+    minWidth: 60,
     flexShrink: 0,
     textAlign: "right",
     ...typeScale.label
   },
+  phaseLabel: { ...typeScale.micro, color: colors.textMuted, width: 50 },
+  action: { minHeight: interaction.minTouchTarget, justifyContent: "center", marginTop: spacing.md },
+  link: { ...typeScale.bodyCompact, color: semantic.intelligence, fontWeight: "700" },
   empty: {
     color: colors.textMuted,
     ...typeScale.bodyCompact,

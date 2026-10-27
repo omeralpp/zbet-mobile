@@ -35,17 +35,13 @@ export function ComparisonRow({
   return (
     <View accessible accessibilityLabel={`${label}, ev sahibi ${homeText ?? format(home)}, deplasman ${awayText ?? format(away)}${note ? `. ${note}` : ""}`} style={styles.comparison}>
       <View style={styles.comparisonLabels}>
-        <Text style={styles.statValue}>{homeText ?? format(home)}</Text>
+        <Text style={[styles.statValue, home === null && styles.missingValue]}>{homeText ?? format(home)}</Text>
         <Text style={styles.statLabel}>{label}</Text>
-        <Text style={[styles.statValue, styles.awayValue]}>{awayText ?? format(away)}</Text>
+        <Text style={[styles.statValue, styles.awayValue, away === null && styles.missingValue]}>{awayText ?? format(away)}</Text>
       </View>
-      {home !== null && away !== null ? <View style={styles.dualBar}>
-        <View style={styles.homeTrack}>
-          <View style={[styles.homeBar, { width: homeWidth }]} />
-        </View>
-        <View style={styles.awayTrack}>
-          <View style={[styles.awayBar, { width: awayWidth }]} />
-        </View>
+      {home !== null && away !== null ? <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.dualBar}>
+        <View style={[styles.homeBar, { width: homeWidth }]} />
+        <View style={[styles.awayBar, { width: awayWidth }]} />
       </View> : null}
       {note ? <Text style={styles.statNote}>{note}</Text> : null}
     </View>
@@ -63,7 +59,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     ...numericFont("800"),
-    color: colors.text,
+    color: colors.blue,
     minWidth: 42,
     maxWidth: "28%",
     flexShrink: 1,
@@ -78,22 +74,11 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     paddingHorizontal: spacing.sm
   },
-  awayValue: { textAlign: "right" },
+  awayValue: { textAlign: "right", color: colors.orange },
+  missingValue: { color: colors.textMuted },
   dualBar: {
     flexDirection: "row",
-    gap: spacing.xs
-  },
-  homeTrack: {
-    flex: 1,
-    height: 5,
-    alignItems: "flex-end",
-    backgroundColor: colors.surfaceStrong,
-    borderRadius: radii.round,
-    overflow: "hidden"
-  },
-  awayTrack: {
-    flex: 1,
-    height: 5,
+    height: 6,
     backgroundColor: colors.surfaceStrong,
     borderRadius: radii.round,
     overflow: "hidden"
