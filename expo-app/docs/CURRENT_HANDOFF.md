@@ -1,9 +1,9 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-27
-Mod: `PAIRED_RELEASE_APPROVED / PREVIOUS_PAIR_RETAINED`
+Mod: `COMPLETE / OWNER_ACCEPTED_BOTH / PREVIOUS_PAIR_RETAINED`
 
-## Current local batch — match evidence UX (NXT-OBS-230)
+## Current accepted pair — match evidence UX 9d87b2e (NXT-OBS-230)
 
 Owner directly authorized UX assessment and local improvements to all five
 Maçın Kanıtları subsections on Android and web. Shared components, truthful
@@ -15,18 +15,32 @@ preview bundle/secret scan and canonical verified edge web export. Synthetic
 actual-screen checks cover 320/390/1440 px, six data states, Enter/Space,
 expansion, null vs zero and unchanged historical shares. Final visual polish
 keeps unreachable labels on one line. Heuristic score 5.8→8.3/10; no user-study
-or physical-device acceptance is claimed. [Review and previews](MATCH_EVIDENCE_UX_REVIEW_2026-10-27.md).
+claim is made. [Review and previews](MATCH_EVIDENCE_UX_REVIEW_2026-10-27.md).
 Owner accepted the web/UX preview and explicitly selected **Commit, push, and
 release both Android and web** on 27 October. Approval covers scoped Git and
 the coordinated pilot APK build/signing/private delivery plus companion web
-publication after exact APK installation. Freeze this tested source for both
-artifacts. Installation and both owner smokes remain unobserved; never mark the
-pair complete before them. Track actual hashes/delivery/publication in
-`btb-codex/docs/evidence/match-evidence-release-*2026-10-27*` while this client
-checkout is frozen. No BFF source/SAP/model change. The accepted pair below
-remains the active/recovery source until coordinated delivery is complete.
+publication after exact APK installation. Both artifacts were built from clean
+pushed source `9d87b2ea4a86ec3bdcf454237d1751c9174a58cd`.
 
-## Current accepted pair — 67b72ac (unchanged)
+Signed ARM64 APK `FBBED21D5CB2CC4CCAEA3CDE6C4EB17CE25FB392467618235B57C5B958F499F2`,
+50,495,625 bytes, passed signature/ABI and owner-only private Drive authenticated
+full-byte hash readback. Owner confirmed exact installation/basic Android smoke:
+“kurulum tamamdır sorunsuz görünüyor”. This is owner evidence, not device-side
+hash measurement or exhaustive device testing. Final native build passed.
+
+Matching web tree `D9CF6D6B12628E70081FC322E748DAFE35F305AC8B2F9AD9ADE1B646E5252E04`
+was published after installation as `20261027T112835Z-9d87b2e`. All 56 served
+assets match the frozen build receipt. Shell/deep-link/CSP, API401 and public
+Access302 pass. Canonical publisher restarted the unchanged BFF; no Access
+policy, BFF source, SAP or model change. Owner confirmed “Web checked and working”.
+`client-release.mjs complete` passed with both actual owner smokes and matching
+source/hashes; TASK-0197 is DONE with no known remaining defect. Receipt:
+`btb-codex/docs/evidence/match-evidence-release-9d87b2e-COMPLETE-2026-10-27.json`.
+Related delivery/publication/smoke receipts share the same prefix. Previous
+67b72ac pair is retained. Later documentation commits do not change released
+source. No recurring wait remains; reopen the original task on concrete recurrence.
+
+## Previous accepted pair — 67b72ac (retained)
 
 Super/Toto lists and details (NXT-OBS-226..229) shipped from clean pushed source
 `67b72ac9b5dd8d55db097be85f773a35429405c1`. Owner accepted preview and approved

@@ -88,7 +88,7 @@ logs and labelled screenshots. No current or previous release artifact is remove
 
 [Phone partial/zero/missing preview](../.codex-artifacts/evidence-ux-20261027/phone-partial.jpg).
 
-Remaining limits: no TalkBack/physical Android interaction, exhaustive font-scale
+Limits at local preview: no TalkBack/physical Android interaction, exhaustive font-scale
 or light-theme acceptance, production data accuracy or user-study claim. Dense
 populated decision evidence and multi-phase market rows are still expert views;
 these limits prevent an unqualified 9–10/10 assessment.
@@ -107,3 +107,21 @@ the matching web and obtain both owner smokes. The accepted 67b72ac pair and its
 predecessor remain retained. Actual release receipts are tracked separately in
 `btb-codex/docs/evidence/match-evidence-release-*2026-10-27*`; preparation or
 approval alone is never completion.
+
+## Completed paired delivery
+
+Source `9d87b2ea4a86ec3bdcf454237d1751c9174a58cd` was clean and pushed before
+both final artifacts. Signed ARM64 APK SHA-256
+`FBBED21D5CB2CC4CCAEA3CDE6C4EB17CE25FB392467618235B57C5B958F499F2`
+(50,495,625 bytes) passed signature/ABI and private Drive full authenticated
+readback. Owner confirmed exact installation and basic Android operation.
+Matching web tree `D9CF6D6B12628E70081FC322E748DAFE35F305AC8B2F9AD9ADE1B646E5252E04`
+was published as `20261027T112835Z-9d87b2e`; all 56 runtime-served assets match,
+shell/deep-link/CSP/API401 and public Access302 checks pass. Owner confirmed
+“Web checked and working”. Canonical `client-release.mjs complete` passed;
+TASK-0197 is closed with no known remaining defect. Previous 67b72ac pair is
+retained. Completion and actual owner-smoke receipts are in
+`btb-codex/docs/evidence/match-evidence-release-9d87b2e-*2026-10-27.json`.
+Basic owner acceptance now supersedes the earlier unobserved phone/web state;
+TalkBack, exhaustive font scaling and light-theme acceptance remain unclaimed.
+Later documentation commits do not alter the released source.
