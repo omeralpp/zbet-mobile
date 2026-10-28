@@ -1,7 +1,7 @@
 # Daily decision report — 28 October 2026
 
 Owner request: replace the 7/30-day decision log with Today and Yesterday to
-reduce SAP read load. TASK-0200 / NXT-OBS-232. Local implementation only.
+reduce SAP read load. TASK-0200 / NXT-OBS-232. Delivered and owner-accepted on Android and web.
 
 The default is Today. Both daily periods use Europe/Istanbul publication dates,
 including UTC midnight offsets and year boundaries. Android and desktop web
@@ -57,3 +57,23 @@ and matching web export are retained; the revised scope needs a new coordinated
 Android/web batch. Accepted published pair 9d87b2e remains active. CAP must
 support the new header before client delivery. Actual installation and both
 client smokes are required before completion. No production is authorized.
+
+## Delivered pair and owner acceptance
+
+Owner-approved Mobile source `260bd57661ae35bd159e5793003fc42abcbf536a` and
+BFF functional source `6a49ee7405e1ff38885bec8fe05f23fd7db897dd` were committed
+and pushed clean. DEV BFF activation passed actual daily API strict-schema
+checks: public767ms and895ms after web publication; ten decisions/four cohorts.
+Legacy reports remained compatible. Signed ARM64 APK50,509,773bytes/hash
+`44C764D4A20CF4B829D2FC81EF85A3748EF1311B2599E656CD40C4A15B1EB8BA`
+passed certificate/ABI and owner-only private Drive authenticated full readback.
+After owner Android acceptance “Çalışıyor sorun yok”, matching web tree
+`1B6C41930DEF38943A3DE6B3E9D63E440303F323A0795BC262C023E213A81E20`
+published as `20261028T100508Z-260bd57`. All56served assets, shell/deep-link/CSP,
+API401withoutAccess and publicAccess302 passed. Owner then confirmed “web de
+çalışıyor”. Both are actual owner basic smokes, not exhaustive device testing.
+Canonical paired completion passed; TASK-0200 DONE. Current/previous artifacts
+retained, no recurring wait. Completion and associated receipts:
+`btb-codex/docs/evidence/daily-report-release-260bd57-COMPLETE-2026-10-28.json`.
+No SAP/model/WSL change or production deployment. Later documentation commits
+do not change the frozen released source.

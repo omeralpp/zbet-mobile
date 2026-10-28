@@ -1,35 +1,40 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-28
-Mod: `LOCAL_DAILY_REPORT_VALIDATED / OWNER_APPROVED_GIT_DEV_AND_PAIRED_RELEASE / ACCEPTED_PAIR_RETAINED`
+Mod: `COMPLETE / OWNER_ACCEPTED_ANDROID_AND_WEB / PREVIOUS_PAIR_RETAINED`
 
-## Pending daily report — NXT-OBS-232 / TASK-0200
+## Current accepted pair — Jinx and daily report 260bd57 (NXT-OBS-231/232)
 
-Owner replaced the wide report requirement with Today/Yesterday on 28 October.
-Shared Android/web defaults to Today; both daily windows use Istanbul dates.
-Jinx, Overview, selection cache and widget use the same bounded daily request,
-so no mounted weekly consumer keeps the wide scan running in the background.
-BFF `recent-days.v1` filters publication timestamps in SAP before proof reads;
-only selected fixtures retain their complete predecessor/result chains for
-verification. Daily learning is null; full learning and legacy reports remain
-separate and unchanged. No archive deletion, SAP source/model change or WSL action.
-Local direct OData read: 14 requests /2,388 parts /622 ms versus the previous
-full-report 62 requests /23,067 parts /2,795–3,014 ms. Ten daily decisions match
-the prior full report exactly and pass the strict client schema. Warm-source
-local evidence only, not active API latency or permanent HANA capacity proof.
-701 client/679 BFF tests, type/lint, CAP production build, Android JS/Hermes,
-verified edge web export and native widget Java/resource compilation pass.
-Synthetic desktop/390/320 px, day switching, Enter and empty-day recovery pass.
-[Review and evidence](DAILY_REPORT_REVIEW_2026-10-28.md).
-Owner explicitly approved scoped Mobile/CAP commit/push, DEV BFF activation
-and the revised coordinated Android/web pilot release on 28 October. This is
-the validated pre-execution checkpoint; actual installation and both client
-smokes remain required. Prior ed3dbf8 APK/private readback and frozen web are
-preserved; the revised scope needs a new paired source/artifact batch.
-No new APK signing/distribution/web publication or physical smoke performed.
-Accepted published pair remains 9d87b2e; no new acceptance or completion claimed.
+Owner replaced the wide report with Today/Yesterday. Android/web default to
+Today; Jinx, Overview and widget share the bounded daily request. BFF filters
+SAP publication timestamps before proof reads, retaining selected-fixture
+predecessor/result chains and snapshot guards. Daily learning is null; full
+learning remains separate. No SAP source/model/data deletion or WSL change.
+701 client/679 BFF tests, type/lint, CAP build, both exports, native widget
+compile and synthetic desktop/390/320 px/Enter/empty recovery pass. Actual
+public daily API measured 767 ms, then 895 ms after web publication; local
+source parts fell 23,067→2,388. Warm bounded measurements, not permanent
+capacity proof. [Review/evidence](DAILY_REPORT_REVIEW_2026-10-28.md).
 
-## Pending contextual Jinx — NXT-OBS-231
+Scoped Git and coordinated pilot delivery approved on 28 October. Clean pushed
+Mobile source `260bd57661ae35bd159e5793003fc42abcbf536a`; BFF functional source
+`6a49ee7405e1ff38885bec8fe05f23fd7db897dd` activated in DEV. Signed ARM64 APK
+`44C764D4A20CF4B829D2FC81EF85A3748EF1311B2599E656CD40C4A15B1EB8BA`,
+50,509,773 bytes, privately delivered with full authenticated hash readback.
+Matching web tree
+`1B6C41930DEF38943A3DE6B3E9D63E440303F323A0795BC262C023E213A81E20`
+published as `20261028T100508Z-260bd57` after exact APK installation. All 56
+served assets match; shell/deep-link/CSP/API401/Access302 checks pass. Owner
+accepted Android “Çalışıyor sorun yok”, then published web “web de çalışıyor”.
+These are actual owner basic smokes, not device-side hashes or exhaustive
+TalkBack testing. Canonical `client-release.mjs complete` passed; TASK-0200 is
+DONE. Receipt: `btb-codex/docs/evidence/daily-report-release-260bd57-COMPLETE-2026-10-28.json`;
+installation/publication/acceptance receipts share that prefix. Previous
+accepted 9d87b2e pair and superseded ed3dbf8 candidate artifacts are retained.
+No recurring wait remains; reopen only on concrete recurrence. Documentation
+closeout commits do not change the released source or require another release.
+
+## Delivered contextual Jinx — NXT-OBS-231
 
 Owner requested improvements beyond the compact candidate's subjective 6/10.
 Shared Android/web Jinx now compares the frozen decision with verified current
@@ -44,13 +49,13 @@ Type/lint/brand, 700 client +32 tooling tests, Android JS/Hermes preview bundle
 and verified edge web export pass. Unchanged Doctor20/20 reused. Synthetic
 320/390/1440 px, keyboard, nine context cases and new-decision navigation pass.
 Heuristic assessment 6→8/10 is not a user study or prediction-performance claim.
-Physical Android/TalkBack and published-web acceptance remain untested. Owner
-explicitly approved scoped zbet-mobile commit/push on 2026-10-28. This approval
-does not cover APK build/signing/distribution, web publication or BFF activation.
-No runtime activation or release performed; accepted pair remains 9d87b2e.
+Contextual Jinx shipped with the owner-accepted 260bd57 daily-report pair
+above. Android installation/basic smoke and published-web basic smoke are
+accepted; exhaustive TalkBack testing remains unobserved. Heuristic 8/10 does
+not imply prediction performance. All release receipts are retained.
 [Current design and evidence](JINX_CONTEXT_REVIEW_2026-10-27.md).
 
-## Current accepted pair — match evidence UX 9d87b2e (NXT-OBS-230)
+## Previous accepted pair — match evidence UX 9d87b2e (NXT-OBS-230)
 
 Owner directly authorized UX assessment and local improvements to all five
 Maçın Kanıtları subsections on Android and web. Shared components, truthful
