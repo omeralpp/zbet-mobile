@@ -1,11 +1,12 @@
-import { useMemo, useState, type ComponentProps } from "react";
+import { useId, useLayoutEffect, useMemo, useRef, useState, type ComponentProps } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 import { matchesQuery, rebuildCohortsReportQuery, totoProgramsQuery } from "@/src/api/queries";
 import { colors, iconSizes, radii, semantic, spacing, typeScale } from "@/src/theme/theme";
 import { buildPaletteItems, searchPalette, type PaletteItem, type PaletteKind } from "./command-palette";
+import { paletteScrollOffset } from "./palette-visibility";
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
 
@@ -33,6 +34,10 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
+  const listId = useId();
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const { height: windowHeight } = useWindowDimensions();
+  const topSpace = Math.min(48, windowHeight * 0.12);
 
   const items = useMemo(
     () =>
@@ -44,7 +49,32 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
     [queryClient]
   );
   const results = useMemo(() => searchPalette(items, query), [items, query]);
-  const current = Math.min(selected, Math.max(0, results.length - 1));
+  const current = results.length ? Math.max(0, Math.min(selected, results.length - 1)) : -1;
+  const optionId = (index: number) => `${listId}-option-${index}`;
+  // RN Web supports the full combobox ARIA attributes; the shared native
+  // TextInput types intentionally describe only their native subset.
+  const inputAria = {
+    "aria-autocomplete": "list" as const,
+    "aria-controls": listId,
+    "aria-haspopup": "listbox" as const,
+    "aria-activedescendant": current >= 0 ? optionId(current) : undefined
+  };
+
+  useLayoutEffect(() => {
+    const list = resultsRef.current;
+    if (!list || current < 0) return;
+    const reveal = () => {
+      const option = list.children.item(current);
+      if (!(option instanceof HTMLElement)) return;
+      const listRect = list.getBoundingClientRect(), optionRect = option.getBoundingClientRect();
+      list.scrollTop = paletteScrollOffset({ scrollTop: list.scrollTop, viewportHeight: list.clientHeight,
+        itemTop: optionRect.top - listRect.top + list.scrollTop, itemHeight: optionRect.height });
+    };
+    reveal();
+    const observer = new ResizeObserver(reveal);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, [current, results]);
 
   const open = (entry: PaletteItem | undefined) => {
     if (!entry) {
@@ -55,12 +85,15 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <View style={styles.backdrop}>
+    <View style={[styles.backdrop, { paddingTop: topSpace }]}>
       <Pressable accessible={false} focusable={false} tabIndex={-1} onPress={onClose} style={StyleSheet.absoluteFill} />
-      <View accessibilityRole="search" style={styles.panel}>
+      <View accessibilityRole="search" style={[styles.panel, { maxHeight: Math.max(0, windowHeight - topSpace - spacing.lg) }]}>
         <View style={styles.inputRow}>
           <MaterialCommunityIcons color={colors.textMuted} name="magnify" size={iconSizes.navigation} />
           <TextInput
+            {...inputAria}
+            role="combobox"
+            aria-expanded
             accessibilityLabel="Maç, Super kararı veya Toto programı ara"
             autoFocus
             onChangeText={(text) => {
@@ -69,6 +102,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
             }}
             onKeyPress={(event) => {
               const key = event.nativeEvent.key;
+              if ((event.nativeEvent as typeof event.nativeEvent & { isComposing?: boolean }).isComposing) return;
               if (key === "ArrowDown") {
                 event.preventDefault();
                 setSelected(Math.min(current + 1, results.length - 1));
@@ -89,16 +123,20 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
           />
           <Pressable accessibilityRole="button" accessibilityLabel="Aramayı kapat" onPress={onClose} style={styles.close}><Text style={styles.closeText}>Kapat</Text></Pressable>
         </View>
-        <ScrollView keyboardShouldPersistTaps="handled" style={styles.results}>
-          {results.length === 0 ? (
-            <Text style={styles.empty}>
+        {results.length === 0 ? (
+            <Text role="status" accessibilityLiveRegion="polite" style={styles.empty}>
               Sonuç yok. Yalnız ekranların yüklediği maçlar, Super kararları ve Toto programları aranır.
             </Text>
-          ) : (
-            results.map((entry, index) => (
+        ) : null}
+        <div ref={resultsRef} id={listId} role="listbox" aria-label="Arama sonuçları" style={resultsStyle}>
+          {results.map((entry, index) => (
               <Pressable
-                accessibilityRole="link"
+                role="option"
+                nativeID={optionId(index)}
+                accessibilityLabel={`${entry.title}, ${entry.subtitle}, ${kindLabels[entry.kind]}`}
                 accessibilityState={{ selected: index === current }}
+                aria-selected={index === current}
+                tabIndex={-1}
                 key={entry.id}
                 onHoverIn={() => setSelected(index)}
                 onPress={() => open(entry)}
@@ -119,9 +157,8 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
                 </View>
                 <Text style={styles.kind}>{kindLabels[entry.kind]}</Text>
               </Pressable>
-            ))
-          )}
-        </ScrollView>
+          ))}
+        </div>
         <View style={styles.footer}>
           <Text style={styles.hint}>Yalnız ekranların yüklediği veriler aranır.</Text>
           <Text style={styles.hint}>↑ ↓ seç · Enter aç · Esc kapat</Text>
@@ -131,13 +168,14 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
   );
 }
 
+const resultsStyle = { maxHeight: 420, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", flexShrink: 1 } as const;
+
 const styles = StyleSheet.create({
   backdrop: {
     alignItems: "center",
     backgroundColor: "rgba(1, 6, 12, 0.66)",
     bottom: 0,
     left: 0,
-    paddingTop: "12vh" as unknown as number,
     position: "absolute",
     right: 0,
     top: 0,
@@ -153,6 +191,7 @@ const styles = StyleSheet.create({
     width: "92%"
   },
   inputRow: {
+    flexShrink: 0,
     alignItems: "center",
     borderBottomColor: colors.borderSoft,
     borderBottomWidth: 1,
@@ -177,9 +216,6 @@ const styles = StyleSheet.create({
     color: colors.textSubtle,
     paddingHorizontal: 6,
     paddingVertical: 1
-  },
-  results: {
-    maxHeight: 420
   },
   empty: {
     ...typeScale.bodyCompact,
@@ -214,6 +250,7 @@ const styles = StyleSheet.create({
     color: colors.textSubtle
   },
   footer: {
+    flexShrink: 0,
     borderTopColor: colors.borderSoft,
     borderTopWidth: 1,
     paddingHorizontal: spacing.lg,

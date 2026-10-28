@@ -555,7 +555,7 @@ export default function MoreScreen() {
           <Text style={styles.noteText}>
             {isWeb
               ? "Özet, canlı maç detayı ve Super karar detayındaki analiz modüllerinin üzerine gelip tutamaçla sürükleyerek ya da oklarla kendi sıranıza taşıyabilirsiniz. Sıralama bu tarayıcıda saklanır; yeni modüller otomatik eklenir."
-              : "Özet, canlı maç detayı ve Super karar detayındaki analiz modüllerini uzun basıp sürükleyerek kendi sıranıza taşıyabilirsiniz. Sıralama bu cihazda saklanır; yeni modüller otomatik eklenir."}
+              : "Özet, canlı maç detayı ve Super karar detayındaki analiz modüllerini uzun basıp sürükleyerek ya da Bölümleri düzenle düğmesindeki Yukarı/Aşağı kontrolleriyle kendi sıranıza taşıyabilirsiniz. Yeni konum sesli bildirilir. Sıralama bu cihazda saklanır; yeni modüller otomatik eklenir."}
           </Text>
         </View>
         <SettingsRow

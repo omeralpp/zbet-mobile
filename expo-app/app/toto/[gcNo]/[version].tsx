@@ -46,6 +46,8 @@ import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { filterTotoResults, summarizeTotoResults, type TotoResultFilter } from "@/src/utils/toto-results";
 import { TotoCouponGrid } from "@/src/web/TotoCouponGrid";
+import { TotoRefreshNotice } from "@/src/components/TotoRefreshNotice";
+import { totoQueryView } from "@/src/utils/toto-query-view";
 
 const resultFilters: { value: TotoResultFilter; label: string }[] = [
   { value: "ALL", label: "Tümü" },
@@ -119,8 +121,9 @@ export default function TotoProgramDetailScreen() {
   const desktop = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
   const split = desktop && width >= 1360;
   const inlineMetrics = desktop ? !split : width >= 375;
+  const view = totoQueryView(query);
 
-  if (query.isLoading) {
+  if (view.kind === "loading") {
     return (
       <Screen edgeSwipeBack onEdgeSwipeBack={handleEdgeSwipeBack}>
         <LoadingState label="Toto programı hazırlanıyor" />
@@ -128,7 +131,7 @@ export default function TotoProgramDetailScreen() {
     );
   }
 
-  if (query.isError || !query.data) {
+  if (view.kind === "unavailable") {
     return (
       <Screen edgeSwipeBack onEdgeSwipeBack={handleEdgeSwipeBack}>
         <ErrorState
@@ -144,7 +147,7 @@ export default function TotoProgramDetailScreen() {
     );
   }
 
-  const program = query.data;
+  const program = view.data;
   const statusColor = totoStatusColor(program.status);
   const resultSummary = summarizeTotoResults(program.predictions);
   const resultTotal = resultSummary.total || program.fixtures.length;
@@ -157,6 +160,7 @@ export default function TotoProgramDetailScreen() {
       onEdgeSwipeBack={handleEdgeSwipeBack}
       wide
       contentStyle={styles.screen}
+      fixedHeader={view.kind === "retained" ? <TotoRefreshNotice receivedAt={view.receivedAt} refreshing={query.isFetching} onRetry={() => { void refresh(); }} /> : undefined}
       scrollProps={{
         alwaysBounceVertical: true,
         refreshControl: (

@@ -1,0 +1,27 @@
+{
+  "last": [
+    {
+      "rect": {
+        "bottom": 299,
+        "height": 44,
+        "left": 21,
+        "right": 276,
+        "top": 255,
+        "width": 255,
+        "x": 21,
+        "y": 255
+      },
+      "text": "Yıldız: düşükten yükseğe"
+    }
+  ],
+  "menu": {
+    "bottom": 304,
+    "height": 124,
+    "left": 16,
+    "right": 296,
+    "top": 180,
+    "width": 280,
+    "x": 16,
+    "y": 180
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-28",
+  "profile": "btb-mobile",
+  "observation": "NXT-OBS-233",
+  "status": "LOCAL_VALIDATED_NOT_RELEASED",
+  "scope": "Six owner-approved UX recommendations",
+  "quality": "PASSED TypeScript ESLint client tests tooling tests brand Expo Doctor",
+  "focusedNewRegressionTests": 18,
+  "finalAttributeFollowup": "Explicit aria-selected added after browser caught RN Web omission; scoped lint/type passed; both final exports rebuilt and actual DOM selected=true verified",
+  "androidPreviewBundle": "PASSED; secret scan zero findings; not signed APK",
+  "webExport": "PASSED canonical edge export; secret scan zero findings",
+  "nativeWidgetCompile": "PASSED Java/resources arm64 validation target",
+  "browser": "PASSED synthetic menu scrolling/last action, keyboard/ARIA/empty/navigation/focus, count-end/unknown, cached Toto list/detail failure/retry and 320px width",
+  "nativeInteraction": "UNOBSERVED no connected Android device/emulator",
+  "publishedPair": "260bd57661ae35bd159e5793003fc42abcbf536a unchanged",
+  "gitStagedCommittedPushed": false,
+  "externalMutation": false,
+  "newRelease": false,
+  "recurringWaitCreated": false
+}

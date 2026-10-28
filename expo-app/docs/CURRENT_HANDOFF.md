@@ -1,7 +1,29 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-28
-Mod: `COMPLETE / OWNER_ACCEPTED_ANDROID_AND_WEB / PREVIOUS_PAIR_RETAINED`
+Mod: `UX_PAIRED_RELEASE_APPROVED / SOURCE_FREEZING / ACCEPTED_PAIR_RETAINED`
+
+## Approved local UX batch — NXT-OBS-233
+
+The owner approved all six principal UX recommendations. Shared live counts,
+contained star/sort menus, accessible visible keyboard search, cached Toto
+recovery, Android reorder buttons and 48 dp widget actions are implemented locally.
+Full Mobile quality/Doctor, final Android preview bundle, verified edge web
+export and native widget compile pass. Synthetic browser checks cover menu
+scrolling, search ARIA/navigation, count transitions and Toto failure/recovery,
+including 320 px detail. Native TalkBack/gestures/widget resizing remain unobserved;
+compact widgets may need resize/re-add after a future delivery.
+
+Owner subsequently approved scoped commit/push and coordinated pilot publication
+on 28 October (“commit push ve yayın yapabilirsin”), following the validated web
+preview. Freeze the pushed Mobile SHA and build its web/ARM64 APK pair; exact
+private APK installation must precede web publication, with both owner smokes
+before completion. Current accepted `260bd57` pair below is unchanged. No BFF/SAP
+source or Access-policy change is included. Pending release receipts will be in
+`btb-codex/docs/evidence/principal-ux-release-*2026-10-28.json`; retain Mobile HEAD
+at the frozen release SHA until publication. No recurring observation was created.
+[Implementation, evidence and artifact hashes](PRINCIPAL_UX_IMPLEMENTATION_2026-10-28.md).
+The [8.2/10 baseline review](PRINCIPAL_UX_REVIEW_2026-10-28.md) remains historical.
 
 ## Current accepted pair — Jinx and daily report 260bd57 (NXT-OBS-231/232)
 

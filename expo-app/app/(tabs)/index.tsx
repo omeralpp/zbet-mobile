@@ -23,6 +23,7 @@ import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import { TotoProgramCard } from "@/src/components/TotoProgramCard";
 import { dashboardQuery, matchInsightsQuery, matchesQuery } from "@/src/api/queries";
 import { usePublishedSelections } from "@/src/api/use-published-selections";
+import { resolveLiveMatchCount } from "@/src/api/live-match-count";
 import { RecentRecommendations, useRebuildToday, useRebuildClock } from "@/src/components/RebuildEvidencePanel";
 import { activeMatch, activeStarCounts, publishedStarCounts } from "@/src/utils/rebuild-cards";
 import { overviewLiveSelections } from "@/src/utils/overview-live-selections";
@@ -95,6 +96,7 @@ export default function DashboardScreen() {
   );
 
   const dashboard = query.data;
+  const liveCount = resolveLiveMatchCount(snapshots, query);
   const selectionUnavailable = publications.unavailable || snapshots.isError;
   const starCounts = hasRebuild ? snapshots.isPending || publications.pending || selectionUnavailable ? null
     : publishedStarCounts(snapshots.data ?? [],publications.records,now)
@@ -126,7 +128,7 @@ export default function DashboardScreen() {
       // progress and says nothing about how they are going.
       accent={semantic.live}
       accessibilityHint="Devam eden tüm maçları açar"
-      detail="tüm canlı maçlar"
+      detail={liveCount !== null ? "tüm canlı maçlar" : snapshots.isPending && !snapshots.isError ? "maçlar yükleniyor" : "doğrulanamıyor"}
       icon="access-point"
       key="live"
       label="Canlı maç"
@@ -136,7 +138,7 @@ export default function DashboardScreen() {
           params: { scope: "LIVE" }
         } as never)
       }
-      value={String(dashboard.liveMatchCount)}
+      value={liveCount === null ? "—" : String(liveCount)}
     />,
     <MetricTile
       accent={colors.gold}

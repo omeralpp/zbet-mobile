@@ -351,7 +351,7 @@ export function BtbMascotOverlay() {
   const menuItems = useMemo<MenuItem[]>(
     () => [
       { key: "home", icon: "view-grid-outline", label: "Özet", path: "/", onPress: () => router.replace("/") },
-      { key: "live", icon: "radar", label: "Canlı", path: "/live", badge: liveCount, onPress: () => router.replace("/live") },
+      { key: "live", icon: "radar", label: "Canlı", path: "/live", ...(liveCount === null ? {} : { badge: liveCount }), onPress: () => router.replace("/live") },
       { key: "super", icon: "star-outline", label: "Super", path: "/super", onPress: () => router.replace("/super") },
       { key: "toto", icon: "ticket-outline", label: "Toto", path: "/toto", onPress: () => router.replace("/toto") },
       // Replays the daily comment on demand; the presentation effect does the rest.

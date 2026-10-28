@@ -10,17 +10,21 @@ import {
 } from "react";
 import * as Haptics from "expo-haptics";
 import {
+  AccessibilityInfo,
   Animated,
   PanResponder,
   Platform,
+  Pressable,
   StyleSheet,
+  Text,
   View,
   useWindowDimensions,
   type LayoutChangeEvent,
   type ScrollView
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, radii } from "@/src/theme/theme";
+import { colors, interaction, radii, spacing, typeScale } from "@/src/theme/theme";
+import { moduleReorderLabel, resolveModuleStep } from "./module-reorder-accessibility";
 import {
   moduleReorderActivationDelayMs,
   moduleReorderActivationSlop,
@@ -77,6 +81,8 @@ function haptic(kind: "activate" | "step" | "drop"): void {
 type ReorderableModuleProps = {
   id: string;
   node: ReactNode;
+  controls: ReactNode;
+  editing: boolean;
   dragging: boolean;
   someDragging: boolean;
   onDragMove: (pageY: number, dy: number) => void;
@@ -99,6 +105,8 @@ type ReorderableModuleProps = {
 const ReorderableModule = memo(function ReorderableModule({
   id,
   node,
+  controls,
+  editing,
   dragging,
   someDragging,
   onDragMove,
@@ -150,7 +158,7 @@ const ReorderableModule = memo(function ReorderableModule({
         onHoldMove(event.nativeEvent.pageX, event.nativeEvent.pageY)
       }
       onTouchStart={(event) =>
-        onHoldStart(id, event.nativeEvent.pageX, event.nativeEvent.pageY)
+        !editing && onHoldStart(id, event.nativeEvent.pageX, event.nativeEvent.pageY)
       }
       style={[
         dragging ? styles.dragging : null,
@@ -168,6 +176,7 @@ const ReorderableModule = memo(function ReorderableModule({
       ]}
       {...panResponder.panHandlers}
     >
+      {controls}
       {node}
       {someDragging && !dragging ? (
         <View pointerEvents="none" style={styles.dropTarget} />
@@ -183,12 +192,14 @@ const ReorderableModule = memo(function ReorderableModule({
 });
 
 /**
- * Shared long-press reorder surface used by Özet, Canlı detay and Super detay.
+ * Native reorder surface used by Özet, Canlı detay and Super detay. Visible
+ * edit controls provide the same persisted moves without requiring a drag.
  *
  * Motion is driven by native-driver transforms only: the lifted module follows
  * the finger while neighbours spring aside to open the drop slot. Normal
  * vertical scrolling is untouched until the hold threshold is met, at which
  * point the host screen suspends scrolling for the duration of the drag.
+ * Edit mode keeps scrolling available and disarms holds on its move buttons.
  */
 export function ReorderableModuleList({
   items,
@@ -200,6 +211,7 @@ export function ReorderableModuleList({
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [dragId, setDragId] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
 
   const slots = useRef(new Map<string, ModuleSlot>());
   const drag = useRef<{
@@ -490,11 +502,65 @@ export function ReorderableModuleList({
     [syncAutoScroll, updateDrag]
   );
 
+  const moveByAction = (id: string, direction: -1 | 1) => {
+    if (drag.current) {
+      return;
+    }
+    const move = resolveModuleStep(ids, id, direction);
+    if (!move) {
+      return;
+    }
+    clearHold();
+    onReorder(move.from, move.to);
+    haptic("step");
+    AccessibilityInfo.announceForAccessibility(move.announcement);
+  };
+
   return (
     <View>
-      {items.map((item) => (
+      {items.length > 1 || editing ? (
+        <Pressable
+          accessibilityHint={editing ? "Bölüm taşıma düğmelerini kapatır." : "Her bölüm için yukarı ve aşağı taşıma düğmelerini açar."}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: editing, disabled: dragId !== null }}
+          disabled={dragId !== null}
+          onPress={() => {
+            clearHold();
+            setEditing((value) => !value);
+          }}
+          style={({ pressed }) => [styles.editAction, pressed && styles.actionPressed]}
+        >
+          <Text style={styles.actionText}>{editing ? "Düzenlemeyi bitir" : "Bölümleri düzenle"}</Text>
+        </Pressable>
+      ) : null}
+      {items.map((item, index) => (
         <ReorderableModule
+          controls={editing ? (
+            <View style={styles.moveToolbar}>
+              <Text style={styles.positionText}>{moduleReorderLabel(item.id)} · {index + 1}/{items.length}</Text>
+              <View style={styles.moveActions}>
+                {([-1, 1] as const).map((direction) => {
+                  const disabled = direction === -1 ? index === 0 : index === items.length - 1;
+                  const label = direction === -1 ? "Yukarı" : "Aşağı";
+                  return (
+                    <Pressable
+                      accessibilityLabel={`${moduleReorderLabel(item.id)}, ${index + 1}. bölüm, toplam ${items.length}. ${label} taşı`}
+                      accessibilityRole="button"
+                      accessibilityState={{ disabled }}
+                      disabled={disabled}
+                      key={direction}
+                      onPress={() => moveByAction(item.id, direction)}
+                      style={({ pressed }) => [styles.moveAction, disabled && styles.actionDisabled, pressed && styles.actionPressed]}
+                    >
+                      <Text style={styles.actionText}>{label}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          ) : null}
           dragging={dragId === item.id}
+          editing={editing}
           id={item.id}
           key={item.id}
           node={item.node}
@@ -514,6 +580,50 @@ export function ReorderableModuleList({
 }
 
 const styles = StyleSheet.create({
+  editAction: {
+    alignSelf: "flex-end",
+    justifyContent: "center",
+    minHeight: interaction.minTouchTarget,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm
+  },
+  moveToolbar: {
+    backgroundColor: colors.backgroundElevated,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: radii.md,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.sm,
+    marginBottom: spacing.sm
+  },
+  positionText: {
+    ...typeScale.bodyCompact,
+    color: colors.textMuted
+  },
+  moveActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: spacing.sm
+  },
+  moveAction: {
+    minWidth: interaction.minTouchTarget,
+    minHeight: interaction.minTouchTarget,
+    paddingHorizontal: spacing.md,
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  actionText: {
+    ...typeScale.bodyCompact,
+    color: colors.text,
+    fontWeight: "700"
+  },
+  actionPressed: {
+    opacity: 0.65
+  },
+  actionDisabled: {
+    opacity: 0.35
+  },
   dragging: {
     elevation: 14,
     zIndex: 14

@@ -1,13 +1,15 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
   View
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   colors,
   iconSizes,
@@ -24,6 +26,7 @@ import {
   type StarDecisionFilter,
   type SuperStarSort
 } from "@/src/utils/decision-filters";
+import { decisionFilterMenuLayout } from "./decision-filter-menu";
 
 export function DecisionFilterChip({
   value,
@@ -48,15 +51,21 @@ export function DecisionFilterChip({
 }) {
   const triggerRef = useRef<View>(null);
   const [anchor, setAnchor] = useState({ x: 0, y: 0, width: 0, height: 0 });
-  const { width: windowWidth } = useWindowDimensions();
-  const menuWidth = Math.min(280, windowWidth - spacing.lg * 2);
-  const menuLeft = Math.max(
-    spacing.lg,
-    Math.min(
-      anchor.x + anchor.width - menuWidth,
-      windowWidth - menuWidth - spacing.lg
-    )
-  );
+  const window = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const hasSort = sortValue !== undefined && Boolean(onSortChange);
+  const [contentHeight, setContentHeight] = useState(0);
+  const menuLayout = decisionFilterMenuLayout({ anchor, window, insets,
+    contentHeight: contentHeight || (hasSort ? 387 : 186) });
+
+  useEffect(() => {
+    if (!open) return;
+    // Dimensions update before the trigger's new layout is measured on rotation.
+    const frame = requestAnimationFrame(() => {
+      triggerRef.current?.measureInWindow((x, y, width, height) => setAnchor({ x, y, width, height }));
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [open, window.width, window.height, window.fontScale, insets.top, insets.right, insets.bottom, insets.left]);
 
   const openMenu = () => {
     triggerRef.current?.measureInWindow((x, y, width, height) => {
@@ -133,16 +142,16 @@ export function DecisionFilterChip({
             style={StyleSheet.absoluteFill}
           />
           <View
+            accessibilityLabel={hasSort ? "Yıldız filtresi ve sıralama" : "Yıldız filtresi"}
             accessibilityRole="menu"
             style={[
               styles.menu,
-              {
-                left: menuLeft,
-                top: anchor.y + anchor.height + spacing.xs,
-                width: menuWidth
-              }
+              menuLayout
             ]}
           >
+          <ScrollView bounces={false} keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.menuContent}
+            onContentSizeChange={(_, height) => setContentHeight(height + 2)}>
           {sortValue !== undefined && onSortChange ? (
             <Text style={styles.sectionLabel}>Yıldız filtresi</Text>
           ) : null}
@@ -150,6 +159,7 @@ export function DecisionFilterChip({
             <Pressable
               accessibilityLabel={option.accessibilityLabel}
               accessibilityRole="menuitem"
+              accessibilityState={{ selected: value === option.value }}
               key={option.value}
               onPress={() => {
                 onChange(option.value);
@@ -211,6 +221,7 @@ export function DecisionFilterChip({
               ))}
             </>
           ) : null}
+          </ScrollView>
           </View>
         </View>
       </Modal>
@@ -255,12 +266,14 @@ const styles = StyleSheet.create({
   },
   menu: {
     position: "absolute",
-    padding: spacing.xs,
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surfaceStrong,
     ...shadows.card
+  },
+  menuContent: {
+    padding: spacing.xs
   },
   modalLayer: {
     position: "absolute",

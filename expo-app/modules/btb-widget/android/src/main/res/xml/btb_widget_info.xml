@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Reserve the header, two body lines and 48dp actions including padding. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
   android:description="@string/btb_widget_description"
   android:initialLayout="@layout/btb_notification_widget"
-  android:minHeight="120dp"
-  android:minResizeHeight="100dp"
+  android:minHeight="156dp"
+  android:minResizeHeight="156dp"
   android:minResizeWidth="220dp"
   android:minWidth="250dp"
   android:previewLayout="@layout/btb_notification_widget"

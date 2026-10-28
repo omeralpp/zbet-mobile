@@ -1,0 +1,170 @@
+[
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 234,
+    "index": 0,
+    "selected": null,
+    "text": "󰳠ÖzetSayfa · g oSayfa",
+    "top": 182
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 286,
+    "index": 1,
+    "selected": null,
+    "text": "󰳠CanlıSayfa · g lSayfa",
+    "top": 234
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 338,
+    "index": 2,
+    "selected": null,
+    "text": "󰳠SuperSayfa · g sSayfa",
+    "top": 286
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 390,
+    "index": 3,
+    "selected": null,
+    "text": "󰳠TotoSayfa · g tSayfa",
+    "top": 338
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 442,
+    "index": 4,
+    "selected": null,
+    "text": "󰳠Daha FazlaSayfa · g mSayfa",
+    "top": 390
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 494,
+    "index": 5,
+    "selected": null,
+    "text": "󰒸Örnek Takım 1 - Örnek Rakip 1YEREL ÖRNEK · UX doğrulama · Canlı · 1-1Maç",
+    "top": 442
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 546,
+    "index": 6,
+    "selected": null,
+    "text": "󰒸Örnek Takım 2 - Örnek Rakip 2YEREL ÖRNEK · UX doğrulama · Canlı · 1-1Maç",
+    "top": 494
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 598,
+    "index": 7,
+    "selected": null,
+    "text": "󰒸Örnek Takım 3 - Örnek Rakip 3YEREL ÖRNEK · UX doğrulama · Canlı · 1-1Maç",
+    "top": 546
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 650,
+    "index": 8,
+    "selected": null,
+    "text": "󰒸Örnek Takım 4 - Örnek Rakip 4YEREL ÖRNEK · UX doğrulama · Canlı · 1-1Maç",
+    "top": 598
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 702,
+    "index": 9,
+    "selected": null,
+    "text": "󰒸Örnek Takım 5 - Örnek Rakip 5YEREL ÖRNEK · UX doğrulama · Canlı · 1-1Maç",
+    "top": 650
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 754,
+    "index": 10,
+    "selected": null,
+    "text": "󰒸Örnek Takım 6 - Örnek Rakip 6YEREL ÖRNEK · UX doğrulama · Canlı · 1-1Maç",
+    "top": 702
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 806,
+    "index": 11,
+    "selected": null,
+    "text": "󰒸Örnek Takım 7 - Örnek Rakip 7YEREL ÖRNEK · UX doğrulama · Canlı · 1-1Maç",
+    "top": 754
+  },
+  {
+    "background": "rgb(15, 35, 49)",
+    "bottom": 858,
+    "index": 12,
+    "selected": null,
+    "text": "󰒸Örnek Takım 8 - Örnek Rakip 8YEREL ÖRNEK · UX doğrulama · Canlı · 1-1Maç",
+    "top": 806
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 910,
+    "index": 13,
+    "selected": null,
+    "text": "󰒸Örnek Takım 9 - Örnek Rakip 9YEREL ÖRNEK · UX doğrulama · Canlı · 1-1Maç",
+    "top": 858
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 962,
+    "index": 14,
+    "selected": null,
+    "text": "󰒸Örnek Takım 10 - Örnek Rakip 10YEREL ÖRNEK · UX doğrulama · Canlı · 1-1Maç",
+    "top": 910
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 1014,
+    "index": 15,
+    "selected": null,
+    "text": "󰒸Örnek Takım 11 - Örnek Rakip 11YEREL ÖRNEK · UX doğrulama · Canlı · 1-1Maç",
+    "top": 962
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 1066,
+    "index": 16,
+    "selected": null,
+    "text": "󰒸Örnek Takım 12 - Örnek Rakip 12YEREL ÖRNEK · UX doğrulama · Canlı · 1-1Maç",
+    "top": 1014
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 1118,
+    "index": 17,
+    "selected": null,
+    "text": "󰒸Örnek Takım 13 - Örnek Rakip 13YEREL ÖRNEK · UX doğrulama · Canlı · 1-1Maç",
+    "top": 1066
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 1170,
+    "index": 18,
+    "selected": null,
+    "text": "󰒸Örnek Takım 14 - Örnek Rakip 14YEREL ÖRNEK · UX doğrulama · Canlı · 1-1Maç",
+    "top": 1118
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 1222,
+    "index": 19,
+    "selected": null,
+    "text": "󰒸Örnek Takım 15 - Örnek Rakip 15YEREL ÖRNEK · UX doğrulama · Canlı · 1-1Maç",
+    "top": 1170
+  },
+  {
+    "background": "rgba(0, 0, 0, 0)",
+    "bottom": 1274,
+    "index": 20,
+    "selected": null,
+    "text": "󰒸Örnek Takım 16 - Örnek Rakip 16YEREL ÖRNEK · UX doğrulama · Canlı · 1-1Maç",
+    "top": 1222
+  }
+]

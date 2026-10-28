@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-28T19:38:51Z",
+  "observation": "NXT-OBS-233",
+  "ownerStatement": "commit push ve yayın yapabilirsin",
+  "scope": "The six implemented principal UX improvements, their tests and scoped review/evidence documents in zbet-mobile",
+  "scopedGitCommitPushApproved": true,
+  "coordinatedPilotAndroidAndWebReleaseApproved": true,
+  "artifactPreparation": "Matching verified web export and signed ARM64 pilot APK from one clean pushed commit; private owner-only APK delivery and companion web publication",
+  "webPreviewEvidence": "Owner proceeded after the validated implementation report and rendered web screenshots; no later functional change is included",
+  "installationOrSmokeInferred": false,
+  "requiredSequence": "Verify pair, privately deliver APK, obtain actual exact-APK installation, publish matching web, obtain both owner smokes, then canonical complete",
+  "productionOrAccessPolicyChangeApproved": false,
+  "previousAcceptedSource": "260bd57661ae35bd159e5793003fc42abcbf536a"
+}

@@ -1,0 +1,53 @@
+{
+  "items": [
+    {
+      "bottom": 209,
+      "text": "★+"
+    },
+    {
+      "bottom": 253,
+      "text": "★★+"
+    },
+    {
+      "bottom": 297,
+      "text": "★★★+"
+    },
+    {
+      "bottom": 341,
+      "text": "★★★★+"
+    },
+    {
+      "bottom": 424,
+      "text": "Varsayılan󰄬"
+    },
+    {
+      "bottom": 468,
+      "text": "Yıldız: yüksekten düşüğe"
+    },
+    {
+      "bottom": 512,
+      "text": "Yıldız: düşükten yükseğe"
+    }
+  ],
+  "rect": {
+    "bottom": 374,
+    "height": 244,
+    "left": 178.078125,
+    "right": 458.078125,
+    "top": 130,
+    "width": 280,
+    "x": 178.078125,
+    "y": 130
+  },
+  "scrollers": [
+    {
+      "client": 242,
+      "scroll": 385,
+      "scrollTop": 0
+    }
+  ],
+  "viewport": {
+    "height": 390,
+    "width": 1280
+  }
+}

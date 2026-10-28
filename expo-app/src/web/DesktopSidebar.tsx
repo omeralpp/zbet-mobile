@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { matchesQuery } from "@/src/api/queries";
+import { useLiveMatchCount } from "@/src/api/use-live-match-count";
 import { runtimeConfig } from "@/src/config/runtime";
 import { tabPresentation } from "@/src/navigation/BottomTabBar";
 import { btbBrandMark } from "@/src/theme/brand-mark";
@@ -47,10 +46,7 @@ export function DesktopSidebar({ expanded, onOpenPalette, onOpenHelp, onToggleEx
   const router = useRouter();
   const pathname = usePathname();
   const active = activeDestination(pathname);
-  const matches = useQuery(matchesQuery);
-  const liveCount = (matches.data ?? []).filter(
-    (match) => match.status === "LIVE" || match.status === "HALF_TIME"
-  ).length;
+  const liveCount = useLiveMatchCount(true);
   const [themeChanging, setThemeChanging] = useState(false);
 
   return (
@@ -139,7 +135,7 @@ export function DesktopSidebar({ expanded, onOpenPalette, onOpenHelp, onToggleEx
                       <Text style={[styles.itemLabel, selected && styles.itemLabelSelected]}>
                         {destination.label}
                       </Text>
-                      {destination.route === "live" && liveCount > 0 ? (
+                      {destination.route === "live" && liveCount !== null && liveCount > 0 ? (
                         <View accessibilityLabel={`${liveCount} canlı maç`} style={styles.liveBadge}>
                           <Text style={styles.liveText}>{liveCount}</Text>
                         </View>
@@ -149,7 +145,7 @@ export function DesktopSidebar({ expanded, onOpenPalette, onOpenHelp, onToggleEx
                     </>
                   ) : (
                     <>
-                      {destination.route === "live" && liveCount > 0 ? (
+                      {destination.route === "live" && liveCount !== null && liveCount > 0 ? (
                         <View style={styles.railBadge}>
                           <Text style={styles.railBadgeText}>{liveCount}</Text>
                         </View>

@@ -52,7 +52,7 @@ export function BottomTabBar({ navigation, state }: TopTabBarProps) {
           label: route.name
         };
         const color = focused ? semantic.positive : colors.textSubtle;
-        const badge = route.name === "live" && liveCount > 0 ? liveCount : null;
+        const badge = route.name === "live" && liveCount !== null && liveCount > 0 ? liveCount : null;
 
         return (
           <Pressable

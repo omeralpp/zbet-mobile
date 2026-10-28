@@ -1,0 +1,113 @@
+{
+  "localOnly": true,
+  "sourceSha": "4b2bd7c40a708c12d611ef3876f1c624c15c026b",
+  "sourceTree": "17b476beb79b507bdae7dcbd47cdb68ba1ed541a",
+  "sourceDirty": true,
+  "androidPreviewBundleSha256": "DD8F167BBE922F8F4EE31D4F92FBF6492F54E6C28E2909724D7D35F0284B275C",
+  "androidPreviewReleaseArtifact": false,
+  "webTreeSha256": "70E2199BDF8E62E31E67182E0F15870AD96AF1770CAF624FB738F439D0E532AD",
+  "webMode": "edge",
+  "features": {
+    "matchJourney": "LIVE",
+    "teamForm": "LIVE",
+    "jinx": "LIVE"
+  },
+  "clientSourceFiles": [
+    {
+      "path": "app/(tabs)/index.tsx",
+      "sha256": "B6EA76D768446D15F061802069F2DABA3A1D3C038A10F7B543807AE6FFDEE76C"
+    },
+    {
+      "path": "app/(tabs)/more.tsx",
+      "sha256": "3C8A0EAA179D48CEB3418D28ED62D5102934AEBAC946B96704EB19D9CFE209B3"
+    },
+    {
+      "path": "app/(tabs)/toto.tsx",
+      "sha256": "6D80874254748B9F881C45B3E7698D917C6C737EBBA92D3838FA8C6E3EC31CAF"
+    },
+    {
+      "path": "app/toto/[gcNo]/[version].tsx",
+      "sha256": "55E6CD6A942BD001E5BD1029966E1BB20A7C9C08F2A3D01055C05BCFD81BC86E"
+    },
+    {
+      "path": "modules/btb-widget/android/src/main/res/layout/btb_notification_widget.xml",
+      "sha256": "4B69BA291E7D63E0A2E5006726DE3A87FFF9671BF30285149095AEFD2BDC91EB"
+    },
+    {
+      "path": "modules/btb-widget/android/src/main/res/xml/btb_widget_info.xml",
+      "sha256": "E3294AB759F14C63222B70E04A95D2B1007B7518D2101E390ABC7FB6620622B2"
+    },
+    {
+      "path": "src/api/use-live-match-count.ts",
+      "sha256": "29EB7EDC45198BEBAD0FECF25B64DA43DEBF794D1912635C97A1D2B6F8723948"
+    },
+    {
+      "path": "src/components/DecisionFilterChip.tsx",
+      "sha256": "61A8E57821F8BEB819B1E01D3F8AAE99F05F882617EE1BC128B9EF0727E09359"
+    },
+    {
+      "path": "src/layout/ReorderableModuleList.tsx",
+      "sha256": "62002719FCAFEE2271CBA67C088F5EDED3C2B8F1107FE1AB05F4C9B227872361"
+    },
+    {
+      "path": "src/mascot/BtbMascotOverlay.tsx",
+      "sha256": "C4B7E1BC1BEEB180D3BA56D3951EB90F3E06F2AB3F574F31548A9A02CD48B31B"
+    },
+    {
+      "path": "src/navigation/BottomTabBar.tsx",
+      "sha256": "FD8141B886D65D9C8EEEF409E631E76C0A0864529BF38D2C891AE67E1E9486B3"
+    },
+    {
+      "path": "src/web/CommandPalette.tsx",
+      "sha256": "D682955ABC1A3AD43567DDA1B4B9CB7C640FF40B911EE876EEA27102AC813809"
+    },
+    {
+      "path": "src/web/DesktopSidebar.tsx",
+      "sha256": "21187D481196CACB6225BC68668F9190C896C23827DC3770B3D8C94E6822207D"
+    },
+    {
+      "path": "src/api/live-match-count.test.ts",
+      "sha256": "6A4BC0699ED1E6C1C747FE8480F9834CFE87D796108B98E138418263F3A3C153"
+    },
+    {
+      "path": "src/api/live-match-count.ts",
+      "sha256": "17DD4D12447E34383752D293D0A6C68875A09BB786692734FA6F932D2881DB67"
+    },
+    {
+      "path": "src/components/decision-filter-menu.test.ts",
+      "sha256": "93ACCE9B88487494804352D7808B928CB0E5C59D8F3A56626AE60D696E85406B"
+    },
+    {
+      "path": "src/components/decision-filter-menu.ts",
+      "sha256": "E5C18624E66020A9E9F7BFF6E5C482B5EDEF53AF94D59E763636FCDD739E8E49"
+    },
+    {
+      "path": "src/components/TotoRefreshNotice.tsx",
+      "sha256": "D27E01537BD83B17922CB83A8A87CD89958C9EDC478D9795432F1665F40709BA"
+    },
+    {
+      "path": "src/layout/module-reorder-accessibility.test.ts",
+      "sha256": "A8B4FD12D677EBCAD5BD37FC23CEFF1CBF8042E9CB7A2A7DA4B865B964B65CB4"
+    },
+    {
+      "path": "src/layout/module-reorder-accessibility.ts",
+      "sha256": "D831C90724A5BDBEFB97148593CA246B3B2A98ACF02622120CA2F6E868A36B3C"
+    },
+    {
+      "path": "src/utils/toto-query-view.test.ts",
+      "sha256": "93EDE9FA122BB7AD7D6053ADD05D3CC54E3A4B57F70E4A8FD7ECEA408E00EDE7"
+    },
+    {
+      "path": "src/utils/toto-query-view.ts",
+      "sha256": "50098F20FFDDDB10DDE0C482AC383DB3988DFB1248A653DBACAAB1974B32A4BD"
+    },
+    {
+      "path": "src/web/palette-visibility.test.ts",
+      "sha256": "40AD21F28ECB2515E4FC24816F0092351B83168BAED72D374A5F2A2D2B496A02"
+    },
+    {
+      "path": "src/web/palette-visibility.ts",
+      "sha256": "6E096E4F8418A6642117838F7230273141489244B9C01BEB2B1E4F8D26D8151B"
+    }
+  ]
+}

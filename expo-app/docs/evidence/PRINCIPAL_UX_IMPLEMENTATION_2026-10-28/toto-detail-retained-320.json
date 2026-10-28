@@ -1,0 +1,21 @@
+{
+  "alerts": [
+    {
+      "rect": {
+        "bottom": 242,
+        "height": 170,
+        "left": 16,
+        "right": 304,
+        "top": 72,
+        "width": 288,
+        "x": 16,
+        "y": 72
+      },
+      "text": "Toto verileri yenilenemediSon alınan kayıtlar gösteriliyor · 28 Eki 2026 22:29. Programın durumu ve sonuçlar güncel olmayabilir.󰑐Tekrar dene"
+    }
+  ],
+  "pageWidth": 320,
+  "predictionLinks": 3,
+  "programVisible": true,
+  "viewportWidth": 320
+}

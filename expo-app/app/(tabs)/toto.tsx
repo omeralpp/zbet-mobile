@@ -15,6 +15,8 @@ import { useCardGrid } from "@/src/layout/use-card-grid";
 import { colors, spacing, typeScale } from "@/src/theme/theme";
 import { Action } from "@/src/components/RebuildEvidencePanel";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
+import { TotoRefreshNotice } from "@/src/components/TotoRefreshNotice";
+import { totoQueryView } from "@/src/utils/toto-query-view";
 
 type StatusFilter = "ALL" | TotoProgram["status"];
 
@@ -44,6 +46,7 @@ export default function TotoScreen() {
     return result;
   }, [programs]);
   const visible = filter === "ALL" ? programs : programs.filter((program) => program.status === filter);
+  const view = totoQueryView(query);
 
   return (
     <Screen
@@ -53,9 +56,10 @@ export default function TotoScreen() {
       scroll={false}
       subtitle="Programı aç, kolon planını ve sonuçları incele."
       title="Programlar"
+      fixedHeader={view.kind === "retained" ? <TotoRefreshNotice receivedAt={view.receivedAt} refreshing={query.isFetching} onRetry={() => { void refresh(); }} /> : undefined}
       wide
     >
-      {query.data ? (
+      {view.kind === "current" || view.kind === "retained" ? (
         <View style={styles.filters}>
           <FilterChip count={programs.length} label="Tümü" onPress={() => setFilter("ALL")} selected={filter === "ALL"} />
           {statusFilters
@@ -72,9 +76,9 @@ export default function TotoScreen() {
             ))}
         </View>
       ) : null}
-      {query.isLoading ? (
+      {view.kind === "loading" ? (
         <LoadingState label="Toto programları hazırlanıyor" />
-      ) : query.isError ? (
+      ) : view.kind === "unavailable" ? (
         <ErrorState
           error={query.error}
           message={
@@ -96,8 +100,8 @@ export default function TotoScreen() {
           ListEmptyComponent={
             <View style={styles.empty}>
               <EmptyState
-                message={filter === "ALL" ? "Programlar hazır olduğunda burada görünür." : "Diğer durumdaki programları görmek için filtreyi temizleyebilirsin."}
-                title={filter === "ALL" ? "Henüz program yok" : filter === "WAITING_RESULT" ? "Sonuç bekleyen program yok" : filter === "RESULTED" ? "Sonuçlanmış program yok" : filter === "ERROR" ? "Hatalı program yok" : "Aktif program yok"}
+                message={filter === "ALL" ? view.kind === "retained" ? "Güncel programları almak için tekrar deneyebilirsin." : "Programlar hazır olduğunda burada görünür." : "Diğer durumdaki programları görmek için filtreyi temizleyebilirsin."}
+                title={filter === "ALL" ? view.kind === "retained" ? "Son alınan listede program yok" : "Henüz program yok" : filter === "WAITING_RESULT" ? "Sonuç bekleyen program yok" : filter === "RESULTED" ? "Sonuçlanmış program yok" : filter === "ERROR" ? "Hatalı program yok" : "Aktif program yok"}
               />
               {filter !== "ALL" && programs.length > 0 ? <Action icon="chevron-right" onPress={() => setFilter("ALL")} title="Tüm programları göster" /> : null}
             </View>
