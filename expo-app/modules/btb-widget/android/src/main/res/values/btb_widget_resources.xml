@@ -20,9 +20,9 @@
   <string name="btb_widget_updated">Güncellendi %1$s</string>
 
   <string name="btb_kpi_widget_name">BTB Next – Performans</string>
-  <string name="btb_kpi_widget_description">Toto kapsamını ve BTB son 7 gün sonucunu gösterir.</string>
+  <string name="btb_kpi_widget_description">Toto kapsamını ve BTB bugünün sonucunu gösterir.</string>
   <string name="btb_kpi_widget_title">BTB Performans</string>
   <string name="btb_kpi_toto_title">TOTO KAPSAMI</string>
-  <string name="btb_kpi_super_title">BTB · 7 GÜN</string>
+  <string name="btb_kpi_super_title">BTB · BUGÜN</string>
   <string name="btb_kpi_waiting">Veri bekleniyor</string>
 </resources>

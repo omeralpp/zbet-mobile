@@ -4,8 +4,9 @@ import firstFixture from "../api/fixtures/btb-rebuild-v1.json";
 import reportFixture from "../api/fixtures/btb-rebuild-report-v1.json";
 import { rebuildCohortsReportSchema, rebuildMatchSchema, rebuildReportSchema } from "../api/rebuild-schemas";
 import { jinxWeekQuip } from "../mascot/jinx-week";
-import { combinedReport } from "./rebuild-log";
+import { combinedReport, periodRecords } from "./rebuild-log";
 import { buildRebuildWidgetPayload } from "../widgets/performance-widget-data";
+import { buildWidgetPayload } from "../widgets/widget-payload";
 
 test("Jinx, the Super summary and the widget agree on seven all-cohort decisions and -1.11, not the current cohort's +0.28", () => {
   const base = rebuildReportSchema.parse(reportFixture), source = base.periods[0]!;
@@ -33,4 +34,26 @@ test("Jinx, the Super summary and the widget agree on seven all-cohort decisions
   assert.equal(widget.super_profit,"-1.11");
   assert.equal(JSON.stringify(report.cohorts),before); // cohort learning/evidence is not merged or mutated
   assert.equal(report.cohorts[0]!.periods[0]!.net,"0.28");
+});
+
+test("daily log, Jinx and native widget use today's totals without mixing yesterday or changing exact net", () => {
+  const base = rebuildReportSchema.parse(reportFixture), source = base.periods[0]!;
+  const currentId = "A".repeat(64), first = rebuildMatchSchema.parse(firstFixture).history[0]!;
+  const today = { ...source, key: "today" as const, days: 1 as const, from: "2026-10-21", through: "2026-10-21",
+    recommendations: 1, settled: 1, wins: 1, losses: 0, net: "0.1234567890123456789",
+    byStar: [{ ...source.byStar[0]!, stars: 3, settled: 1, wins: 1, losses: 0, net: "0.1234567890123456789" }] };
+  const yesterday = { ...today, key: "yesterday" as const, from: "2026-10-20", through: "2026-10-20", net: "99" };
+  const report = rebuildCohortsReportSchema.parse({ ...base, contractVersion: "btb-rebuild-report.v2", asOf: "2026-10-21T12:00:00Z",
+    periods: [today, yesterday], learning: null, cohorts: [{ id: currentId, label: "Current", current: true, firstDecisionAt: null, periods: [today, yesterday], learning: null }],
+    recommendations: [{ ...first, cohortId: currentId, publishedAt: "2026-10-20T21:00:00Z" },
+      { ...first, decisionId: "2".repeat(32), cohortId: currentId, publishedAt: "2026-10-20T20:59:59Z" }] });
+  assert.equal(jinxWeekQuip(today)?.title, "Bugün: 1 öneri");
+  assert.equal(jinxWeekQuip({ ...today, recommendations: 0 })?.title, "Bugün öneri yok");
+  assert.equal(jinxWeekQuip(yesterday)?.title, "Dün: 1 öneri");
+  assert.deepEqual(periodRecords(report, today).map(r => r.decisionId), [first.decisionId]);
+  assert.deepEqual(periodRecords(report, yesterday).map(r => r.decisionId), ["2".repeat(32)]);
+  const widget = buildRebuildWidgetPayload(report, "STAR_1_PLUS");
+  assert.equal(widget.super_days, 1); assert.equal(widget.super_profit, "0.1234567890123456789");
+  assert.equal(buildWidgetPayload(widget)?.super_days, 1);
+  assert.equal(combinedReport(report).learning, null);
 });

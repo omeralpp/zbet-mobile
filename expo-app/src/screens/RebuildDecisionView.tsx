@@ -154,7 +154,7 @@ export function RebuildDecisionView({ decisionId, matchKey: matchParam, onEdgeSw
     return (
       <Screen edgeSwipeBack onEdgeSwipeBack={onEdgeSwipeBack}>
         {header}
-        {report.isError || rebuild.isError ? <ErrorState error={report.error ?? rebuild.error} onRetry={() => { void refresh(); }} /> : <EmptyState kind="NO_DECISION" message="Bu karar son 30 günlük raporda ya da maçın kayıtlarında bulunamadı." title="Karar bulunamadı" />}
+        {report.isError || rebuild.isError ? <ErrorState error={report.error ?? rebuild.error} onRetry={() => { void refresh(); }} /> : <EmptyState kind="NO_DECISION" message="Bu karar bugün/dün raporunda ya da maçın kayıtlarında bulunamadı." title="Karar bulunamadı" />}
         <Action icon="chevron-right" onPress={() => router.replace("/super")} title="Karar günlüğüne dön" />
       </Screen>
     );

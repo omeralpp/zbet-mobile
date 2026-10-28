@@ -568,7 +568,7 @@ export function BtbMascotOverlay() {
             ]}
           >
             <View style={styles.moodHead}>
-              <Text style={styles.moodEyebrow}>BTB · 7 GÜN</Text>
+              <Text style={styles.moodEyebrow}>BTB · BUGÜN</Text>
               <MaterialCommunityIcons color={colors.textMuted} name="close" size={iconSizes.small} />
             </View>
             <Text style={styles.tutorialTitle}>{dailyQuip.title}</Text>

@@ -3,7 +3,7 @@ import { mobileApi } from "./index";
 
 export const rebuildReportQuery = queryOptions({ queryKey: ["rebuildReport"], queryFn: ({ signal }) => mobileApi.getRebuildReport(signal),
   staleTime: 10_000, refetchInterval: 30_000, retry: false });
-export const rebuildCohortsReportQuery = queryOptions({ queryKey: ["rebuildCohortsReport"], queryFn: ({ signal }) => mobileApi.getRebuildCohortsReport(signal),
+export const rebuildCohortsReportQuery = queryOptions({ queryKey: ["rebuildCohortsReport", "recent-days.v1"], queryFn: ({ signal }) => mobileApi.getRebuildCohortsReport(signal),
   staleTime: 10_000, refetchInterval: 30_000, retry: false });
 export function rebuildMatchQuery(key: string) {
   return queryOptions({ queryKey: ["rebuildMatch", key], enabled: Boolean(key), queryFn: ({ signal }) => mobileApi.getRebuildMatch(key, signal),

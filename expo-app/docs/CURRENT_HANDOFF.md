@@ -1,7 +1,33 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-28
-Mod: `LOCAL_JINX_CONTEXT_VALIDATED / GIT_APPROVED / RELEASE_NOT_APPROVED / ACCEPTED_PAIR_RETAINED`
+Mod: `LOCAL_DAILY_REPORT_VALIDATED / OWNER_APPROVED_GIT_DEV_AND_PAIRED_RELEASE / ACCEPTED_PAIR_RETAINED`
+
+## Pending daily report — NXT-OBS-232 / TASK-0200
+
+Owner replaced the wide report requirement with Today/Yesterday on 28 October.
+Shared Android/web defaults to Today; both daily windows use Istanbul dates.
+Jinx, Overview, selection cache and widget use the same bounded daily request,
+so no mounted weekly consumer keeps the wide scan running in the background.
+BFF `recent-days.v1` filters publication timestamps in SAP before proof reads;
+only selected fixtures retain their complete predecessor/result chains for
+verification. Daily learning is null; full learning and legacy reports remain
+separate and unchanged. No archive deletion, SAP source/model change or WSL action.
+Local direct OData read: 14 requests /2,388 parts /622 ms versus the previous
+full-report 62 requests /23,067 parts /2,795–3,014 ms. Ten daily decisions match
+the prior full report exactly and pass the strict client schema. Warm-source
+local evidence only, not active API latency or permanent HANA capacity proof.
+701 client/679 BFF tests, type/lint, CAP production build, Android JS/Hermes,
+verified edge web export and native widget Java/resource compilation pass.
+Synthetic desktop/390/320 px, day switching, Enter and empty-day recovery pass.
+[Review and evidence](DAILY_REPORT_REVIEW_2026-10-28.md).
+Owner explicitly approved scoped Mobile/CAP commit/push, DEV BFF activation
+and the revised coordinated Android/web pilot release on 28 October. This is
+the validated pre-execution checkpoint; actual installation and both client
+smokes remain required. Prior ed3dbf8 APK/private readback and frozen web are
+preserved; the revised scope needs a new paired source/artifact batch.
+No new APK signing/distribution/web publication or physical smoke performed.
+Accepted published pair remains 9d87b2e; no new acceptance or completion claimed.
 
 ## Pending contextual Jinx — NXT-OBS-231
 

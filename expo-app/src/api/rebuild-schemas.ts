@@ -46,7 +46,7 @@ const aggregate = z.strictObject({ recommendations: count, matches: count, settl
   net: decimal, risk: count, totalRisk: count, roi: z.number().finite().nullable(), hitRate: z.number().min(0).max(1).nullable(), evidenceNote: z.literal("PILOT_MATCH_CLUSTERED"),
   uncertainty: z.strictObject({ method: z.literal("MATCH_CLUSTER_BOOTSTRAP"), lower: z.number().finite(), upper: z.number().finite(), samples: count }).nullable(), byMatch: z.array(matchRisk).optional() });
 const threshold = z.strictObject({ settled: count, matches: count, days: count, requiredSettled: count, requiredMatches: count, requiredDays: z.literal(2), reviewAvailable: z.boolean() });
-const reportPeriod = aggregate.extend({ days: z.union([z.literal(1), z.literal(7), z.literal(30)]), from: z.string(), through: z.string(),
+const reportPeriod = aggregate.extend({ days: z.union([z.literal(1), z.literal(7), z.literal(30)]), key: z.enum(["today", "yesterday"]).optional(), from: z.string(), through: z.string(),
   byStar: z.array(aggregate.extend({ stars: count })), byMarket: z.array(aggregate.extend({ market: z.string() })) });
 const reportLearning = z.strictObject({ analysisOnly: z.literal(true), autoPromotion: z.literal(false), overall: threshold, byMarket: z.array(threshold.extend({ market: z.string() })),
   prospective: z.strictObject({ state: z.literal("FROZEN_CANDIDATE_REGISTRATION_REQUIRED"), requiredSettled: z.literal(50), requiredMatches: z.literal(20), requiredDays: z.literal(2) }), note: z.string() }).nullable();

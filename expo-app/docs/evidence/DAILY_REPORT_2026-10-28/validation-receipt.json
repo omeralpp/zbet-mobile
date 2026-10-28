@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-28",
+  "task": "TASK-0200",
+  "observation": "NXT-OBS-232",
+  "status": "LOCAL_VALIDATED_REVISED_GIT_RELEASE_APPROVAL_PENDING",
+  "runtimeActivated": false,
+  "releaseComplete": false,
+  "ownerRequest": "Only Today and Yesterday instead of 7/30 days to reduce source load",
+  "sourceMode": "Direct read-only real OData, not sap-adt MCP",
+  "measurementCaveat": "Warm-source local reader, not public API activation or permanent HANA capacity proof",
+  "periods": [
+    {
+      "key": "today",
+      "from": "2026-10-28",
+      "through": "2026-10-28",
+      "recommendations": 1,
+      "net": "-1"
+    },
+    {
+      "key": "yesterday",
+      "from": "2026-10-27",
+      "through": "2026-10-27",
+      "recommendations": 9,
+      "net": "-1.32"
+    }
+  ],
+  "measurement": {
+    "elapsedMs": 622,
+    "sourceRequests": 14,
+    "byEntity": {
+      "RebuildAttempts": {
+        "requests": 2,
+        "rows": 0,
+        "bytes": 204
+      },
+      "RebuildOpportunities": {
+        "requests": 4,
+        "rows": 40,
+        "bytes": 41884
+      },
+      "RebuildContexts": {
+        "requests": 2,
+        "rows": 18,
+        "bytes": 9208
+      },
+      "RebuildResults": {
+        "requests": 2,
+        "rows": 40,
+        "bytes": 26236
+      },
+      "RebuildCaptures": {
+        "requests": 1,
+        "rows": 30,
+        "bytes": 20287
+      },
+      "RebuildParts": {
+        "requests": 3,
+        "rows": 2388,
+        "bytes": 2562686
+      }
+    },
+    "previousFullReport": {
+      "elapsedMs": [
+        2795,
+        3014
+      ],
+      "sourceRequests": 62,
+      "proofPartRequests": 32,
+      "proofParts": 23067,
+      "proofWireBytes": 24760917
+    }
+  },
+  "equivalence": {
+    "strictClientSchema": true,
+    "comparedToPriorFullReport": true,
+    "recordsIdentical": true,
+    "fullRecords": 92,
+    "dailyRecords": 10,
+    "periods": [
+      {
+        "key": "today",
+        "from": "2026-10-28",
+        "through": "2026-10-28",
+        "recommendations": 1,
+        "net": "-1"
+      },
+      {
+        "key": "yesterday",
+        "from": "2026-10-27",
+        "through": "2026-10-27",
+        "recommendations": 9,
+        "net": "-1.32"
+      }
+    ]
+  },
+  "guarantees": {
+    "sapPublicationTimestampFilter": true,
+    "selectedFixturePredecessorAndResultChainsRetained": true,
+    "globalPreparedGuardRetained": true,
+    "mutableDiscoveryAndFixtureReread": true,
+    "crossRequestProofCache": false,
+    "dailyLearning": null,
+    "legacyContractUnchanged": true,
+    "modelChanged": false,
+    "sapSourceChanged": false,
+    "dataDeleted": false,
+    "wslChanged": false
+  },
+  "validation": {
+    "clientTests": 701,
+    "bffTests": 679,
+    "typecheck": "PASS",
+    "lint": "PASS; final touched-file recheck clears prior duplicate-import warnings",
+    "bffProductionBuild": "PASS",
+    "androidJsHermesExport": "PASS",
+    "canonicalVerifiedEdgeWebExport": "PASS; isolated .codex-artifacts/daily-report-20261028/web; frozen ed3dbf8 dist-web preserved",
+    "nativeWidgetCompile": "PASS; compileDebugJavaWithJavac plus generated resources; not signed APK",
+    "doctor": "Prior unchanged dependency20/20 reused",
+    "browser": "Synthetic desktop/390/320 px; two menu options, Today/Yesterday dates and outcomes, Enter, empty-day recovery",
+    "contextAudit": {
+      "runs": 87,
+      "routesClean": true,
+      "missing": [],
+      "flaggedCurrentStateDocs": 3
+    },
+    "physicalOwnerDeviceSmoke": false,
+    "publishedWebSmoke": false
+  },
+  "git": {
+    "committed": false,
+    "pushed": false,
+    "revisedSourceApprovalPending": true
+  },
+  "release": {
+    "newPairedClientBuildRequired": true,
+    "previousCandidate": "ed3dbf8f991b69052a00e1cf11ca8612165d0bdb",
+    "acceptedPublishedPair": "9d87b2ea4a86ec3bdcf454237d1751c9174a58cd",
+    "priorArtifactsPreserved": true,
+    "devBffActivationApprovalPending": true,
+    "pairedApkSigningPrivateDeliveryAndWebPublicationApprovalPending": true
+  },
+  "sourceManifest": [
+    {
+      "path": "zbet-mobile/expo-app/app/(tabs)/index.tsx",
+      "sha256": "B25ECB52215E47611A1F2C8982853DC2042C053E16C040527070E89B47B5545F"
+    },
+    {
+      "path": "zbet-mobile/expo-app/modules/btb-widget/android/src/main/java/expo/modules/btbwidget/BtbPerformanceWidgetProvider.java",
+      "sha256": "9D955CD8FB015DD867325C37020EC16FC641A2CC604DCAF471F26D507D111AD3"
+    },
+    {
+      "path": "zbet-mobile/expo-app/modules/btb-widget/android/src/main/res/values/btb_widget_resources.xml",
+      "sha256": "456A5722A1B127F8E0BAF990ED44FDF0CFE897852ED18F40AB59A2E7C42AE842"
+    },
+    {
+      "path": "zbet-mobile/expo-app/src/api/http-mobile-api.ts",
+      "sha256": "AA3739385273BC619355499CA77745750BC73235B12693D0D51EC74D3834E159"
+    },
+    {
+      "path": "zbet-mobile/expo-app/src/api/queries.ts",
+      "sha256": "4B5467926E380B209E55B32D10C31CF0522C7906D719250A7D4FE57AD0C61CF5"
+    },
+    {
+      "path": "zbet-mobile/expo-app/src/api/rebuild-schemas.ts",
+      "sha256": "0A7381E40E99BFCDF9380E3A9D73CCB0CC9FED02470A0FE0C527FE5294D053B2"
+    },
+    {
+      "path": "zbet-mobile/expo-app/src/components/RebuildDecisionLog.tsx",
+      "sha256": "C06510EF444C8892EDFA4CBE6C98F245E42B2C93F4CB410D4B5F45BABE0278A3"
+    },
+    {
+      "path": "zbet-mobile/expo-app/src/components/RebuildEvidencePanel.tsx",
+      "sha256": "EFA365705E379341FCA8C391CBE6C40121DBB3088A9CDF61B383FC1A52D435C5"
+    },
+    {
+      "path": "zbet-mobile/expo-app/src/mascot/BtbMascotOverlay.tsx",
+      "sha256": "E1551F66B51546E853C1BE4A37E00134F0E25AAEEE7213281B90EBFBC9C94352"
+    },
+    {
+      "path": "zbet-mobile/expo-app/src/mascot/JinxDailyComment.tsx",
+      "sha256": "B95B72D33FD4715592386AE556CA4FA96397D0071CC836875538BF78084357EF"
+    },
+    {
+      "path": "zbet-mobile/expo-app/src/mascot/jinx-week.ts",
+      "sha256": "F5D420F4FC9AAB52FECE97550D45AFA7BC3C40BBDE69A9629930D77D85FE280D"
+    },
+    {
+      "path": "zbet-mobile/expo-app/src/mascot/use-jinx-daily-quip.ts",
+      "sha256": "84F4A5862942E5983173B1E8B87F8538C2FD5164FA36292A72B8A72AB7D49902"
+    },
+    {
+      "path": "zbet-mobile/expo-app/src/screens/RebuildDecisionView.tsx",
+      "sha256": "E5CBE038440F2BC45D4656606F0FAABA54030A2A2B000CD00F7E14FF21A8A821"
+    },
+    {
+      "path": "zbet-mobile/expo-app/src/tutorial/tutorial-state.ts",
+      "sha256": "FD8570CB130ABA41AAE2A51F9A14958F04494C9901DF3CEDE10B77443701661C"
+    },
+    {
+      "path": "zbet-mobile/expo-app/src/utils/rebuild-report-consumers.test.ts",
+      "sha256": "5AF22239BE32FA6056650DECF465774B1EDE9154C30E692F3D0F73317C357A9C"
+    },
+    {
+      "path": "zbet-mobile/expo-app/src/widgets/performance-widget-data.ts",
+      "sha256": "772F0F2F02EB9153BEDEA5477C8B77F3FCFF511700F3D4520E9FCCA90207EE27"
+    },
+    {
+      "path": "zbet-mobile/expo-app/src/widgets/widget-payload.ts",
+      "sha256": "82C66F5B130AF44001C5D85E9EC725C94595EDFD07AE3815712A3F567D42E04A"
+    },
+    {
+      "path": "zbet-cap/srv/mobile-bff/rebuild-capture-reader.js",
+      "sha256": "601880DB17747C6FD2FE3DEB6BC0FAA9FA8AD98FEF3EA447B2065AA3BE064DFE"
+    },
+    {
+      "path": "zbet-cap/srv/mobile-bff/rebuild-provider.js",
+      "sha256": "44D0F9EA258A546C9A455B947E4676F65421975600756B418C529F4ADE253414"
+    },
+    {
+      "path": "zbet-cap/srv/mobile-bff/rebuild-report-snapshot.js",
+      "sha256": "F3C87B56A62718739148EC431D1956C4C22848A6F021DCDBDAA80AB7E281849E"
+    },
+    {
+      "path": "zbet-cap/srv/mobile-bff/rebuild-report.js",
+      "sha256": "D6354D272EB6972DA931C6571E55F6DDFDE69DA2187A965C9B8B723549040E7F"
+    },
+    {
+      "path": "zbet-cap/srv/mobile-bff/router.js",
+      "sha256": "58950E4F2BC9F9EC64AD993CDCB4587C49510039BCA3330A7FE42BBA259AB7FE"
+    },
+    {
+      "path": "zbet-cap/test/fixtures/odata-filter.js",
+      "sha256": "5396604799BDE6275074F36BCA7CCD88EE99E1E9D30277F08DF97653B6BF7995"
+    },
+    {
+      "path": "zbet-cap/test/rebuild-report-availability.test.js",
+      "sha256": "BE0FCDA33DF59E1039275FE6EBF2A39A83DC2ED43FFCA01B7824A9B56D19FEDF"
+    },
+    {
+      "path": "zbet-cap/test/rebuild-recent-days.test.js",
+      "sha256": "3ECE2805290C9E6CA2B0CFA036A24005078BD612F3BCB7683C8A38A1C1DF95A8"
+    }
+  ]
+}

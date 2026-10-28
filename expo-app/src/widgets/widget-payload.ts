@@ -17,7 +17,7 @@ export type BtbWidgetPayload = {
   super_losses?: number;
   super_profit?: number | string;
   super_model_regime?: "BTB_RB1_20261018";
-  super_days?: 7 | 30;
+  super_days?: 1 | 7 | 30;
   super_available?: boolean;
   super_pending?: number;
   super_unresolved?: number;
@@ -194,7 +194,7 @@ export function buildWidgetPayload(
   if (data.super_model_regime === "BTB_RB1_20261018" && typeof data.super_available === "boolean") {
     payload.super_model_regime = "BTB_RB1_20261018";
     payload.super_available = data.super_available;
-    payload.super_days = data.super_days === 30 ? 30 : 7;
+    payload.super_days = data.super_days === 1 ? 1 : data.super_days === 30 ? 30 : 7;
     for (const key of ["super_pending", "super_unresolved", "super_voids"] as const) {
       const value = nonNegativeInteger(data[key]); if (value !== null) payload[key] = value;
     }

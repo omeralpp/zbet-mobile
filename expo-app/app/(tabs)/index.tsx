@@ -23,7 +23,7 @@ import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import { TotoProgramCard } from "@/src/components/TotoProgramCard";
 import { dashboardQuery, matchInsightsQuery, matchesQuery } from "@/src/api/queries";
 import { usePublishedSelections } from "@/src/api/use-published-selections";
-import { RecentRecommendations, useRebuildWeek, useRebuildClock } from "@/src/components/RebuildEvidencePanel";
+import { RecentRecommendations, useRebuildToday, useRebuildClock } from "@/src/components/RebuildEvidencePanel";
 import { activeMatch, activeStarCounts, publishedStarCounts } from "@/src/utils/rebuild-cards";
 import { overviewLiveSelections } from "@/src/utils/overview-live-selections";
 import { formatRatio, formatUnits, unitsTone } from "@/src/utils/rebuild-display";
@@ -107,7 +107,7 @@ export default function DashboardScreen() {
   const featuredMatches = showLiveSelections ? selectedMatches : [...(dashboard?.featuredMatches ?? [])].sort((a,b)=>activeSelection(b).rating-activeSelection(a).rating);
   const featuredMode = selectedMatches.length ? "SELECTED_LIVE" : dashboard?.featuredMatchMode === "SELECTED_LIVE" && !featuredMatches.some(match=>activeSelection(match).selectedOdd)
     ? "PRESSURE_LIVE" : dashboard?.featuredMatchMode ?? "EMPTY";
-  const week = useRebuildWeek();
+  const today = useRebuildToday();
   const featuredTitle = showLiveSelections ? "Canlı BTB seçimleri" : {
     SELECTED_LIVE: "Öne çıkan canlı maçlar",
     PRESSURE_LIVE: "Takipteki canlı maçlar",
@@ -119,7 +119,7 @@ export default function DashboardScreen() {
       ? "Başlama zamanı en yakın aktif fikstürler"
       : "Skor, seçim ve güncel oran";
 
-  const weekTone = week.period ? unitsTone(week.period.net) : "neutral";
+  const todayTone = today.period ? unitsTone(today.period.net) : "neutral";
   const tiles = dashboard ? [
     <MetricTile
       // The live-match counter used loss red. It counts matches in
@@ -153,27 +153,27 @@ export default function DashboardScreen() {
       }
       value={starCounts ? String(liveStarMetricCount(starCounts,liveStarFilter)) : "—"}
     />,
-    // The rebuild's own seven-day result at the original quote, one
+    // Today's rebuild result at the original quote, one
     // hypothetical unit per recommendation; the full report and its caveats
     // live on the Super tab.
-    <TutorialTarget id="home-super-metric" key="week" style={wideWeb ? styles.metricTarget : styles.stripTarget}>
+    <TutorialTarget id="home-super-metric" key="today" style={wideWeb ? styles.metricTarget : styles.stripTarget}>
       <MetricTile
-        accent={week.period ? toneColor[weekTone] : semantic.neutral}
+        accent={today.period ? toneColor[todayTone] : semantic.neutral}
         accessibilityHint="Tüm Super kararlarını ve sonuç raporunu açar"
-        accessibilityLabel={week.period
-          ? `BTB son 7 gün, varsayımsal birim ${formatUnits(week.period.net)}; ${week.period.wins} kazandı, ${week.period.losses} kaybetti; ROI ${formatRatio(week.period.roi)}`
-          : "BTB son 7 gün: rapor bekleniyor"}
-        detail={!week.period
-          ? week.loading ? "hazırlanıyor" : "rapor bekleniyor"
-          : week.period.recommendations === 0
+        accessibilityLabel={today.period
+          ? `BTB bugün, varsayımsal birim ${formatUnits(today.period.net)}; ${today.period.wins} kazandı, ${today.period.losses} kaybetti; ROI ${formatRatio(today.period.roi)}`
+          : "BTB bugün: rapor bekleniyor"}
+        detail={!today.period
+          ? today.loading ? "hazırlanıyor" : "rapor bekleniyor"
+          : today.period.recommendations === 0
             ? "henüz öneri yok"
-            : `${week.period.wins} kazandı · ${week.period.losses} kaybetti`}
+            : `${today.period.wins} kazandı · ${today.period.losses} kaybetti`}
         icon="chart-line"
-        label="BTB · 7 gün"
+        label="BTB · Bugün"
         valueCaption="varsayımsal birim"
         onPress={() => router.push("/super" as never)}
-        value={week.period ? formatUnits(week.period.net) : "—"}
-        valueColor={week.period && weekTone !== "neutral" ? toneColor[weekTone] : undefined}
+        value={today.period ? formatUnits(today.period.net) : "—"}
+        valueColor={today.period && todayTone !== "neutral" ? toneColor[todayTone] : undefined}
       />
     </TutorialTarget>
   ] : [];

@@ -30,7 +30,7 @@ export function JinxDailyComment({ variant = "row" }: { variant?: "row" | "tile"
       <SurfaceMaterial radius={18} />
       <Image accessible={false} resizeMode="contain" source={orb} style={tile ? styles.orbTile : styles.orb} />
       <View style={styles.copy}>
-        <Text style={styles.eyebrow}>JİNX · BTB 7 GÜN</Text>
+        <Text style={styles.eyebrow}>JİNX · BTB BUGÜN</Text>
         <Text style={styles.title}>{quip.title}</Text>
         <Text style={styles.body}>{quip.body}</Text>
         {tile ? <Text style={styles.link}>Karar günlüğü</Text> : null}

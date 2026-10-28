@@ -93,7 +93,7 @@ paths:
   /v1/btb/rebuild/v2/report:
     get:
       operationId: getRebuildCohortsReport
-      description: Every accepted RB1 policy cohort's first publications of the last 30 Istanbul days in one list, each tagged with its cohort. Top-level periods summarize all listed cohorts; cohort learning stays separate. Default periods are 7/30 days. Opt in to an additional Today period with X-BTB-Report-Periods, using Istanbul midnight and backend accounting.
+      description: Every accepted RB1 policy cohort's first publications in one list, each tagged with its cohort. Legacy default periods are 7/30 days; today.v1 adds Today. New Android/web clients use recent-days.v1 for only Today and Yesterday, with SAP-filtered discovery, keyed one-day periods, daily recommendations and null learning. Istanbul midnight and canonical accounting apply; full fixture predecessor/result chains remain verified.
       parameters:
         - $ref: "#/components/parameters/RebuildVersion"
         - $ref: "#/components/parameters/ReportPeriodsVersion"
@@ -601,8 +601,8 @@ components:
       name: X-BTB-Report-Periods
       in: header
       required: false
-      description: Adds days=1 to v2 combined and per-cohort periods. Absent preserves installed clients' 7/30-day response shape. Does not change learning, frozen facts or accounting. Response varies by this header.
-      schema: { type: string, enum: [today.v1] }
+      description: today.v1 adds days=1 without changing legacy history or learning. recent-days.v1 bounds source discovery to Today/Yesterday in Istanbul and returns two days=1 periods keyed today/yesterday; recommendations contain only these days and learning is null at every level. Absent preserves installed clients' 7/30-day response shape. Frozen facts and accounting stay canonical. Response varies by this header.
+      schema: { type: string, enum: [today.v1, recent-days.v1] }
     PoolDistributionVersion:
       name: X-BTB-Pool-Distribution
       in: header

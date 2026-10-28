@@ -210,6 +210,13 @@
               }
             ]
           },
+          "key": {
+            "type": "string",
+            "enum": [
+              "today",
+              "yesterday"
+            ]
+          },
           "from": {
             "type": "string"
           },
@@ -395,7 +402,6 @@
                 "hitRate",
                 "evidenceNote",
                 "uncertainty",
-                "byMatch",
                 "stars"
               ],
               "additionalProperties": false
@@ -578,7 +584,6 @@
                 "hitRate",
                 "evidenceNote",
                 "uncertainty",
-                "byMatch",
                 "market"
               ],
               "additionalProperties": false
@@ -601,7 +606,6 @@
           "hitRate",
           "evidenceNote",
           "uncertainty",
-          "byMatch",
           "days",
           "from",
           "through",

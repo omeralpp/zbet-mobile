@@ -537,10 +537,10 @@ export function RecentRecommendations({ limit = 3 }: { limit?: number }) {
   );
 }
 
-/** Seven-day figures for the Overview strip; undefined while unavailable. */
-export function useRebuildWeek() {
+/** Today's figures for the Overview strip; undefined while unavailable. */
+export function useRebuildToday() {
   const query = useQuery(rebuildCohortsReportQuery);
-  const period = !query.isError && query.data?.availability === "AVAILABLE" ? query.data.periods.find(p => p.days === 7) : undefined;
+  const period = !query.isError && query.data?.availability === "AVAILABLE" ? query.data.periods.find(p => p.key === "today") : undefined;
   return { period, loading: query.isLoading, recommendations: query.data?.recommendations ?? [] };
 }
 

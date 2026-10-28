@@ -43,8 +43,8 @@ export const tutorialTips: readonly TutorialTip[] = [
   },
   {
     id: "home-super-summary",
-    title: "BTB · 7 gün",
-    body: "Bu metrik son 7 günde yayımlanan BTB önerilerinin sonucunu özetler; her öneri seçim oranıyla varsayımsal 1 birim sayılır.",
+    title: "BTB · Bugün",
+    body: "Bu metrik bugün yayımlanan BTB önerilerinin sonucunu özetler; her öneri seçim oranıyla varsayımsal 1 birim sayılır.",
     route: "/",
     match: "EXACT",
     targetId: "home-super-metric"

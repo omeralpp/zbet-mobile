@@ -39,7 +39,8 @@ import { EmptyState, LoadingState } from "./StateView";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 import { TeamLogo } from "./TeamLogo";
 
-type Days = 1 | 7 | 30;
+type Days = "today" | "yesterday";
+const periodLabel = (day: Days) => day === "today" ? "Bugün" : "Dün";
 
 const localTabs = ["ALL", "STAR"] as const;
 
@@ -50,24 +51,24 @@ function useOpenDecision() {
     router.push({ pathname: "/super/[key]", params: { key: record.decisionId, match: record.matchKey } } as never);
 }
 
-/** "7 gün ▾": the report's two periods as the board's date-scope menu. */
+/** Daily report scopes, both using the server's Istanbul calendar boundaries. */
 function PeriodMenu({ days, open, onOpenChange, onChange }: { days: Days; open: boolean; onOpenChange: (open: boolean) => void; onChange: (days: Days) => void }) {
   return (
     <View style={[styles.periodWrapper, open && styles.periodWrapperOpen]}>
       <Pressable
-        accessibilityLabel={days === 1 ? "Dönem: bugün, İstanbul saati" : `Dönem: son ${days} gün`}
+        accessibilityLabel={`Dönem: ${periodLabel(days)}, İstanbul saati`}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
         onPress={() => onOpenChange(!open)}
         style={({ pressed, hovered }) => [styles.periodButton, hovered && styles.hover, pressed && styles.pressed]}
       >
         <MaterialCommunityIcons color={semantic.intelligence} name="calendar-blank-outline" size={iconSizes.small} />
-        <Text style={styles.periodText}>{days === 1 ? "Bugün" : `${days} gün`}</Text>
+        <Text style={styles.periodText}>{periodLabel(days)}</Text>
         <MaterialCommunityIcons color={semantic.intelligence} name={open ? "chevron-up" : "chevron-down"} size={iconSizes.inline} />
       </Pressable>
       {open ? (
         <View accessibilityRole="menu" style={styles.periodMenu}>
-          {([1, 7, 30] as const).map((option) => {
+          {(["today", "yesterday"] as const).map((option) => {
             const selected = option === days;
             return (
               <Pressable
@@ -80,7 +81,7 @@ function PeriodMenu({ days, open, onOpenChange, onChange }: { days: Days; open: 
                 }}
                 style={({ pressed }) => [styles.periodOption, selected && styles.periodOptionSelected, pressed && styles.pressed]}
               >
-                <Text style={[styles.periodOptionText, selected && styles.periodOptionTextSelected]}>{option === 1 ? "Bugün" : `Son ${option} gün`}</Text>
+                <Text style={[styles.periodOptionText, selected && styles.periodOptionTextSelected]}>{periodLabel(option)}</Text>
                 {selected ? <MaterialCommunityIcons color={colors.onAction} name="check" size={iconSizes.inline} /> : null}
               </Pressable>
             );
@@ -252,7 +253,7 @@ function Tile({ value, label, color, children }: { value?: string; label: string
 
 /**
  * Karar günlüğü on RB1 data, in the v40 board's layout: every published
- * record of the report's 7 or 30 Istanbul days, filtered by star floor or
+ * record of today or yesterday in Istanbul, filtered by star floor or
  * pending result. The list spans every accepted policy cohort, each record
  * tagged with its cohort; the summary, tiles and "Rapor ayrıntısı" are the
  * backend's figures over all of them (a star scope adds its per-star rows;
@@ -266,7 +267,7 @@ export function RebuildDecisionLog() {
   const { filter: starFilter, setFilter: setStarFilter } = useSuperStarFilter();
   const [tab, setTab] = useState<"ALL" | "STAR">("ALL");
   const [pendingOnly, setPendingOnly] = useState(false);
-  const [days, setDays] = useState<Days>(7);
+  const [days, setDays] = useState<Days>("today");
   const [starMenuOpen, setStarMenuOpen] = useState(false);
   const [periodOpen, setPeriodOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -286,7 +287,7 @@ export function RebuildDecisionLog() {
   }, [periodOpen, starMenuOpen]);
   const full = query.data;
   const report = useMemo(() => (full ? combinedReport(full) : null), [full]);
-  const period = report?.periods.find((item) => item.days === days);
+  const period = report?.periods.find((item) => item.key === days);
   const available = !query.isError && full?.availability === "AVAILABLE" && period ? period : null;
   const labels = useMemo(() => cohortLabels(full), [full]);
   const minStars = starFilterMinRating(starFilter);
@@ -363,7 +364,7 @@ export function RebuildDecisionLog() {
   const scope = (
     <View style={styles.scopeRow}>
       <Text style={styles.scopeText}>
-        {available ? `${formatReportRange(available.from, available.through)} · ${visible.length} / ${records.length} karar${tab === "STAR" ? ` · ${starMetricLabel(starFilter)}` : ""}${pendingOnly ? " · bekliyor" : ""}${days === 1 ? " · İstanbul" : ""}` : query.isError || full?.availability === "UNAVAILABLE" ? "Rapor doğrulanamadı · kayıt sayısı bilinmiyor" : "Rapor bekleniyor"}
+        {available ? `${formatReportRange(available.from, available.through)} · ${visible.length} / ${records.length} karar${tab === "STAR" ? ` · ${starMetricLabel(starFilter)}` : ""}${pendingOnly ? " · bekliyor" : ""} · İstanbul` : query.isError || full?.availability === "UNAVAILABLE" ? "Rapor doğrulanamadı · kayıt sayısı bilinmiyor" : "Rapor bekleniyor"}
       </Text>
       <PeriodMenu
         days={days}
@@ -405,7 +406,7 @@ export function RebuildDecisionLog() {
         message={records.length === 0 ? "Başka bir dönem seçerek geçmiş kararları inceleyebilirsin." : "Filtreleri temizleyerek bu dönemin tüm kararlarını görebilirsin."}
         title={records.length === 0 ? "Bu dönemde öneri yok" : pendingOnly ? "Bu filtrede bekleyen karar yok" : "Bu yıldız aralığında karar yok"}
       />
-      {records.length > 0 ? <Action icon="chevron-right" onPress={() => { closeMenus(); setTab("ALL"); setPendingOnly(false); }} title="Tüm kararları göster" /> : days !== 30 ? <Action icon="chevron-right" onPress={() => { closeMenus(); setDays(30); }} title="Son 30 günü göster" /> : null}
+      {records.length > 0 ? <Action icon="chevron-right" onPress={() => { closeMenus(); setTab("ALL"); setPendingOnly(false); }} title="Tüm kararları göster" /> : <Action icon="chevron-right" onPress={() => { closeMenus(); setDays(days === "today" ? "yesterday" : "today"); }} title={days === "today" ? "Dünün kararlarını göster" : "Bugünün kararlarını göster"} />}
     </View>
   );
   const summaryContext = (
@@ -492,7 +493,7 @@ export function RebuildDecisionLog() {
               ListHeaderComponent={
                 <View style={styles.summaryHeader}>
                   <SummaryCard
-                    label={`${days === 1 ? "BUGÜN" : `${days} GÜN`} · ${page === "STAR" ? starMetricLabel(starFilter).toLocaleUpperCase("tr-TR") : "TÜMÜ"}`}
+                    label={`${periodLabel(days).toLocaleUpperCase("tr-TR")} · ${page === "STAR" ? starMetricLabel(starFilter).toLocaleUpperCase("tr-TR") : "TÜMÜ"}`}
                     summary={pageSummary}
                   />
                   <Text style={styles.tableNote}>Karar başına 1 varsayımsal birim.{pendingOnly ? " Özet tüm sonuçları, liste yalnızca bekleyenleri içerir." : ""}</Text>

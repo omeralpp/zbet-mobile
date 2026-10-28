@@ -187,7 +187,8 @@ public class BtbPerformanceWidgetProvider extends AppWidgetProvider {
         BigDecimal safeProfit =
                 superProfit == null ? BigDecimal.ZERO : superProfit;
         String profitValue = hasSuper ? formatProfit(safeProfit) : "—";
-        String superLabel = "BTB · " + preferences.getInt("super_days", 7) + " GÜN"
+        int superDays = preferences.getInt("super_days", 7);
+        String superLabel = "BTB · " + (superDays == 1 ? "BUGÜN" : superDays + " GÜN")
                 + (hasSuper && minRating > 0 ? " · " + minRating + "+ YILDIZ" : "");
         String superDetail = (hasSuper
                 ? superWins + " kazandı · " + superLosses + " kaybetti"
