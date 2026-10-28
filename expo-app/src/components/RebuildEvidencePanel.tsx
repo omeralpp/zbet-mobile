@@ -1,7 +1,8 @@
-import { mobileApi } from "@/src/api";
-import { currentRb1Explanation } from "@/src/utils/rebuild-jinx";
+import { jinxInsight } from "@/src/utils/jinx-insight";
+import { jinxMatchReading } from "@/src/utils/jinx-match-reading";
+import type { AnalysisContext } from "@/src/api/schemas";
 import { useEffect, useState, type ReactNode } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
@@ -28,8 +29,6 @@ import { decisionEvidenceStatus } from "@/src/utils/decision-evidence-view";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 import { RatingStars } from "./RatingStars";
 import { ListPerforation, ResultPill, TicketFigure, TicketSeam, TonePill, toneColor } from "./DecisionTicket";
-import { useBreakpoint } from "@/src/layout/use-breakpoint";
-import { isAtLeast } from "@/src/layout/breakpoints";
 
 export function useRebuildClock(enabled = true) {
   const [now, setNow] = useState(() => Date.now());
@@ -242,43 +241,29 @@ function asOfTime(iso: string | undefined): string {
     : "—";
 }
 
-function JinxChip({ label, value, accent }: { label: string; value: string; accent?: string }) {
-  return (
-    <View style={styles.jinxChip}>
-      <Text style={styles.jinxChipLabel}>{label}</Text>
-      <Text style={[styles.jinxChipValue, accent ? { color: accent } : null]}>{value}</Text>
-    </View>
-  );
-}
-
 /**
- * Jinx on an RB1 match, in the v40 board's card: the decision state, Jinx
- * explaining the same backend decision, the current record's pool support
- * (percentages mean pool support), and the rejected candidates with their
- * exact backend reasons behind "Kanıtı gör" (A7 questions 33–35).
+ * One short interpretation with explicitly separate decision/current sources.
+ * Detailed provenance is on demand; refreshing never calls an LLM.
  */
-export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession }: { matchKey: string; matchStatus?: string; possession?: {label:string} | null }) {
-  const wide = isAtLeast(useBreakpoint(), "wide");
+export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession, matchContext, refreshContext, contextRefreshing = false }: {
+  matchKey: string; matchStatus?: string; possession?: {label:string} | null; matchContext?: AnalysisContext | undefined;
+  refreshContext?: () => Promise<unknown>; contextRefreshing?: boolean;
+}) {
+  const router = useRouter();
   const query = useQuery(rebuildMatchQuery(matchKey)), now = useRebuildClock();
   const [showCandidates, setShowCandidates] = useState(false);
   const params = useLocalSearchParams<{decision?:string | string[]}>();
   const requested = requestedDecision(params.decision);
-  const explanation = useMutation({ retry: false, mutationFn: async () => {
-    const fresh = await query.refetch();
-    if (fresh.isError || !fresh.data) throw new Error("RB1 evidence unavailable");
-    const freshHero = rebuildHero({ data: fresh.data, matchKey, status: matchStatus, now, error: false, decisionId: requested });
-    return mobileApi.getRebuildJinxExplanation(matchKey, freshHero?.record?.decisionId);
-  } });
   const data = query.data;
   const hero = rebuildHero({data, matchKey, status: matchStatus, now, error: query.isError, decisionId: requested});
   const record = hero?.record;
   const state = rebuildPresentation({ status: matchStatus, summary: data, now, error: query.isError,
     redUnknown: data?.candidates.some(candidate => candidate.reason === "RED_CARD_UNKNOWN") });
-  const text = record ? publishedExplanation(record) : requested ? "İncelenen karar kaydı doğrulanamadı." : state.text;
-  const ordered = currentRb1Explanation(explanation.isError || explanation.isPending ? null : explanation.data, record, matchKey, query.isError);
-  const explanationText = ordered ? ordered.facts.map(fact => fact.text).join(" ") : text;
-  const refreshing = query.isFetching || explanation.isPending;
-  const support = record ? formatSupport(record.poolWins, record.poolTotal) : null;
+  const reading = record && data ? jinxMatchReading({ record, data, matchKey, context: matchContext,
+    now: Math.max(now, query.dataUpdatedAt), sourceFailed: query.isError }) : null;
+  const text = reading?.text ?? (query.isError ? "Karar verisi yenilenemedi." : record ? jinxInsight(record)
+    : requested ? "İncelenen karar kaydı doğrulanamadı." : state.text);
+  const refreshing = query.isFetching || contextRefreshing;
   return (
     <View style={styles.jinxCard}>
       <SurfaceMaterial accent={hero?.playable || hero?.active ? semantic.intelligence : undefined} radius={20} />
@@ -286,44 +271,38 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession }: 
         <Image accessible={false} resizeMode="contain" source={jinxFace} style={styles.jinxAvatar} />
         <View style={styles.jinxIdentity}>
           <Text accessibilityRole="header" aria-level={2} style={styles.jinxTitle}>Jinx</Text>
-          <TonePill label={hero?.stateLabel ?? state.label} tone={hero?.stateTone ?? state.tone} />
+          <TonePill label={reading?.title ?? state.label} tone={reading?.tone ?? state.tone} />
         </View>
         <Pressable
-          accessibilityLabel="Jinx değerlendirmesini yenile"
+          accessibilityLabel="Jinx kaydını yenile"
           accessibilityRole="button"
           accessibilityState={{ busy: refreshing }}
-          disabled={explanation.isPending}
-          onPress={() => explanation.mutate()}
+          disabled={refreshing}
+          onPress={() => void Promise.all([query.refetch(), refreshContext?.()])}
           style={({ pressed, hovered }) => [styles.jinxRefresh, hovered && styles.actionHover, pressed && styles.pressed]}
         >
           <MaterialCommunityIcons color={colors.text} name="refresh" size={iconSizes.small} />
           <Text style={styles.jinxRefreshText}>{refreshing ? "Yenileniyor…" : "Yenile"}</Text>
         </Pressable>
       </View>
-      <View style={[styles.jinxBody, wide && styles.jinxBodyWide]}>
-      <View style={[styles.jinxSpeech, wide && styles.jinxSpeechWide]}>
-        <Text accessibilityLiveRegion="polite" style={styles.jinxSpeechText}>{explanationText}</Text>
-        {explanation.isSuccess || explanation.isError ? <Text style={styles.caption}>
-          {ordered?.origin === "LIVE" ? "Gemini sıralaması · karar anındaki kanıt" : "Kurallı açıklama"}
-        </Text> : null}
-        {record ? <Text style={styles.caption}>{hero?.stateText ?? state.text}</Text> : null}
-        {possession ? <Text style={styles.caption}>Ek saha bilgisi · {possession.label}. Seçim kanıtından ayrıdır.</Text> : null}
-      </View>
-      {support && record ? (
-        <View style={wide ? styles.jinxMetricsWide : styles.jinxMetrics}>
-          <View accessible accessibilityLabel={`Havuz desteği ${support.share}, ${support.counts}`} style={styles.jinxFigure}>
-            <Text style={styles.jinxFigureValue}>{support.share}</Text>
-            <Text style={styles.jinxFigureLabel}>havuz desteği</Text>
+      <View style={styles.jinxSpeech}>
+        <Text accessibilityLiveRegion="polite" style={styles.jinxSpeechText}>{text}</Text>
+        {reading?.comparison ? <View accessible
+          accessibilityLabel={`${reading.comparison.label}: ilk karar ${reading.comparison.before}; son kontrol ${reading.comparison.after}`}
+          style={styles.jinxComparison}>
+          <Text style={styles.caption}>{reading.comparison.label}</Text>
+          <View style={styles.jinxComparisonValues}>
+            <Text style={styles.jinxComparisonBefore}>{reading.comparison.before}</Text>
+            <Text style={styles.caption}>→</Text>
+            <Text style={styles.jinxComparisonAfter}>{reading.comparison.after}</Text>
           </View>
-          <View style={styles.jinxChips}>
-            <JinxChip label="Havuz" value={support.counts} />
-            <JinxChip label="İlk oran" value={formatQuote(record.quote)} />
-            <JinxChip label={hero?.quoteLabel ?? "Güncel oran bekleniyor"} value={formatQuote(hero?.currentQuote)} />
-            <JinxChip accent={semantic.intelligence} label="Karar baskısı" value={`${record.votesSupport}/${record.votesUsed} teyit`} />
-          </View>
-          <Text style={styles.caption}>Havuz payı ve yıldızlar kazanma olasılığı değildir.</Text>
-        </View>
-      ) : null}
+        </View> : null}
+        {reading?.decisionId ? <Pressable accessibilityRole="button" accessibilityLabel="Yeni BTB kararını aç"
+          onPress={() => router.push({ pathname: "/super/[key]", params: { key: reading.decisionId!, match: matchKey } } as never)}
+          style={({ pressed, hovered }) => [styles.jinxNewDecision, hovered && styles.actionHover, pressed && styles.pressed]}>
+          <Text style={styles.link}>Yeni kararı aç</Text>
+          <MaterialCommunityIcons name="chevron-right" size={iconSizes.small} color={semantic.intelligence} />
+        </Pressable> : null}
       </View>
       <View style={styles.jinxFoot}>
         <Text style={styles.jinxTime}>{asOfTime(data?.asOf)} <Text style={styles.jinxTimeLabel}>· {query.isError ? "yenilenemedi" : "son okuma"}</Text></Text>
@@ -333,12 +312,22 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession }: 
           onPress={() => setShowCandidates(!showCandidates)}
           style={({ pressed }) => [styles.jinxEvidenceAction, pressed && styles.pressed]}
         >
-          <Text style={styles.link}>{showCandidates ? "Kanıtı gizle" : "Kanıtı gör"}</Text>
+          <Text style={styles.link}>{showCandidates ? "Dayanakları gizle" : "Dayanakları gör"}</Text>
           <MaterialCommunityIcons color={semantic.intelligence} name={showCandidates ? "chevron-up" : "chevron-down"} size={iconSizes.inline} />
         </Pressable> : null}
       </View>
       {showCandidates ? (
         <View style={styles.jinxCandidates}>
+          {reading ? <View style={styles.jinxSources}>
+            <Text style={styles.evidenceLabel}>Yorumun dayanağı</Text>
+            {reading.sources.map(source => <Text key={source.label} style={styles.caption}>{source.label} · {source.value}</Text>)}
+          </View> : null}
+          {record && !query.isError ? <>
+            <Text style={styles.caption}>{publishedExplanation(record)}</Text>
+            <RecordEvidence record={record} />
+            <Text style={styles.caption}>Havuz payı ve yıldızlar kazanma olasılığı değildir.</Text>
+          </> : null}
+          {possession ? <Text style={styles.caption}>Ek saha bilgisi · {possession.label}. Seçim kanıtından ayrıdır.</Text> : null}
           <Text style={styles.caption}>Diğer adaylar ve elenme nedenleri · yayımlanmış birimlerden ayrı tutulur; bahis önerisi değildir.</Text>
           <Text style={styles.caption}>Erken elenen pazarda sonraki ölçütler hesaplanmamış olabilir. Hesaplanmayan değerler sıfır değildir; son kayıtlı değerlendirme gösterilir.</Text>
           {data?.candidates.length ? data.candidates.map(c => {
@@ -582,19 +571,13 @@ const styles = StyleSheet.create({
   jinxRefresh: { minHeight: interaction.minTouchTarget, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 16, borderRadius: radii.round, borderWidth: 1, borderColor: colors.border },
   jinxRefreshText: { color: colors.text, ...typeScale.bodyCompact, fontWeight: "700" },
   jinxSpeech: { paddingHorizontal: 14, paddingVertical: 12, borderRadius: 16, borderTopLeftRadius: 6, backgroundColor: colors.surfaceStrong },
-  jinxBody: { gap: 12 },
-  jinxBodyWide: { flexDirection: "row", alignItems: "flex-start", gap: 20 },
-  jinxSpeechWide: { flex: 1, minWidth: 0, maxWidth: 780 },
-  jinxMetrics: { gap: 10 },
-  jinxMetricsWide: { flex: 1, maxWidth: 520, gap: 10 },
   jinxSpeechText: { color: colors.text, ...typeScale.body, fontSize: 16, lineHeight: 23, fontWeight: "500" },
-  jinxFigure: { flexDirection: "row", alignItems: "baseline", gap: 10 },
-  jinxFigureValue: { color: colors.text, ...typeScale.display, fontSize: 36, lineHeight: 42 },
-  jinxFigureLabel: { color: colors.textMuted, ...typeScale.bodyCompact, fontWeight: "700" },
-  jinxChips: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  jinxChip: { flexDirection: "row", alignItems: "baseline", gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: colors.border },
-  jinxChipLabel: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0 },
-  jinxChipValue: { color: colors.text, ...typeScale.metricCompact, fontSize: 15, lineHeight: 18 },
+  jinxComparison: { marginTop: 10, gap: 4 },
+  jinxComparisonValues: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 },
+  jinxComparisonBefore: { color: colors.textMuted, ...typeScale.bodyCompact },
+  jinxComparisonAfter: { color: colors.text, ...typeScale.bodyCompact, fontWeight: "700" },
+  jinxSources: { gap: 4 },
+  jinxNewDecision: { flexDirection: "row", alignItems: "center", gap: 6, minHeight: 44, alignSelf: "flex-start", marginTop: 6 },
   jinxFoot: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border },
   jinxTime: { color: colors.textMuted, ...typeScale.metricCompact, fontSize: 14, lineHeight: 18 },
   jinxTimeLabel: { ...typeScale.label, letterSpacing: 0 },

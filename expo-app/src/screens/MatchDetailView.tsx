@@ -731,7 +731,8 @@ export function MatchDetailView({
       </TutorialTarget>
       </View>
 
-      {query.data?.rebuild ? <RebuildJinxCard matchKey={key} matchStatus={match.status} possession={possession} /> : null}
+      {query.data?.rebuild ? <RebuildJinxCard matchKey={key} matchStatus={match.status} possession={possession}
+        matchContext={context.data} refreshContext={() => context.refetch()} contextRefreshing={context.isFetching} /> : null}
 
       <View collapsable={false} ref={(node) => { moduleRefs.current.set("matchPath", node); }}>
         <MatchPathCard

@@ -1,7 +1,28 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-10-27
-Mod: `COMPLETE / OWNER_ACCEPTED_BOTH / PREVIOUS_PAIR_RETAINED`
+Son güncelleme: 2026-10-28
+Mod: `LOCAL_JINX_CONTEXT_VALIDATED / GIT_APPROVED / RELEASE_NOT_APPROVED / ACCEPTED_PAIR_RETAINED`
+
+## Pending contextual Jinx — NXT-OBS-231
+
+Owner requested improvements beyond the compact candidate's subjective 6/10.
+Shared Android/web Jinx now compares the frozen decision with verified current
+DTOs: pressure changes versus native confirmation, market closure, critical
+score conditions and canonical final results. A newer published decision can
+be opened directly. Default text stays within two sentences; one comparison
+row and optional provenance replace duplicated metrics. Stale, foreign or
+unverified current sources fall back without inventing a current assessment.
+No model, star, outcome or API contract changes; BFF is clean. Refresh uses
+existing RB1/context queries; synthetic browser records zero Jinx LLM calls.
+Type/lint/brand, 700 client +32 tooling tests, Android JS/Hermes preview bundle
+and verified edge web export pass. Unchanged Doctor20/20 reused. Synthetic
+320/390/1440 px, keyboard, nine context cases and new-decision navigation pass.
+Heuristic assessment 6→8/10 is not a user study or prediction-performance claim.
+Physical Android/TalkBack and published-web acceptance remain untested. Owner
+explicitly approved scoped zbet-mobile commit/push on 2026-10-28. This approval
+does not cover APK build/signing/distribution, web publication or BFF activation.
+No runtime activation or release performed; accepted pair remains 9d87b2e.
+[Current design and evidence](JINX_CONTEXT_REVIEW_2026-10-27.md).
 
 ## Current accepted pair — match evidence UX 9d87b2e (NXT-OBS-230)
 

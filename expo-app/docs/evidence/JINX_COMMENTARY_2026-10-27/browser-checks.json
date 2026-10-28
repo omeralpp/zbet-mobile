@@ -1,0 +1,53 @@
+{
+  "synthetic": true,
+  "physicalAndroid": false,
+  "checks": [
+    {
+      "surface": "phone-width-web",
+      "width": 390,
+      "sourceOnEntry": true,
+      "manualAi": true,
+      "horizontalOverflow": false
+    },
+    {
+      "scenario": "ai-rejected",
+      "fallback": true,
+      "sourceAnalysis": true,
+      "rejectedAdviceVisible": false
+    },
+    {
+      "scenario": "ai-timeout",
+      "fallback": true,
+      "sourceAnalysis": true,
+      "rejectedAdviceVisible": false
+    },
+    {
+      "scenario": "result-win",
+      "width": 320,
+      "resultCaveat": true,
+      "horizontalOverflow": false
+    },
+    {
+      "scenario": "partial-support",
+      "partialSupport": true,
+      "dissent": true
+    },
+    {
+      "scenario": "empty",
+      "previousCommentaryVisible": false,
+      "sourceSectionsAbsent": true
+    },
+    {
+      "scenario": "error",
+      "previousCommentaryVisible": false,
+      "sourceSectionsAbsent": true
+    },
+    {
+      "surface": "desktop-web",
+      "width": 1440,
+      "keyboardEnter": true,
+      "sourceDisclosure": true,
+      "sourceDisclosureCollapse": true
+    }
+  ]
+}

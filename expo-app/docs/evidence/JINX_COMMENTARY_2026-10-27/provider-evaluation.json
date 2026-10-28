@@ -1,0 +1,235 @@
+{
+  "synthetic": true,
+  "realSapEvidence": false,
+  "runtimeChanged": false,
+  "samples": [
+    {
+      "scenario": "reported-layout",
+      "synthetic": true,
+      "durationMs": 3236,
+      "dto": {
+        "contractVersion": "jinx-rb1-commentary.v2",
+        "matchKey": "2026-10-20:17:13:00:00",
+        "asOf": "2026-10-27T16:52:01.149Z",
+        "decisionId": "11111111111111111111111111111111",
+        "evidenceKey": "[\"jinx-rb1-commentary.v2\",\"[\\\"11111111111111111111111111111111\\\",\\\"2026-10-20:17:13:00:00\\\",\\\"Ms2\\\",\\\"2026-10-27T16:50:01.149Z\\\",52,1,1,\\\"2.123456789012345678901234567890123\\\",2,2,15,25,false]\",2,false,[3,5,4,4,5],[[\"2026-10-20T11:54:00.000Z\",\"2026-10-20T11:56:00.000Z\",true,true],[\"2026-10-20T11:56:00.000Z\",\"2026-10-20T11:58:00.000Z\",true,true]],\"WIN\",2]",
+        "origin": "LIVE",
+        "availability": "OK",
+        "reasonCode": null,
+        "sections": [
+          {
+            "id": "READING",
+            "title": "Kararın dayanağı",
+            "evidenceIds": [
+              "DECISION",
+              "PRESSURE",
+              "POOL",
+              "DIRECTION"
+            ],
+            "text": "52. dakikadaki deplasman seçiminin dayanağı: 2 baskı aralığının tamamı seçimi teyit etmiş; bu, o aralıkların aynı yönde olduğuna işaret eder. Havuzdaki 25 referans kaydının 15 tanesi seçimi desteklemiş, 10 tanesi desteklememiş. Kayıtta yön çelişkisi bulunmuyor; bu, sonucun kesinleştiği anlamına gelmiyor.",
+            "sourceText": "52. dakikadaki deplasman seçiminin dayanağı: 2 baskı aralığının tamamı seçimi teyit etmiş; bu, o aralıkların aynı yönde olduğuna işaret eder. Havuzdaki 25 referans kaydının 15 tanesi seçimi desteklemiş, 10 tanesi desteklememiş. Kayıtta yön çelişkisi bulunmuyor; bu, sonucun kesinleştiği anlamına gelmiyor."
+          },
+          {
+            "id": "LIMITS",
+            "title": "Kanıtın sınırı",
+            "evidenceIds": [
+              "QUALITY",
+              "MEASUREMENT"
+            ],
+            "text": "Kaydedilen en düşük yıldız tavanı 3/5 seviyesindedir ve havuz kapsamını belirler. Bu sınır, kanıtların değerlendirilmesi sürecinde mutlaka korunmalıdır. Baskı aralıklarında yer alan veriler tahmini ölçüm içerdiğinden, bunların tamamı doğrudan ölçüm olarak kabul edilmemelidir.",
+            "sourceText": "Kaydedilmiş en düşük yıldız tavanı 3/5: havuz kapsamı. Bu sınır, kanıtın değerlendirmesinde korunmalı. Baskı aralıklarında tahmini ölçüm bulunuyor; tamamı doğrudan ölçüm gibi okunmamalı."
+          },
+          {
+            "id": "CONDITION",
+            "title": "Skor koşulu ve sonuç",
+            "evidenceIds": [
+              "SCORE",
+              "RESULT"
+            ],
+            "text": "Karar anında Deplasman karar skorunda tutmuyor: skor 1-1; deplasmanın 1 golü gerekir. Kayıt sonucu kazandı. Tek bir kazanç, karar yönteminin başarısını kanıtlamaz.",
+            "sourceText": "Karar anında Deplasman karar skorunda tutmuyor: skor 1-1; deplasmanın 1 golü gerekir. Kayıt sonucu kazandı. Tek bir kazanç, karar yönteminin başarısını kanıtlamaz."
+          }
+        ],
+        "limitation": "Havuz desteği ve yıldızlar kazanma olasılığı değildir. Havuzdaki kayıtların fiziksel maç tekilliği doğrulanmamıştır."
+      }
+    },
+    {
+      "scenario": "partial-support",
+      "synthetic": true,
+      "durationMs": 3253,
+      "dto": {
+        "contractVersion": "jinx-rb1-commentary.v2",
+        "matchKey": "2026-10-20:17:13:00:00",
+        "asOf": "2026-10-27T16:52:04.385Z",
+        "decisionId": "11111111111111111111111111111111",
+        "evidenceKey": "[\"jinx-rb1-commentary.v2\",\"[\\\"11111111111111111111111111111111\\\",\\\"2026-10-20:17:13:00:00\\\",\\\"Ms45a\\\",\\\"2026-10-27T16:50:04.385Z\\\",87,1,3,\\\"2.123456789012345678901234567890123\\\",1,2,36,40,false]\",3,true,[3,5,4,4,5],[[\"2026-10-20T11:54:00.000Z\",\"2026-10-20T11:56:00.000Z\",true,true],[\"2026-10-20T11:56:00.000Z\",\"2026-10-20T11:58:00.000Z\",true,true]],\"PENDING\",1]",
+        "origin": "LIVE",
+        "availability": "OK",
+        "reasonCode": null,
+        "sections": [
+          {
+            "id": "READING",
+            "title": "Kararın dayanağı",
+            "evidenceIds": [
+              "DECISION",
+              "PRESSURE",
+              "POOL",
+              "DIRECTION"
+            ],
+            "text": "87. dakikadaki toplam gol 4,5 alt seçiminin dayanağı: 2 baskı aralığının 1 tanesi seçimi teyit etmiş; aralıkların tümü aynı yönde değil. Havuzdaki 40 referans kaydının 36 tanesi seçimi desteklemiş, 4 tanesi desteklememiş. Kayıtta yön çelişkisi bulunmuyor; bu, sonucun kesinleştiği anlamına gelmiyor.",
+            "sourceText": "87. dakikadaki toplam gol 4,5 alt seçiminin dayanağı: 2 baskı aralığının 1 tanesi seçimi teyit etmiş; aralıkların tümü aynı yönde değil. Havuzdaki 40 referans kaydının 36 tanesi seçimi desteklemiş, 4 tanesi desteklememiş. Kayıtta yön çelişkisi bulunmuyor; bu, sonucun kesinleştiği anlamına gelmiyor."
+          },
+          {
+            "id": "LIMITS",
+            "title": "Kanıtın sınırı",
+            "evidenceIds": [
+              "QUALITY",
+              "MEASUREMENT"
+            ],
+            "text": "Kaydedilen en düşük yıldız tavanı 3/5 seviyesindedir ve havuz kapsamını gösterir; bu sınır, kanıt değerlendirmesinde mutlaka korunmalıdır. Baskı aralıklarında tahmini ölçüm yer almaktadır ve bunların tamamı doğrudan ölçüm olarak ele alınmamalıdır. Ayrıca kaydedilen ters oylar, sağlanan desteğin tek yönlü okunmasını sınırlandırmaktadır.",
+            "sourceText": "Kaydedilmiş en düşük yıldız tavanı 3/5: havuz kapsamı. Bu sınır, kanıtın değerlendirmesinde korunmalı. Baskı aralıklarında tahmini ölçüm bulunuyor; tamamı doğrudan ölçüm gibi okunmamalı. Kaydedilmiş ters oy da desteğin tek yönlü okunmasını sınırlar."
+          },
+          {
+            "id": "CONDITION",
+            "title": "Skor koşulu ve sonuç",
+            "evidenceIds": [
+              "SCORE",
+              "RESULT"
+            ],
+            "text": "Karar anında Toplam gol 4,5 alt karar skorunda tutuyor: skor 1-3; 1 gol daha bu durumu bozar. Kayıt sonucu henüz kesinleşmedi; bu yorum maçın devamına ilişkin bir tahmin değildir.",
+            "sourceText": "Karar anında Toplam gol 4,5 alt karar skorunda tutuyor: skor 1-3; 1 gol daha bu durumu bozar. Kayıt sonucu henüz kesinleşmedi; bu yorum maçın devamına ilişkin bir tahmin değildir."
+          }
+        ],
+        "limitation": "Havuz desteği ve yıldızlar kazanma olasılığı değildir. Havuzdaki kayıtların fiziksel maç tekilliği doğrulanmamıştır."
+      }
+    },
+    {
+      "scenario": "score-correction",
+      "synthetic": true,
+      "durationMs": 3123,
+      "dto": {
+        "contractVersion": "jinx-rb1-commentary.v2",
+        "matchKey": "2026-10-20:17:13:00:00",
+        "asOf": "2026-10-27T16:52:07.638Z",
+        "decisionId": "11111111111111111111111111111111",
+        "evidenceKey": "[\"jinx-rb1-commentary.v2\",\"[\\\"11111111111111111111111111111111\\\",\\\"2026-10-20:17:13:00:00\\\",\\\"Ms45a\\\",\\\"2026-10-27T16:50:07.638Z\\\",60,2,3,\\\"2.123456789012345678901234567890123\\\",2,2,36,40,false]\",3,false,[3,5,4,4,5],[[\"2026-10-20T11:54:00.000Z\",\"2026-10-20T11:56:00.000Z\",true,true],[\"2026-10-20T11:56:00.000Z\",\"2026-10-20T11:58:00.000Z\",true,true]],\"LOSS\",3]",
+        "origin": "LIVE",
+        "availability": "OK",
+        "reasonCode": null,
+        "sections": [
+          {
+            "id": "READING",
+            "title": "Kararın dayanağı",
+            "evidenceIds": [
+              "DECISION",
+              "PRESSURE",
+              "POOL",
+              "DIRECTION"
+            ],
+            "text": "60. dakikadaki toplam gol 4,5 alt seçiminin dayanağı: 2 baskı aralığının tamamı seçimi teyit etmiş; bu, o aralıkların aynı yönde olduğuna işaret eder. Havuzdaki 40 referans kaydının 36 tanesi seçimi desteklemiş, 4 tanesi desteklememiş. Kayıtta yön çelişkisi bulunmuyor; bu, sonucun kesinleştiği anlamına gelmiyor.",
+            "sourceText": "60. dakikadaki toplam gol 4,5 alt seçiminin dayanağı: 2 baskı aralığının tamamı seçimi teyit etmiş; bu, o aralıkların aynı yönde olduğuna işaret eder. Havuzdaki 40 referans kaydının 36 tanesi seçimi desteklemiş, 4 tanesi desteklememiş. Kayıtta yön çelişkisi bulunmuyor; bu, sonucun kesinleştiği anlamına gelmiyor."
+          },
+          {
+            "id": "LIMITS",
+            "title": "Kanıtın sınırı",
+            "evidenceIds": [
+              "QUALITY",
+              "MEASUREMENT"
+            ],
+            "text": "Kaydedilen en düşük yıldız tavanı 3/5 seviyesindedir ve havuz kapsamını belirler. Bu sınır, kanıtların değerlendirilmesi sürecinde mutlaka dikkate alınmalıdır. Baskı aralıklarındaki verilerin bir kısmı tahmini ölçüm içerdiğinden, tamamı doğrudan ölçüm olarak kabul edilmemelidir.",
+            "sourceText": "Kaydedilmiş en düşük yıldız tavanı 3/5: havuz kapsamı. Bu sınır, kanıtın değerlendirmesinde korunmalı. Baskı aralıklarında tahmini ölçüm bulunuyor; tamamı doğrudan ölçüm gibi okunmamalı."
+          },
+          {
+            "id": "CONDITION",
+            "title": "Skor koşulu ve sonuç",
+            "evidenceIds": [
+              "SCORE",
+              "RESULT"
+            ],
+            "text": "Karar anında Toplam gol 4,5 alt skor 2-3 ile artık karşılanamaz. Kayıt sonucu kaybetti. Sonuç, karar anındaki gerekçelerden ayrı değerlendirilir.",
+            "sourceText": "Karar anında Toplam gol 4,5 alt skor 2-3 ile artık karşılanamaz. Kayıt sonucu kaybetti. Sonuç, karar anındaki gerekçelerden ayrı değerlendirilir."
+          }
+        ],
+        "limitation": "Havuz desteği ve yıldızlar kazanma olasılığı değildir. Havuzdaki kayıtların fiziksel maç tekilliği doğrulanmamıştır."
+      }
+    }
+  ],
+  "telemetry": {
+    "requests": 3,
+    "liveReadings": 3,
+    "factualSummaries": 0,
+    "unavailable": 0,
+    "notLive": 0,
+    "cacheHits": 0,
+    "spacingWaits": 0,
+    "causeLocalSpacing": 0,
+    "causeLocalHourlyCap": 0,
+    "causeProviderFailure": 0,
+    "causeValidationRejected": 0,
+    "providerCalls": 3,
+    "providerOk": 3,
+    "providerTimeouts": 0,
+    "providerHttpErrors": 0,
+    "providerNetworkErrors": 0,
+    "providerInvalidResponses": 0,
+    "lastOutcome": "LIVE",
+    "lastCause": null,
+    "lastProviderOutcome": "OK",
+    "lastProviderHttpStatus": 200,
+    "lastProviderStatus": null,
+    "lastProviderMs": 3122,
+    "lastProviderServerMs": 3101,
+    "lastObservedAt": "2026-10-27T16:52:10.761Z"
+  },
+  "diagnostics": [],
+  "providerTimings": [
+    {
+      "startedAt": "2026-10-27T16:52:01.151Z",
+      "model": "gemini-3.5-flash-lite",
+      "attempt": 1,
+      "budgetMs": 14999,
+      "outcome": "OK",
+      "httpStatus": 200,
+      "providerStatus": null,
+      "serverMs": 3086,
+      "finishReason": "STOP",
+      "promptTokens": 464,
+      "outputTokens": 368,
+      "thoughtTokens": null,
+      "errorCode": null,
+      "durationMs": 3233
+    },
+    {
+      "startedAt": "2026-10-27T16:52:04.385Z",
+      "model": "gemini-3.5-flash-lite",
+      "attempt": 1,
+      "budgetMs": 14999,
+      "outcome": "OK",
+      "httpStatus": 200,
+      "providerStatus": null,
+      "serverMs": 3235,
+      "finishReason": "STOP",
+      "promptTokens": 484,
+      "outputTokens": 294,
+      "thoughtTokens": null,
+      "errorCode": null,
+      "durationMs": 3253
+    },
+    {
+      "startedAt": "2026-10-27T16:52:07.639Z",
+      "model": "gemini-3.5-flash-lite",
+      "attempt": 1,
+      "budgetMs": 14999,
+      "outcome": "OK",
+      "httpStatus": 200,
+      "providerStatus": null,
+      "serverMs": 3101,
+      "finishReason": "STOP",
+      "promptTokens": 461,
+      "outputTokens": 275,
+      "thoughtTokens": null,
+      "errorCode": null,
+      "durationMs": 3122
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+[
+  {
+    "scenario": "pressure-drop",
+    "title": "Baskı desteği azaldı",
+    "horizontalOverflow": false,
+    "visibleJinx": "heading \"Jinx\" [level=2]\n  - generic: Baskı desteği azaldı\n  - button \"Jinx kaydını yenile\":\n    - generic: 󰑐\n    - generic: Yenile\n  - generic: İlk kararın baskı desteği son aralıklarda azalmış; açık oran eski teyidin sürdüğü anlamına gelmez.\n  - 'generic \"Baskı teyidi: ilk karar 2/2; son kontrol 0/2\"':\n    - generic: Baskı teyidi\n    - generic: 2/2\n    - generic: →\n    - generic: 0/2\n  - text: 20:58:56\n  - generic: · son okuma\n  - button \"Dayanakları gör 󰅀\":\n    - generic: Dayanakları gör\n    - generic: 󰅀\n  - "
+  },
+  {
+    "scenario": "market-closed",
+    "title": "Pazar kapalı",
+    "horizontalOverflow": false,
+    "visibleJinx": "heading \"Jinx\" [level=2]\n  - generic: Pazar kapalı\n  - button \"Jinx kaydını yenile\":\n    - generic: 󰑐\n    - generic: Yenile\n  - generic: Son kontrolde bu pazar kapalı; ilk karardaki oran güncel işlem fiyatı değil.\n  - 'generic \"Pazar: ilk karar Kararda açık; son kontrol Son kontrolde kapalı\"':\n    - generic: Pazar\n    - generic: Kararda açık\n    - generic: →\n    - generic: Son kontrolde kapalı\n  - text: 20:58:57\n  - generic: · son okuma\n  - button \"Dayanakları gör 󰅀\":\n    - generic: Dayanakları gör\n    - generic: 󰅀\n  - "
+  },
+  {
+    "scenario": "score-goal",
+    "title": "Skorun kritik koşulu",
+    "horizontalOverflow": false,
+    "visibleJinx": "heading \"Jinx\" [level=2]\n  - generic: Skorun kritik koşulu\n  - button \"Jinx kaydını yenile\":\n    - generic: 󰑐\n    - generic: Yenile\n  - generic: Ev sahibinin 1 golü deplasman üstünlüğünü kaldırır. xG kapsamı, kalite tavanını 2 yıldızla sınırlamış.\n  - 'generic \"Skor: ilk karar 52′ · 1–1; son kontrol 65′ · 1–2\"':\n    - generic: Skor\n    - generic: 52′ · 1–1\n    - generic: →\n    - generic: 65′ · 1–2\n  - text: 20:58:57\n  - generic: · son okuma\n  - button \"Dayanakları gör 󰅀\":\n    - generic: Dayanakları gör\n    - generic: 󰅀\n  - "
+  },
+  {
+    "scenario": "result-win",
+    "title": "Maç sonu değerlendirme",
+    "horizontalOverflow": false,
+    "visibleJinx": "heading \"Jinx\" [level=2]\n  - generic: Maç sonu değerlendirme\n  - button \"Jinx kaydını yenile\":\n    - generic: 󰑐\n    - generic: Yenile\n  - generic: Karardaki 1–1 skoru 1–2 olmuş; seçimin skor koşulu sağlanmış. xG kapsamı, kalite tavanını 2 yıldızla sınırlamış.\n  - 'generic \"Skor: ilk karar 52′ · 1–1; son kontrol 90′ · 1–2\"':\n    - generic: Skor\n    - generic: 52′ · 1–1\n    - generic: →\n    - generic: 90′ · 1–2\n  - text: 20:58:57\n  - generic: · son okuma\n  - button \"Dayanakları gör 󰅀\":\n    - generic: Dayanakları gör\n    - generic: 󰅀\n  - "
+  },
+  {
+    "scenario": "result-pending",
+    "title": "Sonuç kaydı bekleniyor",
+    "horizontalOverflow": false,
+    "visibleJinx": "heading \"Jinx\" [level=2]\n  - generic: Sonuç kaydı bekleniyor\n  - button \"Jinx kaydını yenile\":\n    - generic: 󰑐\n    - generic: Yenile\n  - generic: Son skorla seçimin koşulu karşılanıyor; kararın sonucu henüz kesinleşmemiş.\n  - 'generic \"Skor: ilk karar 52′ · 1–1; son kontrol 90′ · 1–2\"':\n    - generic: Skor\n    - generic: 52′ · 1–1\n    - generic: →\n    - generic: 90′ · 1–2\n  - text: 20:58:58\n  - generic: · son okuma\n  - button \"Dayanakları gör 󰅀\":\n    - generic: Dayanakları gör\n    - generic: 󰅀\n  - "
+  },
+  {
+    "scenario": "result-conflict",
+    "title": "Sonuç kontrolü gerekli",
+    "horizontalOverflow": false,
+    "visibleJinx": "heading \"Jinx\" [level=2]\n  - generic: Sonuç kontrolü gerekli\n  - button \"Jinx kaydını yenile\":\n    - generic: 󰑐\n    - generic: Yenile\n  - generic: Skor ile sonuç kaydı farklı görünüyor; aynı kapsamda doğrulama gerekiyor.\n  - 'generic \"Skor: ilk karar 52′ · 1–1; son kontrol 90′ · 2–1\"':\n    - generic: Skor\n    - generic: 52′ · 1–1\n    - generic: →\n    - generic: 90′ · 2–1\n  - text: 20:58:58\n  - generic: · son okuma\n  - button \"Dayanakları gör 󰅀\":\n    - generic: Dayanakları gör\n    - generic: 󰅀\n  - "
+  },
+  {
+    "scenario": "stale-context",
+    "title": "Karar anı",
+    "horizontalOverflow": false,
+    "visibleJinx": "heading \"Jinx\" [level=2]\n  - generic: Karar anı\n  - button \"Jinx kaydını yenile\":\n    - generic: 󰑐\n    - generic: Yenile\n  - generic: Baskı aralıkları seçimi aynı yönde desteklemiş. xG kapsamı, kalite tavanını 2 yıldızla sınırlamış.\n  - text: 20:58:58\n  - generic: · son okuma\n  - button \"Dayanakları gör 󰅀\":\n    - generic: Dayanakları gör\n    - generic: 󰅀\n  - "
+  },
+  {
+    "scenario": "unverified-context",
+    "title": "Karar anı",
+    "horizontalOverflow": false,
+    "visibleJinx": "heading \"Jinx\" [level=2]\n  - generic: Karar anı\n  - button \"Jinx kaydını yenile\":\n    - generic: 󰑐\n    - generic: Yenile\n  - generic: Baskı aralıkları seçimi aynı yönde desteklemiş. xG kapsamı, kalite tavanını 2 yıldızla sınırlamış.\n  - text: 20:58:59\n  - generic: · son okuma\n  - button \"Dayanakları gör 󰅀\":\n    - generic: Dayanakları gör\n    - generic: 󰅀\n  - "
+  },
+  {
+    "scenario": "new-decision",
+    "title": "Yeni karar var",
+    "horizontalOverflow": false,
+    "visibleJinx": "heading \"Jinx\" [level=2]\n  - generic: Yeni karar var\n  - button \"Jinx kaydını yenile\":\n    - generic: 󰑐\n    - generic: Yenile\n  - generic: Bu kart önceki kararı gösteriyor; daha yeni bir BTB kararı yayımlanmış.\n  - 'generic \"Pazar: ilk karar Deplasman kazanır; son kontrol Beraberlik\"':\n    - generic: Pazar\n    - generic: Deplasman kazanır\n    - generic: →\n    - generic: Beraberlik\n  - button \"Yeni BTB kararını aç\":\n    - generic: Yeni kararı aç\n    - generic: 󰅂\n  - text: 20:58:59\n  - generic: · son okuma\n  - button \"Dayanakları gör 󰅀\":\n    - generic: Dayanakları gör\n    - generic: 󰅀\n  - "
+  },
+  {
+    "scenario": "new-decision-navigation-and-refresh",
+    "passed": true
+  },
+  {
+    "scenario": "refresh-and-source-disclosure",
+    "sourcesVisible": true,
+    "initialContextVisible": true
+  },
+  {
+    "scenario": "narrow-pressure-comparison",
+    "width": 320,
+    "horizontalOverflow": false
+  },
+  {
+    "scenario": "desktop-pressure-comparison",
+    "width": 1440,
+    "horizontalOverflow": false,
+    "comparison": true
+  },
+  {
+    "scenario": "final-export-result-smoke",
+    "passed": true
+  },
+  {
+    "scenario": "final-export-pressure-smoke",
+    "passed": true
+  },
+  {
+    "check": "final-native-admission-text",
+    "viewport": "390x844",
+    "text": "Baskı desteği azalmış; oran açık olsa da son hesap bu pazarı teyit etmiyor.",
+    "keyboardDisclosure": true,
+    "passed": true
+  }
+]

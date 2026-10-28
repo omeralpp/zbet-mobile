@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 1,
+  "status": "LOCAL_VALIDATED_OWNER_REVIEW_PENDING",
+  "recordedAt": "2026-10-27T17:05:53.120Z",
+  "profile": "btb-mobile",
+  "observation": "NXT-OBS-231",
+  "contractVersion": "jinx-rb1-commentary.v2",
+  "repositoryBases": {
+    "mobile": "99ea43307e613b22751f63611b2a3e0e5c555949",
+    "bff": "358801e7fb21539460ce026c5ef5f559f9c3d87c"
+  },
+  "dirtyLocalCandidate": true,
+  "sourceSha256": {
+    "zbet-cap/srv/mobile-bff/jinx-rb1-commentary.js": "6ebefb07daba5ef43747856c7dcd05c26b51fea37de12fbeac9f2b15e5032e27",
+    "zbet-cap/srv/mobile-bff/jinx-outlook.js": "04add60b452118dd7f61340cc0ae7e7b43d7b1811a8e69db98e3e12fc79ded67",
+    "zbet-cap/srv/mobile-bff/router.js": "02ef99fb5d0c7e0e071183a7d85899a8638870531faf3b7dcf434c5cd41e91e3",
+    "zbet-cap/test/mobile-bff-jinx-commentary.test.js": "d2157b6b50071c9bf7dd45847e739a35f485e157264a8092413648434aba7c4e",
+    "zbet-cap/test/fixtures/jinx-rb1.js": "38064b38801d8ce32ecc63d11a85cc5a426207850fff23674dad8b3a05e67c66",
+    "zbet-mobile/expo-app/src/components/RebuildEvidencePanel.tsx": "a0613b4781a0bf6bdc6c4f295ab255de8cbdd5c09d1c93d9ac829cf5926127dc",
+    "zbet-mobile/expo-app/src/utils/rebuild-jinx.ts": "1471874064abc5d38466fd85e9788d71e09c79de211df1359a2f52c1fe6d477e",
+    "zbet-mobile/expo-app/src/api/jinx-rb1-schema.ts": "63d2129518b3b522b9edac0eb5c1c9d05c05b3051546b65ee2b2cb1cab31d470",
+    "zbet-mobile/expo-app/src/api/jinx-rb1-schema.test.ts": "b42cd53ed0e9f72b7a325f16d100ff8b19add8de5829db6f9f8f1d80ec496eff",
+    "zbet-mobile/expo-app/src/api/http-mobile-api.ts": "adfb33b73014c7088c98c57cb3a4311cbd5ce4177c69423cdfa8214a38686033",
+    "zbet-mobile/expo-app/src/api/mobile-api.ts": "702e0c0886cbdbe3b38ccd6fc408bc3e71672e0bf45b73e98d1401864a6a3110",
+    "zbet-mobile/expo-app/src/api/mock-mobile-api.ts": "2b2d0792cd12a9a7673ea0aae0f49b7d1c131939f30b5db1267005e65ca08222",
+    "zbet-mobile/expo-app/scripts/verify-jinx-contract.ts": "376279fef04f18a564a715dad232b370e6983cb24f1fe8333a8caab201b4fa71",
+    "zbet-mobile/expo-app/contracts/mobile-api.openapi.yaml": "03dace72b458f48e1b66793ab8118aca720cecd21319b346e3042a862d17afef"
+  },
+  "checks": {
+    "typecheck": "PASSED",
+    "lint": "PASSED",
+    "brand": "PASSED",
+    "clientTests": 679,
+    "toolingTests": 32,
+    "expoDoctor": "20/20",
+    "bffSuite": "PASSED",
+    "bffProductionBuild": "PASSED",
+    "newBffCommentaryTests": 13,
+    "crossRepositoryContract": "PASSED",
+    "androidJsHermesPreviewExport": "PASSED",
+    "androidSecretScan": "1 FILE / ZERO FINDINGS",
+    "canonicalEdgeWebExport": "PASSED",
+    "webSecretScan": "4 FILES / ZERO FINDINGS",
+    "diffCheck": "PASSED",
+    "contextRoutes": "CLEAN"
+  },
+  "realProviderSyntheticEvaluation": {
+    "samples": 3,
+    "accepted": 3,
+    "durationMs": [
+      3236,
+      3253,
+      3123
+    ],
+    "scenarios": [
+      "reported-layout",
+      "partial-support",
+      "score-correction"
+    ],
+    "predictionPerformanceEvidence": false
+  },
+  "browser": {
+    "synthetic": true,
+    "checks": [
+      {
+        "surface": "phone-width-web",
+        "width": 390,
+        "sourceOnEntry": true,
+        "manualAi": true,
+        "horizontalOverflow": false
+      },
+      {
+        "scenario": "ai-rejected",
+        "fallback": true,
+        "sourceAnalysis": true,
+        "rejectedAdviceVisible": false
+      },
+      {
+        "scenario": "ai-timeout",
+        "fallback": true,
+        "sourceAnalysis": true,
+        "rejectedAdviceVisible": false
+      },
+      {
+        "scenario": "result-win",
+        "width": 320,
+        "resultCaveat": true,
+        "horizontalOverflow": false
+      },
+      {
+        "scenario": "partial-support",
+        "partialSupport": true,
+        "dissent": true
+      },
+      {
+        "scenario": "empty",
+        "previousCommentaryVisible": false,
+        "sourceSectionsAbsent": true
+      },
+      {
+        "scenario": "error",
+        "previousCommentaryVisible": false,
+        "sourceSectionsAbsent": true
+      },
+      {
+        "surface": "desktop-web",
+        "width": 1440,
+        "keyboardEnter": true,
+        "sourceDisclosure": true,
+        "sourceDisclosureCollapse": true
+      }
+    ]
+  },
+  "storage": {
+    "files": 214,
+    "preserved": 77,
+    "unknown": 17,
+    "removalCandidates": 0,
+    "archiveCandidates": 0,
+    "referenceCoverageComplete": false,
+    "operationsPerformed": []
+  },
+  "evidenceSha256": {
+    "provider-evaluation.json": "6b5e1fc9050baf4d3efaa1a4b28b5c456e3d56cc778fc110b990dea72ce51e56",
+    "browser-checks.json": "b61447bc6923f7f8425236b5d1e477314f03a23a80b2e90aa1cf28ce7d7bc755",
+    "desktop.jpg": "39a8aafe51a4d51397f4e413128716e5f8d6612a8fa535c441c943e345193562",
+    "phone-commentary.jpg": "4930ee4d3d019321fed5b6a97b23c9f30808246f2c2889d47d325a2ab8114252"
+  },
+  "limits": [
+    "Free prose rejection filters do not prove complete semantic correctness.",
+    "No physical Android or TalkBack acceptance.",
+    "No live SAP read or model modification.",
+    "No stage/commit/push, BFF activation, release APK or web publication."
+  ],
+  "acceptedClientSourceRetained": "9d87b2ea4a86ec3bdcf454237d1751c9174a58cd",
+  "releaseComplete": false
+}

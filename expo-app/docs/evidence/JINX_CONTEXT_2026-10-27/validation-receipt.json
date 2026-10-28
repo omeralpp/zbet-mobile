@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-27",
+  "observation": "NXT-OBS-231",
+  "status": "LOCAL_VALIDATED_OWNER_REVIEW_PENDING",
+  "released": false,
+  "ownerAccepted": false,
+  "assessment": {
+    "method": "subjective product heuristic; no user study or prediction-performance claim",
+    "currentCandidate": 8,
+    "previousCompact": 6,
+    "scale": 10
+  },
+  "scope": {
+    "canonicalResultsChanged": false,
+    "apiContractChanged": false,
+    "modelChanged": false,
+    "llmRequests": 0,
+    "source": "shared Expo client",
+    "bffClean": true,
+    "starsChanged": false,
+    "surfaces": [
+      "Android",
+      "web"
+    ]
+  },
+  "validation": {
+    "gitDiffCheck": "PASS",
+    "lint": "PASS",
+    "web": {
+      "secretScanFiles": 4,
+      "command": "node scripts/web.mjs export",
+      "status": "PASS",
+      "secretFindings": 0,
+      "mode": "edge"
+    },
+    "doctor": "previous unchanged-dependency 20/20 result reused",
+    "contextAudit": {
+      "existingBudgetWarningsPreserved": true,
+      "report": ".codex-artifacts/jinx-context-20261027/context-audit.json",
+      "missingRoutes": 0,
+      "routesClean": true
+    },
+    "brand": "PASS",
+    "android": {
+      "secretScanFiles": 1,
+      "status": "PASS",
+      "secretFindings": 0,
+      "kind": "JS/Hermes preview export, not APK release"
+    },
+    "toolingTests": {
+      "failed": 0,
+      "passed": 32
+    },
+    "clientTests": {
+      "failed": 0,
+      "passed": 700
+    },
+    "scoreConditionCrosscheck": {
+      "combinations": 648,
+      "markets": 18,
+      "scorePairs": 36,
+      "oracle": "existing local BFF market-state predicate",
+      "liveSap": false
+    },
+    "browser": {
+      "horizontalOverflow": false,
+      "actualMatchDetailView": true,
+      "widths": [
+        320,
+        390,
+        1440
+      ],
+      "synthetic": true,
+      "contextCases": 9,
+      "checks": [
+        "source disclosure",
+        "keyboard refresh and disclosure",
+        "new decision navigation and refresh",
+        "final text smoke"
+      ]
+    },
+    "typecheck": "PASS"
+  },
+  "limits": [
+    "No live SAP evidence",
+    "No physical Android or TalkBack acceptance",
+    "No APK build/signing/distribution",
+    "No BFF restart/deployment",
+    "No web publication",
+    "No stage/commit/push"
+  ],
+  "retainedAcceptedPair": "9d87b2ea4a86ec3bdcf454237d1751c9174a58cd",
+  "sourceSha256": [
+    {
+      "sha256": "ec372db6f9288fd21c74b0539322ba5e2e08612d012bfadb12463976aebf4dbc",
+      "path": "src/components/RebuildEvidencePanel.tsx"
+    },
+    {
+      "sha256": "1918c96154ae153983340f125892b678f77e57ae4db091016e6e840e1cdc87dc",
+      "path": "src/screens/MatchDetailView.tsx"
+    },
+    {
+      "sha256": "8524cc7e1e9a0a23cfad318ba68f542ef7fe9ac43045666edcd021ecc1a07b12",
+      "path": "src/utils/jinx-insight.ts"
+    },
+    {
+      "sha256": "419d673aa2f3173ace764ce80c10ef17a586fa0642dc04a26898f96f1406ec3a",
+      "path": "src/utils/jinx-insight.test.ts"
+    },
+    {
+      "sha256": "a3122a94e93af5a53c21a3666e3c982b56f1616bda37ac194a5379de0b9113ad",
+      "path": "src/utils/jinx-match-reading.ts"
+    },
+    {
+      "sha256": "bc44195e5c2c9e7e788da68e72fcb93bce4987259b7585f1acae51dd3ad764fe",
+      "path": "src/utils/jinx-match-reading.test.ts"
+    },
+    {
+      "sha256": "528cd6d8fbb0ac013ff60c046d4b7560d4d77c9d6aab89d45ed004bd654b6a1f",
+      "path": "src/utils/jinx-score-condition.ts"
+    }
+  ],
+  "storage": {
+    "operations": [],
+    "note": "Existing evidence and accepted client pairs preserved; no new cleanup scan or storage mutation.",
+    "scope": "same NXT-OBS-231 local implementation batch",
+    "previousReport": ".codex-artifacts/jinx-commentary-20261027/storage-report.json"
+  }
+}

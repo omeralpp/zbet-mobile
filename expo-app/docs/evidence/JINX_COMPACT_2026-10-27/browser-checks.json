@@ -1,0 +1,36 @@
+{
+  "synthetic": true,
+  "phoneWidths": [
+    320,
+    390
+  ],
+  "checks": [
+    {
+      "width": 390,
+      "refreshKeyboard": true,
+      "detailsKeyboard": true
+    },
+    {
+      "scenario": "partial-support",
+      "text": "heading \"Jinx\" [level=2]\n  - generic: SEÇİM AKTİF\n  - button \"Jinx kaydını yenile\":\n    - generic: 󰑐\n    - generic: Yenile\n  - generic: Baskı aralıkları seçimi bütünüyle desteklememiş. xG kapsamı, kalite tavanını 2 yıldızla sınırlamış.\n  - text: 20:19:00\n  - generic: · son okuma\n  - button \"Dayanakları gör 󰅀\":\n    - generic: Dayanakları gör\n    - generic: 󰅀\n  - "
+    },
+    {
+      "scenario": "result-win",
+      "text": "heading \"Jinx\" [level=2]\n  - generic: MAÇ TAMAMLANDI\n  - button \"Jinx kaydını yenile\":\n    - generic: 󰑐\n    - generic: Yenile\n  - generic: Baskı aralıkları seçimi aynı yönde desteklemiş. xG kapsamı, kalite tavanını 2 yıldızla sınırlamış.\n  - text: 20:19:00\n  - generic: · son okuma\n  - button \"Dayanakları gör 󰅀\":\n    - generic: Dayanakları gör\n    - generic: 󰅀\n  - "
+    },
+    {
+      "scenario": "empty",
+      "text": "heading \"Jinx\" [level=2]\n  - generic: GÜNCEL VERİ BEKLENİYOR\n  - button \"Jinx kaydını yenile\":\n    - generic: 󰑐\n    - generic: Yenile\n  - generic: Güncel veri bekleniyor · Veri veya karar kanıtı doğrulanamadı.\n  - text: 20:19:01\n  - generic: · son okuma\n  - "
+    },
+    {
+      "scenario": "error",
+      "text": "heading \"Jinx\" [level=2]\n  - generic: VERİ ALINAMADI\n  - button \"Jinx kaydını yenile\":\n    - generic: 󰑐\n    - generic: Yenile\n  - generic: Karar verisi yenilenemedi.\n  - text: —\n  - generic: · yenilenemedi\n  - "
+    },
+    {
+      "width": 1440,
+      "shortReading": true,
+      "hiddenDetails": true,
+      "horizontalOverflow": false
+    }
+  ]
+}

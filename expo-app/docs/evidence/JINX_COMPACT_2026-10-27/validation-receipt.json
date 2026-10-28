@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "status": "LOCAL_VALIDATED_OWNER_REVIEW_PENDING",
+  "recordedAt": "2026-10-27T17:22:50.9457715Z",
+  "clientTests": 682,
+  "toolingTests": 32,
+  "typecheck": "PASSED",
+  "lint": "PASSED",
+  "brand": "PASSED",
+  "androidJsExport": "PASSED",
+  "verifiedEdgeWebExport": "PASSED",
+  "secretFindings": 0,
+  "reusedDoctor": "20/20_UNCHANGED_INPUTS",
+  "testedWidths": [
+    320,
+    390,
+    1440
+  ],
+  "jinxLlmRequests": 0,
+  "bffSourceChanged": false,
+  "sourceSha256": {
+    "src/components/RebuildEvidencePanel.tsx": "9C786336FA9B669EB2D70CFD033ACC2174EEB7686716A63FB405B9D25E945244",
+    "src/utils/jinx-insight.ts": "C6F96BCE54256DA68181FF39E085F3C7AA494A94CEB6B7EF2CD4396E3F332EB2",
+    "src/utils/jinx-insight.test.ts": "419D673AA2F3173ACE764CE80C10EF17A586FA0642DC04A26898F96F1406EC3A"
+  },
+  "physicalAndroidAccepted": false,
+  "releaseComplete": false,
+  "supersedes": "JINX_COMMENTARY_2026-10-27",
+  "ownerAccepted": false
+}
