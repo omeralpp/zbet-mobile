@@ -1,7 +1,23 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-29
-Mod: `PAIRED_RELEASE_COMPLETE / ACCEPTED_PAIR_E4DEF59 / PREVIOUS_PAIR_RETAINED`
+Mod: `LOCAL_MOTION_BATCH_VALIDATED / RELEASE_APPROVED / ACCEPTED_PAIR_E4DEF59_RETAINED`
+
+## Approved local motion batch — NXT-OBS-234
+
+Owner approved the animation recommendations, including Jinx and launch.
+Launch honors preference readiness/reduced motion, has no forced wait after
+initialization and uses truthful indeterminate status. Jinx pauses decoration
+in its menu, resumes without queued replay and has quieter idle motion; drag,
+guide, CALM/OFF and assets remain. Native reorder springs and web fades honor
+reduced motion, including exactly-once interrupted drops. Core quality checks,
+18 new regressions, Doctor20/20, Android Hermes export, verified edge web export
+and 15 synthetic browser checks pass. Zero connected Android devices; native
+playback/TalkBack and representative-device performance remain unobserved.
+Owner approved scoped Git and the coordinated pilot Android/web release on
+29 October ([approval](evidence/ANIMATION_IMPLEMENTATION_2026-10-29/release-approval.json)).
+Until both owner smokes pass, the accepted e4def59 pair below remains current.
+[Implementation/evidence](ANIMATION_IMPLEMENTATION_2026-10-29.md).
 
 ## Current accepted pair — principal UX e4def59 (NXT-OBS-233)
 

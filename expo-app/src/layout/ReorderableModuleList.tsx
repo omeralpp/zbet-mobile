@@ -24,7 +24,9 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, interaction, radii, spacing, typeScale } from "@/src/theme/theme";
+import { useReducedMotion } from "@/src/theme/use-reduced-motion";
 import { moduleReorderLabel, resolveModuleStep } from "./module-reorder-accessibility";
+import { createReorderSettlement, type ReorderSettlement } from "./module-reorder-motion";
 import {
   moduleReorderActivationDelayMs,
   moduleReorderActivationSlop,
@@ -83,6 +85,7 @@ type ReorderableModuleProps = {
   node: ReactNode;
   controls: ReactNode;
   editing: boolean;
+  reduceMotion: boolean;
   dragging: boolean;
   someDragging: boolean;
   onDragMove: (pageY: number, dy: number) => void;
@@ -107,6 +110,7 @@ const ReorderableModule = memo(function ReorderableModule({
   node,
   controls,
   editing,
+  reduceMotion,
   dragging,
   someDragging,
   onDragMove,
@@ -144,8 +148,15 @@ const ReorderableModule = memo(function ReorderableModule({
   }, [id, onRegister, onRelease, translate]);
 
   useEffect(() => {
-    Animated.spring(lift, { toValue: dragging ? 1 : 0, ...settle }).start();
-  }, [dragging, lift]);
+    lift.stopAnimation();
+    if (reduceMotion) {
+      lift.setValue(dragging ? 1 : 0);
+      return;
+    }
+    const animation = Animated.spring(lift, { toValue: dragging ? 1 : 0, ...settle });
+    animation.start();
+    return () => animation.stop();
+  }, [dragging, lift, reduceMotion]);
 
   return (
     <Animated.View
@@ -166,7 +177,7 @@ const ReorderableModule = memo(function ReorderableModule({
           transform: [
             { translateY: translate },
             {
-              scale: lift.interpolate({
+              scale: reduceMotion ? 1 : lift.interpolate({
                 inputRange: [0, 1],
                 outputRange: [1, 1.02]
               })
@@ -210,6 +221,8 @@ export function ReorderableModuleList({
 }: ReorderableModuleListProps) {
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const reduceMotion = useReducedMotion();
+  const motionPreference = useRef(reduceMotion);
   const [dragId, setDragId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
 
@@ -227,6 +240,7 @@ export function ReorderableModuleList({
   const autoScrollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdOrigin = useRef({ x: 0, y: 0 });
+  const dropSettlement = useRef<ReorderSettlement | null>(null);
 
   const ids = useMemo(() => items.map((item) => item.id), [items]);
 
@@ -273,12 +287,33 @@ export function ReorderableModuleList({
         active.dropIndex < active.index &&
         index < active.index &&
         index >= active.dropIndex;
-      Animated.spring(slot.translate, {
-        toValue: shiftsUp ? -active.height : shiftsDown ? active.height : 0,
-        ...settle
-      }).start();
+      const toValue = shiftsUp ? -active.height : shiftsDown ? active.height : 0;
+      slot.translate.stopAnimation();
+      if (motionPreference.current) {
+        slot.translate.setValue(toValue);
+      } else {
+        Animated.spring(slot.translate, { toValue, ...settle }).start();
+      }
     });
   }, []);
+
+  useEffect(() => {
+    // Autoscroll and a native responder can retain an earlier render's
+    // callbacks; they must still obey the preference in the active session.
+    motionPreference.current = reduceMotion;
+    if (!reduceMotion) return;
+    dropSettlement.current?.finish();
+    if (drag.current) {
+      // Preserve functional finger tracking, and snap every neighbour to its
+      // current drop slot instead of leaving an old spring running.
+      applyNeighbourOffsets();
+    } else {
+      for (const slot of slots.current.values()) {
+        slot.translate.stopAnimation();
+        slot.translate.setValue(0);
+      }
+    }
+  }, [applyNeighbourOffsets, reduceMotion]);
 
   const updateDrag = useCallback(
     (dy: number) => {
@@ -365,7 +400,7 @@ export function ReorderableModuleList({
   const activate = useCallback(
     (id: string) => {
       const index = orderedIds.current.indexOf(id);
-      if (index < 0 || drag.current) {
+      if (index < 0 || drag.current || dropSettlement.current) {
         return;
       }
       drag.current = {
@@ -437,30 +472,42 @@ export function ReorderableModuleList({
     drag.current = null;
     haptic("drop");
     const settleDrop = () => {
+      dropSettlement.current = null;
       setDragId(null);
       onDragStateChange?.(false);
-      if (from === to) {
-        slot?.translate.setValue(0);
-        return;
-      }
       // Offsets are cleared in the same commit as the reordered list so the
       // settled module never blinks back through its previous slot.
       for (const entry of slots.current.values()) {
+        entry.translate.stopAnimation();
         entry.translate.setValue(0);
       }
-      onReorder(from, to);
+      if (from !== to) onReorder(from, to);
     };
     if (!slot) {
       settleDrop();
       return;
     }
-    Animated.spring(slot.translate, { toValue: restOffset, ...settle }).start(
-      settleDrop
-    );
+    const settlement = createReorderSettlement({
+      startAnimated: (complete) => {
+        const animation = Animated.spring(slot.translate, { toValue: restOffset, ...settle });
+        animation.start(complete);
+        return () => animation.stop();
+      },
+      snapToEnd: () => {
+        slot.translate.stopAnimation();
+        slot.translate.setValue(restOffset);
+      },
+      onSettled: settleDrop
+    });
+    dropSettlement.current = settlement;
+    settlement.start(motionPreference.current);
   }, [clearHold, onDragStateChange, onReorder, orderedHeights, stopAutoScroll]);
 
   useEffect(
     () => () => {
+      dropSettlement.current?.cancel();
+      dropSettlement.current = null;
+      for (const slot of slots.current.values()) slot.translate.stopAnimation();
       if (autoScrollTimer.current) {
         clearInterval(autoScrollTimer.current);
       }
@@ -561,6 +608,7 @@ export function ReorderableModuleList({
           ) : null}
           dragging={dragId === item.id}
           editing={editing}
+          reduceMotion={reduceMotion}
           id={item.id}
           key={item.id}
           node={item.node}

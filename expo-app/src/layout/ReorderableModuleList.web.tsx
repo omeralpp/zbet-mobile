@@ -2,6 +2,7 @@ import { useState, type ReactNode, type RefObject } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, type ScrollView } from "react-native";
 import { colors, iconSizes, radii, semantic, spacing } from "@/src/theme/theme";
+import { useReducedMotion } from "@/src/theme/use-reduced-motion";
 import { moduleColumns } from "./breakpoints";
 import { useBreakpoint } from "./use-breakpoint";
 
@@ -39,6 +40,8 @@ export function ReorderableModuleList({
   const [active, setActive] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  const reduceMotion = useReducedMotion();
+  const transition = reduceMotion ? "none" : "opacity 140ms ease";
   // Grid follows DOM/keyboard order across each row. Saved module order stays intact.
   const columns = Math.max(1, Math.min(moduleColumns(useBreakpoint()), maxColumns ?? 3));
 
@@ -83,6 +86,7 @@ export function ReorderableModuleList({
             onMouseLeave={() => setActive((current) => (current === item.id ? null : current))}
             style={{
               ...moduleStyle,
+              transition,
               ...(columns > 1 ? columnModuleStyle : null),
               ...(columns > 1 && item.fullWidth ? { gridColumn: "1 / -1" } : null),
               ...(columns > 1 && item.rowSpan ? { gridRow: `span ${item.rowSpan}` } : null),
@@ -94,6 +98,7 @@ export function ReorderableModuleList({
             <div
               style={{
                 ...toolbarStyle,
+                transition,
                 opacity: shown ? 1 : 0,
                 pointerEvents: shown ? "auto" : "none"
               }}
@@ -179,8 +184,7 @@ const columnModuleStyle = {
 
 const moduleStyle = {
   ...viewDefaults,
-  borderRadius: radii.lg,
-  transition: "opacity 140ms ease"
+  borderRadius: radii.lg
 } as const;
 
 const toolbarStyle = {
@@ -194,7 +198,6 @@ const toolbarStyle = {
   position: "absolute",
   right: spacing.sm,
   top: -spacing.md,
-  transition: "opacity 140ms ease",
   zIndex: 2
 } as const;
 

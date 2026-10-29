@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-29",
+  "profile": "btb-mobile",
+  "observation": "NXT-OBS-234",
+  "status": "LOCAL_VALIDATED_RELEASE_APPROVED",
+  "scope": "Owner-approved motion, Jinx and launch improvements",
+  "quality": "PASSED TypeScript ESLint client tests tooling tests brand; re-run before commit: 737 client and 33 tooling tests",
+  "focusedNewRegressionTests": 18,
+  "expoDoctor": "PASSED 20/20 preview profile after explicit owner approval of metadata requests",
+  "androidPreviewBundle": "PASSED Hermes export; secret scan zero findings; not signed APK",
+  "webExport": "PASSED canonical verified edge export; secret scan zero findings; not a publication artifact",
+  "browser": "PASSED 15 synthetic checks at 1440 px and 390 px with zero page errors; 20 remote logo requests blocked, zero sent",
+  "whitespace": "PASSED git diff --check and untracked-file whitespace check",
+  "nativeInteraction": "UNOBSERVED zero connected Android devices; gestures, TalkBack and device performance not measured",
+  "publishedPair": "e4def5973dd4169a19556663d415b466ee46f309 unchanged before this release",
+  "externalMutation": false,
+  "recurringWaitCreated": false
+}

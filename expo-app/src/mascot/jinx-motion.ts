@@ -92,6 +92,28 @@ export function resolveJinxMotion(mode: JinxMotionMode, reduceMotion: boolean, a
   return { enabled, amplitude: enabled ? mode === "CALM" ? 0.45 : 1.35 : 0, ambient: enabled && mode === "LIVE" };
 }
 
+/** Renderer authority: direct scenes may own an interaction, decorative loops may not. */
+export function resolveJinxRendererMotion({ mode, reduceMotion, forceReducedMotion, foreground, asleep, state }: {
+  mode: JinxMotionMode;
+  reduceMotion: boolean;
+  forceReducedMotion: boolean;
+  foreground: boolean;
+  asleep: boolean;
+  state: Pick<JinxMotionState, "active" | "blocked" | "scene">;
+}) {
+  const base = resolveJinxMotion(mode, reduceMotion || forceReducedMotion || asleep, state.active && foreground);
+  const directScene = state.scene === "drag" || state.scene === "guide";
+  const enabled = base.enabled && (!state.blocked || directScene);
+  return {
+    enabled,
+    amplitude: enabled ? base.amplitude : 0,
+    breathe: enabled && !state.blocked,
+    ambient: enabled && base.ambient && !state.blocked && state.scene === "idle",
+    blink: enabled && !state.blocked && state.scene !== "drag",
+    spark: enabled && !state.blocked && state.scene !== "idle"
+  };
+}
+
 export function designLabAvailable(config: { useMocks: boolean; authMode: string }): boolean {
   return config.useMocks && config.authMode === "preview";
 }

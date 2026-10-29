@@ -151,6 +151,13 @@ export function BtbMascotOverlay() {
   useEffect(() => {
     sleepingRef.current = sleeping;
   }, [sleeping]);
+  useEffect(() => {
+    if (appActive && !reduceMotion && !sleeping) return;
+    pressScale.stopAnimation();
+    dragTilt.stopAnimation();
+    pressScale.setValue(1);
+    dragTilt.setValue(0);
+  }, [appActive, dragTilt, pressScale, reduceMotion, sleeping]);
   useEffect(() => subscribeMascotInteraction(() => {
     const wasSleeping = sleepingRef.current;
     sleepingRef.current = false;
@@ -202,9 +209,10 @@ export function BtbMascotOverlay() {
   const displayPosition = tutorial.activeTip ? tutorialPosition : visiblePosition;
   const open = !tutorial.activeTip && openPath === pathname;
   const guideActive = Boolean(tutorial.activeTip || discovery.activeHint);
+  const interactionBlocked = !ambient || dragging || open || guideActive || sleeping;
   useEffect(() => {
-    dispatch({ type: "interaction", blocked: !ambient || dragging || open || guideActive || sleeping });
-  }, [ambient, dispatch, dragging, guideActive, open, sleeping]);
+    dispatch({ type: "interaction", blocked: interactionBlocked });
+  }, [dispatch, interactionBlocked]);
   useEffect(() => {
     if (!ambient || !appActive || dragging || open || guideActive || sleeping || moodBubble) return;
     const timer = setTimeout(() => { sleepingRef.current = true; setSleeping(true); }, jinxSleepDelayMs);
@@ -251,22 +259,26 @@ export function BtbMascotOverlay() {
       y: displayPosition.y - visiblePosition.y
     };
     guideTranslation.stopAnimation();
-    if (reduceMotion) {
+    if (reduceMotion || !appActive || sleeping) {
       guideTranslation.setValue(next);
       return;
     }
-    Animated.spring(guideTranslation, {
+    const animation = Animated.spring(guideTranslation, {
       toValue: next,
       damping: 17,
       stiffness: 120,
       mass: 0.8,
       useNativeDriver: Platform.OS !== "web"
-    }).start();
+    });
+    animation.start();
+    return () => animation.stop();
   }, [
+    appActive,
     displayPosition.x,
     displayPosition.y,
     guideTranslation,
     reduceMotion,
+    sleeping,
     tutorial.activeTip,
     visiblePosition.x,
     visiblePosition.y
@@ -417,8 +429,10 @@ export function BtbMascotOverlay() {
     if (reduceMotion) { pressScale.setValue(1); return; }
     Animated.spring(pressScale, { toValue, damping: 15, stiffness: 240, useNativeDriver: Platform.OS !== "web" }).start();
   };
-  const characterState = guideActive ? { ...character, scene: "guide" as const }
-    : dragging ? { ...character, scene: "drag" as const } : character;
+  // Render current interaction ownership immediately, before reducer effects
+  // settle. Drag/guide retain their explicit scene; the menu freezes idle.
+  const characterState = { ...character, blocked: interactionBlocked,
+    scene: dragging ? "drag" as const : guideActive ? "guide" as const : character.scene };
 
   // Presence is acted on after every hook so the early return never changes the
   // hook order. On a dense analytical surface Jinx is absent until the tutorial

@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import { AccessibilityInfo } from "react-native";
+import {
+  observeReducedMotionPreference,
+  pendingReducedMotionPreference,
+  type ReducedMotionPreference
+} from "./reduced-motion-preference";
 
 /**
  * The device's reduced-motion preference, as one shared source.
@@ -13,27 +18,18 @@ import { AccessibilityInfo } from "react-native";
  * a surface that only sampled it at mount would keep animating for the rest of
  * the session.
  */
+export function useReducedMotionPreference(): ReducedMotionPreference {
+  const [preference, setPreference] = useState(pendingReducedMotionPreference);
+
+  useEffect(() => observeReducedMotionPreference({
+    read: () => AccessibilityInfo.isReduceMotionEnabled(),
+    subscribe: listener => AccessibilityInfo.addEventListener("reduceMotionChanged", listener)
+  }, setPreference), []);
+
+  return preference;
+}
+
+/** Existing callers stay conservative while the device preference is unknown. */
 export function useReducedMotion(): boolean {
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    AccessibilityInfo.isReduceMotionEnabled()
-      .then((enabled) => {
-        if (active) {
-          setReduceMotion(enabled);
-        }
-      })
-      .catch(() => undefined);
-    const subscription = AccessibilityInfo.addEventListener(
-      "reduceMotionChanged",
-      setReduceMotion
-    );
-    return () => {
-      active = false;
-      subscription.remove();
-    };
-  }, []);
-
-  return reduceMotion;
+  return useReducedMotionPreference().reduceMotion;
 }

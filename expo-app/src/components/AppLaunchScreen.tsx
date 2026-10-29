@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -12,6 +12,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { btbBrandMark } from "@/src/theme/brand-mark";
+import { useReducedMotionPreference } from "@/src/theme/use-reduced-motion";
+import { createLaunchCompletion, launchIntroDuration } from "./launch-policy";
 import {
   colors,
   iconSizes,
@@ -26,107 +28,76 @@ type AppLaunchScreenProps = {
   onLayout(event: LayoutChangeEvent): void;
 };
 
-const minimumDisplayDurationMs = 1250;
-
 export function AppLaunchScreen({
   ready,
   onComplete,
   onLayout
 }: AppLaunchScreenProps) {
   const insets = useSafeAreaInsets();
-  const [progress] = useState(() => new Animated.Value(0.08));
+  const preference = useReducedMotionPreference();
+  const [startedAt] = useState(Date.now);
+  const [completion] = useState(createLaunchCompletion);
+  const introStarted = useRef(false);
+  const [layoutReady, setLayoutReady] = useState(false);
+  const [showBall, setShowBall] = useState(false);
   const [ballY] = useState(() => new Animated.Value(-260));
-  const [ballOpacity] = useState(() => new Animated.Value(1));
+  const [ballOpacity] = useState(() => new Animated.Value(0));
   const [ballScale] = useState(() => new Animated.Value(1));
   const [ballRotation] = useState(() => new Animated.Value(0));
-  const [minimumDisplayElapsed, setMinimumDisplayElapsed] =
-    useState(false);
-
   useEffect(() => {
+    const duration = launchIntroDuration({ ready, layoutReady, preference, alreadyStarted: introStarted.current, elapsedMs: Date.now() - startedAt });
+    if (duration === 0) return;
+    introStarted.current = true;
+    let active = true;
+    ballY.setValue(-260);
+    ballOpacity.setValue(1);
+    ballScale.setValue(1);
+    ballRotation.setValue(0);
+    setShowBall(true);
+    // One brief landing during initialization; slower preference/layout reads
+    // shorten its remaining window rather than queueing a late introduction.
     const landing = Animated.sequence([
       Animated.parallel([
         Animated.timing(ballY, {
-          toValue: 86,
-          duration: 720,
+          toValue: 82,
+          duration: Math.round(duration * 0.75),
           easing: Easing.bezier(0.2, 0.72, 0.25, 1),
           useNativeDriver: true
         }),
         Animated.timing(ballRotation, {
           toValue: 1,
-          duration: 720,
+          duration: Math.round(duration * 0.75),
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true
         })
       ]),
-      Animated.spring(ballY, {
-        toValue: 82,
-        damping: 11,
-        stiffness: 240,
-        mass: 0.55,
-        useNativeDriver: true
-      }),
-      Animated.delay(80),
       Animated.parallel([
         Animated.timing(ballOpacity, {
           toValue: 0,
-          duration: 170,
+          duration: Math.round(duration * 0.25),
           useNativeDriver: true
         }),
         Animated.timing(ballScale, {
           toValue: 0.55,
-          duration: 170,
+          duration: Math.round(duration * 0.25),
           useNativeDriver: true
         })
       ])
     ]);
-    landing.start();
-    return () => landing.stop();
-  }, [ballOpacity, ballRotation, ballScale, ballY]);
+    landing.start(({ finished }) => {
+      if (active && finished) setShowBall(false);
+    });
+    return () => {
+      active = false;
+      landing.stop();
+      ballOpacity.setValue(0);
+      setShowBall(false);
+    };
+  }, [ballOpacity, ballRotation, ballScale, ballY, layoutReady, preference, ready, startedAt]);
 
   useEffect(() => {
-    const animation = Animated.timing(progress, {
-      toValue: 0.84,
-      duration: minimumDisplayDurationMs,
-      useNativeDriver: false
-    });
-
-    animation.start(({ finished }) => {
-      if (finished) {
-        setMinimumDisplayElapsed(true);
-      }
-    });
-
-    return () => {
-      animation.stop();
-    };
-  }, [progress]);
-
-  useEffect(() => {
-    if (!minimumDisplayElapsed || !ready) {
-      return;
-    }
-
-    const animation = Animated.timing(progress, {
-      toValue: 1,
-      duration: 320,
-      useNativeDriver: false
-    });
-
-    animation.start(({ finished }) => {
-      if (finished) {
-        onComplete();
-      }
-    });
-
-    return () => {
-      animation.stop();
-    };
-  }, [minimumDisplayElapsed, onComplete, progress, ready]);
-
-  const progressWidth = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0%", "100%"]
-  });
+    completion.complete(ready, layoutReady, onComplete);
+  }, [completion, layoutReady, onComplete, ready]);
   const ballRotate = ballRotation.interpolate({
     inputRange: [0, 1],
     outputRange: ["-80deg", "420deg"]
@@ -134,13 +105,17 @@ export function AppLaunchScreen({
 
   return (
     <LinearGradient
+      testID="launch-root"
       colors={
         themeMode === "light"
           ? [colors.background, colors.backgroundElevated, colors.surfaceStrong]
           : ["#020915", colors.background, "#061D31"]
       }
       locations={[0, 0.56, 1]}
-      onLayout={onLayout}
+      onLayout={event => {
+        onLayout(event);
+        setLayoutReady(true);
+      }}
       style={styles.container}
     >
       <View style={styles.content}>
@@ -156,7 +131,11 @@ export function AppLaunchScreen({
             source={btbBrandMark}
             style={styles.logo}
           />
-          <Animated.View
+          {showBall && preference.ready && !preference.reduceMotion && !ready ? <Animated.View
+            testID="launch-ball"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            aria-hidden
             pointerEvents="none"
             style={[
               styles.ball,
@@ -175,39 +154,27 @@ export function AppLaunchScreen({
               name="soccer"
               size={iconSizes.state}
             />
-          </Animated.View>
+          </Animated.View> : null}
         </View>
         <Text style={styles.brand}>BTB MOBILE</Text>
         <Text style={styles.tagline}>BETTER THAN BET</Text>
 
         <View style={styles.statusArea}>
-          <View
-            accessibilityLabel="Uygulama yükleme durumu"
-            accessibilityRole="progressbar"
-            accessibilityValue={{
-              min: 0,
-              max: 100,
-              text: ready ? "Tamamlandı" : "Yükleniyor"
-            }}
-            style={styles.track}
-          >
-            <Animated.View
-              style={[styles.progressClip, { width: progressWidth }]}
-            />
-          </View>
-          <View style={styles.statusRow}>
+          <View testID="launch-status" accessibilityLabel={ready ? "BTB hazır" : "Uygulama hazırlanıyor"}
+            accessibilityLiveRegion="polite"
+            accessibilityRole={ready ? "text" : "progressbar"}
+            accessibilityValue={ready ? undefined : { text: "Hazırlanıyor; kalan süre bilinmiyor" }}
+            style={styles.statusRow}>
             <Text style={styles.status}>
-              {ready ? "BTB hazır" : "Güvenli oturum hazırlanıyor"}
+              {ready ? "BTB hazır" : "Uygulama hazırlanıyor"}
             </Text>
-            {ready ? (
-              <Text style={styles.statusMark}>100%</Text>
-            ) : (
-              <View accessibilityElementsHidden style={styles.dots}>
+            {!ready ? (
+              <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden style={styles.dots}>
                 <View style={styles.dot} />
                 <View style={[styles.dot, styles.dotMid]} />
                 <View style={[styles.dot, styles.dotLow]} />
               </View>
-            )}
+            ) : null}
           </View>
         </View>
       </View>
@@ -308,17 +275,6 @@ const styles = StyleSheet.create({
     width: 260,
     marginTop: 56
   },
-  track: {
-    height: 6,
-    overflow: "hidden",
-    borderRadius: 3,
-    backgroundColor: colors.surfaceStrong
-  },
-  progressClip: {
-    height: "100%",
-    borderRadius: 3,
-    backgroundColor: colors.actionFill
-  },
   dots: {
     flexDirection: "row",
     gap: 4
@@ -336,7 +292,6 @@ const styles = StyleSheet.create({
     opacity: 0.3
   },
   statusRow: {
-    marginTop: 10,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between"
@@ -346,12 +301,6 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 13,
     lineHeight: 18
-  },
-  statusMark: {
-    ...textFont("800"),
-    color: colors.actionFill,
-    fontSize: 12,
-    letterSpacing: 1
   },
   footer: {
     ...textFont("700"),

@@ -3,7 +3,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { AppState, Animated, Easing, Image, Platform, StyleSheet, View } from "react-native";
 import { textFont } from "@/src/theme/typography";
 import { useReducedMotion } from "@/src/theme/use-reduced-motion";
-import { resolveJinxMotion, sceneCopy, type JinxCandidate, type JinxMotionMode, type JinxMotionState } from "./jinx-motion";
+import { resolveJinxRendererMotion, sceneCopy, type JinxCandidate, type JinxMotionMode, type JinxMotionState } from "./jinx-motion";
 
 const frames = {
   orb: [require("../../assets/mascot/candidates/jinx-a-open.png"), require("../../assets/mascot/candidates/jinx-a-half.png"), require("../../assets/mascot/candidates/jinx-a-closed.png")],
@@ -16,8 +16,8 @@ const idleMoves: readonly IdleMove[] = ["hop", "glance", "tilt"];
 
 /**
  * Both characters use the exact same timing and layout for a fair comparison.
- * NXT-OBS-173: Jinx always breathes while motion is allowed and adds a short
- * irregular micro-move on top, so the character reads as alive between scenes.
+ * Idle motion stays subordinate to menus and direct interaction. Pausing
+ * cancels each loop/timer; resuming starts a fresh quiet interval.
  */
 export function JinxAnimator({ candidate, state, mode, size = 160, dark = true, compact = false, asleep = false, forceReducedMotion = false, onComplete }: {
   candidate: JinxCandidate;
@@ -36,13 +36,13 @@ export function JinxAnimator({ candidate, state, mode, size = 160, dark = true, 
     const listener = AppState.addEventListener("change", next => setForeground(next === "active"));
     return () => listener.remove();
   }, []);
-  const policy = resolveJinxMotion(mode, reduceMotion || forceReducedMotion || asleep, state.active && foreground);
+  const policy = resolveJinxRendererMotion({ mode, reduceMotion, forceReducedMotion, foreground, asleep, state });
   const [phase] = useState(() => new Animated.Value(0));
   const [breath] = useState(() => new Animated.Value(0));
   const [idleX] = useState(() => new Animated.Value(0));
   const [idleY] = useState(() => new Animated.Value(0));
   const [idleTilt] = useState(() => new Animated.Value(0));
-  const blinkToken = `${state.scene}:${state.sequence}:${policy.enabled}:${mode}`;
+  const blinkToken = `${state.scene}:${state.sequence}:${policy.blink}:${mode}`;
   const [blink, setBlink] = useState<{ frame: 0 | 1 | 2; token: string }>({ frame: 0, token: "" });
   const complete = useRef(onComplete);
   useEffect(() => { complete.current = onComplete; }, [onComplete]);
@@ -54,7 +54,9 @@ export function JinxAnimator({ candidate, state, mode, size = 160, dark = true, 
       complete.current?.(state.sequence);
       return;
     }
-    if (state.scene === "idle" && state.sequence === 0) return;
+    // Idle already has one breath and occasional micro-moves; the hook's idle
+    // heartbeat must not add a second bob or replay one after a menu closes.
+    if (state.scene === "idle") return;
     const animation = Animated.timing(phase, {
       toValue: 1, duration: sceneCopy[state.scene].duration,
       easing: Easing.inOut(Easing.cubic), useNativeDriver: driver
@@ -63,23 +65,23 @@ export function JinxAnimator({ candidate, state, mode, size = 160, dark = true, 
     return () => animation.stop();
   }, [phase, policy.enabled, state.scene, state.sequence]);
 
-  // One breath drives position, scale and the spark, so loops never drift apart.
+  // One quiet breath drives position and scale. Idle does not animate a spark.
   useEffect(() => {
     breath.stopAnimation();
     breath.setValue(0);
-    if (!policy.enabled) return;
+    if (!policy.breathe) return;
     const loop = Animated.loop(Animated.sequence([
-      Animated.timing(breath, { toValue: 1, duration: policy.ambient ? 1700 : 2400, easing: Easing.inOut(Easing.ease), useNativeDriver: driver }),
-      Animated.timing(breath, { toValue: 0, duration: policy.ambient ? 2000 : 2800, easing: Easing.inOut(Easing.ease), useNativeDriver: driver })
+      Animated.timing(breath, { toValue: 1, duration: 2400, easing: Easing.inOut(Easing.ease), useNativeDriver: driver }),
+      Animated.timing(breath, { toValue: 0, duration: 2800, easing: Easing.inOut(Easing.ease), useNativeDriver: driver })
     ]));
     loop.start();
     return () => { loop.stop(); breath.setValue(0); };
-  }, [breath, policy.ambient, policy.enabled]);
+  }, [breath, policy.breathe]);
 
   // Irregular micro-moves between scenes; never the same one twice in a row.
   useEffect(() => {
     idleX.setValue(0); idleY.setValue(0); idleTilt.setValue(0);
-    if (!policy.ambient || state.scene !== "idle") return;
+    if (!policy.ambient) return;
     let disposed = false;
     let previous: IdleMove | null = null;
     let timer: ReturnType<typeof setTimeout>;
@@ -91,7 +93,7 @@ export function JinxAnimator({ candidate, state, mode, size = 160, dark = true, 
       const options = idleMoves.filter(move => move !== previous);
       const move = options[Math.floor(Math.random() * options.length)] ?? "hop";
       previous = move;
-      const amp = size / 68;
+      const amp = size / 68 * 0.65;
       (move === "hop" ? spring(idleY, -7 * amp)
         : move === "glance" ? Animated.sequence([
           Animated.timing(idleX, { toValue: -4 * amp, duration: 260, useNativeDriver: driver }),
@@ -100,13 +102,13 @@ export function JinxAnimator({ candidate, state, mode, size = 160, dark = true, 
         : spring(idleTilt, Math.random() < 0.5 ? -1 : 1)).start();
       schedule();
     };
-    const schedule = () => { timer = setTimeout(() => { if (!disposed) play(); }, 3200 + Math.random() * 3800); };
+    const schedule = () => { timer = setTimeout(() => { if (!disposed) play(); }, 6000 + Math.random() * 5000); };
     schedule();
     return () => { disposed = true; clearTimeout(timer); idleX.stopAnimation(); idleY.stopAnimation(); idleTilt.stopAnimation(); };
-  }, [idleTilt, idleX, idleY, policy.ambient, size, state.scene]);
+  }, [idleTilt, idleX, idleY, policy.ambient, size]);
 
   useEffect(() => {
-    if (!policy.enabled || state.scene === "drag") return;
+    if (!policy.blink) return;
     let timers: ReturnType<typeof setTimeout>[] = [];
     let cancelled = false;
     const schedule = () => {
@@ -120,10 +122,10 @@ export function JinxAnimator({ candidate, state, mode, size = 160, dark = true, 
     };
     schedule();
     return () => { cancelled = true; timers.forEach(clearTimeout); };
-  }, [blinkToken, policy.ambient, policy.enabled, state.scene]);
+  }, [blinkToken, policy.ambient, policy.blink]);
 
   const scene = state.scene;
-  const moving = policy.enabled && state.sequence > 0;
+  const moving = policy.enabled && state.scene !== "idle" && state.sequence > 0;
   const amp = policy.amplitude * size / 160;
   const curve = (values: number[]) => phase.interpolate({ inputRange: phasePoints, outputRange: values.map(n => n * amp) });
   const vertical = scene === "goal" ? [0, -14, -34, 0, -12, 0]
@@ -139,15 +141,15 @@ export function JinxAnimator({ candidate, state, mode, size = 160, dark = true, 
     : scene === "doubt" ? [0, -11, 11, -9, 6, 0]
     : scene === "guide" ? [0, -7, -7, 0, -3, 0]
     : [0, -5, 4, -2, 1, 0];
-  const breathAmp = policy.enabled ? policy.amplitude * size / 68 : 0;
+  const breathAmp = policy.breathe ? policy.amplitude * size / 68 * (scene === "idle" && mode === "LIVE" ? 0.8 : 1) : 0;
   const breathY = breath.interpolate({ inputRange: [0, 1], outputRange: [0.8 * breathAmp, -2.6 * breathAmp] });
   const breathScale = breath.interpolate({ inputRange: [0, 1], outputRange: [1, 1 + 0.03 * Math.min(1, breathAmp)] });
   const sparkOpacity = breath.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1] });
   const sparkScale = breath.interpolate({ inputRange: [0, 1], outputRange: [0.75, 1.25] });
   const sceneY = moving ? curve(vertical) : 0;
-  const translateY = Animated.add(Animated.add(sceneY, breathY), idleY);
+  const translateY = Animated.add(Animated.add(sceneY, breathY), policy.ambient ? idleY : 0);
   const sceneTilt = moving ? phase.interpolate({ inputRange: phasePoints, outputRange: tilt.map(n => n * policy.amplitude) }) : 0;
-  const rotation = Animated.add(sceneTilt, Animated.multiply(idleTilt, 6)).interpolate({ inputRange: [-60, 60], outputRange: ["-60deg", "60deg"] });
+  const rotation = Animated.add(sceneTilt, policy.ambient ? Animated.multiply(idleTilt, 4) : 0).interpolate({ inputRange: [-60, 60], outputRange: ["-60deg", "60deg"] });
   const squash = phase.interpolate({ inputRange: phasePoints, outputRange: [1, 1 - .08 * policy.amplitude, 1 + .06 * policy.amplitude, 1 - .02 * policy.amplitude, 1, 1] });
   const ballVisible = ["idle", "touch", "goal", "cheer", "drag", "greeting"].includes(scene);
   const boardVisible = ["thinking", "halfTime", "guide"].includes(scene);
@@ -158,10 +160,10 @@ export function JinxAnimator({ candidate, state, mode, size = 160, dark = true, 
       <View style={[styles.pitchLine, { borderColor: dark ? "#3B6E5E" : "#A7C9BE" }]} />
     </View> : null}
     {!compact ? <Animated.View style={[styles.shadow, { width: size * .66, height: size * .08, bottom: size * .14, opacity: dark ? .38 : .12, transform: [{ scaleX: moving ? phase.interpolate({ inputRange: phasePoints, outputRange: [1, .85, .65, 1, .88, 1] }) : 1 }] }]} /> : null}
-    <Animated.View style={{ width: size, height: size, transform: [{ translateX: idleX }, { translateY }, { rotate: rotation }, { scaleY: moving ? squash : 1 }, { scale: breathScale }] }}>
+    <Animated.View testID="jinx-animated-character" style={{ width: size, height: size, transform: [{ translateX: policy.ambient ? idleX : 0 }, { translateY }, { rotate: rotation }, { scaleY: moving ? squash : 1 }, { scale: breathScale }] }}>
       <Image source={frames[candidate][expression]} resizeMode="contain" style={styles.image} fadeDuration={0} />
     </Animated.View>
-    {policy.enabled && !asleep ? <Animated.Text style={[styles.spark, { fontSize: Math.max(11, size * .2), right: compact ? -2 : size * .2, top: compact ? -4 : size * .12, opacity: sparkOpacity, transform: [{ scale: sparkScale }] }]}>✦</Animated.Text> : null}
+    {policy.spark ? <Animated.Text testID="jinx-spark" style={[styles.spark, { fontSize: Math.max(11, size * .2), right: compact ? -2 : size * .2, top: compact ? -4 : size * .12, opacity: sparkOpacity, transform: [{ scale: sparkScale }] }]}>✦</Animated.Text> : null}
     {ballVisible && (!compact || scene !== "idle") ? <Animated.View style={{ position: "absolute", bottom: size * .12, left: size * (compact ? .72 : 1.05), transform: [{ translateX: moving ? curve([0, -14, 8, -18, -3, 0]) : 0 }, { translateY: moving ? curve([0, -8, -38, -5, -16, 0]) : 0 }, { rotate: moving ? phase.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "210deg"] }) : "0deg" }] }}>
       <MaterialCommunityIcons name="soccer" size={size * .22} color={dark ? "#F1EFE5" : "#27372F"} />
     </Animated.View> : null}

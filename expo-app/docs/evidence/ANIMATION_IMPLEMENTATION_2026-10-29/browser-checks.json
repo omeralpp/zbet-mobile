@@ -1,0 +1,99 @@
+{
+  "status": "PASSED",
+  "synthetic": true,
+  "published": false,
+  "checks": [
+    {
+      "case": "normal-desktop",
+      "check": "launch preference and truthful loading",
+      "pass": true,
+      "observedSamples": 85,
+      "ballSamples": 41
+    },
+    {
+      "case": "normal-desktop",
+      "check": "menu suspends character motion and ornament",
+      "pass": true
+    },
+    {
+      "case": "normal-desktop",
+      "check": "live preference switch settles static",
+      "pass": true
+    },
+    {
+      "case": "normal-desktop",
+      "check": "same-tab reload remains usable without intro",
+      "pass": true
+    },
+    {
+      "case": "normal-desktop",
+      "check": "fast initialization has no forced decorative wait",
+      "pass": true,
+      "launchVisibleMs": 93
+    },
+    {
+      "case": "reduced-desktop",
+      "check": "launch preference and truthful loading",
+      "pass": true,
+      "observedSamples": 85,
+      "ballSamples": 0
+    },
+    {
+      "case": "reduced-desktop",
+      "check": "menu suspends character motion and ornament",
+      "pass": true
+    },
+    {
+      "case": "reduced-desktop",
+      "check": "reduced idle and module fades remain static",
+      "pass": true
+    },
+    {
+      "case": "reduced-desktop",
+      "check": "same-tab reload remains usable without intro",
+      "pass": true
+    },
+    {
+      "case": "reduced-desktop",
+      "check": "fast initialization has no forced decorative wait",
+      "pass": true,
+      "launchVisibleMs": 97
+    },
+    {
+      "case": "reduced-narrow",
+      "check": "launch preference and truthful loading",
+      "pass": true,
+      "observedSamples": 83,
+      "ballSamples": 0
+    },
+    {
+      "case": "reduced-narrow",
+      "check": "menu suspends character motion and ornament",
+      "pass": true
+    },
+    {
+      "case": "reduced-narrow",
+      "check": "reduced idle and module fades remain static",
+      "pass": true
+    },
+    {
+      "case": "reduced-narrow",
+      "check": "same-tab reload remains usable without intro",
+      "pass": true
+    },
+    {
+      "case": "reduced-narrow",
+      "check": "fast initialization has no forced decorative wait",
+      "pass": true,
+      "launchVisibleMs": 108
+    }
+  ],
+  "errors": [],
+  "network": {
+    "remoteRequestsSent": 0,
+    "remoteAttemptsBlocked": 20,
+    "blockedOrigins": [
+      "https://content.bilyoner.com"
+    ]
+  }
+}

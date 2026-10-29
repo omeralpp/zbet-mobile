@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-29T11:25:00Z",
+  "observation": "NXT-OBS-234",
+  "ownerStatement": "Commit, push ve iki yüzeyi yayınla (Önerilen)",
+  "approvalChannel": "Owner selected this option in the Claude Code decision prompt after the re-run quality gate and the labelled local mock web preview",
+  "scope": "The approved Android/web motion, Jinx and launch changes, their regression tests and scoped review/evidence documents in zbet-mobile, plus release records in btb-codex",
+  "scopedGitCommitPushApproved": true,
+  "coordinatedPilotAndroidAndWebReleaseApproved": true,
+  "artifactPreparation": "Matching verified web export and signed ARM64 pilot APK from one clean pushed commit; private owner-only APK delivery and companion web publication",
+  "webPreviewEvidence": "Labelled local mock preview from uncommitted source and rendered synthetic desktop/narrow screenshots; no later functional change is included",
+  "installationOrSmokeInferred": false,
+  "requiredSequence": "Verify pair, privately deliver APK, obtain actual exact-APK installation, publish matching web, obtain both owner smokes, then canonical complete",
+  "productionOrAccessPolicyChangeApproved": false,
+  "previousAcceptedSource": "e4def5973dd4169a19556663d415b466ee46f309"
+}

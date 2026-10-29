@@ -1,0 +1,12 @@
+{
+  "status": "PASSED",
+  "androidPreviewBundle": true,
+  "releaseArtifact": false,
+  "source": {
+    "sourceSha": "38e885c27d35011a92e6b9fa052ee51fe9b055fe",
+    "sourceTree": "9f92a4b20609f4d93194333c2a34cc32ca45a30f",
+    "sourceDirty": true
+  },
+  "scannedFiles": 1,
+  "secretFindings": 0
+}
