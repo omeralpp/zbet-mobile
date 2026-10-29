@@ -1,32 +1,47 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-10-29
-Mod: `LOCAL_MOTION_BATCH_VALIDATED / RELEASE_APPROVED / ACCEPTED_PAIR_E4DEF59_RETAINED`
+Mod: `PAIRED_RELEASE_COMPLETE / ACCEPTED_PAIR_6FC5D05 / PREVIOUS_PAIR_RETAINED`
 
-## Approved local motion batch — NXT-OBS-234
+## Current accepted pair — motion, Jinx and launch 6fc5d05 (NXT-OBS-234)
 
 Owner approved the animation recommendations, including Jinx and launch.
-Launch honors preference readiness/reduced motion, keeps a brief bounded brand
-moment (800 ms normal with one landing, 500 ms static reduced, never the old
-1.57 s floor) and uses truthful indeterminate status. Jinx pauses decoration
-in its menu, resumes without queued replay and has quieter idle motion; drag,
-guide, CALM/OFF and assets remain. Native reorder springs and web fades honor
-reduced motion, including exactly-once interrupted drops. Core quality checks,
-18 new regressions, Doctor20/20, Android Hermes export, verified edge web export
-and 15 synthetic browser checks pass. Zero connected Android devices; native
-playback/TalkBack and representative-device performance remain unobserved.
-Owner approved scoped Git and the coordinated pilot Android/web release on
-29 October ([approval](evidence/ANIMATION_IMPLEMENTATION_2026-10-29/release-approval.json)).
-Candidate ee84fc2 (APK `8A368FC359A8…59AA`, privately delivered) failed the
-owner Android smoke: the launch screen never appeared because readiness was
-immediate. Its web build was never published, and the candidate is superseded
-with artifacts retained. The owner chose the short branded intro and accepted
-the fixed web preview. The fix passes 738/33 tests and the tightened browser
-checks. Until both owner smokes pass on the new pair, the accepted e4def59
-pair below remains current.
+Launch honors the reduced-motion preference and keeps a brief, bounded brand
+moment: 800 ms with one landing under normal motion, 500 ms static under
+reduced motion, and never the old 1.57 s floor. Loading status is
+indeterminate, with no fabricated percentage. Jinx pauses decoration while its
+menu is open, resumes without queued replay and has quieter idle motion;
+drag, guide, CALM/OFF and assets remain. Native reorder springs and web fades
+honor reduced motion, and an interrupted native drop commits exactly once.
+
+Scoped Git and the coordinated pilot release were approved on 29 October
+([approval](evidence/ANIMATION_IMPLEMENTATION_2026-10-29/release-approval.json)).
+Candidate `ee84fc2` (APK `8A368FC359A8…59AA`, privately delivered) failed the
+owner Android smoke: the launch screen never appeared because pilot readiness
+is immediate. Its web build was never published; the candidate is superseded.
+
+The owner chose the short branded intro and accepted the fixed web preview.
+Clean pushed source is `6fc5d05453cd5cb093cc45a5d109d682a77d1251`, and BFF
+source is unchanged. The signed ARM64 APK
+`01374056E7DE72FD197231C1B1DD28093A17E1B61A73B2B5C97F8B4F15CF8A64`
+(50,522,265 bytes) was privately delivered with a full authenticated
+readback. Owner accepted Android: “Kuruldu, sorun yok”.
+
+The matching web tree
+`7FA6B7507218574118C35CC241F26A84607BC9005AF21C6780CE21A04C11975F` was
+published as `20261029T124743Z-6fc5d05`. The publisher replaced the BFF
+automatically (PID 19660→31124). Results: 57/57 served requests match,
+independent readback 56/56, and shell/CSP/deep-link/API401/Access302 pass.
+Owner accepted the published web: “Web çalışıyor, sorun yok”. Canonical
+`client-release.mjs complete` passed, and TASK-0203 is DONE. Receipts:
+`btb-codex/docs/evidence/motion-release-6fc5d05-*-2026-10-29.json`.
+
+These are owner basic smokes, not device-side hashes. TalkBack, exhaustive
+gestures and representative-device performance remain unobserved. The
+previous accepted e4def59 pair is retained.
 [Implementation/evidence](ANIMATION_IMPLEMENTATION_2026-10-29.md).
 
-## Current accepted pair — principal UX e4def59 (NXT-OBS-233)
+## Previous accepted pair — principal UX e4def59 (NXT-OBS-233)
 
 The six principal UX changes (shared live counts, contained star/sort menus,
 accessible visible keyboard search, cached Toto recovery, Android reorder

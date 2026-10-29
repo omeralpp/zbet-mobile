@@ -1,8 +1,9 @@
 # Approved Android and web motion improvements
 
 Date: 2026-10-29. Owner: BTB Mobile Next - Aktif. NXT-OBS-234.
-Status: LOCAL_VALIDATED / RELEASE_APPROVED / NOT_RELEASED. Owner approved all recommended local
-improvements after the animation review, including Jinx and launch.
+Status: COMPLETE / OWNER_ACCEPTED_BOTH (paired release 6fc5d05). Owner approved
+all recommended local improvements after the animation review, including Jinx
+and launch.
 
 ## Result
 
@@ -90,8 +91,10 @@ pass. The tightened browser check requires 650–1,100 ms normal and
 and passes on the fix: 843 ms with the landing, and 556/564 ms static. All
 15 checks pass with zero page errors. Expo Doctor 20/20 is reused because no
 dependencies or configuration changed. The owner accepted the labelled local
-web preview. The ee84fc2 candidate is superseded: its web build was never
-published, and its artifacts are retained.
+web preview. The ee84fc2 candidate is superseded, and its web build was never
+published. Its APK, APK config and Drive delivery receipt are retained. Its
+unpublished `dist-web` export was overwritten by the next release build; its
+tree hash `A820A602…3EC9` stays recorded in the prepared-batch receipt.
 
 ## Remaining scope and delivery
 
@@ -107,9 +110,30 @@ native reorder springs are platform-specific implementations of the same reduced
 motion behavior; direct manipulation remains available on each surface.
 
 Owner approved scoped Git and the coordinated pilot Android/web release on
-29 October after the re-run quality gate (737 client and 33 tooling tests) and
-the labelled local mock web preview. Accepted paired release e4def59 and its
-previous pair remain retained until this batch completes. A release requires a clean pushed source and coordinated
-Android/web artifact verification and acceptance under the existing procedure.
+29 October, after the re-run quality gate (737 client and 33 tooling tests)
+and the labelled local mock web preview.
+
+**Release result.** Both artifacts were built from clean pushed source
+`6fc5d05453cd5cb093cc45a5d109d682a77d1251`. The first APK build hit a Gradle
+Metaspace OOM; its orphaned daemons were stopped, and an identical retry
+passed. The pair was verified as batch
+`client-6fc5d05453cd5cb093cc45a5d109d682a77d1251-01374056E7DE-7FA6B7507218`.
+
+The signed ARM64 APK
+`01374056E7DE72FD197231C1B1DD28093A17E1B61A73B2B5C97F8B4F15CF8A64`
+(50,522,265 bytes, same signing certificate) was privately delivered with a
+full readback. The owner confirmed installation and the basic Android smoke:
+“Kuruldu, sorun yok”.
+
+Web tree `7FA6B7507218574118C35CC241F26A84607BC9005AF21C6780CE21A04C11975F`
+was then published as `20261029T124743Z-6fc5d05`. The publisher replaced the
+BFF automatically. Results: 57/57 served requests match, an independent
+readback matches 56/56, and shell/CSP/deep-link/API401/Access302 pass. The
+owner confirmed the published web: “Web çalışıyor, sorun yok”.
+
+Canonical `client-release.mjs complete` passed. Receipts are
+`btb-codex/docs/evidence/motion-release-6fc5d05-*-2026-10-29.json` (the
+superseded candidate's are `motion-release-ee84fc2-*`). The previous accepted
+pair e4def59 is retained.
 
 [Baseline assessment](ANIMATION_REVIEW_2026-10-29.md)
