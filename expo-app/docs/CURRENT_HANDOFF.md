@@ -28,8 +28,8 @@ pass. Owner accepted the published web “sorun yok web de  calisiyor”. Canoni
 `btb-codex/docs/evidence/principal-ux-release-e4def59-{COMPLETE,OWNER-ACCEPTANCE,RUNTIME-RECOVERY}-2026-10-29.json`.
 Actual owner basic smokes, not device-side hashes; native TalkBack/gestures/widget
 resizing remain unobserved and compact widgets may need resize/re-add. Previous
-accepted 260bd57 pair retained. `client-release.mjs complete` does not yet
-require served-byte proof (TASK-0202).
+accepted 260bd57 pair retained. `client-release.mjs complete` now refuses a
+publication receipt without matching served-byte proof (TASK-0202, DONE).
 [Implementation, evidence and artifact hashes](PRINCIPAL_UX_IMPLEMENTATION_2026-10-28.md);
 the [8.2/10 baseline review](PRINCIPAL_UX_REVIEW_2026-10-28.md) remains historical.
 

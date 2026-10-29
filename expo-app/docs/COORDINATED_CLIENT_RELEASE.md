@@ -100,6 +100,12 @@ transaction. Use this bounded sequence and report any interrupted batch as
    Web manifests/receipts record the common batch ID and both hashes. A
    published web response still reports `releaseComplete=false` pending the
    client smoke evidence. There is no web-only dirty-source escape hatch.
+   The publisher replaces only a verified BFF process and succeeds only after
+   every file of the release's `web-build-receipt.json` is read back from the
+   running BFF (`servedAssets`). When the release and its settings are already
+   persisted but the BFF still serves the previous one, `-Recover` with
+   `RECOVER-WEB` replaces the BFF and writes a receipt beside the releases
+   instead of publishing again.
 4. Verify the installed Android app and the published web app with actual
    owner data. Record `batchId`, `sourceSha`, `apkSha256`, `webTreeSha256`,
    `androidSmokePassed`, `webSmokePassed` and an actual evidence reference in
@@ -109,6 +115,9 @@ transaction. Use this bounded sequence and report any interrupted batch as
    node scripts/client-release.mjs complete --apk <final.apk> --web-root <published-root> --delivery <android-delivery.json> --publication <publish-receipt.json> --acceptance <owner-smoke.json> --output <completed-batch.json>
    ```
 
+   `--publication` is the publish or recovery receipt; completion refuses one
+   without matching `servedAssets` byte proof, because routing probes also pass
+   for a BFF still serving the previous release.
    Both receipts, hashes, source and smokes must match. If either smoke fails,
    keep the batch incomplete and stop further delivery. Recover both surfaces
    to their previous accepted pair or finish the same frozen batch under the

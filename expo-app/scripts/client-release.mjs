@@ -113,6 +113,12 @@ export function completePair(pair, delivery, publication, acceptance) {
     publication.androidSha256 === pair.android.sha256 && publication.pairedWebTreeSha256 === pair.web.treeSha256 &&
     publication.localProbe?.ok === true && publication.publicGate?.protected === true,
     "Matching successful web publication evidence is required.");
+  // Routing probes also pass for a BFF still serving the previous release; only
+  // the publisher's byte readback of this release proves web delivery.
+  const served = publication.servedAssets;
+  requireFact(served?.ok === true && served.mismatchCount === 0 && served.sourceSha === pair.sourceSha &&
+    Number.isInteger(served.filesExpected) && served.filesExpected > 0,
+    "Served-byte proof of this release is required in the publication evidence.");
   requireFact(acceptance?.batchId === pair.batchId && acceptance.sourceSha === pair.sourceSha &&
     acceptance.apkSha256 === pair.android.sha256 && acceptance.webTreeSha256 === pair.web.treeSha256 &&
     acceptance.androidSmokePassed === true && acceptance.webSmokePassed === true &&

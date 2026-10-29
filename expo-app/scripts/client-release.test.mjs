@@ -35,7 +35,8 @@ function delivery(pair) {
 }
 function publication(pair) {
   return { sourceSha: pair.sourceSha, pairedBatchId: pair.batchId, androidSha256: pair.android.sha256,
-    pairedWebTreeSha256: pair.web.treeSha256, localProbe: { ok: true }, publicGate: { protected: true } };
+    pairedWebTreeSha256: pair.web.treeSha256, localProbe: { ok: true }, publicGate: { protected: true },
+    servedAssets: { ok: true, sourceSha: pair.sourceSha, filesExpected: 2, filesVerified: 3, mismatchCount: 0, mismatches: [] } };
 }
 function acceptance(pair) {
   return { batchId: pair.batchId, sourceSha: pair.sourceSha, apkSha256: pair.android.sha256,
@@ -120,10 +121,23 @@ test("published web with a failed public gate cannot be called complete", (t) =>
   const f = fixture(t); const pair = verifyPair(f.apk, f.web, source);
   assert.throws(() => completePair(pair, delivery(pair), { ...publication(pair), publicGate: { protected: false } }, acceptance(pair)), /publication evidence/);
 });
+test("passing routing probes without served-byte proof cannot complete a release", (t) => {
+  const f = fixture(t); const pair = verifyPair(f.apk, f.web, source);
+  // The first e4def59 receipt: probes and Access passed while the previous release was still served.
+  const { servedAssets, ...probesOnly } = publication(pair);
+  assert.equal(servedAssets.ok, true);
+  assert.throws(() => completePair(pair, delivery(pair), probesOnly, acceptance(pair)), /Served-byte proof/);
+  const stale = { ok: false, sourceSha: pair.sourceSha, filesExpected: 2, filesVerified: 1, mismatchCount: 2 };
+  assert.throws(() => completePair(pair, delivery(pair), { ...probesOnly, servedAssets: stale }, acceptance(pair)), /Served-byte proof/);
+  const otherRelease = { ...publication(pair).servedAssets, sourceSha: "c".repeat(40) };
+  assert.throws(() => completePair(pair, delivery(pair), { ...probesOnly, servedAssets: otherRelease }, acceptance(pair)), /Served-byte proof/);
+  const empty = { ...publication(pair).servedAssets, filesExpected: 0 };
+  assert.throws(() => completePair(pair, delivery(pair), { ...probesOnly, servedAssets: empty }, acceptance(pair)), /Served-byte proof/);
+});
 test("publisher refuses missing Android companions before reading runtime config", { skip: process.platform !== "win32" }, () => {
   const workspace = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
   const script = join(workspace, "zbet-cap/scripts/publish-web-client.ps1");
-  for (const confirm of ["PUBLISH-WEB", "ROLLBACK-WEB"]) {
+  for (const confirm of ["PUBLISH-WEB", "ROLLBACK-WEB", "RECOVER-WEB"]) {
     const run = spawnSync("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script, "-Confirm", confirm], { encoding: "utf8" });
     assert.notEqual(run.status, 0);
     assert.match(run.stdout+run.stderr, /Coordinated client release requires/);
