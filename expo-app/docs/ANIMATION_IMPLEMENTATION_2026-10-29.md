@@ -8,9 +8,12 @@ improvements after the animation review, including Jinx and launch.
 
 - Launch uses static branding until the motion preference is known and under
   reduced motion or preference-read failure. Normal motion gets one landing of
-  at most 640 ms during the first 800 ms of initialization; late starts shorten
-  or skip it. Auth/fonts readiness plus the first layout immediately completes
-  launch, independently of decoration. There is no required animation wait.
+  at most 640 ms inside the first 800 ms after mount, even when initialization
+  is already ready; late starts shorten or skip it. Launch completes at
+  auth/fonts readiness plus the first layout, but not before a bounded brand
+  hold from mount: 800 ms normal, 500 ms reduced motion, at most 900 ms while
+  the preference is unknown. Slower initialization adds nothing, and the old
+  1.57 s floor is gone (owner decision after the Android smoke, below).
 - Loading text is indeterminate and contains no fabricated percentage. Readiness
   no longer shows 100% against an incomplete bar. Web's once-per-tab completion
   and native auth/font/splash layout ordering remain intact.
@@ -61,9 +64,34 @@ Evidence under `.codex-artifacts/animation-review-20261029/`:
 `doctor.txt`, `android-checks.json`, `android-export.txt`, `web-edge-export.txt`,
 `web-edge/web-build-receipt.json`, `web-mock/web-build-receipt.json`,
 `browser-checks.json`, `render-checks.mjs` and desktop/narrow screenshots.
+Launch-fix evidence is under `.codex-artifacts/launch-fix-20261029/`.
 Committed copies of the browser/Android receipts and screenshots, the
-re-run validation receipt and the release approval are under
-`docs/evidence/ANIMATION_IMPLEMENTATION_2026-10-29/`.
+re-run validation receipt, the release approval and the launch-fix receipt
+are under `docs/evidence/ANIMATION_IMPLEMENTATION_2026-10-29/`.
+
+## Android smoke finding and launch fix
+
+The first release candidate, source `ee84fc2`, was built and verified as a
+pair. Its signed APK `8A368FC359A8…59AA` was privately delivered and installed.
+The owner's Android smoke then failed: “açılış ekranı yani splash screen hiç
+gelmiyor”. Cause: pilot auth resolves on the first render and Android fonts
+are bundled, so readiness is immediate. Readiness-only completion therefore
+ended launch after about one frame, and the native splash drawable is
+transparent. The synthetic fast-start check had accepted 93 ms visibility
+because it asserted only an upper bound.
+
+The owner selected a short branded intro (normal one landing, reduced motion
+static, under 1 s). The fix adds the bounded brand hold described above and
+lets the landing play regardless of readiness. Validation: core gate with
+**738 client and 33 tooling tests**, including regressions for instant
+readiness and the bounded hold. Android preview Hermes export/secret scan
+pass. The tightened browser check requires 650–1,100 ms normal and
+400–1,100 ms reduced fast-start visibility. It fails on the old build (93 ms)
+and passes on the fix: 843 ms with the landing, and 556/564 ms static. All
+15 checks pass with zero page errors. Expo Doctor 20/20 is reused because no
+dependencies or configuration changed. The owner accepted the labelled local
+web preview. The ee84fc2 candidate is superseded: its web build was never
+published, and its artifacts are retained.
 
 ## Remaining scope and delivery
 

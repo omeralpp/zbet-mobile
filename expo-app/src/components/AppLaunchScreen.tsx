@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { btbBrandMark } from "@/src/theme/brand-mark";
 import { useReducedMotionPreference } from "@/src/theme/use-reduced-motion";
-import { createLaunchCompletion, launchIntroDuration } from "./launch-policy";
+import { createLaunchCompletion, launchBrandHoldMs, launchIntroDuration } from "./launch-policy";
 import {
   colors,
   iconSizes,
@@ -34,18 +34,19 @@ export function AppLaunchScreen({
   onLayout
 }: AppLaunchScreenProps) {
   const insets = useSafeAreaInsets();
-  const preference = useReducedMotionPreference();
+  const { ready: motionKnown, reduceMotion } = useReducedMotionPreference();
   const [startedAt] = useState(Date.now);
   const [completion] = useState(createLaunchCompletion);
   const introStarted = useRef(false);
   const [layoutReady, setLayoutReady] = useState(false);
+  const [brandHeld, setBrandHeld] = useState(false);
   const [showBall, setShowBall] = useState(false);
   const [ballY] = useState(() => new Animated.Value(-260));
   const [ballOpacity] = useState(() => new Animated.Value(0));
   const [ballScale] = useState(() => new Animated.Value(1));
   const [ballRotation] = useState(() => new Animated.Value(0));
   useEffect(() => {
-    const duration = launchIntroDuration({ ready, layoutReady, preference, alreadyStarted: introStarted.current, elapsedMs: Date.now() - startedAt });
+    const duration = launchIntroDuration({ layoutReady, preference: { ready: motionKnown, reduceMotion }, alreadyStarted: introStarted.current, elapsedMs: Date.now() - startedAt });
     if (duration === 0) return;
     introStarted.current = true;
     let active = true;
@@ -54,8 +55,9 @@ export function AppLaunchScreen({
     ballScale.setValue(1);
     ballRotation.setValue(0);
     setShowBall(true);
-    // One brief landing during initialization; slower preference/layout reads
-    // shorten its remaining window rather than queueing a late introduction.
+    // One brief landing inside the brand window, even when initialization is
+    // already done; slower preference/layout reads shorten its remaining
+    // window rather than queueing a late introduction.
     const landing = Animated.sequence([
       Animated.parallel([
         Animated.timing(ballY, {
@@ -93,11 +95,18 @@ export function AppLaunchScreen({
       ballOpacity.setValue(0);
       setShowBall(false);
     };
-  }, [ballOpacity, ballRotation, ballScale, ballY, layoutReady, preference, ready, startedAt]);
+  }, [ballOpacity, ballRotation, ballScale, ballY, layoutReady, motionKnown, reduceMotion, startedAt]);
+
+  const holdMs = launchBrandHoldMs({ ready: motionKnown, reduceMotion });
+  useEffect(() => {
+    const remaining = Math.max(0, holdMs - (Date.now() - startedAt));
+    const timer = setTimeout(() => setBrandHeld(true), remaining);
+    return () => clearTimeout(timer);
+  }, [holdMs, startedAt]);
 
   useEffect(() => {
-    completion.complete(ready, layoutReady, onComplete);
-  }, [completion, layoutReady, onComplete, ready]);
+    completion.complete(ready, layoutReady && brandHeld, onComplete);
+  }, [brandHeld, completion, layoutReady, onComplete, ready]);
   const ballRotate = ballRotation.interpolate({
     inputRange: [0, 1],
     outputRange: ["-80deg", "420deg"]
@@ -131,7 +140,7 @@ export function AppLaunchScreen({
             source={btbBrandMark}
             style={styles.logo}
           />
-          {showBall && preference.ready && !preference.reduceMotion && !ready ? <Animated.View
+          {showBall && motionKnown && !reduceMotion ? <Animated.View
             testID="launch-ball"
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"

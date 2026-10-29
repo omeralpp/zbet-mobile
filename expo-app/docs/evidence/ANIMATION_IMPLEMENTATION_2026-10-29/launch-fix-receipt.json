@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-29",
+  "observation": "NXT-OBS-234",
+  "supersededCandidate": {
+    "sourceSha": "ee84fc2576ea079c7df477efe34791e39a35a9d0",
+    "apkSha256": "8A368FC359A8295881DD85226E07B04B8F7B62662F09F4F34AF122C9545059AA",
+    "webTreeSha256": "A820A6026D42A4FB67F3526BBF97E234E596125CF94C63E9E4A5AD0A72773EC9",
+    "privatelyDelivered": true,
+    "installedVerified": true,
+    "androidSmokePassed": false,
+    "webPublished": false,
+    "ownerStatement": "açılış ekranı yani splash screen hiç gelmiyor"
+  },
+  "cause": "Pilot auth resolves on the first render and Android fonts are bundled; readiness-only completion ended launch after about one frame and the native splash drawable is transparent",
+  "ownerDecision": "Kısa markalı giriş (Önerilen): normal one landing, reduced motion static, under 1 s",
+  "fix": "Bounded brand hold from mount (800 ms normal, 500 ms reduced, 900 ms cap while the preference is unknown); the landing plays regardless of readiness; completion still requires actual readiness and layout",
+  "validation": {
+    "quality": "PASSED TypeScript ESLint brand; 738 client and 33 tooling tests",
+    "androidPreviewBundle": "PASSED Hermes export; secret scan zero findings; not signed APK",
+    "browser": "PASSED 15 synthetic checks; fast-start visibility normal 843 ms with landing, reduced 556/564 ms static; the tightened check fails on the old build at 93 ms",
+    "expoDoctor": "20/20 reused; no dependency or configuration change"
+  },
+  "ownerWebPreviewAccepted": "Uygun, devam et (Önerilen)",
+  "releaseApprovalCarriesOver": "Owner chose the fix knowing it needs a new commit, new APK/web pair and reinstallation under the existing scoped Git and coordinated pilot release approval",
+  "nativeInteraction": "UNOBSERVED until the new APK is installed; zero connected Android devices"
+}

@@ -6,8 +6,9 @@ Mod: `LOCAL_MOTION_BATCH_VALIDATED / RELEASE_APPROVED / ACCEPTED_PAIR_E4DEF59_RE
 ## Approved local motion batch — NXT-OBS-234
 
 Owner approved the animation recommendations, including Jinx and launch.
-Launch honors preference readiness/reduced motion, has no forced wait after
-initialization and uses truthful indeterminate status. Jinx pauses decoration
+Launch honors preference readiness/reduced motion, keeps a brief bounded brand
+moment (800 ms normal with one landing, 500 ms static reduced, never the old
+1.57 s floor) and uses truthful indeterminate status. Jinx pauses decoration
 in its menu, resumes without queued replay and has quieter idle motion; drag,
 guide, CALM/OFF and assets remain. Native reorder springs and web fades honor
 reduced motion, including exactly-once interrupted drops. Core quality checks,
@@ -16,7 +17,13 @@ and 15 synthetic browser checks pass. Zero connected Android devices; native
 playback/TalkBack and representative-device performance remain unobserved.
 Owner approved scoped Git and the coordinated pilot Android/web release on
 29 October ([approval](evidence/ANIMATION_IMPLEMENTATION_2026-10-29/release-approval.json)).
-Until both owner smokes pass, the accepted e4def59 pair below remains current.
+Candidate ee84fc2 (APK `8A368FC359A8…59AA`, privately delivered) failed the
+owner Android smoke: the launch screen never appeared because readiness was
+immediate. Its web build was never published, and the candidate is superseded
+with artifacts retained. The owner chose the short branded intro and accepted
+the fixed web preview. The fix passes 738/33 tests and the tightened browser
+checks. Until both owner smokes pass on the new pair, the accepted e4def59
+pair below remains current.
 [Implementation/evidence](ANIMATION_IMPLEMENTATION_2026-10-29.md).
 
 ## Current accepted pair — principal UX e4def59 (NXT-OBS-233)

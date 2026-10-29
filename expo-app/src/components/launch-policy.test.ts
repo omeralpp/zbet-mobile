@@ -1,10 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createLaunchCompletion, launchIntroDuration, launchIntroDurationMs, launchIntroWindowMs } from "./launch-policy";
+import {
+  createLaunchCompletion,
+  launchBrandCapMs,
+  launchBrandHoldMs,
+  launchIntroDuration,
+  launchIntroDurationMs,
+  launchIntroWindowMs,
+  launchStaticHoldMs
+} from "./launch-policy";
 
-const pending = { ready: false, layoutReady: true, preference: { ready: true, reduceMotion: false }, alreadyStarted: false, elapsedMs: 0 };
+const pending = { layoutReady: true, preference: { ready: true, reduceMotion: false }, alreadyStarted: false, elapsedMs: 0 };
 
-test("a short normal intro uses only the initial preparation window", () => {
+test("a short normal intro uses only the initial brand window", () => {
   assert.equal(launchIntroDuration(pending), launchIntroDurationMs);
   assert.equal(launchIntroDuration({ ...pending, elapsedMs: launchIntroWindowMs - 100 }), 100);
   assert.equal(launchIntroDuration({ ...pending, elapsedMs: launchIntroWindowMs }), 0);
@@ -18,15 +26,23 @@ test("unknown/reduced preference, no layout and a repeated intro never permit de
   assert.equal(launchIntroDuration({ ...pending, alreadyStarted: true }), 0);
 });
 
-test("fast readiness cuts the intro immediately, independent of motion-preference latency", () => {
-  assert.equal(launchIntroDuration({ ...pending, ready: true, elapsedMs: 20 }), 0);
-  const completion = createLaunchCompletion();
-  let calls = 0;
-  assert.equal(completion.complete(true, true, () => calls++), true);
-  assert.equal(calls, 1);
+test("instant readiness still plays the brief landing (Android pilot cold start)", () => {
+  // Pilot auth resolves on the first render and Android fonts are bundled, so
+  // readiness is immediate; the brand must not vanish after one frame.
+  assert.equal(launchIntroDuration({ ...pending, elapsedMs: 20 }), launchIntroDurationMs);
 });
 
-test("completion waits for actual initialization and the first layout, never a decorative duration", () => {
+test("the brand hold is brief, bounded and never longer than the old 1.57 s floor", () => {
+  assert.equal(launchBrandHoldMs({ ready: true, reduceMotion: false }), launchIntroWindowMs);
+  assert.equal(launchBrandHoldMs({ ready: true, reduceMotion: true }), launchStaticHoldMs);
+  assert.equal(launchBrandHoldMs({ ready: false, reduceMotion: true }), launchBrandCapMs);
+  for (const hold of [launchIntroWindowMs, launchStaticHoldMs, launchBrandCapMs]) {
+    assert.ok(hold >= 400 && hold < 1_000);
+  }
+  assert.ok(launchIntroDurationMs <= launchIntroWindowMs, "the landing ends inside the normal hold");
+});
+
+test("completion waits for initialization and the presented brand, never an animation callback", () => {
   const completion = createLaunchCompletion();
   let calls = 0;
   const done = () => calls++;

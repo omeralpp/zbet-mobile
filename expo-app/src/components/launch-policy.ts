@@ -2,25 +2,37 @@ import type { ReducedMotionPreference } from "../theme/reduced-motion-preference
 
 export const launchIntroWindowMs = 800;
 export const launchIntroDurationMs = 640;
+/** Reduced motion keeps the brand readable for a moment without movement. */
+export const launchStaticHoldMs = 500;
+/** An unanswered preference read never holds the brand longer than this. */
+export const launchBrandCapMs = 900;
 
-/** The intro uses initialization time only; it can never delay application access. */
-export function launchIntroDuration({ ready, layoutReady, preference, alreadyStarted, elapsedMs }: {
-  ready: boolean;
+/** The intro plays once inside the brand window; readiness does not cut it. */
+export function launchIntroDuration({ layoutReady, preference, alreadyStarted, elapsedMs }: {
   layoutReady: boolean;
   preference: ReducedMotionPreference;
   alreadyStarted: boolean;
   elapsedMs: number;
 }): number {
-  if (ready || !layoutReady || !preference.ready || preference.reduceMotion || alreadyStarted) return 0;
+  if (!layoutReady || !preference.ready || preference.reduceMotion || alreadyStarted) return 0;
   return Math.max(0, Math.min(launchIntroDurationMs, launchIntroWindowMs - Math.max(0, elapsedMs)));
 }
 
-/** Completion belongs to actual readiness and layout, never an animation callback. */
+/**
+ * Owner decision 2026-10-29: a fast cold start still shows a brief, bounded
+ * brand moment, measured from mount. Slower initialization adds nothing.
+ */
+export function launchBrandHoldMs(preference: ReducedMotionPreference): number {
+  if (!preference.ready) return launchBrandCapMs;
+  return preference.reduceMotion ? launchStaticHoldMs : launchIntroWindowMs;
+}
+
+/** Completion belongs to readiness and the presented brand, never an animation callback. */
 export function createLaunchCompletion() {
   let completed = false;
   return {
-    complete(ready: boolean, layoutReady: boolean, onComplete: () => void): boolean {
-      if (completed || !ready || !layoutReady) return false;
+    complete(ready: boolean, presented: boolean, onComplete: () => void): boolean {
+      if (completed || !ready || !presented) return false;
       completed = true;
       onComplete();
       return true;
