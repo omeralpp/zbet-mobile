@@ -1,31 +1,39 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-10-28
-Mod: `UX_PAIRED_RELEASE_APPROVED / SOURCE_FREEZING / ACCEPTED_PAIR_RETAINED`
+Son güncelleme: 2026-10-29
+Mod: `PAIRED_RELEASE_COMPLETE / ACCEPTED_PAIR_E4DEF59 / PREVIOUS_PAIR_RETAINED`
 
-## Approved local UX batch — NXT-OBS-233
+## Current accepted pair — principal UX e4def59 (NXT-OBS-233)
 
-The owner approved all six principal UX recommendations. Shared live counts,
-contained star/sort menus, accessible visible keyboard search, cached Toto
-recovery, Android reorder buttons and 48 dp widget actions are implemented locally.
-Full Mobile quality/Doctor, final Android preview bundle, verified edge web
-export and native widget compile pass. Synthetic browser checks cover menu
-scrolling, search ARIA/navigation, count transitions and Toto failure/recovery,
-including 320 px detail. Native TalkBack/gestures/widget resizing remain unobserved;
-compact widgets may need resize/re-add after a future delivery.
+The six principal UX changes (shared live counts, contained star/sort menus,
+accessible visible keyboard search, cached Toto recovery, Android reorder
+buttons, 48 dp widget actions) shipped as one coordinated pair. Clean pushed
+Mobile source `e4def5973dd4169a19556663d415b466ee46f309`; BFF server code is
+unchanged from `6a49ee7405e1ff38885bec8fe05f23fd7db897dd` (zbet-cap publisher
+scripts changed only). Signed ARM64 APK
+`056719567518E91D72FB926FAA1DBC60A442353B1EAB3397813B6C049ADFD80E`,
+50,517,605 bytes, privately delivered with full authenticated readback; owner
+accepted Android “Kurulum tamam sorun yok”. Matching web tree
+`70E2199BDF8E62E31E67182E0F15870AD96AF1770CAF624FB738F439D0E532AD` published as
+`20261029T071159Z-e4def59`.
 
-Owner subsequently approved scoped commit/push and coordinated pilot publication
-on 28 October (“commit push ve yayın yapabilirsin”), following the validated web
-preview. Freeze the pushed Mobile SHA and build its web/ARM64 APK pair; exact
-private APK installation must precede web publication, with both owner smokes
-before completion. Current accepted `260bd57` pair below is unchanged. No BFF/SAP
-source or Access-policy change is included. Pending release receipts will be in
-`btb-codex/docs/evidence/principal-ux-release-*2026-10-28.json`; retain Mobile HEAD
-at the frozen release SHA until publication. No recurring observation was created.
-[Implementation, evidence and artifact hashes](PRINCIPAL_UX_IMPLEMENTATION_2026-10-28.md).
-The [8.2/10 baseline review](PRINCIPAL_UX_REVIEW_2026-10-28.md) remains historical.
+The first publication reported success while the BFF kept serving 260bd57: the
+TCP table reports the listener with an invalid state, so the publisher saw no
+BFF and skipped the stop. The publisher now reads identity without the state
+field, proves the replacement and checks every served byte; its `-Recover`
+mode replaced the BFF at 09:14Z without a new release folder. 57/57 served
+requests match, independent readback 56/56; shell/deep-link/CSP/API401/Access302
+pass. Owner accepted the published web “sorun yok web de  calisiyor”. Canonical
+`client-release.mjs complete` passed; TASK-0201 is DONE. Receipts:
+`btb-codex/docs/evidence/principal-ux-release-e4def59-{COMPLETE,OWNER-ACCEPTANCE,RUNTIME-RECOVERY}-2026-10-29.json`.
+Actual owner basic smokes, not device-side hashes; native TalkBack/gestures/widget
+resizing remain unobserved and compact widgets may need resize/re-add. Previous
+accepted 260bd57 pair retained. `client-release.mjs complete` does not yet
+require served-byte proof (TASK-0202).
+[Implementation, evidence and artifact hashes](PRINCIPAL_UX_IMPLEMENTATION_2026-10-28.md);
+the [8.2/10 baseline review](PRINCIPAL_UX_REVIEW_2026-10-28.md) remains historical.
 
-## Current accepted pair — Jinx and daily report 260bd57 (NXT-OBS-231/232)
+## Previous accepted pair — Jinx and daily report 260bd57 (NXT-OBS-231/232)
 
 Owner replaced the wide report with Today/Yesterday. Android/web default to
 Today; Jinx, Overview and widget share the bounded daily request. BFF filters
