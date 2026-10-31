@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-31",
+  "profile": "btb-mobile",
+  "observation": "NXT-OBS-239",
+  "status": "LOCAL_VALIDATED_NOT_RELEASED",
+  "ownerDecision": "Toto alanları (Önerilen): expose SAP Toto facts via BFF + client; NXT-OBS-236/237 stay deferred",
+  "sapEvidence": {
+    "mode": "ARC-1 read-only live source reads; sap-adt offline (port 2234 closed); data preview disabled",
+    "objects": ["ZBET_UI_TOTO (SRVD, local)", "ZBET_C_TOTO_PROG (live DDLS)", "ZBET_C_TOTO_PAYO (live DDLS)", "ZBET_CL_TOTO_API=>CALC_THEO_PAYOUT (local source)"],
+    "fullSystemCheck": "cutover summaries gc356-gc363: 1296/1944/1728/2304 columns, all 2^a*3^b, cost = columns x 10"
+  },
+  "bffContract": "X-BTB-Toto-Display: btb-toto-display.v1 (opt-in; default SAP request and response unchanged; unknown version 400)",
+  "bffAllowlistChange": "Payouts added to the Toto service entity allowlist (read-only)",
+  "sapChange": false,
+  "bffTests": "688 passed (node --test test/*.test.js)",
+  "clientTests": "757 client + 33 tooling passed; TypeScript, ESLint, brand passed",
+  "androidPreviewBundle": "PASSED; zero secret findings; SHA-256 6A9AB7F2CA2277DAF834166E7D03C20E61DB0310517909A27A85F7CB26E711A3",
+  "webExport": "PASSED edge; zero secret findings; tree SHA-256 79AE50BFA671AB02B15F46A67DCAEB79468017C793F9875BF053DBB6EC3578FA",
+  "browser": "Synthetic: header sent on list and detail reads; coupon close, cost in TRY, best column line and four prize tiers rendered; list caveat drops the unit sentence when every program has a unit",
+  "bffRuntimeRestarted": false,
+  "gitStagedCommittedPushed": false,
+  "newRelease": false
+}

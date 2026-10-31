@@ -10,7 +10,7 @@ export function rebuildReason(reason: string | undefined) {
     DUMMY_NOT_PUBLISHED: "Henüz yayımlanmış öneri yok.", NOT_STARTED: "Bu maç için henüz değerlendirme başlamadı.",
     MODEL_NOT_ENABLED: "Yeni BTB sürümü henüz devreye alınmadı.", ACTIVE: "Güncel seçim doğrulandı.",
     NO_SELECTION: "Bu değerlendirmede uygun seçim yok.", WAITING_CONFIRMATION: "Baskı teyidi için yeterli aralık bekleniyor.",
-    RED_CARD_UNKNOWN: "Kart verisi bekleniyor; bu bilgi doğrulanana kadar öneri üretilemiyor.",
+    RED_CARD_UNKNOWN: "Sağlayıcı kırmızı kart sayısını göndermiyor; bu veri gelmeden öneri üretilmez.",
     QUOTE_STALE: "Son oran ölçümünün geçerlilik süresi doldu; yeni oran bekleniyor.",
     ENDPOINT_STALE: "Son maç veya baskı ölçümü güncel değil; yeni ölçüm bekleniyor.",
     CONFIRMATION_PENDING: "İki destekleyici baskı aralığı bekleniyor.", PRESSURE_FAILED: "Son baskı ölçümleri seçimi desteklemiyor.",

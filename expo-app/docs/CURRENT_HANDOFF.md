@@ -1,7 +1,28 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-10-30
-Mod: `PAIRED_RELEASE_COMPLETE / ACCEPTED_PAIR_6FC5D05 / PREVIOUS_PAIR_RETAINED`
+Son güncelleme: 2026-10-31
+Mod: `PAIRED_RELEASE_COMPLETE / ACCEPTED_PAIR_6FC5D05 / PREVIOUS_PAIR_RETAINED / LOCAL_CANDIDATE_NXT_OBS_235`
+
+## Yerel aday (31 October)
+
+One combined local candidate, uncommitted on top of `eff88f2`; the owner asked
+to publish both batches together:
+
+- NXT-OBS-235 Jinx decision outlook
+  ([record](JINX_OUTLOOK_IMPLEMENTATION_2026-10-31.md)); follow-ups
+  NXT-OBS-236/237 DEFERRED.
+- NXT-OBS-238 Toto Programlar + Toto programı UX
+  ([record](TOTO_UX_IMPLEMENTATION_2026-10-31.md)).
+- NXT-OBS-239 SAP Toto display facts through the BFF (uncommitted in
+  `zbet-cap` on `306c7df`; contract `zbet-cap/docs/TOTO_DISPLAY_V1_2026-10-31.md`).
+  Opt-in header, so the BFF restart and the clients can roll out in either order.
+
+Combined validation: 757 client + 33 tooling + 688 BFF tests, Android preview
+bundle `6A9AB7F2…E711A3` and edge web tree `79AE50BF…3578FA`, both
+secret-scanned. No commit/push, APK, web publication, BFF restart or SAP change
+was made; `6fc5d05`
+stays the accepted pair. Next: owner review, then separate commit/push and
+coordinated Android+web release approvals for the combined candidate.
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 The owner approved this reconciliation in Turkish pop-up 1/6. Only the
@@ -89,8 +110,11 @@ or cloud copy and changes no active publication.
 
 ## Açık observation / blokajlar
 
-There are no OBSERVED rows eligible for a new implementation batch. Six
-DEFERRED items remain in [OBSERVATION_LOG.md](OBSERVATION_LOG.md):
+NXT-OBS-235, NXT-OBS-238 and NXT-OBS-239 form the only local candidate (see above). Besides
+the two new deferred follow-ups NXT-OBS-236 (per-match decision notification,
+blocked by NXT-OBS-074) and NXT-OBS-237 (no single RB1 threshold; frozen model;
+BTB - Aktif first), six older DEFERRED items remain in
+[OBSERVATION_LOG.md](OBSERVATION_LOG.md):
 
 | Observation | Remaining scope |
 | --- | --- |

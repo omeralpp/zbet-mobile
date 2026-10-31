@@ -471,6 +471,8 @@ paths:
   /v1/toto/programs:
     get:
       operationId: getTotoPrograms
+      parameters:
+        - $ref: "#/components/parameters/TotoDisplayVersion"
       responses:
         "200":
           description: Toto-native program summaries and predictions.
@@ -486,6 +488,7 @@ paths:
     get:
       operationId: getTotoProgram
       parameters:
+        - $ref: "#/components/parameters/TotoDisplayVersion"
         - name: gcNo
           in: path
           required: true
@@ -609,6 +612,12 @@ components:
       required: false
       description: Includes nullable scoreDistribution from the latest verified display pool. period=1H means historical half-time outcomes; 2H means full-time outcomes. Counts and shares are display-only reference frequencies, not win probabilities. Absent preserves the original response shape.
       schema: { type: string, enum: [score-distribution.v1] }
+    TotoDisplayVersion:
+      name: X-BTB-Toto-Display
+      in: header
+      required: false
+      description: Opts Toto program reads into SAP facts already computed for the program - coupon close (payinEndsAt), cost unit (costCurrency, unitPrice), best column (bestColumnHits) and prize tiers (payouts). Absent preserves the published shape. Unknown versions are rejected with 400. Responses vary by this header.
+      schema: { type: string, enum: [btb-toto-display.v1] }
     SelectionDisplayVersion:
       name: X-BTB-Selection-Display
       in: header
@@ -1133,6 +1142,28 @@ components:
         payoutDescription:
           type: [string, "null"]
           minLength: 1
+        payinEndsAt:
+          type: [string, "null"]
+          format: date-time
+          description: btb-toto-display.v1. SAP Programs.payin_end_at (coupon close); null when unknown.
+        costCurrency:
+          type: [string, "null"]
+          pattern: "^[A-Z]{3}$"
+          description: btb-toto-display.v1. ISO 4217 unit of cost and payout amounts from SAP Programs.currency_code; null when invalid.
+        unitPrice:
+          type: [number, "null"]
+          exclusiveMinimum: 0
+          description: btb-toto-display.v1. Price of one column in costCurrency; null without a valid unit.
+        bestColumnHits:
+          type: [integer, "null"]
+          minimum: 0
+          maximum: 15
+          description: btb-toto-display.v1. SAP max_hit_count, emitted only when the coupon is the full system (columns = 2^doubleCount * 3^tripleCount), every match has settled and it equals the settled coverage; otherwise null.
+        payouts:
+          type: [array, "null"]
+          description: btb-toto-display.v1. SAP Payouts tiers, highest first; empty unless the payout is ready with a valid unit. Absent (null) without the opt-in.
+          items:
+            $ref: "#/components/schemas/TotoPayout"
         fixtures:
           type: array
           items:
@@ -1142,6 +1173,16 @@ components:
           items:
             $ref: "#/components/schemas/TotoPrediction"
         updatedAt: { type: string, format: date-time }
+    TotoPayout:
+      type: object
+      additionalProperties: false
+      required: [correct, winners, amountPerColumn, couponWinningColumns, theoreticalTotal]
+      properties:
+        correct: { type: integer, minimum: 0, maximum: 15, description: Correct picks this tier pays (SAP ordinal_no). }
+        winners: { type: integer, minimum: 0 }
+        amountPerColumn: { type: number, minimum: 0, description: Prize per winning column in costCurrency. }
+        couponWinningColumns: { type: integer, minimum: 0, description: Full-system coupon columns with exactly this many correct picks. }
+        theoreticalTotal: { type: number, minimum: 0, description: amountPerColumn × couponWinningColumns; theoretical, assumes the coupon was played. }
     Dashboard:
       type: object
       additionalProperties: false

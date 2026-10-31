@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-31",
+  "observation": "NXT-OBS-235",
+  "harness": "Actual exported MatchDetailView served by .codex-artifacts/jinx-outlook-20261031/preview.ts with synthetic DTOs; external fetches and non-GET methods blocked; no SAP/BFF request",
+  "webExport": "Final canonical edge export of the final source (keyboard-role fix included)",
+  "stateSweep": {
+    "widths": [1440, 320],
+    "cases": {
+      "red-unknown": { "pill": "KARAR BEKLENMİYOR", "layout": "compact", "action": "Canlı maçlar" },
+      "finished-none": { "pill": "KARAR BEKLENMİYOR", "layout": "compact", "action": "Canlı maçlar" },
+      "watching": { "pill": "KARAR GELEBİLİR", "blockers": ["9 pazar", "6 pazar", "3 pazar", "1 pazar (named, not bucketed)"], "action": "Dayanakları gör" },
+      "second-half": { "pill": "KARAR GELEBİLİR", "blockers": "none (single reason equals the main sentence)", "action": "Dayanakları gör" },
+      "jinx-error": { "pill": "YENİLENEMEDİ", "action": "Yeniden dene" },
+      "populated": { "pill": "GÜNCEL SEÇİM", "lead": "Skorun kritik koşulu", "action": "Dayanakları gör (hero keeps Karar kaydını aç)" },
+      "pressure-drop": { "pill": "KARAR GELEBİLİR", "lead": "Baskı desteği azaldı", "action": "Dayanakları gör" },
+      "result-win": { "pill": "KARAR BEKLENMİYOR", "lead": "Maç sonu değerlendirme", "action": "Dayanakları gör" },
+      "new-decision": { "pill": "GÜNCEL SEÇİM", "lead": "Yeni karar var", "action": "Yeni kararı aç + Dayanakları gör" }
+    },
+    "allCombinations": 18,
+    "horizontalOverflow": 0,
+    "headerRefreshButton": 0,
+    "retryOutsideErrorState": 0
+  },
+  "cardHeightPx": {
+    "1440": { "red-unknown": 133, "finished-none": 112, "watching": 346, "jinx-error": 208 },
+    "320": { "red-unknown": 249, "finished-none": 175, "watching": 459, "jinx-error": 249 }
+  },
+  "themes": "Dark and light (app theme setting) rendered at 390 px for red-unknown, watching and jinx-error; grouped Dayanaklar rendered in dark",
+  "keyboard": {
+    "canliMaclar": "First role=link build: focused, Enter did not navigate (React Native Web activates role=link only with an href). Fixed to role=button; Enter navigates to /live. Mouse click navigated in both builds. 44 px target.",
+    "yenidenDene": "Focused, Enter re-read the RB1 record within 700 ms (4 to 5 reads) and the match context",
+    "dayanaklar": "Expanded; rejected markets grouped by reason with ELENDİ · N, measured facts per market, unmeasured names on one line"
+  },
+  "network": {
+    "jinxLlmRequests": 0,
+    "expected400": "decision-context.v3 negotiation in the harness, each followed by a 200 v2 read (pre-existing harness behavior)",
+    "expected503": "jinx-error scenario rebuild record",
+    "transient500": "Three page loads while the export directory was being rebuilt (index.html briefly absent); none during the final sweep"
+  },
+  "notObserved": "Physical Android device, TalkBack, font scaling and representative-device performance"
+}

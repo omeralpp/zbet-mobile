@@ -90,7 +90,7 @@ test("a closed or decided market takes precedence over apparently helpful pressu
 
 test("native missing-card and stale-source gates cannot be replaced with a new score narrative", () => {
   const s = setup(); s.waiting(); s.data.reason = "RED_CARD_UNKNOWN";
-  assert.equal(s.run().title, "Kart verisi bekleniyor");
+  assert.equal(s.run().title, "Kart verisi yok"); assert.match(s.run().text, /göndermiyor/);
   for (const reason of ["ENDPOINT_STALE", "QUOTE_STALE", "TRANSACTION_RECONCILIATION_REQUIRED"]) {
     s.data.reason = reason; assert.equal(s.run().title, "Güncel kanıt bekleniyor");
   }

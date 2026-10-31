@@ -1,0 +1,105 @@
+{
+  "localOnly": true,
+  "sourceSha": "eff88f2ed06aa4bdd1d26b2ff383e31e09d87aac",
+  "sourceTree": "aee5b6a1c5f482b1010db0051f0dca7bb4533ff0",
+  "sourceDirty": true,
+  "androidPreviewBundle": "index-3ccd302e5679841f2a90d1ee6ca5bfcf.hbc",
+  "androidPreviewBundleSha256": "6A9AB7F2CA2277DAF834166E7D03C20E61DB0310517909A27A85F7CB26E711A3",
+  "androidPreviewReleaseArtifact": false,
+  "webTreeSha256": "79AE50BFA671AB02B15F46A67DCAEB79468017C793F9875BF053DBB6EC3578FA",
+  "webMode": "edge",
+  "changedFiles": [
+    {
+      "path": "app/(tabs)/toto.tsx",
+      "sha256": "23851DA3483A33C5192307CE2E9D05023AB409A5AE56B248D00CC677C92780F9"
+    },
+    {
+      "path": "app/toto/[gcNo]/[version].tsx",
+      "sha256": "7A053D873D3E3BF23A33E3649E4AAA65142B07112C9DE730492876F1088C5676"
+    },
+    {
+      "path": "docs/CURRENT_HANDOFF.md",
+      "sha256": "319B1C5C5A33C443972F4026065B61E32AB96F5F980464C3B4C1CD1A5EB8E132"
+    },
+    {
+      "path": "docs/JINX_OUTLOOK_IMPLEMENTATION_2026-10-31.md",
+      "sha256": "D05FBDB9C223AB033644F832B60F2A3A57F50B836995B0E26E25478AFB5F0778"
+    },
+    {
+      "path": "docs/OBSERVATION_LOG.md",
+      "sha256": "3428FE4A05CE4FE108700A8A5B5841E5A913595DB66C8BB289B07899BF3A30BB"
+    },
+    {
+      "path": "docs/TOTO_UX_IMPLEMENTATION_2026-10-31.md",
+      "sha256": "53B7909B73466D179DFB91192E9C4878D7160B062558232EFC15C71D4C00A259"
+    },
+    {
+      "path": "src/api/http-mobile-api.ts",
+      "sha256": "382A93FCEACB002D53F5AC7C4E1A0A9F16D26A2E333032982BEB431076B61637"
+    },
+    {
+      "path": "src/api/mock-data.ts",
+      "sha256": "CE0A90456772D108ED6747130F03E83C55B2ABD8F453DA612E4FA54A1B172498"
+    },
+    {
+      "path": "src/api/schemas.ts",
+      "sha256": "D2C7C1C2AB743D03A995162FFAE4CFF659310352CADE996F09CA1084758CF52F"
+    },
+    {
+      "path": "src/api/toto-display-schema.test.ts",
+      "sha256": "4F1930866CF205F09B0EAC112AF6E48CD056F658BE872858DBC471AFA07CA7CB"
+    },
+    {
+      "path": "src/components/RebuildEvidencePanel.tsx",
+      "sha256": "16826EFC3F54196154522723ECEF7B819B195D698EB18CEADDD1773834130000"
+    },
+    {
+      "path": "src/components/TotoCouponList.tsx",
+      "sha256": "C610B627B789785684A38876DE93438B92410DEF93501000A71763116CB4ACD3"
+    },
+    {
+      "path": "src/components/TotoProgramCard.tsx",
+      "sha256": "76DBDC52997021351F5D70BFEDB586A596B2FB5F8E5F99E0195CF81FC815CF48"
+    },
+    {
+      "path": "src/utils/jinx-match-reading.test.ts",
+      "sha256": "9D4F595487EEF4B1539CCF668B29889D4B4787E3C1ABD87F242FBEB8640A1E0C"
+    },
+    {
+      "path": "src/utils/jinx-match-reading.ts",
+      "sha256": "CB22E546847E77231C5100F82C9A80EBED7B22FCF3CC5A3407DF73BAD4A07F0B"
+    },
+    {
+      "path": "src/utils/jinx-outlook.test.ts",
+      "sha256": "5673916CA611A7313E53026E90FD60F8DA47423334BB4EAEDB740FA3C8FA7CD3"
+    },
+    {
+      "path": "src/utils/jinx-outlook.ts",
+      "sha256": "B1844480571E3BCD21CAAE93C1AFF29444D6EE3D1847180084FA27E9AFCCEE86"
+    },
+    {
+      "path": "src/utils/rebuild-current.ts",
+      "sha256": "73B7779CF8B3498322AB80AFE1BBF18F61C4EF2728C89F4B3D504DCF09344BDE"
+    },
+    {
+      "path": "src/utils/rebuild-presentation.test.ts",
+      "sha256": "C810EC7E86D2F03285F0AF4E3EC442AF02752E237CB204B21015A044E64C0BE4"
+    },
+    {
+      "path": "src/utils/rebuild-presentation.ts",
+      "sha256": "C34B61F2D41FA68C63BFE35DE97F4D821A738C7CAC0493E88AF79A9267439CC3"
+    },
+    {
+      "path": "src/utils/toto-lifecycle.test.ts",
+      "sha256": "C5262B507844CE7C378387620F7936B07FA999A2A78C126E1608614FC070A42A"
+    },
+    {
+      "path": "src/utils/toto-lifecycle.ts",
+      "sha256": "75BD3C90562EC7B0F6A2ABE5231FFAB5495E656B30C8F154FFDBF9800EE7CC47"
+    },
+    {
+      "path": "src/web/TotoCouponGrid.tsx",
+      "sha256": "F5DEBC5A64512150E164ACAB269EC62F37CBB004C9808FA4CFA004986E178D5E"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "localOnly": true,
+  "sourceSha": "eff88f2ed06aa4bdd1d26b2ff383e31e09d87aac",
+  "sourceTree": "aee5b6a1c5f482b1010db0051f0dca7bb4533ff0",
+  "sourceDirty": true,
+  "androidPreviewBundle": "index-a1e0ec7c0dfb0145fa70deca713625e6.hbc",
+  "androidPreviewBundleSha256": "B2C95C14729D2065FC300BABF2A38D65EE85C1D5FD9B5414B500ADD0F2C3C810",
+  "androidPreviewReleaseArtifact": false,
+  "webTreeSha256": "DEF8828B7309BE0E5488719497A028EE245AAA8701B20857642C12E6315BB034",
+  "webMode": "edge",
+  "changedFiles": [
+    {
+      "path": "docs/CURRENT_HANDOFF.md",
+      "sha256": "3C0E5825042CAFBD6289C7B79BB7CAE7C437063DFE22EA3C19DF24F952F8A839"
+    },
+    {
+      "path": "docs/JINX_OUTLOOK_IMPLEMENTATION_2026-10-31.md",
+      "sha256": "037A1E53C74715A3E0536DACCAA744C84697DF791FD927267EE4E740809C6959"
+    },
+    {
+      "path": "docs/OBSERVATION_LOG.md",
+      "sha256": "A6578C6CE3B356766EF449FE45EA76B35109067EF6DF652C03305AA8F1C578D6"
+    },
+    {
+      "path": "src/components/RebuildEvidencePanel.tsx",
+      "sha256": "9F0655CB0D146380E57969FA6FF45E4D9E96802E44BF991F14EF21F5F7AC50D7"
+    },
+    {
+      "path": "src/utils/jinx-match-reading.test.ts",
+      "sha256": "9D4F595487EEF4B1539CCF668B29889D4B4787E3C1ABD87F242FBEB8640A1E0C"
+    },
+    {
+      "path": "src/utils/jinx-match-reading.ts",
+      "sha256": "CB22E546847E77231C5100F82C9A80EBED7B22FCF3CC5A3407DF73BAD4A07F0B"
+    },
+    {
+      "path": "src/utils/jinx-outlook.test.ts",
+      "sha256": "5673916CA611A7313E53026E90FD60F8DA47423334BB4EAEDB740FA3C8FA7CD3"
+    },
+    {
+      "path": "src/utils/jinx-outlook.ts",
+      "sha256": "B1844480571E3BCD21CAAE93C1AFF29444D6EE3D1847180084FA27E9AFCCEE86"
+    },
+    {
+      "path": "src/utils/rebuild-current.ts",
+      "sha256": "73B7779CF8B3498322AB80AFE1BBF18F61C4EF2728C89F4B3D504DCF09344BDE"
+    },
+    {
+      "path": "src/utils/rebuild-presentation.test.ts",
+      "sha256": "C810EC7E86D2F03285F0AF4E3EC442AF02752E237CB204B21015A044E64C0BE4"
+    },
+    {
+      "path": "src/utils/rebuild-presentation.ts",
+      "sha256": "C34B61F2D41FA68C63BFE35DE97F4D821A738C7CAC0493E88AF79A9267439CC3"
+    }
+  ]
+}

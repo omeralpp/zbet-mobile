@@ -17,7 +17,8 @@ import { totoProgramQuery } from "@/src/api/queries";
 import { ModuleHeading } from "@/src/components/ModuleHeading";
 import { FilterChip } from "@/src/components/FilterChip";
 import { Action } from "@/src/components/RebuildEvidencePanel";
-import { totoStatusColor } from "@/src/components/TotoProgramCard";
+import { TotoProgressBar, totoStatusColor, useMinuteNow } from "@/src/components/TotoProgramCard";
+import { TotoCouponList } from "@/src/components/TotoCouponList";
 import { Screen } from "@/src/components/Screen";
 import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
 import { EmptyState, ErrorState, LoadingState } from "@/src/components/StateView";
@@ -37,14 +38,14 @@ import {
 } from "@/src/theme/theme";
 import {
   formatFixtureDateTime,
-  formatPercentage,
   formatProgramStatus,
   formatCurrencyAmount,
   formatTimestamp
 } from "@/src/utils/format";
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
-import { filterTotoResults, summarizeTotoResults, type TotoResultFilter } from "@/src/utils/toto-results";
+import { filterTotoResults, type TotoResultFilter } from "@/src/utils/toto-results";
+import { dayRange, formatCost, kickoffLabel, kickoffText, outOf, payoutRows, totoProgress } from "@/src/utils/toto-lifecycle";
 import { TotoCouponGrid } from "@/src/web/TotoCouponGrid";
 import { TotoRefreshNotice } from "@/src/components/TotoRefreshNotice";
 import { totoQueryView } from "@/src/utils/toto-query-view";
@@ -52,8 +53,8 @@ import { totoQueryView } from "@/src/utils/toto-query-view";
 const resultFilters: { value: TotoResultFilter; label: string }[] = [
   { value: "ALL", label: "Tümü" },
   { value: "OPEN", label: "Bekliyor" },
-  { value: "MISS", label: "Kapsam dışı" },
-  { value: "COVERAGE", label: "Kapsamada" }
+  { value: "COVERAGE", label: "Kapsamada" },
+  { value: "MISS", label: "Kapsam dışı" }
 ];
 
 function predictionResultPresentation(result: TotoPrediction["result"]): {
@@ -61,13 +62,13 @@ function predictionResultPresentation(result: TotoPrediction["result"]): {
   label: string;
 } {
   if (result === "MAIN_HIT") {
-    return { color: semantic.positive, label: "ANA TAHMİN" };
+    return { color: semantic.positive, label: "ANA İSABET" };
   }
   if (result === "COVERED") {
     // Deliberately still the raw gold. A covered prediction is the middle tier
     // of a three-tier outcome scale, and it is neither a warning nor a partial
     // positive - the semantic vocabulary has no honest name for it yet.
-    return { color: colors.gold, label: "KUPONDA" };
+    return { color: colors.gold, label: "KAPSAMADA" };
   }
   if (result === "MISS") {
     return { color: semantic.negative, label: "KAPSAM DIŞI" };
@@ -111,6 +112,7 @@ export default function TotoProgramDetailScreen() {
   const query = useQuery(totoProgramQuery(gcNo, version));
   const [resultFilter, setResultFilter] = useState<TotoResultFilter>("ALL");
   const [refreshing, setRefreshing] = useState(false);
+  const now = useMinuteNow();
   const refresh = async () => {
     setRefreshing(true);
     try { await query.refetch(); } finally { setRefreshing(false); }
@@ -149,10 +151,40 @@ export default function TotoProgramDetailScreen() {
 
   const program = view.data;
   const statusColor = totoStatusColor(program.status);
-  const resultSummary = summarizeTotoResults(program.predictions);
-  const resultTotal = resultSummary.total || program.fixtures.length;
+  const progress = totoProgress(program, now);
   const visiblePredictions = filterTotoResults(program.predictions, resultFilter);
   const number = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 });
+  const of = (count: number | null) => outOf(count, progress.total);
+  const span = progress.firstKickoff !== null && progress.lastKickoff !== null ? dayRange(progress.firstKickoff, progress.lastKickoff) : null;
+  // SAP's coupon close when known, otherwise the first kickoff.
+  const when = progress.deadline ? { label: progress.deadline.label, text: kickoffText(progress.deadline.at, now) } : { label: "İlk maç", text: "tarih bekleniyor" };
+  const cost = formatCost(program.cost, program.costCurrency);
+  const unitNote = program.costCurrency ? "" : " Maliyet birimi belirtilmiyor.";
+  const plan = [{ value: number.format(program.columns), label: "kolon" }, { value: cost, label: "maliyet" }];
+  const tiers = program.status === "RESULTED" && program.payouts?.length && program.costCurrency ? payoutRows(program.payouts, program.costCurrency) : [];
+  // The overview answers this lifecycle's question: when play starts, how the
+  // open program is going, or how it ended. Each count appears once.
+  const metrics = program.status === "ACTIVE" ? progress.planned ? plan : []
+    : program.status === "WAITING_RESULT" ? [{ value: `${progress.settled}/${progress.total}`, label: "sonuçlandı" },
+      { value: program.coverageHits === null ? "—" : String(program.coverageHits), label: "kapsama" },
+      { value: program.mainHits === null ? "—" : String(program.mainHits), label: "ana isabet" }, { value: of(progress.maxCoverage), label: "en fazla kapsama" }]
+    : program.status === "RESULTED" ? [{ value: of(program.coverageHits), label: "kapsama" }, { value: of(program.mainHits), label: "ana isabet" }, ...plan]
+    : [...plan, { value: program.mainHits === null ? "—" : String(program.mainHits), label: "ana isabet" }, { value: program.coverageHits === null ? "—" : String(program.coverageHits), label: "kapsama" }];
+  const legend = ([["ana isabet", colors.green, progress.mainHits], ["kapsamada", colors.gold, progress.coveredOnly],
+    ["kapsam dışı", colors.red, progress.misses], ["bekliyor", colors.textSubtle, progress.open]] as const).filter(([, , count]) => count > 0);
+  const note = program.status === "ACTIVE" ? unitNote.trim()
+    : `Kapsama, ana isabet dahil sonucu kuponda kalan maçlardır; kupon kazancı değildir.${program.status === "WAITING_RESULT" ? " En fazla kapsama bir üst sınırdır, tahmin değildir." : ""}${unitNote}`;
+  const meta = [program.status === "WAITING_RESULT" ? `${number.format(program.columns)} kolon · ${cost} maliyet` : null, progress.structure].filter(Boolean).join(" · ");
+  const bilyonerAction = (primary: boolean) => (
+    <Pressable
+      accessibilityHint="Bilyoner uygulaması kuruluysa Spor Toto sayfasını uygulamada, değilse güvenli web sayfasında açar"
+      accessibilityRole="link"
+      onPress={() => Linking.openURL(buildBilyonerTotoUrl()).catch(() => Alert.alert("Bilyoner açılamadı", "Bilyoner Spor Toto sayfası şu anda açılamıyor."))}
+      style={({ pressed }) => [styles.bilyonerAction, primary ? styles.bilyonerPrimary : styles.bilyonerSecondary, pressed && styles.actionPressed]}
+    >
+      <Text style={[styles.bilyonerActionText, !primary && styles.bilyonerSecondaryText]}>Bilyoner Spor Toto&apos;da aç</Text>
+    </Pressable>
+  );
 
   return (
     <Screen
@@ -177,7 +209,7 @@ export default function TotoProgramDetailScreen() {
       <View style={split ? styles.summaryColumn : desktop ? styles.summaryOverview : undefined}>
       <View style={[styles.hero, desktop && !split && styles.overviewCard]}>
         <SurfaceMaterial radius={radii.xl} />
-        <Text style={styles.eyebrow}>{program.weekText}</Text>
+        <Text style={styles.eyebrow}>{program.weekText}{span ? ` · ${span}` : ""}</Text>
         <Text style={styles.title}>Program {program.gcNo}</Text>
         <View
           style={[styles.statusPill, { backgroundColor: `${statusColor}1F` }]}
@@ -186,118 +218,74 @@ export default function TotoProgramDetailScreen() {
             {formatProgramStatus(program.status)}
           </Text>
         </View>
-        <View style={styles.metrics}>
-          <View style={[styles.metric, inlineMetrics && styles.overviewMetric]}>
-            <Text style={styles.metricValue}>{number.format(program.columns)}</Text>
-            <Text style={styles.metricLabel}>kolon</Text>
+        {metrics.length ? <View style={styles.metrics}>
+          {metrics.map((metric) => (
+            <View key={metric.label} style={[styles.metric, inlineMetrics && styles.overviewMetric]}>
+              <Text style={styles.metricValue}>{metric.value}</Text>
+              <Text style={styles.metricLabel}>{metric.label}</Text>
+            </View>
+          ))}
+        </View> : null}
+        {program.status === "ACTIVE" ? (
+          <Text style={styles.kickoff}>{progress.planned ? when.label : `${program.predictions.length ? "Henüz kolon planı yok" : "Tahmin hazırlanıyor"} · ${when.label.toLocaleLowerCase("tr-TR")}`} {when.text}</Text>
+        ) : null}
+        {progress.settled > 0 ? (
+          <View style={styles.resultBlock}>
+            <TotoProgressBar progress={progress} />
+            <View style={styles.resultLegend}>
+              {legend.map(([label, color]) => (
+                <View key={label} style={styles.legendItem}>
+                  <View style={[styles.legendDot, { backgroundColor: color }]} />
+                  <Text style={styles.legendText}>{label}</Text>
+                </View>
+              ))}
+            </View>
           </View>
-          <View style={[styles.metric, inlineMetrics && styles.overviewMetric]}>
-            <Text style={styles.metricValue}>{number.format(program.cost)}</Text>
-            <Text style={styles.metricLabel}>maliyet</Text>
-          </View>
-          <View style={[styles.metric, inlineMetrics && styles.overviewMetric]}>
-            <Text style={styles.metricValue}>{program.mainHits ?? "—"}</Text>
-            <Text style={styles.metricLabel}>ana isabet</Text>
-          </View>
-          <View style={[styles.metric, inlineMetrics && styles.overviewMetric]}>
-            <Text style={styles.metricValue}>
-              {program.coverageHits ?? "—"}
+        ) : null}
+        {program.status === "WAITING_RESULT" && progress.next ? (
+          <Text style={styles.kickoff}>{progress.next.started ? "Sonuç bekleniyor" : "Sıradaki"}: {progress.next.matchName}{progress.next.at !== null ? ` · ${kickoffLabel(progress.next.at)}` : ""}</Text>
+        ) : null}
+        {program.status === "RESULTED" && program.theoreticalPrize !== null ? (
+          <View style={styles.prizeRow}>
+            <View style={styles.prizeCopy}>
+              <Text style={styles.prizeLabel}>Teorik ikramiye</Text>
+              {program.payoutDescription ? (
+                <Text numberOfLines={2} style={styles.prizeDescription}>
+                  {program.payoutDescription}
+                </Text>
+              ) : null}
+            </View>
+            <Text style={styles.prizeValue}>
+              {formatCurrencyAmount(program.theoreticalPrize, program.theoreticalPrizeCurrency)}
             </Text>
-            <Text style={styles.metricLabel}>kapsama</Text>
           </View>
-        </View>
-        <Text style={styles.contextNote}>Kapsama = ana isabet + kupondaki diğer isabetler. Kupon kazancı değildir. Maliyet birimi kaynakta belirtilmiyor.</Text>
-        <Text style={styles.distribution}>
-          {program.singleCount} tek · {program.doubleCount} çift ·{" "}
-          {program.tripleCount} üçlü
-        </Text>
+        ) : null}
+        {program.status === "RESULTED" && program.bestColumnHits !== null ? (
+          <Text style={styles.kickoff}>Kupon tam sistem: en iyi kolon {outOf(program.bestColumnHits, progress.total)} doğru.</Text>
+        ) : null}
+        {tiers.length ? (
+          <View style={styles.tiers}>
+            <Text style={styles.prizeLabel}>İkramiye kademeleri</Text>
+            {tiers.map((tier) => (
+              <View accessible accessibilityLabel={`${tier.label}, ${tier.detail}, ${tier.oursLabel}`} key={tier.key} style={styles.tierRow}>
+                <Text style={[styles.tierLabel, tier.ours > 0 && styles.tierWon]}>{tier.label}</Text>
+                <View style={styles.tierCopy}>
+                  <Text style={styles.tierDetail}>{tier.detail}</Text>
+                  <Text style={[styles.tierOurs, tier.ours > 0 && styles.tierWon]}>{tier.oursLabel}</Text>
+                </View>
+              </View>
+            ))}
+            <Text style={styles.prizeDescription}>Teorik tutarlar SAP ikramiye dağılımından; kuponun oynandığı varsayılır.</Text>
+          </View>
+        ) : null}
+        {resultFilter !== "ALL" ? <Text style={styles.contextNote}>Programın tamamı · aşağıdaki filtreler yalnızca maç listesini daraltır.</Text> : null}
+        {note ? <Text style={styles.contextNote}>{note}</Text> : null}
+        {meta ? <Text style={styles.distribution}>{meta}</Text> : null}
         <Text style={styles.updatedAt}>
           Son güncelleme: {formatTimestamp(program.updatedAt)}
         </Text>
       </View>
-
-      {resultTotal > 0 ? (
-        <View style={[styles.resultProgressCard, desktop && !split && styles.overviewCard]}>
-          <View style={styles.resultProgressHeader}>
-            <Text style={styles.resultProgressTitle}>Sonuçlar</Text>
-            <Text style={styles.resultProgressValue}>
-              {resultSummary.settled}/{resultTotal} sonuçlandı
-            </Text>
-          </View>
-          <View style={styles.resultProgressTrack}>
-            {resultSummary.total > 0 ? (
-              <>
-                <View
-                  style={[
-                    styles.resultProgressFill,
-                    {
-                      backgroundColor: colors.green,
-                      flex: resultSummary.mainHits
-                    }
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.resultProgressFill,
-                    {
-                      backgroundColor: colors.gold,
-                      flex: resultSummary.coveredOnly
-                    }
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.resultProgressFill,
-                    {
-                      backgroundColor: colors.red,
-                      flex: resultSummary.misses
-                    }
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.resultProgressFill,
-                    {
-                      backgroundColor: colors.textSubtle,
-                      flex: resultSummary.open
-                    }
-                  ]}
-                />
-              </>
-            ) : null}
-          </View>
-          {resultSummary.total > 0 ? (
-            <View style={styles.resultMetrics}>
-              <Text style={[styles.resultMetric, { color: colors.green }]}>
-                {resultSummary.mainHits} ana isabet
-              </Text>
-              <Text style={[styles.resultMetric, { color: colors.gold }]}>
-                {resultSummary.coveredOnly} Kuponda
-              </Text>
-              <Text style={[styles.resultMetric, { color: colors.red }]}>
-                {resultSummary.misses} kapsam dışı
-              </Text>
-              <Text style={[styles.resultMetric, { color: semantic.intelligence }]}>{resultSummary.open} bekliyor</Text>
-            </View>
-          ) : null}
-          {resultFilter !== "ALL" ? <Text style={styles.contextNote}>Programın tamamı · aşağıdaki filtreler yalnızca maç listesini daraltır.</Text> : null}
-          {program.status === "RESULTED" && program.theoreticalPrize !== null ? (
-            <View style={styles.prizeRow}>
-              <View style={styles.prizeCopy}>
-                <Text style={styles.prizeLabel}>Teorik ikramiye</Text>
-                {program.payoutDescription ? (
-                  <Text numberOfLines={2} style={styles.prizeDescription}>
-                    {program.payoutDescription}
-                  </Text>
-                ) : null}
-              </View>
-              <Text style={styles.prizeValue}>
-                {formatCurrencyAmount(program.theoreticalPrize, program.theoreticalPrizeCurrency)}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-      ) : null}
+      {program.status === "ACTIVE" ? bilyonerAction(true) : null}
       </View>
 
       <View style={desktop ? styles.couponColumn : undefined}>
@@ -305,9 +293,11 @@ export default function TotoProgramDetailScreen() {
         eyebrow="KUPON"
         title={program.predictions.length ? "Tahminler" : "Aktif fikstür"}
       />
-      {program.predictions.length > 0 ? <View style={styles.listControls}>
+      {program.predictions.length > 0 && progress.settled > 0 ? <View style={styles.listControls}>
         <View style={styles.filters}>
-          {resultFilters.map(option => <FilterChip key={option.value} label={option.label} count={filterTotoResults(program.predictions, option.value).length} selected={resultFilter === option.value} onPress={() => setResultFilter(option.value)} />)}
+          {resultFilters.map(option => ({ option, count: filterTotoResults(program.predictions, option.value).length }))
+            .filter(({ option, count }) => option.value === "ALL" || count > 0 || resultFilter === option.value)
+            .map(({ option, count }) => <FilterChip key={option.value} label={option.label} count={count} selected={resultFilter === option.value} onPress={() => setResultFilter(option.value)} />)}
         </View>
         <Text accessibilityLiveRegion="polite" style={styles.contextNote}>{visiblePredictions.length} / {program.predictions.length} maç · {resultFilters.find(option => option.value === resultFilter)?.label}</Text>
       </View> : null}
@@ -322,66 +312,13 @@ export default function TotoProgramDetailScreen() {
           predictions={visiblePredictions}
           presentResult={predictionResultPresentation}
         />
-      ) : program.predictions.length ? visiblePredictions.map((prediction) => {
-        const presentation = predictionResultPresentation(prediction.result);
-        return (
-          <Pressable
-            accessibilityRole="link"
-            accessibilityHint="Karşılaşmayı Bilyoner uygulamasında veya web sitesinde açar"
-            accessibilityLabel={`${prediction.matchNo}. ${prediction.matchName}, ana tahmin ${prediction.mainPick}, kupon ${prediction.coverage}, ${presentation.label}`}
-            accessibilityState={{ disabled: !prediction.eventId }}
-            disabled={!prediction.eventId}
-            key={prediction.matchNo}
-            onPress={() => openBilyoner(prediction.eventId)}
-            style={({ pressed }) => [
-              styles.predictionCard,
-              styles.predictionStack,
-              pressed && styles.pressed
-            ]}
-          >
-            <View style={styles.predictionHeader}>
-            <View style={styles.matchNo}>
-              <Text style={styles.matchNoText}>{prediction.matchNo}</Text>
-            </View>
-            <View style={styles.predictionCopy}>
-              <Text style={styles.matchName}>
-                {prediction.matchName}
-              </Text>
-              <Text style={styles.predictionMeta}>
-                {formatFixtureDateTime(
-                  prediction.matchDate,
-                  prediction.matchTime
-                )}{" "}
-                · Güven {formatPercentage(prediction.confidence)}
-              </Text>
-            </View>
-            </View>
-            <View style={styles.predictionBottom}>
-            <View style={styles.pickReadout}>
-              <Text style={styles.metricLabel}>Ana tahmin <Text style={styles.pick}>{prediction.mainPick}</Text></Text>
-              <Text style={styles.metricLabel}>Kapsama <Text style={styles.pick}>{prediction.coverage}</Text></Text>
-            </View>
-            <View style={styles.pickBlock}>
-              <Text style={[styles.result, { color: presentation.color }]}>
-                {presentation.label}
-              </Text>
-              {prediction.actualResult ? (
-                <Text style={styles.actualResult}>
-                  Sonuç {prediction.actualResult}
-                </Text>
-              ) : null}
-              {prediction.homeScore !== null &&
-              prediction.awayScore !== null ? (
-                <Text style={styles.finalScore}>
-                  Skor {prediction.homeScore}-{prediction.awayScore}
-                </Text>
-              ) : null}
-            </View>
-            </View>
-            {prediction.eventId ? <Text style={styles.externalHint}>Bilyoner&apos;de aç ↗</Text> : null}
-          </Pressable>
-        );
-      }) : program.fixtures.length ? (
+      ) : program.predictions.length ? (
+        <TotoCouponList
+          onOpen={openBilyoner}
+          predictions={visiblePredictions}
+          presentResult={predictionResultPresentation}
+        />
+      ) : program.fixtures.length ? (
         program.fixtures.map((fixture) => (
           <Pressable
             accessibilityRole="link"
@@ -421,28 +358,8 @@ export default function TotoProgramDetailScreen() {
       </View>
       </View>
 
-      <View style={styles.actions}>
-        <Pressable
-          accessibilityHint="Bilyoner uygulaması kuruluysa Spor Toto sayfasını uygulamada, değilse güvenli web sayfasında açar"
-          accessibilityRole="link"
-          onPress={() =>
-            Linking.openURL(buildBilyonerTotoUrl()).catch(() =>
-              Alert.alert(
-                "Bilyoner açılamadı",
-                "Bilyoner Spor Toto sayfası şu anda açılamıyor."
-              )
-            )
-          }
-          style={({ pressed }) => [
-            styles.bilyonerAction,
-            pressed && styles.actionPressed
-          ]}
-        >
-          <Text style={styles.bilyonerActionText}>
-            Bilyoner Spor Toto&apos;da aç
-          </Text>
-        </Pressable>
-      </View>
+      {/* Playing matters only before kickoff; a resulted program has no play action. */}
+      {program.status === "WAITING_RESULT" || program.status === "ERROR" ? <View style={styles.actions}>{bilyonerAction(false)}</View> : null}
     </Screen>
   );
 }
@@ -468,11 +385,6 @@ const styles = StyleSheet.create({
   contextNote: { color: colors.textMuted, ...typeScale.label, lineHeight: 18, marginTop: spacing.sm },
   listControls: { gap: spacing.sm, marginBottom: spacing.md },
   filters: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
-  predictionStack: { flexDirection: "column", alignItems: "stretch" },
-  predictionHeader: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  predictionBottom: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: spacing.sm },
-  pickReadout: { flex: 1, minWidth: 0, gap: spacing.xs },
-  externalHint: { ...typeScale.label, color: semantic.intelligence, alignSelf: "flex-end" },
   couponColumn: {
     flex: 1,
     minWidth: 0
@@ -535,50 +447,6 @@ const styles = StyleSheet.create({
     color: colors.textSubtle,
     ...typeScale.label,
     marginTop: spacing.sm
-  },
-  resultProgressCard: {
-    backgroundColor: colors.backgroundElevated,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    marginTop: spacing.lg,
-    padding: spacing.lg
-  },
-  resultProgressHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between"
-  },
-  resultProgressTitle: {
-    ...textFont("800"),
-    color: colors.text,
-    fontSize: 14
-  },
-  resultProgressValue: {
-    ...numericFont("800"),
-    color: colors.text,
-    fontSize: 14
-  },
-  resultProgressTrack: {
-    height: 6,
-    flexDirection: "row",
-    backgroundColor: colors.surfaceStrong,
-    borderRadius: radii.round,
-    marginTop: spacing.sm,
-    overflow: "hidden"
-  },
-  resultProgressFill: {
-    height: "100%",
-    borderRadius: radii.round
-  },
-  resultMetrics: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.md,
-    marginTop: spacing.md
-  },
-  resultMetric: {
-    ...typeScale.micro
   },
   resultLegend: {
     flexDirection: "row",
@@ -670,28 +538,6 @@ const styles = StyleSheet.create({
     ...typeScale.label,
     marginTop: spacing.xs
   },
-  pickBlock: {
-    alignItems: "flex-end"
-  },
-  pick: {
-    ...numericFont("800"),
-    color: colors.gold,
-    fontSize: 16
-  },
-  result: {
-    ...typeScale.micro,
-    marginTop: spacing.xs
-  },
-  actualResult: {
-    color: colors.textSubtle,
-    ...typeScale.label,
-    marginTop: spacing.xs
-  },
-  finalScore: {
-    color: colors.textMuted,
-    ...typeScale.label,
-    marginTop: spacing.xs
-  },
   waitingPrediction: {
     color: colors.gold,
     maxWidth: 72,
@@ -711,11 +557,23 @@ const styles = StyleSheet.create({
   },
   bilyonerAction: {
     alignItems: "center",
-    backgroundColor: colors.green,
     borderRadius: radii.round,
     justifyContent: "center",
     minHeight: 50
   },
+  bilyonerPrimary: { backgroundColor: colors.green, marginTop: spacing.lg },
+  bilyonerSecondary: { borderWidth: 1, borderColor: colors.border },
+  bilyonerSecondaryText: { color: colors.text },
+  kickoff: { color: colors.textMuted, ...typeScale.bodyCompact, marginTop: spacing.md },
+  // Prize tiers: a tier that pays any coupon column takes the prize's gold.
+  tiers: { gap: spacing.sm, marginTop: spacing.lg, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.borderSoft },
+  tierRow: { flexDirection: "row", alignItems: "flex-start", gap: spacing.md },
+  tierLabel: { ...typeScale.metricCompact, fontSize: 14, lineHeight: 18, color: colors.textMuted, width: 64 },
+  tierCopy: { flex: 1, minWidth: 0, gap: 2 },
+  tierDetail: { color: colors.textSubtle, ...typeScale.label, letterSpacing: 0 },
+  tierOurs: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0, fontWeight: "700" },
+  tierWon: { color: colors.gold },
+  resultBlock: { gap: spacing.sm, marginTop: spacing.lg },
   bilyonerActionText: {
     ...textFont("800"),
     color: colors.background,

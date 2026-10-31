@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { FlatList, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { totoProgramsQuery } from "@/src/api/queries";
 import type { TotoProgram } from "@/src/api/schemas";
 import { FilterChip } from "@/src/components/FilterChip";
@@ -17,8 +17,13 @@ import { Action } from "@/src/components/RebuildEvidencePanel";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { TotoRefreshNotice } from "@/src/components/TotoRefreshNotice";
 import { totoQueryView } from "@/src/utils/toto-query-view";
+import { coverageTrend } from "@/src/utils/toto-lifecycle";
 
 type StatusFilter = "ALL" | TotoProgram["status"];
+// Current programs render as cards and resulted ones as compact history rows,
+// each chunked into the grid's columns so one single-column list stays virtualized.
+type ListRow = { kind: "cards" | "past"; key: string; programs: TotoProgram[] } | { kind: "history"; key: string; count: number };
+const chunk = <T,>(items: T[], size: number) => Array.from({ length: Math.ceil(items.length / size) }, (_, index) => items.slice(index * size, index * size + size));
 
 /** The lifecycle filters, in lifecycle order; "Hata" only appears when needed. */
 const statusFilters: { value: Exclude<StatusFilter, "ALL">; label: string }[] = [
@@ -47,6 +52,19 @@ export default function TotoScreen() {
   }, [programs]);
   const visible = filter === "ALL" ? programs : programs.filter((program) => program.status === filter);
   const view = totoQueryView(query);
+  const current = visible.filter((program) => program.status !== "RESULTED");
+  const past = visible.filter((program) => program.status === "RESULTED").sort((a, b) => b.gcNo - a.gcNo);
+  const trend = coverageTrend(programs);
+  const rows: ListRow[] = [
+    ...chunk(current, grid.columns).map((items, index): ListRow => ({ kind: "cards", key: `c${index}`, programs: items })),
+    ...(past.length ? [{ kind: "history", key: "history", count: past.length } as ListRow] : []),
+    ...chunk(past, grid.columns).map((items, index): ListRow => ({ kind: "past", key: `p${index}`, programs: items }))
+  ];
+  const firstKey = (current[0] ?? past[0])?.key;
+  const card = (program: TotoProgram, compact: boolean) => {
+    const element = <TotoProgramCard compact={compact} program={program} showContextNote={false} />;
+    return program.key === firstKey ? <TutorialTarget id="toto-first-card">{element}</TutorialTarget> : element;
+  };
 
   return (
     <Screen
@@ -54,13 +72,12 @@ export default function TotoScreen() {
       contentStyle={styles.screen}
       eyebrow="SPOR TOTO"
       scroll={false}
-      subtitle="Programı aç, kolon planını ve sonuçları incele."
       title="Programlar"
       fixedHeader={view.kind === "retained" ? <TotoRefreshNotice receivedAt={view.receivedAt} refreshing={query.isFetching} onRetry={() => { void refresh(); }} /> : undefined}
       wide
     >
       {view.kind === "current" || view.kind === "retained" ? (
-        <View style={styles.filters}>
+        <ScrollView contentContainerStyle={styles.filters} horizontal showsHorizontalScrollIndicator={false} style={styles.filterBar}>
           <FilterChip count={programs.length} label="Tümü" onPress={() => setFilter("ALL")} selected={filter === "ALL"} />
           {statusFilters
             .filter((option) => option.value !== "ERROR" || counts.ERROR > 0)
@@ -74,7 +91,7 @@ export default function TotoScreen() {
                 selected={filter === option.value}
               />
             ))}
-        </View>
+        </ScrollView>
       ) : null}
       {view.kind === "loading" ? (
         <LoadingState label="Toto programları hazırlanıyor" />
@@ -90,13 +107,9 @@ export default function TotoScreen() {
         />
       ) : (
         <FlatList
-          // numColumns cannot change on a mounted list; remount on a new grid.
-          key={grid.columns}
           contentContainerStyle={styles.list}
-          data={visible}
-          keyExtractor={(item) => item.key}
-          numColumns={grid.columns}
-          {...(grid.rowStyle ? { columnWrapperStyle: grid.rowStyle } : {})}
+          data={rows}
+          keyExtractor={(row) => row.key}
           ListEmptyComponent={
             <View style={styles.empty}>
               <EmptyState
@@ -106,7 +119,7 @@ export default function TotoScreen() {
               {filter !== "ALL" && programs.length > 0 ? <Action icon="chevron-right" onPress={() => setFilter("ALL")} title="Tüm programları göster" /> : null}
             </View>
           }
-          ListHeaderComponent={programs.length > 0 ? <Text style={styles.contextNote}>Kapsama isabeti kupon kazancı değildir. Maliyet birimi kaynakta belirtilmiyor.</Text> : null}
+          ListHeaderComponent={<View style={styles.intro}><Text style={styles.subtitle}>Programı aç, kuponu ve sonuçları incele.</Text>{programs.length > 0 ? <Text style={styles.contextNote}>Kapsama kupon kazancı değildir.{programs.every((program) => program.costCurrency) ? "" : " Maliyet birimi kaynakta belirtilmiyor."}</Text> : null}</View>}
           refreshControl={
             <RefreshControl
               colors={[colors.green]}
@@ -115,15 +128,14 @@ export default function TotoScreen() {
               tintColor={colors.green}
             />
           }
-          renderItem={({ item, index }) => (
-            <View style={grid.cellStyle}>
-              {index === 0 ? (
-                <TutorialTarget id="toto-first-card">
-                  <TotoProgramCard program={item} showContextNote={false} />
-                </TutorialTarget>
-              ) : (
-                <TotoProgramCard program={item} showContextNote={false} />
-              )}
+          renderItem={({ item }) => item.kind === "history" ? (
+            <View style={styles.historyHead}>
+              <Text accessibilityRole="header" aria-level={2} style={styles.historyTitle}>Geçmiş</Text>
+              <Text style={styles.contextNote}>{item.count} sonuçlanan program{trend.length > 1 ? ` · son ${trend.length} programın kapsaması, yeniden eskiye: ${trend.join(" · ")}` : ""}</Text>
+            </View>
+          ) : (
+            <View style={grid.wrapStyle}>
+              {item.programs.map((program) => <View key={program.key} style={grid.cellStyle}>{card(program, item.kind === "past")}</View>)}
             </View>
           )}
           showsVerticalScrollIndicator={false}
@@ -137,15 +149,19 @@ const styles = StyleSheet.create({
   screen: {
     paddingBottom: 0
   },
+  // One horizontal row of chips keeps the fixed header short on a phone.
+  filterBar: { flexGrow: 0, flexShrink: 0, marginBottom: 14 },
   filters: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-    marginBottom: 14
+    gap: spacing.sm
   },
+  intro: { gap: spacing.xs, marginBottom: spacing.md },
+  subtitle: { ...typeScale.body, color: colors.textMuted },
+  historyHead: { gap: 2, marginTop: spacing.md, marginBottom: spacing.sm },
+  historyTitle: { ...typeScale.moduleTitle, color: colors.text },
   list: {
     paddingBottom: 112
   },
-  contextNote: { ...typeScale.bodyCompact, color: colors.textMuted, marginBottom: spacing.md },
+  contextNote: { ...typeScale.bodyCompact, color: colors.textMuted },
   empty: { gap: spacing.sm }
 });

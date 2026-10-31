@@ -35,6 +35,8 @@ import { rebuildCohortsReportSchema, rebuildMatchSchema, rebuildReportSchema } f
 import { rebuildPressureHistorySchema, rebuildStatisticsSchema, rebuildPoolPathSchema } from "./rebuild-statistics-schemas";
 
 const requestTimeoutMs = 15_000;
+// Opts Toto reads into SAP coupon close, cost unit, best column and prize tiers.
+const totoDisplayHeaders = { "X-BTB-Toto-Display": "btb-toto-display.v1" };
 const decisionContextHeaders = { "X-BTB-Decision-Context": "decision-context.v3", "X-BTB-Rebuild": "btb-rebuild.v1", "X-BTB-Selection-Display": "btb-selection-display.v2", "X-BTB-Match-Clock":"match-clock.v1" };
 
 export function createHttpMobileApi(baseUrl: string): MobileApi {
@@ -254,12 +256,12 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
         signal
       ),
     getTotoPrograms: (signal) =>
-      request("/v1/toto/programs", totoProgramListSchema, {}, signal),
+      request("/v1/toto/programs", totoProgramListSchema, { headers: totoDisplayHeaders }, signal),
     getTotoProgram: (gcNo, version, signal) =>
       request(
         `/v1/toto/programs/${gcNo}/${version}`,
         totoProgramSchema,
-        {},
+        { headers: totoDisplayHeaders },
         signal
       ),
     registerDevice: async (token, platform, installationId, signal) => {

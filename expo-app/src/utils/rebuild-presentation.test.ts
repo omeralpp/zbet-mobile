@@ -11,7 +11,7 @@ test("verified no-selection is distinct from invalid data", () => {
   assert.equal(rebuildPresentation({status:"LIVE",summary:make("SOURCE_INVALID"),now:0}).label,"GÜNCEL VERİ BEKLENİYOR");
 });
 test("unknown cards and expired selection stay explicit", () => {
-  assert.equal(rebuildPresentation({status:"LIVE",summary:make("NO_SELECTION"),redUnknown:true,now:0}).label,"KART VERİSİ BEKLENİYOR");
+  assert.equal(rebuildPresentation({status:"LIVE",summary:make("NO_SELECTION"),redUnknown:true,now:0}).label,"KART VERİSİ YOK");
   assert.equal(rebuildPresentation({status:"LIVE",summary:{...make("ACTIVE"),availability:"ACTIVE"},now:0}).text,"Oran / ölçüm güncel değil · güncel seçim yok");
 });
 test("early rejected candidate defaults are not presented as measured zero",()=>{

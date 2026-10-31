@@ -87,8 +87,8 @@ export function jinxMatchReading({ record, data, matchKey, context, now, sourceF
   if (latest && Date.parse(latest.publishedAt) <= Date.parse(data.asOf) && latest.decisionId !== record.decisionId) return { ...view("Yeni karar var",
     "Bu kart önceki kararı gösteriyor; daha yeni bir BTB kararı yayımlanmış.",
     { label: "Pazar", before: formatSelection(record.market), after: formatSelection(latest.market) }), decisionId: latest.decisionId };
-  if (data.reason === "RED_CARD_UNKNOWN") return view("Kart verisi bekleniyor",
-    "Kart verisi doğrulanmadığı için güncel seçim teyidi yapılamıyor.", undefined, true);
+  if (data.reason === "RED_CARD_UNKNOWN") return view("Kart verisi yok",
+    "Sağlayıcı kırmızı kart sayısını göndermiyor; güncel seçim teyidi yapılamıyor.", undefined, true);
   const candidates = data.candidates.filter(candidate => candidate.market === record.market);
   const candidate = candidates.length === 1 ? candidates[0] : null;
   if (candidate?.reason === "MARKET_ALREADY_DECIDED") return view("Pazar sonuçlandı",

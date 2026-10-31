@@ -23,7 +23,7 @@ export function rebuildPresentation({ status, summary, now, error = false, redUn
   if (status === "NOT_PLAYED") return { label: "MAÇ OYNANMADI", text: "Maç oynanmadı · güncel seçim yok", tone: "neutral" as const };
   if (error) return { label: "VERİ ALINAMADI", text: "Güncel veri alınamadı · yeniden dene", tone: "warning" as const };
   if (currentRebuild(summary, now)) return { label: "GÜNCEL SEÇİM", text: "Güncel seçim doğrulandı", tone: "positive" as const };
-  if (redUnknown || summary?.reason === "RED_CARD_UNKNOWN") return { label: "KART VERİSİ BEKLENİYOR", text: "Kart verisi bekleniyor · öneri üretilemiyor", tone: "warning" as const };
+  if (redUnknown || summary?.reason === "RED_CARD_UNKNOWN") return { label: "KART VERİSİ YOK", text: "Kart verisi yok · öneri üretilmiyor", tone: "warning" as const };
   if (summary?.availability === "NOT_STARTED" || status === "NOT_STARTED") return { label: "BAŞLAMADI", text: "Maç başlamadı · güncel seçim yok", tone: "neutral" as const };
   if (summary?.availability === "ACTIVE") return { label: "GÜNCEL VERİ BEKLENİYOR", text: "Oran / ölçüm güncel değil · güncel seçim yok", tone: "warning" as const };
   // These reasons describe a successfully verified context with no selection.

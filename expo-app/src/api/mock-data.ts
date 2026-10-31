@@ -410,6 +410,11 @@ export const mockTotoPrograms: TotoProgram[] = [
     theoreticalPrize: 125000.5,
     theoreticalPrizeCurrency: "TRY",
     payoutDescription: "15 bilen kolonlar için teorik toplam",
+    payinEndsAt: null,
+    costCurrency: null,
+    unitPrice: null,
+    bestColumnHits: null,
+    payouts: null,
     updatedAt: now,
     fixtures: [
       {

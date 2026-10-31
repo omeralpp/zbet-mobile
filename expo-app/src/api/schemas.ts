@@ -334,6 +334,15 @@ export const totoPredictionSchema = totoFixtureSchema.extend({
   result: z.enum(["OPEN", "MAIN_HIT", "COVERED", "MISS"])
 });
 
+/** One prize tier from SAP Payouts: how many picks it pays and how many coupon columns hit it. */
+export const totoPayoutSchema = z.strictObject({
+  correct: z.number().int().min(0).max(15),
+  winners: z.number().int().nonnegative(),
+  amountPerColumn: finiteNumber.nonnegative(),
+  couponWinningColumns: z.number().int().nonnegative(),
+  theoreticalTotal: finiteNumber.nonnegative()
+});
+
 export const totoProgramSchema = z.strictObject({
   key: z.string().min(1),
   gcNo: z.number().int().positive(),
@@ -358,6 +367,15 @@ export const totoProgramSchema = z.strictObject({
    */
   theoreticalPrizeCurrency: z.string().regex(/^[A-Z]{3}$/).nullable().default(null),
   payoutDescription: z.string().min(1).nullable().default(null),
+  /**
+   * btb-toto-display.v1 facts (coupon close, cost unit, best column, prize
+   * tiers). Accepted before a BFF sends them; null means not provided.
+   */
+  payinEndsAt: isoDateTime.nullable().default(null),
+  costCurrency: z.string().regex(/^[A-Z]{3}$/).nullable().default(null),
+  unitPrice: finiteNumber.positive().nullable().default(null),
+  bestColumnHits: z.number().int().min(0).max(15).nullable().default(null),
+  payouts: z.array(totoPayoutSchema).nullable().default(null),
   fixtures: z.array(totoFixtureSchema),
   predictions: z.array(totoPredictionSchema),
   updatedAt: isoDateTime
@@ -414,6 +432,7 @@ export type SuperKpis = z.infer<typeof superKpisSchema>;
 export type TotoProgram = z.infer<typeof totoProgramSchema>;
 export type TotoFixture = z.infer<typeof totoFixtureSchema>;
 export type TotoPrediction = z.infer<typeof totoPredictionSchema>;
+export type TotoPayout = z.infer<typeof totoPayoutSchema>;
 export type Dashboard = z.infer<typeof dashboardSchema>;
 
 /* ------------------------------------------------------------------ *

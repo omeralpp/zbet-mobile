@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-31",
+  "profile": "btb-mobile",
+  "observation": "NXT-OBS-238",
+  "combinedWith": "NXT-OBS-235",
+  "followUpsDeferred": ["NXT-OBS-239"],
+  "status": "LOCAL_VALIDATED_NOT_RELEASED",
+  "scope": "Owner-approved Toto Programlar (L1-L4) and Toto programi (D1-D5) recommendations, shared Android/web",
+  "baseSource": "eff88f2ed06aa4bdd1d26b2ff383e31e09d87aac",
+  "heuristicScores": { "programlar": { "before": 7.0, "after": 8.8 }, "totoProgrami": { "before": 7.0, "after": 9.0 } },
+  "quality": "PASSED TypeScript ESLint 752 client tests 33 tooling tests brand",
+  "focusedNewRegressionTests": 5,
+  "expoDoctor": "NOT_RERUN no dependency or native configuration change",
+  "androidPreviewBundle": "PASSED combined candidate; secret scan zero findings; not signed APK; SHA-256 1FDF557C144006A7F236BFD62B0F68AF920ACE8CD01653B32249A47A93ACB3C6",
+  "webExport": "PASSED combined candidate canonical edge export; secret scan zero findings; tree SHA-256 B0F7A19F2B60B1D485F4E4F2EBB00D282066507FAB24E82E7F8BC6E95242A392",
+  "browser": {
+    "list": "Unplanned/active/waiting/resulted cards and compact history at 390/1440 px, dark and light",
+    "detailHeights390": { "activeBefore": 3325, "activeAfter": 1422, "resultedAfter": 1578, "waitingAfter": 1749 },
+    "overflow": "document width equals viewport at 320/390 on list and four details; only the chip scroller extends",
+    "keyboard": "coupon row opens with Enter, aria-expanded true, 44 px Bilyoner link",
+    "playAction": "primary under overview when ACTIVE, secondary at bottom when WAITING_RESULT, absent when RESULTED",
+    "filters": "none before results; zero-count chips hidden"
+  },
+  "browserFoundAndFixed": ["chip row collapsed vertically on web", "coupon label on a program without a coupon", "countdown split across lines", "five-line caveat", "mock 10/3 false fraction", "expanded state not exposed on web"],
+  "nativeInteraction": "UNOBSERVED no connected Android device/emulator",
+  "publishedPair": "6fc5d05453cd5cb093cc45a5d109d682a77d1251 unchanged",
+  "gitStagedCommittedPushed": false,
+  "externalMutation": false,
+  "bffSapModelContractChange": false,
+  "newRelease": false,
+  "recurringWaitCreated": false
+}

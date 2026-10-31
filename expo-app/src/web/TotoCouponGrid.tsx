@@ -28,7 +28,7 @@ export function TotoCouponGrid({
         <View style={styles.legendItem}><View style={[styles.legendCell, styles.cellCovered]} /><Text style={styles.meta}>Kapsama</Text></View>
         <View style={styles.legendItem}><View style={[styles.legendCell, styles.cellActual]} /><Text style={styles.meta}>Gerçekleşen sonuç</Text></View>
       </View>
-      <Text style={styles.externalHint}>Maç adı: Bilyoner&apos;de aç ↗</Text>
+      <Text style={styles.externalHint}>Maç adı: Bilyoner&apos;de aç ↗ · Model güveni kazanma olasılığı değildir.</Text>
     <View role="table" aria-label="Toto kuponu" style={styles.table}>
       <View role="row" style={[styles.row, styles.headerRow]}>
         <Text role="columnheader" style={[styles.headerText, styles.no]}>#</Text>
@@ -38,7 +38,7 @@ export function TotoCouponGrid({
             {outcome}
           </Text>
         ))}
-        <Text role="columnheader" style={[styles.headerText, styles.confidence]}>Güven</Text>
+        <Text role="columnheader" style={[styles.headerText, styles.confidence]}>Model güveni</Text>
         <Text role="columnheader" style={[styles.headerText, styles.status]}>Durum</Text>
       </View>
       {predictions.map((prediction, index) => {
@@ -71,7 +71,7 @@ export function TotoCouponGrid({
               </Text>
             </View>
             {cells.map((cell) => (
-              <View role="cell" key={cell.outcome} accessibilityLabel={`${cell.outcome}${cell.main ? " ana tahmin" : cell.covered ? " kuponda" : ", kuponda değil"}${cell.actual ? ", gerçekleşen sonuç" : ""}`} style={styles.cellColumn}>
+              <View role="cell" key={cell.outcome} accessibilityLabel={`${cell.outcome}${cell.main ? " ana tahmin" : cell.covered ? " kapsamada" : ", kapsamada değil"}${cell.actual ? ", gerçekleşen sonuç" : ""}`} style={styles.cellColumn}>
                 <View
                   style={[
                     styles.cell,
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   },
   confidence: {
     textAlign: "right",
-    width: 56
+    width: 92
   },
   status: {
     textAlign: "right",

@@ -1,5 +1,5 @@
-import { jinxInsight } from "@/src/utils/jinx-insight";
 import { jinxMatchReading } from "@/src/utils/jinx-match-reading";
+import { candidateGroups, jinxBlockers, jinxOutlook } from "@/src/utils/jinx-outlook";
 import type { AnalysisContext } from "@/src/api/schemas";
 import { useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -7,10 +7,10 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { rebuildMatchQuery, rebuildCohortsReportQuery } from "@/src/api/queries";
-import type { RebuildRecommendation, RebuildReport } from "@/src/api/rebuild-schemas";
+import type { RebuildMatch, RebuildRecommendation, RebuildReport } from "@/src/api/rebuild-schemas";
 import { currentRebuild, rebuildReason } from "@/src/utils/rebuild-current";
 import { rebuildHero, displayedDecision, requestedDecision } from "@/src/utils/rebuild-hero";
-import { candidateFacts, rebuildPresentation, publishedExplanation } from "@/src/utils/rebuild-presentation";
+import { candidateFacts, publishedExplanation } from "@/src/utils/rebuild-presentation";
 import {
   formatDecimal,
   formatQuote,
@@ -241,9 +241,47 @@ function asOfTime(iso: string | undefined): string {
     : "—";
 }
 
+/** Rejected candidates grouped by reason; chosen and eligible ones stay individual. */
+function CandidateEvidence({ candidates, current }: { candidates: RebuildMatch["candidates"]; current: boolean }) {
+  const { listed, rejected } = candidateGroups(candidates);
+  return (
+    <>
+      <Text style={styles.evidenceLabel}>Adaylar ve elenme nedenleri</Text>
+      <Text style={styles.caption}>Adaylar yayımlanmış öneri değildir. Hesaplanmayan değerler sıfır sayılmaz; son kayıtlı değerlendirme gösterilir.</Text>
+      {listed.map(c => {
+        const status = c.selected ? { label: current ? "EN İYİ ADAY" : "SON HESABIN LİDERİ", tone: "positive" as const } : { label: "UYGUN, SEÇİLMEDİ", tone: "pending" as const };
+        return (
+          <View key={c.market} style={styles.candidate}>
+            <View style={styles.rowBetween}>
+              <Text style={styles.candidateMarket}>{formatSelection(c.market)}</Text>
+              <TonePill label={status.label} tone={status.tone} />
+            </View>
+            <Text style={styles.candidateReason}>{rebuildReason(c.reason)}</Text>
+            <Text style={styles.candidateFacts}>{candidateFacts(c)}</Text>
+          </View>
+        );
+      })}
+      {rejected.map(group => (
+        <View key={group.reason} style={styles.candidate}>
+          <View style={styles.rowBetween}>
+            <Text style={styles.candidateGroupReason}>{rebuildReason(group.reason)}</Text>
+            <TonePill label={`ELENDİ · ${group.count}`} tone="neutral" />
+          </View>
+          {group.measured.map(c => (
+            <Text key={c.market} style={styles.candidateFacts}><Text style={styles.candidateFactsMarket}>{formatSelection(c.market)}</Text> · {candidateFacts(c)}</Text>
+          ))}
+          {group.unmeasured.length ? <Text style={styles.candidateFacts}>{group.unmeasured.map(c => formatSelection(c.market)).join(", ")}</Text> : null}
+        </View>
+      ))}
+    </>
+  );
+}
+
 /**
- * One short interpretation with explicitly separate decision/current sources.
- * Detailed provenance is on demand; refreshing never calls an LLM.
+ * Jinx answers one question for this match: act now, keep watching, or expect
+ * nothing more. The pill is that outlook, never the hero's match state; the
+ * record auto-refreshes, so a manual retry appears only after a failed read.
+ * Detailed provenance is on demand; Jinx never calls an LLM.
  */
 export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession, matchContext, refreshContext, contextRefreshing = false }: {
   matchKey: string; matchStatus?: string; possession?: {label:string} | null; matchContext?: AnalysisContext | undefined;
@@ -257,13 +295,35 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession, ma
   const data = query.data;
   const hero = rebuildHero({data, matchKey, status: matchStatus, now, error: query.isError, decisionId: requested});
   const record = hero?.record;
-  const state = rebuildPresentation({ status: matchStatus, summary: data, now, error: query.isError,
-    redUnknown: data?.candidates.some(candidate => candidate.reason === "RED_CARD_UNKNOWN") });
+  const outlook = jinxOutlook({ status: matchStatus, data, now, error: query.isError, loading: query.isLoading });
   const reading = record && data ? jinxMatchReading({ record, data, matchKey, context: matchContext,
     now: Math.max(now, query.dataUpdatedAt), sourceFailed: query.isError }) : null;
-  const text = reading?.text ?? (query.isError ? "Karar verisi yenilenemedi." : record ? jinxInsight(record)
-    : requested ? "İncelenen karar kaydı doğrulanamadı." : state.text);
+  const text = reading?.text ?? (requested && !query.isError ? "İncelenen karar kaydı doğrulanamadı." : outlook.text);
+  const blockers = outlook.kind === "WATCH" && !record ? jinxBlockers(data) : [];
   const refreshing = query.isFetching || contextRefreshing;
+  const time = asOfTime(data?.asOf);
+  if (outlook.kind === "NONE" && !record && !requested) return (
+    <View style={[styles.jinxCard, styles.jinxCompact]}>
+      <SurfaceMaterial radius={20} />
+      <Image accessible={false} resizeMode="contain" source={jinxFace} style={styles.jinxAvatarCompact} />
+      <View style={styles.jinxCompactBody}>
+        <View style={styles.jinxCompactHead}>
+          <Text accessibilityRole="header" aria-level={2} style={styles.jinxTitleCompact}>Jinx</Text>
+          <TonePill label={outlook.label} tone={outlook.tone} />
+        </View>
+        <Text accessibilityLiveRegion="polite" style={styles.jinxCompactText}>{text}</Text>
+        {outlook.detail ? <Text style={styles.jinxCompactMeta}>{outlook.detail}</Text> : null}
+        <View style={styles.jinxCompactFoot}>
+          <Text style={styles.jinxCompactMeta}>{time} · otomatik</Text>
+          <Pressable accessibilityHint="Canlı maç listesini açar" accessibilityRole="button" onPress={() => router.navigate("/live")}
+            style={({ pressed, hovered }) => [styles.jinxLink, hovered && styles.actionHover, pressed && styles.pressed]}>
+            <Text style={styles.link}>Canlı maçlar</Text>
+            <MaterialCommunityIcons color={semantic.intelligence} name="chevron-right" size={iconSizes.inline} />
+          </Pressable>
+        </View>
+      </View>
+    </View>
+  );
   return (
     <View style={styles.jinxCard}>
       <SurfaceMaterial accent={hero?.playable || hero?.active ? semantic.intelligence : undefined} radius={20} />
@@ -271,22 +331,22 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession, ma
         <Image accessible={false} resizeMode="contain" source={jinxFace} style={styles.jinxAvatar} />
         <View style={styles.jinxIdentity}>
           <Text accessibilityRole="header" aria-level={2} style={styles.jinxTitle}>Jinx</Text>
-          <TonePill label={reading?.title ?? state.label} tone={reading?.tone ?? state.tone} />
+          <TonePill label={outlook.label} tone={outlook.tone} />
         </View>
-        <Pressable
-          accessibilityLabel="Jinx kaydını yenile"
-          accessibilityRole="button"
-          accessibilityState={{ busy: refreshing }}
-          disabled={refreshing}
-          onPress={() => void Promise.all([query.refetch(), refreshContext?.()])}
-          style={({ pressed, hovered }) => [styles.jinxRefresh, hovered && styles.actionHover, pressed && styles.pressed]}
-        >
-          <MaterialCommunityIcons color={colors.text} name="refresh" size={iconSizes.small} />
-          <Text style={styles.jinxRefreshText}>{refreshing ? "Yenileniyor…" : "Yenile"}</Text>
-        </Pressable>
       </View>
       <View style={styles.jinxSpeech}>
+        {reading ? <Text style={[styles.jinxLead, reading.tone === "warning" && styles.jinxLeadWarning]}>{reading.title}</Text> : null}
         <Text accessibilityLiveRegion="polite" style={styles.jinxSpeechText}>{text}</Text>
+        {outlook.detail ? <Text style={styles.jinxDetail}>{outlook.detail}</Text> : null}
+        {blockers.length ? <View style={styles.jinxBlockers}>
+          <Text style={styles.caption}>Uygun pazar çıkmama nedeni</Text>
+          {blockers.map(row => (
+            <View accessible accessibilityLabel={`${row.label}: ${row.count} pazar`} key={row.reason} style={styles.jinxBlocker}>
+              <Text style={styles.jinxBlockerLabel}>{row.label}</Text>
+              <Text style={styles.jinxBlockerCount}>{row.count} pazar</Text>
+            </View>
+          ))}
+        </View> : null}
         {reading?.comparison ? <View accessible
           accessibilityLabel={`${reading.comparison.label}: ilk karar ${reading.comparison.before}; son kontrol ${reading.comparison.after}`}
           style={styles.jinxComparison}>
@@ -305,16 +365,30 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession, ma
         </Pressable> : null}
       </View>
       <View style={styles.jinxFoot}>
-        <Text style={styles.jinxTime}>{asOfTime(data?.asOf)} <Text style={styles.jinxTimeLabel}>· {query.isError ? "yenilenemedi" : "son okuma"}</Text></Text>
-        {record || data?.candidates.length ? <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ expanded: showCandidates }}
-          onPress={() => setShowCandidates(!showCandidates)}
-          style={({ pressed }) => [styles.jinxEvidenceAction, pressed && styles.pressed]}
-        >
-          <Text style={styles.link}>{showCandidates ? "Dayanakları gizle" : "Dayanakları gör"}</Text>
-          <MaterialCommunityIcons color={semantic.intelligence} name={showCandidates ? "chevron-up" : "chevron-down"} size={iconSizes.inline} />
-        </Pressable> : null}
+        <Text style={styles.jinxTime}>{time} <Text style={styles.jinxTimeLabel}>· {query.isError ? "yenilenemedi" : "otomatik güncellenir"}</Text></Text>
+        <View style={styles.jinxFootActions}>
+          {outlook.kind === "ERROR" ? <Pressable
+            accessibilityLabel="Jinx kaydını yeniden dene"
+            accessibilityRole="button"
+            accessibilityState={{ busy: refreshing }}
+            disabled={refreshing}
+            onPress={() => void Promise.all([query.refetch(), refreshContext?.()])}
+            style={({ pressed, hovered }) => [styles.jinxRefresh, hovered && styles.actionHover, pressed && styles.pressed]}
+          >
+            <MaterialCommunityIcons color={colors.text} name="refresh" size={iconSizes.small} />
+            <Text style={styles.jinxRefreshText}>{refreshing ? "Yenileniyor…" : "Yeniden dene"}</Text>
+          </Pressable> : null}
+          {record || data?.candidates.length ? <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showCandidates }}
+            aria-expanded={showCandidates}
+            onPress={() => setShowCandidates(!showCandidates)}
+            style={({ pressed }) => [styles.jinxEvidenceAction, pressed && styles.pressed]}
+          >
+            <Text style={styles.link}>{showCandidates ? "Dayanakları gizle" : "Dayanakları gör"}</Text>
+            <MaterialCommunityIcons color={semantic.intelligence} name={showCandidates ? "chevron-up" : "chevron-down"} size={iconSizes.inline} />
+          </Pressable> : null}
+        </View>
       </View>
       {showCandidates ? (
         <View style={styles.jinxCandidates}>
@@ -328,23 +402,8 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession, ma
             <Text style={styles.caption}>Havuz payı ve yıldızlar kazanma olasılığı değildir.</Text>
           </> : null}
           {possession ? <Text style={styles.caption}>Ek saha bilgisi · {possession.label}. Seçim kanıtından ayrıdır.</Text> : null}
-          <Text style={styles.caption}>Diğer adaylar ve elenme nedenleri · yayımlanmış birimlerden ayrı tutulur; bahis önerisi değildir.</Text>
-          <Text style={styles.caption}>Erken elenen pazarda sonraki ölçütler hesaplanmamış olabilir. Hesaplanmayan değerler sıfır değildir; son kayıtlı değerlendirme gösterilir.</Text>
-          {data?.candidates.length ? data.candidates.map(c => {
-            const status = c.selected ? { label: !query.isError && currentRebuild(data, now) ? "EN İYİ ADAY" : "SON HESABIN LİDERİ", tone: "positive" as const } : c.admitted ? { label: "UYGUN, SEÇİLMEDİ", tone: "pending" as const } : { label: "ELENDİ", tone: "neutral" as const };
-            return (
-              <View key={c.market} style={styles.candidate}>
-                <View style={styles.rowBetween}>
-                  <Text style={styles.candidateMarket}>{formatSelection(c.market)}</Text>
-                  <TonePill label={status.label} tone={status.tone} />
-                </View>
-                <Text style={styles.candidateReason}>{rebuildReason(c.reason)}</Text>
-                <Text style={styles.candidateFacts}>
-                  {candidateFacts(c)}
-                </Text>
-              </View>
-            );
-          }) : <Text style={styles.caption}>Aday kaydı yok.</Text>}
+          {data?.candidates.length ? <CandidateEvidence candidates={data.candidates} current={!query.isError && Boolean(currentRebuild(data, now))} />
+            : <Text style={styles.caption}>Aday kaydı yok.</Text>}
         </View>
       ) : null}
     </View>
@@ -561,13 +620,31 @@ const styles = StyleSheet.create({
   actionHover: { backgroundColor: colors.surfaceStrong },
   pressed: { opacity: 0.72 },
   waitingReason: { color: colors.textMuted, ...typeScale.body },
-  // Jinx card: the v40 board's match card (avatar, state pill, outlined
-  // Yenile, a speech bubble, the pool-support figure, chips, time and evidence).
+  // Jinx card: the v40 board's match card (avatar, outlook pill, a speech
+  // bubble, blockers, time and evidence). With nothing more to expect it
+  // collapses to one compact row so the match path moves up on phones.
   jinxCard: { gap: 12, marginTop: 12, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 16, borderRadius: 22, borderWidth: 1, borderColor: colors.borderSoft, ...shadows.card },
+  jinxCompact: { flexDirection: "row", alignItems: "flex-start", paddingTop: 12, paddingBottom: 6 },
+  jinxAvatarCompact: { width: 36, height: 36, marginTop: 2 },
+  jinxCompactBody: { flex: 1, minWidth: 0, gap: 4 },
+  jinxCompactHead: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 },
+  jinxTitleCompact: { color: colors.text, ...typeScale.identity, fontWeight: "700" },
+  jinxCompactText: { color: colors.text, ...typeScale.bodyCompact },
+  jinxCompactFoot: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", columnGap: spacing.md },
+  jinxCompactMeta: { flexShrink: 1, color: colors.textMuted, ...typeScale.label, letterSpacing: 0 },
+  jinxLink: { minHeight: interaction.minTouchTarget, flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: spacing.sm, marginRight: -spacing.sm, borderRadius: radii.md },
   jinxHead: { flexDirection: "row", alignItems: "center", gap: 10 },
   jinxAvatar: { width: 50, height: 50 },
   jinxIdentity: { flex: 1, minWidth: 0, gap: 2, alignItems: "flex-start" },
   jinxTitle: { color: colors.text, ...typeScale.decision },
+  jinxLead: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0, fontWeight: "700", marginBottom: 4 },
+  jinxLeadWarning: { color: semantic.warning },
+  jinxDetail: { color: colors.textMuted, ...typeScale.bodyCompact, marginTop: 6 },
+  jinxBlockers: { gap: 6, marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border },
+  jinxBlocker: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: spacing.md },
+  jinxBlockerLabel: { flex: 1, minWidth: 0, color: colors.textMuted, ...typeScale.bodyCompact },
+  jinxBlockerCount: { color: colors.text, ...typeScale.metricCompact, fontSize: 14, lineHeight: 18 },
+  jinxFootActions: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end", gap: spacing.md },
   jinxRefresh: { minHeight: interaction.minTouchTarget, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 16, borderRadius: radii.round, borderWidth: 1, borderColor: colors.border },
   jinxRefreshText: { color: colors.text, ...typeScale.bodyCompact, fontWeight: "700" },
   jinxSpeech: { paddingHorizontal: 14, paddingVertical: 12, borderRadius: 16, borderTopLeftRadius: 6, backgroundColor: colors.surfaceStrong },
@@ -578,7 +655,7 @@ const styles = StyleSheet.create({
   jinxComparisonAfter: { color: colors.text, ...typeScale.bodyCompact, fontWeight: "700" },
   jinxSources: { gap: 4 },
   jinxNewDecision: { flexDirection: "row", alignItems: "center", gap: 6, minHeight: 44, alignSelf: "flex-start", marginTop: 6 },
-  jinxFoot: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border },
+  jinxFoot: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", columnGap: spacing.md, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border },
   jinxTime: { color: colors.textMuted, ...typeScale.metricCompact, fontSize: 14, lineHeight: 18 },
   jinxTimeLabel: { ...typeScale.label, letterSpacing: 0 },
   jinxEvidenceAction: { minHeight: 48, flexDirection: "row", alignItems: "center", gap: 4 },
@@ -636,6 +713,8 @@ const styles = StyleSheet.create({
   candidate: { gap: 4, borderTopWidth: 1, borderTopColor: colors.border, paddingVertical: spacing.md },
   candidateMarket: { color: colors.text, ...typeScale.bodyCompact, fontWeight: "700", flexShrink: 1 },
   candidateReason: { color: colors.textMuted, ...typeScale.bodyCompact },
+  candidateGroupReason: { flex: 1, minWidth: 0, color: colors.text, ...typeScale.bodyCompact, fontWeight: "700" },
+  candidateFactsMarket: { color: colors.text, fontWeight: "700" },
   candidateFacts: { color: colors.textSubtle, ...typeScale.label, letterSpacing: 0 },
   reportBody: { gap: spacing.md },
   waiting: { gap: spacing.sm, alignItems: "flex-start" },
