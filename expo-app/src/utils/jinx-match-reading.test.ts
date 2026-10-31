@@ -5,7 +5,8 @@ import fixtureData from "../api/fixtures/btb-rebuild-v1.json";
 import { rebuildMatchSchema } from "../api/rebuild-schemas";
 import { analysisContextSchema, type AnalysisContext } from "../api/schemas";
 import { mockMatches } from "../api/mock-data";
-import { jinxMatchReading } from "./jinx-match-reading";
+import { jinxMatchReading, jinxReadingSections } from "./jinx-match-reading";
+import { jinxInsight } from "./jinx-insight";
 import { jinxScoreCondition } from "./jinx-score-condition";
 
 function setup() {
@@ -204,4 +205,23 @@ test("normal, changed and final readings stay short and contain no win probabili
     assert.doesNotMatch(reading.text, /%|olasılık|banko|garanti|oyna|kupon|başarılı model|kazanacak/);
     assert.ok(reading.sources.length >= 1);
   }
+});
+
+test("the decision-moment comment stays beside a later change instead of being replaced by it", () => {
+  const s = setup(); s.waiting(); s.candidate.admitted = false; s.candidate.reason = "CONFIRMATION_PENDING";
+  const reading = s.run(), sections = jinxReadingSections(s.record, reading);
+  assert.equal(reading.title, "Güncel teyit bekleniyor", "a pending confirmation is not a refutation");
+  assert.equal(sections.moment?.title, `Karar anı · ${s.record.minute}′`);
+  assert.equal(sections.moment?.text, jinxInsight(s.record));
+  assert.equal(sections.current?.title, "Güncel teyit bekleniyor");
+  s.candidate.reason = "LEADER_FAILED";
+  assert.equal(s.run().title, "İlk karar artık teyit edilmiyor");
+});
+
+test("an unchanged decision shows its moment once, and a foreign record shows no moment", () => {
+  const s = setup(); s.record.result = { state: "LOSS", revision: 2, net: "-1" };
+  const unchanged = jinxReadingSections(s.record, s.run());
+  assert.equal(unchanged.current, null); assert.ok(unchanged.moment);
+  const t = setup(); t.record.matchKey = "2026-10-20:999:00:00:00";
+  assert.equal(jinxReadingSections(t.record, t.run()).moment, null);
 });

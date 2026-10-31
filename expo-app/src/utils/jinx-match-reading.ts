@@ -119,7 +119,8 @@ export function jinxMatchReading({ record, data, matchKey, context, now, sourceF
       text,
       { label: "Baskı teyidi", before: ratio(record.votesSupport, record.votesUsed), after: ratio(candidate.votesSupport, candidate.votesUsed) }, less);
   }
-  if (candidate && !candidate.admitted && failedReasons[candidate.reason]) return view("İlk karar artık teyit edilmiyor",
+  // A pending confirmation has not finished; it is not a refutation of the first decision.
+  if (candidate && !candidate.admitted && failedReasons[candidate.reason]) return view(candidate.reason === "CONFIRMATION_PENDING" ? "Güncel teyit bekleniyor" : "İlk karar artık teyit edilmiyor",
     `${failedReasons[candidate.reason]} Eski kararın yıldızı güncel teyit değildir.`, undefined, true);
   if (measuredLater && candidate.directionConflict && !record.directionConflict)
     return view("Yeni yön çelişkisi", "İlk kararda bulunmayan yön çelişkisi son hesapta ortaya çıkmış.", undefined, true);
@@ -127,4 +128,15 @@ export function jinxMatchReading({ record, data, matchKey, context, now, sourceF
     return view(condition.irreversible ? "Skor koşulu belirleyici" : "Skorun kritik koşulu",
       [condition.text, jinxQualityLimit(record)].filter(Boolean).join(" "), scoreComparison);
   return view("Karar anı", jinxInsight(record));
+}
+
+/**
+ * The decision-moment reading stays fixed beside any later change, so an
+ * automatic refresh never replaces why the decision was published. A record
+ * from another fixture supplies neither.
+ */
+export function jinxReadingSections(record: RebuildRecommendation, reading: JinxReading) {
+  if (!reading.sources.length) return { moment: null, current: reading };
+  const moment = { title: `Karar anı · ${record.minute}′`, text: jinxInsight(record) };
+  return { moment, current: reading.title === "Karar anı" ? null : reading };
 }

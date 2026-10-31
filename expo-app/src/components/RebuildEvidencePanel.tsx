@@ -1,4 +1,4 @@
-import { jinxMatchReading } from "@/src/utils/jinx-match-reading";
+import { jinxMatchReading, jinxReadingSections } from "@/src/utils/jinx-match-reading";
 import { candidateGroups, jinxBlockers, jinxOutlook } from "@/src/utils/jinx-outlook";
 import type { AnalysisContext } from "@/src/api/schemas";
 import { useEffect, useState, type ReactNode } from "react";
@@ -299,6 +299,9 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession, ma
   const reading = record && data ? jinxMatchReading({ record, data, matchKey, context: matchContext,
     now: Math.max(now, query.dataUpdatedAt), sourceFailed: query.isError }) : null;
   const text = reading?.text ?? (requested && !query.isError ? "İncelenen karar kaydı doğrulanamadı." : outlook.text);
+  // Why the decision was published stays fixed; only the later check refreshes.
+  const sections = record && reading ? jinxReadingSections(record, reading) : null;
+  const current = sections ? sections.current : null;
   const blockers = outlook.kind === "WATCH" && !record ? jinxBlockers(data) : [];
   const refreshing = query.isFetching || contextRefreshing;
   const time = asOfTime(data?.asOf);
@@ -335,8 +338,12 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession, ma
         </View>
       </View>
       <View style={styles.jinxSpeech}>
-        {reading ? <Text style={[styles.jinxLead, reading.tone === "warning" && styles.jinxLeadWarning]}>{reading.title}</Text> : null}
-        <Text accessibilityLiveRegion="polite" style={styles.jinxSpeechText}>{text}</Text>
+        {sections?.moment ? <View style={current ? styles.jinxMoment : null}>
+          <Text style={styles.jinxLead}>{sections.moment.title}</Text>
+          <Text style={styles.jinxSpeechText}>{sections.moment.text}</Text>
+        </View> : null}
+        {current ? <Text style={[styles.jinxLead, current.tone === "warning" && styles.jinxLeadWarning]}>{sections?.moment ? `Son kontrol · ${current.title}` : current.title}</Text> : null}
+        {!sections || current ? <Text accessibilityLiveRegion="polite" style={styles.jinxSpeechText}>{current?.text ?? text}</Text> : null}
         {outlook.detail ? <Text style={styles.jinxDetail}>{outlook.detail}</Text> : null}
         {blockers.length ? <View style={styles.jinxBlockers}>
           <Text style={styles.caption}>Uygun pazar çıkmama nedeni</Text>
@@ -639,6 +646,7 @@ const styles = StyleSheet.create({
   jinxTitle: { color: colors.text, ...typeScale.decision },
   jinxLead: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0, fontWeight: "700", marginBottom: 4 },
   jinxLeadWarning: { color: semantic.warning },
+  jinxMoment: { paddingBottom: 10, marginBottom: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
   jinxDetail: { color: colors.textMuted, ...typeScale.bodyCompact, marginTop: 6 },
   jinxBlockers: { gap: 6, marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border },
   jinxBlocker: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: spacing.md },
