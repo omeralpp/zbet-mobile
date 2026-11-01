@@ -246,3 +246,25 @@ TalkBack or device measurement.
 Release needs the coordinated Android/web gates: clean pushed commit, verified
 pair, private APK delivery and installation before web publication, both owner
 smokes, each under its own approval.
+
+## Completed paired delivery
+
+The owner approved commit/push and the coordinated release ("I approve both").
+Source `ba885905674a3e2030bf740b6f41e7a15492e0bd` was clean and pushed before
+both artifacts. Signed ARM64 APK SHA-256
+`A838F9B23381C6F9E50B875EC0FFF69EAB8DEDE42A0640C496506287608A7F77`
+(50,562,341 bytes, unchanged certificate) was privately delivered to the
+owner-only Drive folder with authenticated readback; the owner confirmed
+installation and the Android smoke ("ıt ınstalled and works properly"). Matching
+web tree `BD3B2A2A0308E52FBC2334983442286527353A1FD59224286A86A5F65BF77A80` was
+published as `20261101T180457Z-ba88590` after a clean dry run: 57 served files
+read back with 0 mismatches, local shell/deep-link/API-401 probes passed and the
+public hostname still redirects to Cloudflare Access. The owner confirmed the
+web smoke ("web also works properly"). Canonical `client-release.mjs complete`
+passed for batch
+`client-ba885905674a3e2030bf740b6f41e7a15492e0bd-A838F9B23381-BD3B2A2A0308`;
+receipts are `btb-codex/docs/evidence/match-detail-release-ba88590-*-2026-11-01.json`.
+The superseded local `c8188ca` APK went to the Recycle Bin under the 29 October
+retention rule; its receipts and Drive copy remain. Owner smokes are basic
+acceptance; TalkBack, exhaustive font scaling and device performance remain
+unclaimed.
