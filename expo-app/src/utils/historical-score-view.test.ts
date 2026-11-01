@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { rebuildPoolPathSchema } from "@/src/api/rebuild-statistics-schemas";
-import { historicalScoreReachability, historicalScoreView, retainHistoricalReference } from "./historical-score-view";
+import { historicalOverview, historicalScoreReachability, historicalScoreView, retainHistoricalReference } from "./historical-score-view";
 const now=Date.parse("2026-10-23T14:31:00Z");
 const pool=rebuildPoolPathSchema.parse({contractVersion:"btb-pool-path.v1",modelRegime:"BTB_RB1_20261018",matchKey:"M1",asOf:new Date(now).toISOString(),availability:"AVAILABLE",reason:"AVAILABLE",source:"VERIFIED_RB1_OBSERVATION_POOLS",label:"Havuzda kalan pay",unit:"SURVIVING_REFERENCE_SHARE",winningProbability:false,historical:true,fullMatchCoverageProven:false,points:[],
  scoreDistribution:{period:"1H",captureId:"C1",observedAt:"2026-10-23T14:30:15Z",minute:17,homeScore:1,awayScore:0,total:3,winningProbability:false,rows:[{score:"1–0",count:2,share:2/3},{score:"2–0",count:1,share:1/3}]}});
@@ -54,4 +54,17 @@ test("a current second-half clock overrides an old first-half observation",()=>{
  assert.equal(historicalScoreView(current,pool,now).source,null);
  assert.equal(historicalScoreReachability("0–0",current,"1H",now),"UNKNOWN");
  assert.equal(historicalScoreReachability("0–0",{...current,clock:{period:"ET"}},"2H",now),"UNKNOWN");
+});
+
+test("the overview leads with reachable scores and folds unreachable ones without renormalizing (NXT-OBS-241)",()=>{
+ const rows=[{score:"0–0",reachability:"UNREACHABLE",probability:0.4,count:4},{score:"1–1",reachability:"REACHABLE",probability:0.3,count:3},
+  {score:"1–0",reachability:"UNREACHABLE",probability:0.2,count:2},{score:"2–1",reachability:"UNKNOWN",probability:0.1,count:1}];
+ const view=historicalOverview(rows,6);
+ assert.deepEqual(view.overview.map(row=>row.score),["1–1","2–1"]);
+ assert.deepEqual(view.ordered.map(row=>row.score),["1–1","2–1","0–0","1–0"]);
+ assert.equal(view.unreachable?.scores,2);assert.equal(view.unreachable?.records,6);
+ assert.ok(Math.abs((view.unreachable?.share??0)-0.6)<1e-9);
+ assert.equal(historicalOverview([{...rows[0]!,count:null}]).unreachable?.records,null);
+ assert.equal(historicalOverview(rows.filter(row=>row.reachability!=="UNREACHABLE")).unreachable,null);
+ assert.deepEqual(historicalOverview(rows,1).overview.map(row=>row.score),["1–1"]);
 });

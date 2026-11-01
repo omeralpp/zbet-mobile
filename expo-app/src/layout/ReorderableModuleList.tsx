@@ -51,6 +51,8 @@ type ReorderableModuleListProps = {
   scrollOffsetRef?: RefObject<number>;
   /** Web-only column cap (an embedded pane); native always lays out one column. */
   maxColumns?: number;
+  /** Web-only packed columns; native always lays out one column. */
+  masonry?: boolean;
 };
 
 type ModuleSlot = {

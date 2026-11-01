@@ -2,7 +2,7 @@ import type { MatchMarketRate } from "@/src/api/schemas";
 import { formatRate } from "@/src/utils/format";
 
 export type RatioMarketRateDisplay = {
-  label: "Canlı oran" | "Kick-off oranı" | "Canlı kapalı · KO" | "Oran";
+  label: "Canlı oran" | "Maç önü oranı" | "Canlı kapalı · maç önü oranı" | "Oran";
   text: string;
   isClosed: boolean;
   accessibilityText: string;
@@ -24,16 +24,16 @@ export function ratioMarketRateDisplay(
     const kickoffText = formatRate(marketRate.kickoffRate);
     return phase === "KICK_OFF"
       ? {
-          label: "Kick-off oranı",
+          label: "Maç önü oranı",
           text: kickoffText,
           isClosed: false,
-          accessibilityText: `Kick-off oranı ${kickoffText}`
+          accessibilityText: `maç önü oranı ${kickoffText}`
         }
       : {
-          label: "Canlı kapalı · KO",
+          label: "Canlı kapalı · maç önü oranı",
           text: kickoffText,
           isClosed: false,
-          accessibilityText: `canlı oran kapalı, Kick-off oranı ${kickoffText}`
+          accessibilityText: `canlı oran kapalı, maç önü oranı ${kickoffText}`
         };
   }
   if (marketRate) {

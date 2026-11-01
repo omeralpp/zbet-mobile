@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { reconcileModuleOrder } from "./module-layout";
 import {
+  liveDetailLiveModules,
   liveDetailModules,
   moduleLayoutAnchors,
   overviewModules,
@@ -117,4 +118,12 @@ test("an existing layout gains the pressure chart directly under Maçın Yolu", 
   const stored = liveDetailModules.filter((id) => id !== "pressure");
   const migrated = reconcileModuleOrder(stored, liveDetailModules, moduleLayoutAnchors.liveDetail);
   assert.equal(migrated.indexOf("pressure"), migrated.indexOf("matchPath") + 1);
+});
+
+test("the live default order holds every live detail module once, live evidence first (NXT-OBS-241)", () => {
+  assert.deepEqual([...liveDetailLiveModules].sort(), [...liveDetailModules].sort());
+  assert.equal(new Set(liveDetailLiveModules).size, liveDetailModules.length);
+  assert.deepEqual(reconcileModuleOrder(liveDetailLiveModules, liveDetailModules, moduleLayoutAnchors.liveDetail), [...liveDetailLiveModules]);
+  assert.ok(liveDetailLiveModules.indexOf("statistics") < liveDetailLiveModules.indexOf("teamForm"));
+  assert.ok(liveDetailLiveModules.indexOf("odds") < liveDetailLiveModules.indexOf("standings"));
 });

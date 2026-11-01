@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Stack, useFocusEffect, useRouter } from "expo-router";
@@ -25,13 +25,13 @@ import {
 import { pressureSide } from "@/src/components/MatchCard";
 import { PitchMarkings } from "@/src/components/PitchMarkings";
 import { RebuildDecisionModule, RebuildJinxCard, useRebuildClock } from "@/src/components/RebuildEvidencePanel";
-import { ResultPill } from "@/src/components/DecisionTicket";
+import { ResultPill, toneColor } from "@/src/components/DecisionTicket";
 import { currentRebuild } from "@/src/utils/rebuild-current";
 import { rebuildHero } from "@/src/utils/rebuild-hero";
 import { possessionContext } from "@/src/utils/rebuild-possession";
 import { matchPeriodLabel } from "@/src/utils/match-period";
-import { formatQuote } from "@/src/utils/rebuild-display";
-import { rebuildPresentation } from "@/src/utils/rebuild-presentation";
+import { formatQuote, formatUnits, unitsTone } from "@/src/utils/rebuild-display";
+import { rebuildHeroFallback } from "@/src/utils/rebuild-presentation";
 import { useJinxAnalyticalSurface } from "@/src/mascot/JinxPreferencesProvider";
 import { ChangeEmphasis } from "@/src/components/ChangeEmphasis";
 import { LiveDot } from "@/src/components/LiveDot";
@@ -51,10 +51,12 @@ import { matchActivity } from "@/src/components/match-path-activity";
 import { RebuildStatisticsPanel } from "@/src/components/RebuildStatisticsPanel";
 import { HistoricalScoreDistribution } from "@/src/components/HistoricalScoreDistribution";
 import { TeamFormCard } from "@/src/components/TeamFormCard";
+import { resolveTeamFormState } from "@/src/components/team-form-view";
+import { EvidenceQuality } from "@/src/components/RatingStars";
 import { LiveContextFreshness } from "@/src/components/LiveContextNotice";
 import { StandingsModule } from "@/src/components/StandingsModule";
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
-import { RatioResultsChart } from "@/src/components/RatioResultsChart";
+import { RatioResultsChart, ratioResultsAvailable } from "@/src/components/RatioResultsChart";
 import { Screen } from "@/src/components/Screen";
 import { runtimeConfig } from "@/src/config/runtime";
 import { mountsIntelligenceSurfaces } from "@/src/config/mobile-intelligence";
@@ -64,9 +66,10 @@ import { CollapsibleModule } from "@/src/layout/CollapsibleModule";
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
-import { useModuleLayout } from "@/src/layout/module-layout-store";
-import { resetModuleCollapse, useModuleCollapse } from "@/src/layout/module-collapse-store";
-import type { LiveDetailModuleId } from "@/src/layout/module-registry";
+import { getModuleOrder, restoreModuleOrder, useModuleLayout } from "@/src/layout/module-layout-store";
+import { resetModuleCollapse, restoreModuleCollapse, useModuleCollapse } from "@/src/layout/module-collapse-store";
+import { liveDetailLiveModules, moduleCollapseDefaults, type LiveDetailModuleId } from "@/src/layout/module-registry";
+import type { MatchMarketRate } from "@/src/api/schemas";
 import {
   colors,
   fontWeights,
@@ -76,8 +79,7 @@ import {
   shadows,
   spacing,
   typeScale,
-  textFont,
-  numericFont
+  textFont
 } from "@/src/theme/theme";
 import {
   formatCurrentMarketRate,
@@ -104,6 +106,9 @@ const evidenceChips: { id: LiveDetailModuleId; label: string }[] = [
   { id: "standings", label: "Lig" }
 ];
 
+/** Stable empty market list, so the memoized market chart skips clock ticks. */
+const noMarketRates: MatchMarketRate[] = [];
+
 /**
  * One Canlı detay module, as a collapsible panel.
  *
@@ -128,6 +133,7 @@ function LiveDetailPanel({
     <CollapsibleModule
       eyebrow={eyebrow}
       moduleId={id}
+      showEyebrow
       surface="liveDetail"
       title={title}
       leading={leading}
@@ -231,7 +237,6 @@ export function MatchDetailView({
   const [reordering, setReordering] = useState(false);
   const scrollRef = useRef<ScrollView | null>(null);
   const scrollOffset = useRef(0);
-  const { order, reorderVisible, reset } = useModuleLayout("liveDetail");
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       scrollOffset.current = event.nativeEvent.contentOffset.y;
@@ -278,6 +283,20 @@ export function MatchDetailView({
   const journey = sourceView(context.data?.sources.matchJourney);
   const matchPath = sourceView(context.data?.sources.matchPath);
 
+  // A live match opens with the live evidence first unless the user has saved
+  // an order of their own (owner decision, NXT-OBS-241).
+  const { order, reorderVisible, reset, customized: layoutCustomized } = useModuleLayout("liveDetail", liveNow ? liveDetailLiveModules : undefined);
+  // "Düzeni sıfırla" can be undone for a few seconds instead of asking first.
+  const [layoutUndo, setLayoutUndo] = useState<{ order: string[]; customized: boolean; collapsed: string[] } | null>(null);
+  useEffect(() => {
+    if (!layoutUndo) return;
+    const timer = setTimeout(() => setLayoutUndo(null), 8_000);
+    return () => clearTimeout(timer);
+  }, [layoutUndo]);
+  // A narrow hero stacks the selection above its quotes, so the market name
+  // is never broken inside a word (NXT-OBS-241, 320 px).
+  const [verdictWidth, setVerdictWidth] = useState(0);
+
   // A chip opens its module if it is closed, then brings it under the header.
   // Window positions keep this independent of how the list lays modules out.
   const jumpToModule = (id: LiveDetailModuleId) => {
@@ -294,6 +313,51 @@ export function MatchDetailView({
     }, 60);
   };
 
+  // The once-a-second clock re-renders this screen; everything below that does
+  // not depend on it keeps its identity, so the match path and the memoized
+  // evidence modules skip those ticks (measured idle cost, NXT-OBS-241).
+  const detail = context.data?.sources.matchDetail ?? undefined;
+  const recordCurrent = Boolean(detail?.rebuild && currentRebuild(detail.rebuild, now));
+  const match = useMemo(() => !detail ? undefined : detail.rebuild && !recordCurrent
+    ? { ...detail, selectedOdd: "", rating: 0, liveRate: null, currentRate: null } : detail, [detail, recordCurrent]);
+  // Maçın yolu: provider events, RB1 observations and published records on one
+  // axis. RB1 exposes no pool path, so only a non-RB1 journey can draw a line.
+  const history = pressureHistory.data?.matchKey === key ? pressureHistory.data : undefined;
+  const intervals = useMemo(() => match ? matchActivity(history, match) : [], [history, match]);
+  const liveTimeline = liveContext.data?.matchKey && liveContext.data.matchKey !== key ? undefined : liveContext.data;
+  const legacyPath = !isRebuild && matchPathEnabled;
+  const halfTime = periodScoreQuery.data?.halfTimeScore;
+  const pathPool = poolPath.data?.matchKey === key && !poolPath.isError ? poolPath.data : undefined;
+  const pathModel = useMemo(() => match ? buildMatchPath({
+    match,
+    isRebuild,
+    poolPath:pathPool,
+    events: visibleEvents(liveTimeline?.timeline),
+    observations: history?.observations ?? [],
+    records: isRebuild ? rebuildMatch.data?.history ?? [] : [],
+    journeyPoints: legacyPath && journey.data?.matchKey === key ? journey.data.points : [],
+    halfTimeScore: halfTime ? `${halfTime.homeScore}–${halfTime.awayScore}` : observedHalfTimeScore(history?.observations ?? []),
+    latestReading: latestIntervalReading(intervals, match),
+    latestReadingKind: "ACTIVITY"
+  }) : null, [match, isRebuild, pathPool, liveTimeline, history, rebuildMatch.data, legacyPath, journey.data, key, halfTime, intervals]);
+  const pathActivity = useMemo(() => isRebuild
+    ? { activity: { intervals, failed: pressureHistory.isError, loading: pressureHistory.isLoading } } : {},
+  [isRebuild, intervals, pressureHistory.isError, pressureHistory.isLoading]);
+  const freshness = liveTimeline?.freshness;
+  const pathFooter = useMemo(() => <LiveContextFreshness
+    ageSeconds={freshness?.ageSeconds}
+    refreshFailed={freshness?.refreshFailed}
+    stale={freshness?.stale}
+  />, [freshness?.ageSeconds, freshness?.refreshFailed, freshness?.stale]);
+  const openDecision = useCallback((decisionKey: string) =>
+    router.push({
+      pathname: "/super/[key]",
+      params: { key: decisionKey, match: key }
+    } as never), [key, router]);
+  const toggleMatchPath = useCallback(() => toggleModule("matchPath"), [toggleModule]);
+  const refetchStatistics = rebuildStatistics.refetch;
+  const retryStatistics = useCallback(() => { void refetchStatistics(); }, [refetchStatistics]);
+
   if (query.isLoading) {
     return (
       <Screen edgeSwipeBack={!embedded} onEdgeSwipeBack={handleEdgeSwipeBack}>
@@ -302,7 +366,7 @@ export function MatchDetailView({
     );
   }
 
-  if (query.isError || !query.data) {
+  if (query.isError || !query.data || !match || !pathModel) {
     return (
       <Screen edgeSwipeBack={!embedded} onEdgeSwipeBack={handleEdgeSwipeBack}>
         <ErrorState
@@ -318,13 +382,19 @@ export function MatchDetailView({
     );
   }
 
-  const match = query.data.rebuild && !currentRebuild(query.data.rebuild, now)
-    ? { ...query.data, selectedOdd: "", rating: 0, liveRate: null, currentRate: null } : query.data;
   const hero = isRebuild ? rebuildHero({ data: rebuildMatch.data, matchKey: key, status: match.status, now, error: rebuildMatch.isError }) : null;
+  // Without a record on screen the hero never claims a current selection
+  // (NXT-OBS-241): loading and failed reads say so instead.
+  const fallback = !hero && match.rebuild ? rebuildHeroFallback({ status: match.status, summary: rebuildMatch.data ?? match.rebuild, now,
+    loading: rebuildMatch.isLoading, error: rebuildMatch.isError && !rebuildMatch.data,
+    redUnknown: rebuildMatch.data?.candidates.some(candidate => candidate.reason === "RED_CARD_UNKNOWN") }) : null;
   const heroMarket = isRebuild ? hero?.record.market ?? "" : match.selectedOdd;
   const heroStars = isRebuild ? hero?.record.stars ?? 0 : match.rating;
   const heroFirstRate = isRebuild ? Number(hero?.record.quote ?? NaN) : match.liveRate;
   const heroCurrentRate = isRebuild ? hero?.currentQuote ? Number(hero.currentQuote) : null : match.currentRate;
+  // A settled record shows its hypothetical units where the live quote stood.
+  const resolvedNet = hero && hero.record.result.state !== "PENDING" ? hero.record.result.net : null;
+  const narrowVerdict = verdictWidth > 0 && verdictWidth < 300;
   const pressure = matchPressureSide(match);
   const live = match.status === "LIVE" || match.status === "HALF_TIME";
   const insight = insightQuery.data;
@@ -367,43 +437,37 @@ export function MatchDetailView({
         leagueContext.awayStandingPoints !== null)
   );
 
-  // Maçın yolu: provider events, RB1 observations and published records on one
-  // axis. RB1 exposes no pool path, so only a non-RB1 journey can draw a line.
-  const history = pressureHistory.data?.matchKey === key ? pressureHistory.data : undefined;
   const statistics = !rebuildStatistics.isError && rebuildStatistics.data?.matchKey === key ? rebuildStatistics.data : undefined;
   const possession = possessionContext(statistics, match, now);
   const observedPhase = statistics?.phase ?? history?.observations.at(-1)?.phase;
   // Minute 46 can still be first-half added time. Prefer recorded phase;
   // without it, the ambiguous interval around half-time gets no inferred label.
   const phase = matchPeriodLabel(match,observedPhase);
-  const intervals = matchActivity(history, match);
-  const liveTimeline = liveContext.data?.matchKey && liveContext.data.matchKey !== key ? undefined : liveContext.data;
-  const legacyPath = !isRebuild && matchPathEnabled;
-  const halfTime = periodScoreQuery.data?.halfTimeScore;
-  const pathModel = buildMatchPath({
-    match,
-    isRebuild,
-    poolPath:poolPath.data?.matchKey === key && !poolPath.isError ? poolPath.data : undefined,
-    events: visibleEvents(liveTimeline?.timeline),
-    observations: history?.observations ?? [],
-    records: isRebuild ? rebuildMatch.data?.history ?? [] : [],
-    journeyPoints: legacyPath && journey.data?.matchKey === key ? journey.data.points : [],
-    halfTimeScore: halfTime ? `${halfTime.homeScore}–${halfTime.awayScore}` : observedHalfTimeScore(history?.observations ?? []),
-    latestReading: latestIntervalReading(intervals, match),
-    latestReadingKind: "ACTIVITY"
-  });
   const analysisSignal = legacyPath ? latestMatchPathSignal(matchPath.data?.matchKey === key ? matchPath.data : undefined) : undefined;
   const analysisText = analysisSignal?.stateNormality != null
     ? `Son ölçüm · normallik %${Math.round(analysisSignal.stateNormality * 100)} · ${analysisSignal.cohortSize} benzer maç` : null;
+  const openBilyoner = () =>
+    Linking.openURL(buildBilyonerMatchUrl(match.id)).catch(() =>
+      Alert.alert(
+        "Bilyoner açılamadı",
+        "Bu maçın Bilyoner sayfası şu anda açılamıyor."
+      )
+    );
+
+  // Modules whose verified data is empty: they stay in place as one line but
+  // get no section shortcut (NXT-OBS-241).
+  const teamFormState = resolveTeamFormState(teamForm.data, teamForm.isLoading);
+  const scorePool = pathPool?.availability === "AVAILABLE" ? pathPool.scoreDistribution : null;
+  const emptyModules = new Set<LiveDetailModuleId>([
+    ...(isRebuild && rebuildMatch.data && !rebuildMatch.data.history.length ? ["decision" as const] : []),
+    ...(teamFormState === "EMPTY" || teamFormState === "UNAVAILABLE" ? ["teamForm" as const] : []),
+    ...(!ratioResultsAvailable(match.ratioPhase, match.ratioResults) ? ["odds" as const] : []),
+    ...(isRebuild && (statistics ? statistics.availability === "UNAVAILABLE" || statistics.availability === "NOT_STARTED" : !rebuildStatistics.isLoading) ? ["statistics" as const] : []),
+    ...((isRebuild ? !scorePool : !match.scoreDistribution.length) ? ["scoreDistribution" as const] : [])
+  ]);
 
   // Only modules that currently have data are rendered; the persisted order
   // still holds a slot for the rest so they return where the user left them.
-  const openDecision = (decisionKey: string) =>
-    router.push({
-      pathname: "/super/[key]",
-      params: { key: decisionKey, match: key }
-    } as never);
-
   const moduleNodes: Partial<Record<LiveDetailModuleId, ReactNode>> = {
     // NXT-OBS-175: the two sides' pressure over the match, as its own chart.
     pressure: !isRebuild ? (
@@ -414,15 +478,16 @@ export function MatchDetailView({
     odds: (
       <LiveDetailPanel eyebrow="PİYASA" id="odds" title="Oran sonuçları">
         <RatioResultsChart
-          marketRates={insight?.marketRates ?? []}
+          marketRates={insight?.marketRates ?? noMarketRates}
           phase={match.ratioPhase}
+          pinnedMarket={heroMarket || undefined}
           rows={match.ratioResults}
         />
       </LiveDetailPanel>
     ),
     statistics: (
       <LiveDetailPanel eyebrow="SAHA" id="statistics" title="Canlı saha dengesi">
-        {isRebuild ? <RebuildStatisticsPanel key={key} homeTeam={match.homeTeam} awayTeam={match.awayTeam} isError={rebuildStatistics.isError} isLoading={rebuildStatistics.isLoading} statistics={statistics} onRetry={() => { void rebuildStatistics.refetch(); }} isRefreshing={rebuildStatistics.isFetching} /> : <View style={styles.statsCard}>
+        {isRebuild ? <RebuildStatisticsPanel key={key} homeTeam={match.homeTeam} awayTeam={match.awayTeam} isError={rebuildStatistics.isError} isLoading={rebuildStatistics.isLoading} statistics={statistics} onRetry={retryStatistics} isRefreshing={rebuildStatistics.isFetching} /> : <View style={styles.statsCard}>
           <SurfaceMaterial radius={radii.lg} />
           <ComparisonRow
             away={match.awayBallPossession}
@@ -503,7 +568,7 @@ export function MatchDetailView({
     moduleNodes.standings = (
       <TutorialTarget id="match-standings" radius={radii.lg}>
         <LiveDetailPanel
-          eyebrow="PUAN DURUMU"
+          eyebrow="LİG"
           id="standings"
           title="Lig sıralaması"
         >
@@ -547,7 +612,26 @@ export function MatchDetailView({
         </View>
       )
     }));
-  const visibleChips = evidenceChips.filter((chip) => moduleItems.some((item) => item.id === chip.id));
+  // Shortcuts follow the order on screen, including the user's own (NXT-OBS-241).
+  const visibleChips = moduleItems.flatMap((item) => {
+    const chip = evidenceChips.find((candidate) => candidate.id === item.id);
+    return chip && !emptyModules.has(item.id) ? [chip] : [];
+  });
+  const sameSet = (left: readonly string[], right: readonly string[]) =>
+    left.length === right.length && left.every((id) => right.includes(id));
+  const layoutChanged = layoutCustomized || !sameSet(collapsed, moduleCollapseDefaults.liveDetail);
+  const resetLayout = () => {
+    setLayoutUndo({ order: [...getModuleOrder("liveDetail")], customized: layoutCustomized, collapsed: [...collapsed] });
+    void reset();
+    void resetModuleCollapse("liveDetail");
+  };
+  const undoLayoutReset = () => {
+    if (!layoutUndo) return;
+    void restoreModuleOrder("liveDetail", layoutUndo.order, layoutUndo.customized);
+    void restoreModuleCollapse("liveDetail", layoutUndo.collapsed);
+    setLayoutUndo(null);
+  };
+  const compactQuote = currentMarket.value && currentMarket.value !== "—" ? `${currentMarket.label} ${currentMarket.value}` : currentMarket.label;
 
   return (
     <>
@@ -583,7 +667,7 @@ export function MatchDetailView({
       scrollRef={scrollRef}
       fixedHeader={compactHeader ? <View style={styles.fixedHeader}>
         <Text style={styles.fixedTitle}>{match.homeTeam} – {match.awayTeam}</Text>
-        <Text style={styles.fixedValue}>{match.homeScore}–{match.awayScore} · {formatElapsed(match.status, match.elapsed, match.clock)} · {formatSelection(heroMarket) || "Seçim yok"}{hero ? ` · ${hero.stateLabel}` : ""} · {currentMarket.value}</Text>
+        <Text style={styles.fixedValue}>{match.homeScore}–{match.awayScore} · {formatElapsed(match.status, match.elapsed, match.clock)} · {formatSelection(heroMarket) || "Seçim yok"}{hero ? ` · ${hero.stateLabel}` : ""}{heroMarket ? ` · ${compactQuote}` : ""}</Text>
       </View> : null}
       scrollProps={{
         alwaysBounceVertical: true,
@@ -613,7 +697,7 @@ export function MatchDetailView({
         {/* Faint pitch markings behind the score. Decoration only, so they
             stay below every reading contrast and out of the accessibility tree. */}
         <PitchMarkings />
-        <View style={styles.leagueRow}>
+        <View style={[styles.leagueRow, wideWeb && styles.verdictRowWide]}>
           <View style={styles.leagueCopy}>
             <Text numberOfLines={1} style={styles.league}>
               {match.league}
@@ -653,7 +737,7 @@ export function MatchDetailView({
             </ChangeEmphasis>
             {periodScoreQuery.data?.halfTimeScore ? (
               <Text style={styles.halfTimeScore}>
-                İY {periodScoreQuery.data.halfTimeScore.homeScore}-
+                İY {periodScoreQuery.data.halfTimeScore.homeScore}–
                 {periodScoreQuery.data.halfTimeScore.awayScore}
               </Text>
             ) : null}
@@ -678,30 +762,35 @@ export function MatchDetailView({
           style={styles.heroDivider}
         />
         <Text style={[styles.verdictEyebrow, wideWeb && styles.verdictRowWide]}>
-          {hero ? `SON BTB SEÇİMİ · ${hero.record.minute}′ · ${hero.stateLabel}` : match.rebuild ? rebuildPresentation({status:match.status,summary:rebuildMatch.data ?? match.rebuild,now,
-            redUnknown:rebuildMatch.data?.candidates.some(candidate => candidate.reason === "RED_CARD_UNKNOWN")}).label : `BTB SEÇİMİ${match.decisionMinute !== null && heroMarket ? ` · ${match.decisionMinute}′` : ""}`}
+          {hero ? `SON BTB SEÇİMİ · ${hero.record.minute}′ · ${hero.stateLabel}` : fallback ? fallback.label : `BTB SEÇİMİ${match.decisionMinute !== null && heroMarket ? ` · ${match.decisionMinute}′` : ""}`}
         </Text>
-        <View style={[styles.verdictRow, wideWeb && styles.verdictRowWide]}>
-          <View style={[styles.verdictCell, styles.verdictCellWide]}>
+        <View
+          onLayout={(event) => setVerdictWidth(event.nativeEvent.layout.width)}
+          style={[styles.verdictRow, narrowVerdict && styles.verdictRowNarrow, wideWeb && styles.verdictRowWide]}
+        >
+          <View style={[styles.verdictCell, styles.verdictCellWide, narrowVerdict && styles.verdictCellFull]}>
             <Text numberOfLines={2} style={styles.selection}>
-              {formatSelection(heroMarket) || "Şu anda seçim yok"}
+              {formatSelection(heroMarket) || (fallback?.selection ?? "Şu anda seçim yok")}
             </Text>
-            {/* The rebuild's stars measure consistency and evidence quality,
-                so the board's meter carries that name rather than "BTB rating". */}
-            {heroMarket ? (
-              <SignalMeter
-                {...(match.rebuild ? { label: `İlk kanıt kalitesi · ${Math.min(5, heroStars)}/5` } : {})}
-                rating={heroStars}
-              />
-            ) : null}
+            {/* RB1 stars measure consistency and evidence quality, drawn as
+                the same stars as every ticket and row on this page. */}
+            {heroMarket ? match.rebuild ? <EvidenceQuality stars={heroStars} /> : <SignalMeter rating={heroStars} /> : null}
           </View>
-          {heroMarket ? <View style={[styles.verdictCell, styles.verdictCellEnd]}>
+          {heroMarket ? <View style={[styles.verdictCell, styles.verdictCellEnd, narrowVerdict && styles.verdictCellNarrow]}>
             <Text style={styles.verdictValue}>
               {isRebuild ? formatQuote(hero?.record.quote) : formatRate(match.liveRate)}
             </Text>
-            <Text style={styles.verdictLabel}>seçim oranı</Text>
+            <Text style={[styles.verdictLabel, narrowVerdict && styles.verdictLabelNarrow]}>seçim oranı</Text>
           </View> : null}
-          {heroMarket ? <View style={[styles.verdictCell, styles.verdictCellEnd]}>
+          {heroMarket ? resolvedNet !== null ? <View style={[styles.verdictCell, styles.verdictCellEnd, narrowVerdict && styles.verdictCellNarrow]}>
+            <Text
+              accessibilityLabel={`${formatUnits(resolvedNet)} birim, varsayımsal sonuç`}
+              style={[styles.verdictValue, { color: toneColor[unitsTone(resolvedNet)] }]}
+            >
+              {formatUnits(resolvedNet)}
+            </Text>
+            <Text style={[styles.verdictLabel, narrowVerdict && styles.verdictLabelNarrow]}>birim · varsayımsal</Text>
+          </View> : <View style={[styles.verdictCell, styles.verdictCellEnd, narrowVerdict && styles.verdictCellNarrow]}>
             <View style={styles.movementRow}>
               <MaterialCommunityIcons
                 color={movement.color}
@@ -717,38 +806,43 @@ export function MatchDetailView({
                 </Text>
               </ChangeEmphasis>
             </View>
-            <Text style={styles.verdictLabel}>{currentMarket.label}</Text>
+            <Text style={[styles.verdictLabel, narrowVerdict && styles.verdictLabelNarrow]}>{currentMarket.label}</Text>
           </View> : null}
         </View>
-        {hero ? <View style={styles.heroRecordFooter}>
-          <ResultPill state={hero.record.result.state} />
-          <Pressable accessibilityRole="button" accessibilityLabel="Son BTB karar kaydını aç" onPress={() => openDecision(hero.record.decisionId)} style={styles.heroRecordAction}>
-            <Text style={styles.resetText}>Karar kaydını aç</Text>
-            <MaterialCommunityIcons color={semantic.intelligence} name="chevron-right" size={iconSizes.inline} />
-          </Pressable>
+        {hero ? <View style={[styles.heroRecordFooter, wideWeb && styles.verdictRowWide]}>
+          <ResultPill state={hero.record.result.state} subject />
+          <View style={styles.heroActions}>
+            {/* While the published selection is still playable, its market is
+                one step away (owner decision, NXT-OBS-241). */}
+            {hero.playable ? <Pressable accessibilityHint="Maçın Bilyoner sayfasını açar" accessibilityRole="button" onPress={() => { void openBilyoner(); }} style={({ pressed, hovered }) => [styles.heroRecordAction, hovered && styles.chipHover, pressed && styles.chipPressed]}>
+              <Text style={styles.resetText}>Bilyoner&apos;da aç</Text>
+              <MaterialCommunityIcons color={semantic.intelligence} name="open-in-new" size={iconSizes.inline} />
+            </Pressable> : null}
+            <Pressable accessibilityRole="button" accessibilityLabel="Son BTB karar kaydını aç" onPress={() => openDecision(hero.record.decisionId)} style={styles.heroRecordAction}>
+              <Text style={styles.resetText}>Karar kaydını aç</Text>
+              <MaterialCommunityIcons color={semantic.intelligence} name="chevron-right" size={iconSizes.inline} />
+            </Pressable>
+          </View>
         </View> : null}
         </View>
       </TutorialTarget>
       </View>
 
       {query.data?.rebuild ? <RebuildJinxCard matchKey={key} matchStatus={match.status} possession={possession}
-        matchContext={context.data} refreshContext={() => context.refetch()} contextRefreshing={context.isFetching} /> : null}
+        matchContext={context.data} refreshContext={() => context.refetch()} contextRefreshing={context.isFetching}
+        onOpenEvidence={() => jumpToModule("decision")} /> : null}
 
       <View collapsable={false} ref={(node) => { moduleRefs.current.set("matchPath", node); }}>
         <MatchPathCard
-          {...(isRebuild ? { activity: { intervals, failed: pressureHistory.isError, loading: pressureHistory.isLoading } } : {})}
+          {...pathActivity}
           analysisText={analysisText}
           collapsed={collapsed.includes("matchPath")}
-          footer={<LiveContextFreshness
-            ageSeconds={liveTimeline?.freshness?.ageSeconds}
-            refreshFailed={liveTimeline?.freshness?.refreshFailed}
-            stale={liveTimeline?.freshness?.stale}
-          />}
+          footer={pathFooter}
           key={key}
           match={match}
           model={pathModel}
           onDecisionPress={openDecision}
-          onToggleCollapse={() => toggleModule("matchPath")}
+          onToggleCollapse={toggleMatchPath}
           synthetic={legacyPath && journey.data?.origin === "SYNTHETIC"}
           wide={wideWeb}
         />
@@ -756,9 +850,6 @@ export function MatchDetailView({
 
       <View style={styles.rowTools}>
         <Text accessibilityRole="header" aria-level={2} style={styles.evidenceTitle}>Maçın kanıtları</Text>
-        <Pressable accessibilityRole="button" onPress={() => { void reset(); void resetModuleCollapse("liveDetail"); }} style={styles.resetAction}>
-          <Text style={styles.resetText}>Düzeni sıfırla</Text>
-        </Pressable>
       </View>
       {visibleChips.length ? (
         <>
@@ -787,6 +878,7 @@ export function MatchDetailView({
       ) : null}
       <ReorderableModuleList
         items={moduleItems}
+        masonry
         maxColumns={embedded && !expanded ? 1 : 2}
         onDragStateChange={setReordering}
         onReorder={(from, to) =>
@@ -800,18 +892,33 @@ export function MatchDetailView({
         scrollRef={scrollRef}
       />
 
+      {/* A rarely used, reversible control: after the list it belongs to,
+          shown only when something differs from the default, with an undo. */}
+      {layoutUndo ? (
+        <View style={styles.layoutTools}>
+          <Text accessibilityLiveRegion="polite" style={styles.evidenceHelp}>Bölüm düzeni varsayılana döndü.</Text>
+          <Pressable accessibilityRole="button" onPress={undoLayoutReset} style={styles.resetAction}>
+            <Text style={styles.resetText}>Geri al</Text>
+          </Pressable>
+        </View>
+      ) : layoutChanged ? (
+        <View style={styles.layoutTools}>
+          <Pressable
+            accessibilityHint="Bölüm sırasını ve açık/kapalı durumlarını varsayılana döndürür; birkaç saniye geri alınabilir."
+            accessibilityRole="button"
+            onPress={resetLayout}
+            style={styles.resetAction}
+          >
+            <Text style={styles.resetText}>Düzeni sıfırla</Text>
+          </Pressable>
+        </View>
+      ) : null}
+
       <View style={styles.actions}>
         <Pressable
           accessibilityHint="Maçın Bilyoner sayfasını açar"
           accessibilityRole="button"
-          onPress={() =>
-            Linking.openURL(buildBilyonerMatchUrl(match.id)).catch(() =>
-              Alert.alert(
-                "Bilyoner açılamadı",
-                "Bu maçın Bilyoner sayfası şu anda açılamıyor."
-              )
-            )
-          }
+          onPress={() => { void openBilyoner(); }}
           style={({ pressed, hovered }) => [styles.bilyonerAction, hovered && styles.chipHover, pressed && styles.chipPressed]}
         >
           <Text style={styles.bilyonerActionText}>Bilyoner&apos;da aç</Text>
@@ -883,9 +990,10 @@ const styles = StyleSheet.create({
   elapsedLive: {
     color: semantic.live
   },
+  // Top-aligned, so both crests stay level when one name wraps to two lines.
   scoreRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginVertical: spacing.sm
   },
   teamBlock: {
@@ -966,6 +1074,9 @@ const styles = StyleSheet.create({
   },
   heroRecordFooter: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: spacing.sm, marginTop: spacing.sm },
   heroRecordAction: { flexDirection: "row", alignItems: "center", minHeight: 44, gap: spacing.xs },
+  // Stays on the right when it wraps under the result pill on a phone.
+  heroActions: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end", columnGap: spacing.lg, marginLeft: "auto" },
+  layoutTools: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end", gap: spacing.md, marginTop: spacing.sm },
   rowTools: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, alignItems: "center", justifyContent: "space-between", marginTop: spacing.sm },
   evidenceHelp: { ...typeScale.label, color: colors.textMuted },
   resetAction: { minHeight: 48, justifyContent: "center" },
@@ -1001,6 +1112,20 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0
   },
+  verdictRowNarrow: {
+    flexWrap: "wrap",
+    rowGap: spacing.md
+  },
+  verdictCellFull: {
+    flexBasis: "100%"
+  },
+  verdictCellNarrow: {
+    alignItems: "flex-start",
+    maxWidth: "50%"
+  },
+  verdictLabelNarrow: {
+    textAlign: "left"
+  },
   verdictCellEnd: {
     alignItems: "flex-end",
     maxWidth: "30%"
@@ -1029,49 +1154,6 @@ const styles = StyleSheet.create({
     borderColor: colors.borderSoft,
     padding: spacing.lg,
     gap: spacing.lg
-  },
-  distributionCard: {
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    padding: spacing.lg,
-    gap: spacing.md
-  },
-  distributionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md
-  },
-  distributionScore: {
-    ...numericFont("800"),
-    color: colors.text,
-    width: 34,
-    fontSize: 12
-  },
-  probabilityTrack: {
-    flex: 1,
-    height: 8,
-    backgroundColor: colors.surfaceStrong,
-    borderRadius: radii.round,
-    overflow: "hidden"
-  },
-  probabilityFill: {
-    height: "100%",
-    backgroundColor: colors.gold,
-    borderRadius: radii.round
-  },
-  probability: {
-    color: colors.textMuted,
-    minWidth: 48,
-    flexShrink: 0,
-    textAlign: "right",
-    ...typeScale.label
-  },
-  emptyText: {
-    ...textFont("400"),
-    color: colors.textMuted,
-    textAlign: "center",
-    fontSize: 12
   },
   actions: {
     gap: spacing.md,

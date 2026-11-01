@@ -33,3 +33,21 @@ export function rebuildPresentation({ status, summary, now, error = false, redUn
   }
   return { label: "GÜNCEL VERİ BEKLENİYOR", text: `Güncel veri bekleniyor · ${rebuildReason(reason)}`, tone: "warning" as const };
 }
+
+/**
+ * The match hero's state while no published record is on screen. The context
+ * summary can already name a current selection while the record that the hero
+ * draws is still loading or failed to load, so the hero never says GÜNCEL SEÇİM
+ * above "no selection" (NXT-OBS-241).
+ */
+export function rebuildHeroFallback({ status, summary, now, loading = false, error = false, redUnknown = false }: {
+  status: string; summary: RebuildSummary | undefined; now: number; loading?: boolean; error?: boolean; redUnknown?: boolean | undefined;
+}) {
+  if (status === "FINISHED" || status === "NOT_PLAYED") return { label: rebuildPresentation({ status, summary, now }).label, selection: "Şu anda seçim yok" };
+  if (loading) return { label: "KARAR KAYDI OKUNUYOR", selection: "Karar kaydı okunuyor…" };
+  if (error) return { label: "VERİ ALINAMADI", selection: "Karar kaydı alınamadı" };
+  const presentation = rebuildPresentation({ status, summary, now, redUnknown });
+  return presentation.label === "GÜNCEL SEÇİM"
+    ? { label: "KAYIT DOĞRULANIYOR", selection: "Güncel seçim kaydı doğrulanıyor" }
+    : { label: presentation.label, selection: "Şu anda seçim yok" };
+}

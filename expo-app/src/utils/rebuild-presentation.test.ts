@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { RebuildSummary, RebuildMatch } from "../api/rebuild-schemas";
-import { candidateFacts, rebuildPresentation } from "./rebuild-presentation";
+import { candidateFacts, rebuildHeroFallback, rebuildPresentation } from "./rebuild-presentation";
 const make = (reason: string) => ({ reason, availability: "WAITING_DATA", current: null } as RebuildSummary);
 test("finished matches never promise further confirmation", () => {
   assert.equal(rebuildPresentation({status:"FINISHED",summary:make("SOURCE_INVALID"),now:0}).text,"Maç tamamlandı · güncel seçim yok");
@@ -20,4 +20,15 @@ test("early rejected candidate defaults are not presented as measured zero",()=>
   assert.doesNotMatch(candidateFacts(c),/0\/0/);
   c.votes=[{supports:true},{supports:false}] as typeof c.votes;
   assert.match(candidateFacts(c),/1\/2 ölçüm destekliyor · teyit yok/);
+});
+
+test("the hero fallback never claims a current selection it cannot show (NXT-OBS-241)", () => {
+  const current = { ...make("ADMITTED"), availability: "ACTIVE", current: { decisionId: "A".repeat(32), market: "Ms2", quote: "1.35",
+    stars: 2, consistencyScore: "81", validUntil: new Date(60_000).toISOString() } } as unknown as RebuildSummary;
+  assert.equal(rebuildPresentation({ status: "LIVE", summary: current, now: 0 }).label, "GÜNCEL SEÇİM");
+  assert.deepEqual(rebuildHeroFallback({ status: "LIVE", summary: current, now: 0, loading: true }), { label: "KARAR KAYDI OKUNUYOR", selection: "Karar kaydı okunuyor…" });
+  assert.deepEqual(rebuildHeroFallback({ status: "LIVE", summary: current, now: 0, error: true }), { label: "VERİ ALINAMADI", selection: "Karar kaydı alınamadı" });
+  assert.deepEqual(rebuildHeroFallback({ status: "LIVE", summary: current, now: 0 }), { label: "KAYIT DOĞRULANIYOR", selection: "Güncel seçim kaydı doğrulanıyor" });
+  assert.deepEqual(rebuildHeroFallback({ status: "LIVE", summary: make("NO_SELECTION"), now: 0 }), { label: "MAÇ İZLENİYOR", selection: "Şu anda seçim yok" });
+  assert.deepEqual(rebuildHeroFallback({ status: "FINISHED", summary: current, now: 0, error: true }), { label: "MAÇ TAMAMLANDI", selection: "Şu anda seçim yok" });
 });

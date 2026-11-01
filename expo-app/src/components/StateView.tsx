@@ -62,12 +62,15 @@ export function SystemState({
   kind,
   title,
   message,
-  onRetry
+  onRetry,
+  compact = false
 }: {
   kind: SystemStateKind;
   title?: string;
   message?: string;
   onRetry?: () => void;
+  /** One line inside an analytical module: an absent section must not outweigh the data around it. */
+  compact?: boolean;
 }) {
   const pathname = usePathname();
   const jinx = useJinxPreferences();
@@ -80,6 +83,21 @@ export function SystemState({
     spec.tone === "NEUTRAL" &&
     bibiPresence(pathname) === "FULL";
   const showRetry = spec.retryable && Boolean(onRetry);
+
+  if (compact && kind !== "LOADING") {
+    return (
+      <View accessibilityRole={alarming ? "alert" : undefined} style={styles.compact}>
+        <SurfaceMaterial radius={radii.lg} />
+        <MaterialCommunityIcons color={accent} name={spec.icon as IconName} size={iconSizes.small} />
+        <Text style={styles.compactMessage}>{message ?? spec.body}</Text>
+        {showRetry ? (
+          <Pressable accessibilityRole="button" onPress={onRetry} style={styles.compactRetry}>
+            <Text style={styles.compactRetryText}>Tekrar dene</Text>
+          </Pressable>
+        ) : null}
+      </View>
+    );
+  }
 
   return (
     <View
@@ -195,6 +213,32 @@ export function EmptyState({
 }
 
 const styles = StyleSheet.create({
+  compact: {
+    alignItems: "center",
+    borderColor: colors.borderSoft,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md
+  },
+  compactMessage: {
+    color: colors.textMuted,
+    flex: 1,
+    minWidth: 160,
+    ...typeScale.bodyCompact
+  },
+  compactRetry: {
+    justifyContent: "center",
+    minHeight: interaction.minTouchTarget
+  },
+  compactRetryText: {
+    color: semantic.intelligence,
+    ...typeScale.bodyCompact,
+    fontWeight: "700"
+  },
   container: {
     minHeight: 210,
     alignItems: "center",

@@ -23,6 +23,8 @@ type CollapsibleModuleProps = {
   title: string;
   leading?: ReactNode;
   children: ReactNode;
+  /** See ModuleHeading: the eyebrow stays even when the title repeats it. */
+  showEyebrow?: boolean;
 };
 
 /**
@@ -49,7 +51,8 @@ export function CollapsibleModule({
   eyebrow,
   title,
   leading,
-  children
+  children,
+  showEyebrow = false
 }: CollapsibleModuleProps) {
   const { collapsed, toggle } = useModuleCollapse(surface);
   const isCollapsed = collapsed.includes(moduleId);
@@ -112,6 +115,7 @@ export function CollapsibleModule({
           eyebrow={eyebrow}
           title={title}
           leading={leading}
+          showEyebrow={showEyebrow}
           trailing={
             // The v40 board's square control: the chevron on its own surface
             // tile, so the header reads as a button and not just a title.

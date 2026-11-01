@@ -84,3 +84,11 @@ test("a match that has not started has nothing to select", () => {
   assert.deepEqual(path.chips.map((chip) => chip.label), ["0–0"]);
   assert.equal(path.chips[0]?.current, false);
 });
+
+test("the latest RB1 moment leaves a missing activity window to the rhythm summary (NXT-OBS-241)", () => {
+  const path = buildMatchPath(input({ match: { ...finished, status: "LIVE", elapsed: 65 }, latestReading: null, latestReadingKind: "ACTIVITY" }));
+  const latest = path.moments.find((moment) => moment.kind === "LATEST");
+  assert.ok(latest);
+  assert.ok(!latest.lines.some((line) => /hareketlilik penceresi yok/.test(line)));
+  assert.doesNotMatch(path.lineNotice?.body ?? "", /eski maçlar/);
+});

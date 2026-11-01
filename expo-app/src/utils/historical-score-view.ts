@@ -26,6 +26,25 @@ export function historicalScoreReachability(score: string, match: Match, period:
   if (!parsed) return "UNKNOWN";
   return Number(parsed[1]) < match.homeScore || Number(parsed[2]) < match.awayScore ? "UNREACHABLE" : "REACHABLE";
 }
+/**
+ * The overview leads with scores the match can still reach, in source order,
+ * and folds unreachable ones into one total (NXT-OBS-241). Counts and shares
+ * are summed as recorded, never renormalized over the visible rows.
+ */
+export function historicalOverview<T extends { reachability: string; probability: number; count: number | null }>(rows: readonly T[], limit = 6) {
+  const open = rows.filter(row => row.reachability !== "UNREACHABLE");
+  const closed = rows.filter(row => row.reachability === "UNREACHABLE");
+  return {
+    ordered: [...open, ...closed],
+    overview: open.slice(0, limit),
+    unreachable: closed.length ? {
+      scores: closed.length,
+      records: closed.every(row => row.count !== null) ? closed.reduce((sum, row) => sum + row.count!, 0) : null,
+      share: closed.reduce((sum, row) => sum + row.probability, 0)
+    } : null
+  };
+}
+
 /** Display period comes from verified pool provenance; full-time rows never become half-time rows. */
 export function historicalScoreView(match: Match, pool: RebuildPoolPath | undefined, now: number) {
   const source = pool?.availability === "AVAILABLE" ? pool.scoreDistribution : null;

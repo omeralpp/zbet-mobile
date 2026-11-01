@@ -1,4 +1,4 @@
-import { useState, type ReactNode, type RefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, type ScrollView } from "react-native";
 import { colors, iconSizes, radii, semantic, spacing } from "@/src/theme/theme";
@@ -22,7 +22,75 @@ type ReorderableModuleListProps = {
   scrollOffsetRef?: RefObject<number>;
   /** Caps the masonry columns, e.g. 1 inside the Canlı split-view pane. */
   maxColumns?: number;
+  /**
+   * Each module takes only its own height in its column instead of the row's
+   * tallest module (Maç detayı, NXT-OBS-241). DOM and keyboard order stay the
+   * saved order; only the empty space under a short module is reclaimed.
+   */
+  masonry?: boolean;
 };
+
+// Grid row unit for masonry: a module spans as many units as its height needs.
+const masonryUnit = 4;
+
+/** Measures every module so the masonry grid can give it exactly its height. */
+function useMasonrySpans(enabled: boolean) {
+  const [spans, setSpans] = useState<Record<string, number>>({});
+  const observer = useRef<ResizeObserver | null>(null);
+  const nodes = useRef(new Map<string, HTMLDivElement>());
+  const refs = useRef(new Map<string, (node: HTMLDivElement | null) => void>());
+
+  useEffect(() => {
+    if (!enabled || typeof ResizeObserver === "undefined") {
+      return;
+    }
+    const resize = new ResizeObserver((entries) => {
+      setSpans((current) => {
+        let next = current;
+        for (const entry of entries) {
+          const id = (entry.target as HTMLElement).dataset.moduleId;
+          if (!id) {
+            continue;
+          }
+          const span = Math.max(1, Math.ceil((entry.target.getBoundingClientRect().height + spacing.xxl) / masonryUnit));
+          if (next[id] !== span) {
+            next = { ...next, [id]: span };
+          }
+        }
+        return next;
+      });
+    });
+    observer.current = resize;
+    for (const node of nodes.current.values()) {
+      resize.observe(node);
+    }
+    return () => {
+      resize.disconnect();
+      observer.current = null;
+    };
+  }, [enabled]);
+
+  const register = useCallback((id: string) => {
+    let ref = refs.current.get(id);
+    if (!ref) {
+      ref = (node: HTMLDivElement | null) => {
+        const previous = nodes.current.get(id);
+        if (previous && previous !== node) {
+          observer.current?.unobserve(previous);
+          nodes.current.delete(id);
+        }
+        if (node) {
+          nodes.current.set(id, node);
+          observer.current?.observe(node);
+        }
+      };
+      refs.current.set(id, ref);
+    }
+    return ref;
+  }, []);
+
+  return { spans, register };
+}
 
 /**
  * Web twin of the long-press reorder surface. A desktop has no touch hold, so
@@ -35,7 +103,8 @@ export function ReorderableModuleList({
   items,
   onReorder,
   onDragStateChange,
-  maxColumns
+  maxColumns,
+  masonry = false
 }: ReorderableModuleListProps) {
   const [active, setActive] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -44,6 +113,8 @@ export function ReorderableModuleList({
   const transition = reduceMotion ? "none" : "opacity 140ms ease";
   // Grid follows DOM/keyboard order across each row. Saved module order stays intact.
   const columns = Math.max(1, Math.min(moduleColumns(useBreakpoint()), maxColumns ?? 3));
+  const packed = masonry && columns > 1;
+  const { spans, register } = useMasonrySpans(packed);
 
   const endDrag = () => {
     setDragIndex(null);
@@ -52,13 +123,19 @@ export function ReorderableModuleList({
   };
 
   return (
-    <div style={columns > 1 ? { ...columnsStyle, gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` } : listStyle}>
+    <div style={columns > 1 ? {
+      ...columnsStyle,
+      gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+      ...(packed ? { gridAutoRows: `${masonryUnit}px`, rowGap: 0, columnGap: spacing.xxl } : null)
+    } : listStyle}>
       {items.map((item, index) => {
         const shown = active === item.id || dragIndex === index;
         const dropHere = dragIndex !== null && overIndex === index && dragIndex !== index;
         return (
           <div
+            data-module-id={item.id}
             key={item.id}
+            ref={packed ? register(item.id) : undefined}
             onBlur={(event) => {
               if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
                 setActive((current) => (current === item.id ? null : current));
@@ -89,7 +166,8 @@ export function ReorderableModuleList({
               transition,
               ...(columns > 1 ? columnModuleStyle : null),
               ...(columns > 1 && item.fullWidth ? { gridColumn: "1 / -1" } : null),
-              ...(columns > 1 && item.rowSpan ? { gridRow: `span ${item.rowSpan}` } : null),
+              ...(columns > 1 && item.rowSpan && !packed ? { gridRow: `span ${item.rowSpan}` } : null),
+              ...(packed ? { gridRow: `span ${spans[item.id] ?? 1}` } : null),
               opacity: dragIndex === index ? 0.55 : 1,
               outline: dropHere ? `2px solid ${semantic.intelligence}` : "none"
             }}

@@ -197,3 +197,12 @@ test("a frozen unknown kickoff does not hide the same SAP fixture's recommendati
   first.matchKey = "2026-10-20:18:13:00:00";
   assert.equal(rebuildHero(input), null);
 });
+
+test("a current and playable selection reads GÜNCEL SEÇİM, as Jinx and the live list say it (NXT-OBS-241)", () => {
+  const { input } = setup();
+  const hero = rebuildHero(input)!;
+  assert.equal(hero.active, true);
+  assert.equal(hero.playable, true);
+  assert.equal(hero.stateLabel, "GÜNCEL SEÇİM");
+  assert.equal(hero.stateTone, "positive");
+});

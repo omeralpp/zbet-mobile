@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type {
   MatchDetail,
@@ -58,21 +58,49 @@ function visiblePhases(phase: RatioPhase, rows: RatioResult[]) {
     .filter((item) => rows.some((row) => row[item.field] !== null));
 }
 
-export function RatioResultsChart({
+function availableRatioRows(phase: MatchDetail["ratioPhase"], rows: RatioResult[]) {
+  const phases = phase ? visiblePhases(phase, rows) : [];
+  // Preserve source order and shares. A zero is evidence; a missing phase is not.
+  return { phases, rows: rows.filter((row) => phases.some((item) => row[item.field] !== null)) };
+}
+
+/** Whether the module has any market to show; the section shortcuts skip it otherwise. */
+export function ratioResultsAvailable(phase: MatchDetail["ratioPhase"], rows: RatioResult[]) {
+  return availableRatioRows(phase, rows).rows.length > 0;
+}
+
+const sameMarket = (left: string, right: string) => left.trim().toLocaleLowerCase("tr-TR") === right.trim().toLocaleLowerCase("tr-TR");
+
+export const RatioResultsChart = memo(function RatioResultsChart({
   marketRates,
   phase,
-  rows
+  rows,
+  pinnedMarket
 }: {
   marketRates: MatchMarketRate[];
   phase: MatchDetail["ratioPhase"];
   rows: RatioResult[];
+  /** The published BTB selection's market leads the list (owner decision, NXT-OBS-241). */
+  pinnedMarket?: string | undefined;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const phases = phase ? visiblePhases(phase, rows) : [];
+  const { phases, rows: availableRows } = availableRatioRows(phase, rows);
   const activePhase = phaseDefinitions.find((item) => item.key === phase);
-  // Preserve source order and shares. A zero is evidence; a missing phase is not.
-  const availableRows = rows.filter((row) => phases.some((item) => row[item.field] !== null));
-  const visibleRows = expanded ? availableRows : availableRows.slice(0, 6);
+  // Only the selection's market moves; every other market keeps its source order.
+  const pinnedIndex = pinnedMarket ? availableRows.findIndex((row) => sameMarket(row.betType, pinnedMarket)) : -1;
+  const orderedRows = pinnedIndex > 0
+    ? [availableRows[pinnedIndex]!, ...availableRows.filter((_, index) => index !== pinnedIndex)]
+    : availableRows;
+  const visibleRows = expanded ? orderedRows : orderedRows.slice(0, 6);
+
+  if (!availableRows.length || !phases.length) {
+    return (
+      <View style={styles.card}>
+        <SurfaceMaterial radius={radii.lg} />
+        <Text style={styles.emptyCompact}>Bu maç aşaması için geçmiş oran-sonuç verisi henüz yok.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.card}>
@@ -101,13 +129,11 @@ export function RatioResultsChart({
         ) : null}
       </View>
 
-      {availableRows.length && phases.length ? (
-        <>
-          <View style={styles.summary}>
-            <Text style={styles.meta}>{visibleRows.length} / {availableRows.length} pazar</Text>
-            <Text style={styles.meta}>Tarihsel pay · kazanma olasılığı değildir.</Text>
-          </View>
-          <View style={styles.rows}>
+      <View style={styles.summary}>
+        <Text style={styles.meta}>{visibleRows.length} / {availableRows.length} pazar</Text>
+        <Text style={styles.meta}>Tarihsel pay · kazanma olasılığı değildir.</Text>
+      </View>
+      <View style={styles.rows}>
             {visibleRows.map((row) => {
               const marketRate = marketRates.find(
                 (rate) =>
@@ -115,19 +141,23 @@ export function RatioResultsChart({
               );
               const rateDisplay = ratioMarketRateDisplay(marketRate, phase);
               const label = formatSelection(row.betType);
+              const pinned = pinnedIndex >= 0 && row === availableRows[pinnedIndex];
               const shares = phases.flatMap((item) => row[item.field] === null ? [] :
                 [`${item.label} ${formatHistoricalFraction(row[item.field]! / 100)}`]).join(", ");
               return (
                 <View
                   accessible
-                  accessibilityLabel={`${label}, ${shares}; ${rateDisplay.accessibilityText}`}
+                  accessibilityLabel={`${pinned ? "BTB seçimi, " : ""}${label}, ${shares}; ${rateDisplay.accessibilityText}`}
                   key={`${row.sort}:${row.betType}`}
-                  style={styles.row}
+                  style={[styles.row, pinned && styles.pinnedRow]}
                 >
+                  {pinned ? <Text style={styles.pinnedTag}>BTB SEÇİMİ</Text> : null}
                   <View style={styles.rowHeader}>
                     <View style={styles.marketIdentity}>
-                      <Text style={styles.betType}>{label}</Text>
-                      {label !== row.betType ? <Text style={styles.marketCode}>{row.betType}</Text> : null}
+                      <Text style={styles.betType}>
+                        {label}
+                        {label !== row.betType ? <Text style={styles.marketCode}>{`  ${row.betType}`}</Text> : null}
+                      </Text>
                     </View>
                     <View style={styles.marketRate}>
                       <Text style={styles.marketRateLabel}>
@@ -171,25 +201,19 @@ export function RatioResultsChart({
                 </View>
               );
             })}
-          </View>
-          {availableRows.length > 6 ? <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ expanded }}
-            aria-expanded={expanded}
-            onPress={() => setExpanded(!expanded)}
-            style={styles.action}
-          >
-            <Text style={styles.link}>{expanded ? "İlk 6 pazarı göster" : `Tüm ${availableRows.length} pazarı göster`}</Text>
-          </Pressable> : null}
-        </>
-      ) : (
-        <Text style={styles.empty}>
-          Bu maç aşaması için geçmiş oran-sonuç verisi henüz oluşmadı.
-        </Text>
-      )}
+      </View>
+      {availableRows.length > 6 ? <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        aria-expanded={expanded}
+        onPress={() => setExpanded(!expanded)}
+        style={styles.action}
+      >
+        <Text style={styles.link}>{expanded ? "İlk 6 pazarı göster" : `Tüm ${availableRows.length} pazarı göster`}</Text>
+      </Pressable> : null}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {
@@ -247,6 +271,16 @@ const styles = StyleSheet.create({
     borderTopColor: colors.borderSoft,
     paddingTop: spacing.md
   },
+  pinnedRow: {
+    borderLeftWidth: 2,
+    borderLeftColor: colors.bronze,
+    paddingLeft: spacing.sm
+  },
+  pinnedTag: {
+    color: colors.bronze,
+    ...typeScale.eyebrow,
+    marginBottom: -spacing.xs
+  },
   rowHeader: {
     alignItems: "flex-start",
     flexDirection: "row",
@@ -266,11 +300,16 @@ const styles = StyleSheet.create({
     ...typeScale.identityCompact
   },
   marketCode: { ...typeScale.micro, color: colors.textSubtle },
+  // Label and rate on one line: the market row is two lines, not four.
   marketRate: {
-    alignItems: "flex-end",
+    alignItems: "baseline",
+    flexDirection: "row",
     flexShrink: 1,
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+    marginLeft: "auto",
     maxWidth: "100%",
-    gap: 2
+    columnGap: spacing.sm
   },
   marketRateLabel: {
     color: colors.textSubtle,
@@ -315,10 +354,8 @@ const styles = StyleSheet.create({
   phaseLabel: { ...typeScale.micro, color: colors.textMuted, width: 50 },
   action: { minHeight: interaction.minTouchTarget, justifyContent: "center", marginTop: spacing.md },
   link: { ...typeScale.bodyCompact, color: semantic.intelligence, fontWeight: "700" },
-  empty: {
+  emptyCompact: {
     color: colors.textMuted,
-    ...typeScale.bodyCompact,
-    marginTop: spacing.lg,
-    textAlign: "center"
+    ...typeScale.bodyCompact
   }
 });

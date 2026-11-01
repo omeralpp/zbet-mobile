@@ -106,6 +106,13 @@ export async function resetModuleCollapse(surface: ModuleLayoutSurface): Promise
   await persist(surface, defaults);
 }
 
+/** Puts back the closed panels captured before a reset (the reset's undo). */
+export async function restoreModuleCollapse(surface: ModuleLayoutSurface, collapsed: readonly string[]): Promise<void> {
+  const restored = reconcileCollapsedModules(collapsed, moduleLayoutDefaults[surface]);
+  commit(surface, restored);
+  await persist(surface, restored);
+}
+
 function subscribe(listener: Listener): () => void {
   listeners.add(listener);
   return () => {

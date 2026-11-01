@@ -31,16 +31,19 @@ export function MatchActivitySummary({ intervals, match, failed, loading }: {
   failed: boolean; loading: boolean;
 }) {
   const last = intervals.at(-1);
+  const ended = match.status === "FINISHED" || match.status === "NOT_PLAYED";
+  // The card's one statement about missing activity (NXT-OBS-241): no empty
+  // team legend, and no "yet" once the match is over.
   return <View style={styles.summary} testID="match-activity-summary">
     <View style={styles.copy}>
-      <Text style={styles.eyebrow}>MAÇIN RİTMİ · SON 5 DAKİKA</Text>
-      <Text style={styles.headline}>{last ? activityHeadline(last, match) : loading ? "Hareketlilik yükleniyor…" : "Henüz doğrulanmış hareketlilik penceresi yok."}</Text>
-      <Text style={styles.note}>{failed ? "Yenileme başarısız · kayıtlı geçmiş. " : ""}Tahmini hareketlilik · seçim hesabına katılmaz.</Text>
+      <Text style={styles.eyebrow}>{!last ? "MAÇIN RİTMİ" : ended ? "MAÇIN RİTMİ · SON ÖLÇÜLEN 5 DAKİKA" : "MAÇIN RİTMİ · SON 5 DAKİKA"}</Text>
+      <Text style={styles.headline}>{last ? activityHeadline(last, match) : loading ? "Hareketlilik yükleniyor…" : ended ? "Bu maç için doğrulanmış hareketlilik penceresi yok." : "Henüz doğrulanmış hareketlilik penceresi yok."}</Text>
+      {last || failed ? <Text style={styles.note}>{failed ? "Yenileme başarısız · kayıtlı geçmiş. " : ""}Tahmini hareketlilik · seçim hesabına katılmaz.</Text> : null}
     </View>
-    <View style={styles.teams}>
-      <View style={[styles.team, { borderLeftColor: colors.blue }]}><Text style={styles.teamLabel}>{match.homeTeam}</Text><Text style={[styles.teamValue, { color: colors.blue }]}>{last?.homeText ?? "—"}</Text></View>
-      <View style={[styles.team, { borderLeftColor: colors.orange }]}><Text style={styles.teamLabel}>{match.awayTeam}</Text><Text style={[styles.teamValue, { color: colors.orange }]}>{last?.awayText ?? "—"}</Text></View>
-    </View>
+    {last ? <View style={styles.teams}>
+      <View style={[styles.team, { borderLeftColor: colors.blue }]}><Text style={styles.teamLabel}>{match.homeTeam}</Text><Text style={[styles.teamValue, { color: colors.blue }]}>{last.homeText}</Text></View>
+      <View style={[styles.team, { borderLeftColor: colors.orange }]}><Text style={styles.teamLabel}>{match.awayTeam}</Text><Text style={[styles.teamValue, { color: colors.orange }]}>{last.awayText}</Text></View>
+    </View> : null}
   </View>;
 }
 const styles = StyleSheet.create({

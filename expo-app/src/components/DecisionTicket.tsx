@@ -35,14 +35,19 @@ export const toneSoft: Record<Tone, string> = {
 };
 
 /** One outcome as a pill; the label is spelled in capitals for Turkish İ. */
-export function ResultPill({ state }: { state: ResultState }) {
+/**
+ * `subject` names the result where no SONUÇ label stands beside the pill, so a
+ * pending result reads SONUÇ BEKLİYOR rather than a bare BEKLİYOR next to a
+ * selection state (NXT-OBS-241).
+ */
+export function ResultPill({ state, subject = false }: { state: ResultState; subject?: boolean }) {
   const presentation = resultPresentation[state];
   return (
     <View
       accessibilityLabel={`Sonuç: ${presentation.label}`}
       style={[styles.pill, { backgroundColor: toneSoft[presentation.tone] }]}
     >
-      <Text style={[styles.pillText, { color: toneColor[presentation.tone] }]}>{presentation.pill}</Text>
+      <Text style={[styles.pillText, { color: toneColor[presentation.tone] }]}>{subject && state === "PENDING" ? `SONUÇ ${presentation.pill}` : presentation.pill}</Text>
     </View>
   );
 }

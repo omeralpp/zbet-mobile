@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { RebuildStatistics } from "@/src/api/rebuild-statistics-schemas";
 import { colors, interaction, radii, semantic, spacing, typeScale } from "@/src/theme/theme";
@@ -14,7 +14,7 @@ import { SurfaceMaterial } from "./SurfaceMaterial";
  */
 const timeFormat = new Intl.DateTimeFormat("tr-TR", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false, timeZone: "Europe/Istanbul" });
 
-export function RebuildStatisticsPanel({ statistics, isLoading, isError, homeTeam, awayTeam, onRetry, isRefreshing = false }: {
+export const RebuildStatisticsPanel = memo(function RebuildStatisticsPanel({ statistics, isLoading, isError, homeTeam, awayTeam, onRetry, isRefreshing = false }: {
   statistics: RebuildStatistics | undefined;
   isLoading: boolean;
   isError: boolean;
@@ -60,7 +60,7 @@ export function RebuildStatisticsPanel({ statistics, isLoading, isError, homeTea
       <Text style={styles.reading}>0: ölçülen değer · —: ölçüm yok</Text>
     </> : null}
   </View>;
-}
+});
 
 const styles = StyleSheet.create({
   card: { borderRadius: radii.lg, borderWidth: 1, borderColor: colors.borderSoft, padding: spacing.lg, gap: spacing.md },

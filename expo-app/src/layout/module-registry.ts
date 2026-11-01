@@ -25,6 +25,22 @@ export const liveDetailModules = [
   "scoreDistribution"
 ] as const;
 
+/**
+ * Default order while a match is live and the user has saved no order (owner
+ * decision 2026-11-01, NXT-OBS-241): the live field and market evidence come
+ * before pre-match form and the reference tables. A saved order always wins.
+ */
+export const liveDetailLiveModules: readonly LiveDetailModuleId[] = [
+  "matchPath",
+  "pressure",
+  "decision",
+  "statistics",
+  "odds",
+  "teamForm",
+  "standings",
+  "scoreDistribution"
+];
+
 // Super kararı on RB1 (owner decision 2026-10-21): the A3 `standings` module
 // had no RB1 counterpart and is dropped on reconcile; `matchHistory` lists the
 // match's other published records in its place.

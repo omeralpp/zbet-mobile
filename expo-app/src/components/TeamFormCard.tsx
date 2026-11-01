@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import type { TeamFormContext, TeamFormSide } from "@/src/api/schemas";
 import {
@@ -39,7 +40,7 @@ import {
  * about small samples and missing values are testable without a renderer and
  * cannot be quietly re-decided here.
  */
-export function TeamFormCard({
+export const TeamFormCard = memo(function TeamFormCard({
   awayTeam,
   context,
   homeTeam,
@@ -59,6 +60,7 @@ export function TeamFormCard({
   if (state === "UNAVAILABLE") {
     return (
       <SystemState
+        compact
         kind="UNAVAILABLE"
         message="Takım formu şu anda kullanılamıyor. Maç detayının geri kalanı etkilenmez."
       />
@@ -68,6 +70,7 @@ export function TeamFormCard({
   if (state === "EMPTY") {
     return (
       <SystemState
+        compact
         kind="EMPTY"
         message="Bu takımların örneklemde henüz oynanmış maçı yok."
       />
@@ -116,7 +119,7 @@ export function TeamFormCard({
       <CaveatLine text={smallSampleNotice(context)} />
     </View>
   );
-}
+});
 
 function RecordBlock({
   align,
@@ -196,9 +199,13 @@ function FormRow({ awayTeam, homeTeam, row }: { awayTeam: string; homeTeam: stri
         <Text style={[styles.rowValue, styles.homeText]}>
           {homeValue}
         </Text>
+        {/* Label and unit share a line where they fit, so seven rows do not
+            read as fourteen on a phone (NXT-OBS-241). */}
         <View style={styles.rowHeading}>
-          <Text style={styles.rowLabel}>{row.label}</Text>
-          <Text style={styles.rowUnit}>{unit}{row.lowerIsBetter ? " · düşük daha iyi" : ""}</Text>
+          <Text style={styles.rowLabel}>
+            {row.label}
+            <Text style={styles.rowUnit}>{` · ${unit}${row.lowerIsBetter ? " · düşük daha iyi" : ""}`}</Text>
+          </Text>
         </View>
         <Text style={[styles.rowValue, styles.awayValue]}>
           {awayValue}

@@ -54,7 +54,8 @@ export function jinxMatchReading({ record, data, matchKey, context, now, sourceF
   const condition = usableContext ? jinxScoreCondition(record.market, match.homeScore, match.awayScore) : null;
   const currentScore = usableContext ? score(match.homeScore, match.awayScore) : null;
   if (usableContext) sources.push({ label: "Saha kontrolü", value: `${match.elapsed}′ · ${currentScore} · ${time(context.acquiredAt)}` });
-  const scoreComparison = currentScore ? { label: "Skor", before: `${record.minute}′ · ${initialScore}`,
+  // An unchanged score is not a change to show (NXT-OBS-241).
+  const scoreComparison = currentScore && currentScore !== initialScore ? { label: "Skor", before: `${record.minute}′ · ${initialScore}`,
     after: `${match!.elapsed}′ · ${currentScore}` } : undefined;
 
   if (record.result.state === "VOID") return view("Karar geçersiz", "Bu karar geçersiz sonuçlanmış; kazanç veya kayıp diye değerlendirilmez.");
@@ -68,7 +69,7 @@ export function jinxMatchReading({ record, data, matchKey, context, now, sourceF
       return view("Sonuç kontrolü gerekli", "Skor ile sonuç kaydı farklı görünüyor; aynı kapsamda doğrulama gerekiyor.", scoreComparison, true);
     if (record.result.state === "PENDING") return view("Sonuç kaydı bekleniyor",
       `Son skorla seçimin koşulu ${condition.holds ? "karşılanıyor" : "karşılanmıyor"}; kararın sonucu henüz kesinleşmemiş.`, scoreComparison, true);
-    return view("Maç sonu değerlendirme", [`Karardaki ${initialScore} skoru ${currentScore} olmuş; seçimin skor koşulu ${condition.holds ? "sağlanmış" : "sağlanmamış"}.`, jinxQualityLimit(record)].filter(Boolean).join(" "), scoreComparison);
+    return view("Maç sonu değerlendirme", [`${currentScore === initialScore ? `Skor kararın ${initialScore} skorunda kalmış` : `Karardaki ${initialScore} skoru ${currentScore} olmuş`}; seçimin skor koşulu ${condition.holds ? "sağlanmış" : "sağlanmamış"}.`, jinxQualityLimit(record)].filter(Boolean).join(" "), scoreComparison);
   }
   // A resolved record cannot borrow a later live snapshot as a new live signal.
   if (record.result.state !== "PENDING") return view("Karar anı", jinxInsight(record));
@@ -138,5 +139,9 @@ export function jinxMatchReading({ record, data, matchKey, context, now, sourceF
 export function jinxReadingSections(record: RebuildRecommendation, reading: JinxReading) {
   if (!reading.sources.length) return { moment: null, current: reading };
   const moment = { title: `Karar anı · ${record.minute}′`, text: jinxInsight(record) };
-  return { moment, current: reading.title === "Karar anı" ? null : reading };
+  if (reading.title === "Karar anı") return { moment, current: null };
+  // The frozen quality limit is said once, in the decision moment (NXT-OBS-241).
+  const limit = jinxQualityLimit(record);
+  const repeated = limit && moment.text.includes(limit) && reading.text.includes(limit) && reading.text.trim() !== limit;
+  return { moment, current: repeated ? { ...reading, text: reading.text.replace(limit, "").replace(/\s{2,}/g, " ").trim() } : reading };
 }

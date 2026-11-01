@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { RebuildPoolPath } from "@/src/api/rebuild-statistics-schemas";
 import { colors, interaction, numericFont, radii, semantic, spacing, typeScale } from "@/src/theme/theme";
-import { historicalScoreReachability, historicalScoreView, retainHistoricalReference, type HistoricalReference } from "@/src/utils/historical-score-view";
+import { historicalOverview, historicalScoreReachability, historicalScoreView, retainHistoricalReference, type HistoricalReference } from "@/src/utils/historical-score-view";
 import { formatHistoricalFraction, historicalFractionWidth } from "@/src/utils/statistical-geometry";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 
@@ -23,7 +23,9 @@ export function HistoricalScoreDistribution({ match, pool, now, allowLegacy = fa
   const rows = source ? source.rows.map(row => ({ score: row.score, probability: row.share, count: row.count })) :
     view.period === "2H" && allowLegacy ? match.scoreDistribution.map(row => ({ ...row, count: null })) : [];
   const classified = rows.map(row => ({ ...row, reachability: historicalScoreReachability(row.score, match, view.period, now) }));
-  const visible = expanded ? classified : classified.slice(0, 6);
+  const overview = historicalOverview(classified);
+  const visible = expanded ? overview.ordered : overview.overview;
+  const folded = !expanded ? overview.unreachable : null;
   const unreachable = classified.some(row => row.reachability === "UNREACHABLE");
   const unknownReachability = classified.some(row => row.reachability === "UNKNOWN");
   return <View style={styles.card}>
@@ -34,8 +36,8 @@ export function HistoricalScoreDistribution({ match, pool, now, allowLegacy = fa
     </View>
     {source ? <Text style={styles.meta}>Referans anı {source.minute}′ · skor {source.homeScore}–{source.awayScore}</Text> : null}
     <Text style={styles.meta}>Tarihsel örnek payı · kazanma olasılığı değildir.</Text>
-    {visible.length ? <View style={styles.columns}><Text style={styles.meta}>Skor</Text><Text style={styles.meta}>{source ? "Kayıt / toplam · pay" : "Tarihsel pay"}</Text></View> : null}
-    {visible.length ? visible.map(row => {
+    {visible.length || folded ? <View style={styles.columns}><Text style={styles.meta}>Skor</Text><Text style={styles.meta}>{source ? "Kayıt / toplam · pay" : "Tarihsel pay"}</Text></View> : null}
+    {visible.length || folded ? visible.map(row => {
       const inactive = row.reachability === "UNREACHABLE";
       return <View key={row.score} accessible accessibilityLabel={`${row.score}, ${formatHistoricalFraction(row.probability)}${row.count === null ? "" : `, ${row.count} referans`}${inactive ? ", güncel skorla artık ulaşılamaz" : row.reachability === "UNKNOWN" ? ", ulaşılabilirlik doğrulanmadı" : ""}`} style={styles.row}>
         <View style={styles.scoreCell}><Text style={[styles.score, inactive && styles.inactive]}>{row.score}</Text>
@@ -47,11 +49,18 @@ export function HistoricalScoreDistribution({ match, pool, now, allowLegacy = fa
         </View>
       </View>;
     }) : <Text style={styles.empty}>{view.message}</Text>}
-    {unreachable ? <Text style={styles.meta}>Soluk skorlar: güncel skorla artık ulaşılamaz. Tarihsel sayılar korunur.</Text> : null}
+    {folded ? <View accessible accessibilityLabel={`Ulaşılamaz skorlar, ${folded.scores} skor, ${formatHistoricalFraction(folded.share)}${folded.records === null ? "" : `, ${folded.records} referans`}`} style={styles.row}>
+      <View style={styles.foldedCell}><Text style={[styles.foldedTitle, styles.inactive]}>Ulaşılamaz skorlar</Text><Text style={styles.status}>{folded.scores} skor</Text></View>
+      <View style={styles.valueCell}>
+        {source && folded.records !== null ? <Text style={[styles.recordCount, styles.inactive]}>{folded.records} / {source.total}</Text> : null}
+        <Text style={[styles.value, styles.inactive]}>{formatHistoricalFraction(folded.share)}</Text>
+      </View>
+    </View> : null}
+    {unreachable ? <Text style={styles.meta}>{expanded ? "Soluk skorlar: güncel skorla artık ulaşılamaz." : "Önce güncel skorla hâlâ ulaşılabilen skorlar."} Tarihsel sayılar korunur.</Text> : null}
     {unknownReachability ? <Text style={styles.meta}>Güncel skorla ulaşılabilirlik doğrulanmadı.</Text> : null}
     {source && !view.source ? <Text style={styles.meta}>Kaydedilmiş referans havuz gösteriliyor · {view.message}</Text> : null}
-    {rows.length > 6 ? <Pressable accessibilityRole="button" accessibilityState={{ expanded }} aria-expanded={expanded} onPress={() => setExpanded(!expanded)} style={styles.action}>
-      <Text style={styles.link}>{expanded ? "İlk 6 skoru göster" : `Tüm ${rows.length} skoru göster`}</Text>
+    {rows.length > overview.overview.length ? <Pressable accessibilityRole="button" accessibilityState={{ expanded }} aria-expanded={expanded} onPress={() => setExpanded(!expanded)} style={styles.action}>
+      <Text style={styles.link}>{expanded ? "Özete dön" : `Tüm ${rows.length} skoru göster`}</Text>
     </Pressable> : null}
     {source ? <>
       <Text style={styles.meta}>Kayıt sayısı, bağımsız maç sayısı değildir.</Text>
@@ -74,6 +83,8 @@ const styles = StyleSheet.create({
   columns: { flexDirection: "row", justifyContent: "space-between", gap: spacing.sm },
   row: { flexDirection: "row", alignItems: "center", gap: spacing.sm, minHeight: 40 },
   scoreCell: { width: 76, flexShrink: 0 },
+  foldedCell: { flex: 1, minWidth: 0 },
+  foldedTitle: { ...typeScale.bodyCompact, fontWeight: "700" },
   score: { ...numericFont("700"), fontSize: 18, color: colors.text },
   status: { ...typeScale.label, color: colors.textMuted, fontSize: 12 },
   inactive: { color: colors.textMuted },

@@ -1,7 +1,7 @@
 import { jinxMatchReading, jinxReadingSections } from "@/src/utils/jinx-match-reading";
 import { candidateGroups, jinxBlockers, jinxOutlook } from "@/src/utils/jinx-outlook";
 import type { AnalysisContext } from "@/src/api/schemas";
-import { useEffect, useState, type ReactNode } from "react";
+import { memo, useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -43,7 +43,7 @@ export function Card({ children, padded = true, accent }: { children: ReactNode;
   return (
     <View style={styles.card}>
       <SurfaceMaterial accent={accent} radius={20} />
-      <View style={padded ? styles.cardBody : null}>{children}</View>
+      <View style={padded ? styles.cardBody : styles.cardClip}>{children}</View>
     </View>
   );
 }
@@ -90,6 +90,14 @@ function EvidenceRow({ label, children }: { label: string; children: ReactNode }
  */
 function RecordEvidence({ record }: { record: RebuildRecommendation }) {
   const support = formatSupport(record.poolWins, record.poolTotal);
+  // The frozen deductions, evaluated; the formula stays beneath as provenance.
+  const poolDeduction = record.poolTotal > 0 ? 20 * (record.poolTotal - record.poolWins) / record.poolTotal : 0;
+  const deduction = (value: number) => value > 0 ? `−${formatDecimal(String(value))}` : "0";
+  // The lowest cap is the one that holds the stars down (as Jinx says); an
+  // inconsistent record whose stars exceed it marks nothing.
+  const lowestCap = Math.min(...Object.values(record.caps));
+  const binding = lowestCap < 5 && lowestCap >= record.stars ? lowestCap : null;
+  const bindingLabels = binding === null ? [] : Object.entries(record.caps).filter(([, value]) => value === binding).map(([key]) => capLabel[key] ?? key);
   return (
     <View style={styles.evidence}>
       <Text style={styles.eyebrowMuted}>KARAR KANITI</Text>
@@ -113,8 +121,8 @@ function RecordEvidence({ record }: { record: RebuildRecommendation }) {
                 size={iconSizes.small}
               />
               <Text style={styles.voteText}>
-                {i + 1}. aralık · {vote.supports ? "Destekliyor" : "Ters oy"}
-                <Text style={styles.evidenceMuted}> · Ev {formatDecimal(vote.home)} / Deplasman {formatDecimal(vote.away)} / Toplam {formatDecimal(vote.total)}</Text>
+                {i + 1}. baskı aralığı · {vote.supports ? "Destekliyor" : "Ters oy"}
+                <Text style={styles.evidenceMuted}> · baskı: ev {formatDecimal(vote.home)} · deplasman {formatDecimal(vote.away)} · toplam {formatDecimal(vote.total)}</Text>
               </Text>
             </View>
           ))}
@@ -129,17 +137,19 @@ function RecordEvidence({ record }: { record: RebuildRecommendation }) {
       <View style={styles.formula}>
         <Text style={styles.formulaLabel}>Puan kesintileri</Text>
         <Text style={styles.formulaText}>
-          Havuz 20 × ({record.poolTotal}−{record.poolWins})/{record.poolTotal} · Yön {record.directionConflict ? 20 : 0} · Ters oy {record.dissent ? 5 : 0}
+          Havuz {deduction(poolDeduction)} · Yön {deduction(record.directionConflict ? 20 : 0)} · Ters oy {deduction(record.dissent ? 5 : 0)}
         </Text>
+        <Text style={styles.formulaLabel}>Havuz kesintisi 20 × ({record.poolTotal}−{record.poolWins})/{record.poolTotal}</Text>
         <Text style={styles.formulaLabel}>Yıldız tavanları</Text>
         <View style={styles.caps}>
           {Object.entries(record.caps).map(([key, value]) => (
-            <View key={key} style={styles.cap}>
-              <Text style={styles.capLabel}>{capLabel[key]}</Text>
+            <View accessibilityLabel={`${capLabel[key]} ${value}${value === binding ? ", yıldızı sınırlayan tavan" : ""}`} key={key} style={[styles.cap, value === binding && styles.capBinding]}>
+              <Text style={[styles.capLabel, value === binding && styles.capLabelBinding]}>{capLabel[key]}</Text>
               <Text style={styles.capValue}>{value}</Text>
             </View>
           ))}
         </View>
+        {bindingLabels.length ? <Text style={styles.formulaLabel}>Yıldızı sınırlayan: {bindingLabels.join(", ")} · {binding} yıldız</Text> : null}
       </View>
       <View style={styles.note}>
         <MaterialCommunityIcons color={colors.textMuted} name="information-outline" size={iconSizes.small} />
@@ -177,10 +187,14 @@ function RecommendationTicket({ record, wide }: { record: RebuildRecommendation;
         <Text style={styles.eyebrowMuted}>SONUÇ</Text>
         <ResultPill state={record.result.state} />
       </View>
-      <View style={styles.ticketOutcome}>
-        <TicketFigure label="birim · varsayımsal" size="large" tone={tone} value={formatUnits(record.result.net)} />
-        <Text style={styles.revision}>Sonuç revizyonu {record.result.revision}</Text>
-      </View>
+      {record.result.net === null ? (
+        <Text style={styles.pendingOutcome}>Sonuç kesinleşince birim burada hesaplanır.</Text>
+      ) : (
+        <View style={styles.ticketOutcome}>
+          <TicketFigure label="birim · varsayımsal" size="large" tone={tone} value={formatUnits(record.result.net)} />
+          {record.result.revision > 1 ? <Text style={styles.revision}>Sonuç kaydı · sürüm {record.result.revision}</Text> : null}
+        </View>
+      )}
     </View>
   );
   return (
@@ -217,15 +231,15 @@ function RecommendationRow({
       <View style={styles.rowCopy}>
         <View style={styles.rowMeta}>
           <RatingStars rating={record.stars} size={12} />
-          <ResultPill state={record.result.state} />
+          <ResultPill state={record.result.state} subject={!showTeams} />
         </View>
         {showTeams ? <Text numberOfLines={1} style={styles.rowTeams}>{record.homeTeam} – {record.awayTeam}</Text> : null}
         {/* Market, frozen quote and minute as the board's one line; the minute
             and score wrap as one unit, never between the goals. */}
         <View style={styles.rowDetailLine}>
-          <Text style={styles.rowDetail}>{formatSelection(record.market)} · </Text>
+          <Text style={styles.rowDetail}>{formatSelection(record.market)}{"\u00a0·\u00a0"}</Text>
           <Text style={[styles.rowDetail, styles.rowMarket]}>{formatQuote(record.quote)}</Text>
-          <Text numberOfLines={1} style={styles.rowDetail}> · {record.minute}′ · {record.homeScore}–{record.awayScore}</Text>
+          <Text numberOfLines={1} style={styles.rowDetail}>{"\u00a0·\u00a0"}{record.minute}′ · {record.homeScore}–{record.awayScore}</Text>
         </View>
       </View>
       <ListPerforation />
@@ -283,9 +297,11 @@ function CandidateEvidence({ candidates, current }: { candidates: RebuildMatch["
  * record auto-refreshes, so a manual retry appears only after a failed read.
  * Detailed provenance is on demand; Jinx never calls an LLM.
  */
-export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession, matchContext, refreshContext, contextRefreshing = false }: {
+export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession, matchContext, refreshContext, contextRefreshing = false, onOpenEvidence }: {
   matchKey: string; matchStatus?: string; possession?: {label:string} | null; matchContext?: AnalysisContext | undefined;
   refreshContext?: () => Promise<unknown>; contextRefreshing?: boolean;
+  /** Opens the page's Karar özeti instead of repeating the full evidence here (NXT-OBS-241). */
+  onOpenEvidence?: (() => void) | undefined;
 }) {
   const router = useRouter();
   const query = useQuery(rebuildMatchQuery(matchKey)), now = useRebuildClock();
@@ -405,7 +421,7 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession, ma
           </View> : null}
           {record && !query.isError ? <>
             <Text style={styles.caption}>{publishedExplanation(record)}</Text>
-            <RecordEvidence record={record} />
+            {onOpenEvidence ? <Action icon="chevron-down" onPress={onOpenEvidence} title="Karar kanıtının tamamı: Karar özeti" /> : <RecordEvidence record={record} />}
             <Text style={styles.caption}>Havuz payı ve yıldızlar kazanma olasılığı değildir.</Text>
           </> : null}
           {possession ? <Text style={styles.caption}>Ek saha bilgisi · {possession.label}. Seçim kanıtından ayrıdır.</Text> : null}
@@ -422,7 +438,7 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession, ma
  * with its frozen evidence, then every record of the match as its own event
  * (one current best eligible choice; distinct later opportunities).
  */
-export function RebuildDecisionModule({ matchKey }: { matchKey: string }) {
+export const RebuildDecisionModule = memo(function RebuildDecisionModule({ matchKey }: { matchKey: string }) {
   const query = useQuery(rebuildMatchQuery(matchKey));
   const params = useLocalSearchParams<{ decision?: string | string[] }>();
   const [selectedId, setSelectedId] = useState<{matchKey:string;decisionId:string} | null>(null);
@@ -431,6 +447,7 @@ export function RebuildDecisionModule({ matchKey }: { matchKey: string }) {
   const requested = requestedDecision(params.decision);
   const selected = data ? displayedDecision(data.history, matchKey, (selectedId?.matchKey === matchKey ? selectedId.decisionId : null) || requested) : null;
   const wide = width >= 560;
+  const twoColumn = width >= 900;
   const status = decisionEvidenceStatus(data, query.isLoading, query.isError);
   if (status.kind !== "READY") {
     return <Card>
@@ -439,24 +456,21 @@ export function RebuildDecisionModule({ matchKey }: { matchKey: string }) {
         <View style={styles.decisionStateCopy}>
           <Text style={styles.evidenceText}>{status.title}</Text>
           <Text style={styles.recordNote}>{status.detail}</Text>
+          <Text style={styles.caption}>{status.count === 0 ? "Yalnız yayımlanmış önerilerin karar anı kanıtı burada görünür." : "Kayıtlar alınmadan öneri sayısı gösterilmez."}{data ? ` Son kayıt kontrolü · ${asOfTime(data.asOf)}` : ""}</Text>
         </View>
       </View>
-      <Text style={styles.recordNote}>{status.count === 0 ? "Bu bölüm, yalnız yayımlanmış önerilerin karar anındaki kanıtlarını gösterir. Diğer maç verilerini aşağıdaki bölümlerde inceleyebilirsin." : "Kayıtlar alınmadan öneri sayısı gösterilmez."}</Text>
-      {data ? <Text style={styles.caption}>Son kayıt kontrolü · {asOfTime(data.asOf)}</Text> : null}
       {status.kind !== "LOADING" ? <Action icon="refresh" title="Karar kayıtlarını yenile" busy={query.isFetching} onPress={() => { void query.refetch(); }} /> : null}
     </Card>;
   }
-  return (
-    <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)} style={styles.stack}>
-      {query.isError ? <Card><Text style={styles.recordNote}>Güncelleme alınamadı; son alınan kayıtlar gösteriliyor.</Text><Action title="Yeniden dene" icon="refresh" busy={query.isFetching} onPress={() => { void query.refetch(); }} /></Card> : null}
-      {selected ? (
-        <>
-          <RecommendationTicket record={selected} wide={wide} />
-          <Card><RecordEvidence record={selected} /></Card>
-        </>
-      ) : data?.history.length ? (
-        <Text style={styles.hint}>Bir öneriyi seçtiğinde karar anındaki kanıt burada açılır.</Text>
-      ) : null}
+  // One record is already the ticket above; a list would only repeat it.
+  const single = data?.history.length === 1 && selected?.decisionId === data.history[0]?.decisionId;
+  const ticket = selected ? <RecommendationTicket record={selected} wide={wide} /> : data?.history.length ? (
+    <Text style={styles.hint}>Bir öneriyi seçtiğinde karar anındaki kanıt burada açılır.</Text>
+  ) : null;
+  const evidence = selected ? <Card><RecordEvidence record={selected} /></Card> : null;
+  const list = single ? (
+    <Text style={styles.decisionSingleNote}>Maç boyunca 1 öneri · son kontrol {asOfTime(data?.asOf)}</Text>
+  ) : (
       <Card padded={false}>
         <View style={styles.listHead}>
           <Text style={styles.eyebrowMuted}>MAÇ BOYUNCA ÖNERİLER</Text>
@@ -473,9 +487,21 @@ export function RebuildDecisionModule({ matchKey }: { matchKey: string }) {
           />
         )) : <Text style={styles.empty}>{query.isError ? "Veri alınamadı." : "Yayımlanmış öneri yok."}</Text>}
       </Card>
+  );
+  return (
+    <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)} style={styles.stack}>
+      {query.isError ? <Card><Text style={styles.recordNote}>Güncelleme alınamadı; son alınan kayıtlar gösteriliyor.</Text><Action title="Yeniden dene" icon="refresh" busy={query.isFetching} onPress={() => { void query.refetch(); }} /></Card> : null}
+      {twoColumn && evidence ? (
+        // Wide panes: the ticket and record list beside the frozen evidence, so
+        // no label sits a full desktop width away from its value.
+        <View style={styles.decisionColumns}>
+          <View style={styles.decisionMain}>{ticket}{list}</View>
+          <View style={styles.decisionSide}>{evidence}</View>
+        </View>
+      ) : <>{ticket}{evidence}{list}</>}
     </View>
   );
-}
+});
 
 /** The outcome counts as one proportional bar with a legend. */
 function OutcomeBar({ period }: { period: RebuildReport["periods"][number] }) {
@@ -618,6 +644,13 @@ const styles = StyleSheet.create({
   stackTight: { gap: spacing.lg },
   card: { borderRadius: 20, borderWidth: 1, borderColor: colors.borderSoft, ...shadows.card },
   cardBody: { padding: spacing.lg, gap: spacing.md },
+  // Inside the 1 px border, so a selected row's background follows the corners.
+  cardClip: { borderRadius: 19, overflow: "hidden" },
+  decisionColumns: { flexDirection: "row", alignItems: "flex-start", gap: spacing.lg },
+  decisionMain: { flex: 1.1, minWidth: 0, gap: spacing.md },
+  decisionSide: { flex: 1, minWidth: 0 },
+  decisionSingleNote: { ...typeScale.label, color: colors.textMuted, letterSpacing: 0 },
+  pendingOutcome: { ...typeScale.bodyCompact, color: colors.textMuted },
   eyebrowBronze: { color: colors.bronze, ...typeScale.eyebrow },
   eyebrowMuted: { color: colors.textMuted, ...typeScale.eyebrow },
   rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
@@ -701,6 +734,8 @@ const styles = StyleSheet.create({
   formulaText: { color: colors.text, ...typeScale.bodyCompact, fontWeight: "500" },
   caps: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   cap: { flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 999, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 10, paddingVertical: 4 },
+  capBinding: { borderColor: colors.bronze, backgroundColor: colors.surface },
+  capLabelBinding: { color: colors.text, fontWeight: "700" },
   capLabel: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0 },
   capValue: { color: colors.text, ...typeScale.metricCompact, fontSize: 15, lineHeight: 18 },
   note: { flexDirection: "row", alignItems: "flex-start", gap: spacing.sm },

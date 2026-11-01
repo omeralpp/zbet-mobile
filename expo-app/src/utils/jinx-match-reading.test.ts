@@ -6,7 +6,7 @@ import { rebuildMatchSchema } from "../api/rebuild-schemas";
 import { analysisContextSchema, type AnalysisContext } from "../api/schemas";
 import { mockMatches } from "../api/mock-data";
 import { jinxMatchReading, jinxReadingSections } from "./jinx-match-reading";
-import { jinxInsight } from "./jinx-insight";
+import { jinxInsight, jinxQualityLimit } from "./jinx-insight";
 import { jinxScoreCondition } from "./jinx-score-condition";
 
 function setup() {
@@ -224,4 +224,16 @@ test("an unchanged decision shows its moment once, and a foreign record shows no
   assert.equal(unchanged.current, null); assert.ok(unchanged.moment);
   const t = setup(); t.record.matchKey = "2026-10-20:999:00:00:00";
   assert.equal(jinxReadingSections(t.record, t.run()).moment, null);
+});
+
+test("an unchanged score is not shown as a change and the quality limit is said once (NXT-OBS-241)", () => {
+  const s = setup();
+  const later = { ...s.context, sources: { ...s.context.sources, matchDetail: { ...s.context.sources.matchDetail!, elapsed: s.record.minute + 5 } } };
+  const reading = s.run({ context: later });
+  assert.notEqual(reading.comparison?.label, "Skor");
+  const limit = jinxQualityLimit(s.record)!;
+  const sections = jinxReadingSections(s.record, reading);
+  assert.ok(sections.moment?.text.includes(limit));
+  assert.ok(reading.text.includes(limit), reading.text);
+  assert.ok(sections.current && !sections.current.text.includes(limit), sections.current?.text);
 });

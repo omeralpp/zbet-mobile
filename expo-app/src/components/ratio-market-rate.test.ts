@@ -24,10 +24,10 @@ test("shows the kickoff rate when the live rate has not arrived", () => {
       "KICK_OFF"
     ),
     {
-      label: "Kick-off oranı",
+      label: "Maç önü oranı",
       text: "2,42",
       isClosed: false,
-      accessibilityText: "Kick-off oranı 2,42"
+      accessibilityText: "maç önü oranı 2,42"
     }
   );
 });
@@ -39,10 +39,10 @@ test("keeps the closed-live meaning when a kickoff reference is shown later", ()
       "LIVE"
     ),
     {
-      label: "Canlı kapalı · KO",
+      label: "Canlı kapalı · maç önü oranı",
       text: "2,42",
       isClosed: false,
-      accessibilityText: "canlı oran kapalı, Kick-off oranı 2,42"
+      accessibilityText: "canlı oran kapalı, maç önü oranı 2,42"
     }
   );
 });

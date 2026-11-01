@@ -72,6 +72,9 @@ export function rebuildHero({ data, matchKey, status, now, error = false, decisi
     : !live ? { label: "MAÇ DURUMU DOĞRULANIYOR", text: "Canlı maç durumu doğrulanmadan seçim aktif gösterilmez.", tone: "warning" as const }
     : decided ? { label: "BAHİS SONUÇLANDI", text: "Skor durumuna göre bu piyasanın sonucu belli oldu.", tone: "neutral" as const }
     : closed ? { label: "ORAN KAPALI", text: "Son kontrolde piyasa kapalı; yeniden açılması bekleniyor.", tone: "warning" as const }
+    // Current and playable reads as Jinx and the live list say it; SEÇİM AKTİF
+    // stays for a published selection that is playable but no longer current.
+    : playable && active ? { label: "GÜNCEL SEÇİM", text: "Güncel seçim doğrulandı · oran açık.", tone: "positive" as const }
     : playable ? { label: "SEÇİM AKTİF", text: "Oran açık · seçim henüz sonuçlanmadı.", tone: "positive" as const }
     : record.result.state === "UNRESOLVED" ? { label: "SONUÇ DOĞRULANIYOR", text: "Bu kararın sonucu doğrulanıyor; seçim kaydı korunuyor.", tone: "warning" as const }
     : active ? { label: "GÜNCEL SEÇİM", text: "Güncel seçim doğrulandı.", tone: "positive" as const }

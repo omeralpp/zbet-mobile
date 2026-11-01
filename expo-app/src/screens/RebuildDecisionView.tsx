@@ -17,9 +17,8 @@ import { matchPeriodScoreQuery, matchQuery, rebuildCohortsReportQuery, rebuildMa
 import type { RebuildRecommendation } from "@/src/api/rebuild-schemas";
 import { ListPerforation, ResultPill, TicketSeam, toneColor } from "@/src/components/DecisionTicket";
 import { PitchMarkings } from "@/src/components/PitchMarkings";
-import { RatingStars } from "@/src/components/RatingStars";
+import { EvidenceQuality, RatingStars } from "@/src/components/RatingStars";
 import { Screen } from "@/src/components/Screen";
-import { SignalMeter } from "@/src/components/SignalMeter";
 import { EmptyState, ErrorState, LoadingState } from "@/src/components/StateView";
 import { Action } from "@/src/components/RebuildEvidencePanel";
 import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
@@ -346,7 +345,7 @@ export function RebuildDecisionView({ decisionId, matchKey: matchParam, onEdgeSw
         </View>
         <View style={styles.bandMarket}>
           <Text style={styles.market}>{formatSelection(record.market)}</Text>
-          <SignalMeter label={`Kanıt kalitesi · ${record.stars}/5`} rating={record.stars} />
+          <EvidenceQuality stars={record.stars} />
         </View>
         <View style={styles.bandEnd}>
           <Text style={styles.price}>{formatQuote(record.quote)}</Text>

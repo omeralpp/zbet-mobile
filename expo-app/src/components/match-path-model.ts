@@ -189,7 +189,8 @@ export function buildMatchPath(input: PathInput): PathModel {
       lines: [
         latestLevel !== undefined ? describeLevel(latestLevel) : null,
         reading ? `${input.latestReadingKind === "ACTIVITY" ? "Son hareketlilik penceresi" : "Son baskı aralığı"} ${reading.range} · ${input.latestReadingKind === "ACTIVITY" ? reading.headline.replace("baskın", "daha hareketli") : reading.headline} (ev ${reading.homeText} · deplasman ${reading.awayText})`
-          : input.isRebuild ? input.latestReadingKind === "ACTIVITY" ? "Doğrulanmış 5 dakikalık hareketlilik penceresi yok." : "Bu maç için kayıtlı baskı aralığı yok." : null,
+          // A missing activity window is stated once, in the card's rhythm summary (NXT-OBS-241).
+          : input.isRebuild && input.latestReadingKind !== "ACTIVITY" ? "Bu maç için kayıtlı baskı aralığı yok." : null,
         lastObserved ? `Son doğrulanmış gözlem ${lastObserved.minute}′.` : null
       ].filter((text): text is string => Boolean(text))
     });
@@ -218,7 +219,7 @@ export function buildMatchPath(input: PathInput): PathModel {
   const defaultKey = live ? "latest" : latestBtb?.key ?? lastGoal?.key ?? moments.at(-1)?.key ?? null;
 
   const lineNotice = (poolShare ? line.length > 0 : line.length > 1) ? null : input.isRebuild
-    ? { title: "Havuzda kalan pay kaydı yok", body: "Doğrulanmış havuz yolu bulunamadı; eski maçlar için sonradan çizgi üretilmez. Skor, olaylar ve BTB kararları gösteriliyor." }
+    ? { title: "Havuzda kalan pay kaydı yok", body: "Bu maç için doğrulanmış havuz ölçümü yok; sonradan çizgi üretilmez. Skor, olaylar ve BTB kararları gösteriliyor." }
     : { title: "Havuz uyumu kaydı yok", body: "Bu maç için havuz kaydı yok; geçmişe çizgi üretilmez." };
   const headline = input.match.status === "NOT_STARTED" ? "Başlama düdüğünden sonra ilk kayıtla başlar."
     : line.length > 0 && latestLevel !== undefined ? describeLevel(latestLevel)

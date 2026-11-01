@@ -1,6 +1,6 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-10-31
+Son güncelleme: 2026-11-01
 Mod: `PAIRED_RELEASE_COMPLETE / ACCEPTED_PAIR_C8188CA`
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
@@ -85,7 +85,12 @@ the versioned release folder for rollback.
 
 ## Açık observation / blokajlar
 
-There is no open local candidate; NXT-OBS-235/238/239/240 are delivered in c8188ca. Besides
+**Open local candidate (1 November 2026): NXT-OBS-241 Maç detayı batch**, uncommitted
+on top of `19f0976`, validated locally (770+33 tests, edge web export, Android
+preview bundle, synthetic 320/390/1440 checks) and not released;
+[review and implementation](MATCH_DETAIL_UX_REVIEW_2026-11-01.md). Commit/push and
+the coordinated Android/web release each need their own approval.
+NXT-OBS-235/238/239/240 are delivered in c8188ca. Besides
 the two new deferred follow-ups NXT-OBS-236 (per-match decision notification,
 blocked by NXT-OBS-074) and NXT-OBS-237 (no single RB1 threshold; frozen model;
 BTB - Aktif first), six older DEFERRED items remain in

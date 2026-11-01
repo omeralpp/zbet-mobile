@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -7,8 +7,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Rect, Stop, Text as SvgText } from "react-native-svg";
 import type { MatchDetail } from "@/src/api/schemas";
 import { colors, fontFamilies, iconSizes, numericFont, radii, semantic, spacing, textFont, typeScale } from "@/src/theme/theme";
-import { formatElapsed, formatSelection } from "@/src/utils/format";
-import { matchPeriodLabel } from "@/src/utils/match-period";
+import { formatSelection } from "@/src/utils/format";
 import { formatQuote, formatUnits, resultPresentation, unitsTone } from "@/src/utils/rebuild-display";
 import { ResultPill, toneColor } from "./DecisionTicket";
 import { JourneyEventGlyph, journeySvgAccessibility } from "./JourneyEventIcon";
@@ -25,7 +24,8 @@ import { TeamLogo } from "./TeamLogo";
  * Maçın yolu as its own full-width card under the Jinx card (v45 boards
  * W-MacYolu / M-MacYolu, owner approval 2026-10-22). The chart draws the score
  * ribbon, the home lane above and the away lane below, the pool-alignment
- * line or its one honest notice, and BTB's decisions as tickets. Every mark
+ * line (or, without one, a thin band and a caption that says so), and BTB's
+ * decisions as tickets. Every mark
  * is a 44 pt target; the selected moment opens beside the chart on desktop and
  * above it on a phone, directly after the event navigator. The rail lists
  * every moment in order, including individually selectable grouped marks.
@@ -38,7 +38,8 @@ type Geometry = { width: number; height: number; gutter: number; plotWidth: numb
 function geometry(width: number, wide: boolean, model: PathModel, integrated: boolean): Geometry {
   const gutter = wide ? 118 : 40, right = wide ? 20 : 12;
   const plotWidth = Math.max(120, width - gutter - right);
-  const plotHeight = model.lineNotice ? 84 : wide ? 100 : 80;
+  // Without a pool line the band shrinks to a thin divider; the caption says why (NXT-OBS-241).
+  const plotHeight = model.lineNotice ? 28 : wide ? 100 : 80;
   const poolTop = integrated ? 226 : PT;
   const away = poolTop + plotHeight + LANE_GAP, btb = away + BTB_GAP, axis = btb + AXIS_GAP;
   return {
@@ -92,13 +93,6 @@ function placeChips(model: PathModel, g: Geometry, chipWidth: number) {
   return placed;
 }
 
-function statusPill(match: MatchDetail) {
-  if (match.status === "LIVE") return { label: `${match.clock?.period === "ET" ? matchPeriodLabel(match) : "CANLI"} · ${formatElapsed(match.status,match.elapsed,match.clock)}`, live: true };
-  if (match.status === "HALF_TIME") return { label: "DEVRE ARASI", live: true };
-  if (match.status === "NOT_STARTED") return { label: "BAŞLAMADI", live: false };
-  return { label: "MAÇ TAMAMLANDI", live: false };
-}
-
 const kindLabel: Record<PathMoment["kind"], string> = { GOAL: "Gol", RED_CARD: "Kırmızı kart", BTB: "BTB kararı", POOL: "Devre", LATEST: "Son kayıt", ACTIVITY: "Hareketlilik" };
 
 function MomentGlyph({ moment, size }: { moment: PathMoment; size: number }) {
@@ -115,13 +109,15 @@ function SelectedMoment({ moment, match, model, showBack, onBack, onDecisionPres
   activityReading?: PressureInterval | null | undefined;
 }) {
   if (!moment) {
-    return <View style={styles.panel}><Text style={styles.panelEmpty}>{model.headline}</Text></View>;
+    return null;
   }
   const record = moment.record;
   const side = moment.side === "HOME" ? match.homeTeam : moment.side === "AWAY" ? match.awayTeam : null;
+  // The latest record's subtitle is often just its score, already shown large
+  // beside the minute; it is not repeated as a title (NXT-OBS-241).
   const title = moment.kind === "BTB" && record ? formatSelection(record.market) || record.market
     : moment.kind === "ACTIVITY" ? "Son 5 dakikalık hareketlilik"
-    : moment.kind === "LATEST" ? (moment.railSub || "Son kayıt")
+    : moment.kind === "LATEST" ? (moment.railSub && moment.railSub !== moment.score ? moment.railSub : "")
       : moment.kind === "POOL" ? "İkinci yarı havuzu"
         : [moment.railTitle.split(" · ")[1], side].filter(Boolean).join(" · ");
   return (
@@ -137,14 +133,14 @@ function SelectedMoment({ moment, match, model, showBack, onBack, onDecisionPres
           <Text style={styles.panelBig}>{moment.minute}<Text style={styles.minutePrime}>′</Text></Text>
           {moment.score ? <View style={styles.scoreAtMoment}><Text style={styles.scoreAtMomentValue}>{moment.score}</Text><Text style={styles.ticketLabel}>o andaki skor</Text></View> : null}
         </View>
-        <Text style={styles.panelTitle}>{title}</Text>
+        {title ? <Text style={styles.panelTitle}>{title}</Text> : null}
       </View>
       {record ? <View style={styles.ticket}>
         <View style={styles.ticketRow}>
           <Text accessibilityLabel={`${record.stars} yıldız`} style={styles.ticketStars}>
             {"★".repeat(record.stars)}<Text style={styles.ticketStarsOff}>{"★".repeat(5 - record.stars)}</Text>
           </Text>
-          <ResultPill state={record.result.state} />
+          <ResultPill state={record.result.state} subject />
         </View>
         <View style={styles.ticketRow}>
           <View><Text style={styles.ticketFigure}>{formatQuote(record.quote)}</Text><Text style={styles.ticketLabel}>seçim oranı</Text></View>
@@ -170,7 +166,7 @@ function SelectedMoment({ moment, match, model, showBack, onBack, onDecisionPres
   );
 }
 
-export function MatchPathCard({ match, model, synthetic, analysisText, collapsed, onToggleCollapse, onDecisionPress, wide, footer, activity }: {
+export const MatchPathCard = memo(function MatchPathCard({ match, model, synthetic, analysisText, collapsed, onToggleCollapse, onDecisionPress, wide, footer, activity }: {
   match: MatchDetail;
   model: PathModel;
   /** The legacy line came from a synthetic sample (shows ÖRNEK VERİ). */
@@ -184,6 +180,9 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
   footer?: ReactNode;
   activity?: { intervals: readonly PressureInterval[]; failed: boolean; loading: boolean };
 }) {
+  // An activity band without a verified window repeats what the rhythm summary
+  // already says, so the chart draws the band only with data (NXT-OBS-241).
+  const chartActivity = activity && activity.intervals.length ? activity : undefined;
   const [width, setWidth] = useState(wide ? 740 : 330);
   // Chart and panel sit side by side only where the card itself is wide enough;
   // the desktop Canlı split view embeds this card in a narrower pane.
@@ -196,10 +195,10 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
   const railRef = useRef<ScrollView>(null);
   const railPositions = useRef<Record<string, number>>({});
   const selectedKey = cursor !== null ? `activity:${cursor}` : picked && model.moments.some((moment) => moment.key === picked) ? picked : model.defaultKey;
-  const selected = cursor !== null && activity ? activityMoment(activity.intervals, cursor, match) : model.moments.find((moment) => moment.key === selectedKey);
-  const chartModel = useMemo(() => activity ? { ...model, maxMinute: Math.max(model.maxMinute, ...activity.intervals.map(point => point.endMinute)) } : model, [activity, model]);
-  const g = useMemo(() => geometry(width, wide && width >= 620, chartModel, Boolean(activity)), [width, wide, chartModel, activity]);
-  const lineInk = activity ? colors.teal : colors.blue;
+  const selected = cursor !== null && chartActivity ? activityMoment(chartActivity.intervals, cursor, match) : model.moments.find((moment) => moment.key === selectedKey);
+  const chartModel = useMemo(() => chartActivity ? { ...model, maxMinute: Math.max(model.maxMinute, ...chartActivity.intervals.map(point => point.endMinute)) } : model, [chartActivity, model]);
+  const g = useMemo(() => geometry(width, wide && width >= 620, chartModel, Boolean(chartActivity)), [width, wide, chartModel, chartActivity]);
+  const lineInk = chartActivity ? colors.teal : colors.blue;
   const chooseMoment = useCallback((key: string) => { setCursor(null); setPicked(key); }, []);
   useEffect(() => {
     if (selectedKey && railPositions.current[selectedKey] !== undefined) {
@@ -211,7 +210,6 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
   const groups = useMemo(() => groupMarks(model.moments, g, model, 48), [g, model]);
   const chipWidth = wide ? 44 : 38;
   const chips = useMemo(() => placeChips(model, g, chipWidth), [model, g, chipWidth]);
-  const status = statusPill(match);
   const hasLine = !model.lineNotice;
   const lineD = hasLine ? model.line.map((vertex,index) => `${index === 0 || vertex.connects === false ? "M" : "L"} ${g.x(vertex.minute).toFixed(1)} ${g.y(vertex.level).toFixed(1)}`).join(" ") : "";
   const first = model.line[0], last = model.line.at(-1);
@@ -246,13 +244,13 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
   const pickAt = useCallback((px: number, py: number | null) => {
     const hit = py === null ? null : groups.find(group => Math.abs(group.cx - px) <= 22 && Math.abs(group.cy - py) <= 24);
     if (hit) { chooseMoment(hit.lead.key); return; }
-    if (activity && (py === null || py >= 100 && py <= 218)) {
+    if (chartActivity && (py === null || py >= 100 && py <= 218)) {
       setCursor(Math.round(Math.max(0, Math.min(chartModel.nowMinute ?? chartModel.maxMinute, (px - g.gutter) / g.plotWidth * chartModel.maxMinute))));
       return;
     }
     const key = nearest(px, py);
     if (key) chooseMoment(key);
-  }, [nearest, activity, groups, g, chartModel, chooseMoment]);
+  }, [nearest, chartActivity, groups, g, chartModel, chooseMoment]);
 
   // One gesture canvas owns physical input: a horizontal drag walks the
   // moments, a tap picks the mark under it; vertical movement scrolls the page.
@@ -283,8 +281,8 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
   const chart = (
     <View style={styles.chartBox} onLayout={(event) => setWidth(Math.max(240, event.nativeEvent.layout.width))}>
       <View style={styles.chartHeading}>
-        <View style={styles.chartHeadingCopy}><Text style={styles.chartTitle}>Zaman çizgisi</Text><Text style={styles.chartCaption}>{activity ? "Olaylar, hareketlilik ve havuz · tek eksen" : "Olaylar ve havuz · tek eksen"}</Text></View>
-        {activity ? <View style={styles.teamKeys}>
+        <View style={styles.chartHeadingCopy}><Text style={styles.chartTitle}>Zaman çizgisi</Text><Text style={styles.chartCaption}>{`${chartActivity ? "Olaylar, hareketlilik" : "Olaylar"}${hasLine ? " ve havuz" : ""} · tek eksen${model.lineNotice ? " · havuz kaydı yok" : ""}`}</Text></View>
+        {chartActivity ? <View style={styles.teamKeys}>
           <View style={styles.teamKey}><View style={[styles.teamDot, { backgroundColor: colors.blue }]} /><Text numberOfLines={1} style={styles.teamKeyText}>{match.homeTeam}</Text></View>
           <View style={styles.teamKey}><View style={[styles.teamDot, { backgroundColor: colors.orange }]} /><Text numberOfLines={1} style={styles.teamKeyText}>{match.awayTeam}</Text></View>
         </View> : null}
@@ -294,7 +292,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
           <Svg width={g.width} height={g.height} {...journeySvgAccessibility}>
             <Defs><LinearGradient id="matchPathFill" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor={colors.blue} stopOpacity={0.3} /><Stop offset="1" stopColor={colors.blue} stopOpacity={0.02} /></LinearGradient></Defs>
             {selected ? <Rect x={Math.max(g.gutter, g.x(selected.minute) - 20)} y={32} width={Math.min(40, g.gutter + g.plotWidth - Math.max(g.gutter, g.x(selected.minute) - 20))} height={g.axis - 32} fill={colors.blue} opacity={0.045} /> : null}
-            {activity ? <MatchActivityBars intervals={activity.intervals} x={g.x} left={g.gutter} right={g.gutter + g.plotWidth} mid={g.pressureMid} height={96} /> : null}
+            {chartActivity ? <MatchActivityBars intervals={chartActivity.intervals} x={g.x} left={g.gutter} right={g.gutter + g.plotWidth} mid={g.pressureMid} height={96} /> : null}
             {hasLine && model.poolShare ? [0,0.5,1].map(level => <G key={level}>
               <Line x1={g.gutter} x2={g.gutter+g.plotWidth} y1={g.y(level)} y2={g.y(level)} stroke={colors.borderSoft} strokeDasharray="3 4" />
               <SvgText x={g.gutter+4} y={g.y(level)+(level===1?12:-4)} fill={colors.textMuted} fontSize={11} fontFamily={fontFamilies.text}>%{Math.round(level*100)}</SvgText>
@@ -303,7 +301,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
                 fill={index === 0 ? colors.blue : index === 1 ? colors.gold : colors.violet} opacity={index === 1 ? 0.05 : 0.08} />
               {wide ? <SvgText x={g.gutter - 8} y={(g.y(band.from) + g.y(band.to)) / 2 + 4} textAnchor="end" fill={colors.textMuted} fontSize={12} fontFamily={fontFamilies.text}>{band.label}</SvgText>
                 : <SvgText x={g.gutter + g.plotWidth - 4} y={g.y(band.to) + 13} textAnchor="end" fill={colors.textMuted} fontSize={11} fontFamily={fontFamilies.text}>{band.label}</SvgText>}
-            </G>) : <Rect x={g.gutter} y={g.poolTop + 6} width={g.plotWidth} height={g.plotHeight - 12} rx={12} fill={colors.surface} stroke={colors.borderSoft} strokeDasharray="4 5" />}
+            </G>) : null}
             {hasLine ? <>
               {!model.poolShare ? <Path d={areaD} fill="url(#matchPathFill)" /> : null}
               <Path d={lineD} fill="none" stroke={lineInk} strokeOpacity={0.12} strokeWidth={9} strokeLinejoin="round" />
@@ -317,16 +315,15 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
             <Line x1={g.gutter} x2={g.gutter + g.plotWidth} y1={g.axis} y2={g.axis} stroke={colors.borderSoft} />
             {model.maxMinute >= 45 ? <Line x1={g.x(45)} x2={g.x(45)} y1={RIB + 14} y2={g.axis} stroke={colors.bronze} strokeDasharray="4 4" /> : null}
             {groups.map((group) => {
-              // Guides link a mark to the plot; around the notice they stop at its edge.
-              const inset = model.lineNotice ? 6 : 0;
-              const top = activity ? group.cy === HOME ? HOME + 16 : g.pressureMid : group.cy === HOME ? HOME + 16 : g.poolTop + (inset ? g.plotHeight - inset : 0);
-              const bottom = activity ? group.cy === HOME ? g.pressureMid : 212 : group.cy === HOME ? g.poolTop + (inset || g.plotHeight) : group.cy - 18;
+              // Guides link a mark to the plot.
+              const top = chartActivity ? group.cy === HOME ? HOME + 16 : g.pressureMid : group.cy === HOME ? HOME + 16 : g.poolTop;
+              const bottom = chartActivity ? group.cy === HOME ? g.pressureMid : 212 : group.cy === HOME ? g.poolTop + g.plotHeight : group.cy - 18;
               const ink = group.lead.kind === "BTB" ? colors.gold : group.lead.kind === "RED_CARD" ? colors.red : colors.text;
-              return group.lead.kind === "LATEST" || group.lead.kind === "POOL" || activity && group.lead.kind === "BTB" || bottom <= top ? null
+              return group.lead.kind === "LATEST" || group.lead.kind === "POOL" || chartActivity && group.lead.kind === "BTB" || bottom <= top ? null
                 : <Line key={`guide:${group.lead.key}`} x1={group.cx} x2={group.cx} y1={top} y2={bottom} stroke={ink} strokeOpacity={0.3} />;
             })}
             {selected ? <Line x1={g.x(selected.minute)} x2={g.x(selected.minute)} y1={RIB + 14} y2={g.axis} stroke={colors.blue} strokeOpacity={0.8} strokeWidth={1.5} strokeDasharray="3 4" /> : null}
-            {model.nowMinute !== null ? <Line x1={g.x(model.nowMinute)} x2={g.x(model.nowMinute)} y1={activity ? 100 : g.poolTop} y2={g.axis} stroke={semantic.live} strokeOpacity={0.6} strokeWidth={2} /> : null}
+            {model.nowMinute !== null ? <Line x1={g.x(model.nowMinute)} x2={g.x(model.nowMinute)} y1={chartActivity ? 100 : g.poolTop} y2={g.axis} stroke={semantic.live} strokeOpacity={0.6} strokeWidth={2} /> : null}
             {chips.map((chip) => <Line key={`tick:${chip.key}`} x1={chip.at} x2={chip.at} y1={RIB - 3} y2={RIB + 3} stroke={colors.textMuted} />)}
           </Svg>
 
@@ -337,7 +334,8 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
             return <Text key={`tick:${minute}`} numberOfLines={1} pointerEvents="none"
               style={[styles.tick, { left: g.x(minute) - 40 * anchor, top: g.axis + 5, textAlign: anchor === 0 ? "left" : anchor === 1 ? "right" : "center" }]}>{minute}′</Text>;
           })}
-          {selected ? <View pointerEvents="none" style={[styles.cursorPill, { left: Math.max(g.gutter, Math.min(g.x(selected.minute) - 22, g.gutter + g.plotWidth - 44)), top: g.axis - 1 }]}><Text style={styles.cursorPillText}>{selected.minute}′</Text></View> : null}
+          {/* The live pill already states the latest minute on the axis. */}
+          {selected && !(selected.kind === "LATEST" && !hasLine && !chartActivity) ? <View pointerEvents="none" style={[styles.cursorPill, { left: Math.max(g.gutter, Math.min(g.x(selected.minute) - 22, g.gutter + g.plotWidth - 44)), top: g.axis - 1 }]}><Text style={styles.cursorPillText}>{selected.minute}′</Text></View> : null}
           {chips.map((chip) => <View key={chip.key} pointerEvents="none" style={[styles.chip, { left: chip.left, width: chipWidth }, chip.current && styles.chipCurrent]}>
             <Text style={[styles.chipText, chip.current && styles.chipTextCurrent]}>{chip.label}</Text>
           </View>)}
@@ -355,15 +353,8 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
             <View style={styles.btbBadge}><Svg width={14} height={14} viewBox="0 0 24 24" {...journeySvgAccessibility}><JourneyEventGlyph kind="SUPER" color={colors.gold} /></Svg></View>
             {g.gutter > 40 ? <Text style={styles.gutterName}>BTB</Text> : null}
           </View>
-          {activity ? <Text pointerEvents="none" style={[styles.lineLabel, { top: 82, left: g.gutter, color: colors.textMuted }]}>HAREKETLİLİK · SON 5 DK</Text> : null}
-          {activity && !activity.intervals.length ? <View pointerEvents="none" style={[styles.notice, { left: g.gutter + 1, width: g.plotWidth - 2, top: 108, height: 100 }]}>
-            <Text style={styles.noticeTitle}>Hareketlilik penceresi yok</Text><Text style={styles.noticeBody}>Eksik ölçümler boş bırakılır.</Text>
-          </View> : null}
-          {hasLine && (wide || activity) ? <Text pointerEvents="none" style={[styles.lineLabel, { top: g.poolTop - 18, ...(activity ? { left: g.gutter, color: lineInk } : {}) }]}>{model.poolShare ? "HAVUZDA KALAN PAY" : "HAVUZ UYUMU"}</Text> : null}
-          {model.lineNotice ? <View pointerEvents="none" style={[styles.notice, { left: g.gutter + 1, width: g.plotWidth - 2, top: g.poolTop + 7, height: g.plotHeight - 14 }]}>
-            <Text style={styles.noticeTitle}>{model.lineNotice.title}</Text>
-            <Text style={styles.noticeBody}>{model.lineNotice.body}</Text>
-          </View> : null}
+          {chartActivity ? <Text pointerEvents="none" style={[styles.lineLabel, { top: 82, left: g.gutter, color: colors.textMuted }]}>HAREKETLİLİK · SON 5 DK</Text> : null}
+          {hasLine && (wide || chartActivity) ? <Text pointerEvents="none" style={[styles.lineLabel, { top: g.poolTop - 18, ...(chartActivity ? { left: g.gutter, color: lineInk } : {}) }]}>{model.poolShare ? "HAVUZDA KALAN PAY" : "HAVUZ UYUMU"}</Text> : null}
 
           {groups.map((group) => {
             const lead = group.lead;
@@ -372,7 +363,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
             const label = count > 1 ? `${count} an: ${group.members.map((member) => member.label).join("; ")}` : lead.label;
             const tone = count > 1 ? colors.gold : lead.record ? toneColor[resultPresentation[lead.record.result.state].tone] : colors.gold;
             const minuteLabel = count > 1 ? `${lead.minute}–${group.members.at(-1)!.minute}′` : `${lead.minute}′`;
-            const atAxis = lead.kind === "LATEST" && !hasLine && !activity;
+            const atAxis = lead.kind === "LATEST" && !hasLine && !chartActivity;
             // A ticket or the live pill is wider than a glyph; its target grows with it.
             const markWidth = lead.kind === "BTB" ? (wide ? 88 : 76) : atAxis ? 76 : 44;
             return <Pressable key={lead.key} accessibilityLabel={label} accessibilityRole="button" accessibilityState={{ selected: active }}
@@ -400,7 +391,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
   );
 
   const detailPanel = <SelectedMoment match={match} model={model} moment={selected} onBack={() => chooseMoment("latest")}
-    activityReading={activity ? activityAt(activity.intervals, selected?.minute ?? 0) : undefined}
+    activityReading={chartActivity ? activityAt(chartActivity.intervals, selected?.minute ?? 0) : undefined}
     onDecisionPress={onDecisionPress} showBack={model.nowMinute !== null && selectedKey !== "latest"} />;
 
   return (
@@ -412,7 +403,6 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
           {sideBySide ? <Text style={styles.sectionLabel}>MAÇIN HİKÂYESİ</Text> : null}
           <View style={styles.titleRow}>
             <Text accessibilityRole="header" aria-level={2} style={styles.title}>Maçın yolu</Text>
-            <View style={[styles.statusPill, status.live && styles.statusLive]}><Text style={[styles.statusText, status.live && styles.statusTextLive]}>{status.label}</Text></View>
             {synthetic && hasLine ? <View style={styles.samplePill}><Text style={styles.sampleText}>ÖRNEK VERİ</Text></View> : null}
           </View>
           {collapsed ? null : <Text style={styles.lede}>{sideBySide ? "Maçı değiştiren anları keşfet." : model.headline}</Text>}
@@ -427,7 +417,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
       {collapsed ? null : <>
         <View style={[styles.overview, sideBySide && styles.overviewWide]}>
           {activity ? <View style={styles.rhythmColumn}><MatchActivitySummary intervals={activity.intervals} match={match} failed={activity.failed} loading={activity.loading} /></View> : null}
-          {sideBySide ? <View style={[styles.poolSummary, !!activity && styles.poolSummaryWide]}>
+          {sideBySide && hasLine ? <View style={[styles.poolSummary, !!activity && styles.poolSummaryWide]}>
             <View style={styles.poolSummaryIcon}><MaterialCommunityIcons name="chart-line" color={hasLine ? lineInk : colors.textMuted} size={20} /></View>
             <View style={styles.summaryCopy}><Text style={styles.sectionLabel}>{model.poolShare ? "REFERANS HAVUZU" : "HAVUZ UYUMU"}</Text><Text style={styles.poolHeadline}>{model.headline}</Text><Text style={styles.chartCaption}>{model.poolShare ? "Örneklem desteği · kazanma olasılığı değil" : "Yalnızca kayıtlı havuz ölçümleri"}</Text></View>
           </View> : null}
@@ -454,7 +444,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
                 {active ? <View style={styles.railSelectedDot} /> : null}
               </Pressable>;
             })}
-          </ScrollView> : <Text style={styles.lede}>İlk kayıt geldiğinde maçın hikâyesi burada başlayacak.</Text>}
+          </ScrollView> : <Text style={styles.lede}>{match.status === "FINISHED" || match.status === "NOT_PLAYED" ? "Bu maç için kayıtlı an yok." : "İlk kayıt geldiğinde maçın hikâyesi burada başlayacak."}</Text>}
         </View>
 
         {!sideBySide ? detailPanel : null}
@@ -463,7 +453,7 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
             {chart}
             <View style={styles.chartFootnote}><MaterialCommunityIcons name="gesture-swipe-horizontal" color={colors.textMuted} size={16} /><Text style={styles.hint}>{Platform.OS === "web" ? "Bir an seç veya grafikte sürükleyerek keşfet." : "Bir ana dokun veya yatay sürükle · dikey kaydırarak devam et"}</Text></View>
           </View>
-          {sideBySide ? <View style={styles.panelColumn}>{detailPanel}</View> : null}
+          {sideBySide && selected ? <View style={styles.panelColumn}>{detailPanel}</View> : null}
         </View>
 
         <View style={[styles.footer, wide && styles.footerWide]}>
@@ -485,15 +475,15 @@ export function MatchPathCard({ match, model, synthetic, analysisText, collapsed
           <View style={styles.legendItem}><View style={styles.legendDivider} /><Text style={styles.legendText}>Devre</Text></View>
         </View><Text style={styles.rules}>
           Üstteki şerit her golün yeni skorunu kendi dakikasında gösterir. Ev sahibinin olayları üst, deplasmanın olayları alt şeritte.
-          {activity ? " Mavi ve turuncu sütunlar son 5 dakikanın tahmini hareketliliğidir; eksik pencereler boştur ve bu değerler BTB seçim hesabına katılmaz. Sütunlara dokunarak veya sürükleyerek o dakikayı incele. Havuz çizgisinin yüzde ölçeği ayrıdır; aynı zaman eksenini paylaşırlar." : null}
-          {hasLine && model.poolShare ? ` ${activity ? "Turkuaz" : "Mavi"} çizgi yarının ilk geçerli referans havuzunda güncel skorla uyumlu kalan paydır; kazanma olasılığı değildir. Devrede veya kaynak değişiminde çizgi kesilir. Yalnız kayıtlı havuzlar gösterilir.` : hasLine ? " Mavi çizgi maçın havuzla uyumudur; devrede havuz değişir ve çizgi basamak yapar." : " Havuz çizgisi yalnız kaynak sunduğunda çizilir."}
+          {chartActivity ? " Mavi ve turuncu sütunlar son 5 dakikanın tahmini hareketliliğidir; eksik pencereler boştur ve bu değerler BTB seçim hesabına katılmaz. Sütunlara dokunarak veya sürükleyerek o dakikayı incele. Havuz çizgisinin yüzde ölçeği ayrıdır; aynı zaman eksenini paylaşırlar." : null}
+          {hasLine && model.poolShare ? ` ${chartActivity ? "Turkuaz" : "Mavi"} çizgi yarının ilk geçerli referans havuzunda güncel skorla uyumlu kalan paydır; kazanma olasılığı değildir. Devrede veya kaynak değişiminde çizgi kesilir. Yalnız kayıtlı havuzlar gösterilir.` : hasLine ? " Mavi çizgi maçın havuzla uyumudur; devrede havuz değişir ve çizgi basamak yapar." : " Havuz çizgisi yalnız kaynak sunduğunda çizilir."}
           {" "}Altın fişler BTB kararlarıdır: dakika, yıldız, donmuş seçim oranı ve sonucun rengi. Yıldız tutarlılık ve kanıt kalitesidir.
         </Text></View> : null}
         {footer}
       </>}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   sectionLabel: { ...textFont("700"), fontSize: 11, lineHeight: 16, letterSpacing: 1.5, color: colors.textMuted },
@@ -536,11 +526,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", gap: spacing.md, flexWrap: "wrap" },
   headerCopy: { flex: 1, minWidth: 180, gap: 5 },
   titleRow: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: spacing.sm },
-  title: { ...textFont("800"), fontSize: 26, lineHeight: 34, letterSpacing: -0.7, color: colors.text },
-  statusPill: { borderRadius: radii.round, backgroundColor: colors.surfaceStrong, paddingHorizontal: 9, paddingVertical: 3 },
-  statusLive: { backgroundColor: semantic.liveSoft },
-  statusText: { ...typeScale.eyebrow, color: colors.textMuted },
-  statusTextLive: { color: semantic.live },
+  title: { ...typeScale.moduleTitle, color: colors.text },
   samplePill: { borderRadius: radii.round, backgroundColor: colors.goldSoft, paddingHorizontal: 9, paddingVertical: 3 },
   sampleText: { ...typeScale.eyebrow, color: colors.gold },
   lede: { ...typeScale.bodyCompact, color: colors.textMuted },
@@ -567,11 +553,7 @@ const styles = StyleSheet.create({
   gutterName: { ...textFont("700"), fontSize: 12, color: colors.text, flexShrink: 1 },
   btbBadge: { width: 26, height: 26, borderRadius: 13, backgroundColor: colors.goldSoft, alignItems: "center", justifyContent: "center" },
   lineLabel: { position: "absolute", left: 6, ...typeScale.eyebrow, color: colors.blue },
-  // Opaque, so the divider and cursor lines stop at the box instead of crossing its words.
-  notice: { position: "absolute", alignItems: "center", justifyContent: "center", paddingHorizontal: spacing.md, gap: 2, borderRadius: 11, backgroundColor: colors.surface },
   alignEndText: { textAlign: "right" },
-  noticeTitle: { ...textFont("700"), fontSize: 13, lineHeight: 17, color: colors.text, textAlign: "center" },
-  noticeBody: { ...textFont("400"), fontSize: 12, lineHeight: 16, color: colors.textMuted, textAlign: "center" },
   mark: { position: "absolute", width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   markActive: { borderColor: colors.text, borderWidth: 2 },
   goalMark: { width: 28, height: 28, borderRadius: 14, borderWidth: 1.5, borderColor: colors.text, backgroundColor: colors.surfaceStrong, alignItems: "center", justifyContent: "center" },
@@ -590,10 +572,9 @@ const styles = StyleSheet.create({
   countBadge: { position: "absolute", top: 2, right: 2, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: colors.blue, alignItems: "center", justifyContent: "center", paddingHorizontal: 3 },
   countText: { ...numericFont("800"), fontSize: 11, color: colors.background },
   panel: { flex: 1, gap: spacing.md, padding: spacing.lg, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.borderSoft, backgroundColor: colors.background },
-  panelEmpty: { ...typeScale.bodyCompact, color: colors.textMuted },
   panelTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
   eyebrow: { ...typeScale.eyebrow, color: colors.textMuted, flexShrink: 1 },
-  backAction: { minHeight: 36, borderRadius: 10, backgroundColor: colors.blueSoft, paddingHorizontal: 10, justifyContent: "center" },
+  backAction: { minHeight: 44, borderRadius: 10, backgroundColor: colors.blueSoft, paddingHorizontal: 12, justifyContent: "center" },
   backText: { ...textFont("700"), fontSize: 12, color: colors.blue },
   panelHead: { gap: spacing.sm },
   panelBig: { ...numericFont("700"), fontSize: 48, lineHeight: 52, color: colors.text },

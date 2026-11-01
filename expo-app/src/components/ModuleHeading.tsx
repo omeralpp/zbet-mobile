@@ -19,18 +19,22 @@ export function ModuleHeading({
   eyebrow,
   title,
   leading,
-  trailing
+  trailing,
+  showEyebrow = false
 }: {
   eyebrow: string;
   title: string;
   leading?: ReactNode;
   trailing?: ReactNode;
+  /** Keeps the eyebrow even when the title repeats it, so a stack whose
+   * eyebrows double as its section shortcuts keeps one heading rhythm. */
+  showEyebrow?: boolean;
 }) {
   // The v40 board centres the control against the eyebrow and title together.
   return (
     <View style={styles.container}>
       <View style={styles.copy}>
-        {eyebrow && !title.toLocaleLowerCase("tr-TR").includes(eyebrow.toLocaleLowerCase("tr-TR")) ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
+        {eyebrow && (showEyebrow || !title.toLocaleLowerCase("tr-TR").includes(eyebrow.toLocaleLowerCase("tr-TR"))) ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
         <View style={styles.titleContent}>
           {leading ?? null}
           <Text accessibilityRole="header" role="heading" aria-level={2} style={styles.title}>{title}</Text>
