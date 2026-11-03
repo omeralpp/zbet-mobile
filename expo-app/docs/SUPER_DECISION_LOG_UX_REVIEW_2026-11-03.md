@@ -300,3 +300,16 @@ two shared days), newest first; progress 12 → 24 → 29/30 with `1 gün
 alınamadı`; retry loaded the day (12/12 decisions); switching 30 → 7 days made
 no request. Bilyoner 316×56 (hero), 342×56 (page end, Toto active/waiting),
 294×56 (coupon row) at 390 px; 942/984 px wide on desktop. No BFF change.
+
+### Release of 1fcf5cf and the period-menu fix
+
+The owner approved the follow-up pair ("approve"). Client `1fcf5cf` was
+pushed; APK `1DB0D20A…5068` was delivered privately with readback. Owner
+Android smoke: everything worked except an intermittent period menu that
+opened partly off the phone's left edge ("Tek hata bu hep olmuyor ama arada
+böyle açıyor", screenshot with Son 7 gün selected). Cause: the menu was
+anchored to the control's right edge, and a 7/30-day view hides the day steps,
+so the control is narrower than the menu. Fixed locally: the phone menu opens
+from the control's left edge (24–192 px at 320 and 390 px, every period),
+desktop keeps the right edge. The `1fcf5cf` batch stays **INCOMPLETE** (web
+not published; receipt `super-days-release-1fcf5cf-ANDROID-SMOKE-DEFECT`).

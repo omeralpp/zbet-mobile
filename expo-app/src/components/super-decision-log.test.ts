@@ -121,3 +121,10 @@ test("report details open from one disclosure and never show 0,00 for a group wi
   assert.match(source, /row\.settled \? formatUnits\(row\.net\) : "—"/);
   assert.match(source, /rows\.filter\(row => row\.recommendations > 0\)/);
 });
+
+test("the period menu opens from the control's outer edge, so a 7/30-day phone view keeps it on screen", async () => {
+  const source = await read("./RebuildDecisionLog.tsx");
+  assert.match(source, /align=\{wide \? "right" : "left"\}/);
+  assert.match(source, /periodMenuLeft: \{ left: 0 \}/);
+  assert.doesNotMatch(source, /periodMenu: \{[^}]*right: 0/);
+});

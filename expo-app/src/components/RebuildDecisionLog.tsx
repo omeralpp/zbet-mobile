@@ -88,10 +88,15 @@ function StepButton({ icon, label, disabled, onPress }: { icon: "chevron-left" |
 
 /**
  * Istanbul calendar views from the backend's own day bounds: today, yesterday,
- * the last 7 or 30 days, and single days stepped back up to a year.
+ * the last 7 or 30 days, and single days stepped back up to a year. The menu
+ * opens from the control's outer edge: left on a phone, where the control
+ * starts the row, right on desktop, where it ends the toolbar. A 7/30-day view
+ * hides the day steps, so the control is then narrower than its menu (owner
+ * screenshot 2026-11-03: a right-anchored menu ran off the phone's left edge).
  */
-function PeriodControl({ choice, period, today, open, onOpenChange, onChange }: {
-  choice: LogPeriodChoice; period: LogPeriod; today: string; open: boolean; onOpenChange: (open: boolean) => void; onChange: (choice: LogPeriodChoice) => void;
+function PeriodControl({ align, choice, period, today, open, onOpenChange, onChange }: {
+  align: "left" | "right"; choice: LogPeriodChoice; period: LogPeriod; today: string; open: boolean;
+  onOpenChange: (open: boolean) => void; onChange: (choice: LogPeriodChoice) => void;
 }) {
   const title = periodTitle(period, today);
   const step = (delta: -1 | 1) => {
@@ -116,7 +121,7 @@ function PeriodControl({ choice, period, today, open, onOpenChange, onChange }: 
         {period.days === 1 ? <StepButton disabled={!canStepDay(period, today, 1)} icon="chevron-right" label="Sonraki gün" onPress={() => step(1)} /> : null}
       </View>
       {open ? (
-        <View accessibilityRole="menu" style={styles.periodMenu}>
+        <View accessibilityRole="menu" style={[styles.periodMenu, align === "left" ? styles.periodMenuLeft : styles.periodMenuRight]}>
           {periodOptions.map((option) => {
             const selected = sameChoice(option.choice, choice);
             return (
@@ -476,6 +481,7 @@ export function RebuildDecisionLog() {
     : isLoading ? "Rapor yükleniyor" : isError || full?.availability === "UNAVAILABLE" ? "Rapor doğrulanamadı · kayıt sayısı bilinmiyor" : "Rapor bekleniyor";
   const periodControl = (
     <PeriodControl
+      align={wide ? "right" : "left"}
       choice={choice}
       onChange={changePeriod}
       onOpenChange={(open) => {
@@ -745,7 +751,6 @@ const styles = StyleSheet.create({
   periodMenu: {
     position: "absolute",
     top: interaction.minTouchTarget + 6,
-    right: 0,
     minWidth: 168,
     padding: spacing.xs,
     borderRadius: radii.lg,
@@ -754,6 +759,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceStrong,
     ...shadows.card
   },
+  periodMenuLeft: { left: 0 },
+  periodMenuRight: { right: 0 },
   periodOption: {
     minHeight: interaction.minTouchTarget,
     flexDirection: "row",
