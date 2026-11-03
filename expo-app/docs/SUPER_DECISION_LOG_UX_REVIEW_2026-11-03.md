@@ -313,3 +313,25 @@ so the control is narrower than the menu. Fixed locally: the phone menu opens
 from the control's left edge (24–192 px at 320 and 390 px, every period),
 desktop keeps the right edge. The `1fcf5cf` batch stays **INCOMPLETE** (web
 not published; receipt `super-days-release-1fcf5cf-ANDROID-SMOKE-DEFECT`).
+
+## Completed paired delivery — e3ae5df
+
+The owner approved the fix pair ("Approve"). Source
+`e3ae5dffdde6d1d6dbc682c0e9d90e1304fa14e4` was clean and pushed before both
+artifacts. Signed ARM64 APK SHA-256
+`17989A70DDC72F9294BD4300C934738B595E4F18901191C6299B7A9A8A72AEEE`
+(50,579,109 bytes, unchanged certificate) was delivered privately with
+authenticated readback; the owner confirmed installation and the Android smoke
+("Iy works properly right now"). After the BTB thread's xG cutover had
+finished (`ACTIVE_REPAIR_VERIFIED`), the matching web tree `8516EA40…4839` was
+published as `20261103T172821Z-e3ae5df`: 57 served files read back with 0
+mismatches, local probes passed, the BFF replacement kept the repair identity
+and the public hostname still redirects to Cloudflare Access. The owner
+confirmed the web smoke ("Sorunsuz çalışıyor"). Canonical `client-release.mjs
+complete` passed for batch
+`client-e3ae5dffdde6d1d6dbc682c0e9d90e1304fa14e4-17989A70DDC7-8516EA40C1CE`;
+receipts are `btb-codex/docs/evidence/super-menu-release-e3ae5df-*-2026-11-03.json`.
+Superseded local APKs (`ba88590`, `6141e2f`, `1fcf5cf`) went to the Recycle Bin
+under the 29 October retention rule; their receipts and Drive copies remain.
+Owner smokes are basic acceptance; TalkBack, exhaustive font scaling and device
+performance remain unclaimed.

@@ -1,7 +1,7 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-11-01
-Mod: `PAIRED_RELEASE_COMPLETE / ACCEPTED_PAIR_BA88590`
+Son güncelleme: 2026-11-03
+Mod: `PAIRED_RELEASE_COMPLETE / ACCEPTED_PAIR_E3AE5DF`
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Only the sections below describe current work. Earlier handoff history is
@@ -9,75 +9,87 @@ preserved in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md).
 
 ## Son checkpoint
 
-The accepted Android/web pair is **ba88590**, released and completed on
-1 November 2026 (batch
-`client-ba885905674a3e2030bf740b6f41e7a15492e0bd-A838F9B23381-BD3B2A2A0308`).
-The owner accepted exact APK installation and Android smoke ("ıt ınstalled and
-works properly"), then the published web smoke ("web also works properly").
-Canonical paired completion passed.
+The accepted Android/web pair is **e3ae5df**, released and completed on
+3 November 2026 (batch
+`client-e3ae5dffdde6d1d6dbc682c0e9d90e1304fa14e4-17989A70DDC7-8516EA40C1CE`).
+The owner accepted exact APK installation and Android smoke ("Iy works properly
+right now"), then the published web smoke ("Sorunsuz çalışıyor"). Canonical
+paired completion passed.
 
-The pair delivers NXT-OBS-241, the Maç detayı review batch
-([review and implementation](MATCH_DETAIL_UX_REVIEW_2026-11-01.md)): seven
-confirmed defects fixed (hero `GÜNCEL SEÇİM` above "no selection" while the RB1
-record loads or fails, 320 px mid-word break, desktop pool box, finished-match
-copy, doubled latest score, row highlight past card corners, shortcut order),
-every review improvement and the owner decisions (pinned published market,
-reachable-first score distribution, live-first default module order, Bilyoner
-action in the hero while playable). Page heuristic 7.0 → 8.5; idle main-thread
-work 279 → 15 ms/s (phone profile) and 121 → 8 ms/s (desktop).
+The pair delivers the Super · Karar günlüğü batch
+([review, implementation and releases](SUPER_DECISION_LOG_UX_REVIEW_2026-11-03.md)):
+NXT-OBS-242 (frozen names fixed, league/kickoff/settled score from the BFF's
+opt-in `X-BTB-Report-Facts`, ROI/hit-rate summary, one-level report details,
+C1/C2 fixes), NXT-OBS-243 (one Bilyoner button: Toto green, 56 pt, centred,
+full width) and NXT-OBS-244 (7/30-day views composed from single verified days,
+newest first, three at a time, with progress, partial totals and per-day
+retry; phone period menu anchored on screen).
+
+Two intermediate batches stay **INCOMPLETE** and are not releases: `6141e2f`
+(APK delivered and owner-accepted, web held for the BTB xG cutover, then
+superseded) and `1fcf5cf` (APK delivered, Android smoke found the off-screen
+period menu; web not published).
 
 Canonical receipts in `btb-codex/docs/evidence/`:
-`match-detail-release-ba88590-{PREPARED,DELIVERY,ANDROID-INSTALLED,PUBLICATION,OWNER-ACCEPTANCE,COMPLETE}-2026-11-01.json`.
-The previous accepted pair `c8188ca` and its receipts (`jinx-moment-release-c8188ca-*`)
-remain historical.
+`super-menu-release-e3ae5df-{PREPARED,DELIVERY,ANDROID-INSTALLED,PUBLICATION,OWNER-ACCEPTANCE,COMPLETE}-2026-11-03.json`,
+`super-log-bff-restart-e822bc2-2026-11-03.json`,
+`super-log-release-6141e2f-{PREPARED,DELIVERY,ANDROID-INSTALLED,SUPERSEDED}-2026-11-03.json` and
+`super-days-release-1fcf5cf-{PREPARED,DELIVERY,ANDROID-SMOKE-DEFECT}-2026-11-03.json`.
+The previous accepted pair `ba88590` and its receipts remain historical.
 
 ## Repo durumu
 
 | Repository | HEAD | Meaning |
 | --- | --- | --- |
-| zbet-mobile / master | ba885905674a3e2030bf740b6f41e7a15492e0bd | Accepted client release source; later handoff-only commits do not change the app |
-| zbet-cap / main | 6374e77f5a918e59a181698f71d9c8778dd1c081 | Unchanged; the running pilot BFF serves this commit |
-| zbet-abap / main | cd63dcafde974096e81ee675958c072f3b6b127c | Unchanged; no SAP object changed in this release |
+| zbet-mobile / master | e3ae5dffdde6d1d6dbc682c0e9d90e1304fa14e4 | Accepted client release source; later handoff-only commits do not change the app |
+| zbet-cap / main | a057953ba1d0a0330f7619613d86ae9797467a25 | Mobile BFF `e822bc2` (name fix, frozen facts, day windows, repair cohort label) plus the BTB thread's repair-cohort test; the running BFF serves it |
+| zbet-abap / main | f25e29dd4a7d8ae8247a19e8d5ba0925e293d0d7 | BTB thread's xG repair reseal; no Mobile SAP change |
 
 Active route: Android pilot API and desktop `app.surklase.com` use the Mobile
 BFF at `api.surklase.com`; the origin listens locally on 127.0.0.1:4004.
 Desktop remains protected by Cloudflare Access. The pilot is owner-only DEV.
-The ba88590 web publication replaced the BFF process (23444 → 28772) and the
-publisher verified it.
+BFF process history today: Mobile restart on `e822bc2` (24444 → 8972), the BTB
+thread's identity switch to policy `71AC156E…` (→ 25384), and the e3ae5df web
+publication (25384 → 7516, identity unchanged). Identity values belong to the
+BTB thread (`BTB Logs/cutover_2026-10-20/observations/implementation_xg_reseal_20261103/`).
 
 ## Doğrulama
 
-Release source passed Mobile type/lint/brand, 770 client tests and 33 tooling
-tests (`npm run check`). The edge web export from the clean pushed source and
-the Android preview bundle were secret-scanned (0 findings). The ba88590 pair
-verified source, clean tree, APK bytes/hash, ARM64 and web asset hashes; the
-web publication read back 57 served files with 0 mismatches, local probes passed
-(shell, deep link, API refused without Access) and the public hostname still
-redirects to Cloudflare Access. Synthetic 320/390/1440 px dark/light checks of 13
-states preceded the release. Owner smokes are basic acceptance, not device-side
-hashes or exhaustive TalkBack/gesture or performance measurements; the idle-work
-figures are synthetic browser measurements.
+Release source passed Mobile type/lint/brand, 787 client tests and 33 tooling
+tests (`npm run check`); the BFF passed 701/701 tests and the quality gate with
+production build on Node 24. The edge web export from the clean pushed source
+and the Android preview bundle were secret-scanned (0 findings). The e3ae5df
+pair verified source, clean tree, APK bytes/hash, ARM64 and web asset hashes;
+the web publication read back 57 served files with 0 mismatches, local probes
+passed (shell, deep link, API refused without Access) and the public hostname
+still redirects to Cloudflare Access. The frozen-facts and name-fix evidence
+are bounded direct OData GET reads (not MCP). Synthetic 320/390/1280/1440 px
+checks covered the day-by-day loading with a failing day, retry, cache reuse,
+the period menu and every Bilyoner placement. Owner smokes are basic
+acceptance, not device-side hashes or exhaustive TalkBack/gesture or
+performance measurements.
 
 ## Final yerel pilot APK
 
-- Accepted APK: `btb-mobile-next-arm64-match-detail-ba88590.apk`
-- Source: `ba885905674a3e2030bf740b6f41e7a15492e0bd`
-- SHA-256: `A838F9B23381C6F9E50B875EC0FFF69EAB8DEDE42A0640C496506287608A7F77`
-- Size/ABI: 50,562,341 bytes, ARM64; certificate `FAC61745…B9C` (unchanged)
-- Matching web tree: `BD3B2A2A0308E52FBC2334983442286527353A1FD59224286A86A5F65BF77A80`
-- Web publication: `20261101T180457Z-ba88590`
-- Drive: owner-only file `1AMlD39WW7QcIRkQvtWiuuPU10s7-0Kqf`
+- Accepted APK: `btb-mobile-next-arm64-super-menu-e3ae5df.apk`
+- Source: `e3ae5dffdde6d1d6dbc682c0e9d90e1304fa14e4`
+- SHA-256: `17989A70DDC72F9294BD4300C934738B595E4F18901191C6299B7A9A8A72AEEE`
+- Size/ABI: 50,579,109 bytes, ARM64; certificate `FAC61745…B9C` (unchanged)
+- Matching web tree: `8516EA40C1CEEB63749A8300F6E12BCD87EE8E8FFF17DC7A40BFEFDE0D0B4839`
+- Web publication: `20261103T172821Z-e3ae5df`
+- Drive: owner-only file `1anfUsJeiyEie55oAxFKZyDFv0-Xvh2kI`
 - Pair status: `COMPLETE`, both owner smokes accepted
 
-Under the owner's 29 October retention rule, the superseded local APK
-(`c8188ca`, SHA-256 `8A793C74…A01E`) was moved to the Recycle Bin after this
-acceptance; its receipts, hashes and Drive copy remain. Previous web releases
-stay in the versioned release folder for rollback.
+Under the owner's 29 October retention rule, the superseded local APKs
+(`ba88590` `A838F9B2…7F77`, `6141e2f` `427D9DE6…BAA2A`, `1fcf5cf`
+`1DB0D20A…5068`) were moved to the Recycle Bin after this acceptance; their
+receipts, hashes and Drive copies remain. Previous web releases stay in the
+versioned release folder for rollback.
 
 ## Açık observation / blokajlar
 
-There is no open local candidate; NXT-OBS-241 is delivered in ba88590 and
-NXT-OBS-235/238/239/240 in c8188ca. Besides
+There is no open local candidate; NXT-OBS-242/243/244 are delivered in
+e3ae5df, NXT-OBS-241 in ba88590 and NXT-OBS-235/238/239/240 in c8188ca. Besides
 the two new deferred follow-ups NXT-OBS-236 (per-match decision notification,
 blocked by NXT-OBS-074) and NXT-OBS-237 (no single RB1 threshold; frozen model;
 BTB - Aktif first), six older DEFERRED items remain in
@@ -112,13 +124,12 @@ recurrence. Do not repeat old release smokes or create signature-wait tasks.
 The remaining six DEFERRED items retain their owners and approval/evidence
 conditions; their presence does not authorize implementation.
 
-The ba88590 pair is complete; no client release is being prepared. During
-normal use, watch the Maç detayı batch on real live matches (hero state while the
-RB1 record loads or after a failed read, pinned BTB market, live-first module
-order, reachable-first score distribution, desktop module packing), the Jinx
-decision-moment display and the Toto SAP facts (coupon close, TRY cost,
-full-system best column, prize tiers), and record any concrete mismatch as a new
-observation.
+The e3ae5df pair is complete; no client release is being prepared. During
+normal use, watch the Super log on real data (7/30-day day-by-day loading on a
+slow or failing day, frozen names after a match ends, league/kickoff and MS
+score on settled decisions, the new `RB1 · teknik onarım` cohort once it
+publishes), the Bilyoner buttons and the earlier Maç detayı batch, and record
+any concrete mismatch as a new observation.
 Every future Android/web release still requires one clean pushed source,
 verified pair, private APK delivery/installation before matching web
 publication, and both owner smokes under separate release approval.
