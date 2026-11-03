@@ -515,25 +515,37 @@ function OutcomeBar({ period }: { period: RebuildReport["periods"][number] }) {
         )) : <View style={styles.outcomeEmpty} />}
       </View>
       <Text style={styles.outcomeLegend}>
-        {period.wins} kazandı · {period.losses} kaybetti · {period.pending} bekliyor · {period.unresolved} çözülemedi · {period.voids} iptal
+        {[`${period.wins} kazandı`, `${period.losses} kaybetti`, period.pending ? `${period.pending} bekliyor` : null,
+          period.unresolved ? `${period.unresolved} çözülemedi` : null, period.voids ? `${period.voids} iptal` : null].filter(Boolean).join(" · ")}
       </Text>
     </View>
   );
 }
 
-function BreakdownTable({ title, rows }: { title: string; rows: { key: string; label: ReactNode; settled: number; net: string; extra?: string }[] }) {
-  if (!rows.length) return null;
+type BreakdownRow = Pick<RebuildReport["periods"][number], "recommendations" | "settled" | "pending" | "unresolved" | "voids" | "net" | "hitRate"> & { key: string; label: ReactNode };
+
+/**
+ * A star or market group: what resolved and its units, or what is still
+ * open. A group with nothing resolved shows a dash, never a flat 0,00, and a
+ * star without any decision is left out.
+ */
+function BreakdownTable({ title, rows }: { title: string; rows: BreakdownRow[] }) {
+  const shown = rows.filter(row => row.recommendations > 0);
+  if (!shown.length) return null;
   return (
     <View style={styles.table}>
       <Text style={styles.eyebrowMuted}>{title}</Text>
-      {rows.map(row => (
-        <View key={row.key} style={styles.tableRow}>
-          <Text numberOfLines={1} style={styles.tableLabel}>{row.label}</Text>
-          {row.extra ? <Text style={styles.tableExtra}>{row.extra}</Text> : null}
-          <Text style={styles.tableExtra}>{row.settled} sonuç</Text>
-          <Text style={[styles.tableNet, { color: toneColor[unitsTone(row.net)] }]}>{formatUnits(row.net)}</Text>
-        </View>
-      ))}
+      {shown.map(row => {
+        const meta = [row.settled ? `${row.settled} sonuç · isabet ${formatRatio(row.hitRate)}` : null, row.pending ? `${row.pending} bekliyor` : null,
+          row.unresolved ? `${row.unresolved} çözülemedi` : null, row.voids ? `${row.voids} iptal` : null].filter(Boolean).join(" · ");
+        return (
+          <View key={row.key} style={styles.tableRow}>
+            <Text numberOfLines={1} style={styles.tableLabel}>{row.label}</Text>
+            <Text style={styles.tableExtra}>{meta}</Text>
+            <Text style={[styles.tableNet, { color: row.settled ? toneColor[unitsTone(row.net)] : colors.textMuted }]}>{row.settled ? formatUnits(row.net) : "—"}</Text>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -555,9 +567,10 @@ function Progress({ label, value, required }: { label: string; value: number; re
  * hypothetical one-unit results at the original quote, five outcomes kept
  * apart, a dash for a ratio with no resolved risk, match-level risk retained.
  * Always the whole period as the backend reports it, never a filtered view.
+ * Opened from one disclosure in the log; `columns` sets the star and market
+ * groups side by side on a wide screen.
  */
-export function RebuildReportDetails({ report, period }: { report: RebuildReport; period: RebuildReport["periods"][number] }) {
-  const [expanded, setExpanded] = useState(false);
+export function RebuildReportDetails({ report, period, columns = false }: { report: RebuildReport; period: RebuildReport["periods"][number]; columns?: boolean }) {
   return (
     <View style={styles.reportBody}>
       <Text style={styles.eyebrowMuted}>RAPOR · {period.days} GÜN · {formatReportRange(period.from, period.through)}</Text>
@@ -574,29 +587,34 @@ export function RebuildReportDetails({ report, period }: { report: RebuildReport
           </View>
           <OutcomeBar period={period} />
           <Text style={styles.exposure}>
-            {period.recommendations} öneri · {period.matches} maç · Toplam risk {period.totalRisk} · Sonuçlanan risk {period.risk}
+            {period.recommendations} karar · {period.matches} maç · {period.settled} sonuçlandı
           </Text>
         </>
       )}
       <View style={styles.note}>
         <MaterialCommunityIcons color={colors.textMuted} name="information-outline" size={iconSizes.small} />
-        <Text style={styles.noteText}>Her öneri seçim oranıyla varsayımsal 1 birimdir. Aynı maçtaki öneriler bağımsız maç sayılmaz.</Text>
+        <Text style={styles.noteText}>Her karar seçim oranıyla varsayımsal 1 birimdir. Aynı maçtaki kararlar bağımsız maç sayılmaz.</Text>
       </View>
-      <Text style={styles.noteText}>{period.uncertainty ? `Maç bazlı keşif aralığı: ${formatRatio(period.uncertainty.lower)} — ${formatRatio(period.uncertainty.upper)}; küçük örneklemde kanıt sınırlıdır.` : "Belirsizlik hesabı için farklı maç kanıtı yetersiz."}</Text>
-      <Action icon={expanded ? "chevron-up" : "chevron-down"} onPress={() => setExpanded(!expanded)} title={expanded ? "Kırılımları gizle" : "Yıldız / pazar kırılımları"} />
-      {expanded ? (
-        <View style={styles.stackTight}>
-          <BreakdownTable rows={period.byStar.map(s => ({ key: String(s.stars), label: <RatingStars rating={s.stars} size={12} />, settled: s.settled, net: s.net }))} title="YILDIZA GÖRE" />
-          <BreakdownTable rows={period.byMarket.map(m => ({ key: m.market, label: formatSelection(m.market), settled: m.settled, net: m.net }))} title="PAZARA GÖRE" />
-          {report.learning ? (
-            <View style={styles.learning}>
-              <Text style={styles.eyebrowMuted}>ÖĞRENME İNCELEMESİ</Text>
-              <Progress label="Sonuçlanan öneri" required={100} value={report.learning.overall.settled} />
-              <Progress label="Farklı maç" required={30} value={report.learning.overall.matches} />
-              <Progress label="Gün" required={2} value={report.learning.overall.days} />
-              <Text style={styles.noteText}>Yalnız inceleme içindir; kurallar yalnız onayla değişir.</Text>
-            </View>
-          ) : null}
+      {period.recommendations ? (
+        <Text style={styles.noteText}>{period.uncertainty
+          ? `ROI aralığı (maçlar yeniden örneklenerek): ${formatRatio(period.uncertainty.lower)} ile ${formatRatio(period.uncertainty.upper)} arası. Örnek küçük olduğu için kesin değildir.`
+          : "ROI aralığı için en az iki maçın sonucu gerekir."}</Text>
+      ) : null}
+      <View style={[styles.stackTight, columns && styles.breakdownColumns]}>
+        <View style={columns ? styles.breakdownColumn : null}>
+          <BreakdownTable rows={period.byStar.map(s => ({ ...s, key: String(s.stars), label: <RatingStars rating={s.stars} size={12} /> }))} title="YILDIZA GÖRE" />
+        </View>
+        <View style={columns ? styles.breakdownColumn : null}>
+          <BreakdownTable rows={period.byMarket.map(m => ({ ...m, key: m.market, label: formatSelection(m.market) }))} title="PAZARA GÖRE" />
+        </View>
+      </View>
+      {report.learning ? (
+        <View style={styles.learning}>
+          <Text style={styles.eyebrowMuted}>ÖĞRENME İNCELEMESİ</Text>
+          <Progress label="Sonuçlanan öneri" required={100} value={report.learning.overall.settled} />
+          <Progress label="Farklı maç" required={30} value={report.learning.overall.matches} />
+          <Progress label="Gün" required={2} value={report.learning.overall.days} />
+          <Text style={styles.noteText}>Yalnız inceleme içindir; kurallar yalnız onayla değişir.</Text>
         </View>
       ) : null}
     </View>
@@ -769,6 +787,8 @@ const styles = StyleSheet.create({
   outcomeLegend: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0 },
   exposure: { color: colors.text, ...typeScale.bodyCompact },
   table: { gap: 2 },
+  breakdownColumns: { flexDirection: "row", alignItems: "flex-start", gap: spacing.xl },
+  breakdownColumn: { flex: 1, minWidth: 0 },
   tableRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, minHeight: 36, borderBottomWidth: 1, borderBottomColor: colors.border },
   tableLabel: { flex: 1, minWidth: 0, color: colors.text, ...typeScale.bodyCompact, fontWeight: "700" },
   tableExtra: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0 },

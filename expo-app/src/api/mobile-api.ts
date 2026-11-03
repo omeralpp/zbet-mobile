@@ -17,12 +17,14 @@ import type {
   TotoProgram
 } from "./schemas";
 
-import type { RebuildCohortsReport, RebuildMatch, RebuildReport } from "./rebuild-schemas";
+import type { RebuildCohortsReport, RebuildMatch, RebuildReport, ReportWindowDays } from "./rebuild-schemas";
 import type { RebuildPressureHistory, RebuildStatistics, RebuildPoolPath } from "./rebuild-statistics-schemas";
 export interface MobileApi {
   getRebuildMatch(key: string, signal?: AbortSignal): Promise<RebuildMatch>;
   getRebuildReport(signal?: AbortSignal): Promise<RebuildReport>;
   getRebuildCohortsReport(signal?: AbortSignal): Promise<RebuildCohortsReport>;
+  /** One display window of 1, 7 or 30 Istanbul days ending on `through` (YYYY-MM-DD). */
+  getRebuildReportWindow(days: ReportWindowDays, through: string, signal?: AbortSignal): Promise<RebuildCohortsReport>;
   getRebuildStatistics(key: string, signal?: AbortSignal): Promise<RebuildStatistics>;
   getRebuildPressureHistory(key: string, signal?: AbortSignal): Promise<RebuildPressureHistory>;
   getRebuildPoolPath(key: string, signal?: AbortSignal): Promise<RebuildPoolPath>;

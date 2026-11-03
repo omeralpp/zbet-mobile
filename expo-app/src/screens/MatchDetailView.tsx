@@ -25,6 +25,7 @@ import {
 import { pressureSide } from "@/src/components/MatchCard";
 import { PitchMarkings } from "@/src/components/PitchMarkings";
 import { RebuildDecisionModule, RebuildJinxCard, useRebuildClock } from "@/src/components/RebuildEvidencePanel";
+import { BilyonerButton } from "@/src/components/BilyonerButton";
 import { ResultPill, toneColor } from "@/src/components/DecisionTicket";
 import { currentRebuild } from "@/src/utils/rebuild-current";
 import { rebuildHero } from "@/src/utils/rebuild-hero";
@@ -814,10 +815,7 @@ export function MatchDetailView({
           <View style={styles.heroActions}>
             {/* While the published selection is still playable, its market is
                 one step away (owner decision, NXT-OBS-241). */}
-            {hero.playable ? <Pressable accessibilityHint="Maçın Bilyoner sayfasını açar" accessibilityRole="button" onPress={() => { void openBilyoner(); }} style={({ pressed, hovered }) => [styles.heroRecordAction, hovered && styles.chipHover, pressed && styles.chipPressed]}>
-              <Text style={styles.resetText}>Bilyoner&apos;da aç</Text>
-              <MaterialCommunityIcons color={semantic.intelligence} name="open-in-new" size={iconSizes.inline} />
-            </Pressable> : null}
+            {hero.playable ? <BilyonerButton hint="Maçın Bilyoner sayfasını açar" onPress={() => { void openBilyoner(); }} /> : null}
             <Pressable accessibilityRole="button" accessibilityLabel="Son BTB karar kaydını aç" onPress={() => openDecision(hero.record.decisionId)} style={styles.heroRecordAction}>
               <Text style={styles.resetText}>Karar kaydını aç</Text>
               <MaterialCommunityIcons color={semantic.intelligence} name="chevron-right" size={iconSizes.inline} />
@@ -915,15 +913,7 @@ export function MatchDetailView({
       ) : null}
 
       <View style={styles.actions}>
-        <Pressable
-          accessibilityHint="Maçın Bilyoner sayfasını açar"
-          accessibilityRole="button"
-          onPress={() => { void openBilyoner(); }}
-          style={({ pressed, hovered }) => [styles.bilyonerAction, hovered && styles.chipHover, pressed && styles.chipPressed]}
-        >
-          <Text style={styles.bilyonerActionText}>Bilyoner&apos;da aç</Text>
-          <MaterialCommunityIcons color={colors.text} name="open-in-new" size={iconSizes.small} />
-        </Pressable>
+        <BilyonerButton hint="Maçın Bilyoner sayfasını açar" onPress={() => { void openBilyoner(); }} />
       </View>
       </Screen>
     </>
@@ -1158,24 +1148,5 @@ const styles = StyleSheet.create({
   actions: {
     gap: spacing.md,
     marginTop: spacing.xxl
-  },
-  // Secondary external action; content-sized on both clients.
-  bilyonerAction: {
-    minHeight: 48,
-    alignSelf: "flex-start",
-    paddingHorizontal: spacing.lg,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.sm,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    backgroundColor: colors.surface
-  },
-  bilyonerActionText: {
-    ...textFont("700"),
-    color: colors.text,
-    fontSize: 15
   }
 });

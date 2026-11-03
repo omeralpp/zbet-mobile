@@ -92,7 +92,10 @@ test("a star scope adds the report's own per-star rows exactly", () => {
     pending: 1,
     unresolved: 0,
     voids: 0,
-    net: "-0.14"
+    net: "-0.14",
+    settled: 2,
+    roi: -0.07,
+    hitRate: 0.5
   });
 });
 

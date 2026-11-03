@@ -142,13 +142,18 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
     }
   }
 
+  // Summary-only breakdown and the frozen display facts (league, kickoff,
+  // settled score) for both Karar günlüğü reads.
+  const reportHeaders = { "X-BTB-Rebuild": "btb-rebuild.v1", "X-BTB-Report-Breakdown": "summary.v1", "X-BTB-Report-Facts": "match-facts.v1" };
   return {
     getRebuildMatch: (key, signal) => request(`/v1/btb/rebuild/v1/matches/${encodeURIComponent(key)}`, rebuildMatchSchema,
       { headers: { "X-BTB-Rebuild": "btb-rebuild.v1", "X-BTB-Selection-Display": "btb-selection-display.v2" } }, signal),
     getRebuildReport: signal => request("/v1/btb/rebuild/v1/report", rebuildReportSchema,
       { headers: { "X-BTB-Rebuild": "btb-rebuild.v1" } }, signal),
     getRebuildCohortsReport: signal => request("/v1/btb/rebuild/v2/report", rebuildCohortsReportSchema,
-      { headers: { "X-BTB-Rebuild": "btb-rebuild.v1", "X-BTB-Report-Periods": "recent-days.v1", "X-BTB-Report-Breakdown": "summary.v1" } }, signal),
+      { headers: { ...reportHeaders, "X-BTB-Report-Periods": "recent-days.v1" } }, signal),
+    getRebuildReportWindow: (days, through, signal) => request(`/v1/btb/rebuild/v2/report/window/${encodeURIComponent(through)}/${days}`,
+      rebuildCohortsReportSchema, { headers: reportHeaders }, signal),
     getRebuildStatistics: (key, signal) => request(`/v1/btb/rebuild/v1/matches/${encodeURIComponent(key)}/statistics`, rebuildStatisticsSchema,
       { headers: { "X-BTB-Rebuild": "btb-rebuild.v1" } }, signal),
     getRebuildPressureHistory: (key, signal) => request(`/v1/btb/rebuild/v1/matches/${encodeURIComponent(key)}/pressure-history`, rebuildPressureHistorySchema,

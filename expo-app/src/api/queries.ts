@@ -1,10 +1,20 @@
 import { queryOptions } from "@tanstack/react-query";
 import { mobileApi } from "./index";
+import type { ReportWindowDays } from "./rebuild-schemas";
 
 export const rebuildReportQuery = queryOptions({ queryKey: ["rebuildReport"], queryFn: ({ signal }) => mobileApi.getRebuildReport(signal),
   staleTime: 10_000, refetchInterval: 30_000, retry: false });
 export const rebuildCohortsReportQuery = queryOptions({ queryKey: ["rebuildCohortsReport", "recent-days.v1"], queryFn: ({ signal }) => mobileApi.getRebuildCohortsReport(signal),
   staleTime: 10_000, refetchInterval: 30_000, retry: false });
+/**
+ * Karar günlüğü beyond today and yesterday: one 1/7/30-day window, read only
+ * while the log shows it. A window that includes today still settles, so it
+ * refreshes every minute; a past window changes only on a result correction.
+ */
+export function rebuildReportWindowQuery(days: ReportWindowDays, through: string, includesToday: boolean) {
+  return queryOptions({ queryKey: ["rebuildCohortsReport", "window", days, through], queryFn: ({ signal }) => mobileApi.getRebuildReportWindow(days, through, signal),
+    staleTime: includesToday ? 30_000 : 300_000, refetchInterval: includesToday ? 60_000 : false, retry: false });
+}
 export function rebuildMatchQuery(key: string) {
   return queryOptions({ queryKey: ["rebuildMatch", key], enabled: Boolean(key), queryFn: ({ signal }) => mobileApi.getRebuildMatch(key, signal),
     staleTime: 0, refetchInterval: 10_000, retry: false });

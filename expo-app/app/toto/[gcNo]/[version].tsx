@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import type { TotoPrediction } from "@/src/api/schemas";
 import { totoProgramQuery } from "@/src/api/queries";
+import { BilyonerButton } from "@/src/components/BilyonerButton";
 import { ModuleHeading } from "@/src/components/ModuleHeading";
 import { FilterChip } from "@/src/components/FilterChip";
 import { Action } from "@/src/components/RebuildEvidencePanel";
@@ -176,14 +177,13 @@ export default function TotoProgramDetailScreen() {
     : `Kapsama, ana isabet dahil sonucu kuponda kalan maçlardır; kupon kazancı değildir.${program.status === "WAITING_RESULT" ? " En fazla kapsama bir üst sınırdır, tahmin değildir." : ""}${unitNote}`;
   const meta = [program.status === "WAITING_RESULT" ? `${number.format(program.columns)} kolon · ${cost} maliyet` : null, progress.structure].filter(Boolean).join(" · ");
   const bilyonerAction = (primary: boolean) => (
-    <Pressable
-      accessibilityHint="Bilyoner uygulaması kuruluysa Spor Toto sayfasını uygulamada, değilse güvenli web sayfasında açar"
-      accessibilityRole="link"
-      onPress={() => Linking.openURL(buildBilyonerTotoUrl()).catch(() => Alert.alert("Bilyoner açılamadı", "Bilyoner Spor Toto sayfası şu anda açılamıyor."))}
-      style={({ pressed }) => [styles.bilyonerAction, primary ? styles.bilyonerPrimary : styles.bilyonerSecondary, pressed && styles.actionPressed]}
-    >
-      <Text style={[styles.bilyonerActionText, !primary && styles.bilyonerSecondaryText]}>Bilyoner Spor Toto&apos;da aç</Text>
-    </Pressable>
+    <BilyonerButton
+      hint="Bilyoner uygulaması kuruluysa Spor Toto sayfasını uygulamada, değilse güvenli web sayfasında açar"
+      label={"Bilyoner Spor Toto'da aç"}
+      onPress={() => { void Linking.openURL(buildBilyonerTotoUrl()).catch(() => Alert.alert("Bilyoner açılamadı", "Bilyoner Spor Toto sayfası şu anda açılamıyor.")); }}
+      primary={primary}
+      {...(primary ? { style: styles.bilyonerSlot } : {})}
+    />
   );
 
   return (
@@ -555,15 +555,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginTop: spacing.xxl
   },
-  bilyonerAction: {
-    alignItems: "center",
-    borderRadius: radii.round,
-    justifyContent: "center",
-    minHeight: 50
-  },
-  bilyonerPrimary: { backgroundColor: colors.green, marginTop: spacing.lg },
-  bilyonerSecondary: { borderWidth: 1, borderColor: colors.border },
-  bilyonerSecondaryText: { color: colors.text },
+  bilyonerSlot: { marginTop: spacing.lg },
   kickoff: { color: colors.textMuted, ...typeScale.bodyCompact, marginTop: spacing.md },
   // Prize tiers: a tier that pays any coupon column takes the prize's gold.
   tiers: { gap: spacing.sm, marginTop: spacing.lg, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.borderSoft },
@@ -573,14 +565,5 @@ const styles = StyleSheet.create({
   tierDetail: { color: colors.textSubtle, ...typeScale.label, letterSpacing: 0 },
   tierOurs: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0, fontWeight: "700" },
   tierWon: { color: colors.gold },
-  resultBlock: { gap: spacing.sm, marginTop: spacing.lg },
-  bilyonerActionText: {
-    ...textFont("800"),
-    color: colors.background,
-    fontSize: 14
-  },
-  actionPressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.995 }]
-  }
+  resultBlock: { gap: spacing.sm, marginTop: spacing.lg }
 });

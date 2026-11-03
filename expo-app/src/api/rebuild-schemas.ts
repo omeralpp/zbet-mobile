@@ -60,21 +60,37 @@ export const rebuildReportSchema = z.strictObject({ contractVersion: z.literal("
  * decision 2026-10-22); each cohort keeps its own figures too.
  */
 const cohortId = z.string().regex(/^[A-F0-9]{64}$/);
+/**
+ * Opt-in display facts frozen in SAP evidence (X-BTB-Report-Facts:
+ * match-facts.v1): where the names came from, league and kickoff, and the
+ * regulation-time score a proven result was settled on. Optional, because a
+ * BFF without the header answers without it.
+ */
+export const rebuildMatchFactsSchema = z.strictObject({
+  names: z.enum(["DECISION_EVIDENCE", "SETTLEMENT_EVIDENCE", "CURRENT_FIXTURE", "UNAVAILABLE"]),
+  league: z.string().min(1).nullable(), kickoff: z.string().regex(/^\d{2}:\d{2}$/).nullable(),
+  finalScore: z.strictObject({ home: count, away: count }).nullable() });
 export const rebuildCohortsReportSchema = z.strictObject({ contractVersion: z.literal("btb-rebuild-report.v2"), ...reportHead,
   periods: z.array(reportPeriod), learning: reportLearning,
   cohorts: z.array(z.strictObject({ id: cohortId, label: z.string().min(1), current: z.boolean(), firstDecisionAt: timestamp.nullable(),
     periods: z.array(reportPeriod), learning: reportLearning })),
-  recommendations: z.array(rebuildRecommendationSchema.extend({ cohortId })) }).superRefine((value, ctx) => {
+  recommendations: z.array(rebuildRecommendationSchema.extend({ cohortId, match: rebuildMatchFactsSchema.optional() })) }).superRefine((value, ctx) => {
   const ids = new Set(value.cohorts.map((c) => c.id));
   if (ids.size !== value.cohorts.length) ctx.addIssue({ code: "custom", message: "Duplicate report cohort" });
   if (value.cohorts.filter((c) => c.current).length > 1) ctx.addIssue({ code: "custom", message: "More than one current cohort" });
   if (value.recommendations.some((r) => !ids.has(r.cohortId))) ctx.addIssue({ code: "custom", message: "Recommendation outside a reported cohort" });
   if (new Set(value.recommendations.map((r) => r.decisionId)).size !== value.recommendations.length)
     ctx.addIssue({ code: "custom", message: "Duplicate recommendation identity" });
+  if (value.recommendations.some((r) => r.match?.finalScore && r.result.state !== "WIN" && r.result.state !== "LOSS"))
+    ctx.addIssue({ code: "custom", message: "A settled score belongs to a won or lost result" });
 });
 export type RebuildMatch = z.infer<typeof rebuildMatchSchema>;
 export type RebuildSummary = z.infer<typeof rebuildSummarySchema>;
 export type RebuildRecommendation = z.infer<typeof rebuildRecommendationSchema>;
 export type RebuildCohortsReport = z.infer<typeof rebuildCohortsReportSchema>;
+export type RebuildMatchFacts = z.infer<typeof rebuildMatchFactsSchema>;
+/** A Karar günlüğü record: a published recommendation with its optional display facts. */
+export type RebuildLogRecord = RebuildRecommendation & { match?: RebuildMatchFacts | undefined };
+export type ReportWindowDays = 1 | 7 | 30;
 export type RebuildCohort = RebuildCohortsReport["cohorts"][number];
 export type RebuildReport = z.infer<typeof rebuildReportSchema>;

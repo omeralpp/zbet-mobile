@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { TotoPrediction } from "@/src/api/schemas";
+import { BilyonerButton } from "./BilyonerButton";
 import { colors, radii, semantic, spacing, typeScale } from "@/src/theme/theme";
 import { formatFixtureDateTime, formatPercentage } from "@/src/utils/format";
 import { couponCells } from "@/src/web/toto-coupon";
@@ -71,10 +72,7 @@ export function TotoCouponList({ predictions, presentResult, onOpen }: {
                   <Text style={styles.detail}>Ana tahmin {prediction.mainPick} · Kapsama {prediction.coverage}{prediction.actualResult ? ` · Sonuç ${prediction.actualResult}` : ""}</Text>
                   <Text style={styles.detail}>Model güveni {formatPercentage(prediction.confidence)} · kazanma olasılığı değildir</Text>
                   {prediction.eventId ? (
-                    <Pressable accessibilityHint="Karşılaşmayı Bilyoner uygulamasında veya web sitesinde açar" accessibilityRole="link"
-                      onPress={() => onOpen(prediction.eventId)} style={({ pressed }) => [styles.external, pressed && styles.pressed]}>
-                      <Text style={styles.externalText}>Bilyoner&apos;de aç ↗</Text>
-                    </Pressable>
+                    <BilyonerButton hint="Karşılaşmayı Bilyoner uygulamasında veya web sitesinde açar" onPress={() => onOpen(prediction.eventId)} style={styles.external} />
                   ) : null}
                 </View>
               ) : null}
@@ -120,6 +118,5 @@ const styles = StyleSheet.create({
   status: { ...typeScale.micro },
   detailName: { ...typeScale.identityCompact, color: colors.text },
   detail: { ...typeScale.label, letterSpacing: 0, color: colors.textMuted },
-  external: { alignSelf: "flex-start", minHeight: 44, justifyContent: "center" },
-  externalText: { ...typeScale.bodyCompact, fontWeight: "700", color: semantic.intelligence }
+  external: { marginTop: spacing.xs }
 });

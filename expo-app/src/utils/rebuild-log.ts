@@ -7,14 +7,14 @@
  * point); it never re-derives a result, a unit or a match count, because
  * records of one match can sit in different star rows.
  */
-import type { RebuildCohortsReport, RebuildRecommendation, RebuildReport } from "@/src/api/rebuild-schemas";
+import type { RebuildCohortsReport, RebuildMatchFacts, RebuildRecommendation, RebuildReport, ReportWindowDays } from "@/src/api/rebuild-schemas";
 import { rebuildCalendarDay } from "./rebuild-current";
-import { formatSupport } from "./rebuild-display";
+import { formatReportDay, formatSupport } from "./rebuild-display";
 
 export type RebuildPeriod = RebuildReport["periods"][number];
 
 /** A period's published records, newest first (the report's own day bounds). */
-export function periodRecords(report: Pick<RebuildReport, "recommendations">, period: RebuildPeriod): RebuildRecommendation[] {
+export function periodRecords<T extends RebuildRecommendation>(report: { recommendations: readonly T[] }, period: RebuildPeriod): T[] {
   return report.recommendations
     .filter((record) => {
       const day = rebuildCalendarDay(record.publishedAt);
@@ -30,7 +30,7 @@ export interface LogFilter {
   pendingOnly: boolean;
 }
 
-export function filterLog(records: readonly RebuildRecommendation[], filter: LogFilter): RebuildRecommendation[] {
+export function filterLog<T extends RebuildRecommendation>(records: readonly T[], filter: LogFilter): T[] {
   return records.filter(
     (record) =>
       (filter.minStars === null || record.stars >= filter.minStars) &&
@@ -69,7 +69,7 @@ function sortValue(record: RebuildRecommendation, column: LogColumn): number | n
 }
 
 /** Orders a view; records without a value (no net yet) always go last. */
-export function sortLog(records: readonly RebuildRecommendation[], sort: LogSort): RebuildRecommendation[] {
+export function sortLog<T extends RebuildRecommendation>(records: readonly T[], sort: LogSort): T[] {
   const sign = sort.direction === "asc" ? 1 : -1;
   return records
     .map((record, index) => ({ record, index }))
@@ -108,20 +108,35 @@ export interface LogSummary {
   unresolved: number;
   voids: number;
   net: string;
+  /** Won and lost records: the report's resolved risk. */
+  settled: number;
+  /** Units per resolved unit and the won share of resolved records; null before any result. */
+  roi: number | null;
+  hitRate: number | null;
 }
 
-/** The period, or its records at `minStars` and above, as the report counts them. */
+/**
+ * The period, or its records at `minStars` and above, as the report counts
+ * them. ROI and hit rate are the report's own figures for the whole period;
+ * a star scope applies the report's definitions to its summed rows.
+ */
 export function logSummary(period: RebuildPeriod, minStars: number | null): LogSummary {
-  const rows = minStars === null || minStars <= 1 ? [period] : period.byStar.filter((row) => row.stars >= minStars);
+  const whole = minStars === null || minStars <= 1;
+  const rows = whole ? [period] : period.byStar.filter((row) => row.stars >= minStars);
+  const sum = (pick: (row: (typeof rows)[number]) => number) => rows.reduce((total, row) => total + pick(row), 0);
+  const wins = sum((row) => row.wins), losses = sum((row) => row.losses), settled = wins + losses;
+  const net = rows.length ? addDecimals(rows.map((row) => row.net)) : "0";
   return {
-    recommendations: rows.reduce((sum, row) => sum + row.recommendations, 0),
-    wins: rows.reduce((sum, row) => sum + row.wins, 0),
-    losses: rows.reduce((sum, row) => sum + row.losses, 0),
-    pending: rows.reduce((sum, row) => sum + row.pending, 0),
-    unresolved: rows.reduce((sum, row) => sum + row.unresolved, 0),
-    voids: rows.reduce((sum, row) => sum + row.voids, 0),
-    net: rows.length ? addDecimals(rows.map((row) => row.net)) : "0"
+    recommendations: sum((row) => row.recommendations), wins, losses,
+    pending: sum((row) => row.pending), unresolved: sum((row) => row.unresolved), voids: sum((row) => row.voids), net, settled,
+    roi: whole ? period.roi : settled ? Number(net) / settled : null,
+    hitRate: whole ? period.hitRate : settled ? wins / settled : null
   };
+}
+
+/** "2/2 · 36/40": the same frozen evidence under a "Baskı · Havuz" column head. */
+export function evidenceCompact(record: Pick<RebuildRecommendation, "votesSupport" | "votesUsed" | "poolWins" | "poolTotal">): string {
+  return `${record.votesSupport}/${record.votesUsed} · ${formatSupport(record.poolWins, record.poolTotal).counts}`;
 }
 
 /** "2/2 baskı teyidi · 36/40 havuz": the frozen evidence in one line. */
@@ -161,4 +176,96 @@ export function combinedReport(report: RebuildCohortsReport): RebuildReport {
     recommendations: report.recommendations.map(({ cohortId: _cohort, ...record }) => record),
     learning: report.learning
   };
+}
+
+/** A Karar günlüğü view: 1, 7 or 30 Istanbul days ending on `through`. */
+export interface LogPeriod {
+  days: ReportWindowDays;
+  through: string;
+}
+
+/** The Istanbul calendar day of an instant, "2026-11-03". */
+export function istanbulDay(now: number): string {
+  return rebuildCalendarDay(new Date(now).toISOString());
+}
+
+/** A calendar day moved by whole days ("2026-11-01" − 1 → "2026-10-31"). */
+export function shiftDay(day: string, delta: number): string {
+  return new Date(Date.parse(`${day}T00:00:00Z`) + delta * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** Single days step back up to a year, never past today (the backend's window bounds). */
+export function canStepDay(period: LogPeriod, today: string, delta: -1 | 1): boolean {
+  if (period.days !== 1) return false;
+  const next = shiftDay(period.through, delta);
+  return next <= today && next >= shiftDay(today, -365);
+}
+
+const weekdayFormat = new Intl.DateTimeFormat("tr-TR", { weekday: "short", timeZone: "Europe/Istanbul" });
+
+/** "Bugün", "Dün", "31 Eki Cum", "Son 7 gün", "Son 30 gün". */
+export function periodTitle(period: LogPeriod, today: string): string {
+  if (period.days === 1) {
+    if (period.through === today) return "Bugün";
+    if (period.through === shiftDay(today, -1)) return "Dün";
+    return `${formatReportDay(period.through)} ${weekdayFormat.format(new Date(`${period.through}T12:00:00+03:00`))}`;
+  }
+  return period.through === today ? `Son ${period.days} gün` : `${period.days} gün · ${formatReportDay(period.through)} sonu`;
+}
+
+/** The one cohort every listed record shares, or null when they mix. */
+export function sharedCohort(records: readonly { decisionId: string }[], labels: ReadonlyMap<string, string>): string | null {
+  const names = new Set(records.map((record) => labels.get(record.decisionId) ?? ""));
+  const [only] = names;
+  return names.size === 1 && only ? only : null;
+}
+
+/**
+ * SAP stores league names in 20 characters, so a 20-character name may be
+ * cut ("İngiltere Premier Li"); it is shown as cut rather than completed.
+ */
+export function leagueText(league: string): string {
+  return [...league].length >= 20 ? `${league}…` : league;
+}
+
+/** "İspanya La Liga · 23:00 başlama" from the frozen facts; null when neither is known. */
+export function fixtureLine(match: RebuildMatchFacts | undefined): string | null {
+  const parts = [match?.league ? leagueText(match.league) : null, match?.kickoff ? `${match.kickoff} başlama` : null].filter(Boolean);
+  return parts.length ? parts.join(" · ") : null;
+}
+
+/** "MS 2–1": the regulation-time score a proven result was settled on. */
+export function finalScoreText(match: RebuildMatchFacts | undefined): string | null {
+  return match?.finalScore ? `MS ${match.finalScore.home}–${match.finalScore.away}` : null;
+}
+
+/** True when the backend could not prove either side's name for this record. */
+export function namesUnverified(match: RebuildMatchFacts | undefined): boolean {
+  return match?.names === "UNAVAILABLE";
+}
+
+/** What the period control remembers: relative choices follow the calendar, a stepped day stays put. */
+export type LogPeriodChoice = { kind: "today" } | { kind: "yesterday" } | { kind: "last"; days: 7 | 30 } | { kind: "day"; date: string };
+
+export function resolvePeriod(choice: LogPeriodChoice, today: string): LogPeriod {
+  switch (choice.kind) {
+    case "today":
+      return { days: 1, through: today };
+    case "yesterday":
+      return { days: 1, through: shiftDay(today, -1) };
+    case "last":
+      return { days: choice.days, through: today };
+    case "day":
+      return { days: 1, through: choice.date };
+  }
+}
+
+/** A stepped day turns back into "Bugün" or "Dün" when it reaches them. */
+export function choiceForDay(day: string, today: string): LogPeriodChoice {
+  return day === today ? { kind: "today" } : day === shiftDay(today, -1) ? { kind: "yesterday" } : { kind: "day", date: day };
+}
+
+/** Today and yesterday come from the shared daily report; every other view reads its own window. */
+export function needsWindow(period: LogPeriod, today: string): boolean {
+  return !(period.days === 1 && (period.through === today || period.through === shiftDay(today, -1)));
 }
