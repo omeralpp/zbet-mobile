@@ -25,11 +25,21 @@ test("Bilyoner takes the front-vowel suffix everywhere", async () => {
   }
 });
 
-test("the shared button keeps one geometry and announces a link", async () => {
+test("the shared button is the Toto green, spans its column like Maç detayına git and announces a link", async () => {
   const source = await read("./BilyonerButton.tsx");
-  assert.match(source, /minHeight: 48/);
-  assert.match(source, /borderRadius: radii\.round/);
-  assert.match(source, /alignSelf: "flex-start"/);
+  assert.match(source, /backgroundColor: colors\.green/);
+  assert.match(source, /color: colors\.background/);
+  assert.match(source, /minHeight: 56/);
+  assert.match(source, /borderRadius: 18/);
+  assert.match(source, /alignSelf: "stretch"/);
+  assert.match(source, /justifyContent: "center"/);
+  assert.doesNotMatch(source, /primary/);
   assert.match(source, /accessibilityRole="link"/);
   assert.match(source, /label = "Bilyoner'de aç"/);
+  // Same 56 pt, 18 pt-corner, centred shape as the Super kararı match button.
+  assert.match(await read("../screens/RebuildDecisionView.tsx"), /matchButton: \{ minHeight: 56, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderRadius: 18/);
+});
+
+test("no screen asks for a separate outlined or primary Bilyoner form", async () => {
+  for (const path of screens) assert.doesNotMatch(await read(path), /primary=\{/, path);
 });

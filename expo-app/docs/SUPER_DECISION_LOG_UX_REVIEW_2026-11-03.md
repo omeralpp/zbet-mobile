@@ -254,3 +254,49 @@ facts header is ignored there and the client tolerates its absence), then the
 coordinated Android/web pair including NXT-OBS-243. Codex's parallel xG
 reseal package changes BFF identity env values; one restart must cover both
 under explicit approval (`BTB Logs/.../BFF_COORDINATION_RESPONSE.md`).
+
+## Release of 6141e2f and owner follow-up — 3 November 2026
+
+The owner approved commit/push, the BFF restart and the coordinated release
+("Approve"). BFF `e822bc2` and client `6141e2f` were pushed; the BFF was
+restarted on `e822bc2` (Node 24, identity unchanged; receipt
+`btb-codex/docs/evidence/super-log-bff-restart-e822bc2-2026-11-03.json`). APK
+`427D9DE6…BAA2A` was delivered privately with readback and the owner accepted
+the Android smoke ("continueıt works properly"). The matching web release was
+held: the BTB thread asked to publish only after its xG identity cutover,
+which switched the BFF to policy `71AC156E…` at 16:08 UTC and then waited on an
+SAP edit lock for the model resume. The batch stays **INCOMPLETE (web not
+published)** and is superseded by the follow-up below; no web release of
+`6141e2f` was made.
+
+### Follow-up (NXT-OBS-244): 7/30 days in parts, one Bilyoner look
+
+Owner: "7 gün ve 30 günde veriyi çekerken sorun yaşıyoruz parçalı olarak
+çekme şansımız mümkün olacak şekilde dizayn edebilir miyiz" and the Bilyoner
+buttons in the Toto green, centred and full width like "Maç detayına git".
+
+Evidence (BFF runtime log of the owner's session): one 7/30-day window answered
+`UNAVAILABLE CAPTURE_BATCH_BYTE_LIMIT` after 1.7 s; a 30-day read of 105
+decisions took 6.5 s; another 105-decision read finished on the BFF after the
+client had stopped waiting; single days took 0.7–1.5 s.
+
+Design: a 7/30-day view is composed from single Istanbul days. Today and
+yesterday come from the shared daily report; every other day is its own
+verified `/window/<day>/1` read, newest first, at most three at a time
+(`request-limiter.ts`), cached per day (5 min fresh, 30 min kept; shared with
+day stepping). Counts and units are the days' backend aggregates added
+exactly; ROI and hit rate use the backend definitions on the sums; a match on
+both sides of midnight counts once (distinct match keys). The match-clustered
+ROI interval cannot be added up, so a composed view says it appears for a
+single day. The view fills in as days arrive (`Yüklenen gün: 18 / 30`), marks
+`Kısmi toplam` until complete, names failed days and retries only those.
+
+Bilyoner: one look everywhere, the Toto green with dark ink, 56 pt, 18 pt
+corners, label centred, spanning its column (hero row, page end, Toto program,
+coupon row); the outlined form is gone.
+
+Checks: synthetic harness with one failing day — 28 day reads (30 minus the
+two shared days), newest first; progress 12 → 24 → 29/30 with `1 gün
+alınamadı`; retry loaded the day (12/12 decisions); switching 30 → 7 days made
+no request. Bilyoner 316×56 (hero), 342×56 (page end, Toto active/waiting),
+294×56 (coupon row) at 390 px; 942/984 px wide on desktop. No BFF change.

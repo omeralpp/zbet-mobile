@@ -568,9 +568,12 @@ function Progress({ label, value, required }: { label: string; value: number; re
  * apart, a dash for a ratio with no resolved risk, match-level risk retained.
  * Always the whole period as the backend reports it, never a filtered view.
  * Opened from one disclosure in the log; `columns` sets the star and market
- * groups side by side on a wide screen.
+ * groups side by side on a wide screen. A `composed` 7/30-day view is the sum
+ * of single days, which has no match-clustered ROI interval.
  */
-export function RebuildReportDetails({ report, period, columns = false }: { report: RebuildReport; period: RebuildReport["periods"][number]; columns?: boolean }) {
+export function RebuildReportDetails({ report, period, columns = false, composed = false }: {
+  report: RebuildReport; period: RebuildReport["periods"][number]; columns?: boolean; composed?: boolean;
+}) {
   return (
     <View style={styles.reportBody}>
       <Text style={styles.eyebrowMuted}>RAPOR · {period.days} GÜN · {formatReportRange(period.from, period.through)}</Text>
@@ -598,6 +601,7 @@ export function RebuildReportDetails({ report, period, columns = false }: { repo
       {period.recommendations ? (
         <Text style={styles.noteText}>{period.uncertainty
           ? `ROI aralığı (maçlar yeniden örneklenerek): ${formatRatio(period.uncertainty.lower)} ile ${formatRatio(period.uncertainty.upper)} arası. Örnek küçük olduğu için kesin değildir.`
+          : composed ? "Çok günlü görünüm günlük raporların toplamıdır; ROI aralığı tek bir gün seçilince görünür."
           : "ROI aralığı için en az iki maçın sonucu gerekir."}</Text>
       ) : null}
       <View style={[styles.stackTight, columns && styles.breakdownColumns]}>

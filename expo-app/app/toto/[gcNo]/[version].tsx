@@ -10,7 +10,9 @@ import {
   StyleSheet,
   Text,
   View,
-  useWindowDimensions
+  useWindowDimensions,
+  type StyleProp,
+  type ViewStyle
 } from "react-native";
 import type { TotoPrediction } from "@/src/api/schemas";
 import { totoProgramQuery } from "@/src/api/queries";
@@ -176,13 +178,12 @@ export default function TotoProgramDetailScreen() {
   const note = program.status === "ACTIVE" ? unitNote.trim()
     : `Kapsama, ana isabet dahil sonucu kuponda kalan maçlardır; kupon kazancı değildir.${program.status === "WAITING_RESULT" ? " En fazla kapsama bir üst sınırdır, tahmin değildir." : ""}${unitNote}`;
   const meta = [program.status === "WAITING_RESULT" ? `${number.format(program.columns)} kolon · ${cost} maliyet` : null, progress.structure].filter(Boolean).join(" · ");
-  const bilyonerAction = (primary: boolean) => (
+  const bilyonerAction = (style?: StyleProp<ViewStyle>) => (
     <BilyonerButton
       hint="Bilyoner uygulaması kuruluysa Spor Toto sayfasını uygulamada, değilse güvenli web sayfasında açar"
       label={"Bilyoner Spor Toto'da aç"}
       onPress={() => { void Linking.openURL(buildBilyonerTotoUrl()).catch(() => Alert.alert("Bilyoner açılamadı", "Bilyoner Spor Toto sayfası şu anda açılamıyor.")); }}
-      primary={primary}
-      {...(primary ? { style: styles.bilyonerSlot } : {})}
+      {...(style ? { style } : {})}
     />
   );
 
@@ -285,7 +286,7 @@ export default function TotoProgramDetailScreen() {
           Son güncelleme: {formatTimestamp(program.updatedAt)}
         </Text>
       </View>
-      {program.status === "ACTIVE" ? bilyonerAction(true) : null}
+      {program.status === "ACTIVE" ? bilyonerAction(styles.bilyonerSlot) : null}
       </View>
 
       <View style={desktop ? styles.couponColumn : undefined}>
@@ -359,7 +360,7 @@ export default function TotoProgramDetailScreen() {
       </View>
 
       {/* Playing matters only before kickoff; a resulted program has no play action. */}
-      {program.status === "WAITING_RESULT" || program.status === "ERROR" ? <View style={styles.actions}>{bilyonerAction(false)}</View> : null}
+      {program.status === "WAITING_RESULT" || program.status === "ERROR" ? <View style={styles.actions}>{bilyonerAction()}</View> : null}
     </Screen>
   );
 }

@@ -1,19 +1,27 @@
 import { queryOptions } from "@tanstack/react-query";
 import { mobileApi } from "./index";
 import type { ReportWindowDays } from "./rebuild-schemas";
+import { createRequestLimiter } from "./request-limiter";
 
 export const rebuildReportQuery = queryOptions({ queryKey: ["rebuildReport"], queryFn: ({ signal }) => mobileApi.getRebuildReport(signal),
   staleTime: 10_000, refetchInterval: 30_000, retry: false });
 export const rebuildCohortsReportQuery = queryOptions({ queryKey: ["rebuildCohortsReport", "recent-days.v1"], queryFn: ({ signal }) => mobileApi.getRebuildCohortsReport(signal),
   staleTime: 10_000, refetchInterval: 30_000, retry: false });
+// Window reads verify every proof of their days; three at a time keeps a
+// 30-day view from sending thirty verifications to SAP at once.
+const windowReads = createRequestLimiter(3);
 /**
- * Karar günlüğü beyond today and yesterday: one 1/7/30-day window, read only
- * while the log shows it. A window that includes today still settles, so it
- * refreshes every minute; a past window changes only on a result correction.
+ * Karar günlüğü beyond today and yesterday: a window read only while the log
+ * shows it. The log reads single days (7/30-day views are composed from them,
+ * NXT-OBS-244). A window that includes today still settles, so it refreshes
+ * every minute; a past day changes only on a result correction, so it stays
+ * fresh for five minutes and cached for thirty.
  */
 export function rebuildReportWindowQuery(days: ReportWindowDays, through: string, includesToday: boolean) {
-  return queryOptions({ queryKey: ["rebuildCohortsReport", "window", days, through], queryFn: ({ signal }) => mobileApi.getRebuildReportWindow(days, through, signal),
-    staleTime: includesToday ? 30_000 : 300_000, refetchInterval: includesToday ? 60_000 : false, retry: false });
+  return queryOptions({ queryKey: ["rebuildCohortsReport", "window", days, through],
+    queryFn: ({ signal }) => windowReads(() => mobileApi.getRebuildReportWindow(days, through, signal), signal),
+    staleTime: includesToday ? 30_000 : 300_000, gcTime: includesToday ? 300_000 : 1_800_000,
+    refetchInterval: includesToday ? 60_000 : false, retry: false });
 }
 export function rebuildMatchQuery(key: string) {
   return queryOptions({ queryKey: ["rebuildMatch", key], enabled: Boolean(key), queryFn: ({ signal }) => mobileApi.getRebuildMatch(key, signal),

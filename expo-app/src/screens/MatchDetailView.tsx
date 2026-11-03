@@ -813,15 +813,15 @@ export function MatchDetailView({
         {hero ? <View style={[styles.heroRecordFooter, wideWeb && styles.verdictRowWide]}>
           <ResultPill state={hero.record.result.state} subject />
           <View style={styles.heroActions}>
-            {/* While the published selection is still playable, its market is
-                one step away (owner decision, NXT-OBS-241). */}
-            {hero.playable ? <BilyonerButton hint="Maçın Bilyoner sayfasını açar" onPress={() => { void openBilyoner(); }} /> : null}
             <Pressable accessibilityRole="button" accessibilityLabel="Son BTB karar kaydını aç" onPress={() => openDecision(hero.record.decisionId)} style={styles.heroRecordAction}>
               <Text style={styles.resetText}>Karar kaydını aç</Text>
               <MaterialCommunityIcons color={semantic.intelligence} name="chevron-right" size={iconSizes.inline} />
             </Pressable>
           </View>
         </View> : null}
+        {/* While the published selection is still playable, its market is one
+            step away (owner decision, NXT-OBS-241), on its own full-width row. */}
+        {hero?.playable ? <BilyonerButton hint="Maçın Bilyoner sayfasını açar" onPress={() => { void openBilyoner(); }} style={styles.heroBilyoner} /> : null}
         </View>
       </TutorialTarget>
       </View>
@@ -1064,6 +1064,7 @@ const styles = StyleSheet.create({
   },
   heroRecordFooter: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: spacing.sm, marginTop: spacing.sm },
   heroRecordAction: { flexDirection: "row", alignItems: "center", minHeight: 44, gap: spacing.xs },
+  heroBilyoner: { marginTop: spacing.md },
   // Stays on the right when it wraps under the result pill on a phone.
   heroActions: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end", columnGap: spacing.lg, marginLeft: "auto" },
   layoutTools: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end", gap: spacing.md, marginTop: spacing.sm },

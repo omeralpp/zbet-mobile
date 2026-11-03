@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { rebuildCohortsReportQuery, rebuildReportWindowQuery } from "@/src/api/queries";
+import { useReportDays } from "@/src/api/use-report-days";
 import type { RebuildCohortsReport, RebuildLogRecord } from "@/src/api/rebuild-schemas";
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
@@ -368,12 +369,22 @@ export function RebuildDecisionLog() {
   // shared report refreshes every 30 s, so "Bugün" rolls over at midnight.
   const today = istanbulDay(daily.data ? Date.parse(daily.data.asOf) : openedAt);
   const period = resolvePeriod(choice, today);
-  const ownWindow = needsWindow(period, today);
-  const windowed = useQuery({ ...rebuildReportWindowQuery(period.days, period.through, period.through === today), enabled: ownWindow });
+  const multiDay = period.days > 1;
+  // A single older day reads its own window; a 7/30-day view adds up single
+  // days as they arrive instead of one heavy read (NXT-OBS-244).
+  const ownWindow = !multiDay && needsWindow(period, today);
+  const windowed = useQuery({ ...rebuildReportWindowQuery(1, period.through, period.through === today), enabled: ownWindow });
+  const days = useReportDays(period, today, daily.data, multiDay);
   const query = ownWindow ? windowed : daily;
+  const isLoading = multiDay ? days.loaded === 0 && days.loading : query.isLoading;
+  const isError = multiDay ? days.loaded === 0 && !days.loading : query.isError;
+  const refetch = async () => {
+    if (multiDay) days.retry();
+    await (multiDay ? daily : query).refetch();
+  };
   const refresh = async () => {
     setRefreshing(true);
-    try { await query.refetch(); } finally { setRefreshing(false); }
+    try { await refetch(); } finally { setRefreshing(false); }
   };
   useEffect(() => {
     if (Platform.OS !== "web" || (!starMenuOpen && !periodOpen)) return;
@@ -383,10 +394,10 @@ export function RebuildDecisionLog() {
     document.addEventListener("keydown", dismiss);
     return () => document.removeEventListener("keydown", dismiss);
   }, [periodOpen, starMenuOpen]);
-  const full = query.data;
+  const full = multiDay ? days.report ?? undefined : query.data;
   const report = useMemo(() => (full ? combinedReport(full) : null), [full]);
   const found = full?.periods.find((item) => item.days === period.days && item.through === period.through);
-  const available = !query.isError && full?.availability === "AVAILABLE" && found ? found : null;
+  const available = !isError && full?.availability === "AVAILABLE" && found ? found : null;
   const labels = useMemo(() => cohortLabels(full), [full]);
   const minStars = starFilterMinRating(starFilter);
   const records = useMemo<RebuildLogRecord[]>(() => (full && available ? periodRecords(full, available) : []), [available, full]);
@@ -401,8 +412,8 @@ export function RebuildDecisionLog() {
   );
   // One cohort for every listed record is named once in the scope line.
   const cohort = sharedCohort(records, labels);
-  const multiDay = period.days > 1;
   const updated = full ? publishedParts(full.asOf).time : null;
+  const partial = multiDay && days.loaded < days.total;
   const closeMenus = () => {
     setStarMenuOpen(false);
     setPeriodOpen(false);
@@ -462,7 +473,7 @@ export function RebuildDecisionLog() {
   const scopeText = available
     ? [formatReportRange(available.from, available.through), `${visible.length} / ${records.length} karar`, tab === "STAR" ? starMetricLabel(starFilter) : null,
       pendingOnly ? "bekliyor" : null, cohort ? `Sürüm ${cohort}` : null].filter(Boolean).join(" · ")
-    : query.isLoading ? "Rapor yükleniyor" : query.isError || full?.availability === "UNAVAILABLE" ? "Rapor doğrulanamadı · kayıt sayısı bilinmiyor" : "Rapor bekleniyor";
+    : isLoading ? "Rapor yükleniyor" : isError || full?.availability === "UNAVAILABLE" ? "Rapor doğrulanamadı · kayıt sayısı bilinmiyor" : "Rapor bekleniyor";
   const periodControl = (
     <PeriodControl
       choice={choice}
@@ -487,20 +498,35 @@ export function RebuildDecisionLog() {
       <Text style={styles.scopeText}>{scopeText}</Text>
     </View>
   );
+  // A 7/30-day view says how many of its days it holds, and which failed.
+  const progress = multiDay && (days.loading || days.failed.length) ? (
+    <View accessibilityLiveRegion="polite" style={styles.progress}>
+      <View style={styles.progressTrack}>
+        <View style={[styles.progressFill, { width: `${Math.round((days.loaded / days.total) * 100)}%` }]} />
+      </View>
+      <View style={styles.progressRow}>
+        <Text style={styles.progressText}>
+          {`Yüklenen gün: ${days.loaded} / ${days.total}`}{days.failed.length ? ` · ${days.failed.length} gün alınamadı` : ""}{days.loading ? " · yükleniyor" : ""}
+        </Text>
+        {days.failed.length && !days.loading ? <Action icon="refresh" onPress={days.retry} title="Alınamayan günleri yeniden dene" /> : null}
+      </View>
+    </View>
+  ) : null;
 
-  if (query.isLoading || !available || !report) {
-    const failed = query.isError || full?.availability === "UNAVAILABLE";
+  if (isLoading || !available || !report) {
+    const failed = isError || full?.availability === "UNAVAILABLE";
     return (
       <View style={[styles.stack, styles.phoneHead]}>
         {wide ? <View style={styles.wideToolbar}>{filters}{scope}</View> : <>{filters}{scope}</>}
-        {query.isLoading ? (
+        {progress}
+        {isLoading ? (
           <Card><LoadingState label="Karar günlüğü hazırlanıyor" /></Card>
         ) : (
           <Card>
             <View style={styles.waiting}>
-              <TonePill dot label={failed ? "RAPOR DOĞRULANAMADI" : "RAPOR BEKLENİYOR"} tone={query.isError ? "neutral" : "warning"} />
-              <Text style={styles.waitingText}>{query.isError ? "Veri alınamadı" : rebuildReason(full?.reason)}</Text>
-              <Action icon="refresh" onPress={() => { void query.refetch(); }} title="Yenile" />
+              <TonePill dot label={failed ? "RAPOR DOĞRULANAMADI" : "RAPOR BEKLENİYOR"} tone={isError ? "neutral" : "warning"} />
+              <Text style={styles.waitingText}>{isError ? "Veri alınamadı" : rebuildReason(full?.reason)}</Text>
+              <Action icon="refresh" onPress={() => { void refetch(); }} title="Yenile" />
             </View>
           </Card>
         )}
@@ -525,7 +551,7 @@ export function RebuildDecisionLog() {
       ) : null}
     </View>
   );
-  const note = `Karar başına 1 varsayımsal birim${updated ? ` · güncellendi ${updated}` : ""}.${pendingOnly ? " Özet tüm sonuçları, liste yalnızca bekleyenleri içerir." : ""}`;
+  const note = `${partial ? `Kısmi toplam: ${days.loaded} / ${days.total} gün. ` : ""}Karar başına 1 varsayımsal birim${updated ? ` · güncellendi ${updated}` : ""}.${pendingOnly ? " Özet tüm sonuçları, liste yalnızca bekleyenleri içerir." : ""}`;
   const details = (
     <Card>
       <Pressable
@@ -540,7 +566,7 @@ export function RebuildDecisionLog() {
         </View>
         <MaterialCommunityIcons color={semantic.intelligence} name={detailsOpen ? "chevron-up" : "chevron-down"} size={iconSizes.control} />
       </Pressable>
-      {detailsOpen ? <RebuildReportDetails columns={wide} period={available} report={report} /> : null}
+      {detailsOpen ? <RebuildReportDetails columns={wide} composed={multiDay} period={available} report={report} /> : null}
     </Card>
   );
 
@@ -555,6 +581,7 @@ export function RebuildDecisionLog() {
           {filters}
           {scope}
         </View>
+        {progress}
         <View style={styles.tiles}>
           <Tile color={netTone === "neutral" ? undefined : toneColor[netTone]} label={`birim · ${tab === "STAR" ? starMetricLabel(starFilter) : "tüm yıldızlar"}`} value={formatUnits(summary.net)} />
           <Tile label="ROI · birim başına" value={formatRatio(summary.roi)} />
@@ -595,6 +622,7 @@ export function RebuildDecisionLog() {
       <View style={styles.phoneHead}>
         {filters}
         {scope}
+        {progress}
       </View>
       <LocalTabPager
         activeKey={tab}
@@ -808,5 +836,10 @@ const styles = StyleSheet.create({
   cellNumber: { color: colors.text, ...typeScale.metricCompact },
   cellEvidence: { color: colors.textMuted, ...typeScale.metricCompact },
   cellNet: { fontWeight: "800" },
-  tableNote: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0 }
+  tableNote: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0 },
+  progress: { gap: spacing.xs },
+  progressTrack: { height: 4, borderRadius: 2, overflow: "hidden", backgroundColor: colors.surfaceStrong },
+  progressFill: { height: 4, borderRadius: 2, backgroundColor: semantic.intelligence },
+  progressRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
+  progressText: { color: colors.textMuted, ...typeScale.meta }
 });
