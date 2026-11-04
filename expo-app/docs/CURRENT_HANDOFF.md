@@ -1,7 +1,7 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-11-04
-Mod: `OWNER_ONLY_DEV / ACCEPTED_PAIRED_RELEASE / E549CB0`
+Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / E549CB0`
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md)
