@@ -116,7 +116,7 @@ function SelectedMoment({ moment, match, model, showBack, onBack, onDecisionPres
   // The latest record's subtitle is often just its score, already shown large
   // beside the minute; it is not repeated as a title (NXT-OBS-241).
   const title = moment.kind === "BTB" && record ? formatSelection(record.market) || record.market
-    : moment.kind === "ACTIVITY" ? "Son 5 dakikalık hareketlilik"
+    : moment.kind === "ACTIVITY" ? "Ölçülen hareketlilik aralığı"
     : moment.kind === "LATEST" ? (moment.railSub && moment.railSub !== moment.score ? moment.railSub : "")
       : moment.kind === "POOL" ? "İkinci yarı havuzu"
         : [moment.railTitle.split(" · ")[1], side].filter(Boolean).join(" · ");
@@ -156,7 +156,7 @@ function SelectedMoment({ moment, match, model, showBack, onBack, onDecisionPres
         <Text style={styles.eyebrow}>BU ANDAKİ HAREKETLİLİK</Text>
         <Text style={styles.panelLine}>{activityHeadline(activityReading, match)}</Text>
         {activityReading ? <Text style={styles.panelLine}>{match.homeTeam} {activityReading.homeText} · {match.awayTeam} {activityReading.awayText}</Text> : null}
-        <Text style={styles.ticketNote}>Tahmini 5 dakikalık pencere; BTB kararının baskı ölçümü değildir.</Text>
+        <Text style={styles.ticketNote}>Gözlenen aralıktan dakikalık hareketlilik tahmini. Seçim ve yıldız hesabına katılmaz.</Text>
       </View> : null}
       {record ? <Pressable accessibilityHint="Super kararını açar" accessibilityRole="button" onPress={() => onDecisionPress(record.decisionId)}
         style={({ hovered, pressed }) => [styles.openDecision, hovered && styles.hover, pressed && styles.pressed]}>
@@ -475,7 +475,7 @@ export const MatchPathCard = memo(function MatchPathCard({ match, model, synthet
           <View style={styles.legendItem}><View style={styles.legendDivider} /><Text style={styles.legendText}>Devre</Text></View>
         </View><Text style={styles.rules}>
           Üstteki şerit her golün yeni skorunu kendi dakikasında gösterir. Ev sahibinin olayları üst, deplasmanın olayları alt şeritte.
-          {chartActivity ? " Mavi ve turuncu sütunlar son 5 dakikanın tahmini hareketliliğidir; eksik pencereler boştur ve bu değerler BTB seçim hesabına katılmaz. Sütunlara dokunarak veya sürükleyerek o dakikayı incele. Havuz çizgisinin yüzde ölçeği ayrıdır; aynı zaman eksenini paylaşırlar." : null}
+          {chartActivity ? " Mavi ve turuncu sütunlar gözlenen aralığın dakika başına tahmini hareketliliğidir. Ölçülen süreyi görmek için bir sütuna dokun veya yatay sürükle. Eksik ölçümler boş bırakılır. Bu değerler BTB seçim hesabına katılmaz. Havuz çizgisi kendi yüzde ölçeğiyle aynı zaman eksenini paylaşır." : null}
           {hasLine && model.poolShare ? ` ${chartActivity ? "Turkuaz" : "Mavi"} çizgi yarının ilk geçerli referans havuzunda güncel skorla uyumlu kalan paydır; kazanma olasılığı değildir. Devrede veya kaynak değişiminde çizgi kesilir. Yalnız kayıtlı havuzlar gösterilir.` : hasLine ? " Mavi çizgi maçın havuzla uyumudur; devrede havuz değişir ve çizgi basamak yapar." : " Havuz çizgisi yalnız kaynak sunduğunda çizilir."}
           {" "}Altın fişler BTB kararlarıdır: dakika, yıldız, donmuş seçim oranı ve sonucun rengi. Yıldız tutarlılık ve kanıt kalitesidir.
         </Text></View> : null}

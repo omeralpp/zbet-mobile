@@ -20,6 +20,11 @@ export interface PressureInterval {
   connects: boolean;
   score: string;
   windowStartMinute?: number;
+  /** Actual delivered source duration, independent of the match clock. */
+  windowSeconds?: number;
+  windowStartsAt?: string;
+  windowEndsAt?: string;
+  observationCount?: number;
 }
 
 export function pressureIntervals(history: RebuildPressureHistory | undefined): PressureInterval[] {
@@ -38,14 +43,23 @@ export function pressureIntervals(history: RebuildPressureHistory | undefined): 
   }));
 }
 
-/** A column is the delivered five-minute activity estimate ending at that minute. */
+/** A column is the delivered observed-window rate ending at that minute. */
 export function activityIntervals(history: RebuildPressureHistory | undefined): PressureInterval[] {
   if (!history || !["AVAILABLE", "PARTIAL"].includes(history.availability) || history.activity?.availability !== "AVAILABLE") return [];
-  return history.activity.points.filter(point=>point.reason === "AVAILABLE" && point.home !== null && point.away !== null).map(point=>({
-    key: point.captureId, startMinute: Math.max(0,point.minute - 1), endMinute: point.minute,
-    home: point.home!, away: point.away!, homeText: formatDecimal(String(point.home)), awayText: formatDecimal(String(point.away)),
-    estimated: true, connects: point.connects, score: "", windowStartMinute: history.observations.find(o=>o.captureId === point.baselineCaptureId)?.minute ?? point.minute - 5
-  }));
+  const observations = new Map(history.observations.map(observation => [observation.captureId, observation]));
+  return history.activity.points.flatMap(point => {
+    const baseline = point.baselineCaptureId ? observations.get(point.baselineCaptureId) : undefined;
+    if (point.reason !== "AVAILABLE" || point.home === null || point.away === null || !point.startsAt || !point.endsAt || !baseline) return [];
+    const seconds = (Date.parse(point.endsAt) - Date.parse(point.startsAt)) / 1000;
+    if (!Number.isFinite(seconds) || seconds <= 0) return [];
+    return [{
+      key: point.captureId, startMinute: Math.max(0, point.minute - 1), endMinute: point.minute,
+      home: point.home, away: point.away, homeText: formatDecimal(String(point.home)), awayText: formatDecimal(String(point.away)),
+      estimated: true, connects: point.connects, score: "", windowStartMinute: baseline.minute,
+      windowSeconds: seconds, windowStartsAt: point.startsAt, windowEndsAt: point.endsAt,
+      ...("observationCount" in point && typeof point.observationCount === "number" ? { observationCount: point.observationCount } : {})
+    }];
+  });
 }
 
 /** Consecutive intervals the backend joined; a gap or transition starts a new run. */

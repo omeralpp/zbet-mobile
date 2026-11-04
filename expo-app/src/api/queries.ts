@@ -37,7 +37,7 @@ export function rebuildStatisticsQuery(key: string) {
 
 /** Persisted verified intervals and observations; it only grows while live. */
 export function rebuildPressureHistoryQuery(key: string) {
-  return queryOptions({ queryKey: ["rebuildPressureHistory", key], enabled: Boolean(key),
+  return queryOptions({ queryKey: ["rebuildPressureHistory", "observed-window.v2", key], enabled: Boolean(key),
     queryFn: ({ signal }) => mobileApi.getRebuildPressureHistory(key, signal), staleTime: 15_000, retry: false });
 }
 export function rebuildPoolPathQuery(key: string) {

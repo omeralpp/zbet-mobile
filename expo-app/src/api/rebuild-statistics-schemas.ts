@@ -72,12 +72,13 @@ const historyObservation = z.strictObject({
   minute: count, phase, homeScore: count, awayScore: count, homeRedCards: count, awayRedCards: count, method: pressureMethod
 });
 
-const activityPoint = z.strictObject({
+const activityPointFields = {
   captureId: z.string().min(1), minute: count.max(150), phase,
   observedAt: timestamp, baselineCaptureId: z.string().nullable(), startsAt: timestamp.nullable(), endsAt: timestamp.nullable(),
   home: z.number().finite().nonnegative().nullable(), away: z.number().finite().nonnegative().nullable(),
   reason: z.string(), connects: z.boolean()
-}).superRefine((point, ctx) => {
+};
+const activityPoint = z.strictObject(activityPointFields).superRefine((point, ctx) => {
   const available = point.reason === "AVAILABLE";
   if (available ? point.home === null || point.away === null || !point.baselineCaptureId || !point.startsAt || !point.endsAt ||
     point.endsAt !== point.observedAt || Date.parse(point.endsAt) - Date.parse(point.startsAt) < 270_000 ||
@@ -85,7 +86,7 @@ const activityPoint = z.strictObject({
     : point.home !== null || point.away !== null || point.startsAt !== null || point.endsAt !== null || point.baselineCaptureId !== null || point.connects)
     ctx.addIssue({code:"custom",message:"Activity value and source window disagree"});
 });
-export const rebuildPressureActivitySchema = z.strictObject({
+const pressureActivityV1Schema = z.strictObject({
   contractVersion: z.literal("btb-pressure-activity.v1"), method: z.literal("OBSERVED_ROLLING_5M_BASE_V1"),
   windowMinutes: z.literal(5), units: z.literal("WEIGHTED_ACTIVITY_PER_MINUTE"),
   displayOnly: z.literal(true), affectsSelection: z.literal(false), estimated: z.literal(true),
@@ -95,6 +96,35 @@ export const rebuildPressureActivitySchema = z.strictObject({
     new Set(value.points.map(p=>p.captureId)).size !== value.points.length)
     ctx.addIssue({code:"custom",message:"Activity availability or identities disagree"});
 });
+
+const observedActivityPoint = z.strictObject({
+  ...activityPointFields,
+  windowSeconds: z.number().finite().min(240).max(360).nullable(),
+  observationCount: count.min(3).max(600).nullable()
+}).superRefine((point, ctx) => {
+  const available = point.reason === "AVAILABLE";
+  if (available ? point.home === null || point.away === null || !point.baselineCaptureId || !point.startsAt || !point.endsAt ||
+    point.endsAt !== point.observedAt || point.windowSeconds === null || point.observationCount === null ||
+    (Date.parse(point.endsAt) - Date.parse(point.startsAt)) / 1000 !== point.windowSeconds
+    : point.home !== null || point.away !== null || point.startsAt !== null || point.endsAt !== null ||
+      point.baselineCaptureId !== null || point.windowSeconds !== null || point.observationCount !== null || point.connects)
+    ctx.addIssue({code:"custom",message:"Observed activity value and actual window disagree"});
+});
+
+const pressureActivityV2Schema = z.strictObject({
+  contractVersion: z.literal("btb-pressure-activity.v2"), method: z.literal("OBSERVED_WINDOW_BASE_V2"),
+  targetWindowMinutes: z.literal(5), minimumWindowSeconds: z.literal(240), maximumWindowSeconds: z.literal(360),
+  maximumGapSeconds: z.literal(150), units: z.literal("WEIGHTED_ACTIVITY_PER_MINUTE"),
+  displayOnly: z.literal(true), affectsSelection: z.literal(false), estimated: z.literal(true),
+  availability: z.enum(["AVAILABLE", "UNAVAILABLE"]), reason: z.string(), points: z.array(observedActivityPoint).max(600)
+}).superRefine((value,ctx) => {
+  const available = value.points.some(point=>point.reason === "AVAILABLE");
+  if ((value.availability === "AVAILABLE") !== available ||
+    value.reason !== (available ? "AVAILABLE" : "NO_COMPLETE_ACTIVITY_WINDOWS") ||
+    new Set(value.points.map(point=>point.captureId)).size !== value.points.length)
+    ctx.addIssue({code:"custom",message:"Observed activity availability or identities disagree"});
+});
+export const rebuildPressureActivitySchema = z.union([pressureActivityV1Schema, pressureActivityV2Schema]);
 
 export const rebuildPressureHistorySchema = z.strictObject({
   contractVersion: z.literal("btb-pressure-history.v1"), modelRegime: z.literal("BTB_RB1_20261018"),
@@ -113,7 +143,49 @@ export const rebuildPressureHistorySchema = z.strictObject({
     return !endpoint || endpoint.minute !== point.minute || endpoint.phase !== point.phase || endpoint.observedAt !== point.observedAt ||
       (point.reason === "AVAILABLE" && (!baseline || baseline.phase !== point.phase || baseline.observedAt !== point.startsAt));
   })) ctx.addIssue({code:"custom",message:"Activity is not linked to the recorded observations"});
+  if (history.activity.contractVersion !== "btb-pressure-activity.v2") return;
+  const positions = new Map(history.observations.map((observation,index)=>[observation.captureId,index]));
+  if (positions.size !== history.observations.length) {
+    ctx.addIssue({code:"custom",message:"Observed activity receipts are duplicated"});
+    return;
+  }
+  for (const [index,point] of history.activity.points.entries()) {
+    if (point.reason !== "AVAILABLE") continue;
+    const first = point.baselineCaptureId ? positions.get(point.baselineCaptureId) : undefined;
+    const last = positions.get(point.captureId);
+    if (first === undefined || last === undefined || first > last) {
+      ctx.addIssue({code:"custom",message:"Observed activity window order is invalid"});
+      continue;
+    }
+    const window = history.observations.slice(first,last+1);
+    const endpoint = window.at(-1)!;
+    const incoherent = window.some((observation,position)=>{
+      if (observation.phase !== endpoint.phase || observation.policySha !== endpoint.policySha || observation.producerSha !== endpoint.producerSha) return true;
+      if (!position) return false;
+      const previous = window[position-1]!;
+      const gap = Date.parse(observation.observedAt) - Date.parse(previous.observedAt);
+      return gap <= 0 || gap > 150_000 || observation.minute < previous.minute ||
+        observation.minute - previous.minute > Math.max(2,Math.floor(gap/60_000)+1) ||
+        observation.homeScore < previous.homeScore || observation.awayScore < previous.awayScore;
+    });
+    if (window.length !== point.observationCount || incoherent)
+      ctx.addIssue({code:"custom",message:"Observed activity receipt count or continuity is invalid"});
+    if (point.connects) {
+      const previous = history.activity.points[index-1];
+      const priorObservation = previous && observations.get(previous.captureId);
+      if (!previous || previous.reason !== "AVAILABLE" || previous.minute+1 !== point.minute || previous.phase !== point.phase ||
+        priorObservation?.policySha !== endpoint.policySha || priorObservation?.producerSha !== endpoint.producerSha)
+        ctx.addIssue({code:"custom",message:"Observed activity connection is not proven"});
+    }
+  }
 });
+
+/** A negotiated v2 read cannot silently substitute a legacy activity series. */
+export const rebuildObservedPressureHistorySchema = rebuildPressureHistorySchema.refine(history =>
+  Object.hasOwn(history, "activity") && (history.activity === null
+    ? history.availability === "UNAVAILABLE" || history.availability === "NOT_STARTED"
+    : history.activity?.contractVersion === "btb-pressure-activity.v2"),
+{ message: "Requested observed-window v2 was not delivered" });
 
 export type RebuildStatistics = z.infer<typeof rebuildStatisticsSchema>;
 export type RebuildCurrentPressure = NonNullable<RebuildStatistics["pressure"]>;

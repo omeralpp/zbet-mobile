@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { G, Line, Rect } from "react-native-svg";
 import type { PressureInterval } from "@/src/utils/rebuild-pressure";
 import { colors, numericFont, radii, spacing, textFont, typeScale } from "@/src/theme/theme";
-import { activityHeadline } from "./match-path-activity";
+import { activitySummary, activityTeamReading } from "./match-path-activity";
 
 /** Uses the journey's x function, cursor and axis; not a second chart. */
 export function MatchActivityBars({ intervals, x, left, right, mid, height }: {
@@ -30,19 +30,19 @@ export function MatchActivitySummary({ intervals, match, failed, loading }: {
   intervals: readonly PressureInterval[]; match: { homeTeam: string; awayTeam: string; status: string; elapsed: number };
   failed: boolean; loading: boolean;
 }) {
-  const last = intervals.at(-1);
-  const ended = match.status === "FINISHED" || match.status === "NOT_PLAYED";
+  const summary = activitySummary(intervals, match, failed, loading);
+  const { last } = summary;
   // The card's one statement about missing activity (NXT-OBS-241): no empty
   // team legend, and no "yet" once the match is over.
   return <View style={styles.summary} testID="match-activity-summary">
     <View style={styles.copy}>
-      <Text style={styles.eyebrow}>{!last ? "MAÇIN RİTMİ" : ended ? "MAÇIN RİTMİ · SON ÖLÇÜLEN 5 DAKİKA" : "MAÇIN RİTMİ · SON 5 DAKİKA"}</Text>
-      <Text style={styles.headline}>{last ? activityHeadline(last, match) : loading ? "Hareketlilik yükleniyor…" : ended ? "Bu maç için doğrulanmış hareketlilik penceresi yok." : "Henüz doğrulanmış hareketlilik penceresi yok."}</Text>
-      {last || failed ? <Text style={styles.note}>{failed ? "Yenileme başarısız · kayıtlı geçmiş. " : ""}Tahmini hareketlilik · seçim hesabına katılmaz.</Text> : null}
+      <Text style={styles.eyebrow}>{summary.eyebrow}</Text>
+      <Text style={styles.headline}>{summary.headline}</Text>
+      {summary.note ? <Text style={styles.note}>{summary.note}</Text> : null}
     </View>
     {last ? <View style={styles.teams}>
-      <View style={[styles.team, { borderLeftColor: colors.blue }]}><Text style={styles.teamLabel}>{match.homeTeam}</Text><Text style={[styles.teamValue, { color: colors.blue }]}>{last.homeText}</Text></View>
-      <View style={[styles.team, { borderLeftColor: colors.orange }]}><Text style={styles.teamLabel}>{match.awayTeam}</Text><Text style={[styles.teamValue, { color: colors.orange }]}>{last.awayText}</Text></View>
+      <View accessible accessibilityLabel={activityTeamReading(match.homeTeam, last.homeText)} style={[styles.team, { borderLeftColor: colors.blue }]}><Text style={styles.teamLabel}>{match.homeTeam}</Text><Text style={[styles.teamValue, { color: colors.blue }]}>{last.homeText}</Text></View>
+      <View accessible accessibilityLabel={activityTeamReading(match.awayTeam, last.awayText)} style={[styles.team, { borderLeftColor: colors.orange }]}><Text style={styles.teamLabel}>{match.awayTeam}</Text><Text style={[styles.teamValue, { color: colors.orange }]}>{last.awayText}</Text></View>
     </View> : null}
   </View>;
 }

@@ -1,12 +1,22 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-11-03
-Mod: `PAIRED_RELEASE_COMPLETE / ACCEPTED_PAIR_E3AE5DF`
+Son güncelleme: 2026-11-04
+Mod: `LOCAL_CANDIDATE / PRESSURE_ACTIVITY_V2` (accepted pair remains E3AE5DF)
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Only the sections below describe current work. Earlier handoff history is
 preserved in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md).
 
+## Yerel aday — TASK-0222
+
+Pressure graph v2 local implementation is complete: real240–360s observed
+windows support120s acquisition, with source/reset/missing-data guards and
+truthful Android/web labels. [Review and release scope](PRESSURE_ACTIVITY_REPAIR_2026-11-04.md).
+BFF713, client797, tooling33, Doctor20 checks pass; unsigned Android bundle
+and verified web export pass with0secret findings. Visual smoke is unobserved:
+Windows Computer Use stopped because it could not verify the browser URL.
+No graph commit/push, BFF restart, APK build/sign/delivery or web publication
+has been performed. Old v1 clients and the accepted pair remain deployed.
 ## Son checkpoint
 
 The accepted Android/web pair is **e3ae5df**, released and completed on
@@ -43,15 +53,15 @@ The previous accepted pair `ba88590` and its receipts remain historical.
 | --- | --- | --- |
 | zbet-mobile / master | e3ae5dffdde6d1d6dbc682c0e9d90e1304fa14e4 | Accepted client release source; later handoff-only commits do not change the app |
 | zbet-cap / main | a057953ba1d0a0330f7619613d86ae9797467a25 | Mobile BFF `e822bc2` (name fix, frozen facts, day windows, repair cohort label) plus the BTB thread's repair-cohort test; the running BFF serves it |
-| zbet-abap / main | f25e29dd4a7d8ae8247a19e8d5ba0925e293d0d7 | BTB thread's xG repair reseal; no Mobile SAP change |
+| zbet-abap / main | 5751cbfdaf705478d21459de533a62ca19c4a101 | Accepted BTB reader migration repair, policy71AC/producerDE3C; no Mobile SAP change |
 
 Active route: Android pilot API and desktop `app.surklase.com` use the Mobile
 BFF at `api.surklase.com`; the origin listens locally on 127.0.0.1:4004.
 Desktop remains protected by Cloudflare Access. The pilot is owner-only DEV.
-BFF process history today: Mobile restart on `e822bc2` (24444 → 8972), the BTB
+BFF process history on 3 November: Mobile restart on `e822bc2` (24444 → 8972), the BTB
 thread's identity switch to policy `71AC156E…` (→ 25384), and the e3ae5df web
-publication (25384 → 7516, identity unchanged). Identity values belong to the
-BTB thread (`BTB Logs/cutover_2026-10-20/observations/implementation_xg_reseal_20261103/`).
+publication (25384 → 7516, identity unchanged), then the accepted BTB reader repair (→ 10648, producer DE3C). Identity values belong to the
+BTB thread (`BTB Logs/cutover_2026-10-20/observations/pressure_freshness_20261103/`).
 
 ## Doğrulama
 
@@ -88,7 +98,7 @@ versioned release folder for rollback.
 
 ## Açık observation / blokajlar
 
-There is no open local candidate; NXT-OBS-242/243/244 are delivered in
+TASK-0222 has the local candidate above; NXT-OBS-242/243/244 are delivered in
 e3ae5df, NXT-OBS-241 in ba88590 and NXT-OBS-235/238/239/240 in c8188ca. Besides
 the two new deferred follow-ups NXT-OBS-236 (per-match decision notification,
 blocked by NXT-OBS-074) and NXT-OBS-237 (no single RB1 threshold; frozen model;
@@ -124,7 +134,7 @@ recurrence. Do not repeat old release smokes or create signature-wait tasks.
 The remaining six DEFERRED items retain their owners and approval/evidence
 conditions; their presence does not authorize implementation.
 
-The e3ae5df pair is complete; no client release is being prepared. During
+The e3ae5df pair is complete. Review TASK-0222 locally before separate commit/runtime/paired-release approval. During
 normal use, watch the Super log on real data (7/30-day day-by-day loading on a
 slow or failing day, frozen names after a match ends, league/kickoff and MS
 score on settled decisions, the new `RB1 · teknik onarım` cohort once it
