@@ -1,153 +1,136 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-11-04
-Mod: `LOCAL_CANDIDATE / PRESSURE_ACTIVITY_V2` (accepted pair remains E3AE5DF)
+Mod: `OWNER_ONLY_DEV / ACCEPTED_PAIRED_RELEASE / E549CB0`
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
-Only the sections below describe current work. Earlier handoff history is
-preserved in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md).
+Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md)
+and the dated release reports/receipts.
 
-## Yerel aday — TASK-0222
-
-Pressure graph v2 local implementation is complete: real240–360s observed
-windows support120s acquisition, with source/reset/missing-data guards and
-truthful Android/web labels. [Review and release scope](PRESSURE_ACTIVITY_REPAIR_2026-11-04.md).
-BFF713, client797, tooling33, Doctor20 checks pass; unsigned Android bundle
-and verified web export pass with0secret findings. Visual smoke is unobserved:
-Windows Computer Use stopped because it could not verify the browser URL.
-No graph commit/push, BFF restart, APK build/sign/delivery or web publication
-has been performed. Old v1 clients and the accepted pair remain deployed.
 ## Son checkpoint
 
-The accepted Android/web pair is **e3ae5df**, released and completed on
-3 November 2026 (batch
-`client-e3ae5dffdde6d1d6dbc682c0e9d90e1304fa14e4-17989A70DDC7-8516EA40C1CE`).
-The owner accepted exact APK installation and Android smoke ("Iy works properly
-right now"), then the published web smoke ("Sorunsuz çalışıyor"). Canonical
-paired completion passed.
+TASK-0222 is delivered and accepted on Android and desktop web.
+Accepted source: **e549cb0478403bb8a36146224f3973343a536e37**.
+Batch: `client-e549cb0478403bb8a36146224f3973343a536e37-FDBF298101CF-D76F5484F65C`.
+Canonical paired completion passed on 4 November 2026.
 
-The pair delivers the Super · Karar günlüğü batch
-([review, implementation and releases](SUPER_DECISION_LOG_UX_REVIEW_2026-11-03.md)):
-NXT-OBS-242 (frozen names fixed, league/kickoff/settled score from the BFF's
-opt-in `X-BTB-Report-Facts`, ROI/hit-rate summary, one-level report details,
-C1/C2 fixes), NXT-OBS-243 (one Bilyoner button: Toto green, 56 pt, centred,
-full width) and NXT-OBS-244 (7/30-day views composed from single verified days,
-newest first, three at a time, with progress, partial totals and per-day
-retry; phone period menu anchored on screen).
+The graph requests `observed-window.v2`: proven 240–360 second windows support
+the observed 120-second capture cadence; shared labels show the actual interval
+and activity per minute. Source, missing-data, reset and continuity guards
+remain enforced. V1 clients retain their previous contract.
+[Repair and release evidence](PRESSURE_ACTIVITY_REPAIR_2026-11-04.md).
 
-Two intermediate batches stay **INCOMPLETE** and are not releases: `6141e2f`
-(APK delivered and owner-accepted, web held for the BTB xG cutover, then
-superseded) and `1fcf5cf` (APK delivered, Android smoke found the off-screen
-period menu; web not published).
+The owner installed the exact private APK and confirmed “Bu APK’yı kurdum;
+uygulama ve grafik sorunsuz”, then accepted the published web:
+“Web’de de uygulama ve grafik sorunsuz”. These are owner smoke attestations,
+not device-side hash measurements or exhaustive accessibility/performance tests.
 
 Canonical receipts in `btb-codex/docs/evidence/`:
-`super-menu-release-e3ae5df-{PREPARED,DELIVERY,ANDROID-INSTALLED,PUBLICATION,OWNER-ACCEPTANCE,COMPLETE}-2026-11-03.json`,
-`super-log-bff-restart-e822bc2-2026-11-03.json`,
-`super-log-release-6141e2f-{PREPARED,DELIVERY,ANDROID-INSTALLED,SUPERSEDED}-2026-11-03.json` and
-`super-days-release-1fcf5cf-{PREPARED,DELIVERY,ANDROID-SMOKE-DEFECT}-2026-11-03.json`.
-The previous accepted pair `ba88590` and its receipts remain historical.
+`pressure-activity-v2-{APPROVAL,PREPARED,DRIVE,ANDROID-DELIVERY,ANDROID-INSTALLED,POST-INSTALL-VERIFIED,PUBLICATION,OWNER-ACCEPTANCE,COMPLETE,LOCAL-APK-RETENTION,STATUS}-2026-11-04.json`.
+Preparation and publication receipts preserve their original intermediate
+states; COMPLETE and current STATUS establish final completion.
+
+The previous accepted E3 pair delivered NXT-OBS-242/243/244 (Super decision
+facts, Bilyoner consistency, chunked 7/30-day views and period-menu repair).
+Its receipts remain historical:
+`super-menu-release-e3ae5df-{PREPARED,DELIVERY,ANDROID-INSTALLED,PUBLICATION,OWNER-ACCEPTANCE,COMPLETE}-2026-11-03.json`.
+Intermediate6141e2f and1fcf5cf batches remain incomplete/superseded, without
+retrospective release credit. Their reports and receipts are preserved.
 
 ## Repo durumu
 
-| Repository | HEAD | Meaning |
+| Repository | Source checkpoint | Meaning |
 | --- | --- | --- |
-| zbet-mobile / master | e3ae5dffdde6d1d6dbc682c0e9d90e1304fa14e4 | Accepted client release source; later handoff-only commits do not change the app |
-| zbet-cap / main | a057953ba1d0a0330f7619613d86ae9797467a25 | Mobile BFF `e822bc2` (name fix, frozen facts, day windows, repair cohort label) plus the BTB thread's repair-cohort test; the running BFF serves it |
-| zbet-abap / main | 5751cbfdaf705478d21459de533a62ca19c4a101 | Accepted BTB reader migration repair, policy71AC/producerDE3C; no Mobile SAP change |
+| zbet-mobile / master | e549cb0478403bb8a36146224f3973343a536e37 | Accepted artifact source; subsequent handoff-only commits do not rebuild/release the app |
+| zbet-cap / main | 178ca6df248c93a64da6b25a9bd2d0d54a1d38cf | Running BFF, versioned pressure activity fix |
+| zbet-abap / main | 5751cbfdaf705478d21459de533a62ca19c4a101 | Previously accepted reader repair, policy71AC/producerDE3C; unchanged by this Mobile batch |
 
-Active route: Android pilot API and desktop `app.surklase.com` use the Mobile
-BFF at `api.surklase.com`; the origin listens locally on 127.0.0.1:4004.
-Desktop remains protected by Cloudflare Access. The pilot is owner-only DEV.
-BFF process history on 3 November: Mobile restart on `e822bc2` (24444 → 8972), the BTB
-thread's identity switch to policy `71AC156E…` (→ 25384), and the e3ae5df web
-publication (25384 → 7516, identity unchanged), then the accepted BTB reader repair (→ 10648, producer DE3C). Identity values belong to the
-BTB thread (`BTB Logs/cutover_2026-10-20/observations/pressure_freshness_20261103/`).
+Android and desktop use `api.surklase.com`; local BFF origin127.0.0.1:4004.
+Cloudflare Access protects `app.surklase.com`. This remains owner-only DEV.
+The approved BFF restart changed PID10648 to30828; web publication changed it
+to10148 on the same CAP source. Policy71AC/producerDE3C and historical-source
+configuration were preserved.
+Published root: `C:/Users/omera/AppData/Local/BTB Mobile Next/web/releases/20261104T091348Z-e549cb0`.
 
 ## Doğrulama
 
-Release source passed Mobile type/lint/brand, 787 client tests and 33 tooling
-tests (`npm run check`); the BFF passed 701/701 tests and the quality gate with
-production build on Node 24. The edge web export from the clean pushed source
-and the Android preview bundle were secret-scanned (0 findings). The e3ae5df
-pair verified source, clean tree, APK bytes/hash, ARM64 and web asset hashes;
-the web publication read back 57 served files with 0 mismatches, local probes
-passed (shell, deep link, API refused without Access) and the public hostname
-still redirects to Cloudflare Access. The frozen-facts and name-fix evidence
-are bounded direct OData GET reads (not MCP). Synthetic 320/390/1280/1440 px
-checks covered the day-by-day loading with a failing day, retry, cache reuse,
-the period menu and every Bilyoner placement. Owner smokes are basic
-acceptance, not device-side hashes or exhaustive TalkBack/gesture or
-performance measurements.
+- BFF713/713 tests and production build passed on Node24.
+- Shared client type/lint/brand,797/797 tests,33/33 tooling and Doctor20/20 passed.
+- Android bundle, signed ARM64 APK and verified edge web export passed;
+  artifact secret scans found0 findings.
+- Bounded retained fixture3264677: default/v1/v2 preserved8 native intervals
+  and74 observations; v1 produced0 activity columns, v2 produced23 valid
+  columns spanning241.962–354.321 seconds. The actual response also passed
+  the frozen shared client schema offline.
+- Publisher verified57 served files (56 expected assets plus receipt verification),
+  zero mismatches. Shell/deep-link/API-refusal probes passed; public Access
+  redirect remains protected.
+- Owner accepted the preview and both final client smokes. Automated browser
+  visual smoke was not observed: Computer Use could not verify the Windows URL.
+
+Technical delivery is not proof of calibrated probability, profitability,
+complete live-feed availability or universal defect absence.
 
 ## Final yerel pilot APK
 
-- Accepted APK: `btb-mobile-next-arm64-super-menu-e3ae5df.apk`
-- Source: `e3ae5dffdde6d1d6dbc682c0e9d90e1304fa14e4`
-- SHA-256: `17989A70DDC72F9294BD4300C934738B595E4F18901191C6299B7A9A8A72AEEE`
-- Size/ABI: 50,579,109 bytes, ARM64; certificate `FAC61745…B9C` (unchanged)
-- Matching web tree: `8516EA40C1CEEB63749A8300F6E12BCD87EE8E8FFF17DC7A40BFEFDE0D0B4839`
-- Web publication: `20261103T172821Z-e3ae5df`
-- Drive: owner-only file `1anfUsJeiyEie55oAxFKZyDFv0-Xvh2kI`
-- Pair status: `COMPLETE`, both owner smokes accepted
+- Accepted APK: `btb-mobile-next-arm64-pressure-e549cb0.apk`
+- Source: `e549cb0478403bb8a36146224f3973343a536e37`
+- SHA-256: `FDBF298101CFF746B294721C45948E4D8750F4D01A2D39C0534A012A0D26367C`
+- Size/ABI:50,584,645 bytes, ARM64; certificate `FAC61745…B9C` unchanged
+- Matching web tree: `D76F5484F65C314D00014701AF94A3B37CF16423779672A6D30A514F0F726907`
+- Web release: `20261104T091348Z-e549cb0`
+- Private Drive file: `1woDYD2ZCPgDf0nhEjRbe4viQF3ERQQMe`
+- Pair: `COMPLETE`, both owner smokes accepted
 
-Under the owner's 29 October retention rule, the superseded local APKs
-(`ba88590` `A838F9B2…7F77`, `6141e2f` `427D9DE6…BAA2A`, `1fcf5cf`
-`1DB0D20A…5068`) were moved to the Recycle Bin after this acceptance; their
-receipts, hashes and Drive copies remain. Previous web releases stay in the
-versioned release folder for rollback.
+Rclone had no local remote configuration and stopped before upload. The
+authorized connected Drive fallback used the existing owner-only BTB APK
+folder; remote size/hash and owner-only permissions were verified.
+No sharing policy or authentication configuration changed.
+
+After acceptance and COMPLETE, the exact superseded local E3 APK
+(`17989A70…AEEE`,50,579,109 bytes) was removed under the owner's29 October
+retention rule. E549 is the sole permanent local APK in the artifact directory.
+Config/hash/delivery/acceptance receipts, source, cloud copies and versioned
+web releases remain preserved.
 
 ## Açık observation / blokajlar
 
-TASK-0222 has the local candidate above; NXT-OBS-242/243/244 are delivered in
-e3ae5df, NXT-OBS-241 in ba88590 and NXT-OBS-235/238/239/240 in c8188ca. Besides
-the two new deferred follow-ups NXT-OBS-236 (per-match decision notification,
-blocked by NXT-OBS-074) and NXT-OBS-237 (no single RB1 threshold; frozen model;
-BTB - Aktif first), six older DEFERRED items remain in
-[OBSERVATION_LOG.md](OBSERVATION_LOG.md):
+TASK-0222 is DONE; no pressure-graph release step remains.
+NXT-OBS-242/243/244 remain delivered inE3, NXT-OBS-241 inba88590 and
+NXT-OBS-235/238/239/240 inc8188ca. Existing deferred observations retain their gates:
 
 | Observation | Remaining scope |
 | --- | --- |
-| NXT-OBS-032 | Genuine SAP source freshness timestamp; request time must not masquerade as upstream freshness |
-| NXT-OBS-068 | Future corporate login; not a prerequisite for the accepted owner-only pilot |
-| NXT-OBS-073 | Trusted participant identity/logo chain and its separately approved backend contract |
-| NXT-OBS-074 | Notification producer continuity; unresolved source-side cause retained |
+| NXT-OBS-032 | Genuine SAP freshness timestamp; request time must not masquerade as upstream freshness |
+| NXT-OBS-068 | Future corporate login; not a prerequisite for this owner-only pilot |
+| NXT-OBS-073 | Trusted participant identity/logo chain and separately approved backend contract |
+| NXT-OBS-074 | Notification producer continuity; unresolved source-side cause |
 | NXT-OBS-086 | Toto producer event identity/idempotency; Toto ownership retained |
 | NXT-OBS-089 | Owner design decision about intentional result/decision presentation |
+| NXT-OBS-236 | Per-match decision notification; blocked byNXT-OBS-074 |
+| NXT-OBS-237 | No single RB1 threshold; frozen model; BTB - Aktif first |
 
-The owner approved archiving NXT-OBS-143/144/117 as SUPERSEDED without
-old-scope success credit, and closing NXT-OBS-100 with its natural-event
-scenario explicitly unobserved. Their exact original rows and dispositions
-are in [the dated archive](observation_archive/legacy_observation_dispositions_2026-10-30.md).
-No other deferred work was closed or implemented.
-
-TASK-0177, TASK-0169 and standing TASK-0168/0171 observation closures remain
-accepted historical facts; none is a pending Mobile release gate. Real A5
-learning, unobserved scenarios and recurring defects belong to normal BTB
-cutover or a concrete owner report. Probability work TASK-0150/0153/0190
-remains retired without implementation/success credit.
+Historical TASK-0177/0169/0168/0171 closures and archived dispositions remain
+unchanged. Actual A5 learning and prospective promotion gates stay separate.
+Probability work TASK-0150/0153/0190 remains retired without success credit.
+No unrelated deferred item was implemented or closed.
 
 ## Exact next steps
 
-Continue normal owner observation of the accepted pair. Record concrete new
-client findings in OBSERVATION_LOG.md; reopen an original finding on a real
-recurrence. Do not repeat old release smokes or create signature-wait tasks.
-The remaining six DEFERRED items retain their owners and approval/evidence
-conditions; their presence does not authorize implementation.
+Continue normal owner observation. Record concrete client findings in
+OBSERVATION_LOG.md; reopen the original task on evidence of recurrence.
+No extra daily/weekly signature-wait task is needed forTASK-0222.
+Regression checks now cover the real120-second cadence, missing captures,
+phase/source/reset boundaries, interval labels and v1/v2 compatibility.
+Source gaps remain unavailable rather than invented values.
 
-The e3ae5df pair is complete. Review TASK-0222 locally before separate commit/runtime/paired-release approval. During
-normal use, watch the Super log on real data (7/30-day day-by-day loading on a
-slow or failing day, frozen names after a match ends, league/kickoff and MS
-score on settled decisions, the new `RB1 · teknik onarım` cohort once it
-publishes), the Bilyoner buttons and the earlier Maç detayı batch, and record
-any concrete mismatch as a new observation.
-Every future Android/web release still requires one clean pushed source,
-verified pair, private APK delivery/installation before matching web
-publication, and both owner smokes under separate release approval.
+Future releases still require one clean pushed source, verified pair, private
+APK installation before matching web publication, and both owner smokes under
+explicit release approval. Deferred work retains its evidence/approval conditions.
 
 ## Documents
 
 [Architecture](ARCHITECTURE.md), [next cutover procedure](NEXT_CUTOVER_PROCEDURE.md),
-[coordinated release](COORDINATED_CLIENT_RELEASE.md),
-`contracts/mobile-api.openapi.yaml`, the rebuild schemas and historical
-handoff retain their contract/evidence roles. Mobile and BFF expose BTB/Toto
-read-only DTOs; model and learning decisions stay with their owners.
+[coordinated release](COORDINATED_CLIENT_RELEASE.md), OpenAPI, rebuild schemas
+and historical handoffs retain their roles. Mobile/BFF expose read-only DTOs;
+BTB/Toto model and learning decisions stay with their owners.
