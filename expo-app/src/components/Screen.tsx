@@ -46,6 +46,8 @@ import { runtimeConfig } from "@/src/config/runtime";
 
 type ScreenProps = PropsWithChildren<{
   title?: string;
+  /** Spoken heading when the visible title is not the page's name (a greeting). */
+  titleAccessibilityLabel?: string;
   subtitle?: string;
   eyebrow?: string;
   action?: ReactNode;
@@ -98,6 +100,7 @@ function BrandBar() {
 export function Screen({
   children,
   title,
+  titleAccessibilityLabel,
   subtitle,
   eyebrow,
   action,
@@ -242,7 +245,7 @@ export function Screen({
         <View style={[styles.header, showsBrandBar && styles.headerUnderBrand]}>
           <View style={styles.headerCopy}>
             {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
-            {title ? <Text accessibilityRole="header" role="heading" aria-level={1} style={styles.title}>{title}</Text> : null}
+            {title ? <Text accessibilityLabel={titleAccessibilityLabel} accessibilityRole="header" role="heading" aria-level={1} style={styles.title}>{title}</Text> : null}
             {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
           </View>
           {action}

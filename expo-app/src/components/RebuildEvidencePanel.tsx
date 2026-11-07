@@ -643,19 +643,37 @@ export function RecentRecommendations({ limit = 3 }: { limit?: number }) {
           record={r}
         />
       )) : (
-        <Text style={styles.recentEmpty}>
-          {query.isLoading ? "Öneriler hazırlanıyor…" : query.isError || query.data?.availability !== "AVAILABLE" ? "Rapor şu anda alınamıyor." : "Henüz yayımlanmış öneri yok."}
-        </Text>
+        <RecentRecommendationsState
+          busy={query.isFetching}
+          onRetry={() => { void query.refetch(); }}
+          state={query.isLoading ? "LOADING" : query.isError || query.data?.availability !== "AVAILABLE" ? "UNAVAILABLE" : "EMPTY"}
+        />
       )}
     </Card>
   );
 }
 
-/** Today's figures for the Overview strip; undefined while unavailable. */
-export function useRebuildToday() {
-  const query = useQuery(rebuildCohortsReportQuery);
-  const period = !query.isError && query.data?.availability === "AVAILABLE" ? query.data.periods.find(p => p.key === "today") : undefined;
-  return { period, loading: query.isLoading, recommendations: query.data?.recommendations ?? [] };
+/**
+ * Özet's decision list without rows: what is happening and what to do. Retry
+ * is offered only for an unavailable report, the one state it can change.
+ */
+function RecentRecommendationsState({ state, busy, onRetry }: { state: "LOADING" | "UNAVAILABLE" | "EMPTY"; busy: boolean; onRetry: () => void }) {
+  const copy = {
+    LOADING: { icon: "progress-clock", title: "Kararlar hazırlanıyor", body: "Son yayımlanan kararlar kontrol ediliyor." },
+    UNAVAILABLE: { icon: "cloud-alert-outline", title: "Kararlar şu an yüklenemedi", body: "Rapor kendiliğinden yeniden denenir; istersen şimdi dene." },
+    EMPTY: { icon: "ticket-outline", title: "Henüz yayımlanmış karar yok", body: "BTB bir karar yayımladığında en yenisi burada ilk sırada görünür." }
+  } as const;
+  const content = copy[state];
+  return (
+    <View accessibilityLiveRegion="polite" style={styles.recentState}>
+      <MaterialCommunityIcons color={state === "UNAVAILABLE" ? semantic.warning : semantic.intelligence} name={content.icon} size={iconSizes.control} />
+      <View style={styles.recentStateCopy}>
+        <Text style={styles.recentStateTitle}>{content.title}</Text>
+        <Text style={styles.recentStateBody}>{content.body}</Text>
+        {state === "UNAVAILABLE" ? <Action busy={busy} icon="refresh" onPress={onRetry} title={busy ? "Deneniyor…" : "Tekrar dene"} /> : null}
+      </View>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -724,7 +742,10 @@ const styles = StyleSheet.create({
   jinxEvidenceAction: { minHeight: 48, flexDirection: "row", alignItems: "center", gap: 4 },
   jinxCandidates: { gap: 2 },
   recordNote: { color: colors.textMuted, ...typeScale.bodyCompact },
-  recentEmpty: { color: colors.textMuted, ...typeScale.bodyCompact, padding: spacing.lg },
+  recentState: { flexDirection: "row", alignItems: "flex-start", gap: spacing.md, padding: spacing.lg },
+  recentStateCopy: { flex: 1, minWidth: 0, gap: 2 },
+  recentStateTitle: { color: colors.text, ...typeScale.body, fontWeight: "700" },
+  recentStateBody: { color: colors.textMuted, ...typeScale.bodyCompact },
   hint: { color: colors.textMuted, ...typeScale.bodyCompact, textAlign: "center", paddingHorizontal: spacing.lg },
   ticket: { borderRadius: 20, borderWidth: 1, borderColor: colors.borderSoft, padding: spacing.lg, gap: spacing.md, ...shadows.card },
   ticketWide: { flexDirection: "row", alignItems: "stretch", gap: spacing.lg },

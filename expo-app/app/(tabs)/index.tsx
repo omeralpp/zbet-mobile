@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import {
   Platform,
@@ -15,25 +16,25 @@ import {
 } from "react-native";
 import { MatchCard } from "@/src/components/MatchCard";
 import { MetricStrip, MetricTile } from "@/src/components/MetricCard";
-import { toneColor } from "@/src/components/DecisionTicket";
+import { RefreshToast } from "@/src/components/RefreshToast";
 import { Screen } from "@/src/components/Screen";
 import { SectionHeader } from "@/src/components/SectionHeader";
 import { ErrorState, LoadingState } from "@/src/components/StateView";
 import { SurfaceMaterial } from "@/src/components/SurfaceMaterial";
+import { TodayResultCard } from "@/src/components/TodayResultCard";
 import { TotoProgramCard } from "@/src/components/TotoProgramCard";
 import { dashboardQuery, matchInsightsQuery, matchesQuery } from "@/src/api/queries";
 import { usePublishedSelections } from "@/src/api/use-published-selections";
 import { resolveLiveMatchCount } from "@/src/api/live-match-count";
-import { RecentRecommendations, useRebuildToday, useRebuildClock } from "@/src/components/RebuildEvidencePanel";
+import { RecentRecommendations, useRebuildClock } from "@/src/components/RebuildEvidencePanel";
 import { activeMatch, activeStarCounts, publishedStarCounts } from "@/src/utils/rebuild-cards";
 import { overviewLiveSelections } from "@/src/utils/overview-live-selections";
-import { formatRatio, formatUnits, unitsTone } from "@/src/utils/rebuild-display";
+import { describeNextKickoff, nextKickoff, overviewStoryLine, timeOfDayGreeting } from "@/src/utils/overview-story";
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { ReorderableModuleList } from "@/src/layout/ReorderableModuleList";
 import { useModuleLayout } from "@/src/layout/module-layout-store";
 import type { OverviewModuleId } from "@/src/layout/module-registry";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
-import { JinxDailyComment } from "@/src/mascot/JinxDailyComment";
 import { useLiveStarFilter } from "@/src/preferences/LiveStarFilterProvider";
 import { colors, iconSizes, interaction, radii, semantic, spacing, typeScale } from "@/src/theme/theme";
 import { canRefreshScreenQuery } from "@/src/web/refresh-data";
@@ -58,12 +59,13 @@ export default function DashboardScreen() {
   const publications = usePublishedSelections(hasRebuild ? snapshots.data ?? query.data?.featuredMatches : undefined);
   const insights = useQuery(matchInsightsQuery);
   const breakpoint = useBreakpoint();
-  // Desktop (v40 W-Özet): four separate figure tiles with Jinx as the fourth,
+  // Desktop (v40 W-Özet): the two counts as tiles with Jinx's day beside them,
   // and each featured match as one horizontal row.
   const wideWeb = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
   const [reordering, setReordering] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshFailed, setRefreshFailed] = useState(false);
+  const [refreshedAt, setRefreshedAt] = useState<number | null>(null);
   const refreshRunning = useRef(false);
   const refresh = useCallback(async () => {
     if (refreshRunning.current) return;
@@ -74,8 +76,12 @@ export default function DashboardScreen() {
       // Use the same scope as the header refresh: figures, Jinx and recent
       // decisions all share the report, which the old pull gesture omitted.
       await queryClient.refetchQueries({ type: "active", predicate: item => canRefreshScreenQuery(item.queryKey) }, { throwOnError: true });
+      // The gesture ends in an answer: a short confirmation and a light tap.
+      setRefreshedAt(Date.now());
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     } catch {
       setRefreshFailed(true);
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => undefined);
     } finally {
       refreshRunning.current = false;
       setRefreshing(false);
@@ -83,7 +89,7 @@ export default function DashboardScreen() {
   }, [queryClient]);
   const scrollRef = useRef<ScrollView | null>(null);
   const scrollOffset = useRef(0);
-  const { order, reorderVisible, reset } = useModuleLayout("overview");
+  const { order, reorderVisible, reset, customized } = useModuleLayout("overview");
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       scrollOffset.current = event.nativeEvent.contentOffset.y;
@@ -109,7 +115,10 @@ export default function DashboardScreen() {
   const featuredMatches = showLiveSelections ? selectedMatches : [...(dashboard?.featuredMatches ?? [])].sort((a,b)=>activeSelection(b).rating-activeSelection(a).rating);
   const featuredMode = selectedMatches.length ? "SELECTED_LIVE" : dashboard?.featuredMatchMode === "SELECTED_LIVE" && !featuredMatches.some(match=>activeSelection(match).selectedOdd)
     ? "PRESSURE_LIVE" : dashboard?.featuredMatchMode ?? "EMPTY";
-  const today = useRebuildToday();
+  // What comes next, from the fixtures the screen already holds.
+  const next = nextKickoff(snapshots.data ?? (dashboard?.featuredMatchMode === "UPCOMING" ? dashboard.featuredMatches : []), now);
+  const greeting = timeOfDayGreeting(clock);
+  const story = overviewStoryLine({ liveCount, next, now });
   const featuredTitle = showLiveSelections ? "Canlı BTB seçimleri" : {
     SELECTED_LIVE: "Öne çıkan canlı maçlar",
     PRESSURE_LIVE: "Takipteki canlı maçlar",
@@ -121,7 +130,6 @@ export default function DashboardScreen() {
       ? "Başlama zamanı en yakın aktif fikstürler"
       : "Skor, seçim ve güncel oran";
 
-  const todayTone = today.period ? unitsTone(today.period.net) : "neutral";
   const tiles = dashboard ? [
     <MetricTile
       // The live-match counter used loss red. It counts matches in
@@ -132,6 +140,7 @@ export default function DashboardScreen() {
       icon="access-point"
       key="live"
       label="Canlı maç"
+      live={Boolean(liveCount)}
       onPress={() =>
         router.push({
           pathname: "/live",
@@ -154,30 +163,7 @@ export default function DashboardScreen() {
         } as never)
       }
       value={starCounts ? String(liveStarMetricCount(starCounts,liveStarFilter)) : "—"}
-    />,
-    // Today's rebuild result at the original quote, one
-    // hypothetical unit per recommendation; the full report and its caveats
-    // live on the Super tab.
-    <TutorialTarget id="home-super-metric" key="today" style={wideWeb ? styles.metricTarget : styles.stripTarget}>
-      <MetricTile
-        accent={today.period ? toneColor[todayTone] : semantic.neutral}
-        accessibilityHint="Tüm Super kararlarını ve sonuç raporunu açar"
-        accessibilityLabel={today.period
-          ? `BTB bugün, varsayımsal birim ${formatUnits(today.period.net)}; ${today.period.wins} kazandı, ${today.period.losses} kaybetti; ROI ${formatRatio(today.period.roi)}`
-          : "BTB bugün: rapor bekleniyor"}
-        detail={!today.period
-          ? today.loading ? "hazırlanıyor" : "rapor bekleniyor"
-          : today.period.recommendations === 0
-            ? "henüz öneri yok"
-            : `${today.period.wins} kazandı · ${today.period.losses} kaybetti`}
-        icon="chart-line"
-        label="BTB · Bugün"
-        valueCaption="varsayımsal birim"
-        onPress={() => router.push("/super" as never)}
-        value={today.period ? formatUnits(today.period.net) : "—"}
-        valueColor={today.period && todayTone !== "neutral" ? toneColor[todayTone] : undefined}
-      />
-    </TutorialTarget>
+    />
   ] : [];
 
   const moduleNodes: Partial<Record<OverviewModuleId, ReactNode>> = {
@@ -190,14 +176,21 @@ export default function DashboardScreen() {
               {tile}
             </View>
           ))}
-          <JinxDailyComment variant="tile" />
+          {/* Today's rebuild result at the original quote, one hypothetical
+              unit per recommendation, told by Jinx; the full report and its
+              caveats live on the Super tab. */}
+          <TutorialTarget id="home-super-metric" style={styles.todayTile}>
+            <TodayResultCard variant="tile" />
+          </TutorialTarget>
         </View>
       ) : (
         <View style={styles.metrics}>
           <TutorialTarget id="home-hero" radius={18}>
             <MetricStrip>{tiles}</MetricStrip>
           </TutorialTarget>
-          <JinxDailyComment />
+          <TutorialTarget id="home-super-metric" radius={18}>
+            <TodayResultCard />
+          </TutorialTarget>
         </View>
       )
     ) : null,
@@ -238,7 +231,9 @@ export default function DashboardScreen() {
               {selectionsLoading ? "Maçlar ve son yayımlanan kararlar kontrol ediliyor." : selectionUnavailable
                 ? "Veriler alınamadığı için aktif seçim sayısı gösterilemiyor. Canlı maçları yine de inceleyebilirsin." : hasLiveMatches
                   ? "Canlı maçlar devam ediyor. Bu yıldız eşiğinde, güncel oranı bulunan bir seçim yok."
-                  : "Yeni maçlar başladığında burada görünecek. Sıradaki maçlar için fikstürü açabilirsin."}
+                  : next
+                    ? `Sıradaki maç: ${describeNextKickoff(next, now)}. Başladığında burada görünecek.`
+                    : "Yeni maçlar başladığında burada görünecek. Sıradaki maçlar için fikstürü açabilirsin."}
             </Text>
             {selectionsLoading ? null : (
               <Pressable accessibilityRole="button" accessibilityLabel={hasLiveMatches || selectionUnavailable ? "Tüm canlı maçları gör" : "Fikstürü gör"}
@@ -272,7 +267,8 @@ export default function DashboardScreen() {
           onAction={() => router.push("/toto" as never)}
           title="Spor Toto"
         />
-        <TotoProgramCard program={dashboard.latestTotoProgram} />
+        {/* The coverage/cost source note lives on the program page, as on the Toto tab. */}
+        <TotoProgramCard program={dashboard.latestTotoProgram} showContextNote={false} />
       </>
     );
   }
@@ -294,7 +290,11 @@ export default function DashboardScreen() {
     <Screen
       brand
       eyebrow={formatTodayEyebrow()}
-      title="Bugünün görünümü"
+      title={greeting}
+      titleAccessibilityLabel={`Özet. ${greeting}`}
+      {...(story ? { subtitle: story } : {})}
+      // The header trace lights only while matches are really in play.
+      {...(liveCount ? { accent: semantic.live } : {})}
       contentStyle={styles.content}
       scrollRef={scrollRef}
       wide
@@ -312,6 +312,7 @@ export default function DashboardScreen() {
         )
       }}
     >
+      <RefreshToast token={refreshedAt} />
       {!dashboard ? query.isLoading ? <LoadingState label="Maç ve program özeti hazırlanıyor" /> : <ErrorState error={query.error} onRetry={() => { void refresh(); }} /> : query.isError || refreshFailed ? <Text accessibilityRole="alert" style={styles.scopeNote}>Bazı özet verileri yenilenemedi. İlgili bölümde son durum gösteriliyor.</Text> : null}
       <ReorderableModuleList
         items={moduleItems}
@@ -327,14 +328,18 @@ export default function DashboardScreen() {
         scrollOffsetRef={scrollOffset}
         scrollRef={scrollRef}
       />
-      {/* The phone's reorder hint (v40 board); desktop shows handles on hover. */}
+      {/* The phone's reorder hint (v40 board); desktop shows handles on hover.
+          It teaches the gesture until the user has an order of their own, then
+          offers the way back instead. */}
       {Platform.OS !== "web" && dashboard ? (
         <View style={styles.reorderHint}>
-          <MaterialCommunityIcons color={colors.textMuted} name="drag" size={iconSizes.small} />
-          <Text style={styles.reorderText}>Bölümleri basılı tutup sürükleyerek sırala.</Text>
-          <Pressable accessibilityRole="button" hitSlop={8} onPress={() => { void reset(); }} style={styles.reorderAction}>
-            <Text style={styles.reorderActionText}>Düzeni sıfırla</Text>
-          </Pressable>
+          <MaterialCommunityIcons color={colors.textMuted} name={customized ? "playlist-check" : "gesture-tap-hold"} size={iconSizes.small} />
+          <Text style={styles.reorderText}>{customized ? "Özet senin sıranla gösteriliyor." : "Bölümleri basılı tutup sürükleyerek sırala."}</Text>
+          {customized ? (
+            <Pressable accessibilityRole="button" hitSlop={8} onPress={() => { void reset(); }} style={({ pressed }) => [styles.reorderAction, pressed && styles.reorderActionPressed]}>
+              <Text style={styles.reorderActionText}>Düzeni sıfırla</Text>
+            </Pressable>
+          ) : null}
         </View>
       ) : null}
     </Screen>
@@ -356,11 +361,9 @@ const styles = StyleSheet.create({
     width: "100%",
     gap: spacing.md
   },
-  stripTarget: {
-    flex: 1
-  },
-  metricTarget: {
-    flex: 1
+  todayTile: {
+    flex: 2,
+    minWidth: 0
   },
   metricRow: {
     flexDirection: "row",
@@ -379,16 +382,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
-    marginTop: spacing.xxl,
-    marginBottom: spacing.xl,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: colors.border
+    minHeight: interaction.minTouchTarget,
+    marginTop: spacing.xl,
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.xs
   },
   reorderText: { flex: 1, color: colors.textMuted, ...typeScale.bodyCompact },
-  reorderAction: { minHeight: 44, justifyContent: "center" },
+  reorderAction: { minHeight: 44, justifyContent: "center", paddingHorizontal: spacing.sm, borderRadius: radii.md },
+  reorderActionPressed: { opacity: 0.7 },
   reorderActionText: { color: semantic.intelligence, ...typeScale.bodyCompact, fontWeight: "700" }
 });

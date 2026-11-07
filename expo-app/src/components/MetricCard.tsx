@@ -1,6 +1,8 @@
 import { Children, isValidElement, type ComponentProps, type ReactNode } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SurfaceMaterial } from "./SurfaceMaterial";
+import { ChangeEmphasis } from "./ChangeEmphasis";
+import { LiveDot } from "./LiveDot";
 import {
   Platform,
   Pressable,
@@ -33,6 +35,8 @@ type MetricTileProps = {
   accessibilityLabel?: string | undefined;
   accessibilityHint?: string | undefined;
   onPress?: (() => void) | undefined;
+  /** A breathing live dot beside the icon while the figure counts matches in play. */
+  live?: boolean | undefined;
 };
 
 /**
@@ -50,22 +54,56 @@ export function MetricTile({
   detail,
   accessibilityLabel,
   accessibilityHint,
-  onPress
+  onPress,
+  live = false
 }: MetricTileProps) {
   const { width } = useWindowDimensions();
   const roomy = Platform.OS === "web" && isAtLeast(resolveBreakpoint(width), "medium");
-  const content = (
-    <>
-      <View style={styles.iconRow}>
-        <MaterialCommunityIcons color={accent} name={icon} size={iconSizes.inline} />
-        {onPress ? <MaterialCommunityIcons accessible={false} color={colors.textMuted} name="chevron-right" size={iconSizes.inline} /> : null}
-      </View>
-      <Text numberOfLines={1} style={[styles.value, roomy && styles.valueRoomy, valueColor ? { color: valueColor } : null]}>
+  // A changed figure announces itself once; the first value stays still.
+  const figure = (
+    <ChangeEmphasis style={styles.valueRow} token={value}>
+      <Text numberOfLines={1} style={[styles.value, roomy ? styles.valueRoomy : styles.valueCompact, valueColor ? { color: valueColor } : null]}>
         {value}
       </Text>
+    </ChangeEmphasis>
+  );
+  const chevron = onPress ? <MaterialCommunityIcons accessible={false} color={colors.textMuted} name="chevron-right" size={iconSizes.inline} /> : null;
+  const identity = (
+    <>
+      <MaterialCommunityIcons color={accent} name={icon} size={roomy ? iconSizes.inline : iconSizes.small} />
+      {live ? <LiveDot size={7} /> : null}
+    </>
+  );
+  // Phones read the tile as a sentence (label on top, the figure beside what it
+  // counts), which keeps the strip about 40 pt shorter; roomy web keeps the
+  // tall figure-first tile.
+  const content = roomy ? (
+    <>
+      <View style={styles.iconRow}>
+        <View style={styles.identity}>{identity}</View>
+        {chevron}
+      </View>
+      {figure}
       {valueCaption ? <Text style={styles.detail}>{valueCaption}</Text> : null}
       <Text style={styles.label}>{label}</Text>
       {detail ? <Text style={styles.detail}>{detail}</Text> : null}
+    </>
+  ) : (
+    <>
+      <View style={styles.iconRow}>
+        <View style={[styles.identity, styles.identityCompact]}>
+          {identity}
+          <Text numberOfLines={1} style={[styles.label, styles.labelCompact]}>{label}</Text>
+        </View>
+        {chevron}
+      </View>
+      <View style={styles.figureRow}>
+        {figure}
+        <View style={styles.figureText}>
+          {valueCaption ? <Text style={styles.detail}>{valueCaption}</Text> : null}
+          {detail ? <Text style={styles.detail}>{detail}</Text> : null}
+        </View>
+      </View>
     </>
   );
   if (!onPress) {
@@ -128,11 +166,39 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between"
   },
+  identity: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6
+  },
+  identityCompact: {
+    flex: 1,
+    minWidth: 0,
+    gap: 5
+  },
+  labelCompact: {
+    flexShrink: 1,
+    fontWeight: "700"
+  },
+  figureRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 6
+  },
+  figureText: {
+    flex: 1,
+    minWidth: 0
+  },
+  valueRow: {
+    alignSelf: "flex-start"
+  },
   hovered: {
     backgroundColor: colors.surfaceStrong
   },
   pressed: {
-    opacity: 0.78
+    opacity: 0.9,
+    transform: [{ scale: 0.97 }]
   },
   value: {
     color: colors.text,
@@ -145,6 +211,9 @@ const styles = StyleSheet.create({
   valueRoomy: {
     fontSize: 40,
     lineHeight: 44
+  },
+  valueCompact: {
+    marginTop: 0
   },
   label: {
     color: colors.text,

@@ -15,7 +15,9 @@ import { resolveBubblePosition } from "./bubble-position";
 import { useDiscovery } from "./DiscoveryProvider";
 import { useJinxMotion } from "./use-jinx-motion";
 import { useJinxDailyQuip } from "./use-jinx-daily-quip";
+import { jinxGreeting } from "./jinx-greeting";
 import { JinxAnimator } from "./JinxAnimator";
+import { useReducedMotionPreference } from "@/src/theme/use-reduced-motion";
 
 /** How long the daily-result bubble stays before Jinx tidies it away. */
 const moodBubbleMs = 7000;
@@ -90,6 +92,49 @@ function clampPosition(
       )
     )
   };
+}
+
+/**
+ * Jinx's opening line, beside him. A lane wider than the 68 pt anchor lets the
+ * bubble size itself to the words instead of wrapping into a narrow column;
+ * it arrives with a small pop, or simply appears under reduced motion.
+ */
+function GreetingBubble({ line, side, motionReady, motionOff }: { line: string; side: "LEFT" | "RIGHT"; motionReady: boolean; motionOff: boolean }) {
+  // The bubble mounts with the overlay, before either preference has answered;
+  // it waits briefly for both so the pop can play, and appears statically if
+  // they stay silent or ask for less motion.
+  const system = useReducedMotionPreference();
+  const ready = system.ready && motionReady;
+  const reduce = system.reduceMotion || motionOff;
+  const [arrival] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    if (!ready) {
+      const fallback = setTimeout(() => arrival.setValue(1), 300);
+      return () => clearTimeout(fallback);
+    }
+    if (reduce) {
+      arrival.setValue(1);
+      return;
+    }
+    const pop = Animated.spring(arrival, { toValue: 1, damping: 14, stiffness: 220, mass: 0.6, useNativeDriver: true });
+    pop.start();
+    return () => pop.stop();
+  }, [arrival, ready, reduce]);
+  return (
+    <View pointerEvents="none" style={[styles.greetingLane, side === "RIGHT" ? styles.greetingLaneRight : styles.greetingLaneLeft]}>
+      <Animated.View
+        style={[styles.greeting, {
+          opacity: arrival,
+          transform: [
+            { translateX: arrival.interpolate({ inputRange: [0, 1], outputRange: [side === "RIGHT" ? 10 : -10, 0] }) },
+            { scale: arrival.interpolate({ inputRange: [0, 1], outputRange: [0.86, 1] }) }
+          ]
+        }]}
+      >
+        <Text style={styles.greetingText}>{line}</Text>
+      </Animated.View>
+    </View>
+  );
 }
 
 export function BtbMascotOverlay() {
@@ -637,15 +682,7 @@ export function BtbMascotOverlay() {
         !discovery.activeHint &&
         !moodBubble &&
         ambient ? (
-          <View
-            pointerEvents="none"
-            style={[
-              styles.greeting,
-              menuRight ? styles.greetingRight : styles.greetingLeft
-            ]}
-          >
-            <Text style={styles.greetingText}>Jinx hazır</Text>
-          </View>
+          <GreetingBubble line={jinxGreeting(liveCount)} motionOff={preferences.mode === "OFF"} motionReady={preferences.ready} side={menuRight ? "RIGHT" : "LEFT"} />
         ) : null}
 
         <Animated.View style={{ transform: [
@@ -692,20 +729,20 @@ const styles = StyleSheet.create({
   moodHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
   moodEyebrow: { ...typeScale.eyebrow, color: colors.gold },
   moodBody: { ...textFont("400"), color: colors.textMuted, fontSize: 14, lineHeight: 20, marginTop: 4 },
+  greetingLane: { position: "absolute", top: 10, width: 220 },
+  greetingLaneLeft: { left: mascotSize + 8, alignItems: "flex-start" },
+  greetingLaneRight: { right: mascotSize + 8, alignItems: "flex-end" },
   greeting: {
-    position: "absolute",
-    top: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: radii.md,
+    maxWidth: 220,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surfaceStrong,
     ...shadows.card
   },
-  greetingLeft: { left: mascotSize + 8 },
-  greetingRight: { right: mascotSize + 8 },
-  greetingText: { ...textFont("800"), color: colors.text, fontSize: 12 },
+  greetingText: { ...textFont("700"), color: colors.text, fontSize: 13, lineHeight: 18 },
   // The v40 board's dark bubble (owner decision 2026-10-21), in both themes'
   // own surface tokens so it always reads as part of the app.
   tutorialBubble: {

@@ -44,7 +44,7 @@ export const tutorialTips: readonly TutorialTip[] = [
   {
     id: "home-super-summary",
     title: "BTB · Bugün",
-    body: "Bu metrik bugün yayımlanan BTB önerilerinin sonucunu özetler; her öneri seçim oranıyla varsayımsal 1 birim sayılır.",
+    body: "Jinx bu kartta bugün yayımlanan BTB önerilerinin sonucunu özetler; her öneri seçim oranıyla varsayımsal 1 birim sayılır.",
     route: "/",
     match: "EXACT",
     targetId: "home-super-metric"

@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import * as SplashScreen from "expo-splash-screen";
 import { Stack, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { usePrefetchOverview } from "@/src/api/prefetch-overview";
 import { useAuth } from "@/src/auth/AuthProvider";
 import { AppLaunchScreen } from "@/src/components/AppLaunchScreen";
 import { hasPlayedLaunch, markLaunchPlayed } from "@/src/components/launch-session";
@@ -31,12 +32,17 @@ function RootNavigator() {
   const fontsReady = useBrandFonts();
   const [skippedLaunch] = useState(hasPlayedLaunch);
   const [launchComplete, setLaunchComplete] = useState(skippedLaunch);
+  // The launch stays mounted over the app until its hand-off fade ends.
+  const [launchShown, setLaunchShown] = useState(!skippedLaunch);
   const hasSession =
     auth.status === "authenticated" || auth.status === "preview";
+  // Özet's reads start under the brand, so the first screen opens filled.
+  usePrefetchOverview(hasSession && !launchComplete);
   const handleLaunchComplete = useCallback(() => {
     markLaunchPlayed();
     setLaunchComplete(true);
   }, []);
+  const handleLaunchExited = useCallback(() => setLaunchShown(false), []);
   const handleLaunchLayout = useCallback(() => {
     SplashScreen.hideAsync().catch(() => undefined);
   }, []);
@@ -45,68 +51,78 @@ function RootNavigator() {
     applySystemTheme(themeMode, colors.background);
   }, []);
 
-  if (!launchComplete) {
-    return (
+  // Always the last child, so the launch keeps its animation state while the
+  // app mounts underneath it.
+  const launch = launchShown ? (
+    <AppLaunchScreen
+      exiting={launchComplete}
+      onComplete={handleLaunchComplete}
+      onExited={handleLaunchExited}
+      onLayout={handleLaunchLayout}
+      ready={auth.status !== "loading" && fontsReady}
+    />
+  ) : null;
+  // The launch is the brand's night pitch in both themes.
+  const statusBarStyle = launchShown || themeMode !== "light" ? "light" : "dark";
+
+  let app: ReactNode = null;
+  if (launchComplete && skippedLaunch && (auth.status === "loading" || !fontsReady)) {
+    // A skipped launch (web reload) must still wait for the auth answer, or the
+    // guards below would bounce a deep link through the sign-in route. Only the
+    // web build skips the launch, and its preview/edge modes never re-enter
+    // "loading" after boot (only native OAuth sign-in does). It also waits for
+    // the bundled faces, so a reload never paints in the fallback font first.
+    app = <View style={[styles.root, { backgroundColor: colors.background }]} />;
+  } else if (launchComplete) {
+    app = (
       <>
-        <StatusBar style={themeMode === "light" ? "dark" : "light"} />
-        <AppLaunchScreen
-          onComplete={handleLaunchComplete}
-          onLayout={handleLaunchLayout}
-          ready={auth.status !== "loading" && fontsReady}
-        />
+        <AppShell>
+        <Stack
+          screenOptions={{
+            animation: reduceMotion ? "none" : "slide_from_right",
+            contentStyle: { backgroundColor: colors.background },
+            headerStyle: { backgroundColor: colors.backgroundElevated },
+            headerTintColor: colors.text,
+            headerShadowVisible: false,
+            headerBackTitle: "Geri"
+          }}
+        >
+          <Stack.Protected guard={hasSession}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="match/[key]"
+              options={{ title: "Maç detayı" }}
+            />
+            <Stack.Screen
+              name="super/[key]"
+              options={{ title: "Super kararı" }}
+            />
+            <Stack.Screen
+              name="toto/[gcNo]/[version]"
+              options={{ title: "Toto programı" }}
+            />
+          </Stack.Protected>
+          <Stack.Protected guard={hasSession && designLabAvailable(runtimeConfig)}>
+            <Stack.Screen name="design-lab" options={{ title: "Tasarım atölyesi", headerShown: false }} />
+          </Stack.Protected>
+          <Stack.Protected guard={!hasSession}>
+            <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+          </Stack.Protected>
+          <Stack.Screen name="auth" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" options={{ title: "Bulunamadı" }} />
+        </Stack>
+        </AppShell>
+        <AndroidBackGuard />
+        {hasSession && pathname !== "/design-lab" ? <BtbMascotOverlay /> : null}
       </>
     );
-  }
-  // A skipped launch (web reload) must still wait for the auth answer, or the
-  // guards below would bounce a deep link through the sign-in route. Only the
-  // web build skips the launch, and its preview/edge modes never re-enter
-  // "loading" after boot (only native OAuth sign-in does). It also waits for
-  // the bundled faces, so a reload never paints in the fallback font first.
-  if (skippedLaunch && (auth.status === "loading" || !fontsReady)) {
-    return <View style={[styles.root, { backgroundColor: colors.background }]} />;
   }
 
   return (
     <>
-      <StatusBar style={themeMode === "light" ? "dark" : "light"} />
-      <AppShell>
-      <Stack
-        screenOptions={{
-          animation: reduceMotion ? "none" : "slide_from_right",
-          contentStyle: { backgroundColor: colors.background },
-          headerStyle: { backgroundColor: colors.backgroundElevated },
-          headerTintColor: colors.text,
-          headerShadowVisible: false,
-          headerBackTitle: "Geri"
-        }}
-      >
-        <Stack.Protected guard={hasSession}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="match/[key]"
-            options={{ title: "Maç detayı" }}
-          />
-          <Stack.Screen
-            name="super/[key]"
-            options={{ title: "Super kararı" }}
-          />
-          <Stack.Screen
-            name="toto/[gcNo]/[version]"
-            options={{ title: "Toto programı" }}
-          />
-        </Stack.Protected>
-        <Stack.Protected guard={hasSession && designLabAvailable(runtimeConfig)}>
-          <Stack.Screen name="design-lab" options={{ title: "Tasarım atölyesi", headerShown: false }} />
-        </Stack.Protected>
-        <Stack.Protected guard={!hasSession}>
-          <Stack.Screen name="sign-in" options={{ headerShown: false }} />
-        </Stack.Protected>
-        <Stack.Screen name="auth" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" options={{ title: "Bulunamadı" }} />
-      </Stack>
-      </AppShell>
-      <AndroidBackGuard />
-      {hasSession && pathname !== "/design-lab" ? <BtbMascotOverlay /> : null}
+      <StatusBar style={statusBarStyle} />
+      {app}
+      {launch}
     </>
   );
 }

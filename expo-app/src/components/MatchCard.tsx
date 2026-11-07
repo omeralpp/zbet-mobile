@@ -168,6 +168,8 @@ export function MatchCard({
   );
   const leader =
     match.homeScore === match.awayScore ? null : match.homeScore > match.awayScore ? "HOME" : "AWAY";
+  // A match that has not kicked off has no score yet; 0–0 would read as one.
+  const scoreless = match.status === "NOT_STARTED" || match.status === "NOT_PLAYED";
   // Spelled in capitals here rather than left to `textTransform`, which follows
   // the device locale on Android and would print a dotless I in SEÇİMİ. The
   // v40 board names the current selection plainly; an RB1 match without one
@@ -244,7 +246,7 @@ export function MatchCard({
             redCards={insight?.homeRedCards}
           />
           <ChangeEmphasis kind="alert" token={match.homeScore}>
-            <Text style={[styles.score, compact && styles.scoreCompact, leader === "AWAY" && styles.scoreTrailing]}>{match.homeScore}</Text>
+            <Text accessibilityElementsHidden={scoreless} importantForAccessibility={scoreless ? "no" : "auto"} style={[styles.score, compact && styles.scoreCompact, (leader === "AWAY" || scoreless) && styles.scoreTrailing]}>{scoreless ? "–" : match.homeScore}</Text>
           </ChangeEmphasis>
         </View>
         <View style={styles.participantRow}>
@@ -258,7 +260,7 @@ export function MatchCard({
             redCards={insight?.awayRedCards}
           />
           <ChangeEmphasis kind="alert" token={match.awayScore}>
-            <Text style={[styles.score, compact && styles.scoreCompact, leader === "HOME" && styles.scoreTrailing]}>{match.awayScore}</Text>
+            <Text accessibilityElementsHidden={scoreless} importantForAccessibility={scoreless ? "no" : "auto"} style={[styles.score, compact && styles.scoreCompact, (leader === "HOME" || scoreless) && styles.scoreTrailing]}>{scoreless ? "–" : match.awayScore}</Text>
           </ChangeEmphasis>
         </View>
       </View>
@@ -293,24 +295,28 @@ export function MatchCard({
       ) : compact ? (
         <View style={styles.compactDecision}>
           {hero ? <Text numberOfLines={2} style={styles.decisionEyebrow}>{eyebrow}</Text> : null}
-          <View accessibilityLabel={match.selectedOdd ? `${formatSelection(match.selectedOdd)}, ${match.rating} yıldız, ${starsSpoken}` : undefined} style={[styles.compactDecisionCopy, dense && styles.compactDecisionInline]}>
-            <Text numberOfLines={1} style={styles.compactOdd}>
-              {formatSelection(match.selectedOdd) || emptySelection}
-            </Text>
-            {match.selectedOdd ? <RatingStars rating={match.rating} size={12} /> : null}
-          </View>
-          {footer.showsRate ? (
-            <View accessibilityLabel={`${match.selectedOdd ? `Seçim oranı ${formatRate(match.liveRate)}, ` : ""}${rateSpoken}`} style={styles.compactRates}>
-              {match.selectedOdd ? <View style={styles.compactRateColumn}><Text style={styles.compactRate}>{formatRate(match.liveRate)}</Text><Text style={styles.compactRateLabel}>seçim oranı</Text></View> : null}
-              <View style={styles.compactRateColumn}>
-              <ChangeEmphasis style={styles.rateHeadline} token={currentMarket.value}>
-                {trendGlyph}
-                <Text style={[styles.compactRate, { color: rateTrendColor }]}>{currentMarket.value}</Text>
-              </ChangeEmphasis>
-              <Text style={styles.compactRateLabel}>{currentMarket.label}</Text>
-              </View>
+          {/* Özet (compact, not the desktop list row): market and prices share
+              one line, so two matches fit on the first phone screen. */}
+          <View style={dense ? null : styles.compactDecisionRow}>
+            <View accessibilityLabel={match.selectedOdd ? `${formatSelection(match.selectedOdd)}, ${match.rating} yıldız, ${starsSpoken}` : undefined} style={[styles.compactDecisionCopy, dense ? styles.compactDecisionInline : styles.compactDecisionLead]}>
+              <Text numberOfLines={dense ? 1 : 2} style={styles.compactOdd}>
+                {formatSelection(match.selectedOdd) || emptySelection}
+              </Text>
+              {match.selectedOdd ? <RatingStars rating={match.rating} size={12} /> : null}
             </View>
-          ) : null}
+            {footer.showsRate ? (
+              <View accessibilityLabel={`${match.selectedOdd ? `Seçim oranı ${formatRate(match.liveRate)}, ` : ""}${rateSpoken}`} style={[styles.compactRates, dense ? null : styles.compactRatesTrailing]}>
+                {match.selectedOdd ? <View style={[styles.compactRateColumn, !dense && styles.compactRateColumnFree]}><Text style={styles.compactRate}>{formatRate(match.liveRate)}</Text><Text numberOfLines={1} style={styles.compactRateLabel}>seçim oranı</Text></View> : null}
+                <View style={[styles.compactRateColumn, !dense && styles.compactRateColumnFree]}>
+                <ChangeEmphasis style={styles.rateHeadline} token={currentMarket.value}>
+                  {trendGlyph}
+                  <Text style={[styles.compactRate, { color: rateTrendColor }]}>{currentMarket.value}</Text>
+                </ChangeEmphasis>
+                <Text numberOfLines={1} style={styles.compactRateLabel}>{currentMarket.label}</Text>
+                </View>
+              </View>
+            ) : null}
+          </View>
         </View>
       ) : (
         <View style={styles.decisionPanel}>
@@ -374,8 +380,8 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg
   },
   pressed: {
-    opacity: 0.78,
-    transform: [{ scale: 0.995 }]
+    opacity: 0.9,
+    transform: [{ scale: 0.985 }]
   },
   // The match shown in the desktop side pane. Intelligence blue rather than the
   // live teal, so "selected" never reads as "live".
@@ -616,6 +622,21 @@ const styles = StyleSheet.create({
   compactDecisionCopy: {
     minWidth: 0
   },
+  compactDecisionRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: spacing.md
+  },
+  compactDecisionLead: {
+    flex: 1,
+    gap: 4
+  },
+  compactRatesTrailing: {
+    flexShrink: 0,
+    flexWrap: "nowrap",
+    maxWidth: "62%"
+  },
   // Desktop list row (v40 W-Canlı): the market with its stars on one line.
   compactDecisionInline: {
     flexDirection: "row",
@@ -672,6 +693,8 @@ const styles = StyleSheet.create({
     gap: 12
   },
   compactRateColumn: { alignItems: "flex-end", minWidth: 0, flexShrink: 1, maxWidth: "48%", gap: 3 },
+  // Beside the market on Özet the prices size to their labels instead.
+  compactRateColumnFree: { maxWidth: "100%", flexShrink: 0 },
   compactRateLabel: { color: colors.textSubtle, ...typeScale.label, textAlign: "right" },
   compactRate: {
     color: colors.text,

@@ -2,7 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   createLaunchCompletion,
+  crestBall,
   launchBrandCapMs,
+  launchChoreography,
+  launchExitDuration,
+  launchExitMs,
+  launchMinimumIntroMs,
+  launchRevealFallbackMs,
+  resolveLaunchReveal,
   launchBrandHoldMs,
   launchIntroDuration,
   launchIntroDurationMs,
@@ -66,4 +73,52 @@ test("readiness/preference rerenders, callback replacement and reentry cannot co
   completion.complete(false, true, done);
   completion.complete(true, true, () => calls++);
   assert.equal(calls, 1);
+});
+
+test("the reveal continues the native splash, then commits to one presentation", () => {
+  const normal = { ready: true, reduceMotion: false };
+  const base = { current: "PENDING" as const, layoutReady: true, preference: normal, elapsedMs: 16 };
+  assert.equal(resolveLaunchReveal(base), "INTRO");
+  assert.equal(resolveLaunchReveal({ ...base, preference: { ready: true, reduceMotion: true } }), "STATIC");
+  // No answer yet: background only, then the static brand after the fallback.
+  assert.equal(resolveLaunchReveal({ ...base, preference: { ready: false, reduceMotion: true } }), "PENDING");
+  assert.equal(resolveLaunchReveal({ ...base, preference: { ready: false, reduceMotion: true }, elapsedMs: launchRevealFallbackMs }), "STATIC");
+  assert.equal(resolveLaunchReveal({ ...base, layoutReady: false, elapsedMs: launchRevealFallbackMs }), "STATIC");
+  // Too little of the window left for a believable fall.
+  assert.equal(resolveLaunchReveal({ ...base, elapsedMs: launchIntroWindowMs - launchMinimumIntroMs + 1 }), "STATIC");
+  // A decided reveal never changes, so the brand cannot appear twice.
+  assert.equal(resolveLaunchReveal({ ...base, current: "STATIC" }), "STATIC");
+  assert.equal(resolveLaunchReveal({ ...base, current: "INTRO", preference: { ready: true, reduceMotion: true } }), "INTRO");
+});
+
+test("the landing keeps its shape and ends inside the intro duration", () => {
+  assert.equal(launchChoreography(0), null);
+  assert.equal(launchChoreography(launchMinimumIntroMs - 1), null);
+  assert.equal(launchChoreography(Number.NaN), null);
+  for (const duration of [launchMinimumIntroMs, 520, launchIntroDurationMs]) {
+    const plan = launchChoreography(duration);
+    assert.ok(plan);
+    assert.equal(plan.dropAt + plan.dropMs, plan.impactAt, "the fall ends exactly at impact");
+    assert.ok(plan.entrance <= plan.impactAt, "the crest is in place before the ball meets it");
+    assert.ok(plan.impactAt + plan.rippleMs <= duration);
+    assert.ok(plan.impactAt + plan.haloRiseMs + plan.haloSettleMs <= duration);
+    assert.ok(plan.impactAt + plan.squashMs + plan.settleMs <= plan.mergeAt, "the ball is seated before it merges");
+    assert.ok(plan.mergeAt + plan.mergeMs <= duration);
+    assert.ok(plan.wordmarkAt + plan.wordmarkMs <= duration);
+    assert.ok(plan.dropMs >= 160, "a fall shorter than this reads as a jump cut");
+  }
+});
+
+test("the hand-off fades only for a known normal-motion preference", () => {
+  assert.equal(launchExitDuration({ ready: true, reduceMotion: false }), launchExitMs);
+  assert.equal(launchExitDuration({ ready: true, reduceMotion: true }), 0);
+  assert.equal(launchExitDuration({ ready: false, reduceMotion: false }), 0);
+  // Brand window plus the fade stays close to one second.
+  assert.ok(launchIntroWindowMs + launchExitMs <= 1_050);
+});
+
+test("the landing target sits on the crest's own ball", () => {
+  assert.ok(crestBall.centerY > 0.5 && crestBall.centerY < 0.9);
+  assert.equal(crestBall.centerX, 0.5);
+  assert.ok(crestBall.diameter > 0.1 && crestBall.diameter < 0.25);
 });
