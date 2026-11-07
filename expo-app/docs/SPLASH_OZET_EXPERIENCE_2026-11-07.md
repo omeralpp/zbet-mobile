@@ -1,7 +1,12 @@
 # Splash and Özet experience — 2026-11-07
 
 Scope: shared Android/web launch screen and Özet (Summary) tab.
-Status: LOCAL CANDIDATE. Not committed to master, not released, no APK built.
+Status: RELEASED (owner-only DEV). Commit `ed30743` is on master and shipped
+as the coordinated pair `client-ed30743b5a3b5a45841aab2bd8d229839fc7ad0c-D303F543EC50-2B5A8F2E9D20`
+on 2026-11-07: APK `D303F543…D003`, web release `20261107T182409Z-ed30743`,
+both owner smokes accepted. Receipts: `btb-codex/docs/evidence/splash-ozet-*-2026-11-07.json`.
+Release-time gate note: Expo Doctor failed only on upstream patch drift of seven
+Expo packages (not caused by this change); see `CURRENT_HANDOFF.md`.
 
 The owner asked for an interaction and enjoyment score for the opening splash
 and Özet, rejected quick fixes, and set a target of 9/10 or above. This lens
