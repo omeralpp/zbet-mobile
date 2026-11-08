@@ -16,6 +16,7 @@ import {
   totoProgramListSchema,
   totoProgramSchema
 } from "./schemas";
+import { emptySelectionComparison } from "./selection-comparison-schema";
 import {
   mockDashboard,
   mockRetainedJourney,
@@ -71,6 +72,10 @@ async function mockDelay(signal?: AbortSignal): Promise<void> {
 }
 
 export const mockMobileApi: MobileApi = {
+  async getMatchSelectionComparison(key, signal) {
+    await mockDelay(signal);
+    return emptySelectionComparison(key);
+  },
   async getRebuildMatch(key, signal) {
     await mockDelay(signal);
     return rebuildMatchSchema.parse({ contractVersion: "btb-rebuild.v1", modelRegime: "BTB_RB1_20261018", matchKey: key, asOf: new Date().toISOString(),

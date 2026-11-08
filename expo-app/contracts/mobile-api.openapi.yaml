@@ -12,6 +12,23 @@ security:
   - pilotKey: []
   - cloudflareAccess: []
 paths:
+  /v1/btb/matches/{key}/selection-comparison:
+    get:
+      operationId: getMatchSelectionComparison
+      description: >-
+        Read-only immutable BTB research publications for C0/C1/C2/C3 from one
+        verified RB1 source snapshot. Never computes or tunes a model in Mobile
+        or BFF. Missing, expired, corrupt, state-changed or quote-changed proofs
+        withhold all selections. No automatic promotion or bet execution.
+      parameters:
+        - $ref: "#/components/parameters/Key"
+      responses:
+        "200":
+          description: Verified comparison or an explicit unavailable/stale response. Always no-store.
+          content:
+            application/json:
+              schema: { $ref: "./selection-comparison.schema.json" }
+        default: { $ref: "#/components/responses/Error" }
   /v1/btb/rebuild/v1/matches/{key}:
     get:
       operationId: getRebuildMatch

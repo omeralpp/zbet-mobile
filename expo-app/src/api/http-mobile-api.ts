@@ -1,4 +1,5 @@
 import { jinxRb1ExplanationSchema } from "./jinx-rb1-schema";
+import { selectionComparisonSchema } from "./selection-comparison-schema";
 import { z, type ZodType } from "zod";
 import {
   browserReloadHost,
@@ -146,6 +147,7 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
   // settled score) for both Karar günlüğü reads.
   const reportHeaders = { "X-BTB-Rebuild": "btb-rebuild.v1", "X-BTB-Report-Breakdown": "summary.v1", "X-BTB-Report-Facts": "match-facts.v1" };
   return {
+    getMatchSelectionComparison: (key, signal) => request(`/v1/btb/matches/${encodeURIComponent(key)}/selection-comparison`, selectionComparisonSchema, {}, signal),
     getRebuildMatch: (key, signal) => request(`/v1/btb/rebuild/v1/matches/${encodeURIComponent(key)}`, rebuildMatchSchema,
       { headers: { "X-BTB-Rebuild": "btb-rebuild.v1", "X-BTB-Selection-Display": "btb-selection-display.v2" } }, signal),
     getRebuildReport: signal => request("/v1/btb/rebuild/v1/report", rebuildReportSchema,

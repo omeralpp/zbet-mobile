@@ -9,6 +9,13 @@ and the dated release reports/receipts.
 
 ## Son checkpoint
 
+Selection Lab (TASK-0230/TASK-0229) is implemented locally in the shared client
+and BFF, with scoped owner commit/push approval on 8 November. It has no real
+approved challenger producer or release. Local checks, Android bundle, verified
+web export and mock browser smoke passed; no Android device was connected.
+See [the development checkpoint](SELECTION_LAB_DEVELOPMENT_2026-11-08.md).
+The accepted pair and running BFF described below remain current.
+
 Accepted source: **5f26c706e5ecadccc79da81bce02b4108ac0284a** (master
 fast-forwarded from 26780bc). Batch:
 `client-5f26c706e5ecadccc79da81bce02b4108ac0284a-DE08B3613F0D-06513353370C`.

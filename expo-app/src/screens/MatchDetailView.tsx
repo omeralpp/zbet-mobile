@@ -52,6 +52,7 @@ import { matchActivity } from "@/src/components/match-path-activity";
 import { RebuildStatisticsPanel } from "@/src/components/RebuildStatisticsPanel";
 import { HistoricalScoreDistribution } from "@/src/components/HistoricalScoreDistribution";
 import { TeamFormCard } from "@/src/components/TeamFormCard";
+import { SelectionLab } from "@/src/components/SelectionLab";
 import { resolveTeamFormState } from "@/src/components/team-form-view";
 import { EvidenceQuality } from "@/src/components/RatingStars";
 import { LiveContextFreshness } from "@/src/components/LiveContextNotice";
@@ -829,6 +830,8 @@ export function MatchDetailView({
       {query.data?.rebuild ? <RebuildJinxCard matchKey={key} matchStatus={match.status} possession={possession}
         matchContext={context.data} refreshContext={() => context.refetch()} contextRefreshing={context.isFetching}
         onOpenEvidence={() => jumpToModule("decision")} /> : null}
+
+      {query.data?.rebuild || runtimeConfig.useMocks ? <SelectionLab key={`${key}:${isFocused}`} match={match} focused={isFocused} wide={wideWeb} /> : null}
 
       <View collapsable={false} ref={(node) => { moduleRefs.current.set("matchPath", node); }}>
         <MatchPathCard

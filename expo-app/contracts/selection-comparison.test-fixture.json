@@ -1,0 +1,96 @@
+{
+  "contractVersion": "selection-comparison.v1",
+  "matchKey": "2026-11-08:999999:20:00:00",
+  "researchOnly": true,
+  "autoPromotion": false,
+  "availability": "AVAILABLE",
+  "reason": "TEST_ONLY",
+  "snapshotId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "sourceSnapshotId": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "asOf": "2026-11-08T18:00:00.000Z",
+  "expiresAt": "2026-11-08T18:00:15.000Z",
+  "state": {
+    "homeScore": 0,
+    "awayScore": 0,
+    "elapsed": 60,
+    "period": "2H",
+    "homeRedCards": 0,
+    "awayRedCards": 0,
+    "revision": "TEST_STATE_1"
+  },
+  "proposals": [
+    {
+      "id": "C0",
+      "modelVersion": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "trialId": null,
+      "status": "SELECTED",
+      "reason": "TEST_ONLY",
+      "selection": {
+        "market": "Ms25a",
+        "quote": 1.5,
+        "quoteAt": "2026-11-08T18:00:00.000Z",
+        "quoteRef": "TEST_QUOTE_C0",
+        "publicationId": "TEST_CHAMPION_1"
+      },
+      "probability": null,
+      "probabilityValidation": null,
+      "expectedNet": null,
+      "form": null,
+      "explanationCodes": []
+    },
+    {
+      "id": "C1",
+      "modelVersion": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "trialId": "TEST_ONLY_UNREGISTERED",
+      "status": "ABSTAIN",
+      "reason": "EXPOSURE_LIMIT",
+      "selection": null,
+      "probability": null,
+      "probabilityValidation": null,
+      "expectedNet": null,
+      "form": null,
+      "explanationCodes": []
+    },
+    {
+      "id": "C2",
+      "modelVersion": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "trialId": "TEST_ONLY_UNREGISTERED",
+      "status": "SELECTED",
+      "reason": "TEST_ONLY",
+      "selection": {
+        "market": "Ms1X",
+        "quote": 1.4,
+        "quoteAt": "2026-11-08T18:00:00.000Z",
+        "quoteRef": "TEST_QUOTE_C2",
+        "publicationId": "TEST_PROPOSAL_1"
+      },
+      "probability": 0.75,
+      "probabilityValidation": {
+        "method": "OUT_OF_TIME_REVIEWED",
+        "reportSha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      "expectedNet": 0.05,
+      "form": {
+        "snapshotSha256": "1111111111111111111111111111111111111111111111111111111111111111",
+        "homeN": 5,
+        "awayN": 5,
+        "homeVenueN": 3,
+        "awayVenueN": 4
+      },
+      "explanationCodes": []
+    },
+    {
+      "id": "C3",
+      "modelVersion": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "trialId": "TEST_ONLY_UNREGISTERED",
+      "status": "ABSTAIN",
+      "reason": "PRICE_NOT_ADMITTED",
+      "selection": null,
+      "probability": null,
+      "probabilityValidation": null,
+      "expectedNet": null,
+      "form": null,
+      "explanationCodes": []
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import type { JinxRb1Explanation } from "./jinx-rb1-schema";
+import type { SelectionComparison } from "./selection-comparison-schema";
 import type {
   AnalysisContext,
   Dashboard,
@@ -20,6 +21,7 @@ import type {
 import type { RebuildCohortsReport, RebuildMatch, RebuildReport, ReportWindowDays } from "./rebuild-schemas";
 import type { RebuildPressureHistory, RebuildStatistics, RebuildPoolPath } from "./rebuild-statistics-schemas";
 export interface MobileApi {
+  getMatchSelectionComparison(key: string, signal?: AbortSignal): Promise<SelectionComparison>;
   getRebuildMatch(key: string, signal?: AbortSignal): Promise<RebuildMatch>;
   getRebuildReport(signal?: AbortSignal): Promise<RebuildReport>;
   getRebuildCohortsReport(signal?: AbortSignal): Promise<RebuildCohortsReport>;
