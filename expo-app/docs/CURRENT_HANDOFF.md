@@ -1,13 +1,31 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-11-07
-Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 6A416A1`
+Son güncelleme: 2026-11-08
+Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 5F26C70`
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md)
 and the dated release reports/receipts.
 
 ## Son checkpoint
+
+Accepted source: **5f26c706e5ecadccc79da81bce02b4108ac0284a** (master
+fast-forwarded from 26780bc). Batch:
+`client-5f26c706e5ecadccc79da81bce02b4108ac0284a-DE08B3613F0D-06513353370C`.
+Canonical paired completion passed on 8 November 2026.
+
+NXT-OBS-246: the Super log keeps the last verified report, with a "Yenilenemedi"
+note, when a refresh fails or answers UNAVAILABLE. It shipped with BFF d8d652f,
+which reuses verified proofs between reports (each re-verified within 10-15
+minutes), shares simultaneous identical reads and allows 12 s for v2 reports.
+Real SAP, 40 decisions: about 1 s after a 9.6 s cold read, 0.38 MB instead of
+10.12 MB. A restart empties the proof cache, so the next report is a cold read.
+No platform exception. The owner replied "Installed, works" after installing the
+exact APK and "Web works" after publication. Live-hour conflicts are not yet
+measured. Receipts in `btb-codex/docs/evidence/`:
+`super-report-{APPROVAL,PREPARED,DRIVE,ANDROID-INSTALLED,PUBLICATION,OWNER-ACCEPTANCE,COMPLETE,LOCAL-APK-RETENTION,STATUS}-2026-11-08.json`.
+
+### Previous pair: 6A416A1 Expo patch
 
 Accepted source: **6a416a1af9851ae2488f669049ceb1a4b731c852** (master
 fast-forwarded from 5286655). Batch:
@@ -63,21 +81,25 @@ retrospective release credit. Their reports and receipts are preserved.
 
 | Repository | Source checkpoint | Meaning |
 | --- | --- | --- |
-| zbet-mobile / master | 6a416a1af9851ae2488f669049ceb1a4b731c852 | Accepted artifact source; subsequent handoff-only commits do not rebuild/release the app |
-| zbet-cap / main | 178ca6df248c93a64da6b25a9bd2d0d54a1d38cf | Running BFF, unchanged by this client-only batch |
+| zbet-mobile / master | 5f26c706e5ecadccc79da81bce02b4108ac0284a | Accepted artifact source; subsequent handoff-only commits do not rebuild/release the app |
+| zbet-cap / main | d8d652fee939df08e097bae2570cff8c09fa906d | Running BFF with report proof reuse; previous revision 178ca6d |
 | zbet-abap / main | 5751cbfdaf705478d21459de533a62ca19c4a101 | Previously accepted reader repair, policy71AC/producerDE3C; unchanged by this Mobile batch |
 
 Android and desktop use `api.surklase.com`; local BFF origin127.0.0.1:4004.
 Cloudflare Access protects `app.surklase.com`. This remains owner-only DEV.
 Web publications replaced the BFF process (PID24544 to8004 for ED30743, then
-to26348 for 6A416A1) through its scheduled task on the same CAP source;
+to26348 for 6A416A1, then to12244 for 5F26C70 after the approved d8d652f restart to4668) through its scheduled task;
 `/health` reported ok with pilot auth and web, SAP backend and notifications
 configured.
-Published root: `C:/Users/omera/AppData/Local/BTB Mobile Next/web/releases/20261107T185107Z-6a416a1`
-(previous `20261107T182409Z-ed30743` and `20261104T091348Z-e549cb0` preserved).
+Published root: `C:/Users/omera/AppData/Local/BTB Mobile Next/web/releases/20261108T104911Z-5f26c70`
+(previous `20261107T185107Z-6a416a1`, `20261107T182409Z-ed30743` and `20261104T091348Z-e549cb0` preserved).
 
 ## Doğrulama
 
+- 5F26C70: the full canonical gate passed, Expo Doctor included, on the identical
+  content before commit; the web export was rebuilt and verified from the
+  committed source. BFF d8d652f: 721 tests. Publisher verified all served files,
+  zero mismatches.
 - 6A416A1: the full canonical gate (`invoke-mobile-check.ps1 -BundleOnly`)
   passed, Expo Doctor included: type check, lint, unit tests, tooling, brand,
   Doctor, Android bundle and verified edge web export (secret scan clean). The
@@ -99,13 +121,13 @@ complete live-feed availability or universal defect absence.
 
 ## Final yerel pilot APK
 
-- Accepted APK: `btb-mobile-next-arm64-expo-patch-6a416a1.apk`
-- Source: `6a416a1af9851ae2488f669049ceb1a4b731c852`
-- SHA-256: `7A512C0C9A9C2105AFF32B7FE72F1246BADCB87E4A6EF835D33AA942C35A02D8`
-- Size/ABI:50,608,417 bytes, ARM64; certificate `FAC61745…3B9C` unchanged
-- Matching web tree: `3850448F2B14A34CC22CD4021F36D242EFD767D7D031ADC60D28A00DC88F578B`
-- Web release: `20261107T185107Z-6a416a1`
-- Private Drive file: `1cJgY9SbY5mfjpasomEHWEJijAT82Wwva`
+- Accepted APK: `btb-mobile-next-arm64-super-report-5f26c70.apk`
+- Source: `5f26c706e5ecadccc79da81bce02b4108ac0284a`
+- SHA-256: `DE08B3613F0DD2961E77F4B69D02F5DF9D7FB1AF5933912EA5D54E2E0EB78CA3`
+- Size/ABI:50,609,985 bytes, ARM64; certificate `FAC61745…3B9C` unchanged
+- Matching web tree: `06513353370C32582F3715E5F4BB61691C1589375837D2E26050B4484D2CF3B7`
+- Web release: `20261108T104911Z-5f26c70`
+- Private Drive file: `1pZtL3jqQ9pb99DFJSzSUu1ElOW9U5hbc`
 - Pair: `COMPLETE`, both owner smokes accepted
 
 Delivery used `deliver-apk-drive.ps1` through the configured `btbdrive` rclone
@@ -113,9 +135,9 @@ remote; no sharing link, policy or authentication configuration changed.
 
 After each acceptance and COMPLETE, the superseded local APK was removed under
 the owner's29 October retention rule: E549 (`FDBF2981…367C`) for ED30743, then
-ED30743 (`D303F543…D003`,50,608,225 bytes) for 6A416A1. 6A416A1 is the sole
+ED30743 (`D303F543…D003`,50,608,225 bytes) for 6A416A1, then 6A416A1 (`7A512C0C…02D8`,50,608,417 bytes) for 5F26C70. 5F26C70 is the sole
 permanent local APK in the artifact directory. Config/hash/delivery/acceptance
-receipts, source, cloud copies (ED30743 Drive file `1QPScFiQbZZyOjvtbRRLDA_vKTMGg8GIP`,
+receipts, source, cloud copies (6A416A1 Drive file `1cJgY9SbY5mfjpasomEHWEJijAT82Wwva`, ED30743 Drive file `1QPScFiQbZZyOjvtbRRLDA_vKTMGg8GIP`,
 E549 `1woDYD2ZCPgDf0nhEjRbe4viQF3ERQQMe`) and versioned web releases remain preserved.
 
 ## Açık observation / blokajlar
