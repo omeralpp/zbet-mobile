@@ -12,6 +12,23 @@ security:
   - pilotKey: []
   - cloudflareAccess: []
 paths:
+  /v1/btb/matches/{key}/selection-history:
+    get:
+      operationId: getMatchSelectionHistory
+      description: >-
+        Read-only original committed C1 technical decision. Remains historical
+        after quote expiry, football-state changes or trial end; currentOffer is
+        always false. Requires a verified registration, intent and commit receipt.
+        No SAP reads, probabilities, settled-result claims or bet execution.
+      parameters:
+        - $ref: "#/components/parameters/Key"
+      responses:
+        "200":
+          description: Original historical decision or explicit unavailability. Always no-store.
+          content:
+            application/json:
+              schema: { $ref: "./selection-history.schema.json" }
+        default: { $ref: "#/components/responses/Error" }
   /v1/btb/matches/{key}/selection-comparison:
     get:
       operationId: getMatchSelectionComparison

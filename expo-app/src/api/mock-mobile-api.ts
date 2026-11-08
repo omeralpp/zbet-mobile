@@ -17,6 +17,7 @@ import {
   totoProgramSchema
 } from "./schemas";
 import { emptySelectionComparison } from "./selection-comparison-schema";
+import { emptySelectionHistory } from "./selection-history-schema";
 import {
   mockDashboard,
   mockRetainedJourney,
@@ -72,6 +73,10 @@ async function mockDelay(signal?: AbortSignal): Promise<void> {
 }
 
 export const mockMobileApi: MobileApi = {
+  async getMatchSelectionHistory(key, signal) {
+    signal?.throwIfAborted();
+    return emptySelectionHistory(key);
+  },
   async getMatchSelectionComparison(key, signal) {
     await mockDelay(signal);
     return emptySelectionComparison(key);

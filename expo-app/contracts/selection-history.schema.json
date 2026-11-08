@@ -1,0 +1,267 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "contractVersion": {
+      "type": "string",
+      "const": "selection-history.v1"
+    },
+    "matchKey": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[^\\x00-\\x1f]+$"
+    },
+    "researchOnly": {
+      "type": "boolean",
+      "const": true
+    },
+    "autoPromotion": {
+      "type": "boolean",
+      "const": false
+    },
+    "currentOffer": {
+      "type": "boolean",
+      "const": false
+    },
+    "availability": {
+      "type": "string",
+      "enum": [
+        "AVAILABLE",
+        "UNAVAILABLE"
+      ]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[^\\x00-\\x1f]+$"
+    },
+    "firstDecision": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "armId": {
+              "type": "string",
+              "const": "C1"
+            },
+            "publicationId": {
+              "type": "string",
+              "pattern": "^[A-F0-9]{32}$"
+            },
+            "trialId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "pattern": "^[^\\x00-\\x1f]+$"
+            },
+            "modelVersion": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "recordedAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+            },
+            "market": {
+              "type": "string",
+              "enum": [
+                "Ms05a",
+                "Ms05u",
+                "Ms15a",
+                "Ms15u",
+                "Ms25a",
+                "Ms25u",
+                "Ms35a",
+                "Ms35u",
+                "Ms45a",
+                "Ms45u",
+                "Ms1",
+                "MsX",
+                "Ms2",
+                "Ms1X",
+                "MsX2",
+                "H1",
+                "H2",
+                "Kgvar",
+                "Kgyok"
+              ]
+            },
+            "quote": {
+              "type": "number",
+              "exclusiveMinimum": 1,
+              "maximum": 1000
+            },
+            "quoteAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+            },
+            "quoteRef": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "pattern": "^[^\\x00-\\x1f]+$"
+            },
+            "sourceSnapshotId": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "state": {
+              "type": "object",
+              "properties": {
+                "homeScore": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "awayScore": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "elapsed": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 130
+                },
+                "period": {
+                  "type": "string",
+                  "enum": [
+                    "1H",
+                    "2H"
+                  ]
+                },
+                "homeRedCards": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "awayRedCards": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "revision": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "^[^\\x00-\\x1f]+$"
+                }
+              },
+              "required": [
+                "homeScore",
+                "awayScore",
+                "elapsed",
+                "period",
+                "homeRedCards",
+                "awayRedCards",
+                "revision"
+              ],
+              "additionalProperties": false
+            },
+            "reference": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "market": {
+                      "type": "string",
+                      "enum": [
+                        "Ms05a",
+                        "Ms05u",
+                        "Ms15a",
+                        "Ms15u",
+                        "Ms25a",
+                        "Ms25u",
+                        "Ms35a",
+                        "Ms35u",
+                        "Ms45a",
+                        "Ms45u",
+                        "Ms1",
+                        "MsX",
+                        "Ms2",
+                        "Ms1X",
+                        "MsX2",
+                        "H1",
+                        "H2",
+                        "Kgvar",
+                        "Kgyok"
+                      ]
+                    },
+                    "quote": {
+                      "type": "number",
+                      "exclusiveMinimum": 1,
+                      "maximum": 1000
+                    },
+                    "publicationId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200,
+                      "pattern": "^[^\\x00-\\x1f]+$"
+                    }
+                  },
+                  "required": [
+                    "market",
+                    "quote",
+                    "publicationId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "hypotheticalStakeUnits": {
+              "type": "number",
+              "const": 1
+            },
+            "resultStatus": {
+              "type": "string",
+              "const": "NOT_EVALUATED"
+            },
+            "publicationSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "armId",
+            "publicationId",
+            "trialId",
+            "modelVersion",
+            "recordedAt",
+            "market",
+            "quote",
+            "quoteAt",
+            "quoteRef",
+            "sourceSnapshotId",
+            "state",
+            "reference",
+            "hypotheticalStakeUnits",
+            "resultStatus",
+            "publicationSha256"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "contractVersion",
+    "matchKey",
+    "researchOnly",
+    "autoPromotion",
+    "currentOffer",
+    "availability",
+    "reason",
+    "firstDecision"
+  ],
+  "additionalProperties": false
+}

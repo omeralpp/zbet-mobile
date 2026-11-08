@@ -9,12 +9,20 @@ and the dated release reports/receipts.
 
 ## Son checkpoint
 
-Selection Lab (TASK-0230/TASK-0229) is implemented locally in the shared client
-and BFF, with scoped owner commit/push approval on 8 November. It has no real
-approved challenger producer or release. Local checks, Android bundle, verified
-web export and mock browser smoke passed; no Android device was connected.
-See [the development checkpoint](SELECTION_LAB_DEVELOPMENT_2026-11-08.md).
-The accepted pair and running BFF described below remain current.
+Selection Lab (TASK-0230/TASK-0229) now also has a read-only C1 history endpoint
+and shared Android/web historical-decision panel. Original quotes remain history,
+with `currentOffer=false`; the live comparison keeps its15-second expiry.
+The BTB-owned complete-capture operator is implemented and tested locally, with
+no actual registration, live collection, runtime activation or client release.
+The owner explicitly approved this continuation's four-repository commit/push
+through popup `call_3405b9e31f434f29bd3c13e51155047b`; no activation or release
+is included. Mobile canonical checks/Doctor, Android bundle and verified
+web export pass. Empty-history browser layouts pass in dark/light at narrow and
+desktop widths; populated browser/live-publication and Android-device smokes
+remain outstanding (ADB:0 connected devices).
+See [the continuation checkpoint](C1_HISTORY_AND_ADAPTER_2026-11-08.md).
+The accepted pair and running BFF below are the recorded baseline, not a new
+live-read claim; this continuation changes neither deployment.
 
 Accepted source: **5f26c706e5ecadccc79da81bce02b4108ac0284a** (master
 fast-forwarded from 26780bc). Batch:

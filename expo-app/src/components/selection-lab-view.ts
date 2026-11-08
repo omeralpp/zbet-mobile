@@ -1,5 +1,6 @@
 import type { MatchDetail } from "@/src/api/schemas";
 import type { SelectionComparison } from "@/src/api/selection-comparison-schema";
+import type { SelectionHistory } from "@/src/api/selection-history-schema";
 
 export const selectionArmLabels = { C0: "Mevcut BTB", C1: "Maç başına sınır", C2: "Form + canlı", C3: "Form + fiyat" } as const;
 export const selectionArmDescriptions = {
@@ -23,7 +24,12 @@ const reasons: Record<string, string> = {
   PRICE_NOT_ADMITTED: "Fiyat ve belirsizlik koşulu sağlanmadı.",
   EXPOSURE_LIMIT: "Bu maçın deney sınırına ulaşıldı.",
   NO_SELECTION: "Bu yöntem bu anda seçim yapmadı.",
-  TRIAL_STOPPED: "Deney durduruldu."
+  TRIAL_STOPPED: "Deney durduruldu.",
+  C1_EXPOSURE_LIMIT: "Bu maçın ilk deney kararı kaydedildi; yeni seçim yapılmaz.",
+  C1_NO_ADMITTED_CANDIDATE: "Bu anda deney koşullarını sağlayan seçim yok.",
+  C1_FIRST_DECISION: "Maçın ilk deney kararı.",
+  C2_MODEL_NOT_VALIDATED: "Form modelinin doğrulaması tamamlanmadı.",
+  C3_UNCERTAINTY_NOT_VALIDATED: "Fiyat modelinin belirsizlik doğrulaması tamamlanmadı."
 };
 export const selectionReason = (reason: string) => reasons[reason] ?? "Bu yöntem için doğrulanmış seçim yok.";
 
@@ -39,4 +45,11 @@ export function currentSelectionComparison(data: SelectionComparison | undefined
   if (Boolean(current) !== (champion.status === "SELECTED") || (current && (current.decisionId !== champion.selection?.publicationId ||
     current.market !== champion.selection.market || Number(current.quote) !== champion.selection.quote))) return null;
   return data;
+}
+
+/** Historical facts survive score/price changes; never turn them into offers. */
+export function historicalSelection(data: SelectionHistory | undefined, matchKey: string, now: number, failed = false) {
+  if (!data || failed || data.matchKey !== matchKey || data.currentOffer !== false || data.availability !== "AVAILABLE" ||
+    !data.firstDecision || !Number.isFinite(now) || Date.parse(data.firstDecision.recordedAt)>now) return null;
+  return data.firstDecision;
 }
