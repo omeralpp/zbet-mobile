@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { rebuildCohortsReportQuery, rebuildReportWindowQuery } from "@/src/api/queries";
+import { useLastVerifiedReport } from "@/src/api/use-last-verified-report";
 import { useReportDays } from "@/src/api/use-report-days";
 import type { RebuildCohortsReport, RebuildLogRecord } from "@/src/api/rebuild-schemas";
 import { isAtLeast } from "@/src/layout/breakpoints";
@@ -19,6 +20,7 @@ import {
   choiceForDay,
   combinedReport,
   defaultLogSort,
+  displayedReport,
   evidenceCompact,
   evidenceLine,
   filterLog,
@@ -379,10 +381,16 @@ export function RebuildDecisionLog() {
   // days as they arrive instead of one heavy read (NXT-OBS-244).
   const ownWindow = !multiDay && needsWindow(period, today);
   const windowed = useQuery({ ...rebuildReportWindowQuery(1, period.through, period.through === today), enabled: ownWindow });
-  const days = useReportDays(period, today, daily.data, multiDay);
+  // A failed refresh keeps the last verified report on screen (NXT-OBS-246).
+  const lastDaily = useLastVerifiedReport("daily", daily.data);
+  const lastWindow = useLastVerifiedReport(`day:${period.through}`, windowed.data);
+  const dailyShown = displayedReport(daily.data, lastDaily, daily.isError);
+  const days = useReportDays(period, today, dailyShown.report, multiDay);
   const query = ownWindow ? windowed : daily;
+  const shown = ownWindow ? displayedReport(windowed.data, lastWindow, windowed.isError) : dailyShown;
+  const stale = multiDay ? dailyShown.stale : shown.stale;
   const isLoading = multiDay ? days.loaded === 0 && days.loading : query.isLoading;
-  const isError = multiDay ? days.loaded === 0 && !days.loading : query.isError;
+  const isError = multiDay ? days.loaded === 0 && !days.loading : query.isError && shown.report?.availability !== "AVAILABLE";
   const refetch = async () => {
     if (multiDay) days.retry();
     await (multiDay ? daily : query).refetch();
@@ -399,7 +407,7 @@ export function RebuildDecisionLog() {
     document.addEventListener("keydown", dismiss);
     return () => document.removeEventListener("keydown", dismiss);
   }, [periodOpen, starMenuOpen]);
-  const full = multiDay ? days.report ?? undefined : query.data;
+  const full = multiDay ? days.report ?? undefined : shown.report;
   const report = useMemo(() => (full ? combinedReport(full) : null), [full]);
   const found = full?.periods.find((item) => item.days === period.days && item.through === period.through);
   const available = !isError && full?.availability === "AVAILABLE" && found ? found : null;
@@ -557,7 +565,7 @@ export function RebuildDecisionLog() {
       ) : null}
     </View>
   );
-  const note = `${partial ? `Kısmi toplam: ${days.loaded} / ${days.total} gün. ` : ""}Karar başına 1 varsayımsal birim${updated ? ` · güncellendi ${updated}` : ""}.${pendingOnly ? " Özet tüm sonuçları, liste yalnızca bekleyenleri içerir." : ""}`;
+  const note = `${stale ? "Yenilenemedi, son doğrulanmış veri gösteriliyor. " : ""}${partial ? `Kısmi toplam: ${days.loaded} / ${days.total} gün. ` : ""}Karar başına 1 varsayımsal birim${updated ? ` · güncellendi ${updated}` : ""}.${pendingOnly ? " Özet tüm sonuçları, liste yalnızca bekleyenleri içerir." : ""}`;
   const details = (
     <Card>
       <Pressable

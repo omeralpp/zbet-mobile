@@ -163,6 +163,24 @@ export function teamInitials(name: string): string {
   return letters.toLocaleUpperCase("tr-TR") || "—";
 }
 
+/** The report a Karar günlüğü view shows, and whether it is older than the latest attempt. */
+export interface DisplayedReport {
+  report: RebuildCohortsReport | undefined;
+  stale: boolean;
+}
+
+/**
+ * A failed refresh or an UNAVAILABLE answer says nothing about decisions that
+ * were already verified, so the last verified report stays on screen, marked
+ * stale (NXT-OBS-246). Without one, the latest answer stands and the view says
+ * it could not verify.
+ */
+export function displayedReport(latest: RebuildCohortsReport | undefined, lastVerified: RebuildCohortsReport | null, refreshFailed: boolean): DisplayedReport {
+  if (latest?.availability === "AVAILABLE") return { report: latest, stale: refreshFailed };
+  if (lastVerified?.availability === "AVAILABLE") return { report: lastVerified, stale: true };
+  return { report: latest, stale: false };
+}
+
 /**
  * A v2 report as the v1 shape the Super screens render: every listed record
  * with the backend's all-cohort periods and learning (owner decision

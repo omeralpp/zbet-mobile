@@ -5,6 +5,7 @@ import {
   addDecimals,
   combinedReport,
   defaultLogSort,
+  displayedReport,
   evidenceLine,
   filterLog,
   logSummary,
@@ -102,6 +103,22 @@ test("a star scope adds the report's own per-star rows exactly", () => {
 test("no scope (or one star) is the period total as delivered", () => {
   assert.equal(logSummary(period, null).net, "-1.14");
   assert.equal(logSummary(period, 1).recommendations, 4);
+});
+
+test("a failed refresh or unavailable answer keeps the last verified report, marked stale", () => {
+  const newest = { availability: "AVAILABLE", asOf: "2026-11-08T12:00:30Z" } as RebuildCohortsReport;
+  const earlier = { availability: "AVAILABLE", asOf: "2026-11-08T12:00:00Z" } as RebuildCohortsReport;
+  const unavailable = { availability: "UNAVAILABLE", asOf: "2026-11-08T12:00:30Z", reason: "SNAPSHOT_ADVANCED" } as RebuildCohortsReport;
+  assert.deepEqual(displayedReport(newest, earlier, false), { report: newest, stale: false });
+  assert.deepEqual(displayedReport(newest, earlier, true), { report: newest, stale: true });
+  assert.deepEqual(displayedReport(unavailable, earlier, false), { report: earlier, stale: true });
+  assert.deepEqual(displayedReport(undefined, earlier, true), { report: earlier, stale: true });
+});
+
+test("with nothing verified yet, the latest answer stands and is not called stale", () => {
+  const unavailable = { availability: "UNAVAILABLE", asOf: "2026-11-08T12:00:30Z", reason: "SNAPSHOT_ADVANCED" } as RebuildCohortsReport;
+  assert.deepEqual(displayedReport(unavailable, null, false), { report: unavailable, stale: false });
+  assert.deepEqual(displayedReport(undefined, null, true), { report: undefined, stale: false });
 });
 
 test("decimal strings add without floating point drift", () => {

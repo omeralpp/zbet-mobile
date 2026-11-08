@@ -100,7 +100,7 @@ test("the log composes 7/30 days from single days, says how many it holds and ne
   const log = await readFile(new URL("../components/RebuildDecisionLog.tsx", import.meta.url), "utf8");
   assert.match(log, /rebuildReportWindowQuery\(1, period\.through/);
   assert.doesNotMatch(log, /rebuildReportWindowQuery\(period\.days/);
-  assert.match(log, /useReportDays\(period, today, daily\.data, multiDay\)/);
+  assert.match(log, /useReportDays\(period, today, dailyShown\.report, multiDay\)/);
   for (const text of ["Yüklenen gün:", "gün alınamadı", "Alınamayan günleri yeniden dene", "Kısmi toplam:"]) assert.ok(log.includes(text), text);
   const details = await readFile(new URL("../components/RebuildEvidencePanel.tsx", import.meta.url), "utf8");
   assert.ok(details.includes("Çok günlü görünüm günlük raporların toplamıdır"));
