@@ -31,8 +31,11 @@ retains that dependency). The latest bounded native probe at08:59:50Z observed
 a04:10:12.267Z cycle, about4h50m old; it did not establish complete-source or
 15-second latency acceptance. This is dated evidence, not present SAP state.
 The owner requested activation/publication, but the source gate is not waived.
-The C1 operator is callable only, without a daemon; client delivery does not
-activate it. C2/C3 remain unvalidated/unavailable. The populated component QA
+The bounded C1 runner is implemented and tested locally with a frozen watchlist
+and cumulative budgets; no daemon, trial or collector is enabled. Its current
+draft watchlist is empty. Client delivery does not activate it; fresh native
+collection/computation and protocol/runtime approvals remain required.
+C2/C3 remain unvalidated/unavailable. The populated component QA
 was explicitly synthetic; screenshot capture failed and no populated real C1
 decision was accepted. See [the implementation checkpoint](C1_HISTORY_AND_ADAPTER_2026-11-08.md)
 and BTB Logs `selection_programme_20261108/activation_release_20261109/`.
