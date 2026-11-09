@@ -1,6 +1,6 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-11-08
+Son güncelleme: 2026-11-09
 Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 5F26C70`
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
@@ -8,6 +8,20 @@ Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THR
 and the dated release reports/receipts.
 
 ## Son checkpoint
+
+Owner direction9 November: do not require a USB/ADB device connection. Continue
+with the unchanged Android bundle/shared-code checks locally; owner-run Android
+installation/smoke follows an approved coordinated release. The companion web
+delivery and release approvals remain. A one-shot native probe connected but
+found the latest eligible cycle about113 minutes old, so live acceptance remains
+unmet. Populated-history component DOM checks now pass with a clearly synthetic
+BFF fixture (state change, pending/error/empty/foreign-key cases, narrow/desktop,
+dark/light). Browser screenshot capture failed, so no new visual/native/live
+acceptance is claimed. The owner replied “Approve” to the9 November validation
+package's scoped three-repository commit/push request; no activation or release
+is included.
+Evidence: BTB Logs `selection_programme_20261108/native_acceptance_20261109/`
+and `populated_history_20261109/` under the active cutover observations.
 
 Selection Lab (TASK-0230/TASK-0229) now also has a read-only C1 history endpoint
 and shared Android/web historical-decision panel. Original quotes remain history,
