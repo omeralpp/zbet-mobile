@@ -1,7 +1,7 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-11-09
-Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 5F26C70`
+Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 49EE2E5`
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md)
@@ -9,34 +9,35 @@ and the dated release reports/receipts.
 
 ## Son checkpoint
 
-Owner direction9 November: do not require a USB/ADB device connection. Continue
-with the unchanged Android bundle/shared-code checks locally; owner-run Android
-installation/smoke follows an approved coordinated release. The companion web
-delivery and release approvals remain. A one-shot native probe connected but
-found the latest eligible cycle about113 minutes old, so live acceptance remains
-unmet. Populated-history component DOM checks now pass with a clearly synthetic
-BFF fixture (state change, pending/error/empty/foreign-key cases, narrow/desktop,
-dark/light). Browser screenshot capture failed, so no new visual/native/live
-acceptance is claimed. The owner replied “Approve” to the9 November validation
-package's scoped three-repository commit/push request; no activation or release
-is included.
-Evidence: BTB Logs `selection_programme_20261108/native_acceptance_20261109/`
-and `populated_history_20261109/` under the active cutover observations.
+Selection Lab is delivered on Android and desktop web from clean pushed source
+**49ee2e5f864eb11d89c1b7ceb995e6f5febbd17f**. Batch:
+`client-49ee2e5f864eb11d89c1b7ceb995e6f5febbd17f-40F6490FEA4A-CC6653A39FE6`.
+The owner accepted the exact private APK with “APK sorunsuz calisti”, then the
+published web with “Web works properly”. Canonical paired completion passed on
+9 November. These are owner smoke attestations, without a device-side hash
+measurement. No USB/ADB connection was required, as directed by the owner.
 
-Selection Lab (TASK-0230/TASK-0229) now also has a read-only C1 history endpoint
-and shared Android/web historical-decision panel. Original quotes remain history,
-with `currentOffer=false`; the live comparison keeps its15-second expiry.
-The BTB-owned complete-capture operator is implemented and tested locally, with
-no actual registration, live collection, runtime activation or client release.
-The owner explicitly approved this continuation's four-repository commit/push
-through popup `call_3405b9e31f434f29bd3c13e51155047b`; no activation or release
-is included. Mobile canonical checks/Doctor, Android bundle and verified
-web export pass. Empty-history browser layouts pass in dark/light at narrow and
-desktop widths; populated browser/live-publication and Android-device smokes
-remain outstanding (ADB:0 connected devices).
-See [the continuation checkpoint](C1_HISTORY_AND_ADAPTER_2026-11-08.md).
-The accepted pair and running BFF below are the recorded baseline, not a new
-live-read claim; this continuation changes neither deployment.
+The shared panel and read-only BFF expose comparison and first-C1 history.
+Historical quotes have `currentOffer=false`; live comparison retains its
+15-second expiry. BFF **8f519232add09d3114682b1d833e700ec2726596** is published;
+the final supervised replacement was PID14504 to41016. The publisher verified
+57 served files, zero mismatches; shell/deep-link/API-refusal and public
+Cloudflare Access checks pass. Receipts in `btb-codex/docs/evidence/`:
+`selection-lab-*-2026-11-09.json`. COMPLETE and STATUS establish the final state;
+preparation/delivery/publication receipts retain their original interim states.
+
+Actual C1 registration and production remain **inactive** (TASK-0229; TASK-0230
+retains that dependency). The latest bounded native probe at08:59:50Z observed
+a04:10:12.267Z cycle, about4h50m old; it did not establish complete-source or
+15-second latency acceptance. This is dated evidence, not present SAP state.
+The owner requested activation/publication, but the source gate is not waived.
+The C1 operator is callable only, without a daemon; client delivery does not
+activate it. C2/C3 remain unvalidated/unavailable. The populated component QA
+was explicitly synthetic; screenshot capture failed and no populated real C1
+decision was accepted. See [the implementation checkpoint](C1_HISTORY_AND_ADAPTER_2026-11-08.md)
+and BTB Logs `selection_programme_20261108/activation_release_20261109/`.
+
+### Previous pair: 5F26C70 Super report
 
 Accepted source: **5f26c706e5ecadccc79da81bce02b4108ac0284a** (master
 fast-forwarded from 26780bc). Batch:
@@ -110,21 +111,27 @@ retrospective release credit. Their reports and receipts are preserved.
 
 | Repository | Source checkpoint | Meaning |
 | --- | --- | --- |
-| zbet-mobile / master | 5f26c706e5ecadccc79da81bce02b4108ac0284a | Accepted artifact source; subsequent handoff-only commits do not rebuild/release the app |
-| zbet-cap / main | d8d652fee939df08e097bae2570cff8c09fa906d | Running BFF with report proof reuse; previous revision 178ca6d |
+| zbet-mobile / master | 49ee2e5f864eb11d89c1b7ceb995e6f5febbd17f | Accepted artifact source; subsequent handoff-only commits do not rebuild/release the app |
+| zbet-cap / main | 8f519232add09d3114682b1d833e700ec2726596 | Running BFF with Selection Lab/history and launcher paths; retains the report proof reuse |
 | zbet-abap / main | 5751cbfdaf705478d21459de533a62ca19c4a101 | Previously accepted reader repair, policy71AC/producerDE3C; unchanged by this Mobile batch |
 
 Android and desktop use `api.surklase.com`; local BFF origin127.0.0.1:4004.
 Cloudflare Access protects `app.surklase.com`. This remains owner-only DEV.
-Web publications replaced the BFF process (PID24544 to8004 for ED30743, then
-to26348 for 6A416A1, then to12244 for 5F26C70 after the approved d8d652f restart to4668) through its scheduled task;
-`/health` reported ok with pilot auth and web, SAP backend and notifications
-configured.
-Published root: `C:/Users/omera/AppData/Local/BTB Mobile Next/web/releases/20261108T104911Z-5f26c70`
-(previous `20261107T185107Z-6a416a1`, `20261107T182409Z-ed30743` and `20261104T091348Z-e549cb0` preserved).
+The Selection Lab source update replaced PID12244 with14504; its web
+publication replaced14504 with41016 through the existing scheduled task.
+Local/public health passed. Published root:
+`C:/Users/omera/AppData/Local/BTB Mobile Next/web/releases/20261109T095638Z-49ee2e5`.
+The previous5F26C70 web root and earlier versioned releases remain preserved.
 
 ## Doğrulama
 
+- 49EE2E5: the unchanged application inputs had passed the canonical Mobile
+  checks/Doctor, Android bundle and BFF tests/build. The final edge web export
+  and signed ARM64 APK were built and paired from the clean pushed commit.
+  The two-line BFF launcher correction passed syntax,19 BFF tests and21 process
+  checks under each of PowerShell7 and Windows PowerShell5.1. Both owner smokes
+  and canonical paired completion pass. Real C1 source/decision acceptance is
+  still unmet; synthetic DOM checks do not supply it.
 - 5F26C70: the full canonical gate passed, Expo Doctor included, on the identical
   content before commit; the web export was rebuilt and verified from the
   committed source. BFF d8d652f: 721 tests. Publisher verified all served files,
@@ -150,24 +157,28 @@ complete live-feed availability or universal defect absence.
 
 ## Final yerel pilot APK
 
-- Accepted APK: `btb-mobile-next-arm64-super-report-5f26c70.apk`
-- Source: `5f26c706e5ecadccc79da81bce02b4108ac0284a`
-- SHA-256: `DE08B3613F0DD2961E77F4B69D02F5DF9D7FB1AF5933912EA5D54E2E0EB78CA3`
-- Size/ABI:50,609,985 bytes, ARM64; certificate `FAC61745…3B9C` unchanged
-- Matching web tree: `06513353370C32582F3715E5F4BB61691C1589375837D2E26050B4484D2CF3B7`
-- Web release: `20261108T104911Z-5f26c70`
-- Private Drive file: `1pZtL3jqQ9pb99DFJSzSUu1ElOW9U5hbc`
+- Accepted APK: `btb-mobile-next-arm64-selection-lab-49ee2e5.apk`
+- Source: `49ee2e5f864eb11d89c1b7ceb995e6f5febbd17f`
+- SHA-256: `40F6490FEA4A470A636FBBF12778370AA2BFF38D6BB4A38E2E5686693E1DF7CA`
+- Size/ABI:50,630,161 bytes, ARM64; certificate `FAC61745…3B9C` unchanged
+- Matching web tree: `CC6653A39FE6E7FF1C146AC01984200E1FA091C3ECA076D164CEEB9F23F1F017`
+- Web release: `20261109T095638Z-49ee2e5`
+- Private Drive file: `19o_O6UnlyiEAsksj-sW5xaCdjCkOLkmr`
 - Pair: `COMPLETE`, both owner smokes accepted
 
-Delivery used `deliver-apk-drive.ps1` through the configured `btbdrive` rclone
-remote; no sharing link, policy or authentication configuration changed.
+Delivery used the connected Google Drive upload into the existing private
+BTB APK folder because the local rclone config/remote was absent. Owner-only
+permission metadata and an authenticated Windows HTTPS streamed download
+verified exact size/SHA-256. No local readback copy, sharing link, policy or
+authentication configuration change was created.
 
 After each acceptance and COMPLETE, the superseded local APK was removed under
 the owner's29 October retention rule: E549 (`FDBF2981…367C`) for ED30743, then
-ED30743 (`D303F543…D003`,50,608,225 bytes) for 6A416A1, then 6A416A1 (`7A512C0C…02D8`,50,608,417 bytes) for 5F26C70. 5F26C70 is the sole
+ED30743 (`D303F543…D003`,50,608,225 bytes) for 6A416A1, then 6A416A1 (`7A512C0C…02D8`,50,608,417 bytes) for 5F26C70, then5F26C70
+(`DE08B361…8CA3`,50,609,985 bytes) for49EE2E5. 49EE2E5 is the sole
 permanent local APK in the artifact directory. Config/hash/delivery/acceptance
 receipts, source, cloud copies (6A416A1 Drive file `1cJgY9SbY5mfjpasomEHWEJijAT82Wwva`, ED30743 Drive file `1QPScFiQbZZyOjvtbRRLDA_vKTMGg8GIP`,
-E549 `1woDYD2ZCPgDf0nhEjRbe4viQF3ERQQMe`) and versioned web releases remain preserved.
+E549 `1woDYD2ZCPgDf0nhEjRbe4viQF3ERQQMe`,5F26C70 `1pZtL3jqQ9pb99DFJSzSUu1ElOW9U5hbc`) and versioned web releases remain preserved.
 
 ## Açık observation / blokajlar
 
@@ -193,6 +204,12 @@ Probability work TASK-0150/0153/0190 remains retired without success credit.
 No unrelated deferred item was implemented or closed.
 
 ## Exact next steps
+
+The paired Selection Lab release is complete. Actual challenger delivery remains
+dependent on BTB-owned TASK-0229 source/latency acceptance and real C1
+registration/execution; TASK-0230 retains that dependency. C2/C3 require their
+separate scientific/identity gates. Do not recreate owner smoke-wait tasks or
+infer model success from this UI release.
 
 Continue normal owner observation. Record concrete client findings in
 OBSERVATION_LOG.md; reopen the original task on evidence of recurrence.
