@@ -27,15 +27,20 @@ Cloudflare Access checks pass. Receipts in `btb-codex/docs/evidence/`:
 preparation/delivery/publication receipts retain their original interim states.
 
 Actual C1 registration and production remain **inactive** (TASK-0229; TASK-0230
-retains that dependency). The latest bounded native probe at08:59:50Z observed
-a04:10:12.267Z cycle, about4h50m old; it did not establish complete-source or
-15-second latency acceptance. This is dated evidence, not present SAP state.
+retains that dependency). The10 November bounded probe at18:22:19Z returned
+a9 November22:06:12.737Z cycle, about20h16m old; no complete frame/computation
+was admitted. TASK-0229's next review is11 November. This is dated evidence,
+not present SAP state or proof that all feeds stopped.
 The owner requested activation/publication, but the source gate is not waived.
 The bounded C1 runner is implemented and tested locally with a frozen watchlist
 and cumulative budgets; no daemon, trial or collector is enabled. Its current
 draft watchlist is empty. Client delivery does not activate it; fresh native
 collection/computation and protocol/runtime approvals remain required.
-C2/C3 remain unvalidated/unavailable. The populated component QA
+C2/C3 remain unvalidated/unavailable. The10 November offline evaluation adds
+paired diagnostics on388 of427 training fixtures;39 fail the unchanged team
+sample guard and zero qualify as historical validation. Model coefficients and
+client artifacts are unchanged. Its prospective protocol is a non-executable
+draft; no forecast ledger or validated alternative is delivered. The populated component QA
 was explicitly synthetic; screenshot capture failed and no populated real C1
 decision was accepted. See [the implementation checkpoint](C1_HISTORY_AND_ADAPTER_2026-11-08.md)
 and BTB Logs `selection_programme_20261108/activation_release_20261109/`.
