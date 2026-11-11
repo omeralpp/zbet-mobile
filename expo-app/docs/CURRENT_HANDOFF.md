@@ -36,8 +36,7 @@ differs per surface. No BFF, SAP or model change: BFF source stays
 process once (PID 19168 to 31328). The publisher verified 57 served files with
 zero mismatches; shell, deep link, API refusal and the public Cloudflare
 Access redirect pass. Receipts in `btb-codex/docs/evidence/`:
-`ux-review-*-2026-11-11.json`, uncommitted there because that repo held another
-session's uncommitted `state/task-registry.json` change.
+`ux-review-*-2026-11-11.json`, committed there as `1612fe8`.
 
 Web review before the APK was nine synthetic-data screenshots in chat, not a
 live preview opened by the owner; the owner approved both deliveries on that
