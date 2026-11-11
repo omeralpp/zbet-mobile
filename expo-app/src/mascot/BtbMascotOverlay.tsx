@@ -12,6 +12,7 @@ import { jinxSleepDelayMs } from "./idle-behavior";
 import { subscribeMascotInteraction } from "./interaction-activity";
 import { allowsAmbientBibi, bibiPresence } from "./bibi-presence";
 import { resolveBubblePosition } from "./bubble-position";
+import { discoveryHintBody } from "./feature-discovery";
 import { useDiscovery } from "./DiscoveryProvider";
 import { useJinxMotion } from "./use-jinx-motion";
 import { useJinxDailyQuip } from "./use-jinx-daily-quip";
@@ -582,7 +583,7 @@ export function BtbMascotOverlay() {
             <Text style={styles.tutorialTitle}>
               {discovery.activeHint.title}
             </Text>
-            <Text style={styles.tutorialBody}>{discovery.activeHint.body}</Text>
+            <Text style={styles.tutorialBody}>{discoveryHintBody(discovery.activeHint, Platform.OS)}</Text>
             <View style={styles.tutorialActions}>
               <Pressable
                 accessibilityRole="button"

@@ -11,6 +11,7 @@ import { AppState, Platform, type AppStateStatus } from "react-native";
 import { useNotificationRuntime } from "@/src/notifications/notification-runtime";
 import { refreshPerformanceWidgetFromApi } from "@/src/widgets/performance-widget";
 import { AuthProvider } from "@/src/auth/AuthProvider";
+import { ListDensityProvider } from "@/src/preferences/ListDensityProvider";
 import { LiveStarFilterProvider } from "@/src/preferences/LiveStarFilterProvider";
 import { SuperStarFilterProvider } from "@/src/preferences/SuperStarFilterProvider";
 import { JinxPreferencesProvider } from "@/src/mascot/JinxPreferencesProvider";
@@ -65,7 +66,7 @@ export function AppProviders({ children }: PropsWithChildren) {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <LiveStarFilterProvider>
-          <SuperStarFilterProvider><JinxPreferencesProvider>{children}</JinxPreferencesProvider></SuperStarFilterProvider>
+          <SuperStarFilterProvider><ListDensityProvider><JinxPreferencesProvider>{children}</JinxPreferencesProvider></ListDensityProvider></SuperStarFilterProvider>
         </LiveStarFilterProvider>
       </AuthProvider>
     </QueryClientProvider>

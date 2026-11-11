@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { accessibleColors } from "./accessible-colors";
+import { accessibleColors, statusText } from "./accessible-colors";
 import { experiencePalettes } from "./experience-palette";
 import { surfaceGradients } from "./surface";
 
@@ -23,5 +23,20 @@ test("body, secondary and action text clear 4.5:1 on approved reading surfaces",
       for (const text of [palette.text, palette.muted, accessibleColors[mode].textSubtle, palette.blue])
         assert.ok(contrast(text, surface) >= 4.5, `${mode} ${text} on ${surface}`);
     }
+  }
+});
+test("unearned stars clear 3:1 on the card surface in both themes (NXT-OBS-257)", () => {
+  for (const mode of ["dark", "light"] as const) {
+    const ratio = contrast(accessibleColors[mode].starOff, experiencePalettes[mode].surface);
+    assert.ok(ratio >= 3, `${mode} star-off reads ${ratio.toFixed(2)}:1`);
+    // Still clearly quieter than an earned star's gold.
+    assert.ok(ratio < contrast(experiencePalettes[mode].warning, experiencePalettes[mode].surface), mode);
+  }
+});
+test("positive status text clears 4.5:1 on its soft fill and on cards (NXT-OBS-256)", () => {
+  for (const mode of ["dark", "light"] as const) {
+    const palette = experiencePalettes[mode];
+    for (const surface of [palette.accentSoft, palette.surface])
+      assert.ok(contrast(statusText[mode].positive, surface) >= 4.5, `${mode} positive on ${surface}`);
   }
 });

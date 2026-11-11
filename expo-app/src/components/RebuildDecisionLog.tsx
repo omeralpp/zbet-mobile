@@ -9,6 +9,8 @@ import { useReportDays } from "@/src/api/use-report-days";
 import type { RebuildCohortsReport, RebuildLogRecord } from "@/src/api/rebuild-schemas";
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
+import { usesCompactCards } from "@/src/preferences/list-density";
+import { useListDensity } from "@/src/preferences/ListDensityProvider";
 import { useSuperStarFilter } from "@/src/preferences/SuperStarFilterProvider";
 import { colors, iconSizes, interaction, radii, semantic, shadows, spacing, typeScale } from "@/src/theme/theme";
 import { starFilterMinRating, starMetricLabel } from "@/src/utils/decision-filters";
@@ -173,12 +175,44 @@ function teamsText(record: RebuildLogRecord): string {
  * `day` adds the publication day in multi-day views; `cohortLabel` tags the
  * record only when the listed records mix policy cohorts.
  */
-export function RebuildDecisionCard({ record, onPress, cohortLabel, day = false }: { record: RebuildLogRecord; onPress: () => void; cohortLabel?: string | undefined; day?: boolean }) {
+export function RebuildDecisionCard({ record, onPress, cohortLabel, day = false, dense = false }: { record: RebuildLogRecord; onPress: () => void; cohortLabel?: string | undefined; day?: boolean; dense?: boolean }) {
   const tone = record.result.net === null ? "neutral" : unitsTone(record.result.net);
   const published = publishedParts(record.publishedAt);
   const pending = record.result.state === "PENDING";
   const unverified = namesUnverified(record.match);
   const fixture = fixtureLine(record.match), score = finalScoreText(record.match);
+  // The short form (NXT-OBS-251): outcome, match and one line of decision facts.
+  // Kickoff, league and the evidence line stay on the decision page.
+  if (dense) return (
+    <Pressable
+      accessibilityHint="Super kararı sayfasını açar"
+      accessibilityLabel={`${teamsText(record)}, ${formatSelection(record.market)}, ${record.stars} yıldız, ${resultPresentation[record.result.state].label}${score ? `, ${score}` : ""}`}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed, hovered }) => [styles.card, styles.cardDense, hovered && styles.cardHover, pressed && styles.pressed]}
+    >
+      <SurfaceMaterial accent={pending ? semantic.intelligence : undefined} radius={20} />
+      <View style={styles.rowBetween}>
+        <RatingStars rating={record.stars} size={14} />
+        <View style={styles.resultGroup}>
+          {score ? <Text style={styles.finalScore}>{score}</Text> : null}
+          <ResultPill state={record.result.state} />
+        </View>
+      </View>
+      <View style={styles.denseBody}>
+        <View style={styles.cardMarket}>
+          <Text numberOfLines={1} style={[styles.team, unverified && styles.unverified]}>{unverified ? "Takım adları doğrulanamadı" : teamsText(record)}</Text>
+          <Text numberOfLines={1} style={styles.footLabel}>
+            {day ? `${published.day} · ` : ""}{published.time} · {formatSelection(record.market)} · {formatQuote(record.quote)} · {record.minute}′ · {record.homeScore}–{record.awayScore}
+          </Text>
+        </View>
+        <View style={[styles.figure, styles.units]}>
+          <Text style={[styles.net, { color: tone === "neutral" ? colors.textMuted : toneColor[tone] }]}>{formatUnits(record.result.net)}</Text>
+          <Text style={styles.footLabel}>birim</Text>
+        </View>
+      </View>
+    </Pressable>
+  );
   return (
     <Pressable
       accessibilityHint="Super kararı sayfasını açar"
@@ -362,6 +396,7 @@ export function RebuildDecisionLog() {
   const wide = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
   const openDecision = useOpenDecision();
   const { filter: starFilter, setFilter: setStarFilter } = useSuperStarFilter();
+  const { density } = useListDensity();
   const [tab, setTab] = useState<"ALL" | "STAR">("ALL");
   const [pendingOnly, setPendingOnly] = useState(false);
   const [choice, setChoice] = useState<LogPeriodChoice>({ kind: "today" });
@@ -648,7 +683,7 @@ export function RebuildDecisionLog() {
           const pageSummary = logSummary(available, page === "STAR" ? minStars : null);
           const pageRecords = sortLog(filterLog(records, { minStars: page === "STAR" ? minStars : null, pendingOnly }), tableSort);
           const card = (item: RebuildLogRecord) => (
-            <RebuildDecisionCard cohortLabel={cohort ? undefined : labels.get(item.decisionId)} day={multiDay} onPress={() => openDecision(item)} record={item} />
+            <RebuildDecisionCard cohortLabel={cohort ? undefined : labels.get(item.decisionId)} day={multiDay} dense={usesCompactCards(density, false)} onPress={() => openDecision(item)} record={item} />
           );
           return (
             <FlatList
@@ -799,6 +834,8 @@ const styles = StyleSheet.create({
   summaryNet: { ...typeScale.metric, fontSize: 26, lineHeight: 28, fontWeight: "800" },
   card: { gap: spacing.sm, padding: 14, borderRadius: 20, borderWidth: 1, borderColor: colors.borderSoft, ...shadows.card },
   cardHover: { borderColor: colors.border },
+  cardDense: { gap: spacing.xs, paddingVertical: 10 },
+  denseBody: { flexDirection: "row", alignItems: "flex-end", gap: spacing.md },
   teams: { flexDirection: "row", alignItems: "center", gap: spacing.sm, minWidth: 0 },
   team: { flexShrink: 1, color: colors.text, ...typeScale.identity, fontWeight: "700" },
   unverified: { color: colors.textMuted, fontStyle: "italic", fontWeight: "600" },

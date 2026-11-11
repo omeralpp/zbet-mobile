@@ -89,7 +89,7 @@ export function numericFont(fontWeight: FontWeight = fontWeights.bold) {
  * `400`/`500`, which is what gives the heavy roles something to be heavy
  * against.
  */
-export const typeScale = {
+const baseTypeScale = {
   /** Hero match score on Match Detail. The largest thing in the product. */
   display: {
     fontFamily: fontFamilies.numeric,
@@ -212,6 +212,49 @@ export const typeScale = {
     letterSpacing: 0.4
   }
 } as const satisfies Record<string, TypeRole>;
+
+/** The widest size that still counts as small text. */
+export const smallTextCeiling = 13;
+
+/** Viewport width from which the desktop layouts, and the desktop step, apply. */
+export const desktopTypeMinWidth = 1200;
+
+/**
+ * The same roles one step larger where they are small (NXT-OBS-252).
+ *
+ * On a desktop monitor the 11–13 pt roles carried about two thirds of a match
+ * detail's text at phone size, read from further away. Only those roles move,
+ * by one point with their line box, so headings, scores and metrics keep the
+ * proportions the layouts were drawn with.
+ */
+export function desktopTypeStep<Scale extends Record<string, TypeRole>>(scale: Scale): Scale {
+  return Object.fromEntries(
+    Object.entries(scale).map(([name, role]) => [
+      name,
+      role.fontSize <= smallTextCeiling
+        ? { ...role, fontSize: role.fontSize + 1, lineHeight: role.lineHeight + 1 }
+        : role
+    ])
+  ) as Scale;
+}
+
+/**
+ * Whether this bundle was loaded in a desktop-width browser. Read once, like
+ * the theme: Android has no `document`, and the unit tests run without a
+ * window, so both keep the base scale.
+ */
+export function loadedOnDesktop(): boolean {
+  return (
+    typeof document !== "undefined" &&
+    typeof window !== "undefined" &&
+    typeof window.innerWidth === "number" &&
+    window.innerWidth >= desktopTypeMinWidth
+  );
+}
+
+export const typeScale: Record<keyof typeof baseTypeScale, TypeRole> = loadedOnDesktop()
+  ? desktopTypeStep(baseTypeScale)
+  : baseTypeScale;
 
 export type TypeRoleName = keyof typeof typeScale;
 

@@ -7,7 +7,7 @@ import {
 import { resolveDepth, type DepthLevel, type DepthPalette } from "./elevation";
 import { resolveSurfaceGradient } from "./surface";
 import { resolveSemanticColors } from "./semantic";
-import { accessibleColors } from "./accessible-colors";
+import { accessibleColors, statusText } from "./accessible-colors";
 import { experiencePalettes } from "./experience-palette";
 import { syncWidgetTheme } from "@/src/widgets/btb-widget";
 
@@ -54,7 +54,7 @@ const darkColors = {
   ...accessibleColors.dark,
   blue: darkBase.blue,
   blueSoft: "#123A5C",
-  green: "#4ADE80",
+  green: statusText.dark.positive,
   greenSoft: darkBase.accentSoft,
   gold: darkBase.warning,
   goldSoft: darkBase.warningSoft,
@@ -83,7 +83,7 @@ const lightColors: ThemeColors = {
   ...accessibleColors.light,
   blue: lightBase.blue,
   blueSoft: "#DCE8F7",
-  green: "#0E7C47",
+  green: statusText.light.positive,
   greenSoft: lightBase.accentSoft,
   gold: lightBase.warning,
   goldSoft: lightBase.warningSoft,

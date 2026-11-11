@@ -76,6 +76,7 @@ import {
   colors,
   fontWeights,
   iconSizes,
+  interaction,
   radii,
   semantic,
   shadows,
@@ -619,6 +620,38 @@ export function MatchDetailView({
     const chip = evidenceChips.find((candidate) => candidate.id === item.id);
     return chip && !emptyModules.has(item.id) ? [chip] : [];
   });
+  // The same shortcuts stay within reach in the pinned bar once the hero has
+  // scrolled away, with Maçın yolu first as the way back up (NXT-OBS-250).
+  const pinnedChips: { id: LiveDetailModuleId; label: string }[] = [{ id: "matchPath", label: "Maçın yolu" }, ...visibleChips];
+  const chipButton = (chip: { id: LiveDetailModuleId; label: string }, pinned: boolean) => pinned ? (
+    // The pinned chip is drawn 32 pt tall inside a 44 pt target on every surface.
+    <Pressable
+      accessibilityLabel={`${chip.label} bölümüne git`}
+      accessibilityHint={`${chip.label} bölümüne gider`}
+      accessibilityRole="button"
+      key={chip.id}
+      onPress={() => jumpToModule(chip.id)}
+      style={styles.pinnedChipTarget}
+    >
+      {({ pressed, hovered }) => (
+        <View style={[styles.chip, styles.chipPinned, hovered && styles.chipHover, pressed && styles.chipPressed]}>
+          <Text style={styles.chipText}>{chip.label}</Text>
+        </View>
+      )}
+    </Pressable>
+  ) : (
+    <Pressable
+      accessibilityLabel={`${chip.label} bölümüne git`}
+      accessibilityHint={`${chip.label} bölümüne gider`}
+      accessibilityRole="button"
+      key={chip.id}
+      onPress={() => jumpToModule(chip.id)}
+      style={({ pressed, hovered }) => [styles.chip, hovered && styles.chipHover, pressed && styles.chipPressed]}
+    >
+      <Text style={styles.chipText}>{chip.label}</Text>
+      <MaterialCommunityIcons color={colors.textMuted} name="arrow-down" size={14} />
+    </Pressable>
+  );
   const sameSet = (left: readonly string[], right: readonly string[]) =>
     left.length === right.length && left.every((id) => right.includes(id));
   const layoutChanged = layoutCustomized || !sameSet(collapsed, moduleCollapseDefaults.liveDetail);
@@ -670,6 +703,15 @@ export function MatchDetailView({
       fixedHeader={compactHeader ? <View style={styles.fixedHeader}>
         <Text style={styles.fixedTitle}>{match.homeTeam} – {match.awayTeam}</Text>
         <Text style={styles.fixedValue}>{match.homeScore}–{match.awayScore} · {formatElapsed(match.status, match.elapsed, match.clock)} · {formatSelection(heroMarket) || "Seçim yok"}{hero ? ` · ${hero.stateLabel}` : ""}{heroMarket ? ` · ${compactQuote}` : ""}</Text>
+        <ScrollView
+          contentContainerStyle={styles.pinnedChipRow}
+          horizontal
+          keyboardShouldPersistTaps="handled"
+          showsHorizontalScrollIndicator={false}
+          style={styles.pinnedChipScroll}
+        >
+          {pinnedChips.map((chip) => chipButton(chip, true))}
+        </ScrollView>
       </View> : null}
       scrollProps={{
         alwaysBounceVertical: true,
@@ -861,19 +903,7 @@ export function MatchDetailView({
           showsHorizontalScrollIndicator={false}
           style={styles.chipScroll}
         >
-          {visibleChips.map((chip) => (
-            <Pressable
-              accessibilityLabel={`${chip.label} bölümüne git`}
-              accessibilityHint={`${chip.label} bölümüne gider`}
-              accessibilityRole="button"
-              key={chip.id}
-              onPress={() => jumpToModule(chip.id)}
-              style={({ pressed, hovered }) => [styles.chip, hovered && styles.chipHover, pressed && styles.chipPressed]}
-            >
-              <Text style={styles.chipText}>{chip.label}</Text>
-              <MaterialCommunityIcons color={colors.textMuted} name="arrow-down" size={14} />
-            </Pressable>
-          ))}
+          {visibleChips.map((chip) => chipButton(chip, false))}
         </ScrollView>
         </>
       ) : null}
@@ -1091,6 +1121,11 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surface
   },
+  // Pinned under the header: one short row that scrolls sideways.
+  chipPinned: { minHeight: 32, paddingHorizontal: 12, gap: 0 },
+  pinnedChipTarget: { minHeight: interaction.minTouchTarget, justifyContent: "center" },
+  pinnedChipScroll: { marginHorizontal: -spacing.lg },
+  pinnedChipRow: { gap: spacing.sm, paddingHorizontal: spacing.lg },
   chipHover: { backgroundColor: colors.surfaceStrong },
   chipPressed: { opacity: 0.72 },
   chipText: { color: colors.text, ...typeScale.bodyCompact, fontWeight: "700" },

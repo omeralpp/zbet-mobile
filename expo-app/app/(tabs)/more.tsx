@@ -16,6 +16,7 @@ import { Screen } from "@/src/components/Screen";
 import { useAuth } from "@/src/auth/AuthProvider";
 import { runtimeConfig } from "@/src/config/runtime";
 import { designLabAvailable } from "@/src/design-lab/jinx-motion";
+import { useListDensity } from "@/src/preferences/ListDensityProvider";
 import { useJinxPreferences } from "@/src/mascot/JinxPreferencesProvider";
 import { useReducedMotion } from "@/src/theme/use-reduced-motion";
 import { resetModuleCollapse } from "@/src/layout/module-collapse-store";
@@ -226,6 +227,7 @@ function registrationErrorDetail(code: RegistrationErrorCode | undefined): strin
 export default function MoreScreen() {
   const router = useRouter();
   const jinx = useJinxPreferences();
+  const listDensity = useListDensity();
   const systemReducedMotion = useReducedMotion();
   const registration = useRegistrationState();
   const [updatingWidgets, setUpdatingWidgets] = useState(false);
@@ -350,6 +352,13 @@ export default function MoreScreen() {
         <ThemeSwitchRow
           changing={themeChanging}
           onChange={changeTheme}
+        />
+        <SwitchRow
+          detail="Canlı ve Super listeleri telefon genişliğinde kısa kartlarla daha çok satır gösterir."
+          icon="view-agenda-outline"
+          onChange={(compact) => listDensity.setDensity(compact ? "COMPACT" : "COMFORTABLE")}
+          title="Sıkı liste görünümü"
+          value={listDensity.density === "COMPACT"}
         />
         <View style={styles.jinxPreference}>
           <View style={styles.jinxHead}>
@@ -554,8 +563,8 @@ export default function MoreScreen() {
         <View style={styles.note}>
           <Text style={styles.noteText}>
             {isWeb
-              ? "Özet, canlı maç detayı ve Super karar detayındaki analiz modüllerinin üzerine gelip tutamaçla sürükleyerek ya da oklarla kendi sıranıza taşıyabilirsiniz. Sıralama bu tarayıcıda saklanır; yeni modüller otomatik eklenir."
-              : "Özet, canlı maç detayı ve Super karar detayındaki analiz modüllerini uzun basıp sürükleyerek ya da Bölümleri düzenle düğmesindeki Yukarı/Aşağı kontrolleriyle kendi sıranıza taşıyabilirsiniz. Yeni konum sesli bildirilir. Sıralama bu cihazda saklanır; yeni modüller otomatik eklenir."}
+              ? "Özet, canlı maç detayı ve Super karar detayındaki analiz modüllerinin üzerine gelip tutamaçla sürükleyerek ya da oklarla kendi sırana taşıyabilirsin. Sıralama bu tarayıcıda saklanır; yeni modüller otomatik eklenir."
+              : "Özet, canlı maç detayı ve Super karar detayındaki analiz modüllerini uzun basıp sürükleyerek ya da Bölümleri düzenle düğmesindeki Yukarı/Aşağı kontrolleriyle kendi sırana taşıyabilirsin. Yeni konum sesli bildirilir. Sıralama bu cihazda saklanır; yeni modüller otomatik eklenir."}
           </Text>
         </View>
         <SettingsRow

@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/src/auth/AuthProvider";
 import { resolveAuthEntryPresentation } from "@/src/auth/entry-policy";
 import { runtimeConfig } from "@/src/config/runtime";
+import { btbBrandMark } from "@/src/theme/brand-mark";
 import {
   colors,
   iconSizes,
@@ -57,12 +59,9 @@ export default function SignInScreen() {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
+          {/* The crest every other screen opens with, in place of a stock icon (NXT-OBS-257). */}
           <View style={styles.brandMark}>
-            <MaterialCommunityIcons
-              color={colors.green}
-              name="soccer"
-              size={iconSizes.hero}
-            />
+            <Image accessibilityIgnoresInvertColors accessible={false} source={btbBrandMark} style={styles.brandImage} />
           </View>
           <Text style={styles.eyebrow}>BTB MOBILE</Text>
           <Text style={styles.title}>Maçın ritmi,{`\n`}doğrudan cebinde.</Text>
@@ -154,6 +153,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xxl,
     paddingVertical: spacing.xxl
   },
+  brandImage: { width: 52, height: 52 },
   brandMark: {
     width: 76,
     height: 76,

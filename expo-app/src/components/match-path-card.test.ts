@@ -47,3 +47,11 @@ test("every mark is a 44 pt target and the chart owns physical input in one gest
   // Stars stay consistency and evidence quality, never a probability.
   assert.ok(source.includes("kazanma olasılığı değildir"));
 });
+
+test("the section shortcuts stay pinned once the hero scrolls away (NXT-OBS-250)", async () => {
+  const view = await read("../screens/MatchDetailView.tsx");
+  assert.ok(view.includes('[{ id: "matchPath", label: "Maçın yolu" }, ...visibleChips]'), "Maçın yolu leads the pinned row");
+  assert.ok(view.includes("{pinnedChips.map((chip) => chipButton(chip, true))}"));
+  assert.ok(view.includes("{visibleChips.map((chip) => chipButton(chip, false))}"), "the in-page row uses the same button");
+  assert.ok(view.includes("pinnedChipTarget: { minHeight: interaction.minTouchTarget"), "a 32 pt pinned chip keeps a 44 pt target");
+});

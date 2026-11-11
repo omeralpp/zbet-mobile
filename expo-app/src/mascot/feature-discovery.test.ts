@@ -4,6 +4,7 @@ import { bibiPresence } from "./bibi-presence";
 import {
   defaultDiscoveryState,
   discoveryDayStamp,
+  discoveryHintBody,
   discoveryHints,
   discoveryPacing,
   featureDiscoveryStorageKey,
@@ -185,4 +186,15 @@ test("a hint shown twice is still one entry", () => {
   const once = recordDiscoveryShown(state(), "overview-reorder", now);
   const twice = recordDiscoveryShown(once, "overview-reorder", now);
   assert.deepEqual(twice.seenHintIds, ["overview-reorder"]);
+});
+
+test("a hint names the gesture of the surface it is shown on (NXT-OBS-249)", () => {
+  const reorder = discoveryHints.find((hint) => hint.id === "overview-reorder")!;
+  assert.match(discoveryHintBody(reorder, "android"), /basılı tutup/);
+  for (const hint of discoveryHints) {
+    assert.doesNotMatch(discoveryHintBody(hint, "web"), /dokun|basılı tut/, hint.id);
+    assert.equal(discoveryHintBody(hint, "android"), hint.body, hint.id);
+    const { webBody: _webBody, ...plain } = hint;
+    assert.equal(discoveryHintBody(plain, "web"), hint.body, hint.id);
+  }
 });

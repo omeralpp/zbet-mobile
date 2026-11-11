@@ -462,7 +462,8 @@ export function RebuildDecisionView({ decisionId, matchKey: matchParam, onEdgeSw
 }
 
 const styles = StyleSheet.create({
-  screen: { paddingTop: spacing.xs, gap: spacing.md },
+  // The same room under the header as match detail (NXT-OBS-257).
+  screen: { paddingTop: spacing.lg, gap: spacing.md },
   headerAction: { width: interaction.minTouchTarget, height: interaction.minTouchTarget, alignItems: "center", justifyContent: "center", borderRadius: 14 },
   hover: { backgroundColor: colors.surfaceStrong },
   pressed: { opacity: 0.72 },

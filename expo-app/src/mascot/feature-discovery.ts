@@ -19,6 +19,8 @@ export interface DiscoveryHint {
   route: string;
   title: string;
   body: string;
+  /** Wording for the web client, where the same capability is a different gesture. */
+  webBody?: string;
 }
 
 /**
@@ -38,13 +40,15 @@ export const discoveryHints: readonly DiscoveryHint[] = [
     id: "overview-reorder",
     route: "/",
     title: "Özet düzenini sen kur",
-    body: "Bir modülü basılı tutup istediğin yere taşı. Sıralaman cihazda kalır."
+    body: "Bir modülü basılı tutup istediğin yere taşı. Sıralaman cihazda kalır.",
+    webBody: "Bir modülün üzerine gelip tutamacından sürükle ya da oklarla taşı. Sıralaman bu tarayıcıda kalır."
   },
   {
     id: "detail-panels",
     route: "/live",
     title: "Kullanmadığın modülü kapat",
-    body: "Maç detayında modül başlığına dokun; o bölüm kapanır ve kapalı kalır."
+    body: "Maç detayında modül başlığına dokun; o bölüm kapanır ve kapalı kalır.",
+    webBody: "Maç detayında modül başlığına tıkla; o bölüm kapanır ve kapalı kalır."
   },
   // `super-star-filter` retired 2026-10-21: since RB1 the Super tab opens on
   // the rebuild report, and the star filter it named lives only in the
@@ -53,9 +57,20 @@ export const discoveryHints: readonly DiscoveryHint[] = [
     id: "layout-reset",
     route: "/more",
     title: "Düzeni geri al",
-    body: "Sıralamayı ve kapattığın modülleri BTB varsayılanına tek dokunuşla döndürebilirsin."
+    body: "Sıralamayı ve kapattığın modülleri BTB varsayılanına tek dokunuşla döndürebilirsin.",
+    webBody: "Sıralamayı ve kapattığın modülleri BTB varsayılanına tek tıkla döndürebilirsin."
   }
 ];
+
+/**
+ * The hint text for the surface it is shown on.
+ *
+ * Android reorders with a long press and the web client with a handle, so a
+ * hint that names the gesture has to name the right one (NXT-OBS-249).
+ */
+export function discoveryHintBody(hint: DiscoveryHint, platform: string): string {
+  return platform === "web" && hint.webBody ? hint.webBody : hint.body;
+}
 
 /**
  * Pacing for the whole discovery surface.

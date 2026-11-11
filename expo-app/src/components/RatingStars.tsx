@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     ...textFont("700")
   },
   unearned: {
-    color: colors.border
+    color: colors.starOff
   },
   empty: {
     color: colors.textSubtle,

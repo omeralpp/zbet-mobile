@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import * as SplashScreen from "expo-splash-screen";
 import { Stack, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { usePrefetchOverview } from "@/src/api/prefetch-overview";
@@ -12,7 +12,10 @@ import { hasPlayedLaunch, markLaunchPlayed } from "@/src/components/launch-sessi
 import { BtbMascotOverlay } from "@/src/mascot/BtbMascotOverlay";
 import { notifyMascotInteraction } from "@/src/mascot/interaction-activity";
 import { DiscoveryProvider } from "@/src/mascot/DiscoveryProvider";
+import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { AndroidBackGuard } from "@/src/navigation/AndroidBackGuard";
+import { needsBackFallback } from "@/src/navigation/back-fallback";
+import { HeaderBackFallback } from "@/src/navigation/HeaderBackFallback";
 import { AppProviders } from "@/src/providers/AppProviders";
 import { useBrandFonts } from "@/src/theme/fonts";
 import { applySystemTheme } from "@/src/theme/system-theme";
@@ -30,6 +33,7 @@ function RootNavigator() {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
   const fontsReady = useBrandFonts();
+  const breakpoint = useBreakpoint();
   const [skippedLaunch] = useState(hasPlayedLaunch);
   const [launchComplete, setLaunchComplete] = useState(skippedLaunch);
   // The launch stays mounted over the app until its hand-off fade ends.
@@ -78,14 +82,18 @@ function RootNavigator() {
       <>
         <AppShell>
         <Stack
-          screenOptions={{
+          screenOptions={({ navigation, route }) => ({
             animation: reduceMotion ? "none" : "slide_from_right",
             contentStyle: { backgroundColor: colors.background },
             headerStyle: { backgroundColor: colors.backgroundElevated },
             headerTintColor: colors.text,
             headerShadowVisible: false,
-            headerBackTitle: "Geri"
-          }}
+            headerBackTitle: "Geri",
+            // A screen opened without history still gets a way up (NXT-OBS-256).
+            ...(needsBackFallback(navigation.canGoBack(), Platform.OS, breakpoint)
+              ? { headerLeft: () => <HeaderBackFallback routeName={route.name} /> }
+              : {})
+          })}
         >
           <Stack.Protected guard={hasSession}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

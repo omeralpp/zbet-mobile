@@ -24,6 +24,8 @@ import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { useCardGrid, type CardGrid } from "@/src/layout/use-card-grid";
 import { MatchDetailView } from "@/src/screens/MatchDetailView";
+import { usesCompactCards } from "@/src/preferences/list-density";
+import { useListDensity } from "@/src/preferences/ListDensityProvider";
 import { useLiveStarFilter } from "@/src/preferences/LiveStarFilterProvider";
 import { usePinnedMatches } from "@/src/preferences/use-pinned-matches";
 import { splitPinnedMatches } from "@/src/preferences/pinned-matches";
@@ -215,6 +217,9 @@ export default function LiveScreen() {
   // full detail side by side; the list then keeps a single column.
   const breakpoint = useBreakpoint();
   const splitLayout = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
+  // The phone list can use the Özet card form to fit more matches (NXT-OBS-251).
+  const { density } = useListDensity();
+  const compactCards = splitLayout || usesCompactCards(density, splitLayout);
   const grid: CardGrid = splitLayout ? singleColumnGrid : cardGrid;
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
@@ -476,7 +481,7 @@ export default function LiveScreen() {
                       <TutorialTarget id="live-first-card" key={match.key}>
                         <MatchCard
                           clock={now}
-                          compact={splitLayout}
+                          compact={compactCards}
                           dense={splitLayout}
                           insight={insightMap.get(match.key)}
                           match={match}
@@ -493,7 +498,7 @@ export default function LiveScreen() {
                     ) : (
                       <MatchCard
                         clock={now}
-                        compact={splitLayout}
+                        compact={compactCards}
                           dense={splitLayout}
                         insight={insightMap.get(match.key)}
                         key={match.key}

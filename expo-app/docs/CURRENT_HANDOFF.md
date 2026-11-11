@@ -1,11 +1,57 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-11-09
-Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 49EE2E5`
+Son güncelleme: 2026-11-11
+Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 49EE2E5 / LOCAL_BATCH_UNRELEASED`
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md)
 and the dated release reports/receipts.
+
+## Yerel batch — 11 Kasım 2026 (yayınlanmadı)
+
+`btb next cutover start` ran on 11 November for the UX review rows
+NXT-OBS-248..257, and the owner then asked to complete every row. The owner
+approved commit and push on 11 November; the work is on the pushed branch
+`claude/ux-review-batch` (from master `620f077`). `master` stays at the accepted
+source until the pair is accepted. No APK build or web publication is approved.
+The accepted pair below is unchanged and still current. Detail:
+[cutover archive](observation_archive/cutover_2026-11-11.md).
+
+- Implemented: Selection Lab folds while nothing is published and a failed read
+  no longer says `Yayın bekleniyor` (248); section shortcuts stay in the pinned
+  bar on match detail (250); `Sıkı liste görünümü` switch for the phone Canlı
+  and Super lists, default off (251); small type roles one point larger on web
+  at 1200 px and wider (252); timeline count badge clears its label (253); web
+  hint wording (249); `sen` voice (255); light theme positive text at 4.63:1
+  and a header back control without history (256); unearned stars at 3.2:1,
+  Toto filter, Super detail spacing, not-found wording and sign-in crest (257).
+- Files: `app/_layout.tsx`, `app/sign-in.tsx`, `app/(tabs)/` (`live.tsx`,
+  `more.tsx`, `toto.tsx`), `src/components/` (`SelectionLab.tsx`,
+  `selection-lab-view.ts`, `MatchPathCard.tsx`, `match-path-labels.ts`,
+  `RebuildDecisionLog.tsx`, `RatingStars.tsx`, `RouteNotFound.tsx`),
+  `src/screens/` (`MatchDetailView.tsx`, `RebuildDecisionView.tsx`),
+  `src/mascot/`, `src/navigation/` (`back-fallback.ts`,
+  `HeaderBackFallback.tsx`), `src/preferences/` (`list-density.ts`,
+  `ListDensityProvider.tsx`), `src/providers/AppProviders.tsx`, `src/theme/`
+  (`accessible-colors.ts`, `theme.ts`, `typography.ts`), their tests and these
+  docs. No BFF, SAP or model change.
+- Checks: `invoke-mobile-check.ps1 -BundleOnly` passed (TypeScript, ESLint, 830
+  unit tests, Expo Doctor, Android production JS bundle, verified edge web
+  export and secret scan). Browser smoke at 390/820/1200/1440 px, both themes,
+  synthetic data.
+- Not done: Android device smoke. The back control, pinned bar, compact lists
+  and folded panel are not verified on a phone, and the sign-in crest is not
+  rendered anywhere. `dist-web` holds this local dirty export; the published
+  web root is untouched.
+- Platform exceptions: back control on Android at every width and on web only
+  below 768 px; the text step on desktop web only; hint wording per surface.
+- No UX review row waits on an owner decision any more.
+- Next: the coordinated pair from the branch tip (APK build and web publication
+  approvals together), exact APK install, web publish and both smokes; `master`
+  fast-forwards after both are accepted. Run bookkeeping in `btb-codex` was not written: that repo
+  held another session's uncommitted `state/task-registry.json` change. Keep the
+  work on a branch that tracks a remote: `btb status` fails on a local branch
+  with no upstream (`BtbAgent.Core.psm1`, ahead/behind check).
 
 ## Son checkpoint
 

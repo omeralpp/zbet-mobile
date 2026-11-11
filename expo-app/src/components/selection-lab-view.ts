@@ -33,6 +33,30 @@ const reasons: Record<string, string> = {
 };
 export const selectionReason = (reason: string) => reasons[reason] ?? "Bu yöntem için doğrulanmış seçim yok.";
 
+/**
+ * Whether the lab has anything of its own to show.
+ *
+ * Without a current comparison every arm is a placeholder, and without a first
+ * recorded decision the history card is one too. The panel then folds to its
+ * heading and one status line instead of repeating the same sentence per arm
+ * above the match story (NXT-OBS-248).
+ */
+export function selectionLabHasContent(current: unknown, firstDecision: unknown): boolean {
+  return Boolean(current) || Boolean(firstDecision);
+}
+
+/**
+ * The status an arm without a selection shows, and its supporting note.
+ *
+ * A failed read is not a pending publication: the lab cannot know what the
+ * producer holds, so it says the read failed instead of "Yayın bekleniyor".
+ */
+export function selectionArmStatus(arm: { status: string; reason: string }, failed: boolean): { headline: string; note: string | null } {
+  if (failed) return { headline: "Karşılaştırma alınamadı", note: null };
+  const headline = arm.status === "ABSTAIN" ? "Seçim yapmadı" : arm.status === "STOPPED" ? "Deney durduruldu" : "Yayın bekleniyor";
+  return { headline, note: selectionReason(arm.reason) };
+}
+
 /** Fail closed on errors, expiry, key changes and score/card/clock revisions. */
 export function currentSelectionComparison(data: SelectionComparison | undefined, match: MatchDetail, now: number, failed = false) {
   if (!data || failed || data.availability !== "AVAILABLE" || data.matchKey !== match.key || !data.asOf || !data.expiresAt || !data.state ||

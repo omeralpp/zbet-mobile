@@ -4,7 +4,7 @@ import test from "node:test";
 import { emptySelectionComparison, selectionComparisonSchema, type SelectionComparison } from "@/src/api/selection-comparison-schema";
 import { mockMatches } from "@/src/api/mock-data";
 import type { MatchDetail } from "@/src/api/schemas";
-import { currentSelectionComparison, selectionReason } from "./selection-lab-view";
+import { currentSelectionComparison, selectionArmStatus, selectionLabHasContent, selectionReason } from "./selection-lab-view";
 
 const fixture = () => selectionComparisonSchema.parse(JSON.parse(readFileSync(new URL("../../contracts/selection-comparison.test-fixture.json", import.meta.url), "utf8")));
 function match(data: SelectionComparison): MatchDetail {
@@ -48,4 +48,18 @@ test("both surfaces withhold previous data after failure, expiry, key, score, ca
     assert.equal(currentSelectionComparison(data, changed, now), null);
   assert.equal(currentSelectionComparison(undefined, current, now), null);
   assert.ok(selectionReason("FORM_UNAVAILABLE").includes("takım geçmişi"));
+});
+
+test("the lab folds while every arm is a placeholder and never while it has content (NXT-OBS-248)", () => {
+  assert.equal(selectionLabHasContent(null, null), false);
+  assert.equal(selectionLabHasContent(fixture(), null), true);
+  assert.equal(selectionLabHasContent(null, { market: "Ms1X" }), true);
+});
+
+test("a failed read is never described as a pending publication (NXT-OBS-248)", () => {
+  const arm = emptySelectionComparison("2026-11-08:999999:20:00:00").proposals[0]!;
+  assert.deepEqual(selectionArmStatus(arm, false), { headline: "Yayın bekleniyor", note: selectionReason("NOT_PUBLISHED") });
+  assert.deepEqual(selectionArmStatus(arm, true), { headline: "Karşılaştırma alınamadı", note: null });
+  assert.equal(selectionArmStatus({ status: "ABSTAIN", reason: "NO_SELECTION" }, false).headline, "Seçim yapmadı");
+  assert.equal(selectionArmStatus({ status: "STOPPED", reason: "TRIAL_STOPPED" }, false).headline, "Deney durduruldu");
 });

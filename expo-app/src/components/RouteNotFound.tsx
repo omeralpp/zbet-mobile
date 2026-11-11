@@ -17,7 +17,7 @@ export function RouteNotFound() {
       <Image accessible={false} resizeMode="contain" source={jinx} style={styles.jinx} />
       <Text style={styles.eyebrow}>BTB MOBILE</Text>
       <Text accessibilityRole="header" style={styles.title}>Ekran bulunamadı</Text>
-      <Text style={styles.message}>İstenen mobil rota mevcut değil veya bildirim bağlantısı artık geçerli değil.</Text>
+      <Text style={styles.message}>Bu ekran mevcut değil veya bildirim bağlantısı artık geçerli değil.</Text>
       <Pressable
         accessibilityRole="button"
         onPress={() => router.replace("/")}

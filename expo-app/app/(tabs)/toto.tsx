@@ -80,7 +80,8 @@ export default function TotoScreen() {
         <ScrollView contentContainerStyle={styles.filters} horizontal showsHorizontalScrollIndicator={false} style={styles.filterBar}>
           <FilterChip count={programs.length} label="Tümü" onPress={() => setFilter("ALL")} selected={filter === "ALL"} />
           {statusFilters
-            .filter((option) => option.value !== "ERROR" || counts.ERROR > 0)
+            // An empty status is not a choice; the selected one stays so it can be left (NXT-OBS-257).
+            .filter((option) => counts[option.value] > 0 || filter === option.value)
             .map((option) => (
               <FilterChip
                 count={counts[option.value]}

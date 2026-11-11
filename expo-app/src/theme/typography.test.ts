@@ -2,9 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   fontFamilies,
+  desktopTypeStep,
   hasReadableLineBox,
+  loadedOnDesktop,
   minimumFontSize,
   renderableWeights,
+  smallTextCeiling,
   typeScale,
   type TypeRole
 } from "./typography";
@@ -79,4 +82,25 @@ test("only the hero numeric tightens and small text opens up", () => {
   assert.ok(typeScale.score.letterSpacing <= 0);
   assert.ok(typeScale.micro.letterSpacing > 0);
   assert.ok(typeScale.label.letterSpacing > 0);
+});
+
+test("the desktop step lifts only the small roles, by one point (NXT-OBS-252)", () => {
+  const stepped = desktopTypeStep(typeScale);
+  for (const [name, role] of roles) {
+    const next = stepped[name as keyof typeof typeScale];
+    const small = role.fontSize <= smallTextCeiling;
+    assert.equal(next.fontSize, role.fontSize + (small ? 1 : 0), name);
+    assert.equal(next.lineHeight, role.lineHeight + (small ? 1 : 0), name);
+    assert.ok(hasReadableLineBox(next), `${name} clips after the step`);
+    assert.equal(next.fontWeight, role.fontWeight, name);
+    assert.equal(next.fontFamily, role.fontFamily, name);
+  }
+  assert.ok(roles.some(([, role]) => role.fontSize <= smallTextCeiling));
+  assert.equal(stepped.display.fontSize, typeScale.display.fontSize);
+});
+
+test("Android and the unit tests keep the base scale", () => {
+  assert.equal(loadedOnDesktop(), false);
+  assert.equal(typeScale.label.fontSize, 12);
+  assert.equal(typeScale.micro.fontSize, minimumFontSize);
 });

@@ -12,6 +12,7 @@ import { formatQuote, formatUnits, resultPresentation, unitsTone } from "@/src/u
 import { ResultPill, toneColor } from "./DecisionTicket";
 import { JourneyEventGlyph, journeySvgAccessibility } from "./JourneyEventIcon";
 import { journeyDragIntent } from "./journey-interaction";
+import { countBadgeEdge } from "./match-path-labels";
 import { journeyNavigation } from "./match-path-navigation";
 import type { PathModel, PathMoment } from "./match-path-model";
 import type { PressureInterval } from "@/src/utils/rebuild-pressure";
@@ -382,7 +383,7 @@ export const MatchPathCard = memo(function MatchPathCard({ match, model, synthet
               </View>}
               {lead.kind === "GOAL" || lead.kind === "RED_CARD" ? <Text style={[styles.markMinute, lead.side === "AWAY" ? styles.markMinuteBelow : styles.markMinuteAbove,
                 lead.kind === "RED_CARD" && { color: colors.red }]}>{minuteLabel}</Text> : null}
-              {count > 1 ? <View style={styles.countBadge}><Text style={styles.countText}>{count}</Text></View> : null}
+              {count > 1 ? <View style={[styles.countBadge, countBadgeEdge(lead.kind, lead.side) === "BOTTOM" ? styles.countBadgeBottom : styles.countBadgeTop]}><Text style={styles.countText}>{count}</Text></View> : null}
             </Pressable>;
           })}
         </View>
@@ -569,7 +570,9 @@ const styles = StyleSheet.create({
   ticketMarkActive: { borderWidth: 3, backgroundColor: colors.surfaceStrong },
   ticketMarkStars: { fontSize: 11, lineHeight: 13, letterSpacing: 0, color: colors.gold },
   ticketMarkText: { ...numericFont("700"), fontSize: 13, lineHeight: 15, color: colors.text },
-  countBadge: { position: "absolute", top: 2, right: 2, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: colors.blue, alignItems: "center", justifyContent: "center", paddingHorizontal: 3 },
+  // Opposite the minute label, so a grouped label stays readable (NXT-OBS-253).
+  countBadgeTop: { top: 2 }, countBadgeBottom: { bottom: 2 },
+  countBadge: { position: "absolute", right: 2, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: colors.blue, alignItems: "center", justifyContent: "center", paddingHorizontal: 3 },
   countText: { ...numericFont("800"), fontSize: 11, color: colors.background },
   panel: { flex: 1, gap: spacing.md, padding: spacing.lg, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.borderSoft, backgroundColor: colors.background },
   panelTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
@@ -583,7 +586,7 @@ const styles = StyleSheet.create({
   ticket: { gap: spacing.md, padding: spacing.md, borderRadius: radii.md, backgroundColor: colors.surface },
   ticketRow: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: spacing.sm },
   ticketStars: { fontSize: 15, letterSpacing: 1.5, color: colors.gold },
-  ticketStarsOff: { color: colors.borderSoft },
+  ticketStarsOff: { color: colors.starOff },
   ticketFigure: { ...numericFont("700"), fontSize: 28, lineHeight: 32, color: colors.text },
   ticketLabel: { ...typeScale.label, color: colors.textMuted },
   ticketNote: { ...typeScale.label, color: colors.textMuted },
