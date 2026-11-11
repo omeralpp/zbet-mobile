@@ -1,59 +1,55 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-11-11
-Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 49EE2E5 / LOCAL_BATCH_UNRELEASED`
+Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 821DD74`
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md)
 and the dated release reports/receipts.
 
-## Yerel batch — 11 Kasım 2026 (yayınlanmadı)
+## Son checkpoint
 
-`btb next cutover start` ran on 11 November for the UX review rows
-NXT-OBS-248..257, and the owner then asked to complete every row. The owner
-approved commit and push on 11 November; the work is on the pushed branch
-`claude/ux-review-batch` (from master `620f077`). `master` stays at the accepted
-source until the pair is accepted. No APK build or web publication is approved.
-The accepted pair below is unchanged and still current. Detail:
+The 11 November UX review batch (NXT-OBS-248..257) is delivered on Android and
+desktop web from clean pushed source
+**821dd749f460b670f0e5d8912c91bdb9fb2797b8**. Batch:
+`client-821dd749f460b670f0e5d8912c91bdb9fb2797b8-7ED70F2D1CD7-FD96337B8C57`.
+The owner installed the exact private APK and replied “Kurdum, çalışıyor”, then
+accepted the published web with “Web çalışıyor”. Canonical paired completion
+passed on 11 November. These are owner smoke attestations, without a
+device-side hash measurement; which screens were exercised was not reported.
+
+Delivered: Selection Lab folds while nothing is published and a failed read no
+longer says `Yayın bekleniyor` (248); section shortcuts stay in the pinned bar
+on match detail (250); `Sıkı liste görünümü` switch for the phone Canlı and
+Super lists, default off (251); small type roles one point larger on web at
+1200 px and wider (252); timeline count badge clears its label (253); web hint
+wording (249); `sen` voice (255); light theme positive text at 4.63:1 and a
+header back control without history (256); unearned stars at 3.2:1, Toto
+filter, Super detail spacing, not-found wording and sign-in crest (257).
+Detail, corrected review claims and what was left unchanged:
 [cutover archive](observation_archive/cutover_2026-11-11.md).
 
-- Implemented: Selection Lab folds while nothing is published and a failed read
-  no longer says `Yayın bekleniyor` (248); section shortcuts stay in the pinned
-  bar on match detail (250); `Sıkı liste görünümü` switch for the phone Canlı
-  and Super lists, default off (251); small type roles one point larger on web
-  at 1200 px and wider (252); timeline count badge clears its label (253); web
-  hint wording (249); `sen` voice (255); light theme positive text at 4.63:1
-  and a header back control without history (256); unearned stars at 3.2:1,
-  Toto filter, Super detail spacing, not-found wording and sign-in crest (257).
-- Files: `app/_layout.tsx`, `app/sign-in.tsx`, `app/(tabs)/` (`live.tsx`,
-  `more.tsx`, `toto.tsx`), `src/components/` (`SelectionLab.tsx`,
-  `selection-lab-view.ts`, `MatchPathCard.tsx`, `match-path-labels.ts`,
-  `RebuildDecisionLog.tsx`, `RatingStars.tsx`, `RouteNotFound.tsx`),
-  `src/screens/` (`MatchDetailView.tsx`, `RebuildDecisionView.tsx`),
-  `src/mascot/`, `src/navigation/` (`back-fallback.ts`,
-  `HeaderBackFallback.tsx`), `src/preferences/` (`list-density.ts`,
-  `ListDensityProvider.tsx`), `src/providers/AppProviders.tsx`, `src/theme/`
-  (`accessible-colors.ts`, `theme.ts`, `typography.ts`), their tests and these
-  docs. No BFF, SAP or model change.
-- Checks: `invoke-mobile-check.ps1 -BundleOnly` passed (TypeScript, ESLint, 830
-  unit tests, Expo Doctor, Android production JS bundle, verified edge web
-  export and secret scan). Browser smoke at 390/820/1200/1440 px, both themes,
-  synthetic data.
-- Not done: Android device smoke. The back control, pinned bar, compact lists
-  and folded panel are not verified on a phone, and the sign-in crest is not
-  rendered anywhere. `dist-web` holds this local dirty export; the published
-  web root is untouched.
-- Platform exceptions: back control on Android at every width and on web only
-  below 768 px; the text step on desktop web only; hint wording per surface.
-- No UX review row waits on an owner decision any more.
-- Next: the coordinated pair from the branch tip (APK build and web publication
-  approvals together), exact APK install, web publish and both smokes; `master`
-  fast-forwards after both are accepted. Run bookkeeping in `btb-codex` was not written: that repo
-  held another session's uncommitted `state/task-registry.json` change. Keep the
-  work on a branch that tracks a remote: `btb status` fails on a local branch
-  with no upstream (`BtbAgent.Core.psm1`, ahead/behind check).
+Platform exceptions: the back control shows on Android at every width and on
+web only below 768 px; the text step applies to desktop web only; hint wording
+differs per surface. No BFF, SAP or model change: BFF source stays
+**8f519232add09d3114682b1d833e700ec2726596**, and the publication replaced its
+process once (PID 19168 to 31328). The publisher verified 57 served files with
+zero mismatches; shell, deep link, API refusal and the public Cloudflare
+Access redirect pass. Receipts in `btb-codex/docs/evidence/`:
+`ux-review-*-2026-11-11.json`, uncommitted there because that repo held another
+session's uncommitted `state/task-registry.json` change.
 
-## Son checkpoint
+Web review before the APK was nine synthetic-data screenshots in chat, not a
+live preview opened by the owner; the owner approved both deliveries on that
+basis (APPROVAL receipt). Not verified: TalkBack, haptics and the pinned bar's
+step on a phone; the sign-in crest is bundled but not rendered, because
+sign-in is unreachable in pilot mode.
+
+Working convention: keep unreleased work on a `claude/<topic>` branch that
+tracks a remote. `btb status` fails on a local branch with no upstream
+(`BtbAgent.Core.psm1`, ahead/behind check; owner: BTB Codex Tool).
+
+### Previous pair: 49EE2E5 Selection Lab
 
 Selection Lab is delivered on Android and desktop web from clean pushed source
 **49ee2e5f864eb11d89c1b7ceb995e6f5febbd17f**. Batch:
@@ -165,19 +161,26 @@ retrospective release credit. Their reports and receipts are preserved.
 
 | Repository | Source checkpoint | Meaning |
 | --- | --- | --- |
-| zbet-mobile / master | 49ee2e5f864eb11d89c1b7ceb995e6f5febbd17f | Accepted artifact source; subsequent handoff-only commits do not rebuild/release the app |
-| zbet-cap / main | 8f519232add09d3114682b1d833e700ec2726596 | Running BFF with Selection Lab/history and launcher paths; retains the report proof reuse |
+| zbet-mobile / master | 821dd749f460b670f0e5d8912c91bdb9fb2797b8 | Accepted artifact source (from branch `claude/ux-review-batch`); subsequent handoff-only commits do not rebuild/release the app |
+| zbet-cap / main | 8f519232add09d3114682b1d833e700ec2726596 | Running BFF with Selection Lab/history and launcher paths; retains the report proof reuse; unchanged by the 821DD74 batch |
 | zbet-abap / main | 5751cbfdaf705478d21459de533a62ca19c4a101 | Previously accepted reader repair, policy71AC/producerDE3C; unchanged by this Mobile batch |
 
 Android and desktop use `api.surklase.com`; local BFF origin127.0.0.1:4004.
 Cloudflare Access protects `app.surklase.com`. This remains owner-only DEV.
-The Selection Lab source update replaced PID12244 with14504; its web
-publication replaced14504 with41016 through the existing scheduled task.
-Local/public health passed. Published root:
-`C:/Users/omera/AppData/Local/BTB Mobile Next/web/releases/20261109T095638Z-49ee2e5`.
-The previous5F26C70 web root and earlier versioned releases remain preserved.
+The 821DD74 web publication replaced PID 19168 with 31328 through the
+publisher. Local and public health passed. Published root:
+`C:/Users/omera/AppData/Local/BTB Mobile Next/web/releases/20261111T180222Z-821dd74`.
+The previous 49EE2E5 web root and earlier versioned releases remain preserved.
 
 ## Doğrulama
+
+- 821DD74: the canonical gate (`invoke-mobile-check.ps1 -BundleOnly`) passed on
+  the identical content before commit: TypeScript, ESLint, 830 unit tests, Expo
+  Doctor, Android production JS bundle and verified edge web export. The web
+  export and signed ARM64 APK were then built from the clean pushed commit and
+  paired; the build log does not contain the pilot key. Browser smoke at
+  390/820/1200/1440 px in both themes used synthetic data. Both owner smokes
+  and canonical paired completion pass.
 
 - 49EE2E5: the unchanged application inputs had passed the canonical Mobile
   checks/Doctor, Android bundle and BFF tests/build. The final edge web export
@@ -211,28 +214,28 @@ complete live-feed availability or universal defect absence.
 
 ## Final yerel pilot APK
 
-- Accepted APK: `btb-mobile-next-arm64-selection-lab-49ee2e5.apk`
-- Source: `49ee2e5f864eb11d89c1b7ceb995e6f5febbd17f`
-- SHA-256: `40F6490FEA4A470A636FBBF12778370AA2BFF38D6BB4A38E2E5686693E1DF7CA`
-- Size/ABI:50,630,161 bytes, ARM64; certificate `FAC61745…3B9C` unchanged
-- Matching web tree: `CC6653A39FE6E7FF1C146AC01984200E1FA091C3ECA076D164CEEB9F23F1F017`
-- Web release: `20261109T095638Z-49ee2e5`
-- Private Drive file: `19o_O6UnlyiEAsksj-sW5xaCdjCkOLkmr`
+- Accepted APK: `btb-mobile-next-arm64-ux-review-821dd74.apk`
+- Source: `821dd749f460b670f0e5d8912c91bdb9fb2797b8`
+- SHA-256: `7ED70F2D1CD72BEC3C42F528E22112349A72BE88504C6A798C8F54FD983FB633`
+- Size/ABI: 50,639,689 bytes, ARM64; certificate `FAC61745…3B9C` unchanged
+- Matching web tree: `FD96337B8C57873E51E4108E863917562E43BCB39276FF6A51EC582B72E8F4E9`
+- Web release: `20261111T180222Z-821dd74`
+- Private Drive file: `1ziPy6-QCo_3JULP3p-wbkeH9Pi7W-8y7`
 - Pair: `COMPLETE`, both owner smokes accepted
 
-Delivery used the connected Google Drive upload into the existing private
-BTB APK folder because the local rclone config/remote was absent. Owner-only
-permission metadata and an authenticated Windows HTTPS streamed download
-verified exact size/SHA-256. No local readback copy, sharing link, policy or
+Delivery used `scripts/deliver-apk-drive.ps1` (rclone remote `btbdrive`, private
+`BTB APK` folder): signature and ABI check, owner-only permission, authenticated
+download and exact size/SHA-256 readback. No sharing link, policy or
 authentication configuration change was created.
 
 After each acceptance and COMPLETE, the superseded local APK was removed under
 the owner's29 October retention rule: E549 (`FDBF2981…367C`) for ED30743, then
 ED30743 (`D303F543…D003`,50,608,225 bytes) for 6A416A1, then 6A416A1 (`7A512C0C…02D8`,50,608,417 bytes) for 5F26C70, then5F26C70
-(`DE08B361…8CA3`,50,609,985 bytes) for49EE2E5. 49EE2E5 is the sole
-permanent local APK in the artifact directory. Config/hash/delivery/acceptance
+(`DE08B361…8CA3`,50,609,985 bytes) for49EE2E5, then 49EE2E5
+(`40F6490F…F7CA`, 50,630,161 bytes, moved to the Recycle Bin) for 821DD74.
+821DD74 is the sole permanent local APK in the artifact directory. Config/hash/delivery/acceptance
 receipts, source, cloud copies (6A416A1 Drive file `1cJgY9SbY5mfjpasomEHWEJijAT82Wwva`, ED30743 Drive file `1QPScFiQbZZyOjvtbRRLDA_vKTMGg8GIP`,
-E549 `1woDYD2ZCPgDf0nhEjRbe4viQF3ERQQMe`,5F26C70 `1pZtL3jqQ9pb99DFJSzSUu1ElOW9U5hbc`) and versioned web releases remain preserved.
+E549 `1woDYD2ZCPgDf0nhEjRbe4viQF3ERQQMe`,5F26C70 `1pZtL3jqQ9pb99DFJSzSUu1ElOW9U5hbc`, 49EE2E5 `19o_O6UnlyiEAsksj-sW5xaCdjCkOLkmr`) and versioned web releases remain preserved.
 
 ## Açık observation / blokajlar
 
@@ -259,7 +262,9 @@ No unrelated deferred item was implemented or closed.
 
 ## Exact next steps
 
-The paired Selection Lab release is complete. Actual challenger delivery remains
+The paired UX review release (821DD74) is complete; every UX review row
+NXT-OBS-248..257 is delivered or dispositioned in the dated archive. Actual
+challenger delivery remains
 dependent on BTB-owned TASK-0229 source/latency acceptance and real C1
 registration/execution; TASK-0230 retains that dependency. C2/C3 require their
 separate scientific/identity gates. Do not recreate owner smoke-wait tasks or
