@@ -11,7 +11,7 @@ test("section shortcuts follow the module order on screen and skip empty modules
   assert.ok(source.includes("const visibleChips = moduleItems.flatMap("));
   assert.ok(source.includes("!emptyModules.has(item.id)"));
   assert.ok(source.includes("liveDetailLiveModules"));
-  assert.ok(source.includes("\n        masonry\n"));
+  assert.match(source, /\r?\n        masonry\r?\n/);
   // The reset belongs after the list it changes, and it can be undone.
   assert.ok(source.indexOf(">Düzeni sıfırla<") > source.indexOf("<ReorderableModuleList"));
   assert.ok(source.includes(">Geri al<"));

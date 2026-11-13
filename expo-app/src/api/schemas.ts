@@ -169,7 +169,8 @@ export const matchMarketRateSchema = z.strictObject({
   sort: z.number().int().nonnegative(),
   betType: z.string().min(1),
   liveRate: finiteNumber.gt(1).nullable(),
-  kickoffRate: finiteNumber.gt(1).nullable()
+  kickoffRate: finiteNumber.gt(1).nullable(),
+  quoteReadAt: z.iso.datetime().optional()
 });
 
 export const matchInsightSchema = z.strictObject({

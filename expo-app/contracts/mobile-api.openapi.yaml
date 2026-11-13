@@ -180,6 +180,7 @@ paths:
         - $ref: "#/components/parameters/MatchClockVersion"
         - $ref: "#/components/parameters/Key"
         - $ref: "#/components/parameters/DecisionContextVersion"
+        - $ref: "#/components/parameters/GoalMarkets"
         - in: header
           name: X-BTB-Journey-Display
           required: false
@@ -332,6 +333,7 @@ paths:
         - $ref: "#/components/parameters/MatchClockVersion"
         - $ref: "#/components/parameters/Key"
         - $ref: "#/components/parameters/DecisionContextVersion"
+        - $ref: "#/components/parameters/GoalMarkets"
         - in: header
           name: X-BTB-Analysis-Features
           schema: { type: string, default: "journey,form" }
@@ -437,6 +439,7 @@ paths:
       operationId: getMatchInsight
       parameters:
         - $ref: "#/components/parameters/Key"
+        - $ref: "#/components/parameters/GoalMarkets"
       responses:
         "200":
           description: Optional team indicators and real current market rates.
@@ -628,6 +631,11 @@ components:
         domain), audience tag, RS256 signature, expiry and an allowlisted email.
         Grants read scope only: device routes answer 403.
   parameters:
+    GoalMarkets:
+      in: header
+      name: X-BTB-Goal-Markets
+      schema: { type: string, enum: ["1"] }
+      description: Requests additional goal-market chart shares and, on insight reads, live odds from the provider through SAP.
     MatchClockVersion:
       name: X-BTB-Match-Clock
       in: header
@@ -927,6 +935,10 @@ components:
             the source does not publish the requested market.
           type: [number, "null"]
           exclusiveMinimum: 1
+        quoteReadAt:
+          type: string
+          format: date-time
+          description: BFF request start for an additional goal quote. The client expires it after 15 seconds.
     ScoreDistribution:
       type: object
       additionalProperties: false

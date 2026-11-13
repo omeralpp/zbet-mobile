@@ -9,6 +9,11 @@ export function formatSelection(code: string): string {
     Ms1X: "Ev sahibi / beraberlik", MsX2: "Beraberlik / deplasman", Ms12: "Ev sahibi / deplasman",
     Kgvar: "Karşılıklı gol var", Kgyok: "Karşılıklı gol yok" };
   const goals = /^Ms([0-4])5([au])$/.exec(code);
+  const teamGoals = /^(Ev|Dp)([0-2])5([au])$/.exec(code);
+  if (teamGoals) {
+    const side = teamGoals[1] === "Ev" ? "Ev sahibi" : "Deplasman";
+    return `${side} gol ${teamGoals[2]},5 ${teamGoals[3] === "a" ? "altı" : "üstü"}`;
+  }
   return names[code] ?? (goals ? `Toplam gol ${goals[1]},5 ${goals[2] === "a" ? "altı" : "üstü"}` : code);
 }
 

@@ -58,15 +58,22 @@ function visiblePhases(phase: RatioPhase, rows: RatioResult[]) {
     .filter((item) => rows.some((row) => row[item.field] !== null));
 }
 
-function availableRatioRows(phase: MatchDetail["ratioPhase"], rows: RatioResult[]) {
+function availableRatioRows(phase: MatchDetail["ratioPhase"], rows: RatioResult[], marketRates: MatchMarketRate[]) {
   const phases = phase ? visiblePhases(phase, rows) : [];
   // Preserve source order and shares. A zero is evidence; a missing phase is not.
-  return { phases, rows: rows.filter((row) => phases.some((item) => row[item.field] !== null)) };
+  const available = rows.filter((row) => phases.some((item) => row[item.field] !== null));
+  const knownMarkets = new Set(available.map(row => row.betType));
+  for (const rate of marketRates) {
+    if (rate.quoteReadAt && !knownMarkets.has(rate.betType)) {
+      available.push({ sort: rate.sort, betType: rate.betType, kickOff: null, halfTime: null, live: null });
+    }
+  }
+  return { phases, rows: available };
 }
 
 /** Whether the module has any market to show; the section shortcuts skip it otherwise. */
-export function ratioResultsAvailable(phase: MatchDetail["ratioPhase"], rows: RatioResult[]) {
-  return availableRatioRows(phase, rows).rows.length > 0;
+export function ratioResultsAvailable(phase: MatchDetail["ratioPhase"], rows: RatioResult[], marketRates: MatchMarketRate[] = []) {
+  return availableRatioRows(phase, rows, marketRates).rows.length > 0;
 }
 
 const sameMarket = (left: string, right: string) => left.trim().toLocaleLowerCase("tr-TR") === right.trim().toLocaleLowerCase("tr-TR");
@@ -84,8 +91,9 @@ export const RatioResultsChart = memo(function RatioResultsChart({
   pinnedMarket?: string | undefined;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const { phases, rows: availableRows } = availableRatioRows(phase, rows);
-  const activePhase = phaseDefinitions.find((item) => item.key === phase);
+  const { phases, rows: availableRows } = availableRatioRows(phase, rows, marketRates);
+  const hasHistory = phases.length > 0;
+  const activePhase = hasHistory ? phaseDefinitions.find((item) => item.key === phase) : undefined;
   // Only the selection's market moves; every other market keeps its source order.
   const pinnedIndex = pinnedMarket ? availableRows.findIndex((row) => sameMarket(row.betType, pinnedMarket)) : -1;
   const orderedRows = pinnedIndex > 0
@@ -93,7 +101,7 @@ export const RatioResultsChart = memo(function RatioResultsChart({
     : availableRows;
   const visibleRows = expanded ? orderedRows : orderedRows.slice(0, 6);
 
-  if (!availableRows.length || !phases.length) {
+  if (!availableRows.length) {
     return (
       <View style={styles.card}>
         <SurfaceMaterial radius={radii.lg} />
@@ -107,10 +115,10 @@ export const RatioResultsChart = memo(function RatioResultsChart({
       <SurfaceMaterial radius={radii.lg} />
       <View style={styles.header}>
         <View style={styles.headerCopy}>
-          <Text style={styles.title}>Tarihsel pazar payları</Text>
-          <Text style={styles.caption}>
+          <Text style={styles.title}>{hasHistory ? "Tarihsel pazar payları" : "Canlı gol oranları"}</Text>
+          {hasHistory ? <Text style={styles.caption}>
             Benzer oran ve skor koşullarındaki geçmiş kayıtlar.
-          </Text>
+          </Text> : null}
         </View>
         {activePhase ? (
           <View
@@ -131,13 +139,13 @@ export const RatioResultsChart = memo(function RatioResultsChart({
 
       <View style={styles.summary}>
         <Text style={styles.meta}>{visibleRows.length} / {availableRows.length} pazar</Text>
-        <Text style={styles.meta}>Tarihsel pay · kazanma olasılığı değildir.</Text>
+        {hasHistory ? <Text style={styles.meta}>Tarihsel pay · kazanma olasılığı değildir.</Text> : null}
       </View>
       <View style={styles.rows}>
             {visibleRows.map((row) => {
               const marketRate = marketRates.find(
                 (rate) =>
-                  rate.sort === row.sort && rate.betType === row.betType
+                  rate.betType === row.betType && (rate.quoteReadAt || rate.sort === row.sort)
               );
               const rateDisplay = ratioMarketRateDisplay(marketRate, phase);
               const label = formatSelection(row.betType);

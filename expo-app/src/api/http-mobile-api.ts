@@ -179,7 +179,7 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
       request(
         `/v1/btb/match-insights/${encodeURIComponent(key)}`,
         matchInsightSchema,
-        {},
+        { headers: { "X-BTB-Goal-Markets": "1" } },
         signal
       ),
     getMatchLeagueContext: (key, signal) =>
@@ -193,7 +193,7 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
       request(
         `/v1/btb/matches/${encodeURIComponent(key)}`,
         matchDetailSchema,
-        { headers: { ...decisionContextHeaders, "X-BTB-Journey-Display": "2" } },
+        { headers: { ...decisionContextHeaders, "X-BTB-Journey-Display": "2", "X-BTB-Goal-Markets": "1" } },
         signal
       ),
     getMatchPeriodScore: (key, signal) =>
@@ -229,7 +229,7 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
         { headers: { ...decisionContextHeaders, "X-BTB-Match-Journey-Version": "match-journey.v4" } }, signal),
     getMatchAnalysisContext: (key, signal) => request(
       `/v1/btb/matches/${encodeURIComponent(key)}/analysis-context`, analysisContextSchema,
-      { headers: { ...decisionContextHeaders, "X-BTB-Analysis-Features": [
+      { headers: { ...decisionContextHeaders, "X-BTB-Goal-Markets": "1", "X-BTB-Analysis-Features": [
         ...(runtimeConfig.matchPathIntelligence === "LIVE" ? ["journey"] : []),
         ...(runtimeConfig.teamFormIntelligence === "LIVE" ? ["form"] : [])
       ].join(",") } }, signal),

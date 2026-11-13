@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import {
   matchAnalysisContextQuery,
+  matchInsightQuery,
   rebuildMatchQuery,
   rebuildPressureHistoryQuery,
   rebuildPoolPathQuery,
@@ -271,6 +272,9 @@ export function MatchDetailView({
   // RB1 statistics and pressure history (TASK-0177). Current statistics expire
   // after 120 seconds at the backend, so a focused live screen asks every 30.
   const liveNow = ["LIVE", "HALF_TIME"].includes(context.data?.sources.matchDetail.status ?? "");
+  const pollGoalRates = Boolean(key) && isFocused && liveNow;
+  const liveMarketInsight = useQuery({ ...matchInsightQuery(key), enabled: pollGoalRates,
+    staleTime: 10_000, refetchInterval: pollGoalRates ? 10_000 : false, retry: false });
   const rebuildStatistics = useQuery({ ...rebuildStatisticsQuery(isRebuild ? key : ""), refetchInterval: isFocused && liveNow ? 30_000 : false });
   const pressureHistory = useQuery({ ...rebuildPressureHistoryQuery(isRebuild ? key : ""), refetchInterval: isFocused && liveNow ? 60_000 : false });
   const poolPath = useQuery({...rebuildPoolPathQuery(isRebuild ? key : ""),refetchInterval:isFocused && liveNow ? 60_000 : false});
@@ -401,6 +405,12 @@ export function MatchDetailView({
   const pressure = matchPressureSide(match);
   const live = match.status === "LIVE" || match.status === "HALF_TIME";
   const insight = insightQuery.data;
+  const marketRates = ((pollGoalRates ? liveMarketInsight.data?.marketRates : undefined) ?? insight?.marketRates ?? noMarketRates).filter(rate => {
+    if (!rate.quoteReadAt) return !/^(?:Ms45|(?:Ev|Dp)[0-2]5)[au]$/.test(rate.betType);
+    if (!liveNow) return false;
+    const age = now - Date.parse(rate.quoteReadAt);
+    return age >= 0 && age < 15_000;
+  });
   const leagueContext = leagueContextQuery.data;
   const currentMarket = isRebuild ? { value: formatQuote(hero?.currentQuote), label: hero?.quoteLabel ?? "Güncel oran bekleniyor" } : formatCurrentMarketRate(
     heroCurrentRate,
@@ -464,7 +474,7 @@ export function MatchDetailView({
   const emptyModules = new Set<LiveDetailModuleId>([
     ...(isRebuild && rebuildMatch.data && !rebuildMatch.data.history.length ? ["decision" as const] : []),
     ...(teamFormState === "EMPTY" || teamFormState === "UNAVAILABLE" ? ["teamForm" as const] : []),
-    ...(!ratioResultsAvailable(match.ratioPhase, match.ratioResults) ? ["odds" as const] : []),
+    ...(!ratioResultsAvailable(match.ratioPhase, match.ratioResults, marketRates) ? ["odds" as const] : []),
     ...(isRebuild && (statistics ? statistics.availability === "UNAVAILABLE" || statistics.availability === "NOT_STARTED" : !rebuildStatistics.isLoading) ? ["statistics" as const] : []),
     ...((isRebuild ? !scorePool : !match.scoreDistribution.length) ? ["scoreDistribution" as const] : [])
   ]);
@@ -481,7 +491,7 @@ export function MatchDetailView({
     odds: (
       <LiveDetailPanel eyebrow="PİYASA" id="odds" title="Oran sonuçları">
         <RatioResultsChart
-          marketRates={insight?.marketRates ?? noMarketRates}
+          marketRates={marketRates}
           phase={match.ratioPhase}
           pinnedMarket={heroMarket || undefined}
           rows={match.ratioResults}
