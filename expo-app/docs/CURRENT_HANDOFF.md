@@ -1,13 +1,37 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-11-11
-Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 821DD74`
+Son güncelleme: 2026-11-13
+Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / BFF2359`
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md)
 and the dated release reports/receipts.
 
 ## Son checkpoint
+
+Piyasa (NXT-OBS-258) is complete on Android and owner-only web from
+`bff2359b867cff62c2201b8272ed543147af7054`. It shows match total 4.5 and home
+and away 0.5, 1.5 and 2.5 under/over. The chart ranks by the latest measured
+phase and keeps the BTB selection pinned. Browser checks used the actual
+historical rows from Mozambique–Ethiopia and Qatar–Australia at desktop and
+phone widths. The owner confirmed Android and published web sorting. APK
+installation is owner-attested. No device-side hash was measured.
+
+- Android SHA-256 `CE505FC632602817525BC068AB1102BBE36EB6CB73C9D42880550823091EF4DA`.
+- Web tree `5CD3086E0C81556ACD539C9307BF827C0A727FAC8CF7044901A76806AD94DA02`.
+- Web release `20261113T120512Z-bff2359` served 57 verified files with zero
+  mismatches behind Cloudflare Access. BFF `87d5d60d7c283bcaf55509c5aa51fab21361614e`
+  returned all 14 new outcomes after SAP DEV activated `66879371e03978c05a1e35e0d3fd9a0e38186886`.
+- Completion and smoke receipts are in workspace `.codex-artifacts` under
+  `piyasa-sort-*-bff2359.json`. The prior published `e351f64` batch exposed the
+  markets and had the owner-reported sorting defect. `821dd74` was the prior
+  fully accepted pair. Automatic approval review blocked the attempted removal
+  of the two superseded local APKs. Private Drive copies and receipts are retained.
+- TASK-0233 tracks the team-total candidate and expanded-market trial. TASK-0229
+  tracks Selection Lab. The latest native discovery found a fresh cycle with no
+  recorded kickoff binding. The producer remains unregistered.
+
+### Previous accepted pair: 821DD74
 
 The 11 November UX review batch (NXT-OBS-248..257) is delivered on Android and
 desktop web from clean pushed source
