@@ -15,6 +15,7 @@ import {
 } from "@/src/theme/theme";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 import { ratioMarketRateDisplay } from "./ratio-market-rate";
+import { orderRatioRows, type RatioShareField } from "./ratio-results-order";
 import { formatHistoricalFraction, historicalFractionWidth } from "@/src/utils/statistical-geometry";
 import { formatSelection } from "@/src/utils/format";
 
@@ -22,7 +23,7 @@ type RatioPhase = NonNullable<MatchDetail["ratioPhase"]>;
 
 const phaseDefinitions: {
   key: RatioPhase;
-  field: keyof Pick<RatioResult, "kickOff" | "halfTime" | "live">;
+  field: RatioShareField;
   label: string;
   color: string;
   softColor: string;
@@ -60,7 +61,6 @@ function visiblePhases(phase: RatioPhase, rows: RatioResult[]) {
 
 function availableRatioRows(phase: MatchDetail["ratioPhase"], rows: RatioResult[], marketRates: MatchMarketRate[]) {
   const phases = phase ? visiblePhases(phase, rows) : [];
-  // Preserve source order and shares. A zero is evidence; a missing phase is not.
   const available = rows.filter((row) => phases.some((item) => row[item.field] !== null));
   const knownMarkets = new Set(available.map(row => row.betType));
   for (const rate of marketRates) {
@@ -75,8 +75,6 @@ function availableRatioRows(phase: MatchDetail["ratioPhase"], rows: RatioResult[
 export function ratioResultsAvailable(phase: MatchDetail["ratioPhase"], rows: RatioResult[], marketRates: MatchMarketRate[] = []) {
   return availableRatioRows(phase, rows, marketRates).rows.length > 0;
 }
-
-const sameMarket = (left: string, right: string) => left.trim().toLocaleLowerCase("tr-TR") === right.trim().toLocaleLowerCase("tr-TR");
 
 export const RatioResultsChart = memo(function RatioResultsChart({
   marketRates,
@@ -94,11 +92,7 @@ export const RatioResultsChart = memo(function RatioResultsChart({
   const { phases, rows: availableRows } = availableRatioRows(phase, rows, marketRates);
   const hasHistory = phases.length > 0;
   const activePhase = hasHistory ? phaseDefinitions.find((item) => item.key === phase) : undefined;
-  // Only the selection's market moves; every other market keeps its source order.
-  const pinnedIndex = pinnedMarket ? availableRows.findIndex((row) => sameMarket(row.betType, pinnedMarket)) : -1;
-  const orderedRows = pinnedIndex > 0
-    ? [availableRows[pinnedIndex]!, ...availableRows.filter((_, index) => index !== pinnedIndex)]
-    : availableRows;
+  const { orderedRows, pinnedRow } = orderRatioRows(availableRows, phases.map(({ field }) => field), pinnedMarket);
   const visibleRows = expanded ? orderedRows : orderedRows.slice(0, 6);
 
   if (!availableRows.length) {
@@ -149,7 +143,7 @@ export const RatioResultsChart = memo(function RatioResultsChart({
               );
               const rateDisplay = ratioMarketRateDisplay(marketRate, phase);
               const label = formatSelection(row.betType);
-              const pinned = pinnedIndex >= 0 && row === availableRows[pinnedIndex];
+              const pinned = row === pinnedRow;
               const shares = phases.flatMap((item) => row[item.field] === null ? [] :
                 [`${item.label} ${formatHistoricalFraction(row[item.field]! / 100)}`]).join(", ");
               return (
