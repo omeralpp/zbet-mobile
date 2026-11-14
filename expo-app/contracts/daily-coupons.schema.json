@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contractVersion", "bettingDate", "status", "publication", "tiers", "history"],
+  "properties": {
+    "contractVersion": { "const": "daily-coupons.v1" },
+    "bettingDate": { "type": "string", "format": "date" },
+    "status": { "enum": ["AVAILABLE", "AWAITING_PUBLICATION", "UNAVAILABLE"] },
+    "publication": { "anyOf": [{ "$ref": "#/$defs/publication" }, { "type": "null" }] },
+    "tiers": { "type": "array", "items": { "$ref": "#/$defs/tier" } },
+    "history": {
+      "type": "array",
+      "maxItems": 30,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["bettingDate", "status"],
+        "properties": {
+          "bettingDate": { "type": "string", "format": "date" },
+          "status": { "const": "AVAILABLE" }
+        }
+      }
+    }
+  },
+  "if": { "properties": { "status": { "const": "AVAILABLE" } } },
+  "then": {
+    "properties": {
+      "publication": { "$ref": "#/$defs/publication" },
+      "tiers": {
+        "minItems": 3,
+        "maxItems": 3,
+        "allOf": [
+          { "contains": { "properties": { "tier": { "const": "BANKO" } } } },
+          { "contains": { "properties": { "tier": { "const": "DENGELI" } } } },
+          { "contains": { "properties": { "tier": { "const": "RISKLI" } } } }
+        ]
+      }
+    }
+  },
+  "else": { "properties": { "publication": { "type": "null" }, "tiers": { "maxItems": 0 } } },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1 },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "optionalTimestamp": { "anyOf": [{ "$ref": "#/$defs/timestamp" }, { "type": "null" }] },
+    "odds": { "type": "number", "exclusiveMinimum": 1 },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cutoffAt", "publishedAt", "sourceChannel", "mode"],
+      "properties": {
+        "cutoffAt": { "$ref": "#/$defs/timestamp" },
+        "publishedAt": { "$ref": "#/$defs/timestamp" },
+        "expiresAt": { "$ref": "#/$defs/optionalTimestamp" },
+        "sourceChannel": { "$ref": "#/$defs/text" },
+        "mode": { "enum": ["PILOT", "DEMO"] }
+      }
+    },
+    "tier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tier", "status", "reason", "totalOdds", "legs", "settlement"],
+      "properties": {
+        "tier": { "enum": ["BANKO", "DENGELI", "RISKLI"] },
+        "status": { "enum": ["AVAILABLE", "NO_QUALIFYING_COUPON"] },
+        "reason": { "anyOf": [{ "$ref": "#/$defs/text" }, { "type": "null" }] },
+        "totalOdds": { "anyOf": [{ "$ref": "#/$defs/odds" }, { "type": "null" }] },
+        "legs": { "type": "array", "items": { "$ref": "#/$defs/leg" } },
+        "settlement": { "enum": ["PENDING", "WON", "LOST", "VOID", null] },
+        "settlementUpdatedAt": { "$ref": "#/$defs/timestamp" },
+        "settlementRevision": { "type": "integer", "minimum": 1 },
+        "expiresAt": { "$ref": "#/$defs/optionalTimestamp" }
+      },
+      "dependentRequired": {
+        "settlementUpdatedAt": ["settlementRevision"],
+        "settlementRevision": ["settlementUpdatedAt"]
+      },
+      "if": { "properties": { "status": { "const": "AVAILABLE" } } },
+      "then": { "properties": { "totalOdds": { "$ref": "#/$defs/odds" }, "legs": { "minItems": 1 }, "settlement": { "type": "string" } } },
+      "else": {
+        "properties": {
+          "settlementUpdatedAt": false,
+          "settlementRevision": false,
+          "reason": { "$ref": "#/$defs/text" },
+          "totalOdds": { "type": "null" },
+          "legs": { "maxItems": 0 },
+          "settlement": { "type": "null" },
+          "expiresAt": { "type": "null" }
+        }
+      }
+    },
+    "leg": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fixtureId", "home", "away", "kickoffAt", "market", "selection", "odds", "quotedAt", "rationale"],
+      "properties": {
+        "fixtureId": { "$ref": "#/$defs/text" },
+        "home": { "$ref": "#/$defs/text" },
+        "away": { "$ref": "#/$defs/text" },
+        "kickoffAt": { "$ref": "#/$defs/timestamp" },
+        "market": { "$ref": "#/$defs/text" },
+        "selection": { "$ref": "#/$defs/text" },
+        "odds": { "$ref": "#/$defs/odds" },
+        "quotedAt": { "$ref": "#/$defs/timestamp" },
+        "quoteTimeBasis": { "enum": ["PROVIDER", "CAPTURE_UPPER_BOUND"] },
+        "rationale": { "$ref": "#/$defs/text" }
+      }
+    }
+  }
+}

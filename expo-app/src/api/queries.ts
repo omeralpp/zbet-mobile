@@ -3,6 +3,16 @@ import { mobileApi } from "./index";
 import type { ReportWindowDays } from "./rebuild-schemas";
 import { createRequestLimiter } from "./request-limiter";
 
+export function dailyCouponsQuery(date: string, isToday: boolean) {
+  return queryOptions({
+    queryKey: ["dailyCoupons", "daily-coupons.v1", date],
+    queryFn: ({ signal }) => mobileApi.getDailyCoupons(date, signal),
+    staleTime: 30_000,
+    refetchInterval: isToday ? 60_000 : false,
+    retry: false
+  });
+}
+
 export function selectionComparisonQuery(key: string) {
   return queryOptions({ queryKey: ["selectionComparison", "selection-comparison.v1", key], enabled: Boolean(key),
     queryFn: ({ signal }) => mobileApi.getMatchSelectionComparison(key, signal), staleTime: 0, retry: false });

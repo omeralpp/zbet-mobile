@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useRouter } from "expo-router";
+import { Link, useRouter, type Href } from "expo-router";
 import {
   Platform,
   Pressable,
@@ -313,6 +313,13 @@ export default function DashboardScreen() {
       }}
     >
       <RefreshToast token={refreshedAt} />
+      <Link href={"/daily-coupons" as Href} asChild>
+        <Pressable accessibilityRole="link" style={({ hovered, pressed }) => [styles.couponLink, (hovered || pressed) && styles.couponLinkHover]}>
+          <MaterialCommunityIcons accessible={false} color={semantic.intelligence} name="ticket-outline" size={iconSizes.small} />
+          <Text style={styles.couponLinkText}>Günlük Kuponlar</Text>
+          <MaterialCommunityIcons accessible={false} color={colors.textMuted} name="chevron-right" size={iconSizes.small} />
+        </Pressable>
+      </Link>
       {!dashboard ? query.isLoading ? <LoadingState label="Maç ve program özeti hazırlanıyor" /> : <ErrorState error={query.error} onRetry={() => { void refresh(); }} /> : query.isError || refreshFailed ? <Text accessibilityRole="alert" style={styles.scopeNote}>Bazı özet verileri yenilenemedi. İlgili bölümde son durum gösteriliyor.</Text> : null}
       <ReorderableModuleList
         items={moduleItems}
@@ -347,6 +354,10 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
+  couponLink: { minHeight: interaction.minTouchTarget, alignItems: "center", alignSelf: "flex-start", flexDirection: "row", gap: spacing.sm,
+    paddingHorizontal: spacing.md, borderRadius: radii.round, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  couponLinkHover: { backgroundColor: colors.surfaceStrong },
+  couponLinkText: { ...typeScale.bodyCompact, color: colors.text, fontWeight: "700" },
   selectionState: { gap: spacing.sm, padding: spacing.lg, borderRadius: 18, borderWidth: 1, borderColor: colors.borderSoft },
   stateTitle: { ...typeScale.body, color: colors.text, fontWeight: "700" },
   stateMessage: { ...typeScale.bodyCompact, color: colors.textMuted },

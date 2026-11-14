@@ -1,6 +1,7 @@
 import type { JinxRb1Explanation } from "./jinx-rb1-schema";
 import type { SelectionComparison } from "./selection-comparison-schema";
 import type { SelectionHistory } from "./selection-history-schema";
+import type { DailyCoupons } from "./daily-coupons-schema";
 import type {
   AnalysisContext,
   Dashboard,
@@ -22,6 +23,7 @@ import type {
 import type { RebuildCohortsReport, RebuildMatch, RebuildReport, ReportWindowDays } from "./rebuild-schemas";
 import type { RebuildPressureHistory, RebuildStatistics, RebuildPoolPath } from "./rebuild-statistics-schemas";
 export interface MobileApi {
+  getDailyCoupons(date: string, signal?: AbortSignal): Promise<DailyCoupons>;
   getMatchSelectionComparison(key: string, signal?: AbortSignal): Promise<SelectionComparison>;
   getMatchSelectionHistory(key: string, signal?: AbortSignal): Promise<SelectionHistory>;
   getRebuildMatch(key: string, signal?: AbortSignal): Promise<RebuildMatch>;

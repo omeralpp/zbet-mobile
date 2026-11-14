@@ -73,6 +73,10 @@ async function mockDelay(signal?: AbortSignal): Promise<void> {
 }
 
 export const mockMobileApi: MobileApi = {
+  async getDailyCoupons(date, signal) {
+    await mockDelay(signal);
+    return { contractVersion: "daily-coupons.v1", bettingDate: date, status: "UNAVAILABLE", publication: null, tiers: [], history: [] };
+  },
   async getMatchSelectionHistory(key, signal) {
     signal?.throwIfAborted();
     return emptySelectionHistory(key);

@@ -97,6 +97,7 @@ function RootNavigator() {
         >
           <Stack.Protected guard={hasSession}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="daily-coupons" options={{ title: "Günlük Kuponlar", headerShown: Platform.OS !== "web" || breakpoint === "compact" }} />
             <Stack.Screen
               name="match/[key]"
               options={{ title: "Maç detayı" }}

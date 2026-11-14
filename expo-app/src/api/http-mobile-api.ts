@@ -1,6 +1,7 @@
 import { jinxRb1ExplanationSchema } from "./jinx-rb1-schema";
 import { selectionComparisonSchema } from "./selection-comparison-schema";
 import { selectionHistorySchema } from "./selection-history-schema";
+import { dailyCouponDateSchema, dailyCouponsSchema } from "./daily-coupons-schema";
 import { z, type ZodType } from "zod";
 import {
   browserReloadHost,
@@ -148,6 +149,14 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
   // settled score) for both Karar günlüğü reads.
   const reportHeaders = { "X-BTB-Rebuild": "btb-rebuild.v1", "X-BTB-Report-Breakdown": "summary.v1", "X-BTB-Report-Facts": "match-facts.v1" };
   return {
+    async getDailyCoupons(date, signal) {
+      const path = `/v1/btb/daily-coupons?date=${encodeURIComponent(dailyCouponDateSchema.parse(date))}`;
+      const day = await request(path, dailyCouponsSchema, {}, signal);
+      if (day.bettingDate !== date) {
+        throw new MobileApiError("İstenen güne ait kuponlar doğrulanamadı.", 502, "DAILY_COUPON_DATE_MISMATCH");
+      }
+      return day;
+    },
     getMatchSelectionComparison: (key, signal) => request(`/v1/btb/matches/${encodeURIComponent(key)}/selection-comparison`, selectionComparisonSchema, {}, signal),
     getMatchSelectionHistory: (key, signal) => request(`/v1/btb/matches/${encodeURIComponent(key)}/selection-history`, selectionHistorySchema, {}, signal),
     getRebuildMatch: (key, signal) => request(`/v1/btb/rebuild/v1/matches/${encodeURIComponent(key)}`, rebuildMatchSchema,

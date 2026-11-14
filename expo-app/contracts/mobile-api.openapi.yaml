@@ -12,6 +12,22 @@ security:
   - pilotKey: []
   - cloudflareAccess: []
 paths:
+  /v1/btb/daily-coupons:
+    get:
+      operationId: getDailyCoupons
+      description: Read-only pre-match coupon publication with the original bulletin cutoff, tier slots, and recorded results. No-store.
+      parameters:
+        - in: query
+          name: date
+          schema: { type: string, format: date }
+          description: Betting date in Europe/Istanbul. Defaults to today.
+      responses:
+        "200":
+          description: Daily publication, waiting status, or unavailable status. No coupons are returned before a publication is verified.
+          content:
+            application/json:
+              schema: { $ref: "./daily-coupons.schema.json" }
+        default: { $ref: "#/components/responses/Error" }
   /v1/btb/matches/{key}/selection-history:
     get:
       operationId: getMatchSelectionHistory

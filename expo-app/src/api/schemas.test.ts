@@ -236,6 +236,7 @@ test("keeps the checked-in OpenAPI document parseable and route-complete", async
   assert.deepEqual(
     Object.keys(document.paths ?? {}).sort(),
     [
+      "/v1/btb/daily-coupons",
       "/v1/btb/matches",
       "/v1/btb/matches/{key}",
       "/v1/btb/matches/{key}/analysis-context",
