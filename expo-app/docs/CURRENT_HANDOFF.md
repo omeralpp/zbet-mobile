@@ -1,13 +1,33 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-11-13
-Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / BFF2359`
+Son güncelleme: 2026-11-14
+Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 7695422`
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md)
 and the dated release reports/receipts.
 
 ## Son checkpoint
+
+Günlük Kuponlar is complete on both owner-only clients from
+`76954220b1f8c963070fe6586a8bc733fbf05281`. The owner installed the verified
+private APK and confirmed the Banko, Dengeli and Riskli demo cards on the phone
+and the published web client. Installation evidence is owner-attested.
+
+- Android SHA-256 `E3F9BFC8BD7CA82AC8D1EADF1F89FA7F1A3C89995A027EE3CB3D9390B9A706E9`.
+- Paired web tree `1868C889EB24A0A1D4EA84B0DDA71C1D9132DA0C3B0088B2B49CDB80BC7A63E2`.
+- Web `20261114T185523Z-7695422` served 57 files with zero mismatches behind
+  Cloudflare Access. BFF `b8ff00738c8f15c610ae43ea611182c4efb11c3d` returned
+  three DEMO tiers over the authenticated Android route. The completion
+  receipt is `.codex-artifacts/daily-coupon-preview-20261114/completed-batch.json`.
+- The accepted `btb-mobile-next-7695422-daily-coupons-arm64.apk` is the sole APK
+  in the local artifact directory. Hashes of removed superseded APKs are in
+  `.codex-artifacts/daily-coupon-preview-20261114/superseded-local-apk-hashes.json`.
+- TASK-0234 tracks the missing verified pre-match input. The 15 November 11:00
+  Istanbul run requires the authorized timestamped bulletin. The SAP DEV
+  bridge rollback passed. The restored source has no full bulletin endpoint.
+
+### Previous accepted pair: BFF2359
 
 Piyasa (NXT-OBS-258) is complete on Android and owner-only web from
 `bff2359b867cff62c2201b8272ed543147af7054`. It shows match total 4.5 and home
