@@ -39,7 +39,20 @@ publishes through `ZBET_UI_SELECTION_SB` (TASK-0229/0230).
     key, no-store, 6 decisions. Selection history, Daily Coupons, web asset
     bytes and the public callback all pass.
   - Receipt: `.codex-artifacts/selection-bff-20261115/BFF_RESTART.json`.
-- **Gate still open:** the coordinated APK plus web release from `90ea742`.
+- **Coordinated release COMPLETE (2026-11-15):**
+  - Batch `client-f6d3a8bf7e2a01fdeec96ca43a413ac9538c9c67-7E936CB3306A-79116CC31300`.
+  - Source `f6d3a8b` (client code as `90ea742` plus this note).
+  - APK `btb-mobile-next-f6d3a8b-selection-rules-arm64.apk`, SHA-256
+    `7E936CB3306A97A4AC6D26C6B2EB081AF716C9DDDE48CE1FBE572361B3BD66BA`,
+    delivered to the private Drive folder with readback verified.
+  - Web `20261115T134011Z-f6d3a8b`: 57 served files, 0 mismatches, BFF
+    54124 to 17600.
+  - Owner smokes: "Kurdum, çalışıyor" and "Web çalışıyor" (owner-attested,
+    no device hash).
+  - Receipts are in `.codex-artifacts/selection-release-20261115/`.
+  - The superseded local 7695422 APK was removed and its hash recorded.
+  - Platform exception: the wide web layout uses a card grid; phones use a
+    list.
 
 ## Son checkpoint
 
