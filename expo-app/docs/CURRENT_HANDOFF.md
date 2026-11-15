@@ -31,11 +31,15 @@ publishes through `ZBET_UI_SELECTION_SB` (TASK-0229/0230).
     - An Android JS bundle with the pilot profile, set per process, passes.
     - A browser mock review passed at 375 px, 800 px and 1440 px, dark and
       light, with no console errors.
-- **Gates still open:**
-  - Commit/push of both repos.
-  - BFF restart. It must serialize with the Daily Coupons session, whose
-    uncommitted zbet-cap edits touch `router.js` and `odata.js`.
-  - Coordinated APK plus web release.
+- **Committed and live BFF:**
+  - zbet-cap `03ef1a9` and zbet-mobile `90ea742` were pushed.
+  - After Daily Coupons committed `adee815`, the supervised BFF was replaced
+    once on `adee815` (PID 48412 to 53052).
+  - The selection route answers 401 without a key and 200 with the pilot
+    key, no-store, 6 decisions. Selection history, Daily Coupons, web asset
+    bytes and the public callback all pass.
+  - Receipt: `.codex-artifacts/selection-bff-20261115/BFF_RESTART.json`.
+- **Gate still open:** the coordinated APK plus web release from `90ea742`.
 
 ## Son checkpoint
 
