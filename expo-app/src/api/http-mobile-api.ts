@@ -1,6 +1,7 @@
 import { jinxRb1ExplanationSchema } from "./jinx-rb1-schema";
 import { selectionComparisonSchema } from "./selection-comparison-schema";
 import { selectionHistorySchema } from "./selection-history-schema";
+import { selectionDecisionsSchema } from "./selection-decisions-schema";
 import { dailyCouponDateSchema, dailyCouponsSchema } from "./daily-coupons-schema";
 import { z, type ZodType } from "zod";
 import {
@@ -159,6 +160,8 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
     },
     getMatchSelectionComparison: (key, signal) => request(`/v1/btb/matches/${encodeURIComponent(key)}/selection-comparison`, selectionComparisonSchema, {}, signal),
     getMatchSelectionHistory: (key, signal) => request(`/v1/btb/matches/${encodeURIComponent(key)}/selection-history`, selectionHistorySchema, {}, signal),
+    getSelectionDecisions: (rule, through, days, signal) => request(`/v1/btb/selection/v1/rules/${encodeURIComponent(rule)}/window/${encodeURIComponent(through)}/${days}`,
+      selectionDecisionsSchema, {}, signal),
     getRebuildMatch: (key, signal) => request(`/v1/btb/rebuild/v1/matches/${encodeURIComponent(key)}`, rebuildMatchSchema,
       { headers: { "X-BTB-Rebuild": "btb-rebuild.v1", "X-BTB-Selection-Display": "btb-selection-display.v2" } }, signal),
     getRebuildReport: signal => request("/v1/btb/rebuild/v1/report", rebuildReportSchema,

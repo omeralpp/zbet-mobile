@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { mobileApi } from "./index";
 import type { ReportWindowDays } from "./rebuild-schemas";
+import type { SelectionRule } from "./selection-decisions-schema";
 import { createRequestLimiter } from "./request-limiter";
 
 export function dailyCouponsQuery(date: string, isToday: boolean) {
@@ -21,6 +22,12 @@ export function selectionComparisonQuery(key: string) {
 export function selectionHistoryQuery(key: string) {
   return queryOptions({ queryKey: ["selectionHistory", "selection-history.v1", key], enabled: Boolean(key),
     queryFn: ({ signal }) => mobileApi.getMatchSelectionHistory(key, signal), staleTime: 15000, retry: false });
+}
+
+export function selectionDecisionsQuery(rule: SelectionRule, through: string, days: 1 | 7 | 30, isCurrent: boolean) {
+  return queryOptions({ queryKey: ["selectionDecisions", "selection-decisions.v1", rule, through, days],
+    queryFn: ({ signal }) => mobileApi.getSelectionDecisions(rule, through, days, signal),
+    staleTime: 15_000, refetchInterval: isCurrent ? 60_000 : false, retry: false });
 }
 
 export const rebuildReportQuery = queryOptions({ queryKey: ["rebuildReport"], queryFn: ({ signal }) => mobileApi.getRebuildReport(signal),

@@ -18,6 +18,7 @@ import {
 } from "./schemas";
 import { emptySelectionComparison } from "./selection-comparison-schema";
 import { emptySelectionHistory } from "./selection-history-schema";
+import { unpublishedSelectionDecisions, type SelectionDecisionRecord } from "./selection-decisions-schema";
 import {
   mockDashboard,
   mockRetainedJourney,
@@ -80,6 +81,20 @@ export const mockMobileApi: MobileApi = {
   async getMatchSelectionHistory(key, signal) {
     signal?.throwIfAborted();
     return emptySelectionHistory(key);
+  },
+  async getSelectionDecisions(rule, through, days, signal) {
+    await mockDelay(signal);
+    const empty = unpublishedSelectionDecisions(rule, through, days);
+    if (rule !== "C1") return empty;
+    // Mock mode only: clearly labelled sample decisions so the populated
+    // layout can be reviewed. Never a live experimental selection.
+    const records = mockSelectionDecisions(through);
+    const settled = records.filter((record) => record.result.net !== null);
+    return { ...empty, ruleLabel: "C1 · kendi durumu (örnek)", availability: "AVAILABLE", reason: null,
+      coverage: { fixtures: 14, tracking: 2, decided: 3, notEnrolled: 9, stopped: 0 },
+      summary: { decisions: 3, live: 2, settled: settled.length, wins: 1, losses: 1, pending: 1, unresolved: 0,
+        hitRate: "0.5000", averageQuote: "1.18", net: "-0.70", roi: "-0.3500" },
+      records };
   },
   async getMatchSelectionComparison(key, signal) {
     await mockDelay(signal);
@@ -367,3 +382,20 @@ export const mockMobileApi: MobileApi = {
     await mockDelay(signal);
   }
 };
+
+/** Mock mode only: three labelled sample C1 decisions on the requested day. */
+function mockSelectionDecisions(through: string): SelectionDecisionRecord[] {
+  const at = (time: string) => `${through}T${time}Z`;
+  const base = { league: "Örnek Lig", period: "2H" as const, stars: 2 };
+  return [
+    { ...base, decisionId: "A".repeat(32), fixtureKey: `${through}:900001`, homeTeam: "Örnek Ev", awayTeam: "Örnek Deplasman",
+      market: "Ms05u", quote: "1.30", minute: 61, homeScore: 0, awayScore: 0, live: true, decidedAt: at("19:51:02.000"),
+      evaluatedAt: at("19:50:17.000"), result: { state: "WIN", net: "0.30", finalHome: 1, finalAway: 0 } },
+    { ...base, decisionId: "B".repeat(32), fixtureKey: `${through}:900002`, homeTeam: "Örnek Kuzey", awayTeam: "Örnek Güney",
+      market: "Ms1X", quote: "1.06", minute: 56, homeScore: 0, awayScore: 0, live: false, decidedAt: at("21:19:16.000"),
+      evaluatedAt: at("16:41:19.000"), result: { state: "LOSS", net: "-1.00", finalHome: 0, finalAway: 1 } },
+    { ...base, decisionId: "C".repeat(32), fixtureKey: `${through}:900003`, homeTeam: "Örnek Doğu", awayTeam: "Örnek Batı",
+      market: "Ms1", quote: "1.18", stars: 3, minute: 58, homeScore: 1, awayScore: 0, live: true, decidedAt: at("21:23:30.000"),
+      evaluatedAt: at("21:23:17.000"), result: { state: "PENDING", net: null, finalHome: null, finalAway: null } }
+  ];
+}

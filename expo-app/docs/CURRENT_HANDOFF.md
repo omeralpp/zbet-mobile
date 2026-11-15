@@ -7,6 +7,36 @@ Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md)
 and the dated release reports/receipts.
 
+## Open local batch: Selection Lab rules on Super (unreleased)
+
+Owner direction 2026-11-14: show every Selection Lab rule beside the champion,
+with each rule's hits and odds. C1 now runs inside SAP (job `ZBET_SEL_C1`) and
+publishes through `ZBET_UI_SELECTION_SB` (TASK-0229/0230).
+
+- **BFF** (zbet-cap, detached worktree off `b8ff007`, not merged):
+  - New file `selection-decisions.js`; route
+    `GET /v1/btb/selection/v1/rules/:rule/window/:through/:days`.
+  - Contract `selection-decisions.v1`. C2/C3 return `RULE_NOT_PUBLISHED`
+    without a SAP call.
+  - Tests: 741/741. A live read-only smoke against DEV passed (7 days: 6
+    decisions, 3 won, 3 lost, net −2.45).
+- **Client** (this repo, uncommitted):
+  - The Super screen gets the rule chips Şampiyon · C1 · C2/C3 hazırlanıyor.
+  - New `SelectionRuleLog` with Bugün/7/30 gün, a coverage line, a
+    hits/odds/ROI summary and CANLI/SONRADAN cards.
+  - The champion log is unchanged. Mock mode shows labelled sample decisions.
+  - Checks:
+    - `npm run check` passes; tests are 838/838 plus 3 new contract tests.
+    - The verified web export passes.
+    - An Android JS bundle with the pilot profile, set per process, passes.
+    - A browser mock review passed at 375 px, 800 px and 1440 px, dark and
+      light, with no console errors.
+- **Gates still open:**
+  - Commit/push of both repos.
+  - BFF restart. It must serialize with the Daily Coupons session, whose
+    uncommitted zbet-cap edits touch `router.js` and `odata.js`.
+  - Coordinated APK plus web release.
+
 ## Son checkpoint
 
 Günlük Kuponlar is complete on both owner-only clients from
