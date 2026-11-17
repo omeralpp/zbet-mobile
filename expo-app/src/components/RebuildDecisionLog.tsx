@@ -49,6 +49,7 @@ import {
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { refreshPerformanceWidgetFromApi } from "@/src/widgets/performance-widget";
 import { DecisionFilterChip } from "./DecisionFilterChip";
+import { controlHeight, controlHitSlop, controlRadius } from "./FilterControls";
 import { ListPerforation, ResultPill, TonePill, toneColor } from "./DecisionTicket";
 import { FilterChip } from "./FilterChip";
 import { LocalTabPager } from "./LocalTabPager";
@@ -82,6 +83,7 @@ function StepButton({ icon, label, disabled, onPress }: { icon: "chevron-left" |
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}
+      hitSlop={controlHitSlop}
       onPress={onPress}
       style={({ pressed, hovered }) => [styles.stepButton, hovered && !disabled && styles.hover, pressed && styles.pressed, disabled && styles.stepDisabled]}
     >
@@ -115,12 +117,13 @@ function PeriodControl({ align, choice, period, today, open, onOpenChange, onCha
           accessibilityLabel={`Dönem: ${title}, İstanbul saati`}
           accessibilityRole="button"
           accessibilityState={{ expanded: open }}
+          hitSlop={controlHitSlop}
           onPress={() => onOpenChange(!open)}
           style={({ pressed, hovered }) => [styles.periodButton, hovered && styles.hover, pressed && styles.pressed]}
         >
           <MaterialCommunityIcons color={semantic.intelligence} name="calendar-blank-outline" size={iconSizes.small} />
           <Text numberOfLines={1} style={styles.periodText}>{title}</Text>
-          <MaterialCommunityIcons color={semantic.intelligence} name={open ? "chevron-up" : "chevron-down"} size={iconSizes.inline} />
+          <MaterialCommunityIcons color={colors.textMuted} name={open ? "chevron-up" : "chevron-down"} size={iconSizes.inline} />
         </Pressable>
         {period.days === 1 ? <StepButton disabled={!canStepDay(period, today, 1)} icon="chevron-right" label="Sonraki gün" onPress={() => step(1)} /> : null}
       </View>
@@ -475,6 +478,7 @@ export function RebuildDecisionLog() {
     <TutorialTarget id="super-filters">
       <View style={styles.filters}>
         <FilterChip
+          compact
           {...(available ? {count:counts.all} : {})}
           label="Tümü"
           onPress={() => {
@@ -486,6 +490,7 @@ export function RebuildDecisionLog() {
         />
         <DecisionFilterChip
           active={tab === "STAR"}
+          compact
           {...(available ? {count:counts.star} : {})}
           onActivate={() => setTab("STAR")}
           onChange={(value) => {
@@ -505,6 +510,7 @@ export function RebuildDecisionLog() {
           value={starFilter}
         />
         <FilterChip
+          compact
           {...(available ? {count:counts.pending} : {})}
           dot={semantic.intelligence}
           label="Bekliyor"
@@ -769,23 +775,24 @@ const styles = StyleSheet.create({
   periodWrapperOpen: { zIndex: 40, elevation: 40 },
   periodRow: { flexDirection: "row", alignItems: "center", gap: spacing.xs },
   periodButton: {
-    minHeight: interaction.minTouchTarget,
+    height: controlHeight,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.round,
+    paddingLeft: 10,
+    paddingRight: 8,
+    borderRadius: controlRadius,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface
   },
-  periodText: { color: semantic.intelligence, ...typeScale.bodyCompact, fontWeight: "700" },
+  periodText: { color: colors.text, ...typeScale.bodyCompact, fontSize: 13, lineHeight: 18, fontWeight: "700" },
   stepButton: {
-    width: interaction.minTouchTarget,
-    height: interaction.minTouchTarget,
+    width: controlHeight,
+    height: controlHeight,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: radii.round,
+    borderRadius: controlRadius,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface
@@ -793,7 +800,7 @@ const styles = StyleSheet.create({
   stepDisabled: { opacity: 0.38 },
   periodMenu: {
     position: "absolute",
-    top: interaction.minTouchTarget + 6,
+    top: controlHeight + 6,
     minWidth: 168,
     padding: spacing.xs,
     borderRadius: radii.lg,

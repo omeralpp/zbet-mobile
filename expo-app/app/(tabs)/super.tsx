@@ -2,20 +2,19 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import type { SelectionRule } from "@/src/api/selection-decisions-schema";
 import { DailyCouponLog } from "@/src/components/DailyCouponLog";
-import { ChipRow } from "@/src/components/ChipRow";
-import { FilterChip } from "@/src/components/FilterChip";
+import { ViewTabs } from "@/src/components/FilterControls";
 import { RebuildDecisionLog } from "@/src/components/RebuildDecisionLog";
 import { Screen } from "@/src/components/Screen";
 import { SelectionRuleLog } from "@/src/components/SelectionRuleLog";
 import { spacing } from "@/src/theme/theme";
 
 type RuleChoice = "CHAMPION" | "COUPONS" | SelectionRule;
-const rules: readonly { id: RuleChoice; label: string }[] = [
+const rules: readonly { id: RuleChoice; label: string; note?: string }[] = [
   { id: "CHAMPION", label: "Şampiyon" },
   { id: "COUPONS", label: "Günlük kupon" },
   { id: "C1", label: "C1" },
-  { id: "C2", label: "C2 · hazırlanıyor" },
-  { id: "C3", label: "C3 · hazırlanıyor" }
+  { id: "C2", label: "C2", note: "hazırlanıyor" },
+  { id: "C3", label: "C3", note: "hazırlanıyor" }
 ];
 
 /**
@@ -36,11 +35,7 @@ export default function SuperScreen() {
   return (
     <Screen brand contentStyle={styles.screen} eyebrow="BTB SUPER" scroll={false} title="Karar günlüğü" wide>
       <View style={styles.body}>
-        <ChipRow label="Seçim kuralı">
-          {rules.map((item) => (
-            <FilterChip key={item.id} label={item.label} onPress={() => setRule(item.id)} selected={rule === item.id} />
-          ))}
-        </ChipRow>
+        <ViewTabs label="Seçim kuralı" onChange={setRule} options={rules} value={rule} />
         {rule === "CHAMPION" ? <RebuildDecisionLog /> : rule === "COUPONS" ? <DailyCouponLog /> : <SelectionRuleLog key={rule} rule={rule} />}
       </View>
     </Screen>

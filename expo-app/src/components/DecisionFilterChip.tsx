@@ -27,6 +27,7 @@ import {
   type SuperStarSort
 } from "@/src/utils/decision-filters";
 import { decisionFilterMenuLayout } from "./decision-filter-menu";
+import { controlHeight, controlHitSlop, controlRadius } from "./FilterControls";
 
 export function DecisionFilterChip({
   value,
@@ -37,7 +38,8 @@ export function DecisionFilterChip({
   onOpenChange,
   onChange,
   sortValue,
-  onSortChange
+  onSortChange,
+  compact = false
 }: {
   value: StarDecisionFilter;
   count?: number;
@@ -48,6 +50,8 @@ export function DecisionFilterChip({
   onChange: (value: StarDecisionFilter) => void;
   sortValue?: SuperStarSort | null;
   onSortChange?: (value: SuperStarSort) => void;
+  /** The 36-point Karar günlüğü size (touch target kept by hit slop). */
+  compact?: boolean;
 }) {
   const triggerRef = useRef<View>(null);
   const [anchor, setAnchor] = useState({ x: 0, y: 0, width: 0, height: 0 });
@@ -84,6 +88,7 @@ export function DecisionFilterChip({
         }`}
         accessibilityRole="button"
         accessibilityState={{ expanded: open, selected: active }}
+        hitSlop={compact ? controlHitSlop : undefined}
         onPress={() => {
           if (!active) {
             onActivate();
@@ -99,6 +104,7 @@ export function DecisionFilterChip({
         ref={triggerRef}
         style={({ pressed }) => [
           styles.chip,
+          compact && styles.compact,
           active && styles.chipSelected,
           pressed && styles.pressed
         ]}
@@ -244,6 +250,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: "transparent"
   },
+  compact: { minHeight: controlHeight, height: controlHeight, paddingHorizontal: 12, borderRadius: controlRadius },
   chipSelected: {
     borderColor: colors.actionFill,
     backgroundColor: colors.actionFill

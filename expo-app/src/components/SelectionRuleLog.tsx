@@ -10,21 +10,15 @@ import { formatSelection } from "@/src/utils/format";
 import { formatQuote, formatRatio, formatUnits, unitsTone } from "@/src/utils/rebuild-display";
 import { istanbulDay } from "@/src/utils/rebuild-log";
 import { ResultPill, TonePill, toneColor } from "./DecisionTicket";
-import { resultFilters } from "./DailyCouponLog";
+import { logWindowOptions, resultOptions, type LogWindowDays } from "./DailyCouponLog";
 import type { CouponResultFilter } from "./daily-coupon-view";
-import { ChipRow } from "./ChipRow";
-import { FilterChip } from "./FilterChip";
+import { SegmentedControl, SelectMenu } from "./FilterControls";
 import { RatingStars } from "./RatingStars";
 import { Action, Card } from "./RebuildEvidencePanel";
 import { EmptyState, LoadingState } from "./StateView";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 
-const windows = [
-  { days: 1, label: "Bugün" },
-  { days: 7, label: "7 gün" },
-  { days: 30, label: "30 gün" }
-] as const;
-type WindowDays = (typeof windows)[number]["days"];
+type WindowDays = LogWindowDays;
 
 const istanbulTime = new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
@@ -126,23 +120,15 @@ export function SelectionRuleLog({ rule }: { rule: SelectionRule }) {
     LOST: records.filter((record) => record.result.state === "LOSS").length,
     PENDING: records.filter((record) => record.result.state === "PENDING").length };
   const visible = result === "ALL" ? records : records.filter((record) => record.result.state === states[result]);
-  const periodChips = (
-    <ChipRow label="Dönem">
-      {windows.map((item) => (
-        <FilterChip key={item.days} label={item.label} onPress={() => setDays(item.days)} selected={days === item.days} />
-      ))}
-    </ChipRow>
-  );
+  const inline = Platform.OS === "web" && isAtLeast(breakpoint, "medium");
   const head = (
     <View style={styles.head}>
-      {periodChips}
-      {value?.availability === "AVAILABLE" ? (
-        <ChipRow label="Sonuç">
-          {resultFilters.map((item) => (
-            <FilterChip count={counts[item.id]} key={item.id} label={item.label} onPress={() => setResult(item.id)} selected={result === item.id} />
-          ))}
-        </ChipRow>
-      ) : null}
+      <View style={[styles.toolbar, inline && styles.toolbarInline]}>
+        <SelectMenu icon="calendar-blank-outline" label="Dönem" onChange={setDays} options={logWindowOptions} value={days} />
+        {value?.availability === "AVAILABLE" ? (
+          <SegmentedControl fill={!inline} label="Sonuç" onChange={setResult} options={resultOptions(counts)} value={result} />
+        ) : null}
+      </View>
       <Text style={styles.scopeText}>
         {value?.coverage
           ? `${value.ruleLabel} · ${value.coverage.fixtures} maç · ${value.coverage.decided} karar verdi · ${value.coverage.tracking} izleniyor · ${value.coverage.notEnrolled} başlangıç kuralı dışında${value.coverage.stopped ? ` · ${value.coverage.stopped} durdu` : ""}`
@@ -225,6 +211,8 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   stack: { gap: spacing.md, width: "100%" },
   head: { gap: spacing.sm },
+  toolbar: { gap: spacing.sm },
+  toolbarInline: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing.md },
   listHead: { gap: spacing.sm, marginBottom: spacing.md },
   filters: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing.sm },
   scopeText: { color: colors.textMuted, ...typeScale.meta },

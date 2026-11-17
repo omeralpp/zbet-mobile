@@ -13,18 +13,28 @@ import {
   countByResult, couponEntries, filterCoupons, summarizeCoupons, tierNames, tierOrder,
   type CouponEntry, type CouponResultFilter, type CouponTierFilter
 } from "./daily-coupon-view";
-import { ChipRow } from "./ChipRow";
-import { FilterChip } from "./FilterChip";
+import { SegmentedControl, SelectMenu } from "./FilterControls";
 import { Action, Card } from "./RebuildEvidencePanel";
 import { EmptyState, LoadingState } from "./StateView";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 
 export const logWindows = [
   { days: 1, label: "Bugün" },
-  { days: 7, label: "7 gün" },
-  { days: 30, label: "30 gün" }
+  { days: 7, label: "Son 7 gün" },
+  { days: 30, label: "Son 30 gün" }
 ] as const;
 export type LogWindowDays = (typeof logWindows)[number]["days"];
+export const logWindowOptions = logWindows.map((item) => ({ id: item.days as LogWindowDays, label: item.label }));
+
+const tierOptions: readonly { id: CouponTierFilter; label: string }[] = [
+  { id: "ALL", label: "Tüm kuponlar" },
+  ...tierOrder.map((name) => ({ id: name as CouponTierFilter, label: tierNames[name] }))
+];
+
+/** Result segments with their counts, shared by the Karar günlüğü rule views. */
+export function resultOptions(counts: Readonly<Record<CouponResultFilter, number>>) {
+  return resultFilters.map((item) => ({ ...item, count: counts[item.id] }));
+}
 
 /** Shared result filter of the Karar günlüğü rule views. */
 export const resultFilters: readonly { id: CouponResultFilter; label: string }[] = [
@@ -87,20 +97,17 @@ export function DailyCouponLog() {
   const visible = filterCoupons(byTier, "ALL", result);
   const demo = query.data?.entries.some((entry) => entry.publication.mode === "DEMO");
 
+  // Phone: scope dropdowns on one line, the result bar under them at full
+  // width. Medium web and up: one toolbar line.
+  const inline = Platform.OS === "web" && isAtLeast(breakpoint, "medium");
+  const resultBar = <SegmentedControl fill={!inline} label="Sonuç" onChange={setResult} options={resultOptions(counts)} value={result} />;
   const head = (
-    <View style={styles.head}>
-      <ChipRow label="Dönem">
-        {logWindows.map((item) => <FilterChip key={item.days} label={item.label} onPress={() => setDays(item.days)} selected={days === item.days} />)}
-      </ChipRow>
-      <ChipRow label="Kupon türü">
-        <FilterChip label="Tümü" onPress={() => setTier("ALL")} selected={tier === "ALL"} />
-        {tierOrder.map((name) => <FilterChip key={name} label={tierNames[name]} onPress={() => setTier(name)} selected={tier === name} />)}
-      </ChipRow>
-      <ChipRow label="Sonuç">
-        {resultFilters.map((item) => (
-          <FilterChip count={counts[item.id]} key={item.id} label={item.label} onPress={() => setResult(item.id)} selected={result === item.id} />
-        ))}
-      </ChipRow>
+    <View style={[styles.head, inline && styles.headInline]}>
+      <View style={styles.scope}>
+        <SelectMenu icon="calendar-blank-outline" label="Dönem" onChange={setDays} options={logWindowOptions} value={days} />
+        <SelectMenu icon="ticket-outline" label="Kupon türü" onChange={setTier} options={tierOptions} value={tier} />
+      </View>
+      {resultBar}
     </View>
   );
 
@@ -172,6 +179,8 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   stack: { gap: spacing.md, width: "100%" },
   head: { gap: spacing.sm },
+  headInline: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing.md },
+  scope: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   listHead: { gap: spacing.sm, marginBottom: spacing.md },
   note: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0 },
   waiting: { gap: spacing.sm, alignItems: "flex-start" },
