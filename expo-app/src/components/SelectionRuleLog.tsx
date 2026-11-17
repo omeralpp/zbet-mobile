@@ -10,6 +10,9 @@ import { formatSelection } from "@/src/utils/format";
 import { formatQuote, formatRatio, formatUnits, unitsTone } from "@/src/utils/rebuild-display";
 import { istanbulDay } from "@/src/utils/rebuild-log";
 import { ResultPill, TonePill, toneColor } from "./DecisionTicket";
+import { resultFilters } from "./DailyCouponLog";
+import type { CouponResultFilter } from "./daily-coupon-view";
+import { ChipRow } from "./ChipRow";
 import { FilterChip } from "./FilterChip";
 import { RatingStars } from "./RatingStars";
 import { Action, Card } from "./RebuildEvidencePanel";
@@ -107,6 +110,7 @@ export function SelectionRuleLog({ rule }: { rule: SelectionRule }) {
   const breakpoint = useBreakpoint();
   const wide = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
   const [days, setDays] = useState<WindowDays>(7);
+  const [result, setResult] = useState<CouponResultFilter>("ALL");
   const [refreshing, setRefreshing] = useState(false);
   const [openedAt] = useState(() => Date.now());
   const today = istanbulDay(openedAt);
@@ -116,16 +120,29 @@ export function SelectionRuleLog({ rule }: { rule: SelectionRule }) {
     try { await query.refetch(); } finally { setRefreshing(false); }
   };
   const value = query.data;
+  const states = { WON: "WIN", LOST: "LOSS", PENDING: "PENDING" } as const;
+  const records = value?.records ?? [];
+  const counts = { ALL: records.length, WON: records.filter((record) => record.result.state === "WIN").length,
+    LOST: records.filter((record) => record.result.state === "LOSS").length,
+    PENDING: records.filter((record) => record.result.state === "PENDING").length };
+  const visible = result === "ALL" ? records : records.filter((record) => record.result.state === states[result]);
   const periodChips = (
-    <View style={styles.filters}>
+    <ChipRow label="Dönem">
       {windows.map((item) => (
         <FilterChip key={item.days} label={item.label} onPress={() => setDays(item.days)} selected={days === item.days} />
       ))}
-    </View>
+    </ChipRow>
   );
   const head = (
     <View style={styles.head}>
       {periodChips}
+      {value?.availability === "AVAILABLE" ? (
+        <ChipRow label="Sonuç">
+          {resultFilters.map((item) => (
+            <FilterChip count={counts[item.id]} key={item.id} label={item.label} onPress={() => setResult(item.id)} selected={result === item.id} />
+          ))}
+        </ChipRow>
+      ) : null}
       <Text style={styles.scopeText}>
         {value?.coverage
           ? `${value.ruleLabel} · ${value.coverage.fixtures} maç · ${value.coverage.decided} karar verdi · ${value.coverage.tracking} izleniyor · ${value.coverage.notEnrolled} başlangıç kuralı dışında${value.coverage.stopped ? ` · ${value.coverage.stopped} durdu` : ""}`
@@ -162,12 +179,14 @@ export function SelectionRuleLog({ rule }: { rule: SelectionRule }) {
     );
   }
   const summary = value.summary;
-  const empty = <EmptyState kind="NO_DECISION" message="Başka bir dönem seçerek bu kuralın geçmiş kararlarını görebilirsin." title="Bu dönemde kural kararı yok" />;
+  const empty = records.length
+    ? <EmptyState kind="NO_DECISION" message="Filtreyi değiştirerek bu dönemin diğer kararlarını görebilirsin." title="Bu filtrede karar yok" />
+    : <EmptyState kind="NO_DECISION" message="Başka bir dönem seçerek bu kuralın geçmiş kararlarını görebilirsin." title="Bu dönemde kural kararı yok" />;
   const header = (
     <View style={styles.listHead}>
       {head}
       <RuleSummary value={summary} />
-      <Text style={styles.note}>{`${note}${summary.live ? ` · ${summary.live} karar canlı kaydedildi` : ""}`}</Text>
+      <Text style={styles.note}>{`${note}${summary.live ? ` · ${summary.live} karar canlı kaydedildi` : ""}${result === "ALL" ? "" : " · Özet seçili dönemin tüm kararlarını gösterir"}`}</Text>
     </View>
   );
   const refreshControl = <RefreshControl colors={[colors.gold]} onRefresh={() => { void refresh(); }} refreshing={refreshing} tintColor={colors.gold} />;
@@ -176,9 +195,9 @@ export function SelectionRuleLog({ rule }: { rule: SelectionRule }) {
     return (
       <ScrollView contentContainerStyle={styles.wideContent} refreshControl={refreshControl} style={styles.fill}>
         {header}
-        {value.records.length ? (
+        {visible.length ? (
           <View style={styles.grid}>
-            {value.records.map((record) => (
+            {visible.map((record) => (
               <View key={record.decisionId} style={styles.gridItem}><DecisionCard record={record} /></View>
             ))}
           </View>
@@ -192,7 +211,7 @@ export function SelectionRuleLog({ rule }: { rule: SelectionRule }) {
       ListEmptyComponent={empty}
       ListHeaderComponent={header}
       contentContainerStyle={styles.pageList}
-      data={value.records}
+      data={visible}
       keyExtractor={(record) => record.decisionId}
       refreshControl={refreshControl}
       renderItem={({ item }) => <DecisionCard record={item} />}

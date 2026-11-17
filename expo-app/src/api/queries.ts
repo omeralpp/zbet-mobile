@@ -6,10 +6,20 @@ import { createRequestLimiter } from "./request-limiter";
 
 export function dailyCouponsQuery(date: string, isToday: boolean) {
   return queryOptions({
-    queryKey: ["dailyCoupons", "daily-coupons.v1", date],
+    queryKey: ["dailyCoupons", "daily-coupons.v2", date],
     queryFn: ({ signal }) => mobileApi.getDailyCoupons(date, signal),
     staleTime: 30_000,
     refetchInterval: isToday ? 60_000 : false,
+    retry: false
+  });
+}
+
+export function dailyCouponWindowQuery(through: string, days: 1 | 7 | 30, isCurrent: boolean) {
+  return queryOptions({
+    queryKey: ["dailyCouponWindow", "daily-coupons-window.v2", through, days],
+    queryFn: ({ signal }) => mobileApi.getDailyCouponWindow(through, days, signal),
+    staleTime: 30_000,
+    refetchInterval: isCurrent ? 120_000 : false,
     retry: false
   });
 }

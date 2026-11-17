@@ -1,5 +1,6 @@
 const moduleNames: Record<string, string> = {
   metrics: "Günlük özet ve Jinx",
+  dailyCoupons: "Günlük kuponlar",
   featured: "Maç görünümü",
   recentSuper: "Son Super kararları",
   toto: "Toto programı",

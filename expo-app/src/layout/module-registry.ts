@@ -9,6 +9,9 @@ import type { ModuleAnchor, ModuleLayoutSurface } from "./module-layout";
  */
 export const overviewModules = [
   "metrics",
+  // Today's Banko, Dengeli and Riskli coupons (owner direction 2026-11-17):
+  // shown on Özet itself instead of a separate screen.
+  "dailyCoupons",
   "featured",
   "recentSuper",
   "toto"
@@ -91,7 +94,7 @@ export const moduleLayoutAnchors: Record<
   ModuleLayoutSurface,
   readonly ModuleAnchor[]
 > = {
-  overview: [],
+  overview: [{ id: "dailyCoupons", after: "metrics" }],
   liveDetail: [
     { id: "matchPath", after: "decision" },
     { id: "pressure", after: "matchPath" },

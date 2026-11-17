@@ -28,6 +28,36 @@ paths:
             application/json:
               schema: { $ref: "./daily-coupons.schema.json" }
         default: { $ref: "#/components/responses/Error" }
+  /v1/btb/daily-coupons/v2:
+    get:
+      operationId: getDailyCouponsDetail
+      description: daily-coupons.v2. The v1 day plus, per leg, the BTB match key, the leg result from the latest SAP settlement and the frozen regulation-time score once settled. No-store.
+      parameters:
+        - in: query
+          name: date
+          schema: { type: string, format: date }
+          description: Betting date in Europe/Istanbul. Defaults to today.
+      responses:
+        "200":
+          description: Daily publication with leg results, waiting status, or unavailable status.
+          content:
+            application/json:
+              schema: { type: object, description: "daily-coupons.v2; validated by src/api/daily-coupons-schema.ts" }
+        default: { $ref: "#/components/responses/Error" }
+  /v1/btb/daily-coupons/v2/window/{through}/{days}:
+    get:
+      operationId: getDailyCouponWindow
+      description: daily-coupons-window.v2. Every published day of 1, 7 or 30 Istanbul days ending on through, for the decision log. Days SAP cannot prove are listed in unavailableDays. No-store.
+      parameters:
+        - { in: path, name: through, required: true, schema: { type: string, format: date } }
+        - { in: path, name: days, required: true, schema: { type: integer, enum: [1, 7, 30] } }
+      responses:
+        "200":
+          description: Published days in the window.
+          content:
+            application/json:
+              schema: { type: object, description: "daily-coupons-window.v2; validated by src/api/daily-coupons-schema.ts" }
+        default: { $ref: "#/components/responses/Error" }
   /v1/btb/matches/{key}/selection-history:
     get:
       operationId: getMatchSelectionHistory

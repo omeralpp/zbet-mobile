@@ -2,7 +2,7 @@ import { jinxRb1ExplanationSchema } from "./jinx-rb1-schema";
 import { selectionComparisonSchema } from "./selection-comparison-schema";
 import { selectionHistorySchema } from "./selection-history-schema";
 import { selectionDecisionsSchema } from "./selection-decisions-schema";
-import { dailyCouponDateSchema, dailyCouponsSchema } from "./daily-coupons-schema";
+import { dailyCouponDateSchema, dailyCouponWindowSchema, dailyCouponsSchema } from "./daily-coupons-schema";
 import { z, type ZodType } from "zod";
 import {
   browserReloadHost,
@@ -151,12 +151,20 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
   const reportHeaders = { "X-BTB-Rebuild": "btb-rebuild.v1", "X-BTB-Report-Breakdown": "summary.v1", "X-BTB-Report-Facts": "match-facts.v1" };
   return {
     async getDailyCoupons(date, signal) {
-      const path = `/v1/btb/daily-coupons?date=${encodeURIComponent(dailyCouponDateSchema.parse(date))}`;
+      const path = `/v1/btb/daily-coupons/v2?date=${encodeURIComponent(dailyCouponDateSchema.parse(date))}`;
       const day = await request(path, dailyCouponsSchema, {}, signal);
       if (day.bettingDate !== date) {
         throw new MobileApiError("İstenen güne ait kuponlar doğrulanamadı.", 502, "DAILY_COUPON_DATE_MISMATCH");
       }
       return day;
+    },
+    async getDailyCouponWindow(through, days, signal) {
+      const window = await request(`/v1/btb/daily-coupons/v2/window/${encodeURIComponent(dailyCouponDateSchema.parse(through))}/${days}`,
+        dailyCouponWindowSchema, {}, signal);
+      if (window.window.through !== through || window.window.days !== days) {
+        throw new MobileApiError("İstenen döneme ait kuponlar doğrulanamadı.", 502, "DAILY_COUPON_WINDOW_MISMATCH");
+      }
+      return window;
     },
     getMatchSelectionComparison: (key, signal) => request(`/v1/btb/matches/${encodeURIComponent(key)}/selection-comparison`, selectionComparisonSchema, {}, signal),
     getMatchSelectionHistory: (key, signal) => request(`/v1/btb/matches/${encodeURIComponent(key)}/selection-history`, selectionHistorySchema, {}, signal),

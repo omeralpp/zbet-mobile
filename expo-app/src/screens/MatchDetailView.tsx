@@ -53,6 +53,8 @@ import { matchActivity } from "@/src/components/match-path-activity";
 import { RebuildStatisticsPanel } from "@/src/components/RebuildStatisticsPanel";
 import { HistoricalScoreDistribution } from "@/src/components/HistoricalScoreDistribution";
 import { TeamFormCard } from "@/src/components/TeamFormCard";
+import { istanbulDay } from "@/src/utils/rebuild-log";
+import { MatchCouponCard } from "@/src/components/MatchCouponCard";
 import { SelectionLab } from "@/src/components/SelectionLab";
 import { resolveTeamFormState } from "@/src/components/team-form-view";
 import { EvidenceQuality } from "@/src/components/RatingStars";
@@ -878,6 +880,9 @@ export function MatchDetailView({
         </View>
       </TutorialTarget>
       </View>
+
+      {/* The Daily Coupon this match is in, under its score (owner direction 2026-11-17). */}
+      {embedded ? null : <MatchCouponCard matchKey={key} today={istanbulDay(now)} />}
 
       {query.data?.rebuild ? <RebuildJinxCard matchKey={key} matchStatus={match.status} possession={possession}
         matchContext={context.data} refreshContext={() => context.refetch()} contextRefreshing={context.isFetching}

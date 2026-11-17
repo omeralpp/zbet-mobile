@@ -1,13 +1,52 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-11-14
+Son güncelleme: 2026-11-17
 Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 7695422`
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md)
 and the dated release reports/receipts.
 
-## Open local batch: Selection Lab rules on Super (unreleased)
+## Open local batch: Daily Coupons and Selection Lab in the flow (2026-11-17, unreleased)
+
+Owner direction with two screenshots (NXT-OBS-259). The owner approved commit
+and push on 17 November: branch `claude/daily-coupons-flow` in zbet-mobile
+(from `master` `1c5c2f2`) and in zbet-cap (BFF `6042bd7`, from `main`
+`d6a1a23`), both pushed. `master`/`main` stay at the accepted sources until
+the pair is accepted. Nothing is built, published, restarted or written to SAP.
+
+- **Client:**
+  - Özet gains the `dailyCoupons` module (anchored after `metrics`). It shows
+    today's Banko, Dengeli and Riskli tickets, each match with its live or
+    final score and a tap to match detail. Phones get a sideways pager,
+    desktop a row of three. The separate pill link is gone.
+  - Karar günlüğü gets a `Günlük kupon` view (`/super?view=COUPONS`): 1/7/30
+    days, tier and result filters with counts, a summary at one unit per
+    coupon, and the losing match marked with its score. The rule choice now
+    lives in the route.
+  - C1 gets the same result filter (Tümü/Kazandı/Kaybetti/Bekliyor).
+  - Match detail shows a `Günlük kupon` card when the match is in a coupon:
+    the pick, its own result and score, and the coupon's state.
+  - `/daily-coupons` redirects to the log view. Phone filter chips scroll on
+    one line (`ChipRow`).
+- **BFF (zbet-cap):** new `daily-coupons.v2` (`/v1/btb/daily-coupons/v2`) and
+  `daily-coupons-window.v2` (`/v1/btb/daily-coupons/v2/window/:through/:days`).
+  The v1 route is unchanged, so the installed APK keeps working. Leg results
+  come from the SAP settlement's `outcomes`; a result that contradicts its
+  tier is withheld. 745 BFF tests pass.
+- **SAP gate:** final scores come from kind `F` documents, which the view
+  `ZBET_C_DC_DOC` does not expose (`where doc_kind = 'P' or doc_kind = 'S'`).
+  Adding `or doc_kind = 'F'` needs SAP approval and the abapGit route. Until
+  then settled matches show their result without a score, and today's
+  matches show the live score from the match list.
+- **Checks:** `invoke-mobile-check.ps1 -BundleOnly` passed; 845 client unit
+  tests. Browser smoke used a static mock export at 390/820/1440 px in both
+  themes (`.codex-artifacts/coupons-20261117`). Not verified on a phone or
+  against live SAP data.
+- **Next:** the SAP view change, a BFF restart on `6042bd7` and the
+  coordinated pair from the client branch tip each need their own approval.
+
+## Earlier batch: Selection Lab rules on Super (released 2026-11-15)
 
 Owner direction 2026-11-14: show every Selection Lab rule beside the champion,
 with each rule's hits and odds. C1 now runs inside SAP (job `ZBET_SEL_C1`) and

@@ -13,16 +13,20 @@ import {
 test("overview starts with the summary, followed by matches and decision records", () => {
   assert.deepEqual(overviewModules, [
     "metrics",
+    "dailyCoupons",
     "featured",
     "recentSuper",
     "toto"
   ]);
+  // A customized Özet gets the coupons under its figures, not at the bottom.
+  assert.deepEqual(reconcileModuleOrder(["toto", "metrics", "featured", "recentSuper"], overviewModules, moduleLayoutAnchors.overview),
+    ["toto", "metrics", "dailyCoupons", "featured", "recentSuper"]);
 });
 
 test("overview retains functional modules and retires the decorative hero", () => {
   assert.deepEqual(
     new Set(overviewModules),
-    new Set(["metrics", "featured", "recentSuper", "toto"])
+    new Set(["metrics", "dailyCoupons", "featured", "recentSuper", "toto"])
   );
 });
 

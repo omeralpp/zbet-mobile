@@ -237,6 +237,8 @@ test("keeps the checked-in OpenAPI document parseable and route-complete", async
     Object.keys(document.paths ?? {}).sort(),
     [
       "/v1/btb/daily-coupons",
+      "/v1/btb/daily-coupons/v2",
+      "/v1/btb/daily-coupons/v2/window/{through}/{days}",
       "/v1/btb/matches",
       "/v1/btb/matches/{key}",
       "/v1/btb/matches/{key}/analysis-context",

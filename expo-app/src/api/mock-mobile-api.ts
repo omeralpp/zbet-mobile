@@ -1,3 +1,5 @@
+import { mockDailyCouponWindow, mockDailyCoupons } from "./mock-daily-coupons";
+import { istanbulDay } from "@/src/utils/rebuild-log";
 import {
   analysisContextSchema,
   liveContextSchema,
@@ -76,7 +78,11 @@ async function mockDelay(signal?: AbortSignal): Promise<void> {
 export const mockMobileApi: MobileApi = {
   async getDailyCoupons(date, signal) {
     await mockDelay(signal);
-    return { contractVersion: "daily-coupons.v1", bettingDate: date, status: "UNAVAILABLE", publication: null, tiers: [], history: [] };
+    return mockDailyCoupons(date, istanbulDay(Date.now()));
+  },
+  async getDailyCouponWindow(through, days, signal) {
+    await mockDelay(signal);
+    return mockDailyCouponWindow(through, days, istanbulDay(Date.now()));
   },
   async getMatchSelectionHistory(key, signal) {
     signal?.throwIfAborted();

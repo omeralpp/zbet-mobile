@@ -17,7 +17,15 @@ const leg = z.strictObject({
   odds,
   quotedAt: timestamp,
   quoteTimeBasis: z.enum(["PROVIDER", "CAPTURE_UPPER_BOUND"]).optional(),
-  rationale: text
+  rationale: text,
+  // daily-coupons.v2: the BTB match key (null for a non-BTB fixture id), the
+  // leg result from SAP settlement (null when SAP cannot explain it) and the
+  // frozen regulation-time score once the leg is settled.
+  matchKey: z.string().regex(/^\d{4}-\d{2}-\d{2}:\d+:\d{2}:\d{2}:\d{2}$/).nullable(),
+  result: z.enum(["PENDING", "WON", "LOST", "VOID"]).nullable(),
+  finalScore: z.strictObject({ home: z.number().int().min(0).max(99), away: z.number().int().min(0).max(99) }).nullable()
+}).refine((value) => value.finalScore === null || (value.result !== null && value.result !== "PENDING"), {
+  message: "A final score belongs to a settled leg"
 });
 
 const coupon = z.discriminatedUnion("status", [
@@ -54,7 +62,7 @@ const publication = z.strictObject({
 });
 
 const envelope = {
-  contractVersion: z.literal("daily-coupons.v1"),
+  contractVersion: z.literal("daily-coupons.v2"),
   bettingDate: dailyCouponDateSchema,
   history: z.array(z.strictObject({
     bettingDate: dailyCouponDateSchema,
@@ -76,3 +84,26 @@ export const dailyCouponsSchema = z.discriminatedUnion("status", [
 export type DailyCoupons = z.infer<typeof dailyCouponsSchema>;
 export type DailyCouponTier = z.infer<typeof coupon>;
 export type DailyCouponPublication = z.infer<typeof publication>;
+export type DailyCouponLeg = z.infer<typeof leg>;
+export type DailyCouponSettlement = "PENDING" | "WON" | "LOST" | "VOID";
+
+const day = z.strictObject({
+  contractVersion: z.literal("daily-coupons.v2"),
+  bettingDate: dailyCouponDateSchema,
+  status: z.literal("AVAILABLE"),
+  publication,
+  tiers: z.array(coupon).length(3)
+});
+
+/** daily-coupons-window.v2: every published day of 1, 7 or 30 Istanbul days. */
+export const dailyCouponWindowSchema = z.strictObject({
+  contractVersion: z.literal("daily-coupons-window.v2"),
+  window: z.strictObject({ days: z.union([z.literal(1), z.literal(7), z.literal(30)]), from: dailyCouponDateSchema, through: dailyCouponDateSchema }),
+  todayStatus: z.enum(["AVAILABLE", "AWAITING_PUBLICATION", "UNAVAILABLE"]).nullable(),
+  unavailableDays: z.array(dailyCouponDateSchema).max(30),
+  entries: z.array(day).max(30)
+}).refine((value) => value.entries.every((entry) => entry.bettingDate >= value.window.from && entry.bettingDate <= value.window.through)
+  && new Set(value.entries.map((entry) => entry.bettingDate)).size === value.entries.length,
+{ message: "Window entries must be unique days inside the window", path: ["entries"] });
+export type DailyCouponWindow = z.infer<typeof dailyCouponWindowSchema>;
+export type DailyCouponDay = z.infer<typeof day>;
