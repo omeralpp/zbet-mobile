@@ -1,50 +1,76 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-11-17
-Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 7695422`
+Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / B95FEEC`
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md)
 and the dated release reports/receipts.
 
-## Open local batch: Daily Coupons and Selection Lab in the flow (2026-11-17, unreleased)
+## Released batch: Daily Coupons and Selection Lab in the flow (2026-11-17, COMPLETE)
 
-Owner direction with two screenshots (NXT-OBS-259). The owner approved commit
-and push on 17 November: branch `claude/daily-coupons-flow` in zbet-mobile
-(from `master` `1c5c2f2`) and in zbet-cap (BFF `6042bd7`, from `main`
-`d6a1a23`), both pushed. `master`/`main` stay at the accepted sources until
-the pair is accepted. Nothing is built, published, restarted or written to SAP.
+Owner direction with two screenshots (NXT-OBS-259), then two follow-ups the
+same day: compact filters, and Karar günlüğü regrouped into three views. Each
+follow-up superseded the previous candidate before its web release, so only
+`b95feec` was published. Branch `claude/daily-coupons-flow` in zbet-mobile
+(from `master` `1c5c2f2`) and zbet-cap (BFF `6042bd7`, from `main` `d6a1a23`);
+both `master`/`main` fast-forwarded after acceptance.
 
 - **Client:**
   - Özet gains the `dailyCoupons` module (anchored after `metrics`). It shows
     today's Banko, Dengeli and Riskli tickets, each match with its live or
     final score and a tap to match detail. Phones get a sideways pager,
     desktop a row of three. The separate pill link is gone.
-  - Karar günlüğü gets a `Günlük kupon` view (`/super?view=COUPONS`): 1/7/30
-    days, tier and result filters with counts, a summary at one unit per
-    coupon, and the losing match marked with its score. The rule choice now
-    lives in the route.
-  - C1 gets the same result filter (Tümü/Kazandı/Kaybetti/Bekliyor).
+  - Karar günlüğü has three oval tabs with icons, like Canlı's switch:
+    Şampiyon (trophy), Günlük kupon (ticket) and Lab (flask). Lab holds C1,
+    C2 and C3 as a segmented rule filter. On a phone the views are swipeable
+    pages; past the first or last one the swipe moves to the neighbouring app
+    tab. Web has no swipe (platform exception: tabs are clicked). Route:
+    `/super?view=COUPONS|LAB&rule=C1`; an old `view=C1` link opens Lab on C1.
+  - Every log opens on Bugün. Günlük kupon has period, tier and result
+    filters with counts, a summary at one unit per coupon, and the losing
+    match marked with its score. Lab has the same period and result filters.
+  - Compact filter language (`FilterControls.tsx`): 36-point controls with a
+    44-point touch target (segmented control, select menu), also used by the
+    champion's period and Tümü/★/Bekliyor chips.
   - Match detail shows a `Günlük kupon` card when the match is in a coupon:
     the pick, its own result and score, and the coupon's state.
-  - `/daily-coupons` redirects to the log view. Phone filter chips scroll on
-    one line (`ChipRow`).
+  - `/daily-coupons` redirects to the log view.
 - **BFF (zbet-cap):** new `daily-coupons.v2` (`/v1/btb/daily-coupons/v2`) and
   `daily-coupons-window.v2` (`/v1/btb/daily-coupons/v2/window/:through/:days`).
   The v1 route is unchanged, so the installed APK keeps working. Leg results
   come from the SAP settlement's `outcomes`; a result that contradicts its
   tier is withheld. 745 BFF tests pass.
-- **SAP gate:** final scores come from kind `F` documents, which the view
-  `ZBET_C_DC_DOC` does not expose (`where doc_kind = 'P' or doc_kind = 'S'`).
-  Adding `or doc_kind = 'F'` needs SAP approval and the abapGit route. Until
-  then settled matches show their result without a score, and today's
-  matches show the live score from the match list.
-- **Checks:** `invoke-mobile-check.ps1 -BundleOnly` passed; 845 client unit
-  tests. Browser smoke used a static mock export at 390/820/1440 px in both
-  themes (`.codex-artifacts/coupons-20261117`). Not verified on a phone or
-  against live SAP data.
-- **Next:** the SAP view change, a BFF restart on `6042bd7` and the
-  coordinated pair from the client branch tip each need their own approval.
+- **SAP (done 17 November, owner approved):** `ZBET_C_DC_DOC` and
+  `ZBET_C_DC_PART` now also return kind `F`, the frozen pre-wipe rows that
+  carry final scores. zbet-abap `546ee3b` passed preflight and is deployed to
+  DEV (`deployedCommit` = `headAfter` = `546ee3b`); no inactive objects.
+  Getting there needed three Git-only repairs on zbet-abap `main` that change
+  no SAP object: `bbd6dfc` (missing UTF-8 BOM on 16 Daily Coupons XML files),
+  `b8e72fc` (SAP-native files for objects that were only in SAP) and
+  `d1f1d14` (removed a table file restored by mistake). A local read with the
+  new BFF code against DEV returned real results and scores, for example the
+  16 November Dengeli and Riskli losses: İtalya U21–Belçika U21 2–2 and
+  Sorrento–Monopoli 2–1. 15 November has no settlement yet (Daily Coupons
+  thread). Evidence: workspace `.codex-artifacts/daily-coupons-sap-20261117/`.
+- **BFF:** restarted on `6042bd7` (owner approved); the publisher replaced it
+  again on the same build (PID 32892 to 6616). Health passes.
+- **Checks:** `invoke-mobile-check.ps1 -BundleOnly` passed on `b95feec`; 845
+  client unit tests. Browser review on a static mock export at 360/390/820/
+  1440 px in both themes (`expo-app/.codex-artifacts/coupons-20261117`).
+- **Coordinated release COMPLETE (2026-11-17):**
+  - Batch `client-b95feec81e7034f0b4c49c54eb697c011f79c045-D976EA3990C7-78AAAF1EE4E8`.
+  - APK `btb-mobile-next-b95feec-lab-tabs-arm64.apk`, 50,703,593 bytes,
+    SHA-256 `D976EA3990C77307904D9C9D36444EDEFA22A2216FE1978C7F18F3C26A9CC141`,
+    private Drive file `1qA0E82MUaFD2cUz0tYJpMHNxYlKeP38Y`, readback verified.
+  - Web `20261117T175839Z-b95feec`: 57 served files, 0 mismatches, Access
+    protected.
+  - Owner smokes: "Installed, it works" and "Web works" (owner-attested, no
+    device hash; the swipe was named in the Android check request).
+  - Receipts: workspace `.codex-artifacts/lab-tabs-release-20261117/`.
+  - Retention: the f6d3a8b APK and the superseded 37083e0 and 644b70d
+    candidates went to the Recycle Bin; hashes in
+    `superseded-local-apk-hashes.json`. b95feec is the sole local APK.
 
 ## Earlier batch: Selection Lab rules on Super (released 2026-11-15)
 
