@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FlatList, Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { selectionDecisionsQuery } from "@/src/api/queries";
@@ -100,10 +100,10 @@ function DecisionCard({ record }: { record: SelectionDecisionRecord }) {
  * many fixtures the rule could follow. It sits beside the champion's log and
  * never changes it.
  */
-export function SelectionRuleLog({ rule }: { rule: SelectionRule }) {
+export function SelectionRuleLog({ rule, ruleControl }: { rule: SelectionRule; ruleControl?: ReactNode }) {
   const breakpoint = useBreakpoint();
   const wide = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
-  const [days, setDays] = useState<WindowDays>(7);
+  const [days, setDays] = useState<WindowDays>(1);
   const [result, setResult] = useState<CouponResultFilter>("ALL");
   const [refreshing, setRefreshing] = useState(false);
   const [openedAt] = useState(() => Date.now());
@@ -124,7 +124,10 @@ export function SelectionRuleLog({ rule }: { rule: SelectionRule }) {
   const head = (
     <View style={styles.head}>
       <View style={[styles.toolbar, inline && styles.toolbarInline]}>
-        <SelectMenu icon="calendar-blank-outline" label="Dönem" onChange={setDays} options={logWindowOptions} value={days} />
+        <View style={styles.scope}>
+          {ruleControl}
+          <SelectMenu icon="calendar-blank-outline" label="Dönem" onChange={setDays} options={logWindowOptions} value={days} />
+        </View>
         {value?.availability === "AVAILABLE" ? (
           <SegmentedControl fill={!inline} label="Sonuç" onChange={setResult} options={resultOptions(counts)} value={result} />
         ) : null}
@@ -212,6 +215,7 @@ const styles = StyleSheet.create({
   stack: { gap: spacing.md, width: "100%" },
   head: { gap: spacing.sm },
   toolbar: { gap: spacing.sm },
+  scope: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing.sm },
   toolbarInline: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing.md },
   listHead: { gap: spacing.sm, marginBottom: spacing.md },
   filters: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing.sm },

@@ -80,7 +80,7 @@ function CouponSummaryCard({ entries }: { entries: readonly CouponEntry[] }) {
 export function DailyCouponLog() {
   const breakpoint = useBreakpoint();
   const wide = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
-  const [days, setDays] = useState<LogWindowDays>(7);
+  const [days, setDays] = useState<LogWindowDays>(1);
   const [tier, setTier] = useState<CouponTierFilter>("ALL");
   const [result, setResult] = useState<CouponResultFilter>("ALL");
   const [refreshing, setRefreshing] = useState(false);

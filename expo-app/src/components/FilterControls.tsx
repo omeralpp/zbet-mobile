@@ -20,40 +20,39 @@ export const controlHitSlop = { top: (interaction.minTouchTarget - controlHeight
 type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
 type Key = string | number;
 
-/** The view switch: text tabs with an underline, scrolling sideways on a phone. */
+/**
+ * The view switch, drawn like Canlı's Canlı/Tümü switch (owner direction
+ * 2026-11-17): an oval track whose selected segment is raised. On a phone the
+ * segments share the full width; on medium web and up the track hugs them.
+ */
 export function ViewTabs<T extends Key>({ label, options, value, onChange }: {
   label: string;
-  options: readonly { id: T; label: string; note?: string }[];
+  options: readonly { id: T; label: string; note?: string; icon?: IconName }[];
   value: T;
   onChange: (value: T) => void;
 }) {
   const breakpoint = useBreakpoint();
-  const wraps = Platform.OS === "web" && isAtLeast(breakpoint, "medium");
-  const tabs = options.map((option) => {
-    const selected = option.id === value;
-    return (
-      <Pressable
-        accessibilityLabel={option.note ? `${option.label}, ${option.note}` : option.label}
-        accessibilityRole="tab"
-        accessibilityState={{ selected }}
-        key={String(option.id)}
-        onPress={() => onChange(option.id)}
-        style={({ pressed, hovered }) => [styles.tab, hovered && !selected && styles.tabHover, pressed && styles.pressed]}
-      >
-        <Text numberOfLines={1} style={[styles.tabText, selected && styles.tabTextSelected, option.note && !selected ? styles.tabTextPending : null]}>
-          {option.label}
-        </Text>
-        {option.note ? <Text numberOfLines={1} style={styles.tabNote}>{option.note}</Text> : null}
-        {selected ? <View style={styles.tabIndicator} /> : null}
-      </Pressable>
-    );
-  });
-  if (wraps) return <View accessibilityLabel={label} accessibilityRole="tablist" style={[styles.tabs, styles.tabsWide]}>{tabs}</View>;
+  const hugs = Platform.OS === "web" && isAtLeast(breakpoint, "medium");
   return (
-    <View style={styles.tabsBleed}>
-      <ScrollView accessibilityLabel={label} accessibilityRole="tablist" contentContainerStyle={styles.tabsLine} horizontal showsHorizontalScrollIndicator={false}>
-        {tabs}
-      </ScrollView>
+    <View accessibilityLabel={label} accessibilityRole="tablist" style={[styles.tabs, hugs && styles.tabsHug]}>
+      {options.map((option) => {
+        const selected = option.id === value;
+        return (
+          <Pressable
+            accessibilityLabel={option.note ? `${option.label}, ${option.note}` : option.label}
+            accessibilityRole="tab"
+            accessibilityState={{ selected }}
+            key={String(option.id)}
+            onPress={() => onChange(option.id)}
+            style={({ pressed, hovered }) => [styles.tab, hugs ? styles.tabHug : styles.tabFill,
+              hovered && !selected && styles.tabHover, selected && styles.tabSelected, pressed && styles.pressed]}
+          >
+            {option.icon ? <MaterialCommunityIcons color={selected ? colors.actionFill : colors.textMuted} name={option.icon} size={iconSizes.small} /> : null}
+            <Text numberOfLines={1} style={[styles.tabText, selected && styles.tabTextSelected]}>{option.label}</Text>
+            {option.note ? <Text numberOfLines={1} style={styles.tabNote}>{option.note}</Text> : null}
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
@@ -161,17 +160,32 @@ export function SelectMenu<T extends Key>({ label, options, value, onChange, ico
 }
 
 const styles = StyleSheet.create({
-  tabsBleed: { marginHorizontal: -spacing.lg, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-  tabsLine: { flexDirection: "row", paddingHorizontal: spacing.lg - 10 },
-  tabs: { flexDirection: "row" },
-  tabsWide: { flexWrap: "wrap", marginHorizontal: -10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-  tab: { height: 42, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10 },
-  tabHover: { opacity: 0.8 },
-  tabText: { color: colors.textMuted, ...typeScale.bodyCompact, fontSize: 15, fontWeight: "700" },
+  tabs: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "stretch",
+    padding: 3,
+    borderRadius: radii.round,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.backgroundElevated
+  },
+  tabsHug: { alignSelf: "flex-start" },
+  tab: {
+    minHeight: interaction.minTouchTarget - 2,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderRadius: radii.round
+  },
+  tabFill: { flexGrow: 1, flexShrink: 1, flexBasis: "auto", minWidth: 0, paddingHorizontal: spacing.sm },
+  tabHug: { minWidth: 96, paddingHorizontal: spacing.lg },
+  tabHover: { backgroundColor: colors.surface },
+  tabSelected: { backgroundColor: colors.surfaceStrong },
+  tabText: { color: colors.textMuted, ...typeScale.bodyCompact, fontWeight: "700", flexShrink: 1 },
   tabTextSelected: { color: colors.text },
-  tabTextPending: { opacity: 0.75 },
   tabNote: { color: colors.textMuted, ...typeScale.label, fontSize: 11, letterSpacing: 0, opacity: 0.8 },
-  tabIndicator: { position: "absolute", left: 10, right: 10, bottom: 0, height: 2.5, borderRadius: 2, backgroundColor: colors.actionFill },
   track: {
     height: controlHeight,
     flexDirection: "row",
