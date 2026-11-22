@@ -173,8 +173,6 @@ export default function TotoProgramDetailScreen() {
       { value: program.mainHits === null ? "—" : String(program.mainHits), label: "ana isabet" }, { value: of(progress.maxCoverage), label: "en fazla kapsama" }]
     : program.status === "RESULTED" ? [{ value: of(program.coverageHits), label: "kapsama" }, { value: of(program.mainHits), label: "ana isabet" }, ...plan]
     : [...plan, { value: program.mainHits === null ? "—" : String(program.mainHits), label: "ana isabet" }, { value: program.coverageHits === null ? "—" : String(program.coverageHits), label: "kapsama" }];
-  const legend = ([["ana isabet", colors.green, progress.mainHits], ["kapsamada", colors.gold, progress.coveredOnly],
-    ["kapsam dışı", colors.red, progress.misses], ["bekliyor", colors.textSubtle, progress.open]] as const).filter(([, , count]) => count > 0);
   const note = program.status === "ACTIVE" ? unitNote.trim()
     : `Kapsama, ana isabet dahil sonucu kuponda kalan maçlardır; kupon kazancı değildir.${program.status === "WAITING_RESULT" ? " En fazla kapsama bir üst sınırdır, tahmin değildir." : ""}${unitNote}`;
   const meta = [program.status === "WAITING_RESULT" ? `${number.format(program.columns)} kolon · ${cost} maliyet` : null, progress.structure].filter(Boolean).join(" · ");
@@ -233,14 +231,7 @@ export default function TotoProgramDetailScreen() {
         {progress.settled > 0 ? (
           <View style={styles.resultBlock}>
             <TotoProgressBar progress={progress} />
-            <View style={styles.resultLegend}>
-              {legend.map(([label, color]) => (
-                <View key={label} style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: color }]} />
-                  <Text style={styles.legendText}>{label}</Text>
-                </View>
-              ))}
-            </View>
+
           </View>
         ) : null}
         {program.status === "WAITING_RESULT" && progress.next ? (
@@ -449,12 +440,6 @@ const styles = StyleSheet.create({
     ...typeScale.label,
     marginTop: spacing.sm
   },
-  resultLegend: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.md,
-    marginTop: spacing.md
-  },
   prizeRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -483,20 +468,6 @@ const styles = StyleSheet.create({
     color: colors.green,
     fontSize: 15,
     textAlign: "right"
-  },
-  legendItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs
-  },
-  legendDot: {
-    width: 7,
-    height: 7,
-    borderRadius: radii.round
-  },
-  legendText: {
-    color: colors.textMuted,
-    ...typeScale.label
   },
   predictionCard: {
     minHeight: 76,

@@ -5,14 +5,14 @@ import type { MatchDetail, MatchJourney } from "@/src/api/schemas";
 import { colors, fontFamilies, radii, spacing, typeScale } from "@/src/theme/theme";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 import { journeySvgAccessibility } from "./JourneyEventIcon";
-import { edgeSafeLabel, pressureGoalGroups, pressureHeadline, pressureSeries } from "./pressure-chart";
+import { PressureGoalMarkers } from "./PressureGoalMarkers";
+import { pressureHeadline, pressureSeries } from "./pressure-chart";
 
 // Goals ride their own lanes outside the bars (home above, away below), and the
 // minute axis sits under the away lane, so no label is drawn over a bar or
 // outside the SVG.
 const HEIGHT = 192, LEFT = 8, RIGHT = 8;
 const HOME_GOAL_Y = 12, TOP = 26, PLOT_BOTTOM = 150, AWAY_GOAL_Y = 164, AXIS_Y = 186;
-const GOAL_LABEL_WIDTH = 22;
 const svgLabel = { fontSize: 11, fontWeight: "700", fontFamily: fontFamilies.text } as const;
 
 /** Home pressure rises above the axis, away pressure falls below it. */
@@ -22,7 +22,7 @@ export function PressureChart({ match, journey }: { match: MatchDetail; journey:
   const { samples, goals, latest, peak, balance } = series;
   const headline = pressureHeadline(balance, match);
   const plotWidth = Math.max(120, width - LEFT - RIGHT);
-  const maxMinute = Math.max(90, match.elapsed, ...samples.map(s => s.minute));
+  const maxMinute = Math.max(90, match.elapsed, ...samples.map(s => s.minute), ...goals.map(g => g.minute));
   const x = (minute: number) => LEFT + minute / maxMinute * plotWidth;
   const mid = (TOP + PLOT_BOTTOM) / 2;
   const half = (PLOT_BOTTOM - TOP) / 2 - 2;
@@ -44,8 +44,8 @@ export function PressureChart({ match, journey }: { match: MatchDetail; journey:
       {latest ? <Text style={styles.meta}>son ölçüm {Math.round(latest.minute)}′</Text> : null}
     </View>
     {homeShare !== null ? <View style={styles.split}>
-      <View style={[styles.splitHome, { flex: Math.max(0.02, homeShare) }]} />
-      <View style={[styles.splitAway, { flex: Math.max(0.02, 1 - homeShare) }]} />
+      <View style={[styles.splitHome, { flex: homeShare }]} />
+      <View style={[styles.splitAway, { flex: 1 - homeShare }]} />
     </View> : null}
     <View style={styles.teams}>
       <Text numberOfLines={1} style={[styles.team, { color: colors.blue }]}>▲ {match.homeTeam}{homeShare !== null ? ` %${Math.round(homeShare * 100)}` : ""}</Text>
@@ -60,22 +60,12 @@ export function PressureChart({ match, journey }: { match: MatchDetail; journey:
         <Rect x={LEFT} y={TOP} width={plotWidth} height={mid - TOP} fill={colors.blue} opacity={0.05} />
         <Rect x={LEFT} y={mid} width={plotWidth} height={PLOT_BOTTOM - mid} fill={colors.orange} opacity={0.05} />
         {samples.map(sample => <G key={sample.key}>
-          <Rect x={x(sample.minute) - bar / 2} y={mid - scale(sample.home)} width={bar} height={Math.max(1, scale(sample.home))} rx={bar / 2} fill={colors.blue} />
-          <Rect x={x(sample.minute) - bar / 2} y={mid} width={bar} height={Math.max(1, scale(sample.away))} rx={bar / 2} fill={colors.orange} />
+          <Rect x={x(sample.minute) - bar / 2} y={mid - scale(sample.home)} width={bar} height={scale(sample.home)} rx={bar / 2} fill={colors.blue} />
+          <Rect x={x(sample.minute) - bar / 2} y={mid} width={bar} height={scale(sample.away)} rx={bar / 2} fill={colors.orange} />
         </G>)}
         <Line x1={LEFT} x2={LEFT + plotWidth} y1={mid} y2={mid} stroke={colors.textMuted} strokeWidth={1.5} />
-        {pressureGoalGroups(goals, x).map(goal => {
-          const cy = goal.side === "HOME" ? HOME_GOAL_Y : AWAY_GOAL_Y;
-          const ink = goal.side === "HOME" ? colors.blue : colors.orange;
-          const label = edgeSafeLabel(x(goal.minute), LEFT, LEFT + plotWidth, Math.max(GOAL_LABEL_WIDTH, 36));
-          return <G key={goal.key}>
-            {goal.goals.map(mark => <G key={mark.key}>
-              <Line x1={x(mark.minute)} x2={x(mark.minute)} y1={mark.side === "HOME" ? HOME_GOAL_Y + 5 : mid} y2={mark.side === "HOME" ? mid : AWAY_GOAL_Y - 5} stroke={ink} strokeOpacity={0.35} />
-              <Circle cx={x(mark.minute)} cy={cy} r={5} fill={colors.text} stroke={ink} strokeWidth={2} />
-            </G>)}
-            <SvgText x={label.x} y={cy + 4} textAnchor={label.anchor} fill={colors.text} {...svgLabel}>{goal.goals.length > 1 ? `${goal.goals.length} gol` : "gol"}</SvgText>
-          </G>;
-        })}
+        <PressureGoalMarkers goals={goals} x={x} left={LEFT} right={LEFT + plotWidth}
+          mid={mid} homeY={HOME_GOAL_Y} awayY={AWAY_GOAL_Y} />
         {latest ? <Circle cx={x(latest.minute)} cy={mid} r={4} fill={colors.text} /> : null}
       </Svg>
     </View>
@@ -87,7 +77,7 @@ const styles = StyleSheet.create({
   summary: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: spacing.sm, flexWrap: "wrap" },
   headline: { ...typeScale.moduleTitle, color: colors.text, flexShrink: 1 },
   meta: { ...typeScale.label, color: colors.textMuted },
-  split: { flexDirection: "row", height: 10, borderRadius: 5, overflow: "hidden", gap: 2 },
+  split: { flexDirection: "row", height: 10, borderRadius: 5, overflow: "hidden" },
   splitHome: { backgroundColor: colors.blue },
   splitAway: { backgroundColor: colors.orange },
   teams: { flexDirection: "row", justifyContent: "space-between", gap: spacing.sm },

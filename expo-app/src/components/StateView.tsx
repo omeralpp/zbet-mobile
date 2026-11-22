@@ -1,5 +1,6 @@
 import type { ComponentProps } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useReducedMotion } from "@/src/theme/use-reduced-motion";
 import { usePathname } from "expo-router";
 import { useJinxPreferences } from "@/src/mascot/JinxPreferencesProvider";
 import {
@@ -73,6 +74,7 @@ export function SystemState({
   compact?: boolean;
 }) {
   const pathname = usePathname();
+  const reduceMotion = useReducedMotion();
   const jinx = useJinxPreferences();
   const spec = resolveSystemState(kind);
   const accent = toneColor(spec.tone);
@@ -145,7 +147,7 @@ export function SystemState({
       )}
       {kind === "LOADING" ? (
         <View style={styles.loadingLabel}>
-          <ActivityIndicator color={accent} size="small" />
+          {reduceMotion ? null : <ActivityIndicator color={accent} size="small" />}
           <Text accessibilityRole="header" role="heading" aria-level={2} style={styles.loadingText}>{title ?? spec.title}</Text>
         </View>
       ) : (

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { usePathname, useRouter } from "expo-router";
+import { Link, usePathname } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useLiveMatchCount } from "@/src/api/use-live-match-count";
 import { runtimeConfig } from "@/src/config/runtime";
@@ -43,10 +43,11 @@ function RailTooltip({ label, hint }: { label: string; hint?: string | undefined
  * bottom bar, which has no collapsed form: that is the platform exception.
  */
 export function DesktopSidebar({ expanded, onOpenPalette, onOpenHelp, onToggleExpanded }: DesktopSidebarProps) {
-  const router = useRouter();
   const pathname = usePathname();
   const active = activeDestination(pathname);
   const liveCount = useLiveMatchCount(true);
+  const [focusedRoute, setFocusedRoute] = useState<string | null>(null);
+  const [hoveredRoute, setHoveredRoute] = useState<string | null>(null);
   const [themeChanging, setThemeChanging] = useState(false);
 
   return (
@@ -86,7 +87,7 @@ export function DesktopSidebar({ expanded, onOpenPalette, onOpenHelp, onToggleEx
       <Pressable
         accessibilityHint="Maç, Super kararı veya Toto programı arar"
         accessibilityLabel="Ara"
-        accessibilityRole="search"
+        accessibilityRole="button"
         onPress={onOpenPalette}
         style={({ hovered }) => [styles.search, !expanded && styles.searchRail, hovered && styles.hover]}
       >
@@ -108,54 +109,65 @@ export function DesktopSidebar({ expanded, onOpenPalette, onOpenHelp, onToggleEx
           const selected = active === destination.route;
           const presentation = tabPresentation[destination.route];
           const color = selected ? semantic.positive : colors.textMuted;
+          const focused = focusedRoute === destination.route;
+          const hovered = hoveredRoute === destination.route;
+          const label = destination.route === "live" && liveCount
+            ? `${destination.label}, ${liveCount} canlı maç`
+            : destination.label;
           return (
-            <Pressable
-              accessibilityLabel={destination.label}
-              accessibilityRole="link"
-              accessibilityState={{ selected }}
-              key={destination.route}
-              onPress={() => router.navigate(destination.path)}
-              style={({ hovered }) => [
-                styles.item,
-                !expanded && styles.itemRail,
-                hovered && styles.hover,
-                selected && styles.itemSelected
-              ]}
-            >
-              {({ hovered }) => (
-                <>
-                  {selected ? <View style={styles.selectedBar} /> : null}
-                  <MaterialCommunityIcons
-                    color={color}
-                    name={presentation?.icon ?? "circle-outline"}
-                    size={iconSizes.navigation}
-                  />
-                  {expanded ? (
-                    <>
-                      <Text style={[styles.itemLabel, selected && styles.itemLabelSelected]}>
-                        {destination.label}
-                      </Text>
-                      {destination.route === "live" && liveCount !== null && liveCount > 0 ? (
-                        <View accessibilityLabel={`${liveCount} canlı maç`} style={styles.liveBadge}>
-                          <Text style={styles.liveText}>{liveCount}</Text>
-                        </View>
-                      ) : (
-                        <Text style={styles.chord}>g {destination.chordKey}</Text>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      {destination.route === "live" && liveCount !== null && liveCount > 0 ? (
-                        <View style={styles.railBadge}>
-                          <Text style={styles.railBadgeText}>{liveCount}</Text>
-                        </View>
-                      ) : null}
-                      {hovered ? <RailTooltip hint={`g ${destination.chordKey}`} label={destination.label} /> : null}
-                    </>
-                  )}
-                </>
-              )}
-            </Pressable>
+            <Link asChild href={destination.path} key={destination.route}>
+              <Pressable
+                accessibilityLabel={label}
+                accessibilityRole="link"
+                onFocus={() => setFocusedRoute(destination.route)}
+                onBlur={() => setFocusedRoute(null)}
+                onHoverIn={() => setHoveredRoute(destination.route)}
+                onHoverOut={() => setHoveredRoute(null)}
+                aria-current={selected ? "page" : undefined}
+                style={StyleSheet.flatten([
+                  styles.item,
+                  !expanded && styles.itemRail,
+                  hovered && styles.hover,
+                  selected && styles.itemSelected,
+                  focused && styles.itemFocused
+                ])}
+              >
+                {({ hovered }) => (
+                  <>
+                    {selected ? <View style={styles.selectedBar} /> : null}
+                    <MaterialCommunityIcons
+                      color={color}
+                      accessible={false}
+                      name={selected ? presentation!.activeIcon : presentation!.icon}
+                      size={iconSizes.navigation}
+                    />
+                    {expanded ? (
+                      <>
+                        <Text style={[styles.itemLabel, selected && styles.itemLabelSelected]}>
+                          {destination.label}
+                        </Text>
+                        {destination.route === "live" && liveCount !== null && liveCount > 0 ? (
+                          <View accessibilityLabel={`${liveCount} canlı maç`} style={styles.liveBadge}>
+                            <Text style={styles.liveText}>{liveCount}</Text>
+                          </View>
+                        ) : (
+                          <Text style={styles.chord}>g {destination.chordKey}</Text>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {destination.route === "live" && liveCount !== null && liveCount > 0 ? (
+                          <View style={styles.railBadge}>
+                            <Text style={styles.railBadgeText}>{liveCount}</Text>
+                          </View>
+                        ) : null}
+                        {hovered || focused ? <RailTooltip hint={`g ${destination.chordKey}`} label={destination.label} /> : null}
+                      </>
+                    )}
+                  </>
+                )}
+              </Pressable>
+            </Link>
           );
         })}
       </View>
@@ -346,6 +358,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     width: 52
   },
+  itemFocused: { outlineColor: semantic.intelligence, outlineStyle: "solid", outlineWidth: 2, outlineOffset: -2 },
   itemSelected: {
     backgroundColor: colors.greenSoft
   },

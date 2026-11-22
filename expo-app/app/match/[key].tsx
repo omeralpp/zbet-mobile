@@ -12,6 +12,6 @@ function firstParam(value: string | string[] | undefined): string {
 
 /** The full-screen match detail route; the view itself lives in src/screens. */
 export default function MatchDetailScreen() {
-  const params = useLocalSearchParams<{ key?: string | string[] }>();
-  return <MatchDetailView matchKey={firstParam(params.key)} />;
+  const params = useLocalSearchParams<{ key?: string | string[]; from?: string | string[] }>();
+  return <MatchDetailView matchKey={firstParam(params.key)} origin={firstParam(params.from)} />;
 }

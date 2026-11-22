@@ -100,7 +100,13 @@ function clampPosition(
  * bubble size itself to the words instead of wrapping into a narrow column;
  * it arrives with a small pop, or simply appears under reduced motion.
  */
-function GreetingBubble({ line, side, motionReady, motionOff }: { line: string; side: "LEFT" | "RIGHT"; motionReady: boolean; motionOff: boolean }) {
+function GreetingBubble({ line, side, below, motionReady, motionOff }: {
+  line: string;
+  side: "LEFT" | "RIGHT";
+  below: boolean;
+  motionReady: boolean;
+  motionOff: boolean;
+}) {
   // The bubble mounts with the overlay, before either preference has answered;
   // it waits briefly for both so the pop can play, and appears statically if
   // they stay silent or ask for less motion.
@@ -122,7 +128,8 @@ function GreetingBubble({ line, side, motionReady, motionOff }: { line: string; 
     return () => pop.stop();
   }, [arrival, ready, reduce]);
   return (
-    <View pointerEvents="none" style={[styles.greetingLane, side === "RIGHT" ? styles.greetingLaneRight : styles.greetingLaneLeft]}>
+    <View pointerEvents="none" style={[styles.greetingLane, side === "RIGHT" ? styles.greetingLaneRight : styles.greetingLaneLeft,
+      below && (side === "RIGHT" ? styles.greetingBelowRight : styles.greetingBelowLeft)]}>
       <Animated.View
         style={[styles.greeting, {
           opacity: arrival,
@@ -683,7 +690,13 @@ export function BtbMascotOverlay() {
         !discovery.activeHint &&
         !moodBubble &&
         ambient ? (
-          <GreetingBubble line={jinxGreeting(liveCount)} motionOff={preferences.mode === "OFF"} motionReady={preferences.ready} side={menuRight ? "RIGHT" : "LEFT"} />
+          <GreetingBubble
+            below={visiblePosition.y < insets.top + 64}
+            line={jinxGreeting(liveCount)}
+            motionOff={preferences.mode === "OFF"}
+            motionReady={preferences.ready}
+            side={menuRight ? "RIGHT" : "LEFT"}
+          />
         ) : null}
 
         <Animated.View style={{ transform: [
@@ -733,6 +746,8 @@ const styles = StyleSheet.create({
   greetingLane: { position: "absolute", top: 10, width: 220 },
   greetingLaneLeft: { left: mascotSize + 8, alignItems: "flex-start" },
   greetingLaneRight: { right: mascotSize + 8, alignItems: "flex-end" },
+  greetingBelowLeft: { top: mascotSize + 4, left: 0 },
+  greetingBelowRight: { top: mascotSize + 4, right: 0 },
   greeting: {
     maxWidth: 220,
     paddingHorizontal: 12,

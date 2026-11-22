@@ -110,8 +110,13 @@ test("desktop rows are table rows whose match name is the link; the log offers 7
   // The row stays out of the tab order (react-native-web honours tabIndex, not focusable); the link is the stop.
   assert.match(source, /tabIndex=\{-1\}[\s\S]{0,120}role="row"/);
   assert.match(source, /role="link"/);
-  for (const label of ["Son 7 gün", "Son 30 gün", "Önceki gün", "Sonraki gün", "güncellendi", "MS: normal sürede kesinleşen skor"])
+  const control = await read("./LogPeriodControl.tsx");
+  for (const label of ["Bugün", "Dün", "Son 7 gün", "Son 30 gün", "Önceki gün", "Sonraki gün"]) {
+    assert.ok(control.includes(label), label);
+  }
+  for (const label of ["güncellendi", "MS: normal sürede kesinleşen skor"]) {
     assert.ok(source.includes(label), label);
+  }
 });
 
 test("report details open from one disclosure and never show 0,00 for a group without results", async () => {
@@ -125,6 +130,10 @@ test("report details open from one disclosure and never show 0,00 for a group wi
 test("the period menu opens from the control's outer edge, so a 7/30-day phone view keeps it on screen", async () => {
   const source = await read("./RebuildDecisionLog.tsx");
   assert.match(source, /align=\{wide \? "right" : "left"\}/);
-  assert.match(source, /periodMenuLeft: \{ left: 0 \}/);
-  assert.doesNotMatch(source, /periodMenu: \{[^}]*right: 0/);
+  for (const filename of ["RebuildDecisionLog", "DailyCouponLog", "SelectionRuleLog"]) {
+    assert.match(await read(`./${filename}.tsx`), /<LogPeriodControl/);
+  }
+  const control = await read("./LogPeriodControl.tsx");
+  assert.match(control, /periodMenuLeft: \{ left: 0 \}/);
+  assert.doesNotMatch(control, /periodMenu: \{[^}]*right: 0/);
 });

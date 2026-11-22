@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { DailyCouponLeg, DailyCouponTier } from "@/src/api/daily-coupons-schema";
 import { colors, iconSizes, interaction, radii, semantic, shadows, spacing, typeScale } from "@/src/theme/theme";
@@ -35,11 +35,11 @@ function LegRow({ leg, live, onOpen }: { leg: DailyCouponLeg; live: LiveLegState
       </View>
       <View style={styles.legCopy}>
         <View style={styles.legLine}>
-          <Text numberOfLines={1} style={[styles.fixture, lost && styles.fixtureLost]}>{leg.home} – {leg.away}</Text>
+          <Text numberOfLines={2} style={[styles.fixture, lost && styles.fixtureLost]}>{leg.home} – {leg.away}</Text>
           {score ? <Text style={[styles.score, lost && { color: semantic.negative }]}>{score}</Text> : null}
         </View>
         <View style={styles.legLine}>
-          <Text numberOfLines={1} style={styles.selection}>{leg.market} · {leg.selection}</Text>
+          <Text numberOfLines={2} style={styles.selection}>{leg.market} · {leg.selection}</Text>
           <Text style={styles.odds}>{formatRate(leg.odds)}</Text>
         </View>
         <Text style={[styles.meta, lost && styles.lostText]}>{lost ? "Kuponu yatıran maç" : status}</Text>
@@ -68,6 +68,7 @@ export function CouponTicket({ tier, live, eyebrow, compact = false }: {
   compact?: boolean;
 }) {
   const router = useRouter();
+  const from = usePathname();
   if (tier.status === "NO_QUALIFYING_COUPON") {
     return (
       <View style={[styles.ticket, compact && styles.ticketCompact]}>
@@ -101,7 +102,7 @@ export function CouponTicket({ tier, live, eyebrow, compact = false }: {
       <View style={styles.legs}>
         {tier.legs.map((leg) => (
           <LegRow key={leg.fixtureId} leg={leg} live={leg.matchKey ? live?.get(leg.matchKey) : undefined}
-            onOpen={leg.matchKey ? () => router.push({ pathname: "/match/[key]", params: { key: leg.matchKey! } } as never) : undefined} />
+            onOpen={leg.matchKey ? () => router.push({ pathname: "/match/[key]", params: { key: leg.matchKey!, from } } as never) : undefined} />
         ))}
       </View>
     </View>

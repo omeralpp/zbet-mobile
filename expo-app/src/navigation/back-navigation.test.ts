@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   resolveAndroidBackAction,
-  resolveAndroidFallbackPath
+  detailFallbackPath
 } from "./back-navigation";
 
 test("ana sekmelerden geri dönüş önce özete gider", () => {
@@ -35,19 +35,19 @@ test("geçmişsiz derin bağlantı güvenli biçimde özete döner", () => {
 
 test("maç detayı geçmişsiz kalırsa geldiği uygulama ekranına döner", () => {
   assert.equal(
-    resolveAndroidFallbackPath("/match/123", "/super"),
+    detailFallbackPath("/match/123", "/super"),
     "/super"
   );
   assert.equal(
-    resolveAndroidFallbackPath("/match/123", "/live"),
+    detailFallbackPath("/match/123", "/live"),
     "/live"
   );
   assert.equal(
-    resolveAndroidFallbackPath("/match/123", "/unknown"),
+    detailFallbackPath("/match/123", "/unknown"),
     "/"
   );
   assert.equal(
-    resolveAndroidFallbackPath("/toto/350/1", "/"),
+    detailFallbackPath("/toto/350/1", "/"),
     "/toto"
   );
 });

@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FlatList, Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { dailyCouponWindowQuery } from "@/src/api/queries";
+import { Platform, RefreshControl, ScrollView, SectionList, StyleSheet, Text, View } from "react-native";
+import { dailyCouponWindowQuery, rebuildCohortsReportQuery } from "@/src/api/queries";
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
-import { colors, semantic, spacing, typeScale } from "@/src/theme/theme";
-import { formatRatio, formatUnits, unitsTone } from "@/src/utils/rebuild-display";
-import { istanbulDay } from "@/src/utils/rebuild-log";
+import { colors, spacing, typeScale } from "@/src/theme/theme";
+import { formatRatio } from "@/src/utils/rebuild-display";
+import { istanbulDay, resolvePeriod, type LogPeriodChoice } from "@/src/utils/rebuild-log";
 import { CouponTicket } from "./CouponTicket";
-import { TonePill, toneColor } from "./DecisionTicket";
+import { TonePill } from "./DecisionTicket";
 import {
   countByResult, couponEntries, filterCoupons, summarizeCoupons, tierNames, tierOrder,
   type CouponEntry, type CouponResultFilter, type CouponTierFilter
@@ -16,15 +16,9 @@ import {
 import { SegmentedControl, SelectMenu } from "./FilterControls";
 import { Action, Card } from "./RebuildEvidencePanel";
 import { EmptyState, LoadingState } from "./StateView";
-import { SurfaceMaterial } from "./SurfaceMaterial";
-
-export const logWindows = [
-  { days: 1, label: "Bugün" },
-  { days: 7, label: "Son 7 gün" },
-  { days: 30, label: "Son 30 gün" }
-] as const;
-export type LogWindowDays = (typeof logWindows)[number]["days"];
-export const logWindowOptions = logWindows.map((item) => ({ id: item.days as LogWindowDays, label: item.label }));
+import { LogOutcomeSummary } from "./LogOutcomeSummary";
+import { LogPeriodControl } from "./LogPeriodControl";
+import { LogToolbar } from "./LogToolbar";
 
 const tierOptions: readonly { id: CouponTierFilter; label: string }[] = [
   { id: "ALL", label: "Tüm kuponlar" },
@@ -46,31 +40,6 @@ export const resultFilters: readonly { id: CouponResultFilter; label: string }[]
 
 const dayLabel = new Intl.DateTimeFormat("tr-TR", { timeZone: "UTC", weekday: "short", day: "numeric", month: "long" });
 
-function CouponSummaryCard({ entries }: { entries: readonly CouponEntry[] }) {
-  const summary = summarizeCoupons(entries);
-  const tone = unitsTone(summary.net.toFixed(2));
-  return (
-    <View style={styles.summary}>
-      <SurfaceMaterial radius={16} />
-      <View style={styles.flexCopy}>
-        <Text style={styles.summaryLine}>
-          <Text style={[styles.strong, { color: semantic.positive }]}>{summary.wins} kazandı</Text>
-          {" · "}
-          <Text style={[styles.strong, { color: semantic.negative }]}>{summary.losses} kaybetti</Text>
-          {summary.pending ? ` · ${summary.pending} bekliyor` : ""}{summary.voids ? ` · ${summary.voids} iptal` : ""}
-        </Text>
-        <Text style={styles.summaryRatios}>
-          {`${summary.coupons} kupon · isabet ${formatRatio(summary.hitRate)} · ROI ${formatRatio(summary.roi)}`}
-        </Text>
-      </View>
-      <View style={styles.figure}>
-        <Text style={[styles.summaryNet, { color: tone === "neutral" ? colors.text : toneColor[tone] }]}>{formatUnits(summary.net.toFixed(2))}</Text>
-        <Text style={styles.footLabel}>birim</Text>
-      </View>
-    </View>
-  );
-}
-
 /**
  * Karar günlüğü · Günlük kupon (owner direction 2026-11-17): every published
  * Banko, Dengeli and Riskli coupon of 1, 7 or 30 days with its result, the
@@ -80,13 +49,16 @@ function CouponSummaryCard({ entries }: { entries: readonly CouponEntry[] }) {
 export function DailyCouponLog() {
   const breakpoint = useBreakpoint();
   const wide = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
-  const [days, setDays] = useState<LogWindowDays>(1);
+  const [choice, setChoice] = useState<LogPeriodChoice>({ kind: "today" });
+  const [periodOpen, setPeriodOpen] = useState(false);
   const [tier, setTier] = useState<CouponTierFilter>("ALL");
   const [result, setResult] = useState<CouponResultFilter>("ALL");
   const [refreshing, setRefreshing] = useState(false);
   const [openedAt] = useState(() => Date.now());
-  const today = istanbulDay(openedAt);
-  const query = useQuery(dailyCouponWindowQuery(today, days, true));
+  const { data: report } = useQuery(rebuildCohortsReportQuery);
+  const today = istanbulDay(report ? Date.parse(report.asOf) : openedAt);
+  const period = resolvePeriod(choice, today);
+  const query = useQuery(dailyCouponWindowQuery(period.through, period.days, period.through === today));
   const refresh = async () => {
     setRefreshing(true);
     try { await query.refetch(); } finally { setRefreshing(false); }
@@ -97,25 +69,24 @@ export function DailyCouponLog() {
   const visible = filterCoupons(byTier, "ALL", result);
   const demo = query.data?.entries.some((entry) => entry.publication.mode === "DEMO");
 
-  // Phone: scope dropdowns on one line, the result bar under them at full
-  // width. Medium web and up: one toolbar line.
-  const inline = Platform.OS === "web" && isAtLeast(breakpoint, "medium");
-  const resultBar = <SegmentedControl fill={!inline} label="Sonuç" onChange={setResult} options={resultOptions(counts)} value={result} />;
-  const head = (
-    <View style={[styles.head, inline && styles.headInline]}>
-      <View style={styles.scope}>
-        <SelectMenu icon="calendar-blank-outline" label="Dönem" onChange={setDays} options={logWindowOptions} value={days} />
-        <SelectMenu icon="ticket-outline" label="Kupon türü" onChange={setTier} options={tierOptions} value={tier} />
-      </View>
-      {resultBar}
-    </View>
+  const toolbar = (
+    <LogToolbar
+      wide={wide}
+      period={<LogPeriodControl align={wide ? "right" : "left"} choice={choice} onChange={setChoice}
+        onOpenChange={setPeriodOpen} open={periodOpen} period={period} today={today} />}
+      results={<SegmentedControl fill={!wide} label="Sonuç" onChange={(next) => { setPeriodOpen(false); setResult(next); }}
+        options={query.data ? resultOptions(counts) : resultFilters} value={result} />}
+    >
+      <SelectMenu icon="ticket-outline" label="Kupon türü" onChange={(next) => { setPeriodOpen(false); setTier(next); }}
+        options={tierOptions} value={tier} />
+    </LogToolbar>
   );
 
-  if (query.isLoading) return <View style={styles.stack}>{head}<Card><LoadingState label="Kupon sonuçları hazırlanıyor" /></Card></View>;
+  if (query.isLoading) return <View style={styles.stack}>{toolbar}<LoadingState label="Kupon sonuçları hazırlanıyor" /></View>;
   if (query.isError || !query.data) {
     return (
       <View style={styles.stack}>
-        {head}
+        {toolbar}
         <Card>
           <View style={styles.waiting}>
             <TonePill dot label="VERİ ALINAMADI" tone="neutral" />
@@ -129,10 +100,11 @@ export function DailyCouponLog() {
   const missing = query.data.unavailableDays.length
     ? ` · ${query.data.unavailableDays.length} gün doğrulanamadı` : "";
   const note = `Her kupona yayın oranından 1 varsayımsal birim. Kazandı, kaybetti ve maç skorları SAP sonuç kaydından gelir.${missing}${demo ? " · Örnek veri" : ""}`;
+  const summary = summarizeCoupons(visible);
   const header = (
     <View style={styles.listHead}>
-      {head}
-      <CouponSummaryCard entries={visible} />
+      <LogOutcomeSummary counts={summary} hitRate={formatRatio(summary.hitRate)} net={summary.net.toFixed(2)}
+        netLabel="Net birim" roi={formatRatio(summary.roi)} wide={wide} />
       <Text style={styles.note}>{note}</Text>
     </View>
   );
@@ -142,59 +114,72 @@ export function DailyCouponLog() {
         ? "Bugünün kuponları 11.00 bülteninden sonra yayımlanır." : "Başka bir dönem seçerek geçmiş kuponları görebilirsin."}
       title={all.length ? "Bu filtrede kupon yok" : "Bu dönemde kupon yok"} />
   );
-  const eyebrow = (entry: CouponEntry) => entry.day === today ? "BUGÜN" : dayLabel.format(new Date(entry.day)).toLocaleUpperCase("tr-TR");
-  const refreshControl = <RefreshControl colors={[colors.gold]} onRefresh={() => { void refresh(); }} refreshing={refreshing} tintColor={colors.gold} />;
-
-  if (wide) {
-    return (
-      <ScrollView contentContainerStyle={styles.wideContent} refreshControl={refreshControl} style={styles.fill}>
-        {header}
-        {visible.length ? (
-          <View style={styles.grid}>
-            {visible.map((entry) => (
-              <View key={`${entry.day}:${entry.tier.tier}`} style={styles.gridItem}><CouponTicket eyebrow={eyebrow(entry)} tier={entry.tier} /></View>
-            ))}
-          </View>
-        ) : empty}
-      </ScrollView>
-    );
+  const byDay = new Map<string, CouponEntry[]>();
+  for (const entry of visible) {
+    const group = byDay.get(entry.day);
+    if (group) group.push(entry);
+    else byDay.set(entry.day, [entry]);
   }
+  const sections = Array.from(byDay, ([day, data]) => ({ key: day, data }));
+  const heading = (day: string, count: number) => (
+    <View style={styles.dayHeading}>
+      <Text accessibilityRole="header" aria-level={2} style={styles.day}>{day === today ? "Bugün" : dayLabel.format(new Date(day))}</Text>
+      <Text style={styles.note}>{count} kupon</Text>
+    </View>
+  );
+  const refreshControl = <RefreshControl colors={[colors.gold]} onRefresh={() => { void refresh(); }} refreshing={refreshing} tintColor={colors.gold} />;
+  const closePeriod = () => setPeriodOpen(false);
+
   return (
-    <FlatList
-      ItemSeparatorComponent={() => <View style={styles.cardGap} />}
-      ListEmptyComponent={empty}
-      ListHeaderComponent={header}
-      contentContainerStyle={styles.pageList}
-      data={visible}
-      keyExtractor={(entry) => `${entry.day}:${entry.tier.tier}`}
-      refreshControl={refreshControl}
-      renderItem={({ item }) => <CouponTicket eyebrow={eyebrow(item)} tier={item.tier} />}
-      showsVerticalScrollIndicator={false}
-      style={styles.fill}
-    />
+    <View style={styles.stack}>
+      {toolbar}
+      {wide ? (
+        <ScrollView contentContainerStyle={styles.wideContent} onScroll={periodOpen ? closePeriod : undefined}
+          refreshControl={refreshControl} style={styles.fill}>
+          {header}
+          {sections.length ? sections.map(({ key, data }) => (
+            <View key={key} style={styles.dayGroup}>
+              {heading(key, data.length)}
+              <View style={styles.grid}>
+                {data.map(({ tier }) => <View key={tier.tier} style={styles.gridItem}><CouponTicket tier={tier} /></View>)}
+              </View>
+            </View>
+          )) : empty}
+        </ScrollView>
+      ) : (
+        <SectionList
+          ItemSeparatorComponent={() => <View style={styles.cardGap} />}
+          ListEmptyComponent={empty}
+          ListHeaderComponent={header}
+          contentContainerStyle={styles.pageList}
+          keyExtractor={(entry) => `${entry.day}:${entry.tier.tier}`}
+          onScrollBeginDrag={closePeriod}
+          refreshControl={refreshControl}
+          renderItem={({ item }) => <CouponTicket tier={item.tier} />}
+          renderSectionHeader={({ section }) => heading(section.key, section.data.length)}
+          sections={sections}
+          showsVerticalScrollIndicator={false}
+          stickySectionHeadersEnabled={false}
+          style={styles.fill}
+        />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  stack: { gap: spacing.md, width: "100%" },
-  head: { gap: spacing.sm },
-  headInline: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing.md },
-  scope: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  stack: { flex: 1, gap: spacing.md, width: "100%" },
   listHead: { gap: spacing.sm, marginBottom: spacing.md },
   note: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0 },
   waiting: { gap: spacing.sm, alignItems: "flex-start" },
   pageList: { paddingBottom: 112 },
   wideContent: { gap: spacing.md, paddingBottom: spacing.xxl },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md },
-  gridItem: { flexBasis: 360, flexGrow: 1, maxWidth: 520 },
-  cardGap: { height: 12 },
-  flexCopy: { flex: 1, minWidth: 0 },
-  summary: { flexDirection: "row", alignItems: "center", gap: spacing.md, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 16, borderWidth: 1, borderColor: colors.borderSoft },
-  summaryLine: { color: colors.text, ...typeScale.bodyCompact },
-  summaryRatios: { color: colors.textMuted, ...typeScale.meta, marginTop: 2 },
-  strong: { fontWeight: "800" },
-  summaryNet: { ...typeScale.metric, fontSize: 26, lineHeight: 28, fontWeight: "800" },
-  figure: { alignItems: "flex-end" },
-  footLabel: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0 }
+  dayGroup: { gap: spacing.sm },
+  dayHeading: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: spacing.md,
+    paddingTop: spacing.sm, paddingBottom: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.borderSoft },
+  day: { color: colors.text, ...typeScale.moduleTitle },
+  grid: { flexDirection: "row", gap: spacing.md },
+  gridItem: { flexBasis: "31.5%", minWidth: 0 },
+  cardGap: { height: 12 }
 });

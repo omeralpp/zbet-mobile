@@ -1,3 +1,4 @@
+import { useReducedMotion } from "@/src/theme/use-reduced-motion";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -189,6 +190,7 @@ export const MatchPathCard = memo(function MatchPathCard({ match, model, synthet
   // the desktop Canlı split view embeds this card in a narrower pane.
   const [cardWidth, setCardWidth] = useState(0);
   const sideBySide = wide && cardWidth >= 820;
+  const reduceMotion = useReducedMotion();
   const [picked, setPicked] = useState<string | null>(null);
   const [cursor, setCursor] = useState<number | null>(null);
   const [rulesOpen, setRulesOpen] = useState(false);
@@ -203,9 +205,9 @@ export const MatchPathCard = memo(function MatchPathCard({ match, model, synthet
   const chooseMoment = useCallback((key: string) => { setCursor(null); setPicked(key); }, []);
   useEffect(() => {
     if (selectedKey && railPositions.current[selectedKey] !== undefined) {
-      railRef.current?.scrollTo({ x: Math.max(0, railPositions.current[selectedKey]! - 12), animated: false });
+      railRef.current?.scrollTo({ x: Math.max(0, railPositions.current[selectedKey]! - 12), animated: picked === selectedKey && !reduceMotion });
     }
-  }, [selectedKey]);
+  }, [picked, reduceMotion, selectedKey]);
   const { index: selectedIndex, previous, next } = journeyNavigation(model.moments, selectedKey, selected?.minute);
   const decisionCount = model.moments.filter(moment => moment.kind === "BTB").length;
   const groups = useMemo(() => groupMarks(model.moments, g, model, 48), [g, model]);

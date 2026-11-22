@@ -24,12 +24,12 @@ export type TopTabBarProps = {
 };
 
 // The v40 board's tab icons: a grid for Özet and a live target for Canlı.
-export const tabPresentation: Record<string, { icon: IconName; label: string }> = {
-  index: { icon: "view-grid-outline", label: "Özet" },
-  live: { icon: "record-circle-outline", label: "Canlı" },
-  super: { icon: "star-outline", label: "Super" },
-  toto: { icon: "ticket-outline", label: "Toto" },
-  more: { icon: "dots-horizontal-circle-outline", label: "Daha Fazla" }
+export const tabPresentation: Record<string, { icon: IconName; activeIcon: IconName; label: string }> = {
+  index: { icon: "view-grid-outline", activeIcon: "view-grid", label: "Özet" },
+  live: { icon: "record-circle-outline", activeIcon: "record-circle", label: "Canlı" },
+  super: { icon: "star-outline", activeIcon: "star", label: "Super" },
+  toto: { icon: "ticket-outline", activeIcon: "ticket", label: "Toto" },
+  more: { icon: "dots-horizontal-circle-outline", activeIcon: "dots-horizontal-circle", label: "Daha Fazla" }
 };
 
 export function BottomTabBar({ navigation, state }: TopTabBarProps) {
@@ -49,6 +49,7 @@ export function BottomTabBar({ navigation, state }: TopTabBarProps) {
         const focused = state.index === index;
         const presentation = tabPresentation[route.name] ?? {
           icon: "circle-outline" as const,
+          activeIcon: "circle" as const,
           label: route.name
         };
         const color = focused ? semantic.positive : colors.textSubtle;
@@ -58,6 +59,7 @@ export function BottomTabBar({ navigation, state }: TopTabBarProps) {
           <Pressable
             accessibilityLabel={badge ? `${presentation.label}, ${badge} canlı maç` : presentation.label}
             accessibilityRole="tab"
+            aria-selected={focused}
             accessibilityState={{ selected: focused }}
             key={route.key}
             onLongPress={() =>
@@ -90,7 +92,8 @@ export function BottomTabBar({ navigation, state }: TopTabBarProps) {
               <View style={[styles.iconPill, focused && styles.iconPillActive]}>
                 <MaterialCommunityIcons
                   color={color}
-                  name={presentation.icon}
+                  accessible={false}
+                  name={focused ? presentation.activeIcon : presentation.icon}
                   size={iconSizes.control}
                 />
               </View>

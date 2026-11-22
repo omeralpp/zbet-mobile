@@ -235,6 +235,7 @@ export default function MoreScreen() {
   const [notificationMinimumOpen, setNotificationMinimumOpen] = useState(false);
   const [notificationMinimum, setNotificationMinimumState] =
     useState<SuperNotificationMinimum>(1);
+  const [layoutFeedback, setLayoutFeedback] = useState<{ surface: ModuleLayoutSurface; message: string; failed: boolean } | null>(null);
   const auth = useAuth();
   const tutorial = useTutorial();
   const discovery = useDiscovery();
@@ -292,21 +293,21 @@ export default function MoreScreen() {
   };
 
   // Restore both independent preferences to the current focused defaults.
-  const restoreLayout = (surface: ModuleLayoutSurface, label: string) => {
-    Promise.all([resetModuleOrder(surface), resetModuleCollapse(surface)])
-      .then(() =>
-        Alert.alert(
-          "Düzen sıfırlandı",
-          `${label} BTB varsayılan sırasına ve görünümüne döndü.`
-        )
-      )
-      .catch((error: unknown) => {
-        Alert.alert(
-          "Düzen sıfırlanamadı",
-          error instanceof Error ? error.message : "Bilinmeyen hata."
-        );
-      });
+  const restoreLayout = async (surface: ModuleLayoutSurface, label: string) => {
+    try {
+      await Promise.all([resetModuleOrder(surface), resetModuleCollapse(surface)]);
+      setLayoutFeedback({ surface, message: `${label} varsayılan sırasına ve görünümüne döndü.`, failed: false });
+    } catch {
+      setLayoutFeedback({ surface, message: `${label} sıfırlanamadı. Tekrar deneyebilirsin.`, failed: true });
+    }
   };
+  const resetFeedback = (surface: ModuleLayoutSurface) => layoutFeedback?.surface === surface ? (
+    <View accessibilityLiveRegion="polite" style={styles.resetFeedback}>
+      <MaterialCommunityIcons accessible={false} name={layoutFeedback.failed ? "alert-circle-outline" : "check-circle-outline"}
+        size={iconSizes.small} color={layoutFeedback.failed ? semantic.warning : semantic.positive} />
+      <Text style={styles.rowDetail}>{layoutFeedback.message}</Text>
+    </View>
+  ) : null;
 
   const refreshWidgetPreview = async () => {
     setUpdatingWidgets(true);
@@ -573,18 +574,21 @@ export default function MoreScreen() {
           onPress={() => restoreLayout("overview", "Özet düzeni")}
           title="Özet düzenini sıfırla"
         />
+        {resetFeedback("overview")}
         <SettingsRow
           detail="Canlı maç detayı modüllerini varsayılan sıraya döndür"
           icon="soccer"
           onPress={() => restoreLayout("liveDetail", "Canlı detay düzeni")}
           title="Canlı detay düzenini sıfırla"
         />
+        {resetFeedback("liveDetail")}
         <SettingsRow
           detail="Super karar detayı modüllerini varsayılan sıraya döndür"
           icon="star-outline"
           onPress={() => restoreLayout("superDetail", "Super detay düzeni")}
           title="Super detay düzenini sıfırla"
         />
+        {resetFeedback("superDetail")}
       </View>
 
       {!runtimeConfig.useMocks && !runtimeConfig.pilotAccessKey ? (
@@ -689,6 +693,7 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.7
   },
+  resetFeedback: { flexDirection: "row", alignItems: "center", gap: spacing.sm, padding: spacing.md, backgroundColor: colors.surface },
   note: {
     backgroundColor: colors.surface,
     borderBottomColor: colors.border,

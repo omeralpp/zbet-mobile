@@ -7,7 +7,7 @@ import {
 import { Alert, BackHandler, Platform } from "react-native";
 import {
   resolveAndroidBackAction,
-  resolveAndroidFallbackPath
+  detailFallbackPath
 } from "./back-navigation";
 
 function firstParam(value: string | string[] | undefined): string {
@@ -42,7 +42,7 @@ export function AndroidBackGuard() {
 
         if (action === "home") {
           router.replace(
-            resolveAndroidFallbackPath(
+            detailFallbackPath(
               pathname,
               firstParam(params.from)
             )

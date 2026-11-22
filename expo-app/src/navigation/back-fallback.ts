@@ -1,3 +1,4 @@
+import { detailFallbackPath } from "./back-navigation";
 import type { Breakpoint } from "@/src/layout/breakpoints";
 
 /**
@@ -17,8 +18,6 @@ export function needsBackFallback(canGoBack: boolean, platform: string, breakpoi
  * Where that control leads: the same place each screen's edge swipe already
  * falls back to, so the two ways out of a screen never disagree.
  */
-export function backFallbackTarget(routeName: string): "/" | "/super" | "/toto" {
-  if (routeName.startsWith("super/")) return "/super";
-  if (routeName.startsWith("toto/")) return "/toto";
-  return "/";
+export function backFallbackTarget(routeName: string, origin = "") {
+  return detailFallbackPath(`/${routeName}`, origin);
 }

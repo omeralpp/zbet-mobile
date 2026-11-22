@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { Platform, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { dailyCouponsQuery } from "@/src/api/queries";
+import type { DailyCouponTier } from "@/src/api/daily-coupons-schema";
 import type { MatchSummary } from "@/src/api/schemas";
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
@@ -11,7 +12,9 @@ import { colors, iconSizes, radii, semantic, spacing, typeScale } from "@/src/th
 import { formatElapsed } from "@/src/utils/format";
 import { istanbulDay } from "@/src/utils/rebuild-log";
 import { CouponTicket, type LiveLegState } from "./CouponTicket";
-import { sortedTiers, summarizeCoupons } from "./daily-coupon-view";
+import { SegmentedControl } from "./FilterControls";
+import { useReducedMotion } from "@/src/theme/use-reduced-motion";
+import { sortedTiers, summarizeCoupons, tierNames } from "./daily-coupon-view";
 import { Action } from "./RebuildEvidencePanel";
 import { SectionHeader } from "./SectionHeader";
 import { SurfaceMaterial } from "./SurfaceMaterial";
@@ -51,7 +54,6 @@ function Notice({ icon, title, message, onRetry }: { icon: "progress-clock" | "c
 export function DailyCouponsOverview({ matches, now }: { matches: readonly MatchSummary[] | undefined; now: number }) {
   const router = useRouter();
   const breakpoint = useBreakpoint();
-  const { width } = useWindowDimensions();
   const wide = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
   const today = istanbulDay(now);
   const query = useQuery(dailyCouponsQuery(today, true));
@@ -65,7 +67,6 @@ export function DailyCouponsOverview({ matches, now }: { matches: readonly Match
       summary.coupons ? [summary.wins ? `${summary.wins} kazandı` : null, summary.losses ? `${summary.losses} kaybetti` : null,
         summary.pending ? `${summary.pending} bekliyor` : null].filter(Boolean).join(" · ") : null].filter(Boolean).join(" · ")
     : "Banko, Dengeli ve Riskli kupon";
-  const ticketWidth = Math.min(360, Math.max(260, width - 72));
 
   return (
     <View style={styles.module}>
@@ -88,23 +89,51 @@ export function DailyCouponsOverview({ matches, now }: { matches: readonly Match
             {tiers.map((tier) => <CouponTicket compact key={tier.tier} live={live} tier={tier} />)}
           </View>
         ) : (
-          <ScrollView
-            accessibilityLabel="Günlük kuponlar, yana kaydır"
-            contentContainerStyle={styles.pager}
-            decelerationRate="fast"
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            snapToAlignment="start"
-            snapToInterval={ticketWidth + spacing.md}
-            style={styles.pagerScroll}
-          >
-            {tiers.map((tier) => (
-              <View key={tier.tier} style={{ width: ticketWidth }}>
-                <CouponTicket live={live} tier={tier} />
-              </View>
-            ))}
-          </ScrollView>
+          <CouponPager tiers={tiers} live={live} />
         )
+      ) : null}
+    </View>
+  );
+}
+
+function CouponPager({ tiers, live }: { tiers: DailyCouponTier[]; live: ReadonlyMap<string, LiveLegState> }) {
+  const scroll = useRef<ScrollView>(null);
+  const reduceMotion = useReducedMotion();
+  const [width, setWidth] = useState(0);
+  const [page, setPage] = useState(0);
+  const active = Math.min(page, tiers.length - 1);
+  const previousWidth = useRef(0);
+  return (
+    <View style={styles.pager} onLayout={({ nativeEvent }) => setWidth(nativeEvent.layout.width)}>
+      <SegmentedControl
+        fill label="Kupon türü" value={active}
+        options={tiers.map((tier, index) => ({ id: index, label: tierNames[tier.tier] }))}
+        onChange={(index) => scroll.current?.scrollTo({ x: index * width, animated: !reduceMotion })}
+      />
+      {width > 0 ? (
+        <ScrollView
+          ref={scroll} horizontal pagingEnabled showsHorizontalScrollIndicator={false}
+          accessibilityLabel="Günlük kuponlar" scrollEventThrottle={16}
+          onContentSizeChange={() => {
+            if (previousWidth.current !== width) {
+              previousWidth.current = width;
+              scroll.current?.scrollTo({ x: active * width, animated: false });
+            }
+          }}
+          onScroll={({ nativeEvent }) => setPage(Math.max(0, Math.round(nativeEvent.contentOffset.x / width)))}
+        >
+          {tiers.map((tier, index) => (
+            <View key={tier.tier} style={{ width }}
+              ref={(node) => {
+                if (Platform.OS === "web" && node instanceof HTMLElement) node.inert = active !== index;
+              }}
+              aria-hidden={active !== index}
+              accessibilityElementsHidden={active !== index}
+              importantForAccessibility={active !== index ? "no-hide-descendants" : "auto"}>
+              <CouponTicket live={live} tier={tier} />
+            </View>
+          ))}
+        </ScrollView>
       ) : null}
     </View>
   );
@@ -113,8 +142,7 @@ export function DailyCouponsOverview({ matches, now }: { matches: readonly Match
 const styles = StyleSheet.create({
   module: { gap: spacing.sm, width: "100%" },
   row: { flexDirection: "row", alignItems: "flex-start", gap: spacing.md },
-  pagerScroll: { marginHorizontal: -spacing.lg },
-  pager: { gap: spacing.md, paddingHorizontal: spacing.lg },
+  pager: { gap: spacing.md },
   notice: { flexDirection: "row", gap: spacing.md, padding: spacing.lg, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.borderSoft, overflow: "hidden" },
   noticeCopy: { flex: 1, gap: spacing.xs },
   noticeTitle: { ...typeScale.body, color: colors.text, fontWeight: "700" },

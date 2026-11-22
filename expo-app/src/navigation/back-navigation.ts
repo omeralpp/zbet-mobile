@@ -21,7 +21,7 @@ export function resolveAndroidBackAction(
   return "confirm-exit";
 }
 
-export function resolveAndroidFallbackPath(
+export function detailFallbackPath(
   pathname: string,
   origin: string
 ): "/" | "/live" | "/super" | "/toto" | "/more" {
@@ -31,6 +31,7 @@ export function resolveAndroidFallbackPath(
   ) {
     return origin as "/" | "/live" | "/super" | "/toto" | "/more";
   }
+  if (pathname.startsWith("/super/")) return "/super";
   if (pathname.startsWith("/toto/")) {
     return "/toto";
   }

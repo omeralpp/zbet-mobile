@@ -8,7 +8,7 @@ import {
   type PropsWithChildren
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { usePathname } from "expo-router";
+import { useGlobalSearchParams, usePathname } from "expo-router";
 import {
   activeTutorialTip,
   defaultTutorialState,
@@ -42,6 +42,7 @@ const TutorialContext = createContext<TutorialValue | null>(null);
 
 export function TutorialProvider({ children }: PropsWithChildren) {
   const pathname = usePathname();
+  const { view } = useGlobalSearchParams<{ view?: string }>();
   const [ready, setReady] = useState(false);
   const [state, setState] = useState<TutorialState>(defaultTutorialState);
   const [measuredTarget, setMeasuredTarget] = useState<{
@@ -63,7 +64,9 @@ export function TutorialProvider({ children }: PropsWithChildren) {
     );
   }, []);
 
-  const activeTip = ready ? activeTutorialTip(pathname, state) : null;
+  // The existing Super tips point to controls on Şampiyon.
+  const championTipOffscreen = pathname === "/super" && ["COUPONS", "LAB", "C1", "C2", "C3"].includes(view ?? "");
+  const activeTip = ready && !championTipOffscreen ? activeTutorialTip(pathname, state) : null;
   const activeTargetRect =
     activeTip && measuredTarget?.id === activeTip.targetId
       ? measuredTarget.rect

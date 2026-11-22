@@ -51,7 +51,6 @@ export default function SuperScreen() {
             <View style={styles.page}>
               {page === "CHAMPION" ? <RebuildDecisionLog /> : page === "COUPONS" ? <DailyCouponLog /> : (
                 <SelectionRuleLog
-                  key={labRule}
                   rule={labRule}
                   ruleControl={<SegmentedControl label="Lab kuralı" onChange={setLabRule} options={labRules} value={labRule} />}
                 />

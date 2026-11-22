@@ -42,10 +42,28 @@ export function useMinuteNow() {
 
 /** Settled outcomes as one proportional bar: main hits, other coverage, misses, open. */
 export function TotoProgressBar({ progress }: { progress: Pick<ReturnType<typeof totoProgress>, "mainHits" | "coveredOnly" | "misses" | "open" | "total"> }) {
-  const parts = [[progress.mainHits, colors.green], [progress.coveredOnly, colors.gold], [progress.misses, colors.red], [progress.open, colors.textSubtle]] as const;
+  const parts = [
+    { label: "Ana isabet", count: progress.mainHits, color: colors.green },
+    { label: "Ek kapsama", count: progress.coveredOnly, color: colors.gold },
+    { label: "Kapsam dışı", count: progress.misses, color: colors.red },
+    { label: "Bekliyor", count: progress.open, color: colors.textSubtle }
+  ].filter(part => part.count > 0);
+  if (!parts.length) return null;
+  const scope = `Listelenen ${progress.total} maç`;
   return (
-    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.track}>
-      {progress.total > 0 ? parts.map(([count, color], index) => count > 0 ? <View key={index} style={[styles.segment, { flex: count, backgroundColor: color }]} /> : null) : null}
+    <View style={styles.progress} accessible accessibilityLabel={`${scope}. ${parts.map(part => `${part.label} ${part.count}`).join(", ")}`}>
+      <Text style={styles.metricLabel}>{scope}</Text>
+      <View style={styles.track}>
+        {parts.map(part => <View key={part.label} style={[styles.segment, { flex: part.count, backgroundColor: part.color }]} />)}
+      </View>
+      <View style={styles.legend}>
+        {parts.map(part => (
+          <View key={part.label} style={styles.legendItem}>
+            <View style={[styles.legendMark, { backgroundColor: part.color }]} />
+            <Text style={styles.metricLabel}>{part.label} {part.count}</Text>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
@@ -311,6 +329,10 @@ const styles = StyleSheet.create({
   capacityBlock: {
     gap: 6
   },
+  progress: { gap: spacing.sm },
+  legend: { flexDirection: "row", flexWrap: "wrap", columnGap: spacing.md, rowGap: spacing.xs },
+  legendItem: { flexDirection: "row", alignItems: "center", gap: 4 },
+  legendMark: { width: 7, height: 7, borderRadius: 4 },
   track: {
     flexDirection: "row",
     gap: 2,

@@ -68,8 +68,8 @@ export function pressureSeries(journey: MatchJourney | undefined, match: MatchDe
   points.forEach((point, index) => {
     const before = points[index - 1];
     if (point.kind !== "GOAL" || point.plotMinute === null || !before || [point.home, point.away, before.home, before.away].some(v => v === null)) return;
-    if (point.home! > before.home!) goals.push({ key: point.key, minute: point.plotMinute, side: "HOME" });
-    else if (point.away! > before.away!) goals.push({ key: point.key, minute: point.plotMinute, side: "AWAY" });
+    if (point.home! > before.home!) goals.push({ key: point.key, minute: point.plotMinute, side: "HOME", kind: "SCORE_UPDATE" });
+    else if (point.away! > before.away!) goals.push({ key: point.key, minute: point.plotMinute, side: "AWAY", kind: "SCORE_UPDATE" });
   });
   const latest = samples.at(-1) ?? null;
   const peak = samples.reduce((max, sample) => Math.max(max, sample.home, sample.away), 0);

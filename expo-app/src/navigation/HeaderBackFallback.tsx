@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useGlobalSearchParams, useRouter } from "expo-router";
 import { Pressable, StyleSheet } from "react-native";
 import { colors, iconSizes, interaction } from "@/src/theme/theme";
 import { backFallbackTarget } from "./back-fallback";
@@ -7,12 +7,13 @@ import { backFallbackTarget } from "./back-fallback";
 /** The header's way up when the navigator has no history to go back to. */
 export function HeaderBackFallback({ routeName }: { routeName: string }) {
   const router = useRouter();
+  const { from } = useGlobalSearchParams<{ from?: string }>();
   return (
     <Pressable
       accessibilityHint="Bir üst ekrana döner"
       accessibilityLabel="Geri"
       accessibilityRole="button"
-      onPress={() => router.replace(backFallbackTarget(routeName))}
+      onPress={() => router.replace(backFallbackTarget(routeName, from))}
       style={({ pressed }) => [styles.button, pressed && styles.pressed]}
     >
       <MaterialCommunityIcons accessible={false} color={colors.text} name="arrow-left" size={iconSizes.control} />

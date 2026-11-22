@@ -48,6 +48,8 @@ import { visibleEvents } from "@/src/components/live-context-view";
 import { latestMatchPathSignal } from "@/src/components/match-analysis-events";
 import { MatchPathCard } from "@/src/components/MatchPathCard";
 import { buildMatchPath } from "@/src/components/match-path-model";
+import { useReducedMotion } from "@/src/theme/use-reduced-motion";
+import { backFallbackTarget } from "@/src/navigation/back-fallback";
 import { PressureChart } from "@/src/components/PressureChart";
 import { matchActivity } from "@/src/components/match-path-activity";
 import { RebuildStatisticsPanel } from "@/src/components/RebuildStatisticsPanel";
@@ -216,14 +218,17 @@ function TeamHeroName({
  */
 export function MatchDetailView({
   matchKey,
+  origin = "",
   embedded = false,
   expanded = false
 }: {
   matchKey: string;
+  origin?: string;
   embedded?: boolean;
   expanded?: boolean;
 }) {
   useJinxAnalyticalSurface();
+  const reduceMotion = useReducedMotion();
   const key = matchKey;
   const now = useRebuildClock();
   const router = useRouter();
@@ -231,7 +236,7 @@ export function MatchDetailView({
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace("/");
+      router.replace(backFallbackTarget("match/[key]", origin));
     }
   };
   const [compactHeader, setCompactHeader] = useState(false);
@@ -316,7 +321,7 @@ export function MatchDetailView({
       if (!target || !top) return;
       top.measureInWindow((_topX, topY) => {
         target.measureInWindow((_x, y) => {
-          scrollRef.current?.scrollTo({ y: Math.max(0, y - topY + spacing.lg - spacing.sm), animated: true });
+          scrollRef.current?.scrollTo({ y: Math.max(0, y - topY + spacing.lg - spacing.sm), animated: !reduceMotion });
         });
       });
     }, 60);
@@ -369,7 +374,7 @@ export function MatchDetailView({
 
   if (query.isLoading) {
     return (
-      <Screen edgeSwipeBack={!embedded} onEdgeSwipeBack={handleEdgeSwipeBack}>
+      <Screen edgeSwipeBack={!embedded} onEdgeSwipeBack={handleEdgeSwipeBack} showPreviewNotice={!embedded}>
         <LoadingState label="Maç detayı hazırlanıyor" />
       </Screen>
     );
@@ -377,7 +382,7 @@ export function MatchDetailView({
 
   if (query.isError || !query.data || !match || !pathModel) {
     return (
-      <Screen edgeSwipeBack={!embedded} onEdgeSwipeBack={handleEdgeSwipeBack}>
+      <Screen edgeSwipeBack={!embedded} onEdgeSwipeBack={handleEdgeSwipeBack} showPreviewNotice={!embedded}>
         <ErrorState
           error={query.error}
           message={
@@ -710,6 +715,7 @@ export function MatchDetailView({
       edgeSwipeBack={!embedded}
       onEdgeSwipeBack={handleEdgeSwipeBack}
       wide={!embedded || expanded}
+      showPreviewNotice={!embedded}
       contentStyle={styles.screen}
       scrollRef={scrollRef}
       fixedHeader={compactHeader ? <View style={styles.fixedHeader}>

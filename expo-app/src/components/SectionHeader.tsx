@@ -1,5 +1,6 @@
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, interaction, radii, spacing, typeScale } from "@/src/theme/theme";
+import { colors, iconSizes, interaction, radii, spacing, typeScale } from "@/src/theme/theme";
 
 type SectionHeaderProps = {
   title: string;
@@ -22,16 +23,17 @@ export function SectionHeader({
       </View>
       {actionLabel && onAction ? (
         <Pressable
-          accessibilityLabel={actionLabel}
+          accessibilityLabel={`${title}, ${actionLabel}`}
           accessibilityRole="button"
-          hitSlop={10}
           onPress={onAction}
-          style={({ pressed }) => [
+          style={({ pressed, hovered }) => [
             styles.actionButton,
+            hovered && styles.hovered,
             pressed && styles.pressed
           ]}
         >
           <Text style={styles.action}>{actionLabel}</Text>
+          <MaterialCommunityIcons accessible={false} name="chevron-right" color={colors.blue} size={iconSizes.inline} />
         </Pressable>
       ) : null}
     </View>
@@ -72,10 +74,10 @@ const styles = StyleSheet.create({
     borderRadius: radii.round,
     justifyContent: "center",
     minHeight: interaction.minTouchTarget,
-    paddingHorizontal: 14
+    flexDirection: "row",
+    gap: 2,
+    paddingHorizontal: spacing.md
   },
-  pressed: {
-    opacity: 0.78,
-    transform: [{ scale: 0.98 }]
-  }
+  hovered: { backgroundColor: colors.surfaceStrong },
+  pressed: { opacity: 0.78 }
 });

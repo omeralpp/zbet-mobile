@@ -1,55 +1,30 @@
 import { type ReactNode, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FlatList, Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { selectionDecisionsQuery } from "@/src/api/queries";
-import type { SelectionDecisionRecord, SelectionDecisions, SelectionRule } from "@/src/api/selection-decisions-schema";
+import { rebuildCohortsReportQuery, selectionDecisionsQuery } from "@/src/api/queries";
+import type { SelectionDecisionRecord, SelectionRule } from "@/src/api/selection-decisions-schema";
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { colors, semantic, shadows, spacing, typeScale } from "@/src/theme/theme";
 import { formatSelection } from "@/src/utils/format";
 import { formatQuote, formatRatio, formatUnits, unitsTone } from "@/src/utils/rebuild-display";
-import { istanbulDay } from "@/src/utils/rebuild-log";
+import { istanbulDay, resolvePeriod, type LogPeriodChoice } from "@/src/utils/rebuild-log";
 import { ResultPill, TonePill, toneColor } from "./DecisionTicket";
-import { logWindowOptions, resultOptions, type LogWindowDays } from "./DailyCouponLog";
+import { resultFilters, resultOptions } from "./DailyCouponLog";
 import type { CouponResultFilter } from "./daily-coupon-view";
-import { SegmentedControl, SelectMenu } from "./FilterControls";
+import { SegmentedControl } from "./FilterControls";
 import { RatingStars } from "./RatingStars";
 import { Action, Card } from "./RebuildEvidencePanel";
 import { EmptyState, LoadingState } from "./StateView";
+import { LogOutcomeSummary } from "./LogOutcomeSummary";
+import { LogPeriodControl } from "./LogPeriodControl";
+import { LogToolbar } from "./LogToolbar";
 import { SurfaceMaterial } from "./SurfaceMaterial";
-
-type WindowDays = LogWindowDays;
 
 const istanbulTime = new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
 function ratio(value: string | null): number | null {
   return value === null ? null : Number(value);
-}
-
-/** Outcomes and ratios on the left, net units on the right, like the champion's summary. */
-function RuleSummary({ value }: { value: NonNullable<SelectionDecisions["summary"]> }) {
-  const tone = unitsTone(value.net);
-  const extra = [value.pending ? `${value.pending} bekliyor` : null, value.unresolved ? `${value.unresolved} çözülemedi` : null].filter(Boolean);
-  return (
-    <View style={styles.summary}>
-      <SurfaceMaterial radius={16} />
-      <View style={styles.flexCopy}>
-        <Text style={styles.summaryLine}>
-          <Text style={[styles.strong, { color: semantic.positive }]}>{value.wins} kazandı</Text>
-          {" · "}
-          <Text style={[styles.strong, { color: semantic.negative }]}>{value.losses} kaybetti</Text>
-          {extra.length ? ` · ${extra.join(" · ")}` : ""}
-        </Text>
-        <Text style={styles.summaryRatios}>
-          {`${value.decisions} karar · isabet ${formatRatio(ratio(value.hitRate))} · ort. oran ${formatQuote(value.averageQuote)} · ROI ${formatRatio(ratio(value.roi))}`}
-        </Text>
-      </View>
-      <View style={styles.figure}>
-        <Text style={[styles.summaryNet, { color: tone === "neutral" ? colors.text : toneColor[tone] }]}>{formatUnits(value.net)}</Text>
-        <Text style={styles.footLabel}>birim</Text>
-      </View>
-    </View>
-  );
 }
 
 function DecisionCard({ record }: { record: SelectionDecisionRecord }) {
@@ -72,8 +47,8 @@ function DecisionCard({ record }: { record: SelectionDecisionRecord }) {
           <ResultPill state={record.result.state} />
         </View>
       </View>
-      <Text numberOfLines={1} style={styles.team}>{teams}</Text>
-      <Text numberOfLines={1} style={styles.meta}>
+      <Text numberOfLines={2} style={styles.team}>{teams}</Text>
+      <Text numberOfLines={2} style={styles.meta}>
         {[record.league || null, `${istanbulTime.format(new Date(record.evaluatedAt))} karar`].filter(Boolean).join(" · ")}
       </Text>
       <View style={styles.cardFoot}>
@@ -103,12 +78,15 @@ function DecisionCard({ record }: { record: SelectionDecisionRecord }) {
 export function SelectionRuleLog({ rule, ruleControl }: { rule: SelectionRule; ruleControl?: ReactNode }) {
   const breakpoint = useBreakpoint();
   const wide = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
-  const [days, setDays] = useState<WindowDays>(1);
+  const [choice, setChoice] = useState<LogPeriodChoice>({ kind: "today" });
+  const [periodOpen, setPeriodOpen] = useState(false);
   const [result, setResult] = useState<CouponResultFilter>("ALL");
   const [refreshing, setRefreshing] = useState(false);
   const [openedAt] = useState(() => Date.now());
-  const today = istanbulDay(openedAt);
-  const query = useQuery(selectionDecisionsQuery(rule, today, days, true));
+  const { data: report } = useQuery(rebuildCohortsReportQuery);
+  const today = istanbulDay(report ? Date.parse(report.asOf) : openedAt);
+  const period = resolvePeriod(choice, today);
+  const query = useQuery(selectionDecisionsQuery(rule, period.through, period.days, period.through === today));
   const refresh = async () => {
     setRefreshing(true);
     try { await query.refetch(); } finally { setRefreshing(false); }
@@ -120,32 +98,27 @@ export function SelectionRuleLog({ rule, ruleControl }: { rule: SelectionRule; r
     LOST: records.filter((record) => record.result.state === "LOSS").length,
     PENDING: records.filter((record) => record.result.state === "PENDING").length };
   const visible = result === "ALL" ? records : records.filter((record) => record.result.state === states[result]);
-  const inline = Platform.OS === "web" && isAtLeast(breakpoint, "medium");
-  const head = (
-    <View style={styles.head}>
-      <View style={[styles.toolbar, inline && styles.toolbarInline]}>
-        <View style={styles.scope}>
-          {ruleControl}
-          <SelectMenu icon="calendar-blank-outline" label="Dönem" onChange={setDays} options={logWindowOptions} value={days} />
-        </View>
-        {value?.availability === "AVAILABLE" ? (
-          <SegmentedControl fill={!inline} label="Sonuç" onChange={setResult} options={resultOptions(counts)} value={result} />
-        ) : null}
-      </View>
-      <Text style={styles.scopeText}>
-        {value?.coverage
-          ? `${value.ruleLabel} · ${value.coverage.fixtures} maç · ${value.coverage.decided} karar verdi · ${value.coverage.tracking} izleniyor · ${value.coverage.notEnrolled} başlangıç kuralı dışında${value.coverage.stopped ? ` · ${value.coverage.stopped} durdu` : ""}`
-          : value?.ruleLabel ?? rule}
-      </Text>
-    </View>
+  const toolbar = (
+    <LogToolbar
+      wide={wide}
+      period={<LogPeriodControl align={wide ? "right" : "left"} choice={choice} onChange={setChoice}
+        onOpenChange={setPeriodOpen} open={periodOpen} period={period} today={today} />}
+      results={query.isLoading || value?.availability === "AVAILABLE" ? (
+        <SegmentedControl fill={!wide} label="Sonuç" onChange={(next) => { setPeriodOpen(false); setResult(next); }}
+          options={value ? resultOptions(counts) : resultFilters} value={result} />
+      ) : null}
+    >
+      {ruleControl}
+    </LogToolbar>
   );
+  const coverage = value?.coverage;
   const note = "Varsayımsal: her maçta kuralın ilk kararı, ilk orana 1 birim. Kapsam dışı maçlar, ilk döngüsü temiz başlamayan maçlardır. Şampiyonun yerine geçmez; karşılaştırma içindir.";
 
-  if (query.isLoading) return <View style={styles.stack}>{head}<Card><LoadingState label="Kural kararları hazırlanıyor" /></Card></View>;
+  if (query.isLoading) return <View style={styles.stack}>{toolbar}<LoadingState label="Kural kararları hazırlanıyor" /></View>;
   if (query.isError || !value) {
     return (
       <View style={styles.stack}>
-        {head}
+        {toolbar}
         <Card>
           <View style={styles.waiting}>
             <TonePill dot label="VERİ ALINAMADI" tone="neutral" />
@@ -158,7 +131,7 @@ export function SelectionRuleLog({ rule, ruleControl }: { rule: SelectionRule; r
   if (value.availability !== "AVAILABLE" || !value.summary) {
     return (
       <View style={styles.stack}>
-        {head}
+        {toolbar}
         <EmptyState
           kind="NO_DECISION"
           message={value.reason === "RULE_NOT_PUBLISHED" ? "Bu kural için tüm ligleri kapsayan form girdisi geliştiriliyor." : "Kural verisi şu an doğrulanamadı."}
@@ -173,77 +146,76 @@ export function SelectionRuleLog({ rule, ruleControl }: { rule: SelectionRule; r
     : <EmptyState kind="NO_DECISION" message="Başka bir dönem seçerek bu kuralın geçmiş kararlarını görebilirsin." title="Bu dönemde kural kararı yok" />;
   const header = (
     <View style={styles.listHead}>
-      {head}
-      <RuleSummary value={summary} />
-      <Text style={styles.note}>{`${note}${summary.live ? ` · ${summary.live} karar canlı kaydedildi` : ""}${result === "ALL" ? "" : " · Özet seçili dönemin tüm kararlarını gösterir"}`}</Text>
+      <LogOutcomeSummary counts={summary} hitRate={formatRatio(ratio(summary.hitRate))} net={summary.net}
+        netLabel="Net birim" roi={formatRatio(ratio(summary.roi))} wide={wide} />
+      {coverage ? (
+        <View style={styles.coverage}>
+          <Text style={styles.ruleName}>{value.ruleLabel}</Text>
+          <Text style={styles.scopeText}>
+            {`${coverage.fixtures} maç · ${coverage.decided} karar · ${coverage.tracking} izleniyor · ${coverage.notEnrolled} kapsam dışı${coverage.stopped ? ` · ${coverage.stopped} durdu` : ""}`}
+          </Text>
+        </View>
+      ) : null}
+      <Text style={styles.scopeText}>
+        {`${visible.length} / ${summary.decisions} karar · ort. oran ${formatQuote(summary.averageQuote)}${summary.live ? ` · ${summary.live} canlı kayıt` : ""}`}
+      </Text>
+      <Text style={styles.note}>{`${note}${result === "ALL" ? "" : " · Özet seçili dönemin tüm kararlarını gösterir"}`}</Text>
     </View>
   );
   const refreshControl = <RefreshControl colors={[colors.gold]} onRefresh={() => { void refresh(); }} refreshing={refreshing} tintColor={colors.gold} />;
 
-  if (wide) {
-    return (
-      <ScrollView contentContainerStyle={styles.wideContent} refreshControl={refreshControl} style={styles.fill}>
-        {header}
-        {visible.length ? (
-          <View style={styles.grid}>
-            {visible.map((record) => (
-              <View key={record.decisionId} style={styles.gridItem}><DecisionCard record={record} /></View>
-            ))}
-          </View>
-        ) : empty}
-      </ScrollView>
-    );
-  }
+  const closePeriod = () => setPeriodOpen(false);
   return (
-    <FlatList
-      ItemSeparatorComponent={() => <View style={styles.cardGap} />}
-      ListEmptyComponent={empty}
-      ListHeaderComponent={header}
-      contentContainerStyle={styles.pageList}
-      data={visible}
-      keyExtractor={(record) => record.decisionId}
-      refreshControl={refreshControl}
-      renderItem={({ item }) => <DecisionCard record={item} />}
-      showsVerticalScrollIndicator={false}
-      style={styles.fill}
-    />
+    <View style={styles.stack}>
+      {toolbar}
+      {wide ? (
+        <ScrollView contentContainerStyle={styles.wideContent} onScroll={periodOpen ? closePeriod : undefined}
+          refreshControl={refreshControl} style={styles.fill}>
+          {header}
+          {visible.length ? (
+            <View style={styles.grid}>
+              {visible.map((record) => (
+                <View key={record.decisionId} style={styles.gridItem}><DecisionCard record={record} /></View>
+              ))}
+            </View>
+          ) : empty}
+        </ScrollView>
+      ) : (
+        <FlatList
+          ItemSeparatorComponent={() => <View style={styles.cardGap} />}
+          ListEmptyComponent={empty}
+          ListHeaderComponent={header}
+          contentContainerStyle={styles.pageList}
+          data={visible}
+          keyExtractor={(record) => record.decisionId}
+          onScrollBeginDrag={closePeriod}
+          refreshControl={refreshControl}
+          renderItem={({ item }) => <DecisionCard record={item} />}
+          showsVerticalScrollIndicator={false}
+          style={styles.fill}
+        />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  stack: { gap: spacing.md, width: "100%" },
-  head: { gap: spacing.sm },
-  toolbar: { gap: spacing.sm },
-  scope: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing.sm },
-  toolbarInline: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing.md },
+  stack: { flex: 1, gap: spacing.md, width: "100%" },
   listHead: { gap: spacing.sm, marginBottom: spacing.md },
-  filters: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing.sm },
+  coverage: { gap: 2 },
+  ruleName: { color: colors.text, ...typeScale.bodyCompact, fontWeight: "700" },
   scopeText: { color: colors.textMuted, ...typeScale.meta },
   note: { color: colors.textMuted, ...typeScale.label, letterSpacing: 0 },
   waiting: { gap: spacing.sm, alignItems: "flex-start" },
   pageList: { paddingBottom: 112 },
   wideContent: { gap: spacing.md, paddingBottom: spacing.xxl },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md },
-  gridItem: { flexBasis: 360, flexGrow: 1, maxWidth: 560 },
+  gridItem: { flexBasis: "31.5%", minWidth: 0 },
   cardGap: { height: 12 },
   flexCopy: { flex: 1, minWidth: 0 },
-  summary: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.borderSoft
-  },
-  summaryLine: { color: colors.text, ...typeScale.bodyCompact },
-  summaryRatios: { color: colors.textMuted, ...typeScale.meta, marginTop: 2 },
-  strong: { fontWeight: "800" },
-  summaryNet: { ...typeScale.metric, fontSize: 26, lineHeight: 28, fontWeight: "800" },
   card: { gap: spacing.sm, padding: 14, borderRadius: 20, borderWidth: 1, borderColor: colors.borderSoft, ...shadows.card },
-  rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
+  rowBetween: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
   rowStart: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   finalScore: { color: colors.text, ...typeScale.metricCompact },
   team: { color: colors.text, ...typeScale.identity, fontWeight: "700" },

@@ -34,14 +34,12 @@ import {
   needsWindow,
   nextLogSort,
   periodRecords,
-  periodTitle,
   publishedParts,
   resolvePeriod,
   sharedCohort,
   shiftDay,
   sortLog,
   type LogColumn,
-  type LogPeriod,
   type LogPeriodChoice,
   type LogSort,
   type LogSummary
@@ -49,108 +47,24 @@ import {
 import { TutorialTarget } from "@/src/tutorial/TutorialTarget";
 import { refreshPerformanceWidgetFromApi } from "@/src/widgets/performance-widget";
 import { DecisionFilterChip } from "./DecisionFilterChip";
-import { controlHeight, controlHitSlop, controlRadius } from "./FilterControls";
+import { LogPeriodControl } from "./LogPeriodControl";
 import { ListPerforation, ResultPill, TonePill, toneColor } from "./DecisionTicket";
 import { FilterChip } from "./FilterChip";
 import { LocalTabPager } from "./LocalTabPager";
 import { RatingStars } from "./RatingStars";
 import { Action, Card, RebuildReportDetails } from "./RebuildEvidencePanel";
 import { EmptyState, LoadingState } from "./StateView";
+import { OutcomeDistribution } from "./OutcomeDistribution";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 import { TeamLogo } from "./TeamLogo";
 
 const localTabs = ["ALL", "STAR"] as const;
-
-const periodOptions: readonly { choice: LogPeriodChoice; label: string }[] = [
-  { choice: { kind: "today" }, label: "Bugün" },
-  { choice: { kind: "yesterday" }, label: "Dün" },
-  { choice: { kind: "last", days: 7 }, label: "Son 7 gün" },
-  { choice: { kind: "last", days: 30 }, label: "Son 30 gün" }
-];
-const sameChoice = (a: LogPeriodChoice, b: LogPeriodChoice) => JSON.stringify(a) === JSON.stringify(b);
 
 /** Opens a record's Super kararı page; the match key lets it load the match. */
 function useOpenDecision() {
   const router = useRouter();
   return (record: RebuildLogRecord) =>
     router.push({ pathname: "/super/[key]", params: { key: record.decisionId, match: record.matchKey } } as never);
-}
-
-function StepButton({ icon, label, disabled, onPress }: { icon: "chevron-left" | "chevron-right"; label: string; disabled: boolean; onPress: () => void }) {
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      hitSlop={controlHitSlop}
-      onPress={onPress}
-      style={({ pressed, hovered }) => [styles.stepButton, hovered && !disabled && styles.hover, pressed && styles.pressed, disabled && styles.stepDisabled]}
-    >
-      <MaterialCommunityIcons color={semantic.intelligence} name={icon} size={iconSizes.control} />
-    </Pressable>
-  );
-}
-
-/**
- * Istanbul calendar views from the backend's own day bounds: today, yesterday,
- * the last 7 or 30 days, and single days stepped back up to a year. The menu
- * opens from the control's outer edge: left on a phone, where the control
- * starts the row, right on desktop, where it ends the toolbar. A 7/30-day view
- * hides the day steps, so the control is then narrower than its menu (owner
- * screenshot 2026-11-03: a right-anchored menu ran off the phone's left edge).
- */
-function PeriodControl({ align, choice, period, today, open, onOpenChange, onChange }: {
-  align: "left" | "right"; choice: LogPeriodChoice; period: LogPeriod; today: string; open: boolean;
-  onOpenChange: (open: boolean) => void; onChange: (choice: LogPeriodChoice) => void;
-}) {
-  const title = periodTitle(period, today);
-  const step = (delta: -1 | 1) => {
-    onOpenChange(false);
-    onChange(choiceForDay(shiftDay(period.through, delta), today));
-  };
-  return (
-    <View style={[styles.periodWrapper, open && styles.periodWrapperOpen]}>
-      <View style={styles.periodRow}>
-        {period.days === 1 ? <StepButton disabled={!canStepDay(period, today, -1)} icon="chevron-left" label="Önceki gün" onPress={() => step(-1)} /> : null}
-        <Pressable
-          accessibilityLabel={`Dönem: ${title}, İstanbul saati`}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: open }}
-          hitSlop={controlHitSlop}
-          onPress={() => onOpenChange(!open)}
-          style={({ pressed, hovered }) => [styles.periodButton, hovered && styles.hover, pressed && styles.pressed]}
-        >
-          <MaterialCommunityIcons color={semantic.intelligence} name="calendar-blank-outline" size={iconSizes.small} />
-          <Text numberOfLines={1} style={styles.periodText}>{title}</Text>
-          <MaterialCommunityIcons color={colors.textMuted} name={open ? "chevron-up" : "chevron-down"} size={iconSizes.inline} />
-        </Pressable>
-        {period.days === 1 ? <StepButton disabled={!canStepDay(period, today, 1)} icon="chevron-right" label="Sonraki gün" onPress={() => step(1)} /> : null}
-      </View>
-      {open ? (
-        <View accessibilityRole="menu" style={[styles.periodMenu, align === "left" ? styles.periodMenuLeft : styles.periodMenuRight]}>
-          {periodOptions.map((option) => {
-            const selected = sameChoice(option.choice, choice);
-            return (
-              <Pressable
-                accessibilityRole="menuitem"
-                accessibilityState={{ selected }}
-                key={option.label}
-                onPress={() => {
-                  onOpenChange(false);
-                  onChange(option.choice);
-                }}
-                style={({ pressed }) => [styles.periodOption, selected && styles.periodOptionSelected, pressed && styles.pressed]}
-              >
-                <Text style={[styles.periodOptionText, selected && styles.periodOptionTextSelected]}>{option.label}</Text>
-                {selected ? <MaterialCommunityIcons color={colors.onAction} name="check" size={iconSizes.inline} /> : null}
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : null}
-    </View>
-  );
 }
 
 /** "1 kazandı · 1 kaybetti · 1 bekliyor" with the outcomes in their own colours; empty extras left out. */
@@ -438,13 +352,13 @@ export function RebuildDecisionLog() {
     try { await refetch(); } finally { setRefreshing(false); }
   };
   useEffect(() => {
-    if (Platform.OS !== "web" || (!starMenuOpen && !periodOpen)) return;
+    if (Platform.OS !== "web" || !starMenuOpen) return;
     const dismiss = (event: KeyboardEvent) => {
       if (event.key === "Escape") { setPeriodOpen(false); setStarMenuOpen(false); }
     };
     document.addEventListener("keydown", dismiss);
     return () => document.removeEventListener("keydown", dismiss);
-  }, [periodOpen, starMenuOpen]);
+  }, [starMenuOpen]);
   const full = multiDay ? days.report ?? undefined : shown.report;
   const report = useMemo(() => (full ? combinedReport(full) : null), [full]);
   const found = full?.periods.find((item) => item.days === period.days && item.through === period.through);
@@ -529,7 +443,7 @@ export function RebuildDecisionLog() {
       pendingOnly ? "bekliyor" : null, cohort ? `Sürüm ${cohort}` : null].filter(Boolean).join(" · ")
     : isLoading ? "Rapor yükleniyor" : isError || full?.availability === "UNAVAILABLE" ? "Rapor doğrulanamadı · kayıt sayısı bilinmiyor" : "Rapor bekleniyor";
   const periodControl = (
-    <PeriodControl
+    <LogPeriodControl
       align={wide ? "right" : "left"}
       choice={choice}
       onChange={changePeriod}
@@ -648,6 +562,7 @@ export function RebuildDecisionLog() {
               <Text style={styles.tileDot}> · </Text>
               <Text style={{ color: semantic.negative }}>{summary.losses}</Text>
             </Text>
+            <OutcomeDistribution counts={summary} />
           </Tile>
         </View>
         <Text style={styles.tableNote}>{note}</Text>
@@ -738,6 +653,7 @@ function SummaryCard({ scope, summary }: { scope: string | null; summary: LogSum
       <SurfaceMaterial radius={16} />
       <View style={styles.flexCopy}>
         <OutcomeLine summary={summary} />
+        <OutcomeDistribution counts={summary} />
         <Text style={styles.summaryRatios}>{scope ? `${scope} · ` : ""}ROI {formatRatio(summary.roi)} · isabet {formatRatio(summary.hitRate)}</Text>
       </View>
       <View style={styles.summaryFigure}>
@@ -771,58 +687,6 @@ const styles = StyleSheet.create({
   scopeWide: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: spacing.md, flexShrink: 1, zIndex: 20 },
   scopeText: { flexShrink: 1, color: colors.textMuted, ...typeScale.meta },
   wideToolbar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.lg, zIndex: 20 },
-  periodWrapper: { position: "relative", zIndex: 10, alignSelf: "flex-start" },
-  periodWrapperOpen: { zIndex: 40, elevation: 40 },
-  periodRow: { flexDirection: "row", alignItems: "center", gap: spacing.xs },
-  periodButton: {
-    height: controlHeight,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingLeft: 10,
-    paddingRight: 8,
-    borderRadius: controlRadius,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface
-  },
-  periodText: { color: colors.text, ...typeScale.bodyCompact, fontSize: 13, lineHeight: 18, fontWeight: "700" },
-  stepButton: {
-    width: controlHeight,
-    height: controlHeight,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: controlRadius,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface
-  },
-  stepDisabled: { opacity: 0.38 },
-  periodMenu: {
-    position: "absolute",
-    top: controlHeight + 6,
-    minWidth: 168,
-    padding: spacing.xs,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceStrong,
-    ...shadows.card
-  },
-  periodMenuLeft: { left: 0 },
-  periodMenuRight: { right: 0 },
-  periodOption: {
-    minHeight: interaction.minTouchTarget,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.md
-  },
-  periodOptionSelected: { backgroundColor: colors.actionFill },
-  periodOptionText: { color: colors.text, ...typeScale.bodyCompact, fontWeight: "700" },
-  periodOptionTextSelected: { color: colors.onAction },
   summary: {
     flexDirection: "row",
     alignItems: "center",

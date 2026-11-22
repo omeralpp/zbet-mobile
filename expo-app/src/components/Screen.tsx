@@ -79,6 +79,7 @@ type ScreenProps = PropsWithChildren<{
    * and the shell carries the refresh.
    */
   brand?: boolean;
+  showPreviewNotice?: boolean;
 }>;
 
 /**
@@ -113,7 +114,8 @@ export function Screen({
   scrollProps,
   wide = false,
   fixedHeader,
-  brand = false
+  brand = false,
+  showPreviewNotice = true
 }: ScreenProps) {
   const { width } = useWindowDimensions();
   const showsBrandBar =
@@ -274,7 +276,7 @@ export function Screen({
     // band between the header and the content on Android.
     <SafeAreaView edges={edgeSwipeBack ? [] : ["top"]} style={styles.safeArea}>
       {showsBrandBar ? <BrandBar /> : null}
-      {runtimeConfig.useMocks ? <View style={styles.previewNotice}><Text style={styles.previewText}>Örnek veriler · canlı veri değil</Text></View> : null}
+      {showPreviewNotice && runtimeConfig.useMocks ? <View style={styles.previewNotice}><Text style={styles.previewText}>Örnek veriler · canlı veri değil</Text></View> : null}
       <GestureDetector gesture={panGesture}>
         <Animated.View
           style={[styles.gestureRoot, gestureEnabled ? gestureStyle : null]}

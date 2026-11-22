@@ -83,13 +83,13 @@ test("the fresh current interval joins a live match; stale or finished ones do n
     matchKey: "other" }, match, now).samples.length, 0);
 });
 
-test("goals are marked on the scoring side's half", () => {
+test("score changes inferred from successive snapshots are labelled as score updates on the scoring side", () => {
   const series = pressureSeries(journey([
     point({ key: "p0", plotMinute: 30, kind: "STATE", home: 0, away: 0 }),
     point({ key: "g1", plotMinute: 31, kind: "GOAL", home: 0, away: 1 }),
     point({ key: "g2", plotMinute: 70, kind: "GOAL", home: 1, away: 1 })
   ]), match, now);
-  assert.deepEqual(series.goals.map(g => [g.minute, g.side]), [[31, "AWAY"], [70, "HOME"]]);
+  assert.deepEqual(series.goals.map(g => [g.minute, g.side, g.kind]), [[31, "AWAY", "SCORE_UPDATE"], [70, "HOME", "SCORE_UPDATE"]]);
 });
 
 test("a mark's label flips inward instead of running past the chart edge", () => {

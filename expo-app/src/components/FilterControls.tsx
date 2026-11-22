@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { colors, iconSizes, interaction, radii, semantic, shadows, spacing, typeScale } from "@/src/theme/theme";
+import { useReducedMotion } from "@/src/theme/use-reduced-motion";
 import { decisionFilterMenuLayout } from "./decision-filter-menu";
 
 /**
@@ -41,6 +42,7 @@ export function ViewTabs<T extends Key>({ label, options, value, onChange }: {
           <Pressable
             accessibilityLabel={option.note ? `${option.label}, ${option.note}` : option.label}
             accessibilityRole="tab"
+            aria-selected={selected}
             accessibilityState={{ selected }}
             key={String(option.id)}
             onPress={() => onChange(option.id)}
@@ -73,6 +75,7 @@ export function SegmentedControl<T extends Key>({ label, options, value, onChang
           <Pressable
             accessibilityLabel={option.count === undefined ? option.label : `${option.label}, ${option.count} kayıt`}
             accessibilityRole="radio"
+            aria-checked={selected}
             accessibilityState={{ selected, checked: selected }}
             hitSlop={controlHitSlop}
             key={String(option.id)}
@@ -99,6 +102,7 @@ export function SelectMenu<T extends Key>({ label, options, value, onChange, ico
   onChange: (value: T) => void;
   icon?: IconName;
 }) {
+  const reduceMotion = useReducedMotion();
   const trigger = useRef<View>(null);
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState({ x: 0, y: 0, width: 0, height: 0 });
@@ -119,6 +123,7 @@ export function SelectMenu<T extends Key>({ label, options, value, onChange, ico
         accessibilityLabel={`${label}: ${current?.label ?? ""}`}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
+        aria-expanded={open}
         hitSlop={controlHitSlop}
         onPress={() => (open ? setOpen(false) : show())}
         ref={trigger}
@@ -128,9 +133,9 @@ export function SelectMenu<T extends Key>({ label, options, value, onChange, ico
         <Text numberOfLines={1} style={styles.selectText}>{current?.short ?? current?.label}</Text>
         <MaterialCommunityIcons color={colors.textMuted} name={open ? "chevron-up" : "chevron-down"} size={iconSizes.inline} />
       </Pressable>
-      <Modal animationType="none" onRequestClose={() => setOpen(false)} statusBarTranslucent transparent visible={open}>
+      <Modal animationType={reduceMotion ? "none" : "fade"} onRequestClose={() => setOpen(false)} statusBarTranslucent transparent visible={open}>
         <View style={StyleSheet.absoluteFill}>
-          <Pressable accessibilityLabel={`${label} menüsünü kapat`} onPress={() => setOpen(false)} style={StyleSheet.absoluteFill} />
+          <Pressable accessibilityRole="button" accessibilityLabel={`${label} menüsünü kapat`} onPress={() => setOpen(false)} style={StyleSheet.absoluteFill} />
           <View accessibilityLabel={label} accessibilityRole="menu" style={[styles.menu, { left: menuLeft, top: layout.top, width: menuWidth, height: layout.height }]}>
             <ScrollView bounces={false} contentContainerStyle={styles.menuContent}>
               {options.map((option) => {

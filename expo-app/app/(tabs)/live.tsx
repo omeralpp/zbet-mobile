@@ -108,6 +108,7 @@ function LiveSwitch({
           <Pressable
             accessibilityLabel={`${segment.label}, ${(segment.live ? liveCount : fixtureCount) === null ? "maç sayısı henüz doğrulanmadı" : `${segment.live ? liveCount : fixtureCount} maç`}`}
             accessibilityRole="tab"
+            aria-selected={selected}
             accessibilityState={{ selected }}
             key={segment.label}
             onPress={() => {
