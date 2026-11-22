@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useIsFocused, useLocalSearchParams, useRouter } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import type { SelectionRule } from "@/src/api/selection-decisions-schema";
 import { DailyCouponLog } from "@/src/components/DailyCouponLog";
@@ -35,6 +35,7 @@ export default function SuperScreen() {
   // The chosen view lives in the route, so Özet and a reload open the same one.
   const { view, rule } = useLocalSearchParams<{ view?: string; rule?: string }>();
   const router = useRouter();
+  const focused = useIsFocused();
   const legacyRule = labRules.find((item) => item.id === view)?.id;
   const current: LogView = legacyRule ? "LAB" : views.find((item) => item.id === view)?.id ?? "CHAMPION";
   const labRule: SelectionRule = labRules.find((item) => item.id === rule)?.id ?? legacyRule ?? "C1";
@@ -49,7 +50,7 @@ export default function SuperScreen() {
           onSelect={setView}
           renderPage={(page) => (
             <View style={styles.page}>
-              {page === "CHAMPION" ? <RebuildDecisionLog /> : page === "COUPONS" ? <DailyCouponLog /> : (
+              {page === "CHAMPION" ? <RebuildDecisionLog /> : page === "COUPONS" ? <DailyCouponLog active={focused && current === "COUPONS"} /> : (
                 <SelectionRuleLog
                   rule={labRule}
                   ruleControl={<SegmentedControl label="Lab kuralı" onChange={setLabRule} options={labRules} value={labRule} />}

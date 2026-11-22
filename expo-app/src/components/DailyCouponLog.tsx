@@ -1,16 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Platform, RefreshControl, ScrollView, SectionList, StyleSheet, Text, View } from "react-native";
-import { dailyCouponWindowQuery, rebuildCohortsReportQuery } from "@/src/api/queries";
+import { dailyCouponMatchStatesQuery, dailyCouponWindowQuery } from "@/src/api/queries";
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { colors, spacing, typeScale } from "@/src/theme/theme";
 import { formatRatio } from "@/src/utils/rebuild-display";
-import { istanbulDay, resolvePeriod, type LogPeriodChoice } from "@/src/utils/rebuild-log";
+import { istanbulDay, resolvePeriod, shiftDay, type LogPeriodChoice } from "@/src/utils/rebuild-log";
 import { CouponTicket } from "./CouponTicket";
 import { TonePill } from "./DecisionTicket";
 import {
-  countByResult, couponEntries, filterCoupons, summarizeCoupons, tierNames, tierOrder,
+  countByResult, couponEntries, currentCouponMatchKeys, filterCoupons, liveLegStates, summarizeCoupons, tierNames, tierOrder,
   type CouponEntry, type CouponResultFilter, type CouponTierFilter
 } from "./daily-coupon-view";
 import { SegmentedControl, SelectMenu } from "./FilterControls";
@@ -46,7 +46,7 @@ const dayLabel = new Intl.DateTimeFormat("tr-TR", { timeZone: "UTC", weekday: "s
  * match that lost it and each final score. Filters narrow the list and the
  * summary together, so the figures always describe what is on screen.
  */
-export function DailyCouponLog() {
+export function DailyCouponLog({ active }: { active: boolean }) {
   const breakpoint = useBreakpoint();
   const wide = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
   const [choice, setChoice] = useState<LogPeriodChoice>({ kind: "today" });
@@ -54,16 +54,31 @@ export function DailyCouponLog() {
   const [tier, setTier] = useState<CouponTierFilter>("ALL");
   const [result, setResult] = useState<CouponResultFilter>("ALL");
   const [refreshing, setRefreshing] = useState(false);
-  const [openedAt] = useState(() => Date.now());
-  const { data: report } = useQuery(rebuildCohortsReportQuery);
-  const today = istanbulDay(report ? Date.parse(report.asOf) : openedAt);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!active) return;
+    const tick = () => setNow(Date.now());
+    const immediate = setTimeout(tick, 0);
+    const interval = setInterval(tick, 10_000);
+    return () => {
+      clearTimeout(immediate);
+      clearInterval(interval);
+    };
+  }, [active]);
+  const today = istanbulDay(now);
   const period = resolvePeriod(choice, today);
-  const query = useQuery(dailyCouponWindowQuery(period.through, period.days, period.through === today));
+  const recent = period.through >= shiftDay(today, -1);
+  const query = useQuery({ ...dailyCouponWindowQuery(period.through, period.days, false),
+    refetchInterval: active && recent ? (period.days === 1 ? 30_000 : 120_000) : false });
+  const all = query.data ? couponEntries(query.data.entries) : [];
+  const matchKeys = currentCouponMatchKeys(all, today);
+  const matchQuery = useQuery(dailyCouponMatchStatesQuery(matchKeys, active));
+  const live = liveLegStates(matchQuery.isError ? undefined : matchQuery.data);
   const refresh = async () => {
     setRefreshing(true);
-    try { await query.refetch(); } finally { setRefreshing(false); }
+    try { await Promise.all([query.refetch(), matchKeys.length ? matchQuery.refetch() : undefined]); }
+    finally { setRefreshing(false); }
   };
-  const all = query.data ? couponEntries(query.data.entries) : [];
   const byTier = filterCoupons(all, tier, "ALL");
   const counts = countByResult(byTier);
   const visible = filterCoupons(byTier, "ALL", result);
@@ -99,7 +114,7 @@ export function DailyCouponLog() {
 
   const missing = query.data.unavailableDays.length
     ? ` · ${query.data.unavailableDays.length} gün doğrulanamadı` : "";
-  const note = `Her kupona yayın oranından 1 varsayımsal birim. Kazandı, kaybetti ve maç skorları SAP sonuç kaydından gelir.${missing}${demo ? " · Örnek veri" : ""}`;
+  const note = `Her kupona yayın oranından 1 varsayımsal birim. Canlı skorlar maç akışından, kesin kupon sonuçları SAP sonuç kaydından gelir.${missing}${demo ? " · Örnek veri" : ""}`;
   const summary = summarizeCoupons(visible);
   const header = (
     <View style={styles.listHead}>
@@ -141,7 +156,7 @@ export function DailyCouponLog() {
             <View key={key} style={styles.dayGroup}>
               {heading(key, data.length)}
               <View style={styles.grid}>
-                {data.map(({ tier }) => <View key={tier.tier} style={styles.gridItem}><CouponTicket tier={tier} /></View>)}
+                {data.map(({ tier }) => <View key={tier.tier} style={styles.gridItem}><CouponTicket live={live} now={now} tier={tier} /></View>)}
               </View>
             </View>
           )) : empty}
@@ -155,7 +170,7 @@ export function DailyCouponLog() {
           keyExtractor={(entry) => `${entry.day}:${entry.tier.tier}`}
           onScrollBeginDrag={closePeriod}
           refreshControl={refreshControl}
-          renderItem={({ item }) => <CouponTicket tier={item.tier} />}
+          renderItem={({ item }) => <CouponTicket live={live} now={now} tier={item.tier} />}
           renderSectionHeader={({ section }) => heading(section.key, section.data.length)}
           sections={sections}
           showsVerticalScrollIndicator={false}

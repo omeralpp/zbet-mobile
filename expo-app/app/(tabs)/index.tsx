@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useRouter } from "expo-router";
+import { useIsFocused, useRouter } from "expo-router";
 import {
   Platform,
   Pressable,
@@ -48,6 +48,7 @@ import { formatTodayEyebrow } from "@/src/utils/format";
 
 export default function DashboardScreen() {
   const clock = useRebuildClock();
+  const focused = useIsFocused();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { filter: liveStarFilter } = useLiveStarFilter();
@@ -197,7 +198,7 @@ export default function DashboardScreen() {
     ) : null,
     // Always present (v40 board), with its own state while nothing is published.
     // Today's coupons with live and final scores; history is in Karar günlüğü.
-    dailyCoupons: <DailyCouponsOverview matches={snapshots.data} now={clock} />,
+    dailyCoupons: <DailyCouponsOverview active={focused} now={clock} />,
     recentSuper: (
       <>
         <SectionHeader

@@ -2,7 +2,7 @@ import type { JinxRb1Explanation } from "./jinx-rb1-schema";
 import type { SelectionComparison } from "./selection-comparison-schema";
 import type { SelectionHistory } from "./selection-history-schema";
 import type { SelectionDecisions, SelectionRule } from "./selection-decisions-schema";
-import type { DailyCouponWindow, DailyCoupons } from "./daily-coupons-schema";
+import type { DailyCouponMatchState, DailyCouponWindow, DailyCoupons } from "./daily-coupons-schema";
 import type {
   AnalysisContext,
   Dashboard,
@@ -27,6 +27,7 @@ export interface MobileApi {
   getDailyCoupons(date: string, signal?: AbortSignal): Promise<DailyCoupons>;
   /** Published Daily Coupons days for 1, 7 or 30 Istanbul days ending on `through`. */
   getDailyCouponWindow(through: string, days: 1 | 7 | 30, signal?: AbortSignal): Promise<DailyCouponWindow>;
+  getDailyCouponMatchStates(keys: readonly string[], signal?: AbortSignal): Promise<DailyCouponMatchState[]>;
   getMatchSelectionComparison(key: string, signal?: AbortSignal): Promise<SelectionComparison>;
   getMatchSelectionHistory(key: string, signal?: AbortSignal): Promise<SelectionHistory>;
   /** Selection Lab rule decisions for 1, 7 or 30 Istanbul days ending on `through` (YYYY-MM-DD). */

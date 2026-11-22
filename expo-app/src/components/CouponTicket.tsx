@@ -5,13 +5,10 @@ import type { DailyCouponLeg, DailyCouponTier } from "@/src/api/daily-coupons-sc
 import { colors, iconSizes, interaction, radii, semantic, shadows, spacing, typeScale } from "@/src/theme/theme";
 import { formatRate } from "@/src/utils/format";
 import { TonePill, toneColor } from "./DecisionTicket";
-import { legResultLabel, settlementPresentation, tierNames } from "./daily-coupon-view";
+import { legResultLabel, settlementPresentation, tierNames, type LiveLegState } from "./daily-coupon-view";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 
 const time = new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul", hour: "2-digit", minute: "2-digit" });
-
-/** The current score of a coupon match the screen already holds, for unsettled legs. */
-export type LiveLegState = { score: string; label: string };
 
 const legIcon = {
   PENDING: { name: "clock-outline", tone: "pending" },
@@ -20,12 +17,12 @@ const legIcon = {
   VOID: { name: "minus-circle-outline", tone: "neutral" }
 } as const;
 
-function LegRow({ leg, live, onOpen }: { leg: DailyCouponLeg; live: LiveLegState | undefined; onOpen: (() => void) | undefined }) {
+function LegRow({ leg, live, onOpen, now }: { leg: DailyCouponLeg; live: LiveLegState | undefined; onOpen: (() => void) | undefined; now: number }) {
   const icon = leg.result ? legIcon[leg.result] : null;
   const lost = leg.result === "LOST";
-  const score = leg.finalScore ? `MS ${leg.finalScore.home}–${leg.finalScore.away}` : live ? live.score : null;
+  const score = leg.finalScore ? `MS ${leg.finalScore.home}–${leg.finalScore.away}` : live?.score;
   const status = leg.result && leg.result !== "PENDING" ? legResultLabel[leg.result]
-    : live ? live.label : `Başlama ${time.format(new Date(leg.kickoffAt))}`;
+    : live?.label ?? (Date.parse(leg.kickoffAt) <= now ? "Skor bekleniyor" : `Başlama ${time.format(new Date(leg.kickoffAt))}`);
   const label = `${leg.home} – ${leg.away}, ${leg.market} ${leg.selection}, oran ${formatRate(leg.odds)}, ${status}${score ? `, ${score}` : ""}`;
   const body = (
     <>
@@ -61,11 +58,12 @@ function LegRow({ leg, live, onOpen }: { leg: DailyCouponLeg; live: LiveLegState
  * each match with its own result and final score, and a tap through to the
  * match detail. A lost coupon names the match that lost it.
  */
-export function CouponTicket({ tier, live, eyebrow, compact = false }: {
+export function CouponTicket({ tier, live, eyebrow, compact = false, now }: {
   tier: DailyCouponTier;
   live?: ReadonlyMap<string, LiveLegState>;
   eyebrow?: string;
   compact?: boolean;
+  now: number;
 }) {
   const router = useRouter();
   const from = usePathname();
@@ -101,7 +99,7 @@ export function CouponTicket({ tier, live, eyebrow, compact = false }: {
       </View>
       <View style={styles.legs}>
         {tier.legs.map((leg) => (
-          <LegRow key={leg.fixtureId} leg={leg} live={leg.matchKey ? live?.get(leg.matchKey) : undefined}
+          <LegRow key={leg.fixtureId} leg={leg} live={leg.matchKey ? live?.get(leg.matchKey) : undefined} now={now}
             onOpen={leg.matchKey ? () => router.push({ pathname: "/match/[key]", params: { key: leg.matchKey!, from } } as never) : undefined} />
         ))}
       </View>

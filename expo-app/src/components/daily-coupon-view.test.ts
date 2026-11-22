@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { dailyCouponWindowSchema } from "@/src/api/daily-coupons-schema";
 import { mockDailyCouponWindow } from "@/src/api/mock-daily-coupons";
-import { countByResult, couponEntries, couponsForMatch, filterCoupons, fixtureIdOfMatchKey, losingLegs, summarizeCoupons } from "./daily-coupon-view";
+import { countByResult, couponEntries, couponsForMatch, currentCouponMatchKeys, filterCoupons, fixtureIdOfMatchKey, liveLegStates, losingLegs, summarizeCoupons } from "./daily-coupon-view";
 
 const today = "2026-11-17";
 const window = dailyCouponWindowSchema.parse(mockDailyCouponWindow(today, 7, today));
@@ -43,4 +43,26 @@ test("a match finds its coupon legs by key or by fixture id", () => {
   const found = couponsForMatch(window.entries[0], "2026-07-28:472910:20:45:00");
   assert.deepEqual(found.map((item) => [item.tier.tier, item.leg.selection]), [["BANKO", "Ev sahibi / beraberlik"]]);
   assert.deepEqual(couponsForMatch(window.entries[0], "2026-07-28:1:20:45:00"), []);
+});
+
+test("score polling includes unresolved exact keys from today and yesterday only", () => {
+  const first = entries[0]!;
+  const yesterday = { ...first, day: "2026-11-16" };
+  const old = { ...entries[1]!, day: "2026-11-15" };
+  const settled = { ...entries[2]!, tier: { ...entries[2]!.tier,
+    legs: entries[2]!.tier.legs.map(leg => ({ ...leg, result: "WON" as const })) } };
+  assert.deepEqual(currentCouponMatchKeys([first, yesterday, old, settled], today),
+    first.tier.legs.map(leg => leg.matchKey!).sort());
+});
+
+test("live and finished observations do not replace the coupon's settlement", () => {
+  const [first, second] = entries[0]!.tier.legs;
+  const states = liveLegStates([
+    { matchKey: first!.matchKey!, status: "LIVE", score: { home: 0, away: 0 }, elapsed: 47 },
+    { matchKey: second!.matchKey!, status: "FINISHED", score: { home: 2, away: 0 }, elapsed: null }
+  ]);
+  assert.deepEqual([...states.values()], [
+    { score: "0–0", label: "Canlı · 47′" }, { score: "2–0", label: "Bitti · sonuç işleniyor" }
+  ]);
+  assert.equal(summarizeCoupons([entries[0]!]).pending, 1);
 });

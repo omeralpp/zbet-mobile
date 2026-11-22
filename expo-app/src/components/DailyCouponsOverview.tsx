@@ -1,36 +1,21 @@
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
-import { dailyCouponsQuery } from "@/src/api/queries";
+import { dailyCouponMatchStatesQuery, dailyCouponsQuery } from "@/src/api/queries";
 import type { DailyCouponTier } from "@/src/api/daily-coupons-schema";
-import type { MatchSummary } from "@/src/api/schemas";
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { colors, iconSizes, radii, semantic, spacing, typeScale } from "@/src/theme/theme";
-import { formatElapsed } from "@/src/utils/format";
 import { istanbulDay } from "@/src/utils/rebuild-log";
-import { CouponTicket, type LiveLegState } from "./CouponTicket";
+import { CouponTicket } from "./CouponTicket";
 import { SegmentedControl } from "./FilterControls";
 import { useReducedMotion } from "@/src/theme/use-reduced-motion";
-import { sortedTiers, summarizeCoupons, tierNames } from "./daily-coupon-view";
+import { currentCouponMatchKeys, liveLegStates, sortedTiers, summarizeCoupons, tierNames, type LiveLegState } from "./daily-coupon-view";
 import { Action } from "./RebuildEvidencePanel";
 import { SectionHeader } from "./SectionHeader";
 import { SurfaceMaterial } from "./SurfaceMaterial";
-
-/** Current score of today's coupon matches, from the match list Özet already holds. */
-export function liveLegStates(matches: readonly MatchSummary[] | undefined): Map<string, LiveLegState> {
-  const result = new Map<string, LiveLegState>();
-  for (const match of matches ?? []) {
-    if (match.status === "LIVE" || match.status === "HALF_TIME") {
-      result.set(match.key, { score: `${match.homeScore}–${match.awayScore}`, label: `Canlı · ${formatElapsed(match.status, match.elapsed, match.clock ?? undefined)}` });
-    } else if (match.status === "FINISHED") {
-      result.set(match.key, { score: `${match.homeScore}–${match.awayScore}`, label: "Bitti · sonuç işleniyor" });
-    }
-  }
-  return result;
-}
 
 function Notice({ icon, title, message, onRetry }: { icon: "progress-clock" | "cloud-alert-outline"; title: string; message: string; onRetry?: () => void }) {
   return (
@@ -51,16 +36,18 @@ function Notice({ icon, title, message, onRetry }: { icon: "progress-clock" | "c
  * where the day starts, each match with its live or final score and a tap
  * through to the match. History and results live in Karar günlüğü.
  */
-export function DailyCouponsOverview({ matches, now }: { matches: readonly MatchSummary[] | undefined; now: number }) {
+export function DailyCouponsOverview({ active, now }: { active: boolean; now: number }) {
   const router = useRouter();
   const breakpoint = useBreakpoint();
   const wide = Platform.OS === "web" && isAtLeast(breakpoint, "wide");
   const today = istanbulDay(now);
-  const query = useQuery(dailyCouponsQuery(today, true));
-  const live = useMemo(() => liveLegStates(matches), [matches]);
+  const query = useQuery({ ...dailyCouponsQuery(today, true), refetchInterval: active ? 30_000 : false });
   const day = query.isError ? undefined : query.data;
   const tiers = day?.status === "AVAILABLE" ? sortedTiers(day) : [];
-  const summary = summarizeCoupons(tiers.flatMap((tier) => tier.status === "AVAILABLE" ? [{ day: today, tier }] : []));
+  const entries = tiers.flatMap((tier) => tier.status === "AVAILABLE" ? [{ day: today, tier }] : []);
+  const matchQuery = useQuery(dailyCouponMatchStatesQuery(currentCouponMatchKeys(entries, today), active));
+  const live = liveLegStates(matchQuery.isError ? undefined : matchQuery.data);
+  const summary = summarizeCoupons(entries);
   const demo = day?.status === "AVAILABLE" && day.publication.mode === "DEMO";
   const caption = day?.status === "AVAILABLE"
     ? [demo ? "Örnek veri · gerçek kupon değil" : "Bugünün 11.00 bülteni",
@@ -86,17 +73,17 @@ export function DailyCouponsOverview({ matches, now }: { matches: readonly Match
       {tiers.length ? (
         wide ? (
           <View style={styles.row}>
-            {tiers.map((tier) => <CouponTicket compact key={tier.tier} live={live} tier={tier} />)}
+            {tiers.map((tier) => <CouponTicket compact key={tier.tier} live={live} now={now} tier={tier} />)}
           </View>
         ) : (
-          <CouponPager tiers={tiers} live={live} />
+          <CouponPager live={live} now={now} tiers={tiers} />
         )
       ) : null}
     </View>
   );
 }
 
-function CouponPager({ tiers, live }: { tiers: DailyCouponTier[]; live: ReadonlyMap<string, LiveLegState> }) {
+function CouponPager({ tiers, live, now }: { tiers: DailyCouponTier[]; live: ReadonlyMap<string, LiveLegState>; now: number }) {
   const scroll = useRef<ScrollView>(null);
   const reduceMotion = useReducedMotion();
   const [width, setWidth] = useState(0);
@@ -130,7 +117,7 @@ function CouponPager({ tiers, live }: { tiers: DailyCouponTier[]; live: Readonly
               aria-hidden={active !== index}
               accessibilityElementsHidden={active !== index}
               importantForAccessibility={active !== index ? "no-hide-descendants" : "auto"}>
-              <CouponTicket live={live} tier={tier} />
+              <CouponTicket live={live} now={now} tier={tier} />
             </View>
           ))}
         </ScrollView>

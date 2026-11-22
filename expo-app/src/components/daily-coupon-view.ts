@@ -1,5 +1,6 @@
-import type { DailyCouponDay, DailyCouponLeg, DailyCouponSettlement, DailyCouponTier } from "@/src/api/daily-coupons-schema";
+import type { DailyCouponDay, DailyCouponLeg, DailyCouponMatchState, DailyCouponSettlement, DailyCouponTier } from "@/src/api/daily-coupons-schema";
 import type { Tone } from "@/src/utils/rebuild-display";
+import { shiftDay } from "@/src/utils/rebuild-log";
 
 export const tierNames = { BANKO: "Banko", DENGELI: "Dengeli", RISKLI: "Riskli" } as const;
 export const tierOrder = ["BANKO", "DENGELI", "RISKLI"] as const;
@@ -42,6 +43,32 @@ export type CouponTierFilter = "ALL" | CouponTierName;
 export interface CouponEntry {
   day: string;
   tier: AvailableTier;
+}
+
+export type LiveLegState = { score: string | null; label: string };
+
+export function liveLegStates(matches: readonly DailyCouponMatchState[] | undefined): Map<string, LiveLegState> {
+  return new Map(matches?.map(({ matchKey, status, score, elapsed }) => {
+    const label = {
+      LIVE: elapsed === null ? "Canlı" : `Canlı · ${elapsed}′`,
+      HALF_TIME: "Devre arası",
+      FINISHED: "Bitti · sonuç işleniyor",
+      NOT_PLAYED: "Oynanmadı · sonuç bekleniyor"
+    }[status];
+    return [matchKey, { score: score ? `${score.home}–${score.away}` : null, label }];
+  }));
+}
+
+export function currentCouponMatchKeys(entries: readonly CouponEntry[], today: string) {
+  const yesterday = shiftDay(today, -1);
+  const keys = new Set<string>();
+  for (const { day, tier } of entries) {
+    if (day < yesterday || day > today) continue;
+    for (const { matchKey, result } of tier.legs) {
+      if (matchKey && (result === null || result === "PENDING")) keys.add(matchKey);
+    }
+  }
+  return [...keys].sort();
 }
 
 /** Every published coupon of a window, newest day first, tiers in fixed order. */

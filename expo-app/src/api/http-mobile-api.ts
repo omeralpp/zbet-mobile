@@ -2,7 +2,7 @@ import { jinxRb1ExplanationSchema } from "./jinx-rb1-schema";
 import { selectionComparisonSchema } from "./selection-comparison-schema";
 import { selectionHistorySchema } from "./selection-history-schema";
 import { selectionDecisionsSchema } from "./selection-decisions-schema";
-import { dailyCouponDateSchema, dailyCouponWindowSchema, dailyCouponsSchema } from "./daily-coupons-schema";
+import { dailyCouponDateSchema, dailyCouponMatchStatesSchema, dailyCouponWindowSchema, dailyCouponsSchema } from "./daily-coupons-schema";
 import { z, type ZodType } from "zod";
 import {
   browserReloadHost,
@@ -165,6 +165,15 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
         throw new MobileApiError("İstenen döneme ait kuponlar doğrulanamadı.", 502, "DAILY_COUPON_WINDOW_MISMATCH");
       }
       return window;
+    },
+    async getDailyCouponMatchStates(keys, signal) {
+      const response = await request(`/v1/btb/daily-coupons/v2/match-states?keys=${encodeURIComponent(keys.join(","))}`,
+        dailyCouponMatchStatesSchema, {}, signal);
+      if (response.matches.some(({ matchKey }) => !keys.includes(matchKey)) ||
+          new Set(response.matches.map(({ matchKey }) => matchKey)).size !== response.matches.length) {
+        throw new MobileApiError("İstenen maç skorları doğrulanamadı.", 502, "DAILY_COUPON_MATCH_STATE_MISMATCH");
+      }
+      return response.matches;
     },
     getMatchSelectionComparison: (key, signal) => request(`/v1/btb/matches/${encodeURIComponent(key)}/selection-comparison`, selectionComparisonSchema, {}, signal),
     getMatchSelectionHistory: (key, signal) => request(`/v1/btb/matches/${encodeURIComponent(key)}/selection-history`, selectionHistorySchema, {}, signal),

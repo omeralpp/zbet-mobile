@@ -1,6 +1,19 @@
 import { z } from "zod";
 
 export const dailyCouponDateSchema = z.iso.date();
+const matchKey = z.string().regex(/^\d{4}-\d{2}-\d{2}:\d+:\d{2}:\d{2}:\d{2}$/);
+const score = z.strictObject({ home: z.number().int().min(0).max(99), away: z.number().int().min(0).max(99) });
+
+export const dailyCouponMatchStatesSchema = z.strictObject({
+  contractVersion: z.literal("daily-coupon-match-states.v1"),
+  matches: z.array(z.strictObject({
+    matchKey,
+    status: z.enum(["LIVE", "HALF_TIME", "FINISHED", "NOT_PLAYED"]),
+    score: score.nullable(),
+    elapsed: z.number().int().min(0).max(150).nullable()
+  })).max(24)
+});
+export type DailyCouponMatchState = z.infer<typeof dailyCouponMatchStatesSchema>["matches"][number];
 
 const timestamp = z.iso.datetime({ offset: true });
 const tier = z.enum(["BANKO", "DENGELI", "RISKLI"]);
@@ -21,9 +34,9 @@ const leg = z.strictObject({
   // daily-coupons.v2: the BTB match key (null for a non-BTB fixture id), the
   // leg result from SAP settlement (null when SAP cannot explain it) and the
   // frozen regulation-time score once the leg is settled.
-  matchKey: z.string().regex(/^\d{4}-\d{2}-\d{2}:\d+:\d{2}:\d{2}:\d{2}$/).nullable(),
+  matchKey: matchKey.nullable(),
   result: z.enum(["PENDING", "WON", "LOST", "VOID"]).nullable(),
-  finalScore: z.strictObject({ home: z.number().int().min(0).max(99), away: z.number().int().min(0).max(99) }).nullable()
+  finalScore: score.nullable()
 }).refine((value) => value.finalScore === null || (value.result !== null && value.result !== "PENDING"), {
   message: "A final score belongs to a settled leg"
 });

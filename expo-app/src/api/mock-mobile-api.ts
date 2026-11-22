@@ -84,6 +84,12 @@ export const mockMobileApi: MobileApi = {
     await mockDelay(signal);
     return mockDailyCouponWindow(through, days, istanbulDay(Date.now()));
   },
+  async getDailyCouponMatchStates(keys, signal) {
+    await mockDelay(signal);
+    return mockMatchSummaries.flatMap(({ key, status, homeScore, awayScore, elapsed }) =>
+      !keys.includes(key) || status === "NOT_STARTED" ? [] : [{ matchKey: key, status,
+        score: status === "NOT_PLAYED" ? null : { home: homeScore, away: awayScore }, elapsed: status === "LIVE" ? elapsed : null }]);
+  },
   async getMatchSelectionHistory(key, signal) {
     signal?.throwIfAborted();
     return emptySelectionHistory(key);

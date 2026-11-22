@@ -24,6 +24,17 @@ export function dailyCouponWindowQuery(through: string, days: 1 | 7 | 30, isCurr
   });
 }
 
+export function dailyCouponMatchStatesQuery(keys: readonly string[], active: boolean) {
+  return queryOptions({
+    queryKey: ["dailyCouponMatchStates", keys],
+    queryFn: ({ signal }) => mobileApi.getDailyCouponMatchStates(keys, signal),
+    enabled: active && keys.length > 0,
+    staleTime: 5_000,
+    refetchInterval: 10_000,
+    retry: false
+  });
+}
+
 export function selectionComparisonQuery(key: string) {
   return queryOptions({ queryKey: ["selectionComparison", "selection-comparison.v1", key], enabled: Boolean(key),
     queryFn: ({ signal }) => mobileApi.getMatchSelectionComparison(key, signal), staleTime: 0, retry: false });
