@@ -1,11 +1,49 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-11-17
-Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / B95FEEC`
+Son güncelleme: 2026-11-23
+Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / BD49708`
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md)
 and the dated release reports/receipts.
+
+## Daily Coupon live scores and settlement (2026-11-22)
+
+Android and desktop web use the same Daily Coupon score and result logic.
+The active view refreshes live match states every 10 seconds. SAP's `RECENT`
+job runs every two minutes to settle eligible results from the match source,
+including fixtures without a Super decision. Final coupon outcomes use SAP
+settlement.
+
+- The owner-approved pair is `COMPLETE` at client commit
+  `bd497081a404323f7a052c296821ff34d4f12680`. Batch
+  `client-bd497081a404323f7a052c296821ff34d4f12680-E0A44008A713-FF2F95F85D2F`.
+- Android artifact `btb-mobile-next-bd49708-live-coupons-arm64.apk` has SHA-256
+  `E0A44008A713DEF0CE4032F83BAAFB303013D2602FB84D280FF793C1A24ABF38`.
+  Private delivery and matching installation were verified before web publication.
+  The installed app successfully called the coupon window and live score routes.
+- Web publication `20261122T202551Z-bd49708` has export tree SHA-256
+  `FF2F95F85D2FA022EDEF4A79BDDD79757E7C7E575E9C59084696B6E04C539ABE`.
+  All 57 served assets matched. The owner confirmed the published browser smoke.
+  [Günlük Kuponlar](https://app.surklase.com/super?view=COUPONS)
+- Local evidence is under `expo-app/.codex-artifacts/daily-coupon-live-bd49708/`.
+  `client-release.json` identifies the approved pair. `android-delivery.json`,
+  `android-install-smoke.json`, `publish-receipt.json`, `owner-smoke.json` and
+  `completed-batch.json` record delivery, publication, smoke and completion.
+- The running BFF is `8ed72b70737a6354da5863c4c02c4d063c534a38`.
+  All 981 BFF tests passed. The three active SAP DEV class implementations
+  match `1ad46831f6621033cf7ffde004df26e1e8f93e73`
+  under unreleased transport `A4HK900110`. The added kickoff regression case
+  passed SAP syntax validation and remains in Git pending a separate SAP change.
+- Previous pair `308748f138bd7a62d281cd81444c5fabab6a686a` used web publication
+  `20261122T185116Z-308748f`, web tree SHA-256
+  `C97483ED6D63DEADE86F87BA4BC1F548E0BB8627D21EB234A6418311F16B0F71`,
+  and APK SHA-256 `522035A154E55177872B507D020241D6798F8453F4A79A9779911F3A5F6929C9`.
+  Its web publication and receipts were retained. `apk-retention.json` records
+  recycling the two superseded local installers after acceptance.
+- Daily Coupons owns `TASK-0239` for the missing SAP result evidence for
+  Östersunds–Varbergs (`3405261`) and Sønderjyske–Odense (`3405033`).
+  Both legs were still pending at the 23 November 11:20 Istanbul BFF check.
 
 ## Released batch: Daily Coupons and Selection Lab in the flow (2026-11-17, COMPLETE)
 
