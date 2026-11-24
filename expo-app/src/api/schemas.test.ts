@@ -272,3 +272,12 @@ test("keeps the checked-in OpenAPI document parseable and route-complete", async
     ].sort()
   );
 });
+
+test("the all-fixtures list carries predicted; the default list may omit it", async () => {
+  const [first] = mockMatchSummaries;
+  assert.equal(matchSummarySchema.parse({ ...first, predicted: false }).predicted, false);
+  assert.equal(matchSummarySchema.parse(first).predicted, undefined);
+  assert.throws(() => matchSummarySchema.parse({ ...first, predicted: "no" }));
+  const all = await mockMobileApi.getAllMatches();
+  assert.deepEqual(all.map((match) => match.predicted), mockMatchSummaries.map((_, index) => index !== mockMatchSummaries.length - 1));
+});

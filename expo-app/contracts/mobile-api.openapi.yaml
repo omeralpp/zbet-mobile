@@ -208,6 +208,13 @@ paths:
         - $ref: "#/components/parameters/DecisionContextVersion"
         - $ref: "#/components/parameters/RebuildVersion"
         - $ref: "#/components/parameters/SelectionDisplayVersion"
+        - in: header
+          name: X-BTB-Fixture-Scope
+          required: false
+          description: >-
+            btb-fixture-scope.all also returns fixtures that get no prediction (score only) and finished
+            fixtures, each with predicted. Echoed when honoured. Without it the list is unchanged.
+          schema: { type: string, enum: [btb-fixture-scope.all] }
       responses:
         "200":
           description: Current BTB match state.
@@ -826,6 +833,9 @@ components:
         pressureSnapshotAt: { type: [string, "null"], format: date-time }
         lastUpdatedAt: { type: string, format: date-time }
         decisionContext: { $ref: "#/components/schemas/DecisionContext" }
+        predicted:
+          type: boolean
+          description: Only with X-BTB-Fixture-Scope btb-fixture-scope.all; false for a fixture that gets no prediction.
     MatchDetail:
       allOf:
         - $ref: "#/components/schemas/MatchSummary"

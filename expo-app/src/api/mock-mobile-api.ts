@@ -192,6 +192,11 @@ export const mockMobileApi: MobileApi = {
     return matchListSchema.parse(clone(mockMatchSummaries));
   },
 
+  async getAllMatches(signal) {
+    await mockDelay(signal);
+    return matchListSchema.parse(clone(mockMatchSummaries).map((match, index, all) => ({ ...match, predicted: index !== all.length - 1 })));
+  },
+
   async getMatchInsights(signal) {
     await mockDelay(signal);
     return matchInsightListSchema.parse(clone(mockMatchInsights));

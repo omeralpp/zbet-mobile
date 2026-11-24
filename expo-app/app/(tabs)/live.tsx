@@ -12,9 +12,10 @@ import {
   TextInput,
   View
 } from "react-native";
-import { matchInsightsQuery, matchesQuery } from "@/src/api/queries";
+import { allMatchesQuery, matchInsightsQuery, matchesQuery } from "@/src/api/queries";
 import { usePublishedSelections } from "@/src/api/use-published-selections";
 import { DecisionFilterChip } from "@/src/components/DecisionFilterChip";
+import { FilterChip } from "@/src/components/FilterChip";
 import { MatchCard } from "@/src/components/MatchCard";
 import { useRebuildClock } from "@/src/components/RebuildEvidencePanel";
 import { LocalTabPager } from "@/src/components/LocalTabPager";
@@ -77,6 +78,16 @@ function routeTab(
 }
 
 const localTabs = ["LIVE", "FIXTURE", "STAR"] as const;
+
+/**
+ * Owner decision 2026-11-24: "Tüm maçlar" also lists the fixtures that get no
+ * prediction (score only) and, under Tümü, today's finished results. The
+ * default list stays the predicted fixtures only.
+ */
+function inLiveTab(match: Parameters<typeof matchLiveTab>[0], tab: LiveMatchTab, allFixtures: boolean,
+  ...rest: Parameters<typeof matchLiveTab> extends [unknown, unknown, ...infer R] ? R : never): boolean {
+  return matchLiveTab(match, tab, ...rest) || (allFixtures && tab === "FIXTURE" && match.status === "FINISHED");
+}
 
 /**
  * The single compact Canlı / Tümü segment. The second half lists the upcoming
@@ -185,6 +196,7 @@ export default function LiveScreen() {
     filter?: string | string[];
     scope?: string | string[];
     decision?: string | string[];
+    fixtures?: string | string[];
   }>();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -226,7 +238,11 @@ export default function LiveScreen() {
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const hasSearch = normalizeSearchText(search).length > 0;
-  const query = useQuery(matchesQuery);
+  const allFixtures = firstParam(params.fixtures) === "all";
+  // Two lists, one active: switching never shows the other scope's rows.
+  const predictedQuery = useQuery({ ...matchesQuery, enabled: !allFixtures });
+  const allQuery = useQuery({ ...allMatchesQuery, enabled: allFixtures });
+  const query = allFixtures ? allQuery : predictedQuery;
   // A newly received quote can postdate the previous one-second clock tick.
   // Use its actual client receipt time, never treating a future quote as fresh.
   const now = Math.max(clock,query.dataUpdatedAt);
@@ -261,19 +277,19 @@ export default function LiveScreen() {
   const tabCounts = useMemo(() => {
     const source = query.data ?? [];
     return {
-      LIVE: source.filter((match) => matchLiveTab(match, "LIVE", starFilter, now)).length,
+      LIVE: source.filter((match) => inLiveTab(match, "LIVE", allFixtures, starFilter, now)).length,
       FIXTURE: source.filter((match) =>
-        matchLiveTab(match, "FIXTURE", starFilter, now)
+        inLiveTab(match, "FIXTURE", allFixtures, starFilter, now)
       ).length,
       STAR: source.filter((match) => matchLiveTab(match, "STAR", starFilter, now, publications.records, publications.unavailable)).length
     };
-  }, [query.data, starFilter, now, publications.records, publications.unavailable]);
+  }, [query.data, allFixtures, starFilter, now, publications.records, publications.unavailable]);
   const sectionsByTab = useMemo(() => {
     const source = query.data ?? [];
     return localTabs.reduce(
       (result, pageTab) => {
         const needle = normalizeSearchText(search);
-        const pageMatches = source.filter(match => matchLiveTab(match, pageTab, starFilter, now, publications.records, publications.unavailable));
+        const pageMatches = source.filter(match => inLiveTab(match, pageTab, allFixtures, starFilter, now, publications.records, publications.unavailable));
         if (needle) {
           const found = pageMatches.map((match, index) => ({ match, index,
             score: searchTextScore(`${match.homeTeam} ${match.awayTeam} ${match.league}`, needle) }))
@@ -295,7 +311,7 @@ export default function LiveScreen() {
         ReturnType<typeof groupMatchesByKickoff>
       >
     );
-  }, [pinnedKeys, query.data, starFilter, search, now, publications.records, publications.unavailable]);
+  }, [pinnedKeys, query.data, allFixtures, starFilter, search, now, publications.records, publications.unavailable]);
   const insightMap = useMemo(
     () =>
       new Map(
@@ -373,6 +389,11 @@ export default function LiveScreen() {
             open={decisionOpen}
             value={starFilter}
           />
+          <FilterChip
+            label="Tüm maçlar"
+            selected={allFixtures}
+            onPress={() => router.setParams({ fixtures: allFixtures ? undefined : "all" })}
+          />
         </View>
       </TutorialTarget>
 
@@ -390,7 +411,7 @@ export default function LiveScreen() {
       </View>
       {query.data ? <Text accessibilityLiveRegion="polite" style={[styles.resultCount, splitLayout && styles.resultCountWide]}>
         {!countsKnown ? "Maç listesi doğrulanamıyor" : tab === "STAR" && publications.pending ? "Seçim kayıtları yükleniyor…" : tab === "STAR" && publications.unavailable ? "Seçim kayıtları doğrulanamıyor" :
-          `${tab === "STAR" ? starMetricLabel(starFilter) : tab === "FIXTURE" ? "Fikstür" : "Canlı"} · ${hasSearch ? `${visibleCount} / ${tabCounts[tab]} eşleşme` : `${tabCounts[tab]} maç`}`}
+          `${tab === "STAR" ? starMetricLabel(starFilter) : tab === "FIXTURE" ? (allFixtures ? "Fikstür ve sonuçlar" : "Fikstür") : "Canlı"} · ${hasSearch ? `${visibleCount} / ${tabCounts[tab]} eşleşme` : `${tabCounts[tab]} maç`}`}
       </Text> : null}
       </View>
 

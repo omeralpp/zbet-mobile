@@ -102,6 +102,7 @@ export function matchAnalysisContextQuery(key: string) {
 export const queryKeys = {
   dashboard: ["dashboard"] as const,
   matches: ["matches"] as const,
+  allMatches: ["matches", "scope:all"] as const,
   matchInsights: ["matchInsights"] as const,
   matchInsight: (key: string) => ["matchInsights", key] as const,
   matchLeagueContext: (key: string) =>
@@ -126,6 +127,14 @@ export const dashboardQuery = queryOptions({
 export const matchesQuery = queryOptions({
   queryKey: queryKeys.matches,
   queryFn: ({ signal }) => mobileApi.getMatches(signal),
+  staleTime: 5_000,
+  refetchInterval: 10_000
+});
+
+/** The all-fixtures list (owner 2026-11-24): parked and finished fixtures too. */
+export const allMatchesQuery = queryOptions({
+  queryKey: queryKeys.allMatches,
+  queryFn: ({ signal }) => mobileApi.getAllMatches(signal),
   staleTime: 5_000,
   refetchInterval: 10_000
 });

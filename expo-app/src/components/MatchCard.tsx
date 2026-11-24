@@ -219,6 +219,9 @@ export function MatchCard({
           <Text numberOfLines={1} style={styles.league}>
             {dense ? `${match.league} · ${match.matchTime}` : match.league}
           </Text>
+          {match.predicted === false ? (
+            <Text numberOfLines={1} style={styles.kickoff}>Tahmin dışı · yalnız skor</Text>
+          ) : null}
           {!compact && (live || minuteProgress.visible) ? (
             <Text numberOfLines={1} style={styles.kickoff}>{kickoff}</Text>
           ) : null}

@@ -197,6 +197,8 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
       request("/v1/dashboard", dashboardSchema, { headers: decisionContextHeaders }, signal),
     getMatches: (signal) =>
       request("/v1/btb/matches", matchListSchema, { headers: decisionContextHeaders }, signal),
+    getAllMatches: (signal) =>
+      request("/v1/btb/matches", matchListSchema, { headers: { ...decisionContextHeaders, "X-BTB-Fixture-Scope": "btb-fixture-scope.all" } }, signal),
     getMatchInsights: (signal) =>
       request(
         "/v1/btb/match-insights",

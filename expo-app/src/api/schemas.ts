@@ -145,6 +145,8 @@ export const matchSummarySchema = z.strictObject({
   pressureProvider: z.string().min(1).nullable().optional(),
   pressureSnapshotAt: isoDateTime.nullable().optional(),
   decisionContext: decisionContextSchema.optional(),
+  /** Only on the all-fixtures list: false for a parked fixture (score only, no prediction). */
+  predicted: z.boolean().optional(),
   rebuild: rebuildSummarySchema.optional(),
   rebuildQuotes: rebuildQuotesSchema.nullable().optional(),
   lastUpdatedAt: isoDateTime

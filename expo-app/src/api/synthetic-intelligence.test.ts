@@ -74,6 +74,7 @@ function baseApi(): MobileApi {
     getRebuildJinxExplanation: unexpected("getRebuildJinxExplanation"),
     getDashboard: unexpected("getDashboard"),
     getMatches: unexpected("getMatches"),
+    getAllMatches: unexpected("getAllMatches"),
     getMatchInsights: unexpected("getMatchInsights"),
     getMatchInsight: unexpected("getMatchInsight"),
     getMatchLeagueContext: unexpected("getMatchLeagueContext"),

@@ -44,6 +44,8 @@ export interface MobileApi {
   getRebuildJinxExplanation(key: string, decisionId?: string, signal?: AbortSignal): Promise<JinxRb1Explanation>;
   getDashboard(signal?: AbortSignal): Promise<Dashboard>;
   getMatches(signal?: AbortSignal): Promise<MatchSummary[]>;
+  /** Every loaded fixture, finished ones included, each with `predicted`. */
+  getAllMatches(signal?: AbortSignal): Promise<MatchSummary[]>;
   getMatchInsights(signal?: AbortSignal): Promise<MatchInsight[]>;
   getMatchInsight(key: string, signal?: AbortSignal): Promise<MatchInsight>;
   getMatchLeagueContext(
