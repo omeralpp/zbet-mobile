@@ -3,6 +3,7 @@ import { mobileApi } from "./index";
 import type { ReportWindowDays } from "./rebuild-schemas";
 import type { SelectionRule } from "./selection-decisions-schema";
 import { createRequestLimiter } from "./request-limiter";
+import { totoInPlay } from "@/src/utils/toto-lifecycle";
 
 export function dailyCouponsQuery(date: string, isToday: boolean) {
   return queryOptions({
@@ -253,6 +254,9 @@ export function totoProgramQuery(gcNo: number, version: number) {
     queryFn: ({ signal }) =>
       mobileApi.getTotoProgram(gcNo, version, signal),
     staleTime: 60_000,
+    // btb-toto-live.v1: refresh every minute while the BFF reports a match in
+    // play (the backend reads Bilyoner every five minutes); otherwise as before.
+    refetchInterval: (query) => totoInPlay(query.state.data) ? 60_000 : false,
     enabled: gcNo > 0 && version > 0
   });
 }

@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { TotoPrediction } from "@/src/api/schemas";
 import { colors, radii, semantic, spacing, typeScale } from "@/src/theme/theme";
 import { formatFixtureDateTime, formatPercentage } from "@/src/utils/format";
-import { couponCells, couponWidth } from "./toto-coupon";
+import { couponCells, couponWidth, totoLiveLabel } from "./toto-coupon";
 
 type ResultPresentation = (result: TotoPrediction["result"]) => { color: string; label: string };
 
@@ -21,12 +21,14 @@ export function TotoCouponGrid({
   presentResult: ResultPresentation;
   onOpen: (eventId: number | null) => void;
 }) {
+  const anyProvisional = predictions.some((prediction) => !prediction.actualResult && prediction.live?.provisionalResult);
   return (
     <View>
       <View style={styles.legend}>
         <View style={styles.legendItem}><View style={[styles.legendCell, styles.cellMain]} /><Text style={styles.meta}>Ana tahmin</Text></View>
         <View style={styles.legendItem}><View style={[styles.legendCell, styles.cellCovered]} /><Text style={styles.meta}>Kapsama</Text></View>
         <View style={styles.legendItem}><View style={[styles.legendCell, styles.cellActual]} /><Text style={styles.meta}>Gerçekleşen sonuç</Text></View>
+        {anyProvisional ? <View style={styles.legendItem}><View style={[styles.legendCell, styles.cellProvisional]} /><Text style={styles.meta}>Geçici sonuç (resmî değil)</Text></View> : null}
       </View>
       <Text style={styles.externalHint}>Maç adı: Bilyoner&apos;de aç ↗ · Model güveni kazanma olasılığı değildir.</Text>
     <View role="table" aria-label="Toto kuponu" style={styles.table}>
@@ -45,6 +47,7 @@ export function TotoCouponGrid({
         const cells = couponCells(prediction);
         const presentation = presentResult(prediction.result);
         const width = couponWidth(prediction);
+        const live = totoLiveLabel(prediction);
         return (
           <View
             key={prediction.matchNo}
@@ -68,16 +71,18 @@ export function TotoCouponGrid({
                 {prediction.homeScore !== null && prediction.awayScore !== null
                   ? ` · Skor ${prediction.homeScore}-${prediction.awayScore}`
                   : ""}
+                {live ? <Text style={live.inPlay ? styles.liveText : undefined}>{` · ${live.text}`}</Text> : null}
               </Text>
             </View>
             {cells.map((cell) => (
-              <View role="cell" key={cell.outcome} accessibilityLabel={`${cell.outcome}${cell.main ? " ana tahmin" : cell.covered ? " kapsamada" : ", kapsamada değil"}${cell.actual ? ", gerçekleşen sonuç" : ""}`} style={styles.cellColumn}>
+              <View role="cell" key={cell.outcome} accessibilityLabel={`${cell.outcome}${cell.main ? " ana tahmin" : cell.covered ? " kapsamada" : ", kapsamada değil"}${cell.actual ? ", gerçekleşen sonuç" : ""}${cell.provisional ? ", geçici sonuç" : ""}`} style={styles.cellColumn}>
                 <View
                   style={[
                     styles.cell,
                     cell.covered && styles.cellCovered,
                     cell.main && styles.cellMain,
-                    cell.actual && styles.cellActual
+                    cell.actual && styles.cellActual,
+                    cell.provisional && styles.cellProvisional
                   ]}
                 >
                   <Text style={[styles.cellText, cell.main && styles.cellTextMain, !cell.covered && styles.cellTextOff]}>
@@ -181,6 +186,16 @@ const styles = StyleSheet.create({
     outlineWidth: 2,
     outlineOffset: 2
   } as never,
+  cellProvisional: {
+    // Live provisional result: the settled ring, dashed, until the official result.
+    outlineColor: colors.gold,
+    outlineStyle: "dashed",
+    outlineWidth: 2,
+    outlineOffset: 2
+  } as never,
+  liveText: {
+    color: semantic.positive
+  },
   cellText: {
     ...typeScale.metricCompact,
     color: colors.text

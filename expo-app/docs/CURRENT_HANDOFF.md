@@ -7,6 +7,22 @@ Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md)
 and the dated release reports/receipts.
 
+## Toto live scores, btb-toto-live.v1 (2026-11-24, local, not committed)
+
+Android and desktop web, same batch, no platform exception. The Toto detail
+request adds `X-BTB-Toto-Live: btb-toto-live.v1`; fixtures accept an optional
+`live` (absent from an older BFF, null on SAP). One shared label
+(`totoLiveLabel`): "Canlı 63' · 1-2", "Devre arası · 1-0", "Bitti 1-0 · geçici 1",
+"Normal süre 1-1 · geçici X", "Durduruldu". The provisional 1/X/2 gets the
+result ring, dashed, plus a "Geçici sonuç" legend; hit/coverage/result stay
+official only. The detail screen refetches every 60 s only while a match is in
+play or awaiting its first reading (6 h window). Backend: zbet-cap `9d53eb4`
+(`ZBET_TOTO_LIVE`, PostgreSQL only; the shadow runs it). Checks: 855 tests,
+typecheck, lint, verified web export (edge, clean), Android bundle export
+(mock profile). Browser smoke against real shadow data for program 369
+(desktop grid + phone list, dark and light) on a local harness. Not done: device
+smoke, commit, release. The feature goes live with the PostgreSQL cutover pair.
+
 ## Daily Coupon live scores and settlement (2026-11-22)
 
 Android and desktop web use the same Daily Coupon score and result logic.

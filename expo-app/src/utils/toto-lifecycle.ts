@@ -105,3 +105,24 @@ export function coverageTrend(programs: readonly Pick<TotoProgram, "gcNo" | "sta
 export function programAction(status: TotoProgram["status"], planned = true) {
   return status === "ACTIVE" ? planned ? "Kuponu incele" : "Fikstürü incele" : status === "WAITING_RESULT" ? "Sonuç takibini aç" : status === "RESULTED" ? "Sonuçları incele" : "Programı incele";
 }
+
+const IN_PLAY = new Set(["LIVE", "HALF_TIME", "EXTRA_TIME", "SUSPENDED"]);
+/** Hours after kickoff a match without a live reading still counts as possibly in play (the backend's window). */
+const LIVE_WINDOW_MS = 6 * 3_600_000;
+
+/**
+ * btb-toto-live.v1: whether an open program has a match in play, or a kicked-off
+ * match still waiting for its first live reading. False when the BFF sends no
+ * `live` field (older BFF or SAP), so nothing polls without live data.
+ */
+export function totoInPlay(program: Pick<TotoProgram, "status" | "fixtures"> | undefined, now = Date.now()): boolean {
+  if (!program || (program.status !== "ACTIVE" && program.status !== "WAITING_RESULT")) return false;
+  return program.fixtures.some((fixture) => {
+    if (fixture.live === undefined || fixture.actualResult) return false;
+    if (fixture.live && IN_PLAY.has(fixture.live.status)) return true;
+    // A finished match whose provisional result is still unproven, or one with no reading yet: only within the window.
+    const waiting = fixture.live === null || (fixture.live.status === "FINISHED" && !fixture.live.provisionalResult);
+    const at = fixtureInstant(fixture);
+    return waiting && at !== null && at <= now && now - at < LIVE_WINDOW_MS;
+  });
+}

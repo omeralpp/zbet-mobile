@@ -318,6 +318,23 @@ export const superKpisSchema = z.strictObject({
   })
 });
 
+/**
+ * btb-toto-live.v1: display-only live state of one Toto match (Bilyoner match
+ * status, PostgreSQL backend). Never the official result: hit, coverage and
+ * settlement stay on actualResult. Absent from a BFF without the contract,
+ * null on SAP, after the official result, or before the first reading.
+ */
+export const totoLiveSchema = z.strictObject({
+  status: z.enum(["NOT_STARTED", "LIVE", "HALF_TIME", "FINISHED", "EXTRA_TIME", "SUSPENDED", "UNKNOWN"]),
+  minute: z.number().int().nonnegative().nullable(),
+  homeScore: z.number().int().nonnegative().nullable(),
+  awayScore: z.number().int().nonnegative().nullable(),
+  halfTimeHomeScore: z.number().int().nonnegative().nullable(),
+  halfTimeAwayScore: z.number().int().nonnegative().nullable(),
+  provisionalResult: z.enum(["1", "X", "2"]).nullable(),
+  updatedAt: z.string().nullable()
+});
+
 export const totoFixtureSchema = z.strictObject({
   matchNo: z.number().int().positive(),
   matchName: z.string().min(1),
@@ -326,7 +343,8 @@ export const totoFixtureSchema = z.strictObject({
   eventId: z.number().int().positive().nullable(),
   actualResult: z.enum(["1", "X", "2"]).nullable(),
   homeScore: z.number().int().nonnegative().nullable().default(null),
-  awayScore: z.number().int().nonnegative().nullable().default(null)
+  awayScore: z.number().int().nonnegative().nullable().default(null),
+  live: totoLiveSchema.nullable().optional()
 });
 
 export const totoPredictionSchema = totoFixtureSchema.extend({
@@ -434,6 +452,7 @@ export type SuperKpis = z.infer<typeof superKpisSchema>;
 
 export type TotoProgram = z.infer<typeof totoProgramSchema>;
 export type TotoFixture = z.infer<typeof totoFixtureSchema>;
+export type TotoLive = z.infer<typeof totoLiveSchema>;
 export type TotoPrediction = z.infer<typeof totoPredictionSchema>;
 export type TotoPayout = z.infer<typeof totoPayoutSchema>;
 export type Dashboard = z.infer<typeof dashboardSchema>;

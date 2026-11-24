@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { TotoFixture, TotoPrediction, TotoProgram } from "@/src/api/schemas";
-import { couponStructure, coverageTrend, dayRange, fixtureInstant, formatCost, kickoffCountdown, kickoffLabel, kickoffText, outOf, payoutRows, programAction, totoProgress } from "./toto-lifecycle";
+import { couponStructure, coverageTrend, dayRange, fixtureInstant, formatCost, kickoffCountdown, kickoffLabel, kickoffText, outOf, payoutRows, programAction, totoInPlay, totoProgress } from "./toto-lifecycle";
 
 const at = (date: string, time: string) => Date.parse(`${date}T${time}:00+03:00`);
 const fixture = (matchNo: number, matchDate: string, matchTime: string, actualResult: TotoFixture["actualResult"] = null): TotoFixture =>
@@ -85,4 +85,21 @@ test("prize tiers read highest first and say how many coupon columns each one pa
   assert.equal(rows[0]!.oursLabel, "kuponda yok");
   assert.match(rows[1]!.detail.replace(/\s/g, " "), /^1\.204 kazanan · kolon başı ₺85,50$/);
   assert.match(rows[1]!.oursLabel.replace(/\s/g, " "), /^kuponda 3 kolon · ₺256,50$/);
+});
+
+test("btb-toto-live.v1 polling: only an open program with a match in play or awaiting its first reading", () => {
+  const now = at("2026-11-24", "23:45");
+  const kicked = fixture(1, "2026-11-24", "23:00");
+  const livePart = { minute: 45, homeScore: 1, awayScore: 0, halfTimeHomeScore: null, halfTimeAwayScore: null, updatedAt: null };
+  const withLive = (live: TotoFixture["live"], row = kicked): TotoFixture => ({ ...row, live });
+  const open = (rows: TotoFixture[], status: TotoProgram["status"] = "WAITING_RESULT") => ({ status, fixtures: rows });
+  assert.equal(totoInPlay(open([kicked]), now), false, "no live field: older BFF or SAP, no polling");
+  assert.equal(totoInPlay(open([withLive({ status: "LIVE", provisionalResult: null, ...livePart })]), now), true);
+  assert.equal(totoInPlay(open([withLive(null)]), now), true, "kicked off, first reading pending");
+  assert.equal(totoInPlay(open([withLive(null, fixture(1, "2026-11-25", "23:00"))]), now), false, "not kicked off yet");
+  assert.equal(totoInPlay(open([withLive(null, fixture(1, "2026-11-24", "15:00"))]), now), false, "outside the live window");
+  assert.equal(totoInPlay(open([withLive({ status: "FINISHED", provisionalResult: "1", ...livePart })]), now), false, "provisional final: done");
+  assert.equal(totoInPlay(open([withLive({ status: "LIVE", provisionalResult: null, ...livePart }, fixture(1, "2026-11-24", "23:00", "1"))]), now), false, "official result");
+  assert.equal(totoInPlay(open([withLive({ status: "LIVE", provisionalResult: null, ...livePart })], "RESULTED"), now), false);
+  assert.equal(totoInPlay(undefined, now), false);
 });

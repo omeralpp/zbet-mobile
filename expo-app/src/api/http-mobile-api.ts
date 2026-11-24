@@ -307,7 +307,8 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
       request(
         `/v1/toto/programs/${gcNo}/${version}`,
         totoProgramSchema,
-        { headers: totoDisplayHeaders },
+        // The detail screen also asks for btb-toto-live.v1; an older BFF ignores it and sends no `live`.
+        { headers: { ...totoDisplayHeaders, "X-BTB-Toto-Live": "btb-toto-live.v1" } },
         signal
       ),
     registerDevice: async (token, platform, installationId, signal) => {

@@ -4,7 +4,7 @@ import type { TotoPrediction } from "@/src/api/schemas";
 import { BilyonerButton } from "./BilyonerButton";
 import { colors, radii, semantic, spacing, typeScale } from "@/src/theme/theme";
 import { formatFixtureDateTime, formatPercentage } from "@/src/utils/format";
-import { couponCells } from "@/src/web/toto-coupon";
+import { couponCells, totoLiveLabel } from "@/src/web/toto-coupon";
 
 type ResultPresentation = (result: TotoPrediction["result"]) => { color: string; label: string };
 
@@ -18,12 +18,14 @@ export function TotoCouponList({ predictions, presentResult, onOpen }: {
   predictions: readonly TotoPrediction[]; presentResult: ResultPresentation; onOpen: (eventId: number | null) => void;
 }) {
   const [expanded, setExpanded] = useState<number | null>(null);
+  const anyProvisional = predictions.some(prediction => !prediction.actualResult && prediction.live?.provisionalResult);
   return (
     <View>
       <View style={styles.legend}>
         <View style={styles.legendItem}><View style={[styles.legendCell, styles.cellMain]} /><Text style={styles.meta}>Ana tahmin</Text></View>
         <View style={styles.legendItem}><View style={[styles.legendCell, styles.cellCovered]} /><Text style={styles.meta}>Kapsama</Text></View>
         <View style={styles.legendItem}><View style={[styles.legendCell, styles.legendActual]} /><Text style={styles.meta}>Gerçekleşen sonuç</Text></View>
+        {anyProvisional ? <View style={styles.legendItem}><View style={[styles.legendCell, styles.legendProvisional]} /><Text style={styles.meta}>Geçici sonuç</Text></View> : null}
       </View>
       <Text style={styles.hint}>Satıra dokun: ayrıntılar ve Bilyoner bağlantısı.</Text>
       <View style={styles.table}>
@@ -38,11 +40,12 @@ export function TotoCouponList({ predictions, presentResult, onOpen }: {
           const presentation = presentResult(prediction.result);
           const score = prediction.homeScore !== null && prediction.awayScore !== null ? `${prediction.homeScore}-${prediction.awayScore}` : null;
           const when = formatFixtureDateTime(prediction.matchDate, prediction.matchTime);
+          const live = totoLiveLabel(prediction);
           return (
             <View key={prediction.matchNo} style={[index % 2 === 1 && styles.zebra, open && styles.openRow]}>
               <Pressable
                 accessibilityHint="Maç ayrıntılarını açar"
-                accessibilityLabel={`${prediction.matchNo}. ${prediction.matchName}, ana tahmin ${prediction.mainPick}, kapsama ${prediction.coverage}, ${presentation.label}${prediction.actualResult ? `, sonuç ${prediction.actualResult}` : ""}`}
+                accessibilityLabel={`${prediction.matchNo}. ${prediction.matchName}, ana tahmin ${prediction.mainPick}, kapsama ${prediction.coverage}, ${presentation.label}${prediction.actualResult ? `, sonuç ${prediction.actualResult}` : ""}${live ? `, ${live.text}` : ""}`}
                 accessibilityRole="button"
                 accessibilityState={{ expanded: open }}
                 // React Native Web does not forward expanded state; name it for the web reader.
@@ -54,10 +57,10 @@ export function TotoCouponList({ predictions, presentResult, onOpen }: {
                 <Text style={[styles.number, styles.no]}>{prediction.matchNo}</Text>
                 <View style={styles.match}>
                   <Text numberOfLines={1} style={styles.matchName}>{prediction.matchName}</Text>
-                  <Text numberOfLines={1} style={styles.meta}>{score ? `Skor ${score}` : when}</Text>
+                  <Text numberOfLines={1} style={[styles.meta, live?.inPlay && styles.liveText]}>{live ? live.text : score ? `Skor ${score}` : when}</Text>
                 </View>
                 {couponCells(prediction).map(cell => (
-                  <View key={cell.outcome} style={[styles.ring, cell.actual && styles.ringActual]}>
+                  <View key={cell.outcome} style={[styles.ring, cell.actual && styles.ringActual, cell.provisional && styles.ringProvisional]}>
                     <View style={[styles.cell, cell.covered && styles.cellCovered, cell.main && styles.cellMain]}>
                       <Text style={[styles.cellText, cell.main && styles.cellTextMain, !cell.covered && styles.cellTextOff]}>{cell.outcome}</Text>
                     </View>
@@ -69,6 +72,7 @@ export function TotoCouponList({ predictions, presentResult, onOpen }: {
                   <Text style={[styles.status, { color: presentation.color }]}>{presentation.label}</Text>
                   <Text style={styles.detailName}>{prediction.matchName}</Text>
                   <Text style={styles.detail}>{when}{score ? ` · Skor ${score}` : ""}</Text>
+                  {live ? <Text style={[styles.detail, live.inPlay && styles.liveText]}>{live.text}{live.text.includes("geçici") ? " · resmî sonuç değildir" : ""}</Text> : null}
                   <Text style={styles.detail}>Ana tahmin {prediction.mainPick} · Kapsama {prediction.coverage}{prediction.actualResult ? ` · Sonuç ${prediction.actualResult}` : ""}</Text>
                   <Text style={styles.detail}>Model güveni {formatPercentage(prediction.confidence)} · kazanma olasılığı değildir</Text>
                   {prediction.eventId ? (
@@ -89,6 +93,8 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   legendCell: { width: 14, height: 14, borderRadius: 3, borderWidth: 1.5, borderColor: "transparent" },
   legendActual: { borderColor: colors.gold, borderWidth: 2 },
+  legendProvisional: { borderColor: colors.gold, borderWidth: 2, borderStyle: "dashed" },
+  liveText: { color: semantic.positive },
   hint: { ...typeScale.meta, color: colors.textSubtle, marginBottom: spacing.sm },
   table: { backgroundColor: colors.backgroundElevated, borderColor: colors.borderSoft, borderRadius: radii.lg, borderWidth: 1, marginBottom: spacing.xl, overflow: "hidden" },
   row: { flexDirection: "row", alignItems: "center", gap: 6, minHeight: 48, paddingRight: spacing.sm },
@@ -108,6 +114,8 @@ const styles = StyleSheet.create({
   cellColumn: { width: 34, textAlign: "center" },
   ring: { width: 34, height: 32, alignItems: "center", justifyContent: "center", borderRadius: radii.sm + 2, borderWidth: 2, borderColor: "transparent" },
   ringActual: { borderColor: colors.gold },
+  // Provisional (live) result: the official ring, dashed, until the official result arrives.
+  ringProvisional: { borderColor: colors.gold, borderStyle: "dashed" },
   cell: { width: 26, height: 24, alignItems: "center", justifyContent: "center", borderRadius: radii.sm, borderWidth: 1.5, borderColor: "transparent" },
   cellCovered: { borderColor: semantic.positive },
   cellMain: { backgroundColor: semantic.positive },
