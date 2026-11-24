@@ -540,6 +540,13 @@ export default function MoreScreen() {
         ) : null}
       </View>
 
+      <Text accessibilityRole="header" aria-level={2} style={styles.sectionTitle}>Uyarlamalar</Text>
+      <View style={styles.group}>
+        <SettingsRow icon="tune-variant" title="Deviation bantları"
+          detail={isWeb ? "Maç yükleme ve tahmin bantlarının sayaç ve aktiflik ayarları" : "Bant ayarlarını gör; değişiklik yalnızca webden yapılır"}
+          onPress={() => router.push("/adaptations" as never)} />
+      </View>
+
       {designLabAvailable(runtimeConfig) ? <>
         <Text accessibilityRole="header" aria-level={2} style={styles.sectionTitle}>Tasarım önizlemesi</Text>
         <View style={styles.group}>

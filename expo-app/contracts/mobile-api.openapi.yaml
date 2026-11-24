@@ -226,6 +226,46 @@ paths:
                   $ref: "#/components/schemas/MatchSummary"
         default:
           $ref: "#/components/responses/Error"
+  /v1/btb/adaptations/deviations:
+    get:
+      operationId: getAdaptationDeviations
+      description: Uyarlamalar — deviation bands (counter, active) and the latest changes. editable is true only in PostgreSQL mode with a writable reference schema.
+      responses:
+        "200":
+          description: Deviation bands.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdaptationDeviations" }
+        default:
+          $ref: "#/components/responses/Error"
+  /v1/btb/adaptations/deviations/{deviation}:
+    put:
+      operationId: updateAdaptationDeviation
+      description: Changes one band. Requires the web-only scope mobile.settings.write; the last active band cannot be switched off.
+      parameters:
+        - in: path
+          name: deviation
+          required: true
+          schema: { type: string, pattern: '^[0-9]\.[0-9]{2}$' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              minProperties: 1
+              properties:
+                counter: { type: integer, minimum: 1, maximum: 100000 }
+                active: { type: boolean }
+      responses:
+        "200":
+          description: Deviation bands after the change.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdaptationDeviations" }
+        default:
+          $ref: "#/components/responses/Error"
   /v1/btb/matches/{key}:
     get:
       operationId: getMatch
@@ -765,6 +805,36 @@ components:
     MatchStatus:
       type: string
       enum: [LIVE, HALF_TIME, NOT_STARTED, FINISHED]
+    AdaptationDeviations:
+      type: object
+      additionalProperties: false
+      required: [contractVersion, editable, readOnlyReason, bands, changes]
+      properties:
+        contractVersion: { type: string, enum: [btb-adaptations.v1] }
+        editable: { type: boolean }
+        readOnlyReason: { type: [string, "null"] }
+        bands:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [deviation, counter, active]
+            properties:
+              deviation: { type: string }
+              counter: { type: [integer, "null"] }
+              active: { type: boolean }
+        changes:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [changedAt, actor, deviation, counter, active]
+            properties:
+              changedAt: { type: string, format: date-time }
+              actor: { type: string }
+              deviation: { type: string }
+              counter: { type: object, properties: { from: { type: [integer, "null"] }, to: { type: [integer, "null"] } } }
+              active: { type: object, properties: { from: { type: boolean }, to: { type: boolean } } }
     MatchSummary:
       type: object
       additionalProperties: false

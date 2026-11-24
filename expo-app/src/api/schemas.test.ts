@@ -236,6 +236,8 @@ test("keeps the checked-in OpenAPI document parseable and route-complete", async
   assert.deepEqual(
     Object.keys(document.paths ?? {}).sort(),
     [
+      "/v1/btb/adaptations/deviations",
+      "/v1/btb/adaptations/deviations/{deviation}",
       "/v1/btb/daily-coupons",
       "/v1/btb/daily-coupons/v2",
       "/v1/btb/daily-coupons/v2/window/{through}/{days}",
@@ -280,4 +282,13 @@ test("the all-fixtures list carries predicted; the default list may omit it", as
   assert.throws(() => matchSummarySchema.parse({ ...first, predicted: "no" }));
   const all = await mockMobileApi.getAllMatches();
   assert.deepEqual(all.map((match) => match.predicted), mockMatchSummaries.map((_, index) => index !== mockMatchSummaries.length - 1));
+});
+
+test("Uyarlamalar: the deviation contract parses, and a mock change is logged", async () => {
+  const before = await mockMobileApi.getAdaptationDeviations();
+  assert.equal(before.contractVersion, "btb-adaptations.v1");
+  const after = await mockMobileApi.updateAdaptationDeviation("0.30", { counter: 250 });
+  assert.equal(after.bands.find((band) => band.deviation === "0.30")?.counter, 250);
+  assert.deepEqual(after.changes[0]?.counter, { from: 300, to: 250 });
+  await mockMobileApi.updateAdaptationDeviation("0.30", { counter: 300 });
 });

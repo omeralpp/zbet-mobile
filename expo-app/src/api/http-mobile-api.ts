@@ -1,3 +1,4 @@
+import { adaptationDeviationsSchema } from "./adaptations-schema";
 import { jinxRb1ExplanationSchema } from "./jinx-rb1-schema";
 import { selectionComparisonSchema } from "./selection-comparison-schema";
 import { selectionHistorySchema } from "./selection-history-schema";
@@ -197,6 +198,11 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
       request("/v1/dashboard", dashboardSchema, { headers: decisionContextHeaders }, signal),
     getMatches: (signal) =>
       request("/v1/btb/matches", matchListSchema, { headers: decisionContextHeaders }, signal),
+    getAdaptationDeviations: (signal) =>
+      request("/v1/btb/adaptations/deviations", adaptationDeviationsSchema, {}, signal),
+    updateAdaptationDeviation: (deviation, change) =>
+      request(`/v1/btb/adaptations/deviations/${encodeURIComponent(deviation)}`, adaptationDeviationsSchema,
+        { method: "PUT", body: JSON.stringify(change) }),
     getAllMatches: (signal) =>
       request("/v1/btb/matches", matchListSchema, { headers: { ...decisionContextHeaders, "X-BTB-Fixture-Scope": "btb-fixture-scope.all" } }, signal),
     getMatchInsights: (signal) =>

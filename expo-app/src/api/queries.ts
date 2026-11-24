@@ -103,6 +103,7 @@ export const queryKeys = {
   dashboard: ["dashboard"] as const,
   matches: ["matches"] as const,
   allMatches: ["matches", "scope:all"] as const,
+  adaptationDeviations: ["adaptations", "deviations"] as const,
   matchInsights: ["matchInsights"] as const,
   matchInsight: (key: string) => ["matchInsights", key] as const,
   matchLeagueContext: (key: string) =>
@@ -129,6 +130,13 @@ export const matchesQuery = queryOptions({
   queryFn: ({ signal }) => mobileApi.getMatches(signal),
   staleTime: 5_000,
   refetchInterval: 10_000
+});
+
+/** Uyarlamalar: deviation bands (owner 2026-11-24). */
+export const adaptationDeviationsQuery = queryOptions({
+  queryKey: queryKeys.adaptationDeviations,
+  queryFn: ({ signal }) => mobileApi.getAdaptationDeviations(signal),
+  staleTime: 15_000
 });
 
 /** The all-fixtures list (owner 2026-11-24): parked and finished fixtures too. */

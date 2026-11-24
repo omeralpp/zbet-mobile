@@ -1,4 +1,5 @@
 import type { JinxRb1Explanation } from "./jinx-rb1-schema";
+import type { AdaptationDeviations, DeviationBandChange } from "./adaptations-schema";
 import type { SelectionComparison } from "./selection-comparison-schema";
 import type { SelectionHistory } from "./selection-history-schema";
 import type { SelectionDecisions, SelectionRule } from "./selection-decisions-schema";
@@ -46,6 +47,9 @@ export interface MobileApi {
   getMatches(signal?: AbortSignal): Promise<MatchSummary[]>;
   /** Every loaded fixture, finished ones included, each with `predicted`. */
   getAllMatches(signal?: AbortSignal): Promise<MatchSummary[]>;
+  /** Uyarlamalar: the deviation bands, read-only unless the BFF says editable. */
+  getAdaptationDeviations(signal?: AbortSignal): Promise<AdaptationDeviations>;
+  updateAdaptationDeviation(deviation: string, change: DeviationBandChange): Promise<AdaptationDeviations>;
   getMatchInsights(signal?: AbortSignal): Promise<MatchInsight[]>;
   getMatchInsight(key: string, signal?: AbortSignal): Promise<MatchInsight>;
   getMatchLeagueContext(

@@ -1,3 +1,4 @@
+import { adaptationDeviationsSchema, type AdaptationDeviations } from "./adaptations-schema";
 import { mockDailyCouponWindow, mockDailyCoupons } from "./mock-daily-coupons";
 import { istanbulDay } from "@/src/utils/rebuild-log";
 import {
@@ -74,6 +75,14 @@ async function mockDelay(signal?: AbortSignal): Promise<void> {
     );
   });
 }
+
+// Preview data for Uyarlamalar: editable, as the web client sees it after the PostgreSQL switch.
+const mockAdaptations: AdaptationDeviations = {
+  contractVersion: "btb-adaptations.v1", editable: true, readOnlyReason: null,
+  bands: [{ deviation: "0.05", counter: 30, active: true }, { deviation: "0.10", counter: 120, active: true },
+    { deviation: "0.15", counter: 180, active: true }, { deviation: "0.20", counter: 200, active: true }, { deviation: "0.30", counter: 300, active: false }],
+  changes: []
+};
 
 export const mockMobileApi: MobileApi = {
   async getDailyCoupons(date, signal) {
@@ -190,6 +199,24 @@ export const mockMobileApi: MobileApi = {
   async getMatches(signal) {
     await mockDelay(signal);
     return matchListSchema.parse(clone(mockMatchSummaries));
+  },
+
+  async getAdaptationDeviations(signal) {
+    await mockDelay(signal);
+    return adaptationDeviationsSchema.parse(clone(mockAdaptations));
+  },
+
+  async updateAdaptationDeviation(deviation, change) {
+    await mockDelay();
+    const band = mockAdaptations.bands.find((item) => item.deviation === deviation);
+    if (!band) throw new Error("Bu bant tanımlı değil.");
+    if (change.active === false && mockAdaptations.bands.filter((item) => item.active && item !== band).length === 0) {
+      throw new Error("En az bir bant aktif kalmalı.");
+    }
+    mockAdaptations.changes.unshift({ changedAt: new Date().toISOString(), actor: "web:önizleme", deviation,
+      counter: { from: band.counter, to: change.counter ?? band.counter }, active: { from: band.active, to: change.active ?? band.active } });
+    Object.assign(band, change);
+    return adaptationDeviationsSchema.parse(clone(mockAdaptations));
   },
 
   async getAllMatches(signal) {

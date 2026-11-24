@@ -110,6 +110,7 @@ function RootNavigator() {
               name="toto/[gcNo]/[version]"
               options={{ title: "Toto programı" }}
             />
+            <Stack.Screen name="adaptations" options={{ title: "Uyarlamalar", headerShown: Platform.OS !== "web" || breakpoint === "compact" }} />
           </Stack.Protected>
           <Stack.Protected guard={hasSession && designLabAvailable(runtimeConfig)}>
             <Stack.Screen name="design-lab" options={{ title: "Tasarım atölyesi", headerShown: false }} />
