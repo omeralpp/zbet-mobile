@@ -53,10 +53,12 @@ export function jinxMatchReading({ record, data, matchKey, context, now, sourceF
     && Math.abs(Date.parse(context.acquiredAt) - Date.parse(data.asOf)) <= 30_000;
   const condition = usableContext ? jinxScoreCondition(record.market, match.homeScore, match.awayScore) : null;
   const currentScore = usableContext ? score(match.homeScore, match.awayScore) : null;
-  if (usableContext) sources.push({ label: "Saha kontrolü", value: `${match.elapsed}′ · ${currentScore} · ${time(context.acquiredAt)}` });
+  if (usableContext) sources.push({ label: "Saha kontrolü", value: `${match.status === "FINISHED" ? "MS" : `${match.elapsed}′`} · ${currentScore} · ${time(context.acquiredAt)}` });
   // An unchanged score is not a change to show (NXT-OBS-241).
+  // A finished match reports elapsed 0; its score is the full-time score (MS).
+  const nowMinute = usableContext && match.status === "FINISHED" ? "MS" : `${match?.elapsed}′`;
   const scoreComparison = currentScore && currentScore !== initialScore ? { label: "Skor", before: `${record.minute}′ · ${initialScore}`,
-    after: `${match!.elapsed}′ · ${currentScore}` } : undefined;
+    after: `${nowMinute} · ${currentScore}` } : undefined;
 
   if (record.result.state === "VOID") return view("Karar geçersiz", "Bu karar geçersiz sonuçlanmış; kazanç veya kayıp diye değerlendirilmez.");
   if (record.result.state === "UNRESOLVED") return view("Sonuç doğrulanıyor", "Kararın sonucu henüz doğrulanamıyor; skor tek başına sonuç kaydının yerini tutmaz.", undefined, true);

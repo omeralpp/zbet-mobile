@@ -673,7 +673,7 @@ export function BtbMascotOverlay() {
                   ]}
                 >
                   <MaterialCommunityIcons color={ink} name={item.icon} size={iconSizes.control} />
-                  <Text style={[styles.menuLabel, { color: ink }]}>{item.label}</Text>
+                  <Text numberOfLines={1} style={[styles.menuLabel, { color: ink }]}>{item.label}</Text>
                   {item.badge ? (
                     <View style={styles.menuBadge}>
                       <Text style={styles.menuBadgeText}>{item.badge}</Text>
@@ -847,7 +847,8 @@ const styles = StyleSheet.create({
   menuItemCurrent: { backgroundColor: colors.greenSoft, borderColor: colors.actionFill },
   menuItemGold: { backgroundColor: colors.goldSoft, borderColor: colors.gold },
   menuItemPressed: { backgroundColor: colors.surfaceStrong },
-  menuLabel: { ...textFont("700"), color: colors.text, fontSize: 15 },
+  // One line, never squeezed by the menu's width: "Günlük yorum" wrapped to two lines.
+  menuLabel: { ...textFont("700"), color: colors.text, fontSize: 15, flexShrink: 0 },
   menuBadge: { minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 5, alignItems: "center", justifyContent: "center", backgroundColor: semantic.live },
   menuBadgeText: { ...numericFont("800"), color: colors.background, fontSize: 14, lineHeight: 16 }
 });

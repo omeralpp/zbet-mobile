@@ -237,3 +237,10 @@ test("an unchanged score is not shown as a change and the quality limit is said 
   assert.ok(reading.text.includes(limit), reading.text);
   assert.ok(sections.current && !sections.current.text.includes(limit), sections.current?.text);
 });
+
+test("a finished match's score comparison reads MS, not the provider's reset minute", () => {
+  const s = setup(); s.waiting(); s.context.sources.matchDetail.status = "FINISHED";
+  s.context.sources.matchDetail.elapsed = 0; s.context.sources.matchDetail.awayScore = 1;
+  s.record.result = { state: "WIN", revision: 2, net: "1" };
+  assert.deepEqual(s.run().comparison, { label: "Skor", before: "60′ · 0–0", after: "MS · 0–1" });
+});

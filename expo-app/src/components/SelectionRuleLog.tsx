@@ -39,8 +39,10 @@ function DecisionCard({ record }: { record: SelectionDecisionRecord }) {
       <SurfaceMaterial accent={record.result.state === "PENDING" ? semantic.intelligence : undefined} radius={20} />
       <View style={styles.rowBetween}>
         <View style={styles.rowStart}>
+          {/* The header reads as on Şampiyon cards (stars, score, result). How the
+              decision was recorded moves to the meta line: a green CANLI pill
+              beside a settled result read as a match still in play. */}
           <RatingStars rating={record.stars} size={14} />
-          <TonePill label={record.live ? "CANLI" : "SONRADAN"} tone={record.live ? "positive" : "neutral"} />
         </View>
         <View style={styles.rowStart}>
           {final ? <Text style={styles.finalScore}>{final}</Text> : null}
@@ -49,7 +51,7 @@ function DecisionCard({ record }: { record: SelectionDecisionRecord }) {
       </View>
       <Text numberOfLines={2} style={styles.team}>{teams}</Text>
       <Text numberOfLines={2} style={styles.meta}>
-        {[record.league || null, `${istanbulTime.format(new Date(record.evaluatedAt))} karar`].filter(Boolean).join(" · ")}
+        {[record.league || null, `${istanbulTime.format(new Date(record.evaluatedAt))} karar`, record.live ? "canlı kayıt" : "sonradan kayıt"].filter(Boolean).join(" · ")}
       </Text>
       <View style={styles.cardFoot}>
         <View style={styles.flexCopy}>

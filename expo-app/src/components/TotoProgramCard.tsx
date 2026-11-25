@@ -200,7 +200,8 @@ export function TotoProgramCard({ program, showContextNote = true, compact = fal
         <>
           <View style={styles.metrics}>
             <Metric label="sonuçlandı" value={`${progress.settled}/${progress.total}`} />
-            <Metric detail={`ana ${program.mainHits ?? "—"}`} label="kapsama" value={program.coverageHits === null ? "—" : String(program.coverageHits)} />
+            {/* With no result yet the main-hit line would only repeat the dash. */}
+            <Metric {...(program.mainHits === null ? {} : { detail: `ana ${program.mainHits}` })} label="kapsama" value={program.coverageHits === null ? "—" : String(program.coverageHits)} />
             <Metric label="en fazla kapsama" value={progress.maxCoverage === null ? "—" : `${progress.maxCoverage}/${progress.total}`} />
           </View>
           <TotoProgressBar progress={progress} />

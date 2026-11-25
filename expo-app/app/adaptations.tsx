@@ -90,7 +90,7 @@ export default function AdaptationsScreen() {
 
   return (
     <Screen eyebrow="Daha Fazla" title="Uyarlamalar">
-      <Text accessibilityRole="header" aria-level={2} style={styles.sectionTitle}>Deviation bantları</Text>
+      <Text accessibilityRole="header" aria-level={2} style={styles.sectionTitle}>Sapma bantları</Text>
       <View style={styles.note}>
         <Text style={styles.noteText}>
           Günlük yükleme her maçı benzer oranlı geçmiş maçlarla karşılaştırır; sayacına ilk ulaşılan bant maçın bandı olur, hiçbir

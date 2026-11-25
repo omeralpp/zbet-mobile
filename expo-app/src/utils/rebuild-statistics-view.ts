@@ -58,7 +58,7 @@ export function statisticsRows(statistics: RebuildStatistics): StatisticsRow[] {
 const timeFormat = new Intl.DateTimeFormat("tr-TR", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false, timeZone: "Europe/Istanbul" });
 
 /** Measurement time and completeness, or why no current statistics are shown. */
-export function statisticsStatus(statistics: RebuildStatistics): { tone: "live" | "partial" | "muted"; text: string; values: boolean } {
+export function statisticsStatus(statistics: RebuildStatistics, finished = false): { tone: "live" | "partial" | "muted"; text: string; values: boolean } {
   if (statistics.availability === "AVAILABLE" || statistics.availability === "PARTIAL") {
     const at = statistics.observedAt ? timeFormat.format(new Date(statistics.observedAt)) : null;
     const when = [statistics.elapsed !== null ? `${statistics.elapsed}′` : null, at].filter(Boolean).join(" · ");
@@ -69,6 +69,8 @@ export function statisticsStatus(statistics: RebuildStatistics): { tone: "live" 
   if (statistics.availability === "NOT_STARTED") {
     return { tone: "muted", text: "Maç başlamadı; istatistikler ilk doğrulanmış ölçümle gelir.", values: false };
   }
+  // After full time the live balance is simply over, not stale.
+  if (finished) return { tone: "muted", text: "Maç tamamlandı; canlı saha dengesi yalnız maç sürerken gösterilir.", values: false };
   const text = statistics.reason === "STATISTICS_STALE"
     ? "Son doğrulanmış ölçüm iki dakikadan eski; güncel istatistik gösterilmiyor."
     : statistics.reason === "DUMMY_NOT_PUBLISHED"

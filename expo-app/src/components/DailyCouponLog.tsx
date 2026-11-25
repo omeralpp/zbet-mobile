@@ -114,7 +114,7 @@ export function DailyCouponLog({ active }: { active: boolean }) {
 
   const missing = query.data.unavailableDays.length
     ? ` · ${query.data.unavailableDays.length} gün doğrulanamadı` : "";
-  const note = `Her kupona yayın oranından 1 varsayımsal birim. Canlı skorlar maç akışından, kesin kupon sonuçları SAP sonuç kaydından gelir.${missing}${demo ? " · Örnek veri" : ""}`;
+  const note = `Her kupona yayın oranından 1 varsayımsal birim. Canlı skorlar maç akışından, kesin kupon sonuçları BTB sonuç kaydından gelir.${missing}${demo ? " · Örnek veri" : ""}`;
   const summary = summarizeCoupons(visible);
   const header = (
     <View style={styles.listHead}>

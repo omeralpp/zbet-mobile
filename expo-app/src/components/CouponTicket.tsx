@@ -24,6 +24,9 @@ function LegRow({ leg, live, onOpen, now }: { leg: DailyCouponLeg; live: LiveLeg
   const status = leg.result && leg.result !== "PENDING" ? legResultLabel[leg.result]
     : live?.label ?? (Date.parse(leg.kickoffAt) <= now ? "Skor bekleniyor" : `Başlama ${time.format(new Date(leg.kickoffAt))}`);
   const label = `${leg.home} – ${leg.away}, ${leg.market} ${leg.selection}, oran ${formatRate(leg.odds)}, ${status}${score ? `, ${score}` : ""}`;
+  // Before kickoff the start time takes the score's place, so the right
+  // column always reads "score or start" and the row needs no third line.
+  const upcoming = !score && !lost && !live?.label && (!leg.result || leg.result === "PENDING") && Date.parse(leg.kickoffAt) > now;
   const body = (
     <>
       <View accessible={false} style={styles.legIcon}>
@@ -33,13 +36,14 @@ function LegRow({ leg, live, onOpen, now }: { leg: DailyCouponLeg; live: LiveLeg
       <View style={styles.legCopy}>
         <View style={styles.legLine}>
           <Text numberOfLines={2} style={[styles.fixture, lost && styles.fixtureLost]}>{leg.home} – {leg.away}</Text>
-          {score ? <Text style={[styles.score, lost && { color: semantic.negative }]}>{score}</Text> : null}
+          {score ? <Text style={[styles.score, lost && { color: semantic.negative }]}>{score}</Text>
+            : upcoming ? <Text style={styles.kickoff}>{time.format(new Date(leg.kickoffAt))}</Text> : null}
         </View>
         <View style={styles.legLine}>
           <Text numberOfLines={2} style={styles.selection}>{leg.market} · {leg.selection}</Text>
           <Text style={styles.odds}>{formatRate(leg.odds)}</Text>
         </View>
-        <Text style={[styles.meta, lost && styles.lostText]}>{lost ? "Kuponu yatıran maç" : status}</Text>
+        {upcoming ? null : <Text style={[styles.meta, lost && styles.lostText]}>{lost ? "Kuponu yatıran maç" : status}</Text>}
       </View>
       {onOpen ? <MaterialCommunityIcons accessible={false} color={colors.textMuted} name="chevron-right" size={iconSizes.small} /> : null}
     </>
@@ -130,6 +134,7 @@ const styles = StyleSheet.create({
   fixtureLost: { color: colors.text },
   // Never shrinks: a long team name truncates instead of wrapping the score.
   score: { ...typeScale.metricCompact, color: colors.text, flexShrink: 0 },
+  kickoff: { ...typeScale.metricCompact, color: colors.textMuted, flexShrink: 0 },
   selection: { ...typeScale.bodyCompact, color: colors.textMuted, flexShrink: 1 },
   odds: { ...typeScale.metricCompact, color: colors.text, flexShrink: 0 },
   meta: { ...typeScale.meta, color: colors.textMuted },

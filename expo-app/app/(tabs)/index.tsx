@@ -172,12 +172,12 @@ export default function DashboardScreen() {
     metrics: dashboard ? (
       wideWeb ? (
         <View style={styles.metricRow}>
-          {tiles.map((tile, index) => (
-            <View key={index} style={styles.metricCard}>
-              <SurfaceMaterial radius={18} />
-              {tile}
-            </View>
-          ))}
+          {/* One divided strip, as on the phone: two counts read as one
+              "right now" summary instead of two half-empty cards. */}
+          <TutorialTarget id="home-hero" radius={18} style={styles.metricCard}>
+            <SurfaceMaterial radius={18} />
+            <MetricStrip>{tiles}</MetricStrip>
+          </TutorialTarget>
           {/* Today's rebuild result at the original quote, one hypothetical
               unit per recommendation, told by Jinx; the full report and its
               caveats live on the Super tab. */}
@@ -223,10 +223,11 @@ export default function DashboardScreen() {
           title={featuredTitle}
         />
         {!featuredMatches.length ? (
-          <View accessibilityLiveRegion="polite" style={styles.selectionState}>
+          <View accessibilityLiveRegion="polite" style={[styles.selectionState, wideWeb && styles.selectionStateRow]}>
             <SurfaceMaterial radius={18} />
             <MaterialCommunityIcons color={selectionUnavailable && !selectionsLoading ? semantic.warning : semantic.intelligence}
               name={selectionsLoading ? "progress-clock" : selectionUnavailable ? "cloud-alert-outline" : "soccer-field"} size={iconSizes.control} />
+            <View style={wideWeb ? styles.stateTextRow : styles.stateText}>
             <Text accessibilityRole="header" aria-level={3} style={styles.stateTitle}>
               {selectionsLoading ? "Seçimler yükleniyor" : selectionUnavailable ? "Seçimler doğrulanamıyor" : hasLiveMatches
                 ? `${starMetricLabel(liveStarFilter)} için aktif seçim yok` : "Şu anda canlı maç yok"}
@@ -239,10 +240,11 @@ export default function DashboardScreen() {
                     ? `Sıradaki maç: ${describeNextKickoff(next, now)}. Başladığında burada görünecek.`
                     : "Yeni maçlar başladığında burada görünecek. Sıradaki maçlar için fikstürü açabilirsin."}
             </Text>
+            </View>
             {selectionsLoading ? null : (
               <Pressable accessibilityRole="button" accessibilityLabel={hasLiveMatches || selectionUnavailable ? "Tüm canlı maçları gör" : "Fikstürü gör"}
                 onPress={() => router.push({pathname:"/live",params:{scope:hasLiveMatches || selectionUnavailable ? "LIVE" : "FIXTURE"}} as never)}
-                style={({ pressed, hovered }) => [styles.stateAction, hovered && styles.stateActionHover, pressed && { opacity: 0.78 }]}>
+                style={({ pressed, hovered }) => [styles.stateAction, wideWeb && styles.stateActionRow, hovered && styles.stateActionHover, pressed && { opacity: 0.78 }]}>
                 <Text style={styles.stateActionText}>{hasLiveMatches || selectionUnavailable ? "Tüm canlı maçları gör" : "Fikstürü gör"}</Text>
                 <MaterialCommunityIcons accessible={false} color={colors.blue} name="arrow-right" size={iconSizes.inline} />
               </Pressable>
@@ -352,6 +354,11 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   selectionState: { gap: spacing.sm, padding: spacing.lg, borderRadius: 18, borderWidth: 1, borderColor: colors.borderSoft },
+  // Desktop: an empty state is one quiet line, not a second card's worth of space.
+  selectionStateRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, paddingVertical: spacing.md },
+  stateText: { gap: spacing.sm },
+  stateTextRow: { flex: 1, minWidth: 0, gap: 2 },
+  stateActionRow: { marginTop: 0, alignSelf: "center" },
   stateTitle: { ...typeScale.body, color: colors.text, fontWeight: "700" },
   stateMessage: { ...typeScale.bodyCompact, color: colors.textMuted },
   stateAction: { minHeight: interaction.minTouchTarget, flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: spacing.sm,
@@ -375,7 +382,7 @@ const styles = StyleSheet.create({
     width: "100%"
   },
   metricCard: {
-    flex: 1,
+    flex: 2,
     minWidth: 0,
     borderRadius: 18,
     borderWidth: 1,

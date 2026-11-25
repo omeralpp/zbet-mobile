@@ -36,3 +36,10 @@ test("status names the measurement or the reason in plain words, never a code", 
     assert.doesNotMatch(text, /[A-Z_]{6,}/);
   }
 });
+
+test("a finished match says the live balance is over instead of calling it stale", () => {
+  const ended = statisticsStatus(rebuildStatisticsSchema.parse(stale), true);
+  assert.equal(ended.values, false);
+  assert.match(ended.text, /Maç tamamlandı/);
+  assert.doesNotMatch(ended.text, /iki dakikadan eski/);
+});

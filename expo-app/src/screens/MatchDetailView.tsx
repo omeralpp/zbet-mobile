@@ -507,7 +507,7 @@ export function MatchDetailView({
     ),
     statistics: (
       <LiveDetailPanel eyebrow="SAHA" id="statistics" title="Canlı saha dengesi">
-        {isRebuild ? <RebuildStatisticsPanel key={key} homeTeam={match.homeTeam} awayTeam={match.awayTeam} isError={rebuildStatistics.isError} isLoading={rebuildStatistics.isLoading} statistics={statistics} onRetry={retryStatistics} isRefreshing={rebuildStatistics.isFetching} /> : <View style={styles.statsCard}>
+        {isRebuild ? <RebuildStatisticsPanel key={key} finished={match.status === "FINISHED"} homeTeam={match.homeTeam} awayTeam={match.awayTeam} isError={rebuildStatistics.isError} isLoading={rebuildStatistics.isLoading} statistics={statistics} onRetry={retryStatistics} isRefreshing={rebuildStatistics.isFetching} /> : <View style={styles.statsCard}>
           <SurfaceMaterial radius={radii.lg} />
           <ComparisonRow
             away={match.awayBallPossession}

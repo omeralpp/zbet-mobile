@@ -38,7 +38,8 @@ export function SelectionLab({ match, focused, wide }: { match: MatchDetail; foc
     <Text accessibilityRole="header" style={styles.cardTitle}>{selectionArmLabels[arm.id]}</Text>
     <Text style={styles.selection}>{arm.selection ? formatSelection(arm.selection.market) : status.headline}</Text>
     {arm.selection ? <Text style={styles.quote}>Karşılaştırma oranı {formatRate(arm.selection.quote)}</Text>
-      : status.note ? <Text style={styles.note}>{status.note}</Text> : null}
+      // The panel's status line already says it; each card repeating it read four times.
+      : status.note && status.note !== reason ? <Text style={styles.note}>{status.note}</Text> : null}
     {arm.probability !== null ? <Text style={styles.metric}>Model olasılığı %{(100*arm.probability).toFixed(1)}</Text> : null}
     {arm.expectedNet !== null ? <Text style={styles.metric}>Beklenen net {formatSigned(arm.expectedNet, 3)} birim</Text> : null}
     {arm.form ? <Text style={styles.note}>Form örneklemi · ev {arm.form.homeN} · dep {arm.form.awayN}</Text> : null}

@@ -333,6 +333,18 @@ export default function LiveScreen() {
     router.setParams({scope:nextTab,decision:nextTab === "STAR" ? starFilter : undefined,filter:undefined});
   };
 
+  const allFixturesChip = (
+    <FilterChip
+      label="Tüm maçlar"
+      selected={allFixtures}
+      onPress={() => router.setParams({ fixtures: allFixtures ? undefined : "all" })}
+    />
+  );
+  // Phone: the count line repeats a number the selected control already shows
+  // (Canlı · 4, ★★★+ 3), so it appears only for search results and for Tümü.
+  const countShownByControl = !splitLayout && !hasSearch && countsKnown
+    && (tab === "LIVE" || (tab === "STAR" && !publications.pending && !publications.unavailable));
+
   useEffect(() => {
     if (Platform.OS !== "web" || !detailExpanded) return;
     const restore = (event: KeyboardEvent) => {
@@ -389,11 +401,7 @@ export default function LiveScreen() {
             open={decisionOpen}
             value={starFilter}
           />
-          <FilterChip
-            label="Tüm maçlar"
-            selected={allFixtures}
-            onPress={() => router.setParams({ fixtures: allFixtures ? undefined : "all" })}
-          />
+          {splitLayout ? allFixturesChip : null}
         </View>
       </TutorialTarget>
 
@@ -408,8 +416,10 @@ export default function LiveScreen() {
             <MaterialCommunityIcons accessible={false} color={colors.blue} name="close" size={iconSizes.inline} />
           </Pressable> : null}
         </View>
+        {/* Phone: the scope toggle sits beside search, so the filters keep one row. */}
+        {splitLayout ? null : allFixturesChip}
       </View>
-      {query.data ? <Text accessibilityLiveRegion="polite" style={[styles.resultCount, splitLayout && styles.resultCountWide]}>
+      {query.data && !countShownByControl ? <Text accessibilityLiveRegion="polite" style={[styles.resultCount, splitLayout && styles.resultCountWide]}>
         {!countsKnown ? "Maç listesi doğrulanamıyor" : tab === "STAR" && publications.pending ? "Seçim kayıtları yükleniyor…" : tab === "STAR" && publications.unavailable ? "Seçim kayıtları doğrulanamıyor" :
           `${tab === "STAR" ? starMetricLabel(starFilter) : tab === "FIXTURE" ? (allFixtures ? "Fikstür ve sonuçlar" : "Fikstür") : "Canlı"} · ${hasSearch ? `${visibleCount} / ${tabCounts[tab]} eşleşme` : `${tabCounts[tab]} maç`}`}
       </Text> : null}

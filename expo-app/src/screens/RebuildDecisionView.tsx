@@ -273,7 +273,7 @@ export function RebuildDecisionView({ decisionId, matchKey: matchParam, onEdgeSw
         </View>
         <View style={styles.note}>
           <MaterialCommunityIcons color={colors.textMuted} name="information-outline" size={iconSizes.small} />
-          <Text style={styles.noteText}>Yıldız: tutarlılık ve kanıt kalitesi. Havuz desteği farklı SAP referans kayıtlarını sayar; fiziksel maç tekilliği doğrulanmamıştır.</Text>
+          <Text style={styles.noteText}>Yıldız: tutarlılık ve kanıt kalitesi. Havuz desteği farklı arşiv referans kayıtlarını sayar; fiziksel maç tekilliği doğrulanmamıştır.</Text>
         </View>
       </Section>
     ),

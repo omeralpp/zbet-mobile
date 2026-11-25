@@ -14,8 +14,9 @@ import { SurfaceMaterial } from "./SurfaceMaterial";
  */
 const timeFormat = new Intl.DateTimeFormat("tr-TR", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false, timeZone: "Europe/Istanbul" });
 
-export const RebuildStatisticsPanel = memo(function RebuildStatisticsPanel({ statistics, isLoading, isError, homeTeam, awayTeam, onRetry, isRefreshing = false }: {
+export const RebuildStatisticsPanel = memo(function RebuildStatisticsPanel({ statistics, isLoading, isError, homeTeam, awayTeam, onRetry, isRefreshing = false, finished = false }: {
   statistics: RebuildStatistics | undefined;
+  finished?: boolean;
   isLoading: boolean;
   isError: boolean;
   homeTeam?: string;
@@ -31,7 +32,7 @@ export const RebuildStatisticsPanel = memo(function RebuildStatisticsPanel({ sta
       {!isLoading && onRetry ? <Pressable accessibilityRole="button" accessibilityState={{ busy: isRefreshing }} disabled={isRefreshing} onPress={onRetry} style={styles.missingAction}><Text style={styles.missingText}>{isRefreshing ? "Yenileniyor…" : "İstatistikleri yeniden dene"}</Text></Pressable> : null}
     </View>;
   }
-  const status = statisticsStatus(statistics);
+  const status = statisticsStatus(statistics, finished);
   const rows = statisticsRows(statistics);
   const missing = rows.filter(row => row.home === null && row.away === null);
   const visible = showMissing ? rows : rows.filter(row => row.home !== null || row.away !== null);

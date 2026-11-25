@@ -267,7 +267,7 @@ export default function TotoProgramDetailScreen() {
                 </View>
               </View>
             ))}
-            <Text style={styles.prizeDescription}>Teorik tutarlar SAP ikramiye dağılımından; kuponun oynandığı varsayılır.</Text>
+            <Text style={styles.prizeDescription}>Teorik tutarlar resmî ikramiye dağılımından; kuponun oynandığı varsayılır.</Text>
           </View>
         ) : null}
         {resultFilter !== "ALL" ? <Text style={styles.contextNote}>Programın tamamı · aşağıdaki filtreler yalnızca maç listesini daraltır.</Text> : null}

@@ -7,7 +7,35 @@ Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md)
 and the dated release reports/receipts.
 
-## Toto live scores, btb-toto-live.v1 (2026-11-24, local, not committed)
+## Screen review batch (2026-11-25, committed with the owner's approval)
+
+The owner reviewed every screen with Claude before the PostgreSQL switch. These
+changes ship in the paired Android/web release on 2026-11-26 together with the
+Toto live client below. Every change is backed by the app's own rules: a
+pattern already used elsewhere, repeated or stale text, or a wrong value.
+
+- Özet:
+  - Desktop counters use one divided strip, as on the phone.
+  - The empty state is a single row on desktop.
+  - Before kickoff, a coupon leg shows its start time where the score will appear, so the row has two lines.
+- Canlı (phone): `Tüm maçlar` sits beside search. The count line is hidden when the selected control already shows the number.
+- Super:
+  - Günlük kupon and Lab use the Şampiyon tab's four summary tiles on desktop.
+  - Lab cards move `canlı kayıt` / `sonradan kayıt` to the meta line; the green CANLI pill read as a match in play.
+- Text that would be wrong after the switch: `SAP sonuç kaydı` becomes BTB, `SAP referans kayıtları` becomes arşiv, `SAP ikramiye dağılımı` becomes resmî.
+- Toto: no `ana —` before any result. Daha Fazla and Uyarlamalar: `Sapma bantları`.
+- Jinx: the quick-menu labels stay on one line (`Günlük yorum` wrapped).
+- Maç detayı:
+  - A finished match's score reads `MS`, not the provider's reset `0′`.
+  - Finished matches say the live balance is over instead of calling it stale.
+  - Lab cards no longer repeat the panel's status sentence.
+- Checks: typecheck, ESLint and 857 tests.
+- Not seen on screen, because the mock has no such data:
+  - the Şampiyon tab;
+  - a program waiting for results;
+  - a finished match with a decision.
+
+## Toto live scores, btb-toto-live.v1 (2026-11-24, committed 247e224)
 
 Android and desktop web, same batch, no platform exception. The Toto detail
 request adds `X-BTB-Toto-Live: btb-toto-live.v1`; fixtures accept an optional

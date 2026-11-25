@@ -542,7 +542,7 @@ export default function MoreScreen() {
 
       <Text accessibilityRole="header" aria-level={2} style={styles.sectionTitle}>Uyarlamalar</Text>
       <View style={styles.group}>
-        <SettingsRow icon="tune-variant" title="Deviation bantları"
+        <SettingsRow icon="tune-variant" title="Sapma bantları"
           detail={isWeb ? "Maç yükleme ve tahmin bantlarının sayaç ve aktiflik ayarları" : "Bant ayarlarını gör; değişiklik yalnızca webden yapılır"}
           onPress={() => router.push("/adaptations" as never)} />
       </View>
