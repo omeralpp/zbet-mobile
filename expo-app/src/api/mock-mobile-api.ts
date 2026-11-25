@@ -1,5 +1,6 @@
 import { adaptationDeviationsSchema, type AdaptationDeviations } from "./adaptations-schema";
 import { mockDailyCouponWindow, mockDailyCoupons } from "./mock-daily-coupons";
+import { mockJinxNewsBrief } from "./mock-jinx-news";
 import { istanbulDay } from "@/src/utils/rebuild-log";
 import {
   analysisContextSchema,
@@ -190,6 +191,10 @@ export const mockMobileApi: MobileApi = {
     return { contractVersion: "jinx-rb1-explainer.v1", matchKey: key,
       asOf: new Date().toISOString(), decisionId: null, evidenceKey: null, origin: "DETERMINISTIC",
       availability: "UNAVAILABLE", reasonCode: "NO_DECISION", facts: [] };
+  },
+  async getJinxNewsBrief(key, _refresh, signal) {
+    await mockDelay(signal);
+    return mockJinxNewsBrief(key);
   },
   async getDashboard(signal) {
     await mockDelay(signal);

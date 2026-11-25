@@ -72,6 +72,14 @@ export function rebuildReportWindowQuery(days: ReportWindowDays, through: string
     staleTime: includesToday ? 30_000 : 300_000, gcTime: includesToday ? 300_000 : 1_800_000,
     refetchInterval: includesToday ? 60_000 : false, retry: false });
 }
+/**
+ * Jinx Maç gündemi: the BFF caches each brief for hours and spaces refreshes,
+ * so the client reads it once per screen visit and never polls.
+ */
+export function jinxNewsQuery(key: string) {
+  return queryOptions({ queryKey: ["jinxNews", key], enabled: Boolean(key),
+    queryFn: ({ signal }) => mobileApi.getJinxNewsBrief(key, false, signal), staleTime: 10 * 60_000, gcTime: 60 * 60_000, retry: false });
+}
 export function rebuildMatchQuery(key: string) {
   return queryOptions({ queryKey: ["rebuildMatch", key], enabled: Boolean(key), queryFn: ({ signal }) => mobileApi.getRebuildMatch(key, signal),
     staleTime: 0, refetchInterval: 10_000, retry: false });

@@ -1,5 +1,6 @@
 import { adaptationDeviationsSchema } from "./adaptations-schema";
 import { jinxRb1ExplanationSchema } from "./jinx-rb1-schema";
+import { jinxNewsBriefSchema } from "./jinx-news-schema";
 import { selectionComparisonSchema } from "./selection-comparison-schema";
 import { selectionHistorySchema } from "./selection-history-schema";
 import { selectionDecisionsSchema } from "./selection-decisions-schema";
@@ -275,6 +276,9 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
         jinxRb1ExplanationSchema, { headers: { ...decisionContextHeaders,
           "X-BTB-Jinx-Version": "jinx-rb1-explainer.v1",
           ...(decisionId ? { "X-BTB-Jinx-Decision": decisionId } : {}) } }, signal),
+    getJinxNewsBrief: (key, refresh, signal) =>
+      request("/v1/btb/matches/" + encodeURIComponent(key) + "/news-brief", jinxNewsBriefSchema,
+        { headers: { "X-BTB-Jinx-News": "btb-jinx-news.v1", ...(refresh ? { "X-BTB-Jinx-News-Refresh": "1" } : {}) } }, signal),
 
     getMatchSuperLogs: (key, signal) =>
       request(

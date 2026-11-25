@@ -28,6 +28,7 @@ import { formatSelection } from "@/src/utils/format";
 import { decisionEvidenceStatus } from "@/src/utils/decision-evidence-view";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 import { RatingStars } from "./RatingStars";
+import { JinxNewsBrief } from "./JinxNewsBrief";
 import { ListPerforation, ResultPill, TicketFigure, TicketSeam, TonePill, toneColor } from "./DecisionTicket";
 
 export function useRebuildClock(enabled = true) {
@@ -332,6 +333,7 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession, ma
         </View>
         <Text accessibilityLiveRegion="polite" style={styles.jinxCompactText}>{text}</Text>
         {outlook.detail ? <Text style={styles.jinxCompactMeta}>{outlook.detail}</Text> : null}
+        <JinxNewsBrief matchKey={matchKey} />
         <View style={styles.jinxCompactFoot}>
           <Text style={styles.jinxCompactMeta}>{time} · otomatik</Text>
           <Pressable accessibilityHint="Canlı maç listesini açar" accessibilityRole="button" onPress={() => router.navigate("/live")}
@@ -387,6 +389,7 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession, ma
           <MaterialCommunityIcons name="chevron-right" size={iconSizes.small} color={semantic.intelligence} />
         </Pressable> : null}
       </View>
+      <JinxNewsBrief matchKey={matchKey} />
       <View style={styles.jinxFoot}>
         <Text style={styles.jinxTime}>{time} <Text style={styles.jinxTimeLabel}>· {query.isError ? "yenilenemedi" : "otomatik güncellenir"}</Text></Text>
         <View style={styles.jinxFootActions}>
