@@ -1,7 +1,7 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-11-26
-Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 215F880`
+Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 03CEB65`
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md)
@@ -13,20 +13,30 @@ and the dated release reports/receipts.
   (`BTB_MOBILE_DATA_SOURCE=postgres`, schema `prod`); SAP is frozen with its
   writer jobs held and stays a rollback until 2026-12-04
   (`btb-codex/docs/PG_CUTOVER_RUNBOOK.md`).
-- Serving BFF: zbet-cap `7fcaff2` (branch `claude/daily-coupons-flow`,
-  Windows task `BTB Mobile BFF`, port 4004) with `BTB_JINX_NEWS_ENABLED=true`
-  and `BTB_JINX_NOTES_ENABLED=true` (`BTB_JINX_NOTES_PATH` in the User
-  environment).
-- Current accepted pair: `215f880` (Jinx notes), COMPLETE. The APK is
-  `btb-mobile-next-215f880-jinx-notes-arm64.apk` (SHA-256 `03DB8C93…`), the
-  only local APK. The web release is `20261126T143343Z-215f880`. Receipts:
-  `btb-codex/docs/evidence/jinx-notes-client-*-2026-11-26.json`.
-- Earlier the same day: `d085f5d` (PostgreSQL switch pair) and `65712c4`
-  (shared Rapor ayrıntısı in all three Karar günlüğü views, plus Jinx Maç
-  gündemi news brief), both COMPLETE.
+- Serving BFF: zbet-cap `5ff6376` (branch `claude/daily-coupons-flow`,
+  Windows task `BTB Mobile BFF`, port 4004, PID 41576 since 20:17Z) with
+  `BTB_JINX_NEWS_ENABLED=true` and `BTB_JINX_NOTES_ENABLED=true`
+  (`BTB_JINX_NOTES_PATH` in the User environment). News briefs persist in
+  `jinx-news-briefs.json` beside the notes file.
+- Current accepted pair: `03ceb65` (Lig sıralaması from the Bilyoner table,
+  Jinx article summaries, Expo 57.0.34 patches), COMPLETE after both owner
+  smokes ("Both work").
+  - APK: `btb-mobile-next-03ceb65-standings-jinx-arm64.apk` (SHA-256
+    `7CAAE96C…`), the only local APK.
+  - Web release: `20261126T201608Z-03ceb65`.
+  - Batch: `client-03ceb65…-7CAAE96CF8DD-62EC0EE11902`.
+  - Receipts: btb-codex `5ee9ea5`,
+    `docs/evidence/standings-jinx-client-*-2026-11-26.json`.
+  - Previous pair: `215f880`. Its local APK was deleted under the retention
+    rule; its receipts and Drive copy remain.
+- Earlier the same day: `215f880` (Jinx notes), `d085f5d` (PostgreSQL switch
+  pair) and `65712c4` (shared Rapor ayrıntısı and the Jinx Maç gündemi news
+  brief), all COMPLETE.
 - Jinx features, display only, on a free-tier Gemini cascade shared by every
-  Jinx feature (daily cap `BTB_JINX_DAILY_CALLS`, default 150):
-  - Maç gündemi: a news brief from Google News RSS.
+  Jinx feature (daily cap `BTB_JINX_DAILY_CALLS`, default 150; the local count
+  restarts with the BFF, while Google's own count does not):
+  - Maç gündemi: Google News plus Bing title matching, with article text.
+    Generated once per match (see the section below).
   - Jinx notu in the Jinx card: PRE / DECISION / POST, stored, at most one
     generated per read.
   - Mascot Günlük yorum: the body comes from a neutral line pool
@@ -38,7 +48,7 @@ and the dated release reports/receipts.
   zbet-mobile and zbet-cap. `master` (zbet-mobile) and `main` (zbet-cap) are
   not yet fast-forwarded.
 
-## Lig sıralaması from the Bilyoner table (2026-11-26, in the release pair)
+## Lig sıralaması from the Bilyoner table (2026-11-26, pair 03ceb65, COMPLETE)
 
 The owner asked for Bilyoner's Puan Durumu (Genel) on every match. Android and
 web share the change; no platform exception.
@@ -73,7 +83,7 @@ web share the change; no platform exception.
 - **Owner, 2026-11-26:** approved commit/push and the paired Android and web
   release together with the Jinx change.
 
-## Jinx Maç gündemi from article text (2026-11-26, zbet-cap `5ff6376`)
+## Jinx Maç gündemi from article text (2026-11-26, BFF 5ff6376, live)
 
 The owner wants one or two sentences of each article's key point, not its
 headline. This is a BFF-only change in zbet-cap (`jinx-news.js`, new
