@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { TotoFixture, TotoPrediction, TotoProgram } from "@/src/api/schemas";
-import { couponStructure, coverageTrend, dayRange, fixtureInstant, formatCost, kickoffCountdown, kickoffLabel, kickoffText, outOf, payoutRows, programAction, totoInPlay, totoProgress } from "./toto-lifecycle";
+import { couponStructure, coverageTrend, dayRange, fixtureInstant, formatCost, kickoffCountdown, kickoffLabel, kickoffText, nextMatchLine, outOf, payoutRows, programAction, totoInPlay, totoProgress } from "./toto-lifecycle";
 
 const at = (date: string, time: string) => Date.parse(`${date}T${time}:00+03:00`);
 const fixture = (matchNo: number, matchDate: string, matchTime: string, actualResult: TotoFixture["actualResult"] = null): TotoFixture =>
@@ -34,7 +34,7 @@ test("a waiting program reports progress, the coverage ceiling and the next unse
   const progress = totoProgress(program(rows), at("2026-11-01", "12:00"));
   assert.deepEqual([progress.total, progress.settled, progress.coverageHits, progress.mainHits, progress.misses, progress.open], [5, 3, 2, 1, 1, 2]);
   assert.equal(progress.maxCoverage, 4, "only settled misses lower the ceiling");
-  assert.deepEqual(progress.next, { matchNo: 5, matchName: "Maç 5", at: at("2026-11-01", "16:00"), started: false }, "earliest open kickoff, not the lowest number");
+  assert.deepEqual(progress.next, { matchNo: 5, matchName: "Maç 5", at: at("2026-11-01", "16:00"), started: false, inPlay: false }, "earliest open kickoff, not the lowest number");
   assert.equal(progress.firstKickoff, at("2026-10-30", "19:00")); assert.equal(progress.lastKickoff, at("2026-11-01", "21:00"));
   assert.equal(totoProgress(program(rows), at("2026-11-01", "17:00")).next?.started, true);
 });
@@ -102,4 +102,30 @@ test("btb-toto-live.v1 polling: only an open program with a match in play or awa
   assert.equal(totoInPlay(open([withLive({ status: "LIVE", provisionalResult: null, ...livePart }, fixture(1, "2026-11-24", "23:00", "1"))]), now), false, "official result");
   assert.equal(totoInPlay(open([withLive({ status: "LIVE", provisionalResult: null, ...livePart })], "RESULTED"), now), false);
   assert.equal(totoInPlay(undefined, now), false);
+});
+
+test("matches finished on the live feed stop waiting; settled stays official (owner 2026-11-26)", () => {
+  const now = at("2026-11-26", "23:50");
+  const live = (status: NonNullable<TotoFixture["live"]>["status"], provisionalResult: "1" | "X" | "2" | null) =>
+    ({ status, provisionalResult, minute: status === "LIVE" ? 45 : null, homeScore: 1, awayScore: 0, halfTimeHomeScore: null,
+      halfTimeAwayScore: null, updatedAt: null });
+  const rows = [prediction(1, "2026-11-24", "20:45", "OPEN"), prediction(2, "2026-11-25", "23:00", "OPEN"),
+    prediction(3, "2026-11-26", "23:00", "OPEN"), prediction(4, "2026-11-27", "20:00", "OPEN")];
+  // The live reading sits on the fixtures, as the BFF sends it.
+  const fixtures = [{ ...fixture(1, "2026-11-24", "20:45"), live: live("FINISHED", "1") }, { ...fixture(2, "2026-11-25", "23:00"), live: live("FINISHED", "X") },
+    { ...fixture(3, "2026-11-26", "23:00"), live: live("LIVE", null) }, fixture(4, "2026-11-27", "20:00")];
+  const progress = totoProgress(program(rows, { fixtures }), now);
+  assert.equal(progress.settled, 0);
+  assert.equal(progress.provisional, 2);
+  assert.equal(progress.inPlay, 1);
+  assert.equal(progress.waiting, 1);
+  assert.equal(progress.next?.matchNo, 3);
+  assert.equal(progress.next?.inPlay, true);
+  assert.match(nextMatchLine(progress, kickoffLabel) ?? "", /^Canlı: Maç 3 · 26 Kas/);
+  const done = [{ ...fixtures[0]! }, { ...fixtures[1]! }];
+  const finished = totoProgress(program(rows.slice(0, 2), { fixtures: done }), now);
+  assert.equal(finished.next, null);
+  assert.equal(nextMatchLine(finished, kickoffLabel), "Tüm maçlar bitti · resmî sonuç bekleniyor");
+  const upcoming = totoProgress(program([prediction(4, "2026-11-27", "20:00", "OPEN")], { fixtures: [fixture(4, "2026-11-27", "20:00")] }), now);
+  assert.match(nextMatchLine(upcoming, kickoffLabel) ?? "", /^Sıradaki: Maç 4/);
 });

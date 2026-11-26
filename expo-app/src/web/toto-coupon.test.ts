@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { couponCells, couponWidth, totoLiveLabel } from "./toto-coupon";
+import { couponCells, couponWidth, totoLiveLabel, totoLiveState } from "./toto-coupon";
 
 test("a single, double and triple row mark main, covered and actual cells", () => {
   assert.deepEqual(couponCells({ mainPick: "1", coverage: "1", actualResult: null }), [
@@ -55,4 +55,16 @@ test("the provisional cell yields to the official result", () => {
   assert.deepEqual(provisional.map((c) => [c.outcome, c.actual, c.provisional]), [["1", false, false], ["X", false, true], ["2", false, false]]);
   const official = couponCells({ mainPick: "1", coverage: "1X", actualResult: "2", live: { provisionalResult: "X" } });
   assert.ok(official.every((c) => !c.provisional));
+});
+
+test("live state: finished with a provisional result, in play, or nothing; an official result wins", () => {
+  const live = (status: string, provisionalResult: string | null) => ({ status, minute: null, homeScore: 2, awayScore: 1, provisionalResult });
+  assert.equal(totoLiveState({ actualResult: null, live: live("FINISHED", "1") }), "PROVISIONAL");
+  assert.equal(totoLiveState({ actualResult: null, live: live("EXTRA_TIME", "X") }), "PROVISIONAL");
+  assert.equal(totoLiveState({ actualResult: null, live: live("EXTRA_TIME", null) }), "IN_PLAY");
+  assert.equal(totoLiveState({ actualResult: null, live: live("HALF_TIME", null) }), "IN_PLAY");
+  assert.equal(totoLiveState({ actualResult: null, live: live("FINISHED", null) }), null, "unproven final");
+  assert.equal(totoLiveState({ actualResult: null, live: live("NOT_STARTED", null) }), null);
+  assert.equal(totoLiveState({ actualResult: "1", live: live("FINISHED", "1") }), null);
+  assert.equal(totoLiveState({ actualResult: null }), null);
 });

@@ -48,7 +48,8 @@ import {
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { filterTotoResults, type TotoResultFilter } from "@/src/utils/toto-results";
-import { dayRange, formatCost, kickoffLabel, kickoffText, outOf, payoutRows, totoProgress } from "@/src/utils/toto-lifecycle";
+import { dayRange, formatCost, kickoffLabel, kickoffText, nextMatchLine, outOf, payoutRows, totoProgress } from "@/src/utils/toto-lifecycle";
+import { totoLiveState, type TotoLiveInput } from "@/src/web/toto-coupon";
 import { TotoCouponGrid } from "@/src/web/TotoCouponGrid";
 import { TotoRefreshNotice } from "@/src/components/TotoRefreshNotice";
 import { totoQueryView } from "@/src/utils/toto-query-view";
@@ -60,7 +61,7 @@ const resultFilters: { value: TotoResultFilter; label: string }[] = [
   { value: "MISS", label: "Kapsam dışı" }
 ];
 
-function predictionResultPresentation(result: TotoPrediction["result"]): {
+function predictionResultPresentation(result: TotoPrediction["result"], row?: { actualResult: string | null; live?: TotoLiveInput | null | undefined }): {
   color: string;
   label: string;
 } {
@@ -76,6 +77,10 @@ function predictionResultPresentation(result: TotoPrediction["result"]): {
   if (result === "MISS") {
     return { color: semantic.negative, label: "KAPSAM DIŞI" };
   }
+  // An open row that finished or is in play on the live feed says so (owner 2026-11-26).
+  const state = row ? totoLiveState(row) : null;
+  if (state === "PROVISIONAL") return { color: colors.gold, label: "BİTTİ · GEÇİCİ" };
+  if (state === "IN_PLAY") return { color: semantic.live, label: "CANLI" };
   return { color: semantic.intelligence, label: "BEKLİYOR" };
 }
 
@@ -155,6 +160,7 @@ export default function TotoProgramDetailScreen() {
   const program = view.data;
   const statusColor = totoStatusColor(program.status);
   const progress = totoProgress(program, now);
+  const nextLine = nextMatchLine(progress, kickoffLabel);
   const visiblePredictions = filterTotoResults(program.predictions, resultFilter);
   const number = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 });
   const of = (count: number | null) => outOf(count, progress.total);
@@ -168,7 +174,8 @@ export default function TotoProgramDetailScreen() {
   // The overview answers this lifecycle's question: when play starts, how the
   // open program is going, or how it ended. Each count appears once.
   const metrics = program.status === "ACTIVE" ? progress.planned ? plan : []
-    : program.status === "WAITING_RESULT" ? [{ value: `${progress.settled}/${progress.total}`, label: "sonuçlandı" },
+    : program.status === "WAITING_RESULT" ? [{ value: `${progress.settled}/${progress.total}`,
+      label: progress.provisional > 0 ? `sonuçlandı · ${progress.provisional} bitti, geçici` : "sonuçlandı" },
       { value: program.coverageHits === null ? "—" : String(program.coverageHits), label: "kapsama" },
       { value: program.mainHits === null ? "—" : String(program.mainHits), label: "ana isabet" }, { value: of(progress.maxCoverage), label: "en fazla kapsama" }]
     : program.status === "RESULTED" ? [{ value: of(program.coverageHits), label: "kapsama" }, { value: of(program.mainHits), label: "ana isabet" }, ...plan]
@@ -228,14 +235,14 @@ export default function TotoProgramDetailScreen() {
         {program.status === "ACTIVE" ? (
           <Text style={styles.kickoff}>{progress.planned ? when.label : `${program.predictions.length ? "Henüz kolon planı yok" : "Tahmin hazırlanıyor"} · ${when.label.toLocaleLowerCase("tr-TR")}`} {when.text}</Text>
         ) : null}
-        {progress.settled > 0 ? (
+        {progress.settled > 0 || progress.provisional > 0 || progress.inPlay > 0 ? (
           <View style={styles.resultBlock}>
             <TotoProgressBar progress={progress} />
 
           </View>
         ) : null}
-        {program.status === "WAITING_RESULT" && progress.next ? (
-          <Text style={styles.kickoff}>{progress.next.started ? "Sonuç bekleniyor" : "Sıradaki"}: {progress.next.matchName}{progress.next.at !== null ? ` · ${kickoffLabel(progress.next.at)}` : ""}</Text>
+        {program.status === "WAITING_RESULT" && nextLine ? (
+          <Text style={styles.kickoff}>{nextLine}</Text>
         ) : null}
         {program.status === "RESULTED" && program.theoreticalPrize !== null ? (
           <View style={styles.prizeRow}>

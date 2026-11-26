@@ -1,8 +1,17 @@
 import type { TotoFixture, TotoPayout, TotoPrediction, TotoProgram } from "../api/schemas";
 import { summarizeTotoResults } from "./toto-results";
+import { totoLiveState } from "../web/toto-coupon";
+
+/** "Canlı: X", "Sonuç bekleniyor: X" or "Sıradaki: X"; after the last whistle, the official result is what remains. */
+export function nextMatchLine(progress: Pick<ReturnType<typeof totoProgress>, "next" | "open">, label: (at: number) => string): string | null {
+  const next = progress.next;
+  if (!next) return progress.open > 0 ? "Tüm maçlar bitti · resmî sonuç bekleniyor" : null;
+  const lead = next.inPlay ? "Canlı" : next.started ? "Sonuç bekleniyor" : "Sıradaki";
+  return `${lead}: ${next.matchName}${next.at !== null ? ` · ${label(next.at)}` : ""}`;
+}
 
 type Program = Pick<TotoProgram, "status" | "columns" | "singleCount" | "doubleCount" | "tripleCount" | "fixtures" | "predictions"> & Partial<Pick<TotoProgram, "payinEndsAt">>;
-type Row = Pick<TotoFixture, "matchNo" | "matchName" | "matchDate" | "matchTime" | "actualResult">;
+type Row = Pick<TotoFixture, "matchNo" | "matchName" | "matchDate" | "matchTime" | "actualResult"> & { live?: TotoFixture["live"] };
 
 /** Istanbul wall-clock kickoff (fixed +03:00, as formatFixtureDateTime); null when unknown. */
 export function fixtureInstant(row: Pick<TotoFixture, "matchDate" | "matchTime">): number | null {
@@ -58,10 +67,18 @@ export function totoProgress(program: Program, now: number) {
   const rows: readonly Row[] = program.predictions.length ? program.predictions : program.fixtures;
   const isOpen = (row: Row) => "result" in row ? (row as TotoPrediction).result === "OPEN" : row.actualResult === null;
   const times = rows.map(fixtureInstant).filter((at): at is number => at !== null);
-  const open = rows.filter(isOpen).map(row => ({ row, at: fixtureInstant(row) }))
+  // Predictions carry no live reading of their own; the fixture with the same number does.
+  const liveOf = (row: Row) => row.live ?? program.fixtures.find(fixture => fixture.matchNo === row.matchNo)?.live ?? null;
+  const open = rows.filter(isOpen).map(row => ({ row, at: fixtureInstant(row),
+    state: totoLiveState({ actualResult: row.actualResult, live: liveOf(row) }) }))
     .sort((a, b) => (a.at ?? Infinity) - (b.at ?? Infinity) || a.row.matchNo - b.row.matchNo);
-  const next = open[0] ? { matchNo: open[0].row.matchNo, matchName: open[0].row.matchName, at: open[0].at,
-    started: open[0].at !== null && open[0].at <= now } : null;
+  // A match that finished on the live feed is no longer "waiting" (owner 2026-11-26);
+  // it still counts as open until the official result arrives.
+  const provisional = open.filter(item => item.state === "PROVISIONAL").length;
+  const inPlay = open.filter(item => item.state === "IN_PLAY").length;
+  const upcoming = open.find(item => item.state !== "PROVISIONAL");
+  const next = upcoming ? { matchNo: upcoming.row.matchNo, matchName: upcoming.row.matchName, at: upcoming.at,
+    started: upcoming.at !== null && upcoming.at <= now, inPlay: upcoming.state === "IN_PLAY" } : null;
   const total = summary.total || program.fixtures.length;
   const closesAt = program.payinEndsAt ? Date.parse(program.payinEndsAt) : NaN;
   const firstKickoff = times.length ? Math.min(...times) : null;
@@ -70,6 +87,7 @@ export function totoProgress(program: Program, now: number) {
   return {
     total, settled: summary.settled, mainHits: summary.mainHits, coverageHits: summary.coverageHits,
     misses: summary.misses, open: summary.open, coveredOnly: summary.coveredOnly,
+    provisional, inPlay, waiting: Math.max(0, summary.open - provisional - inPlay),
     maxCoverage: summary.total ? summary.total - summary.misses : null,
     firstKickoff, lastKickoff: times.length ? Math.max(...times) : null, deadline,
     next, planned: program.columns > 0 && program.predictions.length > 0, structure: couponStructure(program)

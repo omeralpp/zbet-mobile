@@ -48,6 +48,25 @@ and the dated release reports/receipts.
   zbet-mobile and zbet-cap. `master` (zbet-mobile) and `main` (zbet-cap) are
   not yet fast-forwarded.
 
+## Toto progress counts live finals (2026-11-26, release pair in progress)
+
+The owner reported that finished Toto matches still read as waiting. On both
+surfaces, an open row that finished on the live feed (with a provisional
+1/X/2) or is in play is no longer counted as "Bekliyor":
+
+- **Progress bar:** `Bitti · geçici`, `Canlı` and `Bekliyor` are separate.
+- **Settled count:** `sonuçlandı` stays official, with "N bitti · geçici"
+  beside it.
+- **Next-match line:** it skips finished rows (`Canlı: …`, `Sonuç bekleniyor:
+  …`, `Sıradaki: …`, or "Tüm maçlar bitti · resmî sonuç bekleniyor").
+- **DURUM:** `BİTTİ · GEÇİCİ` (gold) or `CANLI`.
+- **Unchanged:** main hit, coverage and maximum coverage stay official only.
+- **Checks:** 872 client tests.
+- **Data repair the same evening (owner-approved):** the 13 proven gc369
+  finals from 24–25 Nov were copied from `live.zbet_t_toto_live` to
+  `prod.zbet_t_toto_live`. They had not been copied at the PostgreSQL
+  cutover.
+
 ## Lig sıralaması from the Bilyoner table (2026-11-26, pair 03ceb65, COMPLETE)
 
 The owner asked for Bilyoner's Puan Durumu (Genel) on every match. Android and

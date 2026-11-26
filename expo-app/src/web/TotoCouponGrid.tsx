@@ -4,7 +4,7 @@ import { colors, radii, semantic, spacing, typeScale } from "@/src/theme/theme";
 import { formatFixtureDateTime, formatPercentage } from "@/src/utils/format";
 import { couponCells, couponWidth, totoLiveLabel } from "./toto-coupon";
 
-type ResultPresentation = (result: TotoPrediction["result"]) => { color: string; label: string };
+type ResultPresentation = (result: TotoPrediction["result"], row?: { actualResult: string | null; live?: TotoPrediction["live"] }) => { color: string; label: string };
 
 /**
  * Desktop Toto coupon (platform exception: wide web layout of the phone's
@@ -45,7 +45,7 @@ export function TotoCouponGrid({
       </View>
       {predictions.map((prediction, index) => {
         const cells = couponCells(prediction);
-        const presentation = presentResult(prediction.result);
+        const presentation = presentResult(prediction.result, prediction);
         const width = couponWidth(prediction);
         const live = totoLiveLabel(prediction);
         return (

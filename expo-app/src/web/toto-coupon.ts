@@ -57,6 +57,18 @@ export type TotoLiveInput = {
 export type TotoLiveLabel = { text: string; inPlay: boolean };
 
 /**
+ * Where a match without an official result stands on the live feed: finished
+ * with a provisional 1/X/2, in play, or neither (owner 2026-11-26: a finished
+ * match must not read as waiting). Official results always win.
+ */
+export function totoLiveState(row: { actualResult: string | null; live?: TotoLiveInput | null | undefined }): "PROVISIONAL" | "IN_PLAY" | null {
+  const live = row.live;
+  if (!live || row.actualResult) return null;
+  if (live.provisionalResult && (live.status === "FINISHED" || live.status === "EXTRA_TIME")) return "PROVISIONAL";
+  return live.status === "LIVE" || live.status === "HALF_TIME" || live.status === "EXTRA_TIME" ? "IN_PLAY" : null;
+}
+
+/**
  * One-line live state of a Toto match for both surfaces (btb-toto-live.v1).
  * Null when there is nothing to add to the kickoff time: no live data, not
  * started, unknown, or an official result already shown.

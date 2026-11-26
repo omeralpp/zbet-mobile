@@ -6,7 +6,7 @@ import { colors, radii, semantic, spacing, typeScale } from "@/src/theme/theme";
 import { formatFixtureDateTime, formatPercentage } from "@/src/utils/format";
 import { couponCells, totoLiveLabel } from "@/src/web/toto-coupon";
 
-type ResultPresentation = (result: TotoPrediction["result"]) => { color: string; label: string };
+type ResultPresentation = (result: TotoPrediction["result"], row?: { actualResult: string | null; live?: TotoPrediction["live"] }) => { color: string; label: string };
 
 /**
  * Phone Toto coupon: the desktop grid's 1/X/2 encoding in one compact row per
@@ -37,7 +37,7 @@ export function TotoCouponList({ predictions, presentResult, onOpen }: {
         </View>
         {predictions.map((prediction, index) => {
           const open = expanded === prediction.matchNo;
-          const presentation = presentResult(prediction.result);
+          const presentation = presentResult(prediction.result, prediction);
           const score = prediction.homeScore !== null && prediction.awayScore !== null ? `${prediction.homeScore}-${prediction.awayScore}` : null;
           const when = formatFixtureDateTime(prediction.matchDate, prediction.matchTime);
           const live = totoLiveLabel(prediction);

@@ -14,7 +14,7 @@ import {
 } from "@/src/theme/theme";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 import { hasTheoreticalPrize, totoProgramTone } from "@/src/utils/toto-status";
-import { dayRange, formatCost, kickoffLabel, kickoffText, outOf, programAction, totoProgress } from "@/src/utils/toto-lifecycle";
+import { dayRange, formatCost, kickoffLabel, kickoffText, nextMatchLine, outOf, programAction, totoProgress } from "@/src/utils/toto-lifecycle";
 import {
   formatCurrencyAmount,
   formatProgramStatus
@@ -41,12 +41,16 @@ export function useMinuteNow() {
 }
 
 /** Settled outcomes as one proportional bar: main hits, other coverage, misses, open. */
-export function TotoProgressBar({ progress }: { progress: Pick<ReturnType<typeof totoProgress>, "mainHits" | "coveredOnly" | "misses" | "open" | "total"> }) {
+export function TotoProgressBar({ progress }: { progress: Pick<ReturnType<typeof totoProgress>, "mainHits" | "coveredOnly" | "misses" | "open" | "total"> & Partial<Pick<ReturnType<typeof totoProgress>, "provisional" | "inPlay" | "waiting">> }) {
+  // Open rows split by the live feed: finished (provisional), in play, not yet played.
+  const provisional = progress.provisional ?? 0, inPlay = progress.inPlay ?? 0;
   const parts = [
     { label: "Ana isabet", count: progress.mainHits, color: colors.green },
     { label: "Ek kapsama", count: progress.coveredOnly, color: colors.gold },
     { label: "Kapsam dışı", count: progress.misses, color: colors.red },
-    { label: "Bekliyor", count: progress.open, color: colors.textSubtle }
+    { label: "Bitti · geçici", count: provisional, color: colors.textMuted },
+    { label: "Canlı", count: inPlay, color: semantic.live },
+    { label: "Bekliyor", count: progress.waiting ?? progress.open, color: colors.textSubtle }
   ].filter(part => part.count > 0);
   if (!parts.length) return null;
   const scope = `Listelenen ${progress.total} maç`;
@@ -89,6 +93,7 @@ export function TotoProgramCard({ program, showContextNote = true, compact = fal
   const router = useRouter();
   const now = useMinuteNow();
   const progress = totoProgress(program, now);
+  const nextLine = nextMatchLine(progress, kickoffLabel);
   const tone = totoProgramTone(program.status);
   const statusColor = totoStatusColor(program.status);
   // Current programs and errors earn an accent; completed history recedes.
@@ -199,13 +204,14 @@ export function TotoProgramCard({ program, showContextNote = true, compact = fal
       ) : program.status === "WAITING_RESULT" ? (
         <>
           <View style={styles.metrics}>
-            <Metric label="sonuçlandı" value={`${progress.settled}/${progress.total}`} />
+            {/* Settled stays official; a match that finished on the live feed is named beside it. */}
+            <Metric {...(progress.provisional > 0 ? { detail: `${progress.provisional} bitti · geçici` } : {})} label="sonuçlandı" value={`${progress.settled}/${progress.total}`} />
             {/* With no result yet the main-hit line would only repeat the dash. */}
             <Metric {...(program.mainHits === null ? {} : { detail: `ana ${program.mainHits}` })} label="kapsama" value={program.coverageHits === null ? "—" : String(program.coverageHits)} />
             <Metric label="en fazla kapsama" value={progress.maxCoverage === null ? "—" : `${progress.maxCoverage}/${progress.total}`} />
           </View>
           <TotoProgressBar progress={progress} />
-          {progress.next ? <Text style={styles.kickoffText}>{progress.next.started ? "Sonuç bekleniyor" : "Sıradaki"}: {progress.next.matchName}{progress.next.at !== null ? ` · ${kickoffLabel(progress.next.at)}` : ""}</Text> : null}
+          {nextLine ? <Text style={styles.kickoffText}>{nextLine}</Text> : null}
           <Text style={styles.metricLabel}>{plan}</Text>
         </>
       ) : program.status === "RESULTED" ? (
