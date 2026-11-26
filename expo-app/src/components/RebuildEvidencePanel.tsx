@@ -27,6 +27,7 @@ import { decisionEvidenceStatus } from "@/src/utils/decision-evidence-view";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 import { RatingStars } from "./RatingStars";
 import { JinxNewsBrief } from "./JinxNewsBrief";
+import { JinxNote } from "./JinxNote";
 import { ListPerforation, ResultPill, TicketFigure, TicketSeam, TonePill } from "./DecisionTicket";
 
 export function useRebuildClock(enabled = true) {
@@ -331,6 +332,7 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession, ma
         </View>
         <Text accessibilityLiveRegion="polite" style={styles.jinxCompactText}>{text}</Text>
         {outlook.detail ? <Text style={styles.jinxCompactMeta}>{outlook.detail}</Text> : null}
+        <JinxNote matchKey={matchKey} />
         <JinxNewsBrief matchKey={matchKey} />
         <View style={styles.jinxCompactFoot}>
           <Text style={styles.jinxCompactMeta}>{time} · otomatik</Text>
@@ -361,6 +363,7 @@ export function RebuildJinxCard({ matchKey, matchStatus = "LIVE", possession, ma
         {current ? <Text style={[styles.jinxLead, current.tone === "warning" && styles.jinxLeadWarning]}>{sections?.moment ? `Son kontrol · ${current.title}` : current.title}</Text> : null}
         {!sections || current ? <Text accessibilityLiveRegion="polite" style={styles.jinxSpeechText}>{current?.text ?? text}</Text> : null}
         {outlook.detail ? <Text style={styles.jinxDetail}>{outlook.detail}</Text> : null}
+        <JinxNote decisionId={record?.decisionId ?? null} matchKey={matchKey} />
         {blockers.length ? <View style={styles.jinxBlockers}>
           <Text style={styles.caption}>Uygun pazar çıkmama nedeni</Text>
           {blockers.map(row => (

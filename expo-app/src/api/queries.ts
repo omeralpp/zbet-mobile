@@ -80,6 +80,17 @@ export function jinxNewsQuery(key: string) {
   return queryOptions({ queryKey: ["jinxNews", key], enabled: Boolean(key),
     queryFn: ({ signal }) => mobileApi.getJinxNewsBrief(key, false, signal), staleTime: 10 * 60_000, gcTime: 60 * 60_000, retry: false });
 }
+/**
+ * Jinx notes: the BFF writes at most one missing note per read and stores them,
+ * so a slow poll fills a live match's notes without spending extra model calls.
+ */
+export function jinxNotesQuery(key: string) {
+  return queryOptions({ queryKey: ["jinxNotes", key], enabled: Boolean(key),
+    queryFn: ({ signal }) => mobileApi.getJinxNotes(key, signal), staleTime: 2 * 60_000, refetchInterval: 3 * 60_000, gcTime: 60 * 60_000, retry: false });
+}
+/** Mascot lines change only a few times a day. */
+export const jinxDailyLinesQuery = queryOptions({ queryKey: ["jinxDailyLines"], queryFn: ({ signal }) => mobileApi.getJinxDailyLines(signal),
+  staleTime: 10 * 60_000, refetchInterval: 15 * 60_000, retry: false });
 export function rebuildMatchQuery(key: string) {
   return queryOptions({ queryKey: ["rebuildMatch", key], enabled: Boolean(key), queryFn: ({ signal }) => mobileApi.getRebuildMatch(key, signal),
     staleTime: 0, refetchInterval: 10_000, retry: false });

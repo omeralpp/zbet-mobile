@@ -1,6 +1,7 @@
 import { adaptationDeviationsSchema } from "./adaptations-schema";
 import { jinxRb1ExplanationSchema } from "./jinx-rb1-schema";
 import { jinxNewsBriefSchema } from "./jinx-news-schema";
+import { jinxDailyLinesSchema, jinxNotesSchema } from "./jinx-notes-schema";
 import { selectionComparisonSchema } from "./selection-comparison-schema";
 import { selectionHistorySchema } from "./selection-history-schema";
 import { selectionDecisionsSchema } from "./selection-decisions-schema";
@@ -279,6 +280,11 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
     getJinxNewsBrief: (key, refresh, signal) =>
       request("/v1/btb/matches/" + encodeURIComponent(key) + "/news-brief", jinxNewsBriefSchema,
         { headers: { "X-BTB-Jinx-News": "btb-jinx-news.v1", ...(refresh ? { "X-BTB-Jinx-News-Refresh": "1" } : {}) } }, signal),
+    getJinxNotes: (key, signal) =>
+      request("/v1/btb/matches/" + encodeURIComponent(key) + "/jinx-notes", jinxNotesSchema,
+        { headers: { "X-BTB-Jinx-Notes": "btb-jinx-notes.v1" } }, signal),
+    getJinxDailyLines: (signal) =>
+      request("/v1/btb/jinx/daily-lines", jinxDailyLinesSchema, { headers: { "X-BTB-Jinx-Lines": "btb-jinx-lines.v1" } }, signal),
 
     getMatchSuperLogs: (key, signal) =>
       request(

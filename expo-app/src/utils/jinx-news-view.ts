@@ -22,7 +22,7 @@ export function newsDay(date: string): string {
 export function jinxNewsView(brief: JinxNewsBrief | undefined, state: { loading: boolean; error: boolean; now: number }): JinxNewsView {
   if (state.loading && !brief) return { kind: "LOADING", message: "Jinx maç gündemini tarıyor…", canRefresh: false, generated: null };
   if (!brief) return state.error ? { kind: "FAILED", message: "Maç gündemi alınamadı.", canRefresh: true, generated: null } : { kind: "HIDDEN" };
-  if (brief.status === "DISABLED") return { kind: "HIDDEN" };
+  if (brief.status === "DISABLED" || brief.status === "SKIPPED") return { kind: "HIDDEN" };
   const canRefresh = brief.refreshAvailableAt ? Date.parse(brief.refreshAvailableAt) <= state.now : brief.status !== "LIMITED";
   const generated = brief.generatedAt ? `Taranma ${timeLabel.format(new Date(brief.generatedAt))}` : null;
   switch (brief.status) {

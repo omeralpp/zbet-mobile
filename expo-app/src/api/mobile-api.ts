@@ -1,5 +1,6 @@
 import type { JinxRb1Explanation } from "./jinx-rb1-schema";
 import type { JinxNewsBrief } from "./jinx-news-schema";
+import type { JinxDailyLines, JinxNotes } from "./jinx-notes-schema";
 import type { AdaptationDeviations, DeviationBandChange } from "./adaptations-schema";
 import type { SelectionComparison } from "./selection-comparison-schema";
 import type { SelectionHistory } from "./selection-history-schema";
@@ -46,6 +47,10 @@ export interface MobileApi {
   getRebuildJinxExplanation(key: string, decisionId?: string, signal?: AbortSignal): Promise<JinxRb1Explanation>;
   /** Jinx Maç gündemi: grounded, display-only news brief; `refresh` asks for a new one. */
   getJinxNewsBrief(key: string, refresh?: boolean, signal?: AbortSignal): Promise<JinxNewsBrief>;
+  /** Jinx notes: stored one-sentence notes for a match moment (display only). */
+  getJinxNotes(key: string, signal?: AbortSignal): Promise<JinxNotes>;
+  /** Mascot line pool: neutral lines about today, for the mascot bubble. */
+  getJinxDailyLines(signal?: AbortSignal): Promise<JinxDailyLines>;
   getDashboard(signal?: AbortSignal): Promise<Dashboard>;
   getMatches(signal?: AbortSignal): Promise<MatchSummary[]>;
   /** Every loaded fixture, finished ones included, each with `predicted`. */

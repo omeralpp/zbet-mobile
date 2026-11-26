@@ -31,6 +31,7 @@ test("an available brief lists dated lines with numbered sources", () => {
 
 test("disabled hides the block; empty, limited and failures explain themselves", () => {
   assert.equal(jinxNewsView(brief({ status: "DISABLED", bullets: [], sources: [] }), { loading: false, error: false, now: NOW }).kind, "HIDDEN");
+  assert.equal(jinxNewsView(brief({ status: "SKIPPED", bullets: [], sources: [] }), { loading: false, error: false, now: NOW }).kind, "HIDDEN");
   assert.equal(jinxNewsView(undefined, { loading: false, error: false, now: NOW }).kind, "HIDDEN");
   assert.equal(jinxNewsView(undefined, { loading: true, error: false, now: NOW }).kind, "LOADING");
   assert.equal(jinxNewsView(undefined, { loading: false, error: true, now: NOW }).kind, "FAILED");

@@ -9,7 +9,7 @@ const isoDateTime = z.string().datetime({ offset: true });
 export const jinxNewsBriefSchema = z.strictObject({
   schemaVersion: z.literal("btb-jinx-news.v1"),
   matchKey: z.string().min(1),
-  status: z.enum(["AVAILABLE", "NO_RECENT_NEWS", "DISABLED", "FAILED", "LIMITED"]),
+  status: z.enum(["AVAILABLE", "NO_RECENT_NEWS", "DISABLED", "FAILED", "LIMITED", "SKIPPED"]),
   displayOnly: z.literal(true),
   generatedAt: isoDateTime.nullable(),
   observedAt: isoDateTime,
