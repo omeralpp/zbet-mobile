@@ -1,6 +1,9 @@
 import { StyleSheet, Text, View } from "react-native";
 import { colors, radii, spacing, textFont, numericFont } from "@/src/theme/theme";
 import { TeamLogo } from "./TeamLogo";
+import { standingsOrder, standingsRecordLine, type StandingsRecord } from "./standings-view";
+
+export type { StandingsRecord } from "./standings-view";
 
 export type StandingsTeam = {
   team: string;
@@ -8,6 +11,7 @@ export type StandingsTeam = {
   position: number | null;
   points: number | null;
   side: "HOME" | "AWAY";
+  record?: StandingsRecord | null;
 };
 
 type StandingsModuleProps = {
@@ -25,13 +29,70 @@ function StandingsRow({ team }: { team: StandingsTeam }) {
   const rankLabel =
     team.position === null ? "sıra yok" : `${team.position}. sıra`;
   const pointsLabel = team.points === null ? "puan yok" : `${team.points} puan`;
+  const record = team.record ?? null;
+  const recordLabel = record
+    ? `, ${record.goalsFor} gol attı, ${record.goalsAgainst} gol yedi, ${standingsRecordLine(record)}, averaj ${record.goalDifference}` +
+      (record.zone ? `, ${record.zone}` : "")
+    : "";
+
+  const label = `${team.team}, ${rankLabel}, ${pointsLabel}${recordLabel}`;
+  // A missing rank stays neutral: a coloured badge would imply a real
+  // standing position the source never delivered.
+  const rank = (
+    <View style={record ? styles.metricCell : styles.metric}>
+      <Text style={[styles.metricValue, team.position === null && styles.metricValueMissing]}>
+        {team.position === null ? "—" : `#${team.position}`}
+      </Text>
+      <Text style={styles.metricLabel}>{team.position === null ? "sıra yok" : "sıra"}</Text>
+    </View>
+  );
+  const points = (
+    <View style={record ? styles.metricCell : styles.metric}>
+      <Text style={[styles.metricValue, team.points === null && styles.metricValueMissing]}>
+        {team.points ?? "—"}
+      </Text>
+      <Text style={styles.metricLabel}>{team.points === null ? "puan yok" : "puan"}</Text>
+    </View>
+  );
+
+  if (record) {
+    // The full table row: identity on top, the four numbers in a strip below,
+    // so a phone keeps the team name on one line.
+    return (
+      <View accessibilityLabel={label} accessibilityRole="text" style={styles.row}>
+        <View style={[styles.accent, { backgroundColor: accent }]} />
+        <View style={styles.stacked}>
+          <View style={styles.identity}>
+            <TeamLogo participantId={team.participantId} size="compact" />
+            <View style={styles.identityCopy}>
+              <Text numberOfLines={1} style={styles.team}>
+                {team.team}
+              </Text>
+              <Text numberOfLines={1} style={styles.recordLine}>
+                <Text style={[styles.side, { color: accent }]}>{sideLabel(team.side)}</Text>
+                {` · ${standingsRecordLine(record)}${record.zone ? ` · ${record.zone}` : ""}`}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.metricStrip}>
+            {rank}
+            <View style={styles.metricCell}>
+              <Text style={styles.metricValue}>{record.goalsFor}</Text>
+              <Text style={styles.metricLabel}>attığı</Text>
+            </View>
+            <View style={styles.metricCell}>
+              <Text style={styles.metricValue}>{record.goalsAgainst}</Text>
+              <Text style={styles.metricLabel}>yediği</Text>
+            </View>
+            {points}
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   return (
-    <View
-      accessibilityLabel={`${team.team}, ${rankLabel}, ${pointsLabel}`}
-      accessibilityRole="text"
-      style={styles.row}
-    >
+    <View accessibilityLabel={label} accessibilityRole="text" style={styles.row}>
       <View style={[styles.accent, { backgroundColor: accent }]} />
       <View style={styles.identity}>
         <TeamLogo participantId={team.participantId} size="compact" />
@@ -44,34 +105,8 @@ function StandingsRow({ team }: { team: StandingsTeam }) {
           </Text>
         </View>
       </View>
-      <View style={styles.metric}>
-        {/* A missing rank stays neutral: a coloured badge would imply a real
-            standing position the SAP record never delivered. */}
-        <Text
-          style={[
-            styles.metricValue,
-            team.position === null && styles.metricValueMissing
-          ]}
-        >
-          {team.position === null ? "—" : `#${team.position}`}
-        </Text>
-        <Text style={styles.metricLabel}>
-          {team.position === null ? "sıra yok" : "sıra"}
-        </Text>
-      </View>
-      <View style={styles.metric}>
-        <Text
-          style={[
-            styles.metricValue,
-            team.points === null && styles.metricValueMissing
-          ]}
-        >
-          {team.points ?? "—"}
-        </Text>
-        <Text style={styles.metricLabel}>
-          {team.points === null ? "puan yok" : "puan"}
-        </Text>
-      </View>
+      {rank}
+      {points}
     </View>
   );
 }
@@ -102,10 +137,13 @@ export function StandingsModule({
         ? home.team
         : away.team;
 
+  // The team higher in the table sits on top; EV / DEPLASMAN still name the side.
+  const [upper, lower] = standingsOrder(home, away);
+
   return (
     <>
       <View style={styles.card}>
-        <StandingsRow team={home} />
+        <StandingsRow team={upper} />
         <View style={styles.gapStrip}>
           {pointsGap === null ? (
             <Text style={styles.gapText}>Puan karşılaştırması yok</Text>
@@ -117,7 +155,7 @@ export function StandingsModule({
             </Text>
           )}
         </View>
-        <StandingsRow team={away} />
+        <StandingsRow team={lower} />
       </View>
       <Text style={styles.boundary}>{caption}</Text>
     </>
@@ -168,6 +206,24 @@ const styles = StyleSheet.create({
   metric: {
     alignItems: "flex-end",
     minWidth: 48
+  },
+  stacked: {
+    flex: 1
+  },
+  metricStrip: {
+    flexDirection: "row",
+    paddingBottom: spacing.md
+  },
+  metricCell: {
+    alignItems: "center",
+    flex: 1
+  },
+  recordLine: {
+    ...textFont("400"),
+    color: colors.textMuted,
+    fontSize: 11,
+    lineHeight: 15,
+    marginTop: 2
   },
   metricValue: {
     ...numericFont("800"),

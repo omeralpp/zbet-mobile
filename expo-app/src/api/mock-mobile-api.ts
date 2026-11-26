@@ -175,8 +175,16 @@ export const mockMobileApi: MobileApi = {
       mockMobileApi.getMatchJourney(key, signal)
     ]);
     const acquiredAt = new Date().toISOString();
+    // Synthetic table rows shaped like the provider's general standings.
+    const standingRow = (position: number, won: number, draw: number, lost: number, goalsFor: number,
+      goalsAgainst: number, zone: string | null) => ({ position, played: won + draw + lost, won, draw, lost,
+      goalsFor, goalsAgainst, goalDifference: goalsFor - goalsAgainst, points: won * 3 + draw, zone });
+    const standings = { contractVersion: "btb-match-standings.v1" as const, matchKey: key,
+      availability: "OK" as const, source: "SYNTHETIC", capturedAt: acquiredAt, competition: matchDetail.league,
+      home: standingRow(leagueContext.homeStandingPosition ?? 4, 8, 3, 2, 24, 13, "Avrupa kupaları"),
+      away: standingRow(leagueContext.awayStandingPosition ?? 11, 4, 4, 5, 15, 17, null) };
     const sources = { matchDetail: { ...matchDetail, currentMatchRecord: true }, insight,
-      periodScore, leagueContext, superLogs, liveContext, teamForm, matchPath, matchJourney };
+      periodScore, leagueContext, superLogs, liveContext, teamForm, matchPath, matchJourney, standings };
     const packet = analysisContextSchema.parse({ contractVersion: "btb-analysis-context.v1", matchKey: key,
       snapshotId: `synthetic-${key}-${Date.now()}`, evidenceRevision: JSON.stringify(sources),
       selectionKey: matchDetail.selectedOdd && matchDetail.rating > 0 ? JSON.stringify([key,

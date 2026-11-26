@@ -270,7 +270,8 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
       `/v1/btb/matches/${encodeURIComponent(key)}/analysis-context`, analysisContextSchema,
       { headers: { ...decisionContextHeaders, "X-BTB-Goal-Markets": "1", "X-BTB-Analysis-Features": [
         ...(runtimeConfig.matchPathIntelligence === "LIVE" ? ["journey"] : []),
-        ...(runtimeConfig.teamFormIntelligence === "LIVE" ? ["form"] : [])
+        ...(runtimeConfig.teamFormIntelligence === "LIVE" ? ["form"] : []),
+        "standings"
       ].join(",") } }, signal),
     getRebuildJinxExplanation: (key, decisionId, signal) =>
       request("/v1/btb/matches/" + encodeURIComponent(key) + "/jinx-outlook",

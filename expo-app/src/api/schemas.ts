@@ -197,6 +197,34 @@ export const matchLeagueContextSchema = z.strictObject({
   awayStandingPoints: z.number().int().nonnegative().nullable()
 });
 
+/** One team's general league-table row (btb-match-standings.v1). */
+export const matchStandingRowSchema = z.object({
+  position: z.number().int().positive(),
+  played: z.number().int().nonnegative(),
+  won: z.number().int().nonnegative(),
+  draw: z.number().int().nonnegative(),
+  lost: z.number().int().nonnegative(),
+  goalsFor: z.number().int().nonnegative(),
+  goalsAgainst: z.number().int().nonnegative(),
+  goalDifference: z.number().int(),
+  points: z.number().int(),
+  zone: z.string().min(1).nullable()
+});
+
+/** The provider's league table for the two teams of a match; display only. */
+export const matchStandingsSchema = z.object({
+  contractVersion: z.literal("btb-match-standings.v1"),
+  matchKey: z.string().min(1),
+  availability: z.enum(["OK", "UNAVAILABLE"]),
+  source: z.string().min(1),
+  capturedAt: isoDateTime.nullable(),
+  competition: z.string().min(1).nullable(),
+  home: matchStandingRowSchema.nullable(),
+  away: matchStandingRowSchema.nullable()
+});
+export type MatchStandingRow = z.infer<typeof matchStandingRowSchema>;
+export type MatchStandings = z.infer<typeof matchStandingsSchema>;
+
 export const periodScoreContextSchema = z.strictObject({
   key: z.string().min(1),
   halfTimeScore: z
@@ -872,7 +900,9 @@ export const analysisContextSchema = z.object({
     liveContext: liveContextSchema.nullable().catch(null),
     teamForm: teamFormContextSchema.nullable().catch(null),
     matchPath: matchPathContextSchema.nullable().catch(null),
-    matchJourney: matchJourneySchema.nullable().catch(null)
+    matchJourney: matchJourneySchema.nullable().catch(null),
+    // Absent from a BFF that predates btb-match-standings.v1.
+    standings: matchStandingsSchema.nullable().optional().catch(null)
   })
 });
 export type AnalysisContext = z.infer<typeof analysisContextSchema>;

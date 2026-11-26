@@ -419,7 +419,12 @@ export function MatchDetailView({
     return age >= 0 && age < 15_000;
   });
   const leagueContext = leagueContextQuery.data;
-  const currentMarket = isRebuild ? { value: formatQuote(hero?.currentQuote), label: hero?.quoteLabel ?? "Güncel oran bekleniyor" } : formatCurrentMarketRate(
+  // The provider's league table (Bilyoner Puan Durumu, Genel) for both teams;
+  // the latest Super decision record stays the fallback.
+  const standingsSource = context.data?.sources.standings;
+  const liveStandings = standingsSource?.availability === "OK" && standingsSource.matchKey === key &&
+    standingsSource.home && standingsSource.away ? standingsSource : null;
+  const currentMarket =isRebuild ? { value: formatQuote(hero?.currentQuote), label: hero?.quoteLabel ?? "Güncel oran bekleniyor" } : formatCurrentMarketRate(
     heroCurrentRate,
     heroMarket,
     "güncel oran"
@@ -449,7 +454,7 @@ export function MatchDetailView({
       label: "güncel oran bekleniyor"
     }
   }[trend];
-  const hasLeagueContext = Boolean(
+  const hasLeagueContext = Boolean(liveStandings) || Boolean(
     leagueContext &&
       (leagueContext.homeStandingPosition !== null ||
         leagueContext.awayStandingPosition !== null ||
@@ -584,7 +589,22 @@ export function MatchDetailView({
     );
   }
 
-  if (hasLeagueContext && leagueContext) {
+  if (liveStandings?.home && liveStandings.away) {
+    const { home: homeRow, away: awayRow } = liveStandings;
+    moduleNodes.standings = (
+      <TutorialTarget id="match-standings" radius={radii.lg}>
+        <LiveDetailPanel eyebrow="LİG" id="standings" title="Lig sıralaması">
+          <StandingsModule
+            away={{ team: match.awayTeam, participantId: match.awayParticipantId,
+              position: awayRow.position, points: awayRow.points, side: "AWAY", record: awayRow }}
+            caption={`Bilyoner puan durumu · genel${liveStandings.competition ? ` · ${liveStandings.competition}` : ""}`}
+            home={{ team: match.homeTeam, participantId: match.homeParticipantId,
+              position: homeRow.position, points: homeRow.points, side: "HOME", record: homeRow }}
+          />
+        </LiveDetailPanel>
+      </TutorialTarget>
+    );
+  } else if (hasLeagueContext && leagueContext) {
     moduleNodes.standings = (
       <TutorialTarget id="match-standings" radius={radii.lg}>
         <LiveDetailPanel
