@@ -123,8 +123,13 @@ test("report details open from one disclosure and never show 0,00 for a group wi
   const source = await read("./RebuildEvidencePanel.tsx");
   assert.ok(!source.includes("Kırılımları gizle"));
   assert.ok(!source.includes("Toplam risk"));
-  assert.match(source, /row\.settled \? formatUnits\(row\.net\) : "—"/);
-  assert.match(source, /rows\.filter\(row => row\.recommendations > 0\)/);
+  // The shared Rapor ayrıntısı (owner 2026-11-25): a dash before any result,
+  // and a group with no decision at all is left out.
+  const table = await read("./ReportBreakdown.tsx");
+  assert.match(table, /group\.value === null \? "—" : value\.format\(group\.value\)/);
+  const view = await read("../utils/report-breakdown.ts");
+  assert.match(view, /groups\.filter\(\(group\) => group\.results \+ group\.open > 0\)/);
+  assert.match(view, /value: aggregate\.settled \? net : null/);
 });
 
 test("the period menu opens from the control's outer edge, so a 7/30-day phone view keeps it on screen", async () => {

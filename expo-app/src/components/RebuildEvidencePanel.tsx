@@ -15,11 +15,9 @@ import {
   formatDecimal,
   formatQuote,
   formatRatio,
-  formatReportRange,
   formatScore,
   formatSupport,
   formatUnits,
-  outcomeSegments,
   resultPresentation,
   unitsTone
 } from "@/src/utils/rebuild-display";
@@ -29,7 +27,7 @@ import { decisionEvidenceStatus } from "@/src/utils/decision-evidence-view";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 import { RatingStars } from "./RatingStars";
 import { JinxNewsBrief } from "./JinxNewsBrief";
-import { ListPerforation, ResultPill, TicketFigure, TicketSeam, TonePill, toneColor } from "./DecisionTicket";
+import { ListPerforation, ResultPill, TicketFigure, TicketSeam, TonePill } from "./DecisionTicket";
 
 export function useRebuildClock(enabled = true) {
   const [now, setNow] = useState(() => Date.now());
@@ -506,53 +504,6 @@ export const RebuildDecisionModule = memo(function RebuildDecisionModule({ match
   );
 });
 
-/** The outcome counts as one proportional bar with a legend. */
-function OutcomeBar({ period }: { period: RebuildReport["periods"][number] }) {
-  const segments = outcomeSegments(period);
-  const total = segments.reduce((sum, segment) => sum + segment.count, 0);
-  return (
-    <View style={styles.outcome}>
-      <View accessibilityElementsHidden style={styles.outcomeBar}>
-        {total ? segments.map(segment => (
-          <View key={segment.key} style={{ flex: segment.count, backgroundColor: toneColor[segment.tone] }} />
-        )) : <View style={styles.outcomeEmpty} />}
-      </View>
-      <Text style={styles.outcomeLegend}>
-        {[`${period.wins} kazandı`, `${period.losses} kaybetti`, period.pending ? `${period.pending} bekliyor` : null,
-          period.unresolved ? `${period.unresolved} çözülemedi` : null, period.voids ? `${period.voids} iptal` : null].filter(Boolean).join(" · ")}
-      </Text>
-    </View>
-  );
-}
-
-type BreakdownRow = Pick<RebuildReport["periods"][number], "recommendations" | "settled" | "pending" | "unresolved" | "voids" | "net" | "hitRate"> & { key: string; label: ReactNode };
-
-/**
- * A star or market group: what resolved and its units, or what is still
- * open. A group with nothing resolved shows a dash, never a flat 0,00, and a
- * star without any decision is left out.
- */
-function BreakdownTable({ title, rows }: { title: string; rows: BreakdownRow[] }) {
-  const shown = rows.filter(row => row.recommendations > 0);
-  if (!shown.length) return null;
-  return (
-    <View style={styles.table}>
-      <Text style={styles.eyebrowMuted}>{title}</Text>
-      {shown.map(row => {
-        const meta = [row.settled ? `${row.settled} sonuç · isabet ${formatRatio(row.hitRate)}` : null, row.pending ? `${row.pending} bekliyor` : null,
-          row.unresolved ? `${row.unresolved} çözülemedi` : null, row.voids ? `${row.voids} iptal` : null].filter(Boolean).join(" · ");
-        return (
-          <View key={row.key} style={styles.tableRow}>
-            <Text numberOfLines={1} style={styles.tableLabel}>{row.label}</Text>
-            <Text style={styles.tableExtra}>{meta}</Text>
-            <Text style={[styles.tableNet, { color: row.settled ? toneColor[unitsTone(row.net)] : colors.textMuted }]}>{row.settled ? formatUnits(row.net) : "—"}</Text>
-          </View>
-        );
-      })}
-    </View>
-  );
-}
-
 function Progress({ label, value, required }: { label: string; value: number; required: number }) {
   return (
     <View style={styles.progress}>
@@ -566,37 +517,18 @@ function Progress({ label, value, required }: { label: string; value: number; re
 }
 
 /**
- * The period's report behind the decision log's summary (A7 question 36):
- * hypothetical one-unit results at the original quote, five outcomes kept
- * apart, a dash for a ratio with no resolved risk, match-level risk retained.
- * Always the whole period as the backend reports it, never a filtered view.
- * Opened from one disclosure in the log; `columns` sets the star and market
- * groups side by side on a wide screen. A `composed` 7/30-day view is the sum
- * of single days, which has no match-clustered ROI interval.
+ * The notes under the decision log's Rapor ayrıntısı (A7 question 36):
+ * hypothetical one-unit results at the original quote, match-level risk, the
+ * ROI interval when the backend has one and the learning review progress.
+ * A `composed` 7/30-day view is the sum of single days, which has no
+ * match-clustered ROI interval.
  */
-export function RebuildReportDetails({ report, period, columns = false, composed = false }: {
-  report: RebuildReport; period: RebuildReport["periods"][number]; columns?: boolean; composed?: boolean;
+export function RebuildReportNotes({ report, period, composed = false }: {
+  report: RebuildReport; period: RebuildReport["periods"][number]; composed?: boolean;
 }) {
   return (
-    <View style={styles.reportBody}>
-      <Text style={styles.eyebrowMuted}>RAPOR · {period.days} GÜN · {formatReportRange(period.from, period.through)}</Text>
-      {period.recommendations === 0 ? (
-        <Text style={styles.waitingReason}>BTB bir öneri yayımladığında seçim oranıyla burada sayılır.</Text>
-      ) : (
-        <>
-          <View style={styles.hero}>
-            <TicketFigure label="birim · varsayımsal" tone={unitsTone(period.net)} value={formatUnits(period.net)} />
-            <View style={styles.heroSide}>
-              <TicketFigure align="right" label="ROI" value={formatRatio(period.roi)} />
-              <TicketFigure align="right" label="isabet" value={formatRatio(period.hitRate)} />
-            </View>
-          </View>
-          <OutcomeBar period={period} />
-          <Text style={styles.exposure}>
-            {period.recommendations} karar · {period.matches} maç · {period.settled} sonuçlandı
-          </Text>
-        </>
-      )}
+    <>
+      {period.recommendations === 0 ? <Text style={styles.waitingReason}>BTB bir öneri yayımladığında seçim oranıyla burada sayılır.</Text> : null}
       <View style={styles.note}>
         <MaterialCommunityIcons color={colors.textMuted} name="information-outline" size={iconSizes.small} />
         <Text style={styles.noteText}>Her karar seçim oranıyla varsayımsal 1 birimdir. Aynı maçtaki kararlar bağımsız maç sayılmaz.</Text>
@@ -607,14 +539,6 @@ export function RebuildReportDetails({ report, period, columns = false, composed
           : composed ? "Çok günlü görünüm günlük raporların toplamıdır; ROI aralığı tek bir gün seçilince görünür."
           : "ROI aralığı için en az iki maçın sonucu gerekir."}</Text>
       ) : null}
-      <View style={[styles.stackTight, columns && styles.breakdownColumns]}>
-        <View style={columns ? styles.breakdownColumn : null}>
-          <BreakdownTable rows={period.byStar.map(s => ({ ...s, key: String(s.stars), label: <RatingStars rating={s.stars} size={12} /> }))} title="YILDIZA GÖRE" />
-        </View>
-        <View style={columns ? styles.breakdownColumn : null}>
-          <BreakdownTable rows={period.byMarket.map(m => ({ ...m, key: m.market, label: formatSelection(m.market) }))} title="PAZARA GÖRE" />
-        </View>
-      </View>
       {report.learning ? (
         <View style={styles.learning}>
           <Text style={styles.eyebrowMuted}>ÖĞRENME İNCELEMESİ</Text>
@@ -624,7 +548,7 @@ export function RebuildReportDetails({ report, period, columns = false, composed
           <Text style={styles.noteText}>Yalnız inceleme içindir; kurallar yalnız onayla değişir.</Text>
         </View>
       ) : null}
-    </View>
+    </>
   );
 }
 

@@ -17,6 +17,8 @@ import { RatingStars } from "./RatingStars";
 import { Action, Card } from "./RebuildEvidencePanel";
 import { EmptyState, LoadingState } from "./StateView";
 import { LogOutcomeSummary } from "./LogOutcomeSummary";
+import { ReportColumn, ReportDetailsCard, ReportTable, unitsValue } from "./ReportBreakdown";
+import { recordGroups } from "@/src/utils/report-breakdown";
 import { LogPeriodControl } from "./LogPeriodControl";
 import { LogToolbar } from "./LogToolbar";
 import { SurfaceMaterial } from "./SurfaceMaterial";
@@ -164,6 +166,24 @@ export function SelectionRuleLog({ rule, ruleControl }: { rule: SelectionRule; r
       <Text style={styles.note}>{`${note}${result === "ALL" ? "" : " · Özet seçili dönemin tüm kararlarını gösterir"}`}</Text>
     </View>
   );
+  // Rapor ayrıntısı over every decision of the period, like Şampiyon.
+  const details = records.length ? (
+    <ReportDetailsCard key={`${value.ruleLabel}:${records.length}`} caption="Yıldıza ve pazara göre sonuçlar"
+      notes={<Text style={styles.note}>Her karar karar anındaki oranla 1 varsayımsal birimdir; gerçek bahis işlemi içermez.</Text>}
+      scope={`RAPOR · ${value.ruleLabel.toLocaleUpperCase("tr-TR")} · ${records.length} KARAR`} wide={wide}>
+      {(sort) => (
+        <>
+          <ReportColumn wide={wide}>
+            <ReportTable groups={recordGroups(records, (r) => String(r.stars), (k) => `${k} yıldız`).sort((a, b) => Number(a.key) - Number(b.key))} keepOrder
+              labelFor={(group) => <RatingStars rating={Number(group.key)} size={12} />} sort={sort} title="YILDIZA GÖRE" value={unitsValue} wide={wide} />
+          </ReportColumn>
+          <ReportColumn main wide={wide}>
+            <ReportTable groups={recordGroups(records, (r) => r.market, (k) => formatSelection(k as SelectionDecisionRecord["market"]))} sort={sort} title="PAZARA GÖRE" value={unitsValue} wide={wide} />
+          </ReportColumn>
+        </>
+      )}
+    </ReportDetailsCard>
+  ) : null;
   const refreshControl = <RefreshControl colors={[colors.gold]} onRefresh={() => { void refresh(); }} refreshing={refreshing} tintColor={colors.gold} />;
 
   const closePeriod = () => setPeriodOpen(false);
@@ -181,11 +201,13 @@ export function SelectionRuleLog({ rule, ruleControl }: { rule: SelectionRule; r
               ))}
             </View>
           ) : empty}
+          {details}
         </ScrollView>
       ) : (
         <FlatList
           ItemSeparatorComponent={() => <View style={styles.cardGap} />}
           ListEmptyComponent={empty}
+          ListFooterComponent={details ? <View style={styles.footer}>{details}</View> : null}
           ListHeaderComponent={header}
           contentContainerStyle={styles.pageList}
           data={visible}
@@ -215,6 +237,7 @@ const styles = StyleSheet.create({
   grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md },
   gridItem: { flexBasis: "31.5%", minWidth: 0 },
   cardGap: { height: 12 },
+  footer: { marginTop: spacing.lg },
   flexCopy: { flex: 1, minWidth: 0 },
   card: { gap: spacing.sm, padding: 14, borderRadius: 20, borderWidth: 1, borderColor: colors.borderSoft, ...shadows.card },
   rowBetween: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },

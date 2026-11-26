@@ -52,7 +52,9 @@ import { ListPerforation, ResultPill, TonePill, toneColor } from "./DecisionTick
 import { FilterChip } from "./FilterChip";
 import { LocalTabPager } from "./LocalTabPager";
 import { RatingStars } from "./RatingStars";
-import { Action, Card, RebuildReportDetails } from "./RebuildEvidencePanel";
+import { Action, Card, RebuildReportNotes } from "./RebuildEvidencePanel";
+import { ReportColumn, ReportDetailsCard, ReportTable, unitsValue } from "./ReportBreakdown";
+import { reportGroup } from "@/src/utils/report-breakdown";
 import { EmptyState, LoadingState } from "./StateView";
 import { OutcomeDistribution } from "./OutcomeDistribution";
 import { SurfaceMaterial } from "./SurfaceMaterial";
@@ -319,7 +321,6 @@ export function RebuildDecisionLog() {
   const [choice, setChoice] = useState<LogPeriodChoice>({ kind: "today" });
   const [starMenuOpen, setStarMenuOpen] = useState(false);
   const [periodOpen, setPeriodOpen] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const [tableSort, setTableSort] = useState<LogSort>(defaultLogSort);
   const [refreshing, setRefreshing] = useState(false);
   const [openedAt] = useState(() => Date.now());
@@ -385,7 +386,6 @@ export function RebuildDecisionLog() {
   };
   const changePeriod = (next: LogPeriodChoice) => {
     setChoice(next);
-    setDetailsOpen(false);
   };
 
   const filters = (
@@ -521,22 +521,26 @@ export function RebuildDecisionLog() {
     </View>
   );
   const note = `${stale ? "Yenilenemedi, son doğrulanmış veri gösteriliyor. " : ""}${partial ? `Kısmi toplam: ${days.loaded} / ${days.total} gün. ` : ""}Karar başına 1 varsayımsal birim${updated ? ` · güncellendi ${updated}` : ""}.${pendingOnly ? " Özet tüm sonuçları, liste yalnızca bekleyenleri içerir." : ""}`;
+  // The tiles above already hold the totals; the details card adds only the
+  // star and market groups, their impact and the report notes.
   const details = (
-    <Card>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ expanded: detailsOpen }}
-        onPress={() => setDetailsOpen((open) => !open)}
-        style={({ pressed, hovered }) => [styles.detailsToggle, hovered && styles.hover, pressed && styles.pressed]}
-      >
-        <View style={styles.flexCopy}>
-          <Text style={styles.detailsTitle}>Rapor ayrıntısı</Text>
-          <Text style={styles.detailsCaption}>Yıldıza ve pazara göre sonuçlar, ROI aralığı</Text>
-        </View>
-        <MaterialCommunityIcons color={semantic.intelligence} name={detailsOpen ? "chevron-up" : "chevron-down"} size={iconSizes.control} />
-      </Pressable>
-      {detailsOpen ? <RebuildReportDetails columns={wide} composed={multiDay} period={available} report={report} /> : null}
-    </Card>
+    <ReportDetailsCard key={`${period.days}:${period.through}`} caption="Yıldıza ve pazara göre sonuçlar, ROI aralığı"
+      notes={<RebuildReportNotes composed={multiDay} period={available} report={report} />}
+      scope={`RAPOR · ${period.days} GÜN · ${formatReportRange(available.from, available.through)} · ${available.recommendations} KARAR · ${available.matches} MAÇ`}
+      wide={wide}>
+      {(sort) => (
+        <>
+          <ReportColumn wide={wide}>
+            <ReportTable groups={available.byStar.map((s) => reportGroup(String(s.stars), `${s.stars} yıldız`, s))} keepOrder
+              labelFor={(group) => <RatingStars rating={Number(group.key)} size={12} />} sort={sort} title="YILDIZA GÖRE" value={unitsValue} wide={wide} />
+          </ReportColumn>
+          <ReportColumn main wide={wide}>
+            <ReportTable groups={available.byMarket.map((m) => reportGroup(m.market, formatSelection(m.market), m))}
+              sort={sort} title="PAZARA GÖRE" value={unitsValue} wide={wide} />
+          </ReportColumn>
+        </>
+      )}
+    </ReportDetailsCard>
   );
 
   if (wide) {

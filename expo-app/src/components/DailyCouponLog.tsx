@@ -5,7 +5,7 @@ import { dailyCouponMatchStatesQuery, dailyCouponWindowQuery } from "@/src/api/q
 import { isAtLeast } from "@/src/layout/breakpoints";
 import { useBreakpoint } from "@/src/layout/use-breakpoint";
 import { colors, spacing, typeScale } from "@/src/theme/theme";
-import { formatRatio } from "@/src/utils/rebuild-display";
+import { formatRatio, formatReportRange } from "@/src/utils/rebuild-display";
 import { istanbulDay, resolvePeriod, shiftDay, type LogPeriodChoice } from "@/src/utils/rebuild-log";
 import { CouponTicket } from "./CouponTicket";
 import { TonePill } from "./DecisionTicket";
@@ -19,6 +19,8 @@ import { EmptyState, LoadingState } from "./StateView";
 import { LogOutcomeSummary } from "./LogOutcomeSummary";
 import { LogPeriodControl } from "./LogPeriodControl";
 import { LogToolbar } from "./LogToolbar";
+import { lostCouponsValue, ReportColumn, ReportDetailsCard, ReportTable, unitsValue } from "./ReportBreakdown";
+import { couponLegGroups, couponTierGroups } from "@/src/utils/report-breakdown";
 
 const tierOptions: readonly { id: CouponTierFilter; label: string }[] = [
   { id: "ALL", label: "Tüm kuponlar" },
@@ -142,6 +144,24 @@ export function DailyCouponLog({ active }: { active: boolean }) {
       <Text style={styles.note}>{count} kupon</Text>
     </View>
   );
+  // Rapor ayrıntısı over the chosen coupon type (all results): which tier and
+  // which leg market carried or lost the coupons (owner 2026-11-25).
+  const details = byTier.length ? (
+    <ReportDetailsCard key={`${period.days}:${period.through}:${tier}`} caption="Kupon türüne ve ayak pazarına göre sonuçlar"
+      notes={<Text style={styles.note}>Kupon başına yayın oranından 1 varsayımsal birim. Ayak tablosu ayağın tutma oranını ve kaç kuponu kaybettirdiğini gösterir.</Text>}
+      scope={`RAPOR · ${period.days} GÜN · ${formatReportRange(shiftDay(period.through, 1 - period.days), period.through)} · ${byTier.length} KUPON`} wide={wide}>
+      {(sort) => (
+        <>
+          <ReportColumn wide={wide}>
+            <ReportTable groups={couponTierGroups(byTier, tierNames, tierOrder)} keepOrder sort={sort} title="KUPON TÜRÜNE GÖRE" value={unitsValue} wide={wide} />
+          </ReportColumn>
+          <ReportColumn main wide={wide}>
+            <ReportTable groups={couponLegGroups(byTier)} sort={sort} title="AYAK PAZARINA GÖRE" value={lostCouponsValue} wide={wide} />
+          </ReportColumn>
+        </>
+      )}
+    </ReportDetailsCard>
+  ) : null;
   const refreshControl = <RefreshControl colors={[colors.gold]} onRefresh={() => { void refresh(); }} refreshing={refreshing} tintColor={colors.gold} />;
   const closePeriod = () => setPeriodOpen(false);
 
@@ -160,11 +180,13 @@ export function DailyCouponLog({ active }: { active: boolean }) {
               </View>
             </View>
           )) : empty}
+          {details}
         </ScrollView>
       ) : (
         <SectionList
           ItemSeparatorComponent={() => <View style={styles.cardGap} />}
           ListEmptyComponent={empty}
+          ListFooterComponent={details ? <View style={styles.footer}>{details}</View> : null}
           ListHeaderComponent={header}
           contentContainerStyle={styles.pageList}
           keyExtractor={(entry) => `${entry.day}:${entry.tier.tier}`}
@@ -196,5 +218,6 @@ const styles = StyleSheet.create({
   day: { color: colors.text, ...typeScale.moduleTitle },
   grid: { flexDirection: "row", gap: spacing.md },
   gridItem: { flexBasis: "31.5%", minWidth: 0 },
-  cardGap: { height: 12 }
+  cardGap: { height: 12 },
+  footer: { marginTop: spacing.lg }
 });
