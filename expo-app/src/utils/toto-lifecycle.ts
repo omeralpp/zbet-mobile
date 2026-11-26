@@ -72,9 +72,7 @@ export function totoProgress(program: Program, now: number) {
   const open = rows.filter(isOpen).map(row => ({ row, at: fixtureInstant(row),
     state: totoLiveState({ actualResult: row.actualResult, live: liveOf(row) }) }))
     .sort((a, b) => (a.at ?? Infinity) - (b.at ?? Infinity) || a.row.matchNo - b.row.matchNo);
-  // A match that finished on the live feed is no longer "waiting" (owner 2026-11-26);
-  // it still counts as open until the official result arrives.
-  const provisional = open.filter(item => item.state === "PROVISIONAL").length;
+  // A finished match is settled upstream (settleTotoFromLive); one in play is not waiting.
   const inPlay = open.filter(item => item.state === "IN_PLAY").length;
   const upcoming = open.find(item => item.state !== "PROVISIONAL");
   const next = upcoming ? { matchNo: upcoming.row.matchNo, matchName: upcoming.row.matchName, at: upcoming.at,
@@ -87,7 +85,7 @@ export function totoProgress(program: Program, now: number) {
   return {
     total, settled: summary.settled, mainHits: summary.mainHits, coverageHits: summary.coverageHits,
     misses: summary.misses, open: summary.open, coveredOnly: summary.coveredOnly,
-    provisional, inPlay, waiting: Math.max(0, summary.open - provisional - inPlay),
+    inPlay, waiting: Math.max(0, summary.open - inPlay),
     maxCoverage: summary.total ? summary.total - summary.misses : null,
     firstKickoff, lastKickoff: times.length ? Math.max(...times) : null, deadline,
     next, planned: program.columns > 0 && program.predictions.length > 0, structure: couponStructure(program)

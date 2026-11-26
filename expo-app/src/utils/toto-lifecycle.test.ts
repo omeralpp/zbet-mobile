@@ -104,7 +104,7 @@ test("btb-toto-live.v1 polling: only an open program with a match in play or awa
   assert.equal(totoInPlay(undefined, now), false);
 });
 
-test("matches finished on the live feed stop waiting; settled stays official (owner 2026-11-26)", () => {
+test("the next-match line skips finished rows and names a match in play", () => {
   const now = at("2026-11-26", "23:50");
   const live = (status: NonNullable<TotoFixture["live"]>["status"], provisionalResult: "1" | "X" | "2" | null) =>
     ({ status, provisionalResult, minute: status === "LIVE" ? 45 : null, homeScore: 1, awayScore: 0, halfTimeHomeScore: null,
@@ -116,9 +116,8 @@ test("matches finished on the live feed stop waiting; settled stays official (ow
     { ...fixture(3, "2026-11-26", "23:00"), live: live("LIVE", null) }, fixture(4, "2026-11-27", "20:00")];
   const progress = totoProgress(program(rows, { fixtures }), now);
   assert.equal(progress.settled, 0);
-  assert.equal(progress.provisional, 2);
   assert.equal(progress.inPlay, 1);
-  assert.equal(progress.waiting, 1);
+  assert.equal(progress.waiting, 3, "finished rows are settled upstream, by settleTotoFromLive");
   assert.equal(progress.next?.matchNo, 3);
   assert.equal(progress.next?.inPlay, true);
   assert.match(nextMatchLine(progress, kickoffLabel) ?? "", /^Canlı: Maç 3 · 26 Kas/);

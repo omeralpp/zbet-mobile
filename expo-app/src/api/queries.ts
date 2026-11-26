@@ -264,7 +264,9 @@ export function matchJourneyQuery(key: string) {
 export const totoProgramsQuery = queryOptions({
   queryKey: queryKeys.totoPrograms,
   queryFn: ({ signal }) => mobileApi.getTotoPrograms(signal),
-  staleTime: 60_000
+  staleTime: 60_000,
+  // The program cards follow a match in play as the detail screen does.
+  refetchInterval: (query) => query.state.data?.some((program) => totoInPlay(program)) ? 60_000 : false
 });
 
 export function totoProgramQuery(gcNo: number, version: number) {

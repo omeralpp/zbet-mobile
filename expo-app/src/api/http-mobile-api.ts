@@ -40,6 +40,7 @@ import {
 import { MobileApiError, type MobileApi } from "./mobile-api";
 import { rebuildCohortsReportSchema, rebuildMatchSchema, rebuildReportSchema } from "./rebuild-schemas";
 import { rebuildObservedPressureHistorySchema, rebuildStatisticsSchema, rebuildPoolPathSchema } from "./rebuild-statistics-schemas";
+import { settleTotoFromLive } from "@/src/utils/toto-live-settle";
 
 const requestTimeoutMs = 15_000;
 // Opts Toto reads into SAP coupon close, cost unit, best column and prize tiers.
@@ -312,16 +313,19 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
         {},
         signal
       ),
+    // Both ask for btb-toto-live.v1 (an older BFF ignores it and sends no `live`), and a
+    // match that finished on the live feed is settled at once (owner 2026-11-26).
     getTotoPrograms: (signal) =>
-      request("/v1/toto/programs", totoProgramListSchema, { headers: totoDisplayHeaders }, signal),
+      request("/v1/toto/programs", totoProgramListSchema,
+        { headers: { ...totoDisplayHeaders, "X-BTB-Toto-Live": "btb-toto-live.v1" } }, signal)
+        .then((programs) => programs.map(settleTotoFromLive)),
     getTotoProgram: (gcNo, version, signal) =>
       request(
         `/v1/toto/programs/${gcNo}/${version}`,
         totoProgramSchema,
-        // The detail screen also asks for btb-toto-live.v1; an older BFF ignores it and sends no `live`.
         { headers: { ...totoDisplayHeaders, "X-BTB-Toto-Live": "btb-toto-live.v1" } },
         signal
-      ),
+      ).then(settleTotoFromLive),
     registerDevice: async (token, platform, installationId, signal) => {
       await request(
         "/v1/devices",

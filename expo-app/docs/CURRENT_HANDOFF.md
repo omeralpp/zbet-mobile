@@ -48,20 +48,33 @@ and the dated release reports/receipts.
   zbet-mobile and zbet-cap. `master` (zbet-mobile) and `main` (zbet-cap) are
   not yet fast-forwarded.
 
-## Toto progress counts live finals (2026-11-26, release pair in progress)
+## Toto settles finished matches from the live feed (2026-11-26/27, release pair in progress)
 
-The owner reported that finished Toto matches still read as waiting. On both
-surfaces, an open row that finished on the live feed (with a provisional
-1/X/2) or is in play is no longer counted as "Bekliyor":
+Owner decision, 2026-11-26: a finished match must be settled at once
+("sonuçlandıysa kazandı kaybetti direk işlesin"), with no "geçici" wording.
+This supersedes the btb-toto-live.v1 rule that hit and coverage stay
+official-only, for display.
 
-- **Progress bar:** `Bitti · geçici`, `Canlı` and `Bekliyor` are separate.
-- **Settled count:** `sonuçlandı` stays official, with "N bitti · geçici"
-  beside it.
-- **Next-match line:** it skips finished rows (`Canlı: …`, `Sonuç bekleniyor:
-  …`, `Sıradaki: …`, or "Tüm maçlar bitti · resmî sonuç bekleniyor").
-- **DURUM:** `BİTTİ · GEÇİCİ` (gold) or `CANLI`.
-- **Unchanged:** main hit, coverage and maximum coverage stay official only.
-- **Checks:** 872 client tests.
+- **What changes:** `settleTotoFromLive` (in `src/utils/toto-live-settle.ts`,
+  applied in the HTTP client to the list, detail and widget) handles open rows
+  whose live reading has a proven regulation 1/X/2. Each such row takes that
+  result, its score and its coupon outcome (ANA İSABET, KAPSAMADA or KAPSAM
+  DIŞI).
+- **Counts:** a WAITING_RESULT program's `sonuçlandı`, `kapsama`, `ana isabet`
+  and `en fazla kapsama` follow those rows.
+- **What wins:** an official result always wins, and a RESULTED program keeps
+  its official counts. Display only; nothing is stored or reaches
+  prediction or learning.
+- **Programs tab:** the list now requests `X-BTB-Toto-Live`. It previously
+  had no live data, which is why it still showed "Bekliyor 15". The list
+  refreshes every minute while a match is in play.
+- **Live and waiting rows:** a match in play reads `CANLI`, and the progress
+  bar separates `Canlı` from `Bekliyor`. The next-match line skips finished
+  rows (`Canlı: …`, `Sonuç bekleniyor: …`, `Sıradaki: …`).
+- **Superseded pair:** 1c42954, with the "Bitti · geçici" wording, was
+  published but its smoke failed on the owner's review. It stays incomplete
+  and is replaced by this pair.
+- **Checks:** 875 client tests.
 - **Data repair the same evening (owner-approved):** the 13 proven gc369
   finals from 24–25 Nov were copied from `live.zbet_t_toto_live` to
   `prod.zbet_t_toto_live`. They had not been copied at the PostgreSQL
