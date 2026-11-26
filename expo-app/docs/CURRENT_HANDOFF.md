@@ -1,7 +1,7 @@
 # BTB Mobile Next — Güncel Devir
 
-Son güncelleme: 2026-11-26
-Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 03CEB65`
+Son güncelleme: 2026-11-27
+Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 02859C1`
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md)
@@ -14,20 +14,25 @@ and the dated release reports/receipts.
   writer jobs held and stays a rollback until 2026-12-04
   (`btb-codex/docs/PG_CUTOVER_RUNBOOK.md`).
 - Serving BFF: zbet-cap `5ff6376` (branch `claude/daily-coupons-flow`,
-  Windows task `BTB Mobile BFF`, port 4004, PID 41576 since 20:17Z) with
+  Windows task `BTB Mobile BFF`, port 4004, PID 52176 since 21:33Z) with
   `BTB_JINX_NEWS_ENABLED=true` and `BTB_JINX_NOTES_ENABLED=true`
   (`BTB_JINX_NOTES_PATH` in the User environment). News briefs persist in
   `jinx-news-briefs.json` beside the notes file.
-- Current accepted pair: `03ceb65` (Lig sıralaması from the Bilyoner table,
-  Jinx article summaries, Expo 57.0.34 patches), COMPLETE after both owner
-  smokes ("Both work").
-  - APK: `btb-mobile-next-03ceb65-standings-jinx-arm64.apk` (SHA-256
-    `7CAAE96C…`), the only local APK.
-  - Web release: `20261126T201608Z-03ceb65`.
-  - Batch: `client-03ceb65…-7CAAE96CF8DD-62EC0EE11902`.
-  - Receipts: btb-codex `5ee9ea5`,
-    `docs/evidence/standings-jinx-client-*-2026-11-26.json`.
-  - Previous pair: `215f880`. Its local APK was deleted under the retention
+- Current accepted pair: `02859c1` (finished Toto matches settled from the
+  live feed, Programs tab with live data), COMPLETE after both owner smokes
+  ("Both work").
+  - APK: `btb-mobile-next-02859c1-toto-settle-arm64.apk` (SHA-256
+    `6FFA1CB9…`), the only local APK.
+  - Web release: `20261126T213255Z-02859c1`.
+  - Batch: `client-02859c1…-6FFA1CB92E74-6B72C7F7499C`.
+  - Receipts: btb-codex `47cf86d`,
+    `docs/evidence/toto-settle-client-*-2026-11-27.json`.
+  - Pair `1c42954` ("Bitti · geçici" wording) was published but failed the
+    owner smoke; it is superseded and its APK deleted.
+  - Before that: `03ceb65` (Lig sıralaması, Jinx article summaries, Expo
+    57.0.34), COMPLETE, receipts btb-codex `5ee9ea5`. Its local APK was
+    deleted under the retention rule.
+  - Earlier: `215f880`. Its local APK was deleted under the retention
     rule; its receipts and Drive copy remain.
 - Earlier the same day: `215f880` (Jinx notes), `d085f5d` (PostgreSQL switch
   pair) and `65712c4` (shared Rapor ayrıntısı and the Jinx Maç gündemi news
@@ -48,7 +53,7 @@ and the dated release reports/receipts.
   zbet-mobile and zbet-cap. `master` (zbet-mobile) and `main` (zbet-cap) are
   not yet fast-forwarded.
 
-## Toto settles finished matches from the live feed (2026-11-26/27, release pair in progress)
+## Toto settles finished matches from the live feed (2026-11-26/27, pair 02859c1, COMPLETE)
 
 Owner decision, 2026-11-26: a finished match must be settled at once
 ("sonuçlandıysa kazandı kaybetti direk işlesin"), with no "geçici" wording.
