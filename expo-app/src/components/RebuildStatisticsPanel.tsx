@@ -2,7 +2,7 @@ import { memo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { RebuildStatistics } from "@/src/api/rebuild-statistics-schemas";
 import { colors, interaction, radii, semantic, spacing, typeScale } from "@/src/theme/theme";
-import { statisticsRows, statisticsStatus } from "@/src/utils/rebuild-statistics-view";
+import { recordedProviderNote, statisticsMinute, statisticsRows, statisticsStatus } from "@/src/utils/rebuild-statistics-view";
 import { ComparisonRow } from "./ComparisonRow";
 import { SurfaceMaterial } from "./SurfaceMaterial";
 
@@ -37,15 +37,17 @@ export const RebuildStatisticsPanel = memo(function RebuildStatisticsPanel({ sta
   const missing = rows.filter(row => row.home === null && row.away === null);
   const visible = showMissing ? rows : rows.filter(row => row.home !== null || row.away !== null);
   const complete = rows.filter(row => row.home !== null && row.away !== null).length;
-  const reading = [statistics.elapsed !== null ? `${statistics.elapsed}′` : null,
+  const recordedNote = recordedProviderNote(statistics);
+  const reading = [statisticsMinute(statistics),
     statistics.observedAt ? timeFormat.format(new Date(statistics.observedAt)) : null].filter(Boolean).join(" · ");
   return <View style={styles.card}>
     <SurfaceMaterial radius={radii.lg} />
     <View style={styles.status}>
       <View style={[styles.dot, status.tone === "live" ? styles.dotLive : status.tone === "partial" ? styles.dotPartial : styles.dotMuted]} />
       <View style={styles.statusCopy}>
-        <Text style={styles.statusText}>{status.values ? statistics.availability === "PARTIAL" ? "Bazı ölçümler eksik" : "Doğrulanmış ölçüm" : status.text}</Text>
+        <Text style={styles.statusText}>{status.values ? recordedNote ? "Sağlayıcı ölçümü · RB1 gözlemi değil" : statistics.availability === "PARTIAL" ? "Bazı ölçümler eksik" : "Doğrulanmış ölçüm" : status.text}</Text>
         {status.values ? <Text style={styles.reading}>{reading}{reading ? " · " : ""}{complete}/{rows.length} karşılaştırma</Text> : null}
+        {recordedNote ? <Text style={styles.reading}>{recordedNote}</Text> : null}
       </View>
     </View>
     {status.values ? <>

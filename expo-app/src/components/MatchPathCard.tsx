@@ -215,6 +215,11 @@ export const MatchPathCard = memo(function MatchPathCard({ match, model, synthet
   const chips = useMemo(() => placeChips(model, g, chipWidth), [model, g, chipWidth]);
   const hasLine = !model.lineNotice;
   const lineD = hasLine ? model.line.map((vertex,index) => `${index === 0 || vertex.connects === false ? "M" : "L"} ${g.x(vertex.minute).toFixed(1)} ${g.y(vertex.level).toFixed(1)}`).join(" ") : "";
+  // Same pool, minutes not observed between the two points: dashed, never a measured level.
+  const bridgeD = hasLine ? model.line.flatMap((vertex, index) => {
+    const previous = model.line[index - 1];
+    return vertex.bridge && previous ? [`M ${g.x(previous.minute).toFixed(1)} ${g.y(previous.level).toFixed(1)} L ${g.x(vertex.minute).toFixed(1)} ${g.y(vertex.level).toFixed(1)}`] : [];
+  }).join(" ") : "";
   const first = model.line[0], last = model.line.at(-1);
   const areaD = hasLine && first && last ? `${lineD} L ${g.x(last.minute).toFixed(1)} ${g.poolTop + g.plotHeight} L ${g.x(first.minute).toFixed(1)} ${g.poolTop + g.plotHeight} Z` : "";
   // Without a line the live pill sits on the axis; the minutes it would cover
@@ -309,6 +314,7 @@ export const MatchPathCard = memo(function MatchPathCard({ match, model, synthet
               {!model.poolShare ? <Path d={areaD} fill="url(#matchPathFill)" /> : null}
               <Path d={lineD} fill="none" stroke={lineInk} strokeOpacity={0.12} strokeWidth={9} strokeLinejoin="round" />
               <Path d={lineD} fill="none" stroke={lineInk} strokeWidth={3} strokeLinejoin="round" strokeLinecap="round" />
+              {bridgeD ? <Path d={bridgeD} fill="none" stroke={lineInk} strokeOpacity={0.7} strokeWidth={2} strokeDasharray="3 5" strokeLinecap="round" testID="match-path-unobserved-bridge" /> : null}
               {model.poolShare ? model.line.filter((point, index) => index === 0 || index === model.line.length - 1 || point.level !== model.line[index - 1]?.level || point.connects === false).map((point,index)=><Circle key={index} cx={g.x(point.minute)} cy={g.y(point.level)} r={3.5} fill={lineInk} />) : null}
             </> : null}
             <Line x1={g.gutter} x2={g.gutter + g.plotWidth} y1={RIB} y2={RIB} stroke={colors.borderSoft} strokeWidth={2} />
@@ -479,7 +485,7 @@ export const MatchPathCard = memo(function MatchPathCard({ match, model, synthet
         </View><Text style={styles.rules}>
           Üstteki şerit her golün yeni skorunu kendi dakikasında gösterir. Ev sahibinin olayları üst, deplasmanın olayları alt şeritte.
           {chartActivity ? " Mavi ve turuncu sütunlar gözlenen aralığın dakika başına tahmini hareketliliğidir. Ölçülen süreyi görmek için bir sütuna dokun veya yatay sürükle. Eksik ölçümler boş bırakılır. Bu değerler BTB seçim hesabına katılmaz. Havuz çizgisi kendi yüzde ölçeğiyle aynı zaman eksenini paylaşır." : null}
-          {hasLine && model.poolShare ? ` ${chartActivity ? "Turkuaz" : "Mavi"} çizgi yarının ilk geçerli referans havuzunda güncel skorla uyumlu kalan paydır; kazanma olasılığı değildir. Devrede veya kaynak değişiminde çizgi kesilir. Yalnız kayıtlı havuzlar gösterilir.` : hasLine ? " Mavi çizgi maçın havuzla uyumudur; devrede havuz değişir ve çizgi basamak yapar." : " Havuz çizgisi yalnız kaynak sunduğunda çizilir."}
+          {hasLine && model.poolShare ? ` ${chartActivity ? "Turkuaz" : "Mavi"} çizgi yarının ilk geçerli referans havuzunda güncel skorla uyumlu kalan paydır; kazanma olasılığı değildir. Devrede veya kaynak değişiminde çizgi kesilir. Aynı havuzda gözlenmeyen dakikalar kesikli çizilir; o aralıkta değer üretilmez. Yalnız kayıtlı havuzlar gösterilir.` : hasLine ? " Mavi çizgi maçın havuzla uyumudur; devrede havuz değişir ve çizgi basamak yapar." : " Havuz çizgisi yalnız kaynak sunduğunda çizilir."}
           {" "}Altın fişler BTB kararlarıdır: dakika, yıldız, donmuş seçim oranı ve sonucun rengi. Yıldız tutarlılık ve kanıt kalitesidir.
         </Text></View> : null}
         {footer}

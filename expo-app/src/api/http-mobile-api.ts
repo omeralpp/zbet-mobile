@@ -192,7 +192,7 @@ export function createHttpMobileApi(baseUrl: string): MobileApi {
     getRebuildReportWindow: (days, through, signal) => request(`/v1/btb/rebuild/v2/report/window/${encodeURIComponent(through)}/${days}`,
       rebuildCohortsReportSchema, { headers: reportHeaders }, signal),
     getRebuildStatistics: (key, signal) => request(`/v1/btb/rebuild/v1/matches/${encodeURIComponent(key)}/statistics`, rebuildStatisticsSchema,
-      { headers: { "X-BTB-Rebuild": "btb-rebuild.v1" } }, signal),
+      { headers: { "X-BTB-Rebuild": "btb-rebuild.v1", "X-BTB-Statistics-Fallback": "recorded-provider.v1" } }, signal),
     getRebuildPressureHistory: (key, signal) => request(`/v1/btb/rebuild/v1/matches/${encodeURIComponent(key)}/pressure-history`, rebuildObservedPressureHistorySchema,
       { headers: { "X-BTB-Rebuild": "btb-rebuild.v1", "X-BTB-Pressure-Activity": "observed-window.v2" } }, signal),
     getRebuildPoolPath: (key, signal) => request(`/v1/btb/rebuild/v1/matches/${encodeURIComponent(key)}/pool-path`, rebuildPoolPathSchema,

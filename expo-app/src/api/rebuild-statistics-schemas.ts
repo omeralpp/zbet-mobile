@@ -43,7 +43,9 @@ const currentPressure = z.strictObject({
   }).nullable()
 });
 
-export const rebuildStatisticsSchema = z.strictObject({
+const statisticsCoverage = z.array(z.strictObject({ metric: z.string(), homePresent: z.boolean(), awayPresent: z.boolean(), reason: z.string() }));
+
+const verifiedStatisticsSchema = z.strictObject({
   contractVersion: z.literal("btb-match-statistics.v1"), modelRegime: z.literal("BTB_RB1_20261018"),
   matchKey: z.string(), asOf: timestamp,
   availability: z.enum(["AVAILABLE", "PARTIAL", "NOT_STARTED", "UNAVAILABLE"]), reason: z.string(),
@@ -51,9 +53,29 @@ export const rebuildStatisticsSchema = z.strictObject({
   pressurePolicy: pressureMethod.nullable(), phase: z.string().nullable(), elapsed: count.nullable(),
   homeScore: count.nullable(), awayScore: count.nullable(), xgScopeVerified: z.boolean(),
   statistics: statisticsValues,
-  coverage: z.array(z.strictObject({ metric: z.string(), homePresent: z.boolean(), awayPresent: z.boolean(), reason: z.string() })),
+  coverage: statisticsCoverage,
   pressure: currentPressure.nullable()
 });
+
+/**
+ * Opt-in (X-BTB-Statistics-Fallback: recorded-provider.v1): while RB1 makes
+ * no observation (bare 45+/90+ clock, half time) the panel may show the
+ * provider document RB1 recorded in its hash-verified cycle capture. It is a
+ * provider measurement, never an RB1 observation: no pressure, no model use.
+ */
+const recordedProviderStatisticsSchema = z.strictObject({
+  contractVersion: z.literal("btb-match-statistics.v1"), modelRegime: z.literal("BTB_RB1_20261018"),
+  matchKey: z.string(), asOf: timestamp,
+  availability: z.enum(["AVAILABLE", "PARTIAL"]), reason: z.string(), modelReason: z.string(),
+  observedAt: timestamp, source: z.literal("RB1_RECORDED_PROVIDER_DOCUMENT"), captureId: z.string().min(1),
+  pressurePolicy: z.null(), phase: z.enum(["1H", "HT", "2H"]).nullable(), elapsed: count.nullable(), clockText: z.string().max(8).nullable(),
+  homeScore: count.nullable(), awayScore: count.nullable(), xgScopeVerified: z.literal(false),
+  statistics: statisticsValues,
+  coverage: statisticsCoverage,
+  pressure: z.null()
+});
+
+export const rebuildStatisticsSchema = z.union([verifiedStatisticsSchema, recordedProviderStatisticsSchema]);
 
 const historySample = z.strictObject({
   captureId: z.string().min(1), stateId: z.string().min(1), pressureSequence: count, policySha: sha, producerSha: sha,

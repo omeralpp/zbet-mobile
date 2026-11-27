@@ -1,7 +1,7 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-11-27
-Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 02859C1`
+Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 02859C1` · Maçın yolu gaps batch committed, release pending
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md)
@@ -52,6 +52,22 @@ and the dated release reports/receipts.
 - Branches: the release commits are on `claude/daily-coupons-flow` in
   zbet-mobile and zbet-cap. `master` (zbet-mobile) and `main` (zbet-cap) are
   not yet fast-forwarded.
+
+## Maçın yolu gaps batch (2026-11-27, committed and pushed, not released)
+
+Owner screenshots (Brno–Slovacko, Feirense–Portimonense). Root causes,
+evidence and checks: [MATCH_PATH_GAPS_BATCH_2026-11-27.md](MATCH_PATH_GAPS_BATCH_2026-11-27.md),
+NXT-OBS-260..263.
+- zbet-cap `3dc553e` (`claude/daily-coupons-flow`, pushed; BFF still serves 5ff6376):
+  `srv/mobile-bff/rebuild-pressure-activity.js` (v2 omitted counters, quiet
+  proof), `rebuild-statistics.js` + `router.js` + `provider.js` (opt-in
+  `X-BTB-Statistics-Fallback: recorded-provider.v1`), tests. 1076/1076.
+- zbet-mobile (`claude/daily-coupons-flow`, this commit, pushed): statistics
+  schema union + header + panel wording, pool-line dashed bridges, goal pool
+  effect, tests. 880/880, tsc, lint, edge web export, Android bundle.
+- Gates open: BFF restart (serialize with Codex), coordinated
+  APK+web pair. Owner decision open (BTB - Aktif, MODEL_LOGIC): admit a bare
+  45+/90+ clock as RB1 model input.
 
 ## Toto settles finished matches from the live feed (2026-11-26/27, pair 02859c1, COMPLETE)
 

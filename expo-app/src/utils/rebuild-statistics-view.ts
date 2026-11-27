@@ -57,8 +57,34 @@ export function statisticsRows(statistics: RebuildStatistics): StatisticsRow[] {
 
 const timeFormat = new Intl.DateTimeFormat("tr-TR", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false, timeZone: "Europe/Istanbul" });
 
+/** The minute as the provider showed it: a bare 90+ stays 90+, half time is İY. */
+export function statisticsMinute(statistics: RebuildStatistics): string | null {
+  if (statistics.source === "RB1_RECORDED_PROVIDER_DOCUMENT") {
+    if (statistics.phase === "HT") return "Devre arası";
+    if (statistics.clockText) return /^\d+\+?$/.test(statistics.clockText) ? `${statistics.clockText}′` : statistics.clockText;
+  }
+  return statistics.elapsed !== null ? `${statistics.elapsed}′` : null;
+}
+
+/**
+ * Why a recorded provider document stands in for an RB1 observation. RB1
+ * observes nothing at half time or at a bare 45+/90+ clock (sealed model rule);
+ * the values are the provider document RB1 itself recorded at that read.
+ */
+export function recordedProviderNote(statistics: RebuildStatistics): string | null {
+  if (statistics.source !== "RB1_RECORDED_PROVIDER_DOCUMENT") return null;
+  const why = statistics.phase === "HT" ? "Devre arasında" : statistics.clockText && /\+/.test(statistics.clockText)
+    ? "Uzatma dakikasında" : "Bu okumada";
+  return `${why} RB1 gözlem yapmadı; değerler RB1'in kaydettiği sağlayıcı belgesinden. Seçim ve yıldız hesabına katılmaz.`;
+}
+
 /** Measurement time and completeness, or why no current statistics are shown. */
 export function statisticsStatus(statistics: RebuildStatistics, finished = false): { tone: "live" | "partial" | "muted"; text: string; values: boolean } {
+  if (statistics.source === "RB1_RECORDED_PROVIDER_DOCUMENT") {
+    const at = timeFormat.format(new Date(statistics.observedAt));
+    const when = [statisticsMinute(statistics), at].filter(Boolean).join(" · ");
+    return { tone: "partial", text: `Sağlayıcı ölçümü · ${when}${statistics.availability === "PARTIAL" ? " · bazı ölçümler eksik" : ""}`, values: true };
+  }
   if (statistics.availability === "AVAILABLE" || statistics.availability === "PARTIAL") {
     const at = statistics.observedAt ? timeFormat.format(new Date(statistics.observedAt)) : null;
     const when = [statistics.elapsed !== null ? `${statistics.elapsed}′` : null, at].filter(Boolean).join(" · ");

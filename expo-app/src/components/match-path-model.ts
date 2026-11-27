@@ -42,7 +42,12 @@ export interface ScoreChip { key: string; minute: number; label: string; current
 export interface PathModel {
   moments: PathMoment[];
   chips: ScoreChip[];
-  line: { minute: number; level: number; connects?: boolean }[];
+  /**
+   * `bridge`: this point and the previous one come from the same pool, but the
+   * minutes between them were not observed. The card draws that span dashed;
+   * no level is invented inside it.
+   */
+  line: { minute: number; level: number; connects?: boolean; bridge?: boolean }[];
   poolShare: boolean;
   referenceMinute: number | null;
   /** Shown instead of the line; null when the line is drawn. */
@@ -69,6 +74,33 @@ export interface PathInput {
 }
 
 const unmeasured = "Olayın dakikası kayıtlı. Bu olaya ait havuz etkisi ölçülmedi.";
+const cardEffect = "Havuzda kalan pay yalnız skora göre hesaplanır; kart bu payı değiştirmez.";
+type PoolPoint = NonNullable<PathInput["poolPath"]>["points"][number];
+const percent = (point: PoolPoint) => `%${Math.round(point.level * 100)}`;
+
+/**
+ * The pool effect of one goal, from recorded captures only (owner report
+ * 2026-11-27). It needs two consecutive verified points of the same pool whose
+ * scores differ by exactly this goal: the last one before it and the first one
+ * after it. The share depends on the score alone, so that pair measures the
+ * goal exactly, even across an unobserved minute. Without such a pair the
+ * effect stays unmeasured; a score correction is never read as a goal.
+ */
+export function goalPoolEffect(points: readonly PoolPoint[], after: { home: number; away: number }, minute: number): string | null {
+  let best: { before: PoolPoint; after: PoolPoint } | null = null;
+  for (let index = 1; index < points.length; index++) {
+    const previous = points[index - 1]!, point = points[index]!;
+    if (point.homeScore !== after.home || point.awayScore !== after.away || point.baselineCaptureId !== previous.baselineCaptureId) continue;
+    const home = point.homeScore - previous.homeScore, away = point.awayScore - previous.awayScore;
+    if (home < 0 || away < 0 || home + away !== 1 || point.minute < minute - 1) continue;
+    if (!best || Math.abs(point.minute - minute) < Math.abs(best.after.minute - minute)) best = { before: previous, after: point };
+  }
+  if (!best) return null;
+  const { before, after: next } = best, removed = before.remainingCount - next.remainingCount;
+  return `Gol öncesi ${before.minute}′ kaydı: havuzda kalan pay ${percent(before)} (${before.remainingCount}/${before.baselineCount}). `
+    + `Gol sonrası ${next.minute}′ kaydı: ${percent(next)} (${next.remainingCount}/${next.baselineCount}). `
+    + (removed > 0 ? `Bu gol ${removed} referansı eledi.` : "Bu gol havuzdan referans elemedi.");
+}
 
 function team(input: PathInput, side: PathSide | null) {
   return side === "HOME" ? input.match.homeTeam : side === "AWAY" ? input.match.awayTeam : "";
@@ -89,6 +121,11 @@ export function buildMatchPath(input: PathInput): PathModel {
   const eventGoals = { HOME: 0, AWAY: 0 };
   const eventReds = { HOME: 0, AWAY: 0 };
 
+  const poolPoints = input.poolPath?.availability === "AVAILABLE" ? input.poolPath.points : [];
+  const goalEffect = (score: { home: number; away: number } | null | undefined, minute: number) =>
+    input.isRebuild && score ? goalPoolEffect(poolPoints, score, minute) ?? unmeasured : unmeasured;
+  const otherEffect = input.isRebuild && poolPoints.length ? cardEffect : unmeasured;
+
   for (const event of input.events) {
     if (event.minute == null || event.minute < 0 || !event.side) continue;
     const side = event.side;
@@ -103,7 +140,7 @@ export function buildMatchPath(input: PathInput): PathModel {
         railTitle: `${event.minuteLabel || `${event.minute}′`} · ${kind}`,
         railSub: [team(input, side), score].filter(Boolean).join(" · "),
         label: `${event.minute}. dakika ${kind.toLocaleLowerCase("tr-TR")}, ${team(input, side)}${score ? `, skor ${score}` : ""}`,
-        score, record: null, lines: player ? [`${player} · ${team(input, side)}`, unmeasured] : [unmeasured]
+        score, record: null, lines: [...(player ? [`${player} · ${team(input, side)}`] : []), goalEffect(event.scoreAfter, event.minute)]
       });
     } else {
       eventReds[side] += 1;
@@ -113,7 +150,7 @@ export function buildMatchPath(input: PathInput): PathModel {
         key: `event:${event.eventKey}`, minute: event.minute, kind: "RED_CARD", side,
         railTitle: `${event.minuteLabel || `${event.minute}′`} · ${title}`, railSub: team(input, side),
         label: `${event.minute}. dakika ${title.toLocaleLowerCase("tr-TR")}, ${team(input, side)}`,
-        score: null, record: null, lines: player ? [`${player} · ${team(input, side)}`, unmeasured] : [unmeasured]
+        score: null, record: null, lines: [...(player ? [`${player} · ${team(input, side)}`] : []), otherEffect]
       });
     }
   }
@@ -135,7 +172,8 @@ export function buildMatchPath(input: PathInput): PathModel {
       moments.push({ key: `observed:${change.key}`, minute: change.minute, kind: "GOAL", side: change.side,
         railTitle: `${change.minute}′ · Skor kaydı`, railSub: `${team(input, change.side)} · ${change.score}`,
         label: `${change.minute}. dakika skor kaydı, ${team(input, change.side)}, skor ${change.score}`,
-        score: change.score, record: null, lines: [`Yeni skor ${change.score} ilk kez ${observed}`] });
+        score: change.score, record: null, lines: [`Yeni skor ${change.score} ilk kez ${observed}`,
+          ...(input.isRebuild ? [goalPoolEffect(poolPoints, { home: Number(change.score.split("–")[0]), away: Number(change.score.split("–")[1]) }, change.minute) ?? unmeasured] : [])] });
     } else if (change.kind === "RED_CARD") {
       moments.push({ key: `observed:${change.key}`, minute: change.minute, kind: "RED_CARD", side: change.side,
         railTitle: `${change.minute}′ · Kart kaydı`, railSub: team(input, change.side),
@@ -162,8 +200,8 @@ export function buildMatchPath(input: PathInput): PathModel {
   }
 
   const poolShare = input.isRebuild;
-  const poolPoints = input.poolPath?.availability === "AVAILABLE" ? input.poolPath.points : [];
-  const line = input.isRebuild ? poolPoints.map(point => ({minute:point.minute,level:point.level,connects:point.connects})) : journeyVertices([...input.journeyPoints]);
+  const line = input.isRebuild ? poolPoints.map((point, index) => ({ minute: point.minute, level: point.level, connects: point.connects,
+    bridge: index > 0 && !point.connects && poolPoints[index - 1]!.baselineCaptureId === point.baselineCaptureId })) : journeyVertices([...input.journeyPoints]);
   const reference = input.isRebuild ? undefined : input.journeyPoints.find((point) => point.referenceChange && point.plotMinute !== null);
   if (reference && reference.plotMinute !== null) {
     moments.push({ key: `pool:${reference.key}`, minute: reference.plotMinute, kind: "POOL", side: null,

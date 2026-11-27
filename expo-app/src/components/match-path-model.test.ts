@@ -92,3 +92,47 @@ test("the latest RB1 moment leaves a missing activity window to the rhythm summa
   assert.ok(!latest.lines.some((line) => /hareketlilik penceresi yok/.test(line)));
   assert.doesNotMatch(path.lineNotice?.body ?? "", /eski maçlar/);
 });
+
+// Owner report 2026-11-27: a goal with recorded captures on both sides shows its pool effect,
+// and same-pool minutes that were not observed are marked as a bridge, never as measured.
+function poolPathOf(points: { minute: number; home: number; away: number; remaining: number; baseline?: string; connects: boolean; phase?: "1H" | "2H" }[]) {
+  return rebuildPoolPathSchema.parse({contractVersion:"btb-pool-path.v1",modelRegime:"BTB_RB1_20261018",matchKey:"k",asOf:"2026-10-22T19:10:00Z",availability:"AVAILABLE",reason:"AVAILABLE",
+    source:"VERIFIED_RB1_OBSERVATION_POOLS",label:"Havuzda kalan pay",unit:"SURVIVING_REFERENCE_SHARE",winningProbability:false,historical:true,fullMatchCoverageProven:false,
+    points: points.map((p, index) => ({ captureId:`C${index}`, baselineCaptureId:p.baseline ?? "A", baselineAt:"2026-10-22T18:00:00Z", observedAt:"2026-10-22T18:00:00Z",
+      observedAtExact:"20261022180000", minute:p.minute, phase:p.phase ?? "1H", policySha:"D".repeat(64), producerSha:"E".repeat(64), sourceSha:"F".repeat(64),
+      homeScore:p.home, awayScore:p.away, baselineCount:441, remainingCount:p.remaining, level:p.remaining/441, connects:p.connects }))});
+}
+const goalEvent = (eventKey: string, minute: number, side: "HOME" | "AWAY", home: number, away: number): VisibleEvent =>
+  ({ eventKey, kind: "GOAL", minute, side, scoreAfter: { home, away }, scorer: { rawName: "Oyuncu" } } as VisibleEvent);
+
+test("a goal between two recorded captures of the same pool shows its measured pool effect", () => {
+  const poolPath = poolPathOf([{ minute: 41, home: 0, away: 1, remaining: 172, connects: false }, { minute: 42, home: 0, away: 1, remaining: 172, connects: true },
+    { minute: 43, home: 1, away: 1, remaining: 79, connects: true }]);
+  const path = buildMatchPath(input({ poolPath, observations: [], events: [goalEvent("g", 43, "HOME", 1, 1)] }));
+  const text = path.moments.find(moment => moment.key === "event:g")?.lines.join(" ") ?? "";
+  assert.match(text, /Gol öncesi 42′ kaydı: havuzda kalan pay %39 \(172\/441\)/);
+  assert.match(text, /Gol sonrası 43′ kaydı: %18 \(79\/441\)/);
+  assert.match(text, /93 referansı eledi/);
+  assert.doesNotMatch(text, /ölçülmedi/);
+});
+
+test("a goal stays unmeasured across a new pool, two goals or a score correction", () => {
+  const halves = poolPathOf([{ minute: 44, home: 0, away: 1, remaining: 172, connects: true }, { minute: 48, home: 1, away: 1, remaining: 43, baseline: "B", phase: "2H", connects: false }]);
+  const atBreak = buildMatchPath(input({ poolPath: halves, observations: [], events: [goalEvent("g", 45, "HOME", 1, 1)] }));
+  assert.match(atBreak.moments.find(moment => moment.key === "event:g")?.lines.join(" ") ?? "", /havuz etkisi ölçülmedi/);
+  const twice = poolPathOf([{ minute: 10, home: 0, away: 0, remaining: 441, connects: false }, { minute: 14, home: 1, away: 1, remaining: 79, connects: false }]);
+  assert.match(buildMatchPath(input({ poolPath: twice, observations: [], events: [goalEvent("g", 12, "HOME", 1, 1)] }))
+    .moments.find(moment => moment.key === "event:g")?.lines.join(" ") ?? "", /ölçülmedi/);
+  // VAR: 1-1 → 2-1 (annulled) → 1-1 → 2-1 at 65′. The 65′ goal uses its own pair, never the annulled one.
+  const corrected = poolPathOf([{ minute: 52, home: 1, away: 1, remaining: 19, connects: false }, { minute: 54, home: 2, away: 1, remaining: 10, connects: true },
+    { minute: 55, home: 1, away: 1, remaining: 19, connects: true }, { minute: 64, home: 1, away: 1, remaining: 19, connects: true }, { minute: 65, home: 2, away: 1, remaining: 10, connects: true }]);
+  const late = buildMatchPath(input({ poolPath: corrected, observations: [], events: [goalEvent("g", 65, "HOME", 2, 1)] }));
+  assert.match(late.moments.find(moment => moment.key === "event:g")?.lines.join(" ") ?? "", /Gol öncesi 64′ kaydı/);
+});
+
+test("same-pool points that do not connect become a dashed bridge, a new pool does not", () => {
+  const poolPath = poolPathOf([{ minute: 20, home: 0, away: 0, remaining: 441, connects: false }, { minute: 22, home: 0, away: 0, remaining: 441, connects: false },
+    { minute: 23, home: 0, away: 0, remaining: 441, connects: true }, { minute: 48, home: 1, away: 1, remaining: 43, baseline: "B", phase: "2H", connects: false }]);
+  const path = buildMatchPath(input({ poolPath, observations: [] }));
+  assert.deepEqual(path.line.map(point => point.bridge), [false, true, false, false]);
+});
