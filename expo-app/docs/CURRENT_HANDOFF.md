@@ -1,7 +1,7 @@
 # BTB Mobile Next — Güncel Devir
 
 Son güncelleme: 2026-11-27
-Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 02859C1` · Maçın yolu gaps batch committed, release pending
+Mod: `PAIRED_RELEASE_COMPLETE / OWNER_ONLY_DEV / 4D6D757`
 
 Owner: BTB Mobile Next - Aktif. Workspace: C:/dev/btb-cdoex.
 Earlier handoff history remains in [the historical document](HANDOFF_HISTORY_THROUGH_2026-10-29.md)
@@ -13,20 +13,27 @@ and the dated release reports/receipts.
   (`BTB_MOBILE_DATA_SOURCE=postgres`, schema `prod`); SAP is frozen with its
   writer jobs held and stays a rollback until 2026-12-04
   (`btb-codex/docs/PG_CUTOVER_RUNBOOK.md`).
-- Serving BFF: zbet-cap `5ff6376` (branch `claude/daily-coupons-flow`,
-  Windows task `BTB Mobile BFF`, port 4004, PID 52176 since 21:33Z) with
+- Serving BFF: zbet-cap `3dc553e` (branch `claude/daily-coupons-flow`,
+  Windows task `BTB Mobile BFF`, port 4004, PID 68088 since the 2026-11-27
+  19:53Z web publication; first started on `3dc553e` at 19:32Z with owner
+  approval; both from a User-scope `BTB_*` environment) with
   `BTB_JINX_NEWS_ENABLED=true` and `BTB_JINX_NOTES_ENABLED=true`
   (`BTB_JINX_NOTES_PATH` in the User environment). News briefs persist in
   `jinx-news-briefs.json` beside the notes file.
-- Current accepted pair: `02859c1` (finished Toto matches settled from the
-  live feed, Programs tab with live data), COMPLETE after both owner smokes
-  ("Both work").
-  - APK: `btb-mobile-next-02859c1-toto-settle-arm64.apk` (SHA-256
-    `6FFA1CB9…`), the only local APK.
-  - Web release: `20261126T213255Z-02859c1`.
-  - Batch: `client-02859c1…-6FFA1CB92E74-6B72C7F7499C`.
-  - Receipts: btb-codex `47cf86d`,
-    `docs/evidence/toto-settle-client-*-2026-11-27.json`.
+- Current accepted pair: `4d6d757` (Maçın yolu gaps, goal pool effect,
+  recorded provider statistics in stoppage time), COMPLETE after both owner
+  smokes ("Both work", 2026-11-27).
+  - APK: `btb-mobile-next-4d6d757-match-path-arm64.apk` (SHA-256
+    `57EC805B…D541`, 50,771,813 bytes), the only local APK; Drive file
+    `1bRRVmK7ZwvxFaJnT4IA5aczKOAuYizYg` (owner-only, readback verified).
+  - Web release: `20261127T195220Z-4d6d757` (served tree `A6246245…`,
+    57 files read back).
+  - Batch: `client-4d6d757…-57EC805B8A19-8FF11772B20E`.
+  - Receipts: btb-codex `docs/evidence/match-path-client-*-2026-11-27.json`
+    (Android delivery, web publish, acceptance, release complete).
+  - Previous: `02859c1` (Toto settled from live finals), COMPLETE, receipts
+    btb-codex `47cf86d`; its local APK was deleted under the retention rule,
+    its web release folder remains.
   - Pair `1c42954` ("Bitti · geçici" wording) was published but failed the
     owner smoke; it is superseded and its APK deleted.
   - Before that: `03ceb65` (Lig sıralaması, Jinx article summaries, Expo
@@ -53,20 +60,19 @@ and the dated release reports/receipts.
   zbet-mobile and zbet-cap. `master` (zbet-mobile) and `main` (zbet-cap) are
   not yet fast-forwarded.
 
-## Maçın yolu gaps batch (2026-11-27, committed and pushed, not released)
+## Maçın yolu gaps batch (2026-11-27, pair 4d6d757, COMPLETE)
 
 Owner screenshots (Brno–Slovacko, Feirense–Portimonense). Root causes,
 evidence and checks: [MATCH_PATH_GAPS_BATCH_2026-11-27.md](MATCH_PATH_GAPS_BATCH_2026-11-27.md),
 NXT-OBS-260..263.
-- zbet-cap `3dc553e` (`claude/daily-coupons-flow`, pushed; BFF still serves 5ff6376):
+- zbet-cap `3dc553e` (`claude/daily-coupons-flow`, pushed; serving since the 19:32Z restart):
   `srv/mobile-bff/rebuild-pressure-activity.js` (v2 omitted counters, quiet
   proof), `rebuild-statistics.js` + `router.js` + `provider.js` (opt-in
   `X-BTB-Statistics-Fallback: recorded-provider.v1`), tests. 1076/1076.
 - zbet-mobile (`claude/daily-coupons-flow`, this commit, pushed): statistics
   schema union + header + panel wording, pool-line dashed bridges, goal pool
   effect, tests. 880/880, tsc, lint, edge web export, Android bundle.
-- Gates open: BFF restart (serialize with Codex), coordinated
-  APK+web pair. Owner decision open (BTB - Aktif, MODEL_LOGIC): admit a bare
+- Released as pair `4d6d757` (see Current state). Owner decision open (BTB - Aktif, MODEL_LOGIC): admit a bare
   45+/90+ clock as RB1 model input.
 
 ## Toto settles finished matches from the live feed (2026-11-26/27, pair 02859c1, COMPLETE)

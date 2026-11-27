@@ -3,7 +3,9 @@
 Thread: BTB Mobile Next - Aktif. One local implementation and validation batch
 for four owner screenshots (SK Artis Brno – 1.FC Slovacko, Feirense –
 Portimonense, 27 Nov). Both surfaces, same `expo-app` code. Committed and pushed 2026-11-27 with owner approval (zbet-cap `3dc553e`);
-not restarted or published. No model, engine or producer change.
+BFF restarted on `3dc553e`; released as pair `4d6d757` (APK `57EC805B…`, web
+`20261127T195220Z-4d6d757`), COMPLETE after both owner smokes. No model,
+engine or producer change.
 
 Evidence: read-only PostgreSQL (`prod.zbet_t_rb_cap`) through the BFF's own
 modules (scratch scripts, not kept). Producer identity of the captures
@@ -82,7 +84,7 @@ on the score only.
   real 90+ recorded document (only its age rebased). Bars from ~12′, dashed
   bridge at 21′, 33′/65′ goal effects, 48′ HT goal unmeasured, balance panel
   "Sağlayıcı ölçümü · 90+′".
-- Not done: device smoke, live BFF (needs restart), commit/push, release.
+- Owner smokes: Android and app.surklase.com, "Both work" (2026-11-27).
 
 ## Release notes
 
